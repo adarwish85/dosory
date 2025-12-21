@@ -16,6 +16,7 @@ import { RecordPaymentDialog } from "@/components/dashboard/customers/payments/r
 export default function PaymentsPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { payments, loading: paymentsLoading } = usePayments({ customerId: customerId || undefined });
+    const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
     if (customerLoading || paymentsLoading) {
         return (
@@ -38,8 +39,6 @@ export default function PaymentsPage() {
     const formatCurrency = (amount: number = 0) => {
         return `$${amount.toFixed(2)}`;
     };
-
-    const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
     // Calculate total payments
     const totalPayments = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
@@ -110,7 +109,17 @@ export default function PaymentsPage() {
                             ) : (
                                 payments.map((payment) => (
                                     <TableRow key={payment.id}>
-                                        <TableCell>{formatDate(payment.date)}</TableCell>
+                                        <TableCell className="min-w-[150px] py-3">
+                                            <div className="flex flex-col group">
+                                                <span className="font-medium text-gray-900">{formatDate(payment.date)}</span>
+                                                <span className="text-gray-500 text-xs mt-0.5 group-hover:hidden">View Details</span>
+                                                <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
+                                                    <span className="text-xs font-medium text-gray-900 hover:underline cursor-pointer">Edit</span>
+                                                    <span className="text-gray-300">|</span>
+                                                    <span className="text-xs font-medium text-red-600 hover:underline cursor-pointer">Delete</span>
+                                                </div>
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="font-medium text-blue-600 hover:underline cursor-pointer">
                                             {payment.invoiceNumber ? (
                                                 <Link href={`/dashboard/invoices/${payment.invoiceId}`}>

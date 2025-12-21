@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { collection, query, where, getDocs, addDoc, getDoc, doc } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
     Select,
     SelectContent,
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Trash, Settings, Plus, ChevronDown, Save, MoreHorizontal } from "lucide-react";
+import { CalendarIcon, Settings, Plus, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,6 +26,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useInvoices } from "@/lib/hooks/use-invoices";
+import type { InvoiceFormData } from "@/lib/schemas";
 
 interface Client {
     id: string;
@@ -40,7 +42,6 @@ interface Project {
     name: string;
 }
 
-// Simplified generic type for demonstration (adjust based on your 'staff'/'users' collection)
 interface StaffMember {
     id: string;
     name: string;
@@ -52,13 +53,16 @@ interface LineItem {
     longDescription?: string;
     quantity: number;
     rate: number;
-    tax?: number; // percentage
+    tax?: number;
+    taxRate?: number; // Normalized to taxRate
+    amount: number; // Calculated
 }
 
 export default function CreateInvoicePage() {
     const { profile } = useUserProfile();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { createInvoice } = useInvoices();
 
     // Data Sources
     const [clients, setClients] = useState<Client[]>([]);
@@ -90,7 +94,7 @@ export default function CreateInvoicePage() {
     // Items
     const [qtyType, setQtyType] = useState<"qty" | "hours" | "qty_hours">("qty");
     const [items, setItems] = useState<LineItem[]>([
-        { id: "1", description: "", longDescription: "", quantity: 1, rate: 0 },
+        { id: "1", description: "", longDescription: "", quantity: 1, rate: 0, amount: 0 },
     ]);
 
     // Totals
@@ -112,8 +116,7 @@ export default function CreateInvoicePage() {
             clientsSnap.forEach((doc) => clientList.push({ id: doc.id, company: doc.data().company, ...doc.data() } as Client));
             setClients(clientList);
 
-            // Fetch Staff (Assuming 'staff' or 'users' collection - using placeholder for now)
-            // In a real app you'd fetch from your users/staff collection
+            // Fetch Staff (Assuming 'staff' collection exists, using profile as fallback)
             setStaff([
                 { id: profile.uid, name: `${profile.firstName} ${profile.lastName}` }
             ]);
@@ -123,15 +126,14 @@ export default function CreateInvoicePage() {
 
     // Fetch Projects when Client Changes
     useEffect(() => {
-        if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) return; // Basic check
-        // In a real implementation: Fetch projects for selectedClient
-        // For now, clear projects or set dummy
+        if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) return;
         if (selectedClient && profile?.orgId) {
             const fetchProjects = async () => {
                 try {
                     const qProjects = query(collection(db, "projects"), where("orgId", "==", profile.orgId), where("customerId", "==", selectedClient));
                     const projectSnap = await getDocs(qProjects);
                     const projectList: Project[] = [];
+                    // @ts-ignore
                     projectSnap.forEach((doc) => projectList.push({ id: doc.id, name: doc.data().name } as Project));
                     setProjects(projectList);
                 } catch (e) {
@@ -148,16 +150,22 @@ export default function CreateInvoicePage() {
     // Handlers
     const handleItemChange = (id: string, field: keyof LineItem, value: any) => {
         setItems((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, [field]: value } : item
-            )
+            prev.map((item) => {
+                if (item.id === id) {
+                    const updated = { ...item, [field]: value };
+                    // Recalculate amount
+                    updated.amount = updated.quantity * updated.rate;
+                    return updated;
+                }
+                return item;
+            })
         );
     };
 
     const addItem = () => {
         setItems([
             ...items,
-            { id: Date.now().toString(), description: "", quantity: 1, rate: 0 },
+            { id: Date.now().toString(), description: "", quantity: 1, rate: 0, amount: 0 },
         ]);
     };
 
@@ -167,7 +175,7 @@ export default function CreateInvoicePage() {
 
     // Calculations
     const calculateSubTotal = () => {
-        return items.reduce((acc, item) => acc + item.quantity * item.rate, 0);
+        return items.reduce((acc, item) => acc + item.amount, 0);
     };
 
     const calculateDiscountAmount = (subTotal: number) => {
@@ -185,56 +193,57 @@ export default function CreateInvoicePage() {
     };
 
     const handleSubmit = async (action: "draft" | "send" | "send_later" | "record_payment") => {
+        if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) return;
         if (!profile?.orgId || !selectedClient) {
             toast.error("Please select a client");
             return;
         }
 
+        if (!date || !dueDate) {
+            toast.error("Please select both Invoice Date and Due Date");
+            return;
+        }
+
         setLoading(true);
         try {
-            const client = clients.find(c => c.id === selectedClient);
-            const project = projects.find(p => p.id === selectedProject);
+            // Map items to schema format
+            const lineItems = items.map(item => ({
+                id: item.id,
+                description: item.description,
+                longDescription: item.longDescription,
+                quantity: item.quantity,
+                rate: item.rate,
+                amount: item.amount,
+                taxRate: item.tax ? parseFloat(String(item.tax)) : 0,
+                unit: "qty"
+            }));
 
-            await addDoc(collection(db, "invoices"), {
-                orgId: profile.orgId,
+            // Construct payload matching InvoiceFormData
+            const invoiceData: InvoiceFormData = {
                 customerId: selectedClient,
-                customerName: client?.company,
-                projectId: selectedProject,
-                projectName: project?.name,
-
-                number: `INV-${Date.now()}`, // Placeholder logic
-                date: date ? format(date, "yyyy-MM-dd") : "",
-                dueDate: dueDate ? format(dueDate, "yyyy-MM-dd") : "",
-
-                status: action === "draft" ? "draft" : "sent", // Simplified status logic
-
-                items: items,
-
-                // Financials
+                projectId: selectedProject || undefined,
+                date: date,
+                dueDate: dueDate,
                 currency,
-                subTotal: calculateSubTotal(),
-                discountType,
-                discountValue,
-                discountKind,
-                adjustment,
-                total: calculateTotal(),
-
-                // Meta
+                items: lineItems,
+                discount: discountType !== "No discount" ? {
+                    type: discountKind,
+                    value: discountValue
+                } : undefined,
+                notes: clientNote,
+                terms: termsConditions,
                 tags: tags.split(",").map(t => t.trim()).filter(Boolean),
-                paymentModes: paymentModes.split(",").map(t => t.trim()).filter(Boolean),
-                saleAgentId: saleAgent,
-                recurring,
-                preventOverdueReminders,
-                adminNote,
+            };
 
-                // Footer
-                clientNote,
-                termsConditions,
+            const invoiceId = await createInvoice(invoiceData);
 
-                createdAt: new Date().toISOString(),
-            });
+            if (action === "draft") {
+                toast.success("Draft invoice created successfully");
+            } else {
+                toast.success("Invoice created successfully");
+                // In real app, trigger send/email logic here
+            }
 
-            toast.success("Invoice created successfully");
             router.push("/dashboard/invoices");
         } catch (error) {
             console.error("Error creating invoice:", error);
@@ -248,11 +257,6 @@ export default function CreateInvoicePage() {
 
     return (
         <div className="p-8 max-w-[1400px] mx-auto space-y-6 pb-20">
-            {/* Header / Title */}
-            {/* <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Create Invoice</h2>
-            </div> */}
-
             <Card className="border-none shadow-sm bg-white">
                 <CardContent className="p-6 space-y-8">
 
@@ -538,7 +542,7 @@ export default function CreateInvoicePage() {
                                         />
                                     </div>
                                     <div className="col-span-12 md:col-span-1">
-                                        <Select defaultValue="0">
+                                        <Select defaultValue="0" onValueChange={(val) => handleItemChange(item.id, "tax", val)}>
                                             <SelectTrigger className="border-gray-200 h-9">
                                                 <SelectValue placeholder="Tax" />
                                             </SelectTrigger>

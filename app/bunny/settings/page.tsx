@@ -37,6 +37,8 @@ interface PlatformSettings {
     customBranding: boolean;
     primaryColor: string;
     logoUrl: string;
+    logoLightUrl: string;
+    faviconUrl: string;
     smtpSettings: {
         host: string;
         port: number;
@@ -62,6 +64,8 @@ const defaultSettings: PlatformSettings = {
     customBranding: true,
     primaryColor: "#9b8cff",
     logoUrl: "",
+    logoLightUrl: "",
+    faviconUrl: "",
     smtpSettings: {
         host: "",
         port: 587,
@@ -78,8 +82,13 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
-    const [uploadingLogo, setUploadingLogo] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Upload states
+    const [uploading, setUploading] = useState<Record<string, boolean>>({});
+
+    const logoInputRef = useRef<HTMLInputElement>(null);
+    const lightLogoInputRef = useRef<HTMLInputElement>(null);
+    const faviconInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         loadSettings();
@@ -116,12 +125,16 @@ export default function SettingsPage() {
         }
     };
 
-    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'logoUrl' | 'logoLightUrl' | 'faviconUrl') => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         // Validate file type
-        if (!file.type.startsWith("image/")) {
+        const validTypes = field === 'faviconUrl'
+            ? ["image/x-icon", "image/png", "image/vnd.microsoft.icon", "image/jpeg"]
+            : ["image/"];
+
+        if (field !== 'faviconUrl' && !file.type.startsWith("image/")) {
             alert("Please select an image file");
             return;
         }
@@ -132,10 +145,11 @@ export default function SettingsPage() {
             return;
         }
 
-        setUploadingLogo(true);
+        setUploading(prev => ({ ...prev, [field]: true }));
         try {
             // Create storage reference
-            const storageRef = ref(storage, `platform/logo-${Date.now()}.${file.name.split('.').pop()}`);
+            const ext = file.name.split('.').pop();
+            const storageRef = ref(storage, `platform/${field}-${Date.now()}.${ext}`);
 
             // Upload file
             await uploadBytes(storageRef, file);
@@ -143,44 +157,54 @@ export default function SettingsPage() {
             // Get download URL
             const downloadUrl = await getDownloadURL(storageRef);
 
-            // Update settings with new logo URL
-            setSettings(s => ({ ...s, logoUrl: downloadUrl }));
+            // Update settings with new URL
+            const newSettings = { ...settings, [field]: downloadUrl };
+            setSettings(newSettings);
 
             // Save immediately
             await setDoc(doc(db, "platform", "settings"), {
-                ...settings,
-                logoUrl: downloadUrl,
+                ...newSettings,
                 updatedAt: serverTimestamp(),
             });
         } catch (error) {
-            console.error("Error uploading logo:", error);
-            alert("Failed to upload logo");
+            console.error(`Error uploading ${field}:`, error);
+            alert(`Failed to upload ${field === 'faviconUrl' ? 'favicon' : 'logo'}`);
         } finally {
-            setUploadingLogo(false);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
+            setUploading(prev => ({ ...prev, [field]: false }));
+            // Clear input
+            if (field === 'logoUrl' && logoInputRef.current) logoInputRef.current.value = "";
+            if (field === 'logoLightUrl' && lightLogoInputRef.current) lightLogoInputRef.current.value = "";
+            if (field === 'faviconUrl' && faviconInputRef.current) faviconInputRef.current.value = "";
         }
     };
 
-    const handleRemoveLogo = async () => {
-        if (!settings.logoUrl) return;
+    const handleRemoveImage = async (field: 'logoUrl' | 'logoLightUrl' | 'faviconUrl') => {
+        const url = settings[field];
+        if (!url) return;
 
         try {
             // Try to delete from storage if it's a Firebase URL
-            if (settings.logoUrl.includes("firebase")) {
+            if (url.includes("firebase")) {
                 try {
-                    const storageRef = ref(storage, settings.logoUrl);
+                    const storageRef = ref(storage, url);
                     await deleteObject(storageRef);
                 } catch (e) {
                     // Ignore if file doesn't exist
                 }
             }
 
-            // Clear logo URL
-            setSettings(s => ({ ...s, logoUrl: "" }));
+            // Clear URL
+            const newSettings = { ...settings, [field]: "" };
+            setSettings(newSettings);
+
+            // Save immediately
+            await setDoc(doc(db, "platform", "settings"), {
+                ...newSettings,
+                updatedAt: serverTimestamp(),
+            });
+
         } catch (error) {
-            console.error("Error removing logo:", error);
+            console.error(`Error removing ${field}:`, error);
         }
     };
 
@@ -419,9 +443,9 @@ export default function SettingsPage() {
                         />
                     </div>
 
-                    {/* Logo Upload Section */}
+                    {/* Default Logo Upload Section */}
                     <div>
-                        <Label style={{ color: colors.dark }}>Platform Logo</Label>
+                        <Label style={{ color: colors.dark }}>Platform Logo (Dark)</Label>
                         <div className="mt-2 p-4 rounded-xl border-2 border-dashed" style={{ borderColor: colors.purple, backgroundColor: colors.light }}>
                             {settings.logoUrl ? (
                                 <div className="flex items-center gap-4">
@@ -439,7 +463,7 @@ export default function SettingsPage() {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={handleRemoveLogo}
+                                        onClick={() => handleRemoveImage('logoUrl')}
                                         className="rounded-xl"
                                         style={{ borderColor: colors.purple, color: colors.dark }}
                                     >
@@ -449,10 +473,10 @@ export default function SettingsPage() {
                             ) : (
                                 <div className="text-center">
                                     <input
-                                        ref={fileInputRef}
+                                        ref={logoInputRef}
                                         type="file"
                                         accept="image/*"
-                                        onChange={handleLogoUpload}
+                                        onChange={(e) => handleImageUpload(e, 'logoUrl')}
                                         className="hidden"
                                         id="logo-upload"
                                     />
@@ -460,7 +484,7 @@ export default function SettingsPage() {
                                         htmlFor="logo-upload"
                                         className="cursor-pointer flex flex-col items-center gap-2"
                                     >
-                                        {uploadingLogo ? (
+                                        {uploading['logoUrl'] ? (
                                             <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.accent }} />
                                         ) : (
                                             <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: colors.purple }}>
@@ -469,9 +493,129 @@ export default function SettingsPage() {
                                         )}
                                         <div>
                                             <p className="text-sm font-medium" style={{ color: colors.dark }}>
-                                                {uploadingLogo ? "Uploading..." : "Click to upload logo"}
+                                                {uploading['logoUrl'] ? "Uploading..." : "Click to upload logo"}
                                             </p>
                                             <p className="text-xs" style={{ color: colors.gray }}>PNG, JPG up to 2MB</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Light Logo Upload Section */}
+                    <div>
+                        <Label style={{ color: colors.dark }}>Platform Logo (Light - for dark backgrounds)</Label>
+                        <div className="mt-2 p-4 rounded-xl border-2 border-dashed" style={{ borderColor: colors.purple, backgroundColor: colors.dark }}>
+                            {settings.logoLightUrl ? (
+                                <div className="flex items-center gap-4">
+                                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-900 flex items-center justify-center border border-gray-700">
+                                        <img
+                                            src={settings.logoLightUrl}
+                                            alt="Light Logo"
+                                            className="max-w-full max-h-full object-contain"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium text-white">Logo uploaded</p>
+                                        <p className="text-xs text-gray-400">Click remove to change</p>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleRemoveImage('logoLightUrl')}
+                                        className="rounded-xl border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800"
+                                    >
+                                        <X className="h-4 w-4 mr-1" /> Remove
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="text-center">
+                                    <input
+                                        ref={lightLogoInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleImageUpload(e, 'logoLightUrl')}
+                                        className="hidden"
+                                        id="light-logo-upload"
+                                    />
+                                    <label
+                                        htmlFor="light-logo-upload"
+                                        className="cursor-pointer flex flex-col items-center gap-2"
+                                    >
+                                        {uploading['logoLightUrl'] ? (
+                                            <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.accent }} />
+                                        ) : (
+                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gray-800">
+                                                <Upload className="h-6 w-6 text-gray-400" />
+                                            </div>
+                                        )}
+                                        <div>
+                                            <p className="text-sm font-medium text-white">
+                                                {uploading['logoLightUrl'] ? "Uploading..." : "Click to upload light logo"}
+                                            </p>
+                                            <p className="text-xs text-gray-400">PNG, JPG up to 2MB</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+
+                    {/* Favicon Upload Section */}
+                    <div>
+                        <Label style={{ color: colors.dark }}>Favicon</Label>
+                        <div className="mt-2 p-4 rounded-xl border-2 border-dashed" style={{ borderColor: colors.purple, backgroundColor: colors.light }}>
+                            {settings.faviconUrl ? (
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-white flex items-center justify-center border" style={{ borderColor: colors.purple }}>
+                                        <img
+                                            src={settings.faviconUrl}
+                                            alt="Favicon"
+                                            className="w-8 h-8 object-contain"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium" style={{ color: colors.dark }}>Favicon uploaded</p>
+                                        <p className="text-xs" style={{ color: colors.gray }}>Click remove to change</p>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleRemoveImage('faviconUrl')}
+                                        className="rounded-xl"
+                                        style={{ borderColor: colors.purple, color: colors.dark }}
+                                    >
+                                        <X className="h-4 w-4 mr-1" /> Remove
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="text-center">
+                                    <input
+                                        ref={faviconInputRef}
+                                        type="file"
+                                        accept="image/x-icon,image/png,image/jpeg"
+                                        onChange={(e) => handleImageUpload(e, 'faviconUrl')}
+                                        className="hidden"
+                                        id="favicon-upload"
+                                    />
+                                    <label
+                                        htmlFor="favicon-upload"
+                                        className="cursor-pointer flex flex-col items-center gap-2"
+                                    >
+                                        {uploading['faviconUrl'] ? (
+                                            <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.accent }} />
+                                        ) : (
+                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: colors.purple }}>
+                                                <Upload className="h-6 w-6" style={{ color: colors.dark }} />
+                                            </div>
+                                        )}
+                                        <div>
+                                            <p className="text-sm font-medium" style={{ color: colors.dark }}>
+                                                {uploading['faviconUrl'] ? "Uploading..." : "Click to upload favicon"}
+                                            </p>
+                                            <p className="text-xs" style={{ color: colors.gray }}>ICO, PNG up to 2MB</p>
                                         </div>
                                     </label>
                                 </div>
