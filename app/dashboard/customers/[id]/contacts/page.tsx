@@ -97,13 +97,12 @@ export default function ContactsPage() {
                             <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Position</TableHead>
                             <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Phone</TableHead>
                             <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Active</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {contacts.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                                     No contacts found for {customer?.company || "this customer"}. Add a contact to get started.
                                 </TableCell>
                             </TableRow>
@@ -124,7 +123,44 @@ export default function ContactsPage() {
                                                         <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Primary</span>
                                                     )}
                                                 </span>
-                                                <span className="text-gray-500 text-sm mt-0.5">{contact.email}</span>
+                                                <span className="text-gray-500 text-sm mt-0.5 group-hover:hidden">{contact.email}</span>
+                                                <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
+                                                    <ContactDialog
+                                                        customerId={customerId || undefined}
+                                                        customerName={customer?.company}
+                                                        contact={contact}
+                                                    >
+                                                        <button className="text-sm font-medium text-gray-900 hover:underline">Edit</button>
+                                                    </ContactDialog>
+                                                    <span className="text-gray-300">|</span>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <button
+                                                                className="text-sm font-medium text-red-600 hover:underline"
+                                                                disabled={deletingId === contact.id}
+                                                            >
+                                                                {deletingId === contact.id ? "..." : "Delete"}
+                                                            </button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete Contact</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    Are you sure you want to delete {contact.firstName} {contact.lastName}? This action cannot be undone.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    className="bg-red-600 hover:bg-red-700"
+                                                                    onClick={() => handleDelete(contact.id)}
+                                                                >
+                                                                    Delete
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
                                             </div>
                                         </div>
                                     </TableCell>
@@ -138,45 +174,7 @@ export default function ContactsPage() {
                                             onCheckedChange={() => handleToggleActive(contact.id, contact.status || "active")}
                                         />
                                     </TableCell>
-                                    <TableCell className="align-top py-4">
-                                        <div className="flex items-center gap-2">
-                                            <ContactDialog
-                                                customerId={customerId || undefined}
-                                                customerName={customer?.company}
-                                                contact={contact}
-                                            >
-                                                <button className="text-sm text-blue-600 hover:underline">Edit</button>
-                                            </ContactDialog>
 
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <button
-                                                        className="text-sm text-red-600 hover:underline"
-                                                        disabled={deletingId === contact.id}
-                                                    >
-                                                        {deletingId === contact.id ? "..." : "Delete"}
-                                                    </button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Delete Contact</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Are you sure you want to delete {contact.firstName} {contact.lastName}? This action cannot be undone.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction
-                                                            className="bg-red-600 hover:bg-red-700"
-                                                            onClick={() => handleDelete(contact.id)}
-                                                        >
-                                                            Delete
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
-                                    </TableCell>
                                 </TableRow>
                             ))
                         )}

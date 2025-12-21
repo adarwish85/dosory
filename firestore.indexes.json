@@ -1,6 +1,20 @@
 {
     "indexes": [
         {
+            "collectionGroup": "contacts",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "lastName",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
             "collectionGroup": "customers",
             "queryScope": "COLLECTION",
             "fields": [

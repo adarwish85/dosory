@@ -17,7 +17,7 @@ export default function CustomersPage() {
     const [showImportWizard, setShowImportWizard] = useState(false);
 
     // Fetch all customers/contacts for stats
-    const [filterStatus, setFilterStatus] = useState<"all" | "active">("active");
+    const [filterStatus, setFilterStatus] = useState<"all" | "active">("all");
     const { customers, loading } = useCustomers({ status: filterStatus });
     const { contacts } = useContacts();
 

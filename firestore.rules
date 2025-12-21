@@ -34,7 +34,7 @@ service cloud.firestore {
     // Check if user is admin of their org
     function isOrgAdmin(orgId) {
       let data = getUserData();
-      return belongsToOrg(orgId) && "role" in data && data.role in ["admin", "superadmin"];
+      return belongsToOrg(orgId) && "role" in data && data.role in ["owner", "admin", "superadmin"];
     }
     
     // Validate orgId is present on create
@@ -84,11 +84,19 @@ service cloud.firestore {
     // ============================================
     
     // Organizations: Members can read/update, superadmins have full access
+    // Organizations: Authenticated users can read (for directory/subdomain check), admins/owners can update
     match /organizations/{orgId} {
       allow create: if request.auth != null;
-      allow read: if belongsToOrg(orgId) || isSuperAdmin() || resource.data.ownerId == request.auth.uid;
+      // Allow reading all orgs for subdomain check (in a real app, use a separate public collection)
+      allow read: if request.auth != null; 
       allow update: if isOrgAdmin(orgId) || isSuperAdmin();
       allow delete: if isSuperAdmin();
+
+      // Allow access to subcollections (settings, etc.)
+      match /{document=**} {
+        allow read: if belongsToOrg(orgId) || isSuperAdmin();
+        allow write: if isOrgAdmin(orgId) || isSuperAdmin();
+      }
     }
     
     // Platform subscriptions (superadmin only)

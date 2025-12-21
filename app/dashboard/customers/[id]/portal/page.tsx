@@ -52,9 +52,22 @@ export default function CustomerPortalSettingsPage() {
     // Portal URL: https://[subdomain].dosory.com/portal
     // OR if no subdomain logic yet for portal, maybe just /portal
     // Based on previous tasks, we have subdomain routing.
+    // Helper to slugify company name
+    const slugify = (text: string) => {
+        return text
+            .toString()
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, '-')     // Replace spaces with -
+            .replace(/[^\w\-]+/g, '') // Remove all non-word chars
+            .replace(/\-\-+/g, '-');  // Replace multiple - with single -
+    };
+
+    const companySlug = customer.company ? slugify(customer.company) : customer.id;
+
     const portalUrl = subdomain
-        ? `${protocol}//${subdomain}.${rootDomain}/portal`
-        : `${protocol}//${rootDomain}/portal`; // Fallback
+        ? `${protocol}//${subdomain}.${rootDomain}/portal/${companySlug}`
+        : `${protocol}//${rootDomain}/portal/${companySlug}`; // Fallback
 
     const handleSave = async () => {
         if (!customerId) return;
