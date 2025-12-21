@@ -1,0 +1,143 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "customers",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "status",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "company",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "customers",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "company",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "leads",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "invoices",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "status",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "payments",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "payments",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "customerId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "expenses",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "invoices",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "staff",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "firstName",
+                    "order": "ASCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}

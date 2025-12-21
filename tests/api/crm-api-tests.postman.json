@@ -1,0 +1,400 @@
+{
+    "info": {
+        "name": "CRM Platform API Tests",
+        "description": "API test collection for CRM/ERP SaaS platform",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/auth/login",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"email\": \"{{testEmail}}\", \"password\": \"{{testPassword}}\"}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                                    "pm.test('Returns token', () => pm.expect(pm.response.json().token).to.exist);",
+                                    "pm.environment.set('authToken', pm.response.json().token);"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Customers",
+            "item": [
+                {
+                    "name": "Create Customer",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/customers",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"company\": \"Test Corp\", \"email\": \"test@corp.com\", \"phone\": \"+1234567890\"}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                                    "pm.test('Returns customer ID', () => pm.expect(pm.response.json().id).to.exist);",
+                                    "pm.test('Customer has orgId', () => pm.expect(pm.response.json().orgId).to.exist);",
+                                    "pm.environment.set('testCustomerId', pm.response.json().id);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Customer",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/api/customers/{{testCustomerId}}",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ]
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                                    "pm.test('Returns customer data', () => pm.expect(pm.response.json().company).to.equal('Test Corp'));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Leads",
+            "item": [
+                {
+                    "name": "Create Lead",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/leads",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\": \"John Doe\", \"email\": \"john@example.com\", \"company\": \"Example Inc\", \"source\": \"Website\"}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                                    "pm.test('Lead status is new', () => pm.expect(pm.response.json().status).to.equal('new'));",
+                                    "pm.environment.set('testLeadId', pm.response.json().id);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Convert Lead to Customer",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/leads/{{testLeadId}}/convert",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ]
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                                    "pm.test('Returns customer ID', () => pm.expect(pm.response.json().customerId).to.exist);",
+                                    "pm.test('Lead was converted', () => pm.expect(pm.response.json().leadStatus).to.equal('won'));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Prevent Double Conversion",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/leads/{{testLeadId}}/convert",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ]
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                                    "pm.test('Error message', () => pm.expect(pm.response.json().error).to.include('already converted'));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Invoices",
+            "item": [
+                {
+                    "name": "Create Invoice",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/invoices",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"customerId\": \"{{testCustomerId}}\", \"items\": [{\"description\": \"Service\", \"quantity\": 1, \"rate\": 1000}]}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                                    "pm.test('Invoice number generated', () => pm.expect(pm.response.json().number).to.match(/^INV-/));",
+                                    "pm.test('Total calculated', () => pm.expect(pm.response.json().total).to.equal(1000));",
+                                    "pm.environment.set('testInvoiceId', pm.response.json().id);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Record Payment",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/invoices/{{testInvoiceId}}/payments",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"amount\": 500, \"paymentMode\": \"Bank Transfer\"}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                                    "pm.test('AmountPaid updated', () => pm.expect(pm.response.json().amountPaid).to.equal(500));",
+                                    "pm.test('Status is partial', () => pm.expect(pm.response.json().status).to.equal('partial'));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Prevent Overpayment",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/invoices/{{testInvoiceId}}/payments",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"amount\": 999999, \"paymentMode\": \"Cash\"}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                                    "pm.test('Error about overpayment', () => pm.expect(pm.response.json().error).to.include('exceeds'));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Invalid Status Transition",
+                    "request": {
+                        "method": "PATCH",
+                        "url": "{{baseUrl}}/api/invoices/{{testInvoiceId}}/status",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"status\": \"draft\"}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                                    "pm.test('Invalid transition error', () => pm.expect(pm.response.json().error).to.include('Invalid'));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Estimates",
+            "item": [
+                {
+                    "name": "Create Estimate",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/estimates",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"customerId\": \"{{testCustomerId}}\", \"items\": [{\"description\": \"Project\", \"quantity\": 1, \"rate\": 5000}], \"expiryDate\": \"2024-12-31\"}"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                                    "pm.test('Has expiry date', () => pm.expect(pm.response.json().expiryDate).to.exist);",
+                                    "pm.environment.set('testEstimateId', pm.response.json().id);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Accept Expired Estimate",
+                    "request": {
+                        "method": "POST",
+                        "url": "{{baseUrl}}/api/estimates/{{expiredEstimateId}}/accept",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ]
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                                    "pm.test('Expired error', () => pm.expect(pm.response.json().error).to.include('expired'));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Multi-tenancy Security",
+            "item": [
+                {
+                    "name": "Cannot Access Other Org Data",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{baseUrl}}/api/customers/{{otherOrgCustomerId}}",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{authToken}}"
+                            }
+                        ]
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test('Status is 403 or 404', () => [403, 404].includes(pm.response.code));",
+                                    "pm.test('Access denied', () => pm.expect(pm.response.json().error).to.exist);"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000"
+        },
+        {
+            "key": "testEmail",
+            "value": "test@example.com"
+        },
+        {
+            "key": "testPassword",
+            "value": "password123"
+        }
+    ]
+}

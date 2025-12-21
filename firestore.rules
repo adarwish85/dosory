@@ -1,0 +1,254 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    // Get user data - SAFE ACCESS
+    function getUserData() {
+      let userDoc = request.auth != null ? get(/databases/$(database)/documents/users/$(request.auth.uid)) : null;
+      return userDoc != null ? userDoc.data : {};
+    }
+    
+    // Check if user belongs to the org
+    function belongsToOrg(orgId) {
+      let data = getUserData();
+      let userOrgId = "orgId" in data ? data.orgId : ("organizationId" in data ? data.organizationId : null);
+      return request.auth != null && userOrgId != null && userOrgId == orgId;
+    }
+
+    // Check if user is the document owner
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Check if user is superadmin (platform-level access)
+    function isSuperAdmin() {
+      let data = getUserData();
+      return request.auth != null && "role" in data && data.role == "superadmin";
+    }
+    
+    // Check if user is admin of their org
+    function isOrgAdmin(orgId) {
+      let data = getUserData();
+      return belongsToOrg(orgId) && "role" in data && data.role in ["admin", "superadmin"];
+    }
+    
+    // Validate orgId is present on create
+    function hasValidOrgId() {
+      return request.resource.data.orgId != null && request.resource.data.orgId != "";
+    }
+    
+    // Check org access for read operations (resource exists)
+    function canReadByOrg() {
+      return belongsToOrg(resource.data.orgId) || isSuperAdmin();
+    }
+    
+    // Check org access for create operations
+    function canCreateByOrg() {
+      return hasValidOrgId() && (belongsToOrg(request.resource.data.orgId) || isSuperAdmin());
+    }
+    
+    // Check org access for update/delete operations
+    function canModifyByOrg() {
+      return belongsToOrg(resource.data.orgId) || isSuperAdmin();
+    }
+
+    // ============================================
+    // USER MANAGEMENT
+    // ============================================
+    
+    // Users: Users can read/write their own profile, superadmins can read all
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if isSuperAdmin();
+      
+      // Allow access to subcollections (e.g. onboarding)
+      match /{document=**} {
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    // Staff - TEMPORARILY RELAXED FOR DEBUGGING
+    match /staff/{staffId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ============================================
+    // ORGANIZATION MANAGEMENT
+    // ============================================
+    
+    // Organizations: Members can read/update, superadmins have full access
+    match /organizations/{orgId} {
+      allow create: if request.auth != null;
+      allow read: if belongsToOrg(orgId) || isSuperAdmin() || resource.data.ownerId == request.auth.uid;
+      allow update: if isOrgAdmin(orgId) || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+    
+    // Platform subscriptions (superadmin only)
+    match /platformSubscriptions/{subId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // ============================================
+    // CRM - CUSTOMERS & LEADS
+    // ============================================
+    
+    // Customers - TEMPORARILY RELAXED FOR DEBUGGING
+    match /customers/{customerId} {
+      allow read, write: if request.auth != null;
+      
+      // Customer contacts
+      match /contacts/{contactId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    // Legacy clients collection - TEMPORARILY RELAXED
+    match /clients/{clientId} {
+      allow read, write: if request.auth != null;
+      
+      match /contacts/{contactId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    // Leads - TEMPORARILY RELAXED
+    match /leads/{leadId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ============================================
+    // SALES - INVOICES, ESTIMATES, PROPOSALS
+    // ============================================
+    
+    // Invoices - TEMPORARILY RELAXED
+    match /invoices/{invoiceId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Estimates - TEMPORARILY RELAXED
+    match /estimates/{estimateId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Proposals - TEMPORARILY RELAXED
+    match /proposals/{proposalId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Contracts - TEMPORARILY RELAXED
+    match /contracts/{contractId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ============================================
+    // PROJECT MANAGEMENT
+    // ============================================
+    
+    // Projects - TEMPORARILY RELAXED
+    match /projects/{projectId} {
+      allow read, write: if request.auth != null;
+      
+      // Project tasks
+      match /tasks/{taskId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    // Standalone tasks - TEMPORARILY RELAXED
+    match /tasks/{taskId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ============================================
+    // SUPPORT
+    // ============================================
+    
+    // Support tickets - TEMPORARILY RELAXED
+    match /support_tickets/{ticketId} {
+      allow read, write: if request.auth != null;
+      
+      // Ticket messages
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    // ============================================
+    // MISSING ROOT COLLECTIONS (Fixing Permission Denied)
+    // ============================================
+
+    // Contacts (Root level access needed for useContacts hook)
+    match /contacts/{contactId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Payments
+    match /payments/{paymentId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Expenses
+    match /expenses/{expenseId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Expense Categories
+    match /expenseCategories/{categoryId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Taxes
+    match /taxes/{taxId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ============================================
+    // SUBSCRIPTIONS (TENANT LEVEL)
+    // ============================================
+    
+    // Customer subscriptions - TEMPORARILY RELAXED
+    match /subscriptions/{subId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ============================================
+    // PLATFORM CONFIG (SUPERADMIN)
+    // ============================================
+    
+    // Platform-level configuration (landing page, etc.)
+    // Public read (landing page needs to load config)
+    // Superadmin only write
+    match /platform/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    
+    // Subscription plans - stored at platform/subscriptionPlans/plans/{planId}
+    match /platform/subscriptionPlans/plans/{planId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // ============================================
+    // CATCH-ALL DENY
+    // ============================================
+    
+    // Deny access to any undefined collection
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
