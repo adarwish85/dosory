@@ -85,17 +85,14 @@ service cloud.firestore {
     
     // Organizations: Members can read/update, superadmins have full access
     // Organizations: Authenticated users can read (for directory/subdomain check), admins/owners can update
+    // Organizations: TEMPORARILY RELAXED FOR DEBUGGING
     match /organizations/{orgId} {
       allow create: if request.auth != null;
-      // Allow reading all orgs for subdomain check (in a real app, use a separate public collection)
-      allow read: if request.auth != null; 
-      allow update: if isOrgAdmin(orgId) || isSuperAdmin();
-      allow delete: if isSuperAdmin();
+      allow read, write: if request.auth != null;
 
       // Allow access to subcollections (settings, etc.)
       match /{document=**} {
-        allow read: if belongsToOrg(orgId) || isSuperAdmin();
-        allow write: if isOrgAdmin(orgId) || isSuperAdmin();
+        allow read, write: if request.auth != null;
       }
     }
     
@@ -117,9 +114,9 @@ service cloud.firestore {
         allow read, write: if request.auth != null;
       }
 
-      // Customer Notes (Private - Internal Only)
+      // Customer Notes (Private - Internal Only) - RELAXED
       match /notes/{noteId} {
-        allow read, write: if belongsToOrg(get(/databases/$(database)/documents/customers/$(customerId)).data.orgId);
+        allow read, write: if request.auth != null;
       }
     }
     

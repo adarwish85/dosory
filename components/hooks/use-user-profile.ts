@@ -13,6 +13,8 @@ export interface UserProfile {
     createdAt: string;
     // Optional profile fields
     displayName?: string;
+    firstName?: string;
+    lastName?: string;
     phone?: string;
     jobTitle?: string;
     photoURL?: string;
