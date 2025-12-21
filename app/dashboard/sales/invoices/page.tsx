@@ -136,15 +136,14 @@ export default function SalesInvoicesPage() {
                             { id: "INV-000117", amount: "EGP62,502.78", tax: "EGP7,675.78", date: "13/10/2025", customer: "Egyptian German Industrial Corporation (EGIC)", project: "EGIC Export", due: "12/11/2025", status: "Paid" },
                         ].map((row) => (
                             <TableRow key={row.id} className="h-16 group">
-                                <TableCell className="font-medium">
-                                    <div className="flex flex-col gap-1">
+                                <TableCell className="min-w-[150px] py-3">
+                                    <div className="flex flex-col group">
                                         <span className="text-gray-900 hover:text-blue-600 cursor-pointer text-base font-semibold">{row.id}</span>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 text-xs text-gray-500">
-                                            <span className="hover:text-blue-600 cursor-pointer">View</span>
+                                        <span className="text-gray-500 text-xs mt-0.5 group-hover:hidden">View Details</span>
+                                        <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
+                                            <span className="text-xs font-medium text-gray-900 hover:underline cursor-pointer">Edit</span>
                                             <span className="text-gray-300">|</span>
-                                            <span className="hover:text-blue-600 cursor-pointer">Edit</span>
-                                            <span className="text-gray-300">|</span>
-                                            <span className="hover:text-red-600 cursor-pointer">Delete</span>
+                                            <span className="text-xs font-medium text-red-600 hover:underline cursor-pointer">Delete</span>
                                         </div>
                                     </div>
                                 </TableCell>

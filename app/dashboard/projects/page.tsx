@@ -149,10 +149,22 @@ export default function ProjectsPage() {
                                     return (
                                         <TableRow key={project.id}>
                                             <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
-                                            <TableCell className="font-medium">
-                                                <Link href={`/dashboard/projects/${project.id}`} className="text-blue-600 hover:underline">
-                                                    {project.name}
-                                                </Link>
+                                            <TableCell className="min-w-[200px] py-3">
+                                                <div className="flex flex-col group">
+                                                    <Link href={`/dashboard/projects/${project.id}`} className="font-medium text-blue-600 hover:underline">
+                                                        {project.name}
+                                                    </Link>
+                                                    <span className="text-gray-500 text-xs mt-0.5 group-hover:hidden">ID: {project.id.substring(0, 8)}...</span>
+                                                    <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
+                                                        <Link href={`/dashboard/projects/${project.id}/settings`} className="text-xs font-medium text-gray-900 hover:underline">
+                                                            Edit
+                                                        </Link>
+                                                        <span className="text-gray-300">|</span>
+                                                        <Link href={`/dashboard/projects/${project.id}/settings`} className="text-xs font-medium text-red-600 hover:underline">
+                                                            Delete
+                                                        </Link>
+                                                    </div>
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-gray-500">{project.customerName || "-"}</TableCell>
                                             <TableCell>

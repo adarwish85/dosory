@@ -54,7 +54,17 @@ export default function SalesPaymentsPage() {
                             { id: "17", invoice: "INV-000109", mode: "Bank", transactionId: "", customer: "Tahweel Integrated", amount: "$912.00", date: "06/08/2025" },
                         ].map((row) => (
                             <TableRow key={row.id}>
-                                <TableCell className="font-medium text-gray-900">{row.id}</TableCell>
+                                <TableCell className="min-w-[150px] py-3">
+                                    <div className="flex flex-col group">
+                                        <span className="font-medium text-gray-900">{row.id}</span>
+                                        <span className="text-gray-500 text-xs mt-0.5 group-hover:hidden">View Details</span>
+                                        <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
+                                            <span className="text-xs font-medium text-gray-900 hover:underline cursor-pointer">Edit</span>
+                                            <span className="text-gray-300">|</span>
+                                            <span className="text-xs font-medium text-red-600 hover:underline cursor-pointer">Delete</span>
+                                        </div>
+                                    </div>
+                                </TableCell>
                                 <TableCell className="text-gray-900">{row.invoice}</TableCell>
                                 <TableCell className="text-gray-900">{row.mode}</TableCell>
                                 <TableCell className="text-gray-900">{row.transactionId}</TableCell>

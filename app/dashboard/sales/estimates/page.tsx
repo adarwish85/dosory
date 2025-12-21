@@ -153,10 +153,22 @@ export default function SalesEstimatesPage() {
                                     const colors = statusColors[est.status];
                                     return (
                                         <TableRow key={est.id} className="group">
-                                            <TableCell className="font-medium">
-                                                <Link href={`/dashboard/sales/estimates/${est.id}`} className="text-blue-600 hover:underline">
-                                                    {est.number}
-                                                </Link>
+                                            <TableCell className="min-w-[150px] py-3">
+                                                <div className="flex flex-col group">
+                                                    <Link href={`/dashboard/sales/estimates/${est.id}`} className="font-medium text-blue-600 hover:underline">
+                                                        {est.number}
+                                                    </Link>
+                                                    <span className="text-gray-500 text-xs mt-0.5 group-hover:hidden">View Details</span>
+                                                    <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
+                                                        <Link href={`/dashboard/sales/estimates/${est.id}/edit`} className="text-xs font-medium text-gray-900 hover:underline">
+                                                            Edit
+                                                        </Link>
+                                                        <span className="text-gray-300">|</span>
+                                                        <Link href={`/dashboard/sales/estimates/${est.id}/delete`} className="text-xs font-medium text-red-600 hover:underline">
+                                                            Delete
+                                                        </Link>
+                                                    </div>
+                                                </div>
                                             </TableCell>
                                             <TableCell className="font-medium">{formatCurrency(est.total || 0, est.currency)}</TableCell>
                                             <TableCell className="text-gray-700">{est.customerName || "-"}</TableCell>

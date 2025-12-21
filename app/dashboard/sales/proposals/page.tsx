@@ -144,10 +144,22 @@ export default function ProposalsPage() {
                                     const colors = statusColors[prop.status];
                                     return (
                                         <TableRow key={prop.id} className="group">
-                                            <TableCell className="font-medium">
-                                                <Link href={`/dashboard/sales/proposals/${prop.id}`} className="text-blue-600 hover:underline">
-                                                    {prop.number}
-                                                </Link>
+                                            <TableCell className="min-w-[150px] py-3">
+                                                <div className="flex flex-col group">
+                                                    <Link href={`/dashboard/sales/proposals/${prop.id}`} className="font-medium text-blue-600 hover:underline">
+                                                        {prop.number}
+                                                    </Link>
+                                                    <span className="text-gray-500 text-xs mt-0.5 group-hover:hidden">View Details</span>
+                                                    <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
+                                                        <Link href={`/dashboard/sales/proposals/${prop.id}/edit`} className="text-xs font-medium text-gray-900 hover:underline">
+                                                            Edit
+                                                        </Link>
+                                                        <span className="text-gray-300">|</span>
+                                                        <Link href={`/dashboard/sales/proposals/${prop.id}/delete`} className="text-xs font-medium text-red-600 hover:underline">
+                                                            Delete
+                                                        </Link>
+                                                    </div>
+                                                </div>
                                             </TableCell>
                                             <TableCell className="font-medium text-gray-900">{prop.subject}</TableCell>
                                             <TableCell className="text-gray-900">{formatCurrency(prop.total || 0, prop.currency)}</TableCell>

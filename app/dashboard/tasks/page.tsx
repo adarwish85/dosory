@@ -162,7 +162,21 @@ export default function TasksPage() {
                                         <TableRow key={task.id}>
                                             <TableCell className="text-center"><Checkbox /></TableCell>
                                             <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
-                                            <TableCell className="font-medium text-gray-900">{task.name}</TableCell>
+                                            <TableCell className="min-w-[200px] py-3">
+                                                <div className="flex flex-col group">
+                                                    <span className="font-medium text-gray-900">{task.name}</span>
+                                                    <span className="text-gray-500 text-xs mt-0.5 group-hover:hidden">ID: {task.id.substring(0, 8)}...</span>
+                                                    <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
+                                                        <Link href={`/dashboard/tasks/${task.id}/edit`} className="text-xs font-medium text-gray-900 hover:underline">
+                                                            Edit
+                                                        </Link>
+                                                        <span className="text-gray-300">|</span>
+                                                        <Link href={`/dashboard/tasks/${task.id}/delete`} className="text-xs font-medium text-red-600 hover:underline">
+                                                            Delete
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
                                             <TableCell>
                                                 <Select
                                                     value={task.status}
