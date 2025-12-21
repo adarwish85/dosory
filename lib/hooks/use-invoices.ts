@@ -328,23 +328,45 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
     }, [recordPayment]);
 
     // Calculate invoice stats
+    interface InvoiceStats {
+        total: number;
+        totalAmount: number;
+        totalPaid: number;
+        totalDue: number;
+        [key: string]: number | Record<string, number> | undefined; // Allow dynamic status keys and amountsByStatus
+        amountsByStatus?: Record<string, number>;
+    }
+
     const invoiceStats = invoices.reduce(
         (acc, inv) => {
-            acc[inv.status] = (acc[inv.status] || 0) + 1;
+            acc[inv.status] = (acc[inv.status] as number || 0) + 1;
             acc.total++;
             acc.totalAmount += inv.total;
             acc.totalPaid += inv.amountPaid;
             acc.totalDue += inv.amountDue;
             return acc;
         },
-        { total: 0, totalAmount: 0, totalPaid: 0, totalDue: 0 } as Record<string, number>
+        { total: 0, totalAmount: 0, totalPaid: 0, totalDue: 0 } as InvoiceStats
     );
+
+    // Calculate amounts by status for dashboard
+    const amountsByStatus = invoices.reduce((acc, inv) => {
+        const amount = inv.total || 0;
+        acc[inv.status] = (acc[inv.status] || 0) + amount;
+        return acc;
+    }, {} as Record<string, number>);
+
+    // Merge stats
+    const extendedStats: InvoiceStats = {
+        ...invoiceStats,
+        amountsByStatus
+    };
 
     return {
         invoices,
         loading,
         error,
-        invoiceStats,
+        invoiceStats: extendedStats,
         createInvoice,
         updateInvoice,
         deleteInvoice,

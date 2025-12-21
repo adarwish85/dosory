@@ -85,9 +85,9 @@ export default function InvoicesPage() {
 
             <StatsGroup
                 items={[
-                    { label: "Outstanding Invoices", amount: formatCurrency(invoiceStats?.outstanding || 0), color: "orange" },
-                    { label: "Past Due Invoices", amount: formatCurrency(invoiceStats?.overdue || 0), color: "default" },
-                    { label: "Paid Invoices", amount: formatCurrency(invoiceStats?.paid || 0), color: "green" },
+                    { label: "Outstanding Invoices", amount: formatCurrency(invoiceStats?.totalDue || 0), color: "orange" },
+                    { label: "Past Due Invoices", amount: formatCurrency(invoiceStats?.amountsByStatus?.overdue || 0), color: "default" },
+                    { label: "Paid Invoices", amount: formatCurrency(invoiceStats?.totalPaid || 0), color: "green" },
                 ]}
             />
 

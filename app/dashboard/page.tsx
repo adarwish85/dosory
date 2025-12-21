@@ -20,9 +20,9 @@ export default function DashboardPage() {
     // Calculate Invoices Awaiting Payment (Pending + Overdue + Partial + Sent + Viewed)
     // Basically total - paid - cancelled - draft
     const awaitingPayment = (invoiceStats?.total || 0)
-        - (invoiceStats?.paid || 0)
-        - (invoiceStats?.cancelled || 0)
-        - (invoiceStats?.draft || 0);
+        - ((invoiceStats?.paid as number) || 0)
+        - ((invoiceStats?.cancelled as number) || 0)
+        - ((invoiceStats?.draft as number) || 0);
 
     // Percentages helper
     const getPerc = (val: number, total: number) => total > 0 ? (val / total) * 100 : 0;
@@ -41,10 +41,10 @@ export default function DashboardPage() {
                 />
                 <StatCard
                     title="Active Customers"
-                    current={customers?.length || 0}
-                    total={customers?.length || 0} // Can't track Leads total easily here
+                    current={customers?.filter(c => c.status === "active").length || 0}
+                    total={customers?.length || 0}
                     icon={<TrendingUp className="h-4 w-4" />}
-                    progress={100}
+                    progress={getPerc(customers?.filter(c => c.status === "active").length || 0, customers?.length || 1)}
                     progressColor="bg-green-500"
                 />
                 <StatCard
