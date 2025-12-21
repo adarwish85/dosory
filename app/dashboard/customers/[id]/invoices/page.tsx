@@ -61,9 +61,11 @@ export default function InvoicesPage() {
             </div>
 
             <div className="flex gap-2">
-                <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                    <Plus className="mr-2 h-4 w-4" /> Create New Invoice
-                </Button>
+                <Link href={`/dashboard/invoices/new?customerId=${customerId}`}>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                        <Plus className="mr-2 h-4 w-4" /> Create New Invoice
+                    </Button>
+                </Link>
                 <Button variant="outline" className="text-gray-700">
                     <FileDown className="mr-2 h-4 w-4" /> Zip Invoices
                 </Button>

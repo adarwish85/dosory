@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 
 interface Client {
     id: string;
-    companyName: string;
+    company: string;
 }
 
 interface LineItem {
@@ -37,8 +37,9 @@ interface LineItem {
 export default function CreateInvoicePage() {
     const { profile } = useUserProfile();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [clients, setClients] = useState<Client[]>([]);
-    const [selectedClient, setSelectedClient] = useState("");
+    const [selectedClient, setSelectedClient] = useState(searchParams.get("customerId") || "");
     const [date, setDate] = useState<Date | undefined>(new Date());
     const [dueDate, setDueDate] = useState<Date | undefined>(new Date());
     const [items, setItems] = useState<LineItem[]>([
@@ -50,13 +51,14 @@ export default function CreateInvoicePage() {
         async function fetchClients() {
             if (!profile?.orgId) return;
             const q = query(
-                collection(db, "clients"),
+                collection(db, "customers"),
                 where("orgId", "==", profile.orgId)
             );
             const querySnapshot = await getDocs(q);
             const clientList: Client[] = [];
             querySnapshot.forEach((doc) => {
-                clientList.push({ id: doc.id, ...doc.data() } as Client);
+                const data = doc.data();
+                clientList.push({ id: doc.id, company: data.company } as Client);
             });
             setClients(clientList);
         }
@@ -95,8 +97,8 @@ export default function CreateInvoicePage() {
             const client = clients.find(c => c.id === selectedClient);
             await addDoc(collection(db, "invoices"), {
                 orgId: profile.orgId,
-                clientId: selectedClient,
-                clientName: client?.companyName,
+                customerId: selectedClient, // Changed from clientId
+                customerName: client?.company, // Changed from clientName/companyName
                 number: `INV-${Date.now()}`, // Simple ID generation
                 date: date ? format(date, "yyyy-MM-dd") : "",
                 dueDate: dueDate ? format(dueDate, "yyyy-MM-dd") : "",
@@ -135,7 +137,7 @@ export default function CreateInvoicePage() {
                                     <SelectContent>
                                         {clients.map((client) => (
                                             <SelectItem key={client.id} value={client.id}>
-                                                {client.companyName}
+                                                {client.company}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
