@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTasks } from "@/lib/hooks";
 import type { TaskStatus, TaskPriority } from "@/lib/types";
 import { format } from "date-fns";
+import Link from "next/link";
 
 const statusColors: Record<TaskStatus, { bg: string; text: string }> = {
     not_started: { bg: "bg-gray-100", text: "text-gray-700" },
@@ -90,9 +91,11 @@ export default function TasksPage() {
 
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
-                        <Plus className="mr-2 h-4 w-4" /> New Task
-                    </Button>
+                    <Link href="/dashboard/tasks/new">
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
+                            <Plus className="mr-2 h-4 w-4" /> New Task
+                        </Button>
+                    </Link>
                     <div className="flex items-center border rounded-md bg-white">
                         <Button variant="ghost" size="icon" className="h-9 w-9 bg-gray-100 rounded-r-none border-r"><LayoutGrid className="h-4 w-4 text-gray-900" /></Button>
                     </div>

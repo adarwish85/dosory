@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, RefreshCw, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import Link from "next/link";
 
 export default function CreditNotesPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
@@ -57,9 +58,11 @@ export default function CreditNotesPage() {
         <div className="space-y-6">
             <h2 className="text-xl font-bold text-gray-900">Credit Notes</h2>
 
-            <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                <Plus className="mr-2 h-4 w-4" /> Create Credit Note
-            </Button>
+            <Link href={`/dashboard/sales/credit-notes/new?customerId=${customerId}`}>
+                <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                    <Plus className="mr-2 h-4 w-4" /> Create Credit Note
+                </Button>
+            </Link>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white rounded-lg border p-4">

@@ -5,15 +5,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Filter, RefreshCw, FileText } from "lucide-react";
+import Link from "next/link";
 
 export default function SalesCreditNotesPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
-                        <Plus className="mr-2 h-4 w-4" /> New Credit Note
-                    </Button>
+                    <Link href="/dashboard/sales/credit-notes/new">
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
+                            <Plus className="mr-2 h-4 w-4" /> New Credit Note
+                        </Button>
+                    </Link>
                     <Button variant="outline" size="icon" className="text-gray-500">
                         <FileText className="h-4 w-4" />
                     </Button>

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, RefreshCw, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import Link from "next/link";
 
 export default function ExpensesPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
@@ -46,9 +47,11 @@ export default function ExpensesPage() {
         <div className="space-y-6">
             <h2 className="text-xl font-bold text-gray-900">Expenses</h2>
 
-            <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                <Plus className="mr-2 h-4 w-4" /> New Expense
-            </Button>
+            <Link href={`/dashboard/expenses/new?customerId=${customerId}`}>
+                <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                    <Plus className="mr-2 h-4 w-4" /> New Expense
+                </Button>
+            </Link>
 
             <div className="space-y-4">
                 <div className="flex justify-between items-center gap-4">

@@ -27,7 +27,7 @@ interface Client {
     company: string;
 }
 
-export default function CreateProjectPage() {
+export default function CreateTaskPage() {
     const { profile } = useUserProfile();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -35,10 +35,12 @@ export default function CreateProjectPage() {
     const [formData, setFormData] = useState({
         name: "",
         clientId: searchParams.get("customerId") || "",
-        status: "in_progress",
+        status: "not_started",
+        priority: "medium",
         description: "",
     });
-    const [deadline, setDeadline] = useState<Date | undefined>(new Date());
+    const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+    const [dueDate, setDueDate] = useState<Date | undefined>();
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -61,21 +63,22 @@ export default function CreateProjectPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!profile?.orgId || !formData.clientId) return;
+        if (!profile?.orgId) return;
 
         setLoading(true);
         try {
             const client = clients.find(c => c.id === formData.clientId);
-            await addDoc(collection(db, "projects"), {
+            await addDoc(collection(db, "tasks"), {
                 ...formData,
                 orgId: profile.orgId,
-                clientName: client?.company,
-                deadline: deadline ? format(deadline, "yyyy-MM-dd") : "",
+                clientName: client?.company || "",
+                startDate: startDate ? format(startDate, "yyyy-MM-dd") : "",
+                dueDate: dueDate ? format(dueDate, "yyyy-MM-dd") : "",
                 createdAt: new Date().toISOString(),
             });
-            router.push("/dashboard/projects");
+            router.push("/dashboard/tasks");
         } catch (error) {
-            console.error("Error creating project:", error);
+            console.error("Error creating task:", error);
         } finally {
             setLoading(false);
         }
@@ -84,17 +87,17 @@ export default function CreateProjectPage() {
     return (
         <div className="p-8 max-w-2xl mx-auto space-y-8">
             <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Create Project</h2>
+                <h2 className="text-3xl font-bold tracking-tight">Create Task</h2>
             </div>
 
             <form onSubmit={handleSubmit}>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Project Details</CardTitle>
+                        <CardTitle>Task Details</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Project Name</Label>
+                            <Label htmlFor="name">Task Name</Label>
                             <Input
                                 id="name"
                                 value={formData.name}
@@ -106,7 +109,10 @@ export default function CreateProjectPage() {
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label>Client</Label>
-                                <Select onValueChange={(value) => setFormData({ ...formData, clientId: value })} value={formData.clientId}>
+                                <Select
+                                    value={formData.clientId}
+                                    onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a client" />
                                     </SelectTrigger>
@@ -120,25 +126,70 @@ export default function CreateProjectPage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Deadline</Label>
+                                <Label>Priority</Label>
+                                <Select
+                                    value={formData.priority}
+                                    onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="medium">Medium</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                        <SelectItem value="urgent">Urgent</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label>Start Date</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
                                             variant={"outline"}
                                             className={cn(
                                                 "w-full justify-start text-left font-normal",
-                                                !deadline && "text-muted-foreground"
+                                                !startDate && "text-muted-foreground"
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {deadline ? format(deadline, "PPP") : <span>Pick a date</span>}
+                                            {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
                                         <Calendar
                                             mode="single"
-                                            selected={deadline}
-                                            onSelect={setDeadline}
+                                            selected={startDate}
+                                            onSelect={setStartDate}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Due Date</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal",
+                                                !dueDate && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <Calendar
+                                            mode="single"
+                                            selected={dueDate}
+                                            onSelect={setDueDate}
                                             initialFocus
                                         />
                                     </PopoverContent>
@@ -158,7 +209,7 @@ export default function CreateProjectPage() {
                     </CardContent>
                     <div className="flex justify-end p-6">
                         <Button type="button" variant="outline" className="mr-2" onClick={() => router.back()}>Cancel</Button>
-                        <Button type="submit" disabled={loading}>{loading ? "Creating..." : "Create Project"}</Button>
+                        <Button type="submit" disabled={loading}>{loading ? "Creating..." : "Create Task"}</Button>
                     </div>
                 </Card>
             </form>

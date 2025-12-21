@@ -61,9 +61,11 @@ export default function ProjectsPage() {
             <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
-                            <Plus className="mr-2 h-4 w-4" /> New Project
-                        </Button>
+                        <Link href="/dashboard/projects/new">
+                            <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
+                                <Plus className="mr-2 h-4 w-4" /> New Project
+                            </Button>
+                        </Link>
                         <Button variant="outline" size="icon" className="text-gray-500 bg-white">
                             <AlignJustify className="h-4 w-4" />
                         </Button>

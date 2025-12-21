@@ -9,6 +9,7 @@ import { Plus, Search, RefreshCw, Upload, FileText, Loader2 } from "lucide-react
 import { Checkbox } from "@/components/ui/checkbox";
 import { useExpenses } from "@/lib/hooks";
 import { format } from "date-fns";
+import Link from "next/link";
 
 export default function ExpensesPage() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -73,9 +74,11 @@ export default function ExpensesPage() {
 
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
-                        <Plus className="mr-2 h-4 w-4" /> Record Expense
-                    </Button>
+                    <Link href="/dashboard/expenses/new">
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
+                            <Plus className="mr-2 h-4 w-4" /> Record Expense
+                        </Button>
+                    </Link>
                     <Button variant="outline" className="text-gray-700 bg-white">
                         <Upload className="mr-2 h-4 w-4" /> Import Expenses
                     </Button>
