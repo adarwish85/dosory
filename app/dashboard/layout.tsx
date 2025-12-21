@@ -19,6 +19,7 @@ import {
     Plus, ChevronDown, Home, Calendar, Clock, PanelRightClose, PanelRightOpen
 } from "lucide-react";
 import { PlatformLogo, usePlatformSettings } from "@/lib/hooks/use-platform-settings";
+import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -47,7 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { user, loading } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
-    const { settings, loading: settingsLoading } = usePlatformSettings();
+    const { settings, loading: settingsLoading } = useOrganizationSettings(); // Contains subdomain
     const { profile } = useUserProfile();
     const { permissions, isAdmin, loading: permissionsLoading } = usePermissions();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -57,8 +58,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     // Enforce Tenant Subdomain
     useEffect(() => {
-        // Skip if loading or no profile/orgId
-        if (loading || !profile?.orgId) return;
+        // Wait for all data to load
+        if (loading || settingsLoading || !profile?.orgId) return;
 
         const host = window.location.host;
 
@@ -79,16 +80,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             currentSubdomain = host.replace(`.${rootDomain}`, "");
         }
 
-        // If current subdomain doesn't match user's orgId, redirect
-        if (profile.orgId !== currentSubdomain) {
-            // Prevent redirect loop if something is wrong with orgId
-            if (!profile.orgId) return;
+        // Determine expected subdomain: Use custom subdomain if set, otherwise fallback to orgId
+        const expectedSubdomain = settings.subdomain || profile.orgId;
 
-            console.log(`Redirecting from ${currentSubdomain} to ${profile.orgId}`);
+        // If current subdomain doesn't match expected one, redirect
+        if (expectedSubdomain && expectedSubdomain !== currentSubdomain) {
+            console.log(`Redirecting from ${currentSubdomain} to ${expectedSubdomain}`);
             const protocol = window.location.protocol;
-            window.location.href = `${protocol}//${profile.orgId}.${rootDomain}/dashboard`;
+            window.location.href = `${protocol}//${expectedSubdomain}.${rootDomain}/dashboard`;
         }
-    }, [profile, loading]);
+    }, [profile, loading, settingsLoading, settings.subdomain]);
 
     // Subscribe to staff profile for real-time updates
     useEffect(() => {

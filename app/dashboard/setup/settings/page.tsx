@@ -10,10 +10,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Settings as SettingsIcon, FileText, Globe, Mail, Wrench, HelpCircle, DollarSign, FileIcon, FileCheck, CreditCard, RefreshCw, CreditCard as PaymentIcon, Users, CheckCircle, Headphones, Target } from "lucide-react";
 import { Trash2 } from "lucide-react";
+import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
     const [activeSection, setActiveSection] = useState("general");
     const [activeEmailTab, setActiveEmailTab] = useState("smtp");
+
+    // Use the hook
+    const { settings, saveSettings, saving, loading } = useOrganizationSettings();
+    const [localSubdomain, setLocalSubdomain] = useState("");
+
+    useEffect(() => {
+        if (!loading) {
+            setLocalSubdomain(settings.subdomain || "");
+        }
+    }, [loading, settings.subdomain]);
 
     const sidebarSections = [
         {
@@ -74,12 +87,37 @@ export default function SettingsPage() {
 
                         <div>
                             <Label>Company Name</Label>
-                            <Input defaultValue="WasilaDev" />
+                            <Input
+                                defaultValue={settings.companyName}
+                                onChange={(e) => saveSettings({ companyName: e.target.value }).catch(console.error)}
+                                placeholder="My Company"
+                            />
                         </div>
 
                         <div>
-                            <Label>Company Main Domain</Label>
-                            <Input defaultValue="https://wasiladev.com/" placeholder="https://" />
+                            <Label>Subdomain (Tenant URL)</Label>
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className="text-gray-500 font-medium">https://</span>
+                                <Input
+                                    value={localSubdomain}
+                                    onChange={(e) => setLocalSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                    placeholder="my-org"
+                                    className="max-w-[200px]"
+                                />
+                                <span className="text-gray-500 font-medium">.dosory.com</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                This will change your dashboard URL.
+                            </p>
+                        </div>
+
+                        <div>
+                            <Label>Custom Domain (Optional)</Label>
+                            <Input
+                                defaultValue={settings.mainDomain || ""}
+                                placeholder="https://my-domain.com"
+                                onChange={(e) => saveSettings({ mainDomain: e.target.value }).catch(console.error)}
+                            />
                         </div>
 
                         <div>

@@ -12,6 +12,7 @@ export interface OrganizationSettings {
     logoLight?: string;
     logoDark?: string;
     favicon?: string;
+    subdomain?: string; // Custom subdomain e.g. "acme"
     mainDomain?: string;
     rtlAdmin: boolean;
     rtlCustomer: boolean;
@@ -46,6 +47,7 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     timeFormat: "12",
     timezone: "Africa/Cairo",
     defaultLanguage: "en",
+    subdomain: "", // Default empty
 };
 
 export function useOrganizationSettings() {
@@ -60,18 +62,34 @@ export function useOrganizationSettings() {
 
         const loadSettings = async () => {
             try {
-                const docRef = doc(db, "organizations", profile.orgId, "settings", "general");
-                const docSnap = await getDoc(docRef);
+                // Fetch general settings from subcollection
+                const settingsRef = doc(db, "organizations", profile.orgId, "settings", "general");
+                const settingsSnap = await getDoc(settingsRef);
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    setSettings({
-                        ...DEFAULT_SETTINGS,
-                        ...data,
-                        updatedAt: data.updatedAt?.toDate(),
-                        createdAt: data.createdAt?.toDate(),
-                    });
+                // Fetch root organization doc for subdomain
+                const orgRef = doc(db, "organizations", profile.orgId);
+                const orgSnap = await getDoc(orgRef);
+
+                let data = {};
+                if (settingsSnap.exists()) {
+                    data = { ...data, ...settingsSnap.data() };
                 }
+
+                if (orgSnap.exists()) {
+                    // Extract subdomain from root doc
+                    const orgData = orgSnap.data();
+                    if (orgData.subdomain) {
+                        data = { ...data, subdomain: orgData.subdomain };
+                    }
+                }
+
+                setSettings({
+                    ...DEFAULT_SETTINGS,
+                    ...data,
+                    // Handle dates if they exist in subcollection data
+                    updatedAt: data.updatedAt?.toDate?.(),
+                    createdAt: data.createdAt?.toDate?.(),
+                });
             } catch (error) {
                 console.error("Error loading org settings:", error);
             } finally {
@@ -88,12 +106,43 @@ export function useOrganizationSettings() {
 
         setSaving(true);
         try {
-            const docRef = doc(db, "organizations", profile.orgId, "settings", "general");
+            // Handle Subdomain logic separately if it's being updated
+            if (updates.subdomain !== undefined) {
+                const newSubdomain = updates.subdomain.toLowerCase().trim();
 
-            await setDoc(docRef, {
-                ...updates,
-                updatedAt: serverTimestamp(),
-            }, { merge: true });
+                // If subdomain is effectively changing
+                if (newSubdomain !== settings.subdomain) {
+                    // Check uniqueness
+                    const { collection, query, where, getDocs } = await import("firebase/firestore");
+                    const orgsRef = collection(db, "organizations");
+                    const q = query(orgsRef, where("subdomain", "==", newSubdomain));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        // Check if the found doc is NOT this org (collision)
+                        const existingDoc = querySnapshot.docs[0];
+                        if (existingDoc.id !== profile.orgId) {
+                            throw new Error("Subdomain is already taken.");
+                        }
+                    }
+
+                    // Update root organization document
+                    const orgRef = doc(db, "organizations", profile.orgId);
+                    await updateDoc(orgRef, { subdomain: newSubdomain });
+                }
+            }
+
+            // Update Settings Subcollection
+            // Exclude subdomain from this update as it lives on the root doc
+            const { subdomain, ...settingsUpdates } = updates;
+
+            if (Object.keys(settingsUpdates).length > 0) {
+                const settingsRef = doc(db, "organizations", profile.orgId, "settings", "general");
+                await setDoc(settingsRef, {
+                    ...settingsUpdates,
+                    updatedAt: serverTimestamp(),
+                }, { merge: true });
+            }
 
             setSettings(prev => ({ ...prev, ...updates }));
 
@@ -109,7 +158,7 @@ export function useOrganizationSettings() {
         } finally {
             setSaving(false);
         }
-    }, [profile?.orgId, settings.companyName]);
+    }, [profile?.orgId, settings.companyName, settings.subdomain]);
 
     // Upload logo
     const uploadLogo = useCallback(async (file: File, type: "light" | "dark" | "favicon"): Promise<string> => {
