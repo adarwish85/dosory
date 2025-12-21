@@ -1,0 +1,43 @@
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyBjO7KDkU3V9zL9XFYCZvkKvg3sywIlYLU
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: goalo-6a269.firebaseapp.com
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: goalo-6a269
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: goalo-6a269.firebasestorage.app
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "618844317530"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: 1:618844317530:web:c91700ca7986eeda497563
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: G-Y33Y4T5HRT
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_ROOT_DOMAIN
+    value: dosory.com
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_PAYPAL_CLIENT_ID
+    value: AVrV1_jTzj4roCuVIwDV8llyW-QIsArn0dKYW2fTkVX4OpTYjGobynSsJuNe4y2BLdV4az8hureO9y3S
+    availability: [BUILD, RUNTIME]
+  - variable: PAYPAL_CLIENT_ID
+    value: AVrV1_jTzj4roCuVIwDV8llyW-QIsArn0dKYW2fTkVX4OpTYjGobynSsJuNe4y2BLdV4az8hureO9y3S
+    availability: [BUILD, RUNTIME]
+  - variable: PAYPAL_CLIENT_SECRET
+    value: ***REDACTED-PAYPAL-SECRET***
+    availability: [BUILD, RUNTIME]
+  - variable: PAYPAL_MODE
+    value: live
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_APP_URL
+    value: https://dosory.com
+    availability: [BUILD, RUNTIME]
+  - variable: FIREBASE_SERVICE_ACCOUNT_KEY
+    value: '{REDACTED-FIREBASE-SERVICE-ACCOUNT-JSON}'
+    availability: [BUILD, RUNTIME]
