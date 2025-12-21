@@ -8,7 +8,7 @@ import {
     User, Users, StickyNote, FileText, Receipt,
     CreditCard, FileSignature, CheckSquare,
     Calculator, Clock, LifeBuoy, Folder, Paperclip,
-    Lock, Bell, MapPin
+    Lock, Bell, MapPin, Globe
 } from "lucide-react";
 
 export function CustomerSidebar() {
