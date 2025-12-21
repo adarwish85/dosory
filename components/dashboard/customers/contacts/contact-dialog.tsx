@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetTrigger } from "@/components/ui/sheet";
@@ -8,9 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Eye, EyeOff, RefreshCw, Send, Lock } from "lucide-react";
 import { useContacts } from "@/lib/hooks/use-customers";
 import { toast } from "sonner";
+import { setContactAuthPassword } from "@/app/actions/contact-auth";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 interface ContactFormData {
     firstName: string;
@@ -37,6 +38,7 @@ interface ContactFormData {
         contract: boolean;
         task: boolean;
     };
+    password?: string;
 }
 
 const defaultFormData: ContactFormData = {
@@ -64,6 +66,7 @@ const defaultFormData: ContactFormData = {
         contract: true,
         task: true,
     },
+    password: "",
 };
 
 export function ContactDialog({
@@ -86,21 +89,51 @@ export function ContactDialog({
     const [step, setStep] = useState(1);
     const [internalOpen, setInternalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [formData, setFormData] = useState<ContactFormData>(contact ? {
-        ...defaultFormData,
-        firstName: contact.firstName || "",
-        lastName: contact.lastName || "",
-        email: contact.email || "",
-        phone: contact.phone || "",
-        position: contact.position || "",
-        direction: contact.direction || "default",
-        isPrimary: contact.isPrimary || false,
-        permissions: contact.permissions || defaultFormData.permissions,
-        notifications: contact.notifications || defaultFormData.notifications,
-    } : defaultFormData);
+    const [showPassword, setShowPassword] = useState(false);
+    const [sendingReset, setSendingReset] = useState(false);
+
+    // Initialize form data with correct permissions mapping
+    const getInitialFormData = (): ContactFormData => {
+        if (!contact) return defaultFormData;
+
+        let initialPermissions = { ...defaultFormData.permissions };
+
+        // Handle array of strings from DB
+        if (Array.isArray(contact.permissions)) {
+            // Reset all to false first, since the array only contains enabled permissions
+            Object.keys(initialPermissions).forEach(key => {
+                (initialPermissions as any)[key] = false;
+            });
+            // Enable only the ones present in the array
+            contact.permissions.forEach((perm: string) => {
+                if (perm in initialPermissions) {
+                    (initialPermissions as any)[perm] = true;
+                }
+            });
+        } else if (contact.permissions && typeof contact.permissions === 'object') {
+            // Handle legacy object format if needed
+            initialPermissions = { ...initialPermissions, ...contact.permissions };
+        }
+
+        return {
+            ...defaultFormData,
+            firstName: contact.firstName || "",
+            lastName: contact.lastName || "",
+            email: contact.email || "",
+            phone: contact.phone || "",
+            position: contact.position || "",
+            direction: contact.direction || "default",
+            isPrimary: contact.isPrimary || false,
+            permissions: initialPermissions,
+            notifications: contact.notifications || defaultFormData.notifications,
+            password: "",
+        };
+    };
+
+    const [formData, setFormData] = useState<ContactFormData>(getInitialFormData());
 
     const { createContact, updateContact } = useContacts({ customerId });
-    const totalSteps = 3;
+    const totalSteps = 4; // Info -> Permissions -> Password -> Notifications
     const isEditing = !!contact?.id;
 
     const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -111,9 +144,14 @@ export function ContactDialog({
 
     const handleOpenChange = (newOpen: boolean) => {
         setOpen(newOpen);
-        if (!newOpen) {
+        if (newOpen) {
+            // Re-initialize data when opening
+            setFormData(getInitialFormData());
+        } else {
+            // Reset state slightly delayed for animation
             setTimeout(() => {
                 setStep(1);
+                setShowPassword(false);
                 if (!contact) {
                     setFormData(defaultFormData);
                 }
@@ -155,8 +193,10 @@ export function ContactDialog({
                 email: formData.email,
                 phone: formData.phone || undefined,
                 position: formData.position || undefined,
+                direction: formData.direction,
                 isPrimary: formData.isPrimary,
                 permissions: permissionsArray,
+                notifications: formData.notifications, // Save notifications too
                 status: "active" as const,
                 customerId,
             };
@@ -167,6 +207,16 @@ export function ContactDialog({
             } else {
                 await createContact(contactData);
                 toast.success("Contact created successfully");
+            }
+
+            // Handle Password Setting
+            if (formData.password) {
+                const result = await setContactAuthPassword(formData.email, formData.password, `${formData.firstName} ${formData.lastName}`);
+                if (result.success) {
+                    toast.success(result.action === "created" ? "Auth user created with password" : "Password updated successfully");
+                } else {
+                    toast.error(`Failed to set password: ${result.error}`);
+                }
             }
 
             handleOpenChange(false);
@@ -191,6 +241,33 @@ export function ContactDialog({
             ...prev,
             notifications: { ...prev.notifications, [key]: value }
         }));
+    };
+
+    const handleGeneratePassword = () => {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        let pass = "";
+        for (let i = 0; i < 12; i++) {
+            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        setFormData(prev => ({ ...prev, password: pass }));
+        setShowPassword(true);
+    };
+
+    const handleSendResetEmail = async () => {
+        if (!formData.email) {
+            toast.error("Please enter an email address first");
+            return;
+        }
+        setSendingReset(true);
+        try {
+            await sendPasswordResetEmail(auth, formData.email);
+            toast.success(`Password reset email sent to ${formData.email}`);
+        } catch (error: any) {
+            console.error("Error sending reset email:", error);
+            toast.error(error.message || "Failed to send reset email");
+        } finally {
+            setSendingReset(false);
+        }
     };
 
     return (
@@ -219,9 +296,10 @@ export function ContactDialog({
                 </SheetHeader>
 
                 <div className="flex-1 overflow-y-auto px-6 py-4 bg-white">
+                    {/* STEP 1: Basic Info - Unchanged */}
                     {step === 1 && (
                         <div className="space-y-5">
-                            {/* Profile Image */}
+                            {/* ... Profile Image ... */}
                             <div className="space-y-2">
                                 <Label>Profile image</Label>
                                 <div className="flex w-full items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm">
@@ -230,7 +308,6 @@ export function ContactDialog({
                                 </div>
                             </div>
 
-                            {/* Basic Info */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="fname" className="text-red-500 font-semibold">* <span className="text-gray-700">First Name</span></Label>
@@ -292,7 +369,6 @@ export function ContactDialog({
                                 </Select>
                             </div>
 
-                            {/* Checkboxes */}
                             <div className="space-y-2 pt-2">
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
@@ -306,6 +382,7 @@ export function ContactDialog({
                         </div>
                     )}
 
+                    {/* STEP 2: Permissions */}
                     {step === 2 && (
                         <div className="space-y-4">
                             <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">Permissions</h3>
@@ -326,7 +403,73 @@ export function ContactDialog({
                         </div>
                     )}
 
+                    {/* STEP 3: Password (NEW) */}
                     {step === 3 && (
+                        <div className="space-y-6">
+                            <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">Security</h3>
+
+                            {/* Manual Password */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-red-500 font-semibold">* <span className="text-gray-700">Password</span></Label>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 text-xs text-blue-600"
+                                        onClick={handleGeneratePassword}
+                                    >
+                                        <RefreshCw className="w-3 h-3 mr-1" />
+                                        Generate
+                                    </Button>
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <Input
+                                            type={showPassword ? "text" : "password"}
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            placeholder="Set password manually"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Note: If you populate this field, the password will be changed/set for this contact.
+                                </p>
+                            </div>
+
+                            <div className="border-t pt-4">
+                                <div className="space-y-3">
+                                    <Label className="text-gray-900">Reset Password</Label>
+                                    <p className="text-sm text-gray-500">
+                                        Send an email to <strong>{formData.email || "the user"}</strong> with a link to reset their password.
+                                    </p>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full sm:w-auto"
+                                        onClick={handleSendResetEmail}
+                                        disabled={sendingReset || !formData.email}
+                                    >
+                                        {sendingReset ? (
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                            <Send className="h-4 w-4 mr-2" />
+                                        )}
+                                        Send Reset Password Email
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* STEP 4: Notifications (Was Step 3) */}
+                    {step === 4 && (
                         <div className="space-y-4">
                             <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">Email Notifications</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

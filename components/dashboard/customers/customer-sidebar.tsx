@@ -17,6 +17,7 @@ export function CustomerSidebar() {
 
     const menuItems = [
         { icon: User, label: "Profile", href: `/dashboard/customers/${customerId}` },
+        { icon: Globe, label: "Portal Settings", href: `/dashboard/customers/${customerId}/portal` },
         { icon: Users, label: "Contacts", href: `/dashboard/customers/${customerId}/contacts`, badge: contacts.length || undefined },
         { icon: StickyNote, label: "Notes", href: `/dashboard/customers/${customerId}/notes` },
         { icon: FileText, label: "Statement", href: `/dashboard/customers/${customerId}/statement` },
