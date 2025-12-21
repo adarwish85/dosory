@@ -34,6 +34,7 @@ export interface Customer extends BaseEntity {
     status: EntityStatus;
     groups?: string[];
     notes?: string;
+    portalEnabled?: boolean;
 }
 
 export interface Contact extends BaseEntity {
