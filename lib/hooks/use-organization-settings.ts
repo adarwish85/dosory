@@ -36,10 +36,16 @@ export interface OrganizationSettings {
     // Metadata
     updatedAt?: Date;
     createdAt?: Date;
+
+    // Platform
+    platformName?: string;
+    maintenanceMode?: boolean;
 }
 
 const DEFAULT_SETTINGS: OrganizationSettings = {
     companyName: "",
+    platformName: "WasilaDev",
+    maintenanceMode: false,
     rtlAdmin: false,
     rtlCustomer: false,
     allowedFileTypes: ".png,.jpg,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.txt",
@@ -70,7 +76,7 @@ export function useOrganizationSettings() {
                 const orgRef = doc(db, "organizations", profile.orgId);
                 const orgSnap = await getDoc(orgRef);
 
-                let data = {};
+                let data: any = {};
                 if (settingsSnap.exists()) {
                     data = { ...data, ...settingsSnap.data() };
                 }
