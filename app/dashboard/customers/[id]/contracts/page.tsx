@@ -54,9 +54,11 @@ export default function ContractsPage() {
         <div className="space-y-6">
             <h2 className="text-xl font-bold text-gray-900">Contracts</h2>
 
-            <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                <Plus className="mr-2 h-4 w-4" /> New Contract
-            </Button>
+            <Link href={`/dashboard/contracts/new?customerId=${customerId}`}>
+                <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                    <Plus className="mr-2 h-4 w-4" /> New Contract
+                </Button>
+            </Link>
 
             <div className="space-y-4">
                 <div className="flex justify-between items-center gap-4">

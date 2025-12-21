@@ -13,9 +13,14 @@ import { useCustomers, useContacts } from "@/lib/hooks";
 import { format } from "date-fns";
 import Link from "next/link";
 
-export function CustomersTable() {
+interface CustomersTableProps {
+    customers: any[];
+    loading: boolean;
+}
+
+export function CustomersTable({ customers, loading }: CustomersTableProps) {
     const [searchQuery, setSearchQuery] = useState("");
-    const { customers, loading, updateCustomer } = useCustomers({ status: "active" });
+    const { updateCustomer } = useCustomers({ status: "all" });  // Keep hook for update capability only
 
     // Filter customers based on search
     const filteredCustomers = customers.filter(customer =>

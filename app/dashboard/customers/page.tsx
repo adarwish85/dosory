@@ -6,6 +6,7 @@ import { CustomersTable } from "@/components/dashboard/customers/customers-table
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, Filter, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import AddCustomerPanel from "@/components/dashboard/customers/AddCustomerPanel";
 import ImportWizard from "@/components/import/ImportWizard";
@@ -16,7 +17,8 @@ export default function CustomersPage() {
     const [showImportWizard, setShowImportWizard] = useState(false);
 
     // Fetch all customers/contacts for stats
-    const { customers } = useCustomers({ status: "all" });
+    const [filterStatus, setFilterStatus] = useState<"all" | "active">("active");
+    const { customers, loading } = useCustomers({ status: filterStatus });
     const { contacts } = useContacts();
 
     // Calculate stats
@@ -68,22 +70,39 @@ export default function CustomersPage() {
                 <div className="flex gap-2">
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" className="text-gray-700 bg-white border-blue-600 text-blue-600 hover:bg-blue-50">
-                                <Filter className="mr-2 h-4 w-4 fill-blue-600" />
-                                Active only
+                            <Button
+                                variant="outline"
+                                className={cn(
+                                    "text-gray-700 bg-white hover:bg-gray-50",
+                                    filterStatus === "active" && "border-blue-600 text-blue-600 bg-blue-50"
+                                )}
+                            >
+                                <Filter className={cn("mr-2 h-4 w-4", filterStatus === "active" ? "fill-blue-600" : "fill-none")} />
+                                {filterStatus === "active" ? "Active only" : "Filter"}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-56 p-0" align="end">
                             <div className="p-3 text-xs flex justify-between text-blue-600 bg-gray-50 border-b">
                                 <span className="cursor-pointer hover:underline">New Filter</span>
                                 <div className="space-x-2">
-                                    <span className="cursor-pointer hover:underline">Clear Filter</span>
+                                    <span
+                                        className="cursor-pointer hover:underline"
+                                        onClick={() => setFilterStatus("all")}
+                                    >
+                                        Clear Filter
+                                    </span>
                                     <span className="cursor-pointer hover:underline">Edit</span>
                                 </div>
                             </div>
-                            <div className="p-2">
-                                <div className="flex items-center gap-2 px-2 py-1.5 text-sm bg-gray-100 rounded-md">
-                                    <span className="text-blue-600">☆</span>
+                            <div className="p-2 space-y-1">
+                                <div
+                                    className={cn(
+                                        "flex items-center gap-2 px-2 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100",
+                                        filterStatus === "active" && "bg-blue-50 text-blue-600"
+                                    )}
+                                    onClick={() => setFilterStatus("active")}
+                                >
+                                    <span className={cn("text-gray-400", filterStatus === "active" && "text-blue-600")}>☆</span>
                                     <span>Active only</span>
                                 </div>
                             </div>
@@ -93,7 +112,7 @@ export default function CustomersPage() {
             </div>
 
             {/* Table */}
-            <CustomersTable />
+            <CustomersTable customers={customers} loading={loading} />
 
             {/* Add Customer Panel */}
             <AddCustomerPanel

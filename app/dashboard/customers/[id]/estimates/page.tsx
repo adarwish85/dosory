@@ -58,9 +58,11 @@ export default function EstimatesPage() {
             <h2 className="text-xl font-bold text-gray-900">Estimates</h2>
 
             <div className="flex gap-2">
-                <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                    <Plus className="mr-2 h-4 w-4" /> Create New Estimate
-                </Button>
+                <Link href={`/dashboard/sales/estimates/new?customerId=${customerId}`}>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                        <Plus className="mr-2 h-4 w-4" /> Create New Estimate
+                    </Button>
+                </Link>
                 <Button variant="outline" className="text-gray-700">
                     <FileDown className="mr-2 h-4 w-4" /> Zip Estimates
                 </Button>

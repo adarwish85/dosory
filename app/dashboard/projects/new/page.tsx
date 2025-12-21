@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -24,16 +24,17 @@ import { cn } from "@/lib/utils";
 
 interface Client {
     id: string;
-    companyName: string;
+    company: string;
 }
 
 export default function CreateProjectPage() {
     const { profile } = useUserProfile();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [clients, setClients] = useState<Client[]>([]);
     const [formData, setFormData] = useState({
         name: "",
-        clientId: "",
+        clientId: searchParams.get("customerId") || "",
         status: "in_progress",
         description: "",
     });
@@ -44,13 +45,14 @@ export default function CreateProjectPage() {
         async function fetchClients() {
             if (!profile?.orgId) return;
             const q = query(
-                collection(db, "clients"),
+                collection(db, "customers"),
                 where("orgId", "==", profile.orgId)
             );
             const querySnapshot = await getDocs(q);
             const clientList: Client[] = [];
             querySnapshot.forEach((doc) => {
-                clientList.push({ id: doc.id, ...doc.data() } as Client);
+                const data = doc.data();
+                clientList.push({ id: doc.id, company: data.company } as Client);
             });
             setClients(clientList);
         }
@@ -67,7 +69,7 @@ export default function CreateProjectPage() {
             await addDoc(collection(db, "projects"), {
                 ...formData,
                 orgId: profile.orgId,
-                clientName: client?.companyName,
+                clientName: client?.company,
                 deadline: deadline ? format(deadline, "yyyy-MM-dd") : "",
                 createdAt: new Date().toISOString(),
             });
@@ -111,7 +113,7 @@ export default function CreateProjectPage() {
                                     <SelectContent>
                                         {clients.map((client) => (
                                             <SelectItem key={client.id} value={client.id}>
-                                                {client.companyName}
+                                                {client.company}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

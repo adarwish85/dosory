@@ -13,6 +13,9 @@ import { Trash2 } from "lucide-react";
 import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Check, X, Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
     const [activeSection, setActiveSection] = useState("general");
@@ -21,12 +24,80 @@ export default function SettingsPage() {
     // Use the hook
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [localSubdomain, setLocalSubdomain] = useState("");
+    const [companyName, setCompanyName] = useState("");
+    const [mainDomain, setMainDomain] = useState("");
+    const [rtlAdmin, setRtlAdmin] = useState("no");
+    const [rtlCustomer, setRtlCustomer] = useState("no");
+    const [allowedFileTypes, setAllowedFileTypes] = useState("");
+    const [availability, setAvailability] = useState<"idle" | "loading" | "available" | "unavailable">("idle");
+    const [checkError, setCheckError] = useState("");
 
     useEffect(() => {
         if (!loading) {
             setLocalSubdomain(settings.subdomain || "");
+            setCompanyName(settings.companyName || "");
+            setMainDomain(settings.mainDomain || "");
+            setRtlAdmin(settings.rtlAdmin ? "yes" : "no");
+            setRtlCustomer(settings.rtlCustomer ? "yes" : "no");
+            setAllowedFileTypes(settings.allowedFileTypes || "");
         }
-    }, [loading, settings.subdomain]);
+    }, [loading, settings]);
+
+    useEffect(() => {
+        const checkAvailability = async () => {
+            if (!localSubdomain || localSubdomain.length < 3) {
+                setAvailability("idle");
+                return;
+            }
+
+            if (localSubdomain === settings.subdomain) {
+                setAvailability("available");
+                return;
+            }
+
+            setAvailability("loading");
+            try {
+                const q = query(
+                    collection(db, "organizations"),
+                    where("subdomain", "==", localSubdomain)
+                );
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    setAvailability("unavailable");
+                    setCheckError("Subdomain is already taken.");
+                } else {
+                    setAvailability("available");
+                    setCheckError("");
+                }
+            } catch (error) {
+                console.error("Error checking subdomain:", error);
+                setAvailability("idle");
+            }
+        };
+
+        const timeoutId = setTimeout(checkAvailability, 500);
+        return () => clearTimeout(timeoutId);
+    }, [localSubdomain, settings.subdomain]);
+
+    const handleSaveGeneral = async () => {
+        if (availability === "unavailable") {
+            toast.error("Subdomain is not available");
+            return;
+        }
+        try {
+            await saveSettings({
+                companyName,
+                subdomain: localSubdomain,
+                mainDomain,
+                rtlAdmin: rtlAdmin === "yes",
+                rtlCustomer: rtlCustomer === "yes",
+                allowedFileTypes
+            });
+            toast.success("Settings saved successfully");
+        } catch (error) {
+            toast.error("Failed to save settings");
+        }
+    };
 
     const sidebarSections = [
         {
@@ -88,8 +159,8 @@ export default function SettingsPage() {
                         <div>
                             <Label>Company Name</Label>
                             <Input
-                                defaultValue={settings.companyName}
-                                onChange={(e) => saveSettings({ companyName: e.target.value }).catch(console.error)}
+                                value={companyName}
+                                onChange={(e) => setCompanyName(e.target.value)}
                                 placeholder="My Company"
                             />
                         </div>
@@ -106,6 +177,21 @@ export default function SettingsPage() {
                                 />
                                 <span className="text-gray-500 font-medium">.dosory.com</span>
                             </div>
+                            {availability === "loading" && (
+                                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                    <Loader2 className="h-3 w-3 animate-spin" /> Checking availability...
+                                </p>
+                            )}
+                            {availability === "available" && localSubdomain !== settings.subdomain && (
+                                <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                    <Check className="h-3 w-3" /> Subdomain is available
+                                </p>
+                            )}
+                            {availability === "unavailable" && (
+                                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                                    <X className="h-3 w-3" /> {checkError}
+                                </p>
+                            )}
                             <p className="text-xs text-muted-foreground mt-1">
                                 This will change your dashboard URL.
                             </p>
@@ -114,15 +200,15 @@ export default function SettingsPage() {
                         <div>
                             <Label>Custom Domain (Optional)</Label>
                             <Input
-                                defaultValue={settings.mainDomain || ""}
+                                value={mainDomain}
                                 placeholder="https://my-domain.com"
-                                onChange={(e) => saveSettings({ mainDomain: e.target.value }).catch(console.error)}
+                                onChange={(e) => setMainDomain(e.target.value)}
                             />
                         </div>
 
                         <div>
                             <Label className="mb-3 block">RTL Admin Area (Right to Left)</Label>
-                            <RadioGroup defaultValue="no">
+                            <RadioGroup value={rtlAdmin} onValueChange={setRtlAdmin}>
                                 <div className="flex items-center space-x-4">
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="yes" id="rtl-admin-yes" />
@@ -138,7 +224,7 @@ export default function SettingsPage() {
 
                         <div>
                             <Label className="mb-3 block">RTL Customers Area (Right to Left)</Label>
-                            <RadioGroup defaultValue="no">
+                            <RadioGroup value={rtlCustomer} onValueChange={setRtlCustomer}>
                                 <div className="flex items-center space-x-4">
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="yes" id="rtl-customer-yes" />
@@ -154,15 +240,19 @@ export default function SettingsPage() {
 
                         <div>
                             <Label>Allowed file types</Label>
-                            <Input defaultValue=".png,.jpg,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.txt,.epub" />
+                            <Input value={allowedFileTypes} onChange={(e) => setAllowedFileTypes(e.target.value)} />
                             <p className="text-sm text-gray-500 mt-1">
                                 Separate file extensions with commas
                             </p>
                         </div>
 
                         <div className="pt-4">
-                            <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                                Save Settings
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveGeneral}
+                                disabled={saving}
+                            >
+                                {saving ? "Saving..." : "Save Settings"}
                             </Button>
                         </div>
                     </div>

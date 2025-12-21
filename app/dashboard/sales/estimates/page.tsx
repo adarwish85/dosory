@@ -91,9 +91,11 @@ export default function SalesEstimatesPage() {
 
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
-                        <Plus className="mr-2 h-4 w-4" /> Create New Estimate
-                    </Button>
+                    <Link href="/dashboard/sales/estimates/new">
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
+                            <Plus className="mr-2 h-4 w-4" /> Create New Estimate
+                        </Button>
+                    </Link>
                     <div className="flex items-center border rounded-md bg-white">
                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-r-none border-r"><LayoutGrid className="h-4 w-4 text-gray-500" /></Button>
                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-l-none bg-gray-100"><List className="h-4 w-4 text-gray-900" /></Button>
