@@ -10,6 +10,8 @@ import { Plus, Search, RefreshCw, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { format } from "date-fns";
+import { useState } from "react";
+import { RecordPaymentDialog } from "@/components/dashboard/customers/payments/record-payment-dialog";
 
 export default function PaymentsPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
@@ -37,15 +39,27 @@ export default function PaymentsPage() {
         return `$${amount.toFixed(2)}`;
     };
 
+    const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+
     // Calculate total payments
     const totalPayments = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
     return (
         <div className="space-y-6">
+            <RecordPaymentDialog
+                open={showPaymentDialog}
+                onOpenChange={setShowPaymentDialog}
+                customerId={customerId || ""}
+                customerName={customer?.company || "Customer"}
+            />
+
             <h2 className="text-xl font-bold text-gray-900">Payments</h2>
 
             <div className="flex gap-2">
-                <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                <Button
+                    className="bg-gray-900 text-white hover:bg-gray-800"
+                    onClick={() => setShowPaymentDialog(true)}
+                >
                     <Plus className="mr-2 h-4 w-4" /> Record Payment
                 </Button>
             </div>
