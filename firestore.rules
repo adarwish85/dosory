@@ -86,20 +86,29 @@ service cloud.firestore {
     // Organizations: Members can read/update, superadmins have full access
     // Organizations: Authenticated users can read (for directory/subdomain check), admins/owners can update
     // Organizations: TEMPORARILY RELAXED FOR DEBUGGING
+    // Organizations: key entity
     match /organizations/{orgId} {
-      allow read, write: if request.auth != null;
+      // Allow read for all auth users (needed for subdomain uniqueness check across orgs)
+      allow read: if request.auth != null;
+      // Allow write only if org admin
+      allow create: if canCreateByOrg(); 
+      allow update: if isOrgAdmin(orgId) || isSuperAdmin();
+      allow delete: if isSuperAdmin();
 
       match /settings/{settingId} {
-        allow read, write: if request.auth != null;
+        allow read: if belongsToOrg(orgId) || isSuperAdmin();
+        allow write: if isOrgAdmin(orgId) || isSuperAdmin();
       }
 
       match /branding/{fileId} {
-        allow read, write: if request.auth != null;
+        allow read: if true; // Public read for logos/branding
+        allow write: if isOrgAdmin(orgId) || isSuperAdmin();
       }
 
-      // Allow access to subcollections (settings, etc.)
+      // Allow access to subcollections
       match /{document=**} {
-        allow read, write: if request.auth != null;
+        allow read: if belongsToOrg(orgId) || isSuperAdmin();
+        allow write: if isOrgAdmin(orgId) || isSuperAdmin();
       }
     }
     
