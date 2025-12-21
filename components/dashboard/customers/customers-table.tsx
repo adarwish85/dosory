@@ -125,7 +125,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1">
-                                            {customer.groups?.map(group => (
+                                            {customer.groups?.map((group: string) => (
                                                 <Badge key={group} variant="secondary" className="font-normal text-xs bg-gray-100 text-gray-600 hover:bg-gray-200">
                                                     {group}
                                                 </Badge>
