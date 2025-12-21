@@ -524,7 +524,7 @@ export default function Home() {
                     <div className="grid md:grid-cols-4 gap-12 mb-12">
                         <div>
                             <Link href="/" className="flex items-center gap-2 mb-4">
-                                <PlatformLogo size="default" textClassName="text-xl text-white" />
+                                <PlatformLogo size="default" textClassName="text-xl text-white" variant="light" />
                             </Link>
                             <p className="text-gray-400 text-sm">
                                 The all-in-one CRM and ERP platform for modern businesses.

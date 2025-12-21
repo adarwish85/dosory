@@ -18,6 +18,8 @@ interface PlatformSettings {
     customBranding: boolean;
     primaryColor: string;
     logoUrl: string;
+    logoLightUrl?: string;
+    faviconUrl?: string;
 }
 
 const defaultSettings: PlatformSettings = {
@@ -34,6 +36,8 @@ const defaultSettings: PlatformSettings = {
     customBranding: true,
     primaryColor: "#9b8cff",
     logoUrl: "",
+    logoLightUrl: "",
+    faviconUrl: "",
 };
 
 interface PlatformSettingsContextType {
@@ -70,9 +74,27 @@ export function PlatformSettingsProvider({ children }: { children: React.ReactNo
 
     return (
         <PlatformSettingsContext.Provider value={{ settings, loading }}>
+            <FaviconUpdater />
             {children}
         </PlatformSettingsContext.Provider>
     );
+}
+
+// Component to handle favicon updates
+function FaviconUpdater() {
+    const { settings } = usePlatformSettings();
+
+    useEffect(() => {
+        if (!settings.faviconUrl) return;
+
+        const link = (document.querySelector("link[rel*='icon']") as HTMLLinkElement) || document.createElement('link');
+        link.type = 'image/x-icon';
+        link.rel = 'shortcut icon';
+        link.href = settings.faviconUrl;
+        document.getElementsByTagName('head')[0].appendChild(link);
+    }, [settings.faviconUrl]);
+
+    return null;
 }
 
 export function usePlatformSettings() {
@@ -84,12 +106,14 @@ export function PlatformLogo({
     className = "",
     textClassName = "",
     showText = true,
-    size = "default"
+    size = "default",
+    variant = "dark" // "light" means for dark background (so use light logo)
 }: {
     className?: string;
     textClassName?: string;
     showText?: boolean;
     size?: "small" | "default" | "large";
+    variant?: "light" | "dark";
 }) {
     const { settings, loading } = usePlatformSettings();
 
@@ -105,10 +129,14 @@ export function PlatformLogo({
         );
     }
 
-    if (settings.logoUrl) {
+    // Determine which logo to use
+    // If variant is "light" (for dark bg), prefer logoLightUrl
+    const targetLogo = variant === "light" && settings.logoLightUrl ? settings.logoLightUrl : settings.logoUrl;
+
+    if (targetLogo) {
         return (
             <img
-                src={settings.logoUrl}
+                src={targetLogo}
                 alt={settings.platformName}
                 className={`${sizeClasses[size]} object-contain ${className}`}
             />
