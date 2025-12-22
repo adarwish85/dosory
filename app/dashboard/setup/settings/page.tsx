@@ -826,8 +826,7 @@ export default function SettingsPage() {
                 { id: "company-information", label: "Company Information", icon: FileText },
                 { id: "localization", label: "Localization", icon: Globe },
                 { id: "email", label: "Email", icon: Mail },
-                { id: "system-update", label: "System Update", icon: Wrench },
-                { id: "system-info", label: "System/Server Info", icon: HelpCircle },
+
             ]
         },
         {
@@ -838,7 +837,7 @@ export default function SettingsPage() {
                 { id: "finance-proposals", label: "Proposals", icon: FileCheck },
                 { id: "finance-estimates", label: "Estimates", icon: FileIcon },
                 { id: "finance-credit-notes", label: "Credit Notes", icon: CreditCard },
-                { id: "finance-subscriptions", label: "Subscriptions", icon: RefreshCw },
+
                 { id: "finance-payment-gateways", label: "Payment Gateways", icon: PaymentIcon },
             ]
         },
