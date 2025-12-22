@@ -88,10 +88,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             const protocol = window.location.protocol;
             const targetHost = `${expectedSubdomain}.${rootDomain}`;
 
+            console.log("Subdomain Redirect Debug:", {
+                host,
+                rootDomain,
+                currentSubdomain,
+                expectedSubdomain,
+                targetHost,
+                willRedirect: window.location.host !== targetHost
+            });
+
             // strict check to avoid loop
             if (window.location.host !== targetHost) {
                 console.log(`Redirecting to tenant subdomain: ${expectedSubdomain}`);
-                window.location.href = `${protocol}//${targetHost}/dashboard`;
+                // window.location.href = `${protocol}//${targetHost}/dashboard`;
+                // Redirect DISABLED for debugging
             }
         }
     }, [profile, loading, settingsLoading, settings.subdomain]);
