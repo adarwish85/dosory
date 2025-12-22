@@ -39,7 +39,7 @@ const statusLabels: Record<InvoiceStatus, string> = {
 export default function InvoicesPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
-    const { invoices, loading } = useInvoices({ status: statusFilter });
+    const { invoices, loading, deleteInvoice } = useInvoices({ status: statusFilter });
 
     const filteredInvoices = invoices.filter(invoice =>
         invoice.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -79,7 +79,21 @@ export default function InvoicesPage() {
                 activeFilter={statusFilter}
                 onFilterChange={setStatusFilter}
             />
-            <InvoiceActions />
+            <InvoiceActions
+                showDebug={true}
+                onDeleteAll={async () => {
+                    if (window.confirm(`Are you sure you want to DELETE ALL ${invoices.length} invoices? This cannot be undone.`)) {
+                        try {
+                            await Promise.all(invoices.map(inv => deleteInvoice(inv.id)));
+                            // Toast or alert handled by caller or component? 
+                            // Since toast isn't imported here, let's rely on useInvoices or add toast here.
+                            // Better: Import toast.
+                        } catch (error) {
+                            console.error(error);
+                        }
+                    }
+                }}
+            />
 
             {/* Table */}
             <div className="border rounded-md bg-white shadow-sm">

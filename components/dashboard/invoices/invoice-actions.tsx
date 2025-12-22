@@ -1,9 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Filter, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Filter, FileText, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { toast } from "sonner";
 
-export function InvoiceActions() {
+interface InvoiceActionsProps {
+    onDeleteAll?: () => void;
+    showDebug?: boolean;
+}
+
+export function InvoiceActions({ onDeleteAll, showDebug }: InvoiceActionsProps) {
     return (
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -12,6 +18,16 @@ export function InvoiceActions() {
                         <Plus className="mr-2 h-4 w-4" /> Create New Invoice
                     </Button>
                 </Link>
+                {/* Debug Button */}
+                {showDebug && onDeleteAll && (
+                    <Button
+                        variant="destructive"
+                        onClick={onDeleteAll}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete All (Debug)
+                    </Button>
+                )}
                 <Button variant="outline" className="bg-white text-gray-700 border-gray-300">
                     <Plus className="mr-2 h-4 w-4" /> Batch Payments
                 </Button>

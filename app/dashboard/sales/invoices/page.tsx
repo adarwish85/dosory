@@ -105,22 +105,7 @@ export default function SalesInvoicesPage() {
                             <Plus className="mr-2 h-4 w-4" /> Create New Invoice
                         </Button>
                     </a>
-                    <Button
-                        variant="destructive"
-                        onClick={async () => {
-                            if (window.confirm("Are you sure you want to DELETE ALL 19 invoices? This cannot be undone.")) {
-                                try {
-                                    await Promise.all(invoices.map(inv => deleteInvoice(inv.id)));
-                                    toast.success("All invoices deleted");
-                                } catch (error) {
-                                    console.error(error);
-                                    toast.error("Failed to delete all invoices");
-                                }
-                            }
-                        }}
-                    >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete All (Debug)
-                    </Button>
+
                 </div>
                 {/* Filters omitted for brevity */}
             </div>
