@@ -83,7 +83,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
 
         constraints.push(orderBy("createdAt", "desc"));
 
-        const q = query(collection(db, "tickets"), ...constraints);
+        const q = query(collection(db, "support_tickets"), ...constraints);
 
         const unsubscribe = onSnapshot(
             q,
@@ -109,7 +109,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
         async (data: TicketFormData): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
 
-            const docRef = await addDoc(collection(db, "tickets"), {
+            const docRef = await addDoc(collection(db, "support_tickets"), {
                 ...data,
                 status: "open",
                 lastReplyByStaff: false,
@@ -126,7 +126,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
 
     const updateTicket = useCallback(
         async (id: string, data: Partial<TicketFormData>): Promise<void> => {
-            await updateDoc(doc(db, "tickets", id), {
+            await updateDoc(doc(db, "support_tickets", id), {
                 ...data,
                 updatedAt: serverTimestamp(),
             });
@@ -135,12 +135,12 @@ export function useTickets(options: UseTicketsOptions = {}) {
     );
 
     const deleteTicket = useCallback(async (id: string): Promise<void> => {
-        await deleteDoc(doc(db, "tickets", id));
+        await deleteDoc(doc(db, "support_tickets", id));
     }, []);
 
     const updateTicketStatus = useCallback(
         async (id: string, newStatus: TicketStatus): Promise<void> => {
-            await updateDoc(doc(db, "tickets", id), {
+            await updateDoc(doc(db, "support_tickets", id), {
                 status: newStatus,
                 updatedAt: serverTimestamp(),
             });
@@ -150,7 +150,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
 
     const assignTicket = useCallback(
         async (id: string, staffId: string): Promise<void> => {
-            await updateDoc(doc(db, "tickets", id), {
+            await updateDoc(doc(db, "support_tickets", id), {
                 assignedTo: staffId,
                 status: "in_progress",
                 updatedAt: serverTimestamp(),
@@ -199,8 +199,7 @@ export function useTicketReplies(ticketId: string | null) {
         }
 
         const q = query(
-            collection(db, "ticketReplies"),
-            where("ticketId", "==", ticketId),
+            collection(db, "support_tickets", ticketId, "messages"),
             orderBy("createdAt", "asc")
         );
 
@@ -222,7 +221,7 @@ export function useTicketReplies(ticketId: string | null) {
 
             const isStaff = true; // In a real app, check user role
 
-            const docRef = await addDoc(collection(db, "ticketReplies"), {
+            const docRef = await addDoc(collection(db, "support_tickets", data.ticketId, "messages"), {
                 ...data,
                 isStaffReply: isStaff,
                 staffId: isStaff ? profile.uid : null,
@@ -232,7 +231,7 @@ export function useTicketReplies(ticketId: string | null) {
             });
 
             // Update ticket with last reply info
-            await updateDoc(doc(db, "tickets", data.ticketId), {
+            await updateDoc(doc(db, "support_tickets", data.ticketId), {
                 lastReply: serverTimestamp(),
                 lastReplyByStaff: isStaff,
                 status: isStaff ? "answered" : "open",

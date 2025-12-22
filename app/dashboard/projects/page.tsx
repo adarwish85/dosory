@@ -35,8 +35,8 @@ export default function ProjectsPage() {
     const { projects, loading, projectStats } = useProjects({ status: statusFilter });
 
     const filteredProjects = projects.filter(project =>
-        project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        project.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
+        (project.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (project.customerName || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const formatDate = (timestamp: { toDate: () => Date } | null | undefined) => {

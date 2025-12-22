@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLeads } from "@/lib/hooks";
 import type { LeadStatus } from "@/lib/types";
 import ImportWizard from "@/components/import/ImportWizard";
+import Link from "next/link";
 
 const statusColors: Record<LeadStatus, { bg: string; text: string; border: string }> = {
     new: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-100" },
@@ -67,9 +68,11 @@ export default function LeadsPage() {
 
                 <div className="flex justify-between items-center mt-2">
                     <div className="flex items-center gap-2">
-                        <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
-                            <Plus className="mr-2 h-4 w-4" /> New Lead
-                        </Button>
+                        <Link href="/dashboard/leads/new">
+                            <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
+                                <Plus className="mr-2 h-4 w-4" /> New Lead
+                            </Button>
+                        </Link>
                         <Button
                             variant="outline"
                             className="text-gray-700 bg-white"
