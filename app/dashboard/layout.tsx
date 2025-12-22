@@ -88,14 +88,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             const protocol = window.location.protocol;
             const targetHost = `${expectedSubdomain}.${rootDomain}`;
 
-            console.log("Subdomain Redirect Debug:", {
+            console.log("Subdomain Redirect Debug:", JSON.stringify({
                 host,
                 rootDomain,
                 currentSubdomain,
                 expectedSubdomain,
                 targetHost,
                 willRedirect: window.location.host !== targetHost
-            });
+            }, null, 2));
 
             // strict check to avoid loop
             if (window.location.host !== targetHost) {
