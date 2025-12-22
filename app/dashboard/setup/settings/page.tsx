@@ -224,6 +224,82 @@ export default function SettingsPage() {
         toast.success("Estimate settings saved successfully");
     };
 
+    // Finance Credit Note State
+    const [creditNoteForm, setCreditNoteForm] = useState({
+        creditNoteNumberPrefix: "CN-",
+        creditNoteNextNumber: "000001",
+        creditNoteNumberFormat: "number_based",
+        creditNoteDecrementOnDelete: false,
+        creditNoteShowProjectName: false,
+        creditNoteDefaultClientNote: "",
+        creditNoteDefaultTerms: "",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setCreditNoteForm(prev => ({
+                ...prev,
+                creditNoteNumberPrefix: settings.creditNoteNumberPrefix ?? "CN-",
+                creditNoteNextNumber: settings.creditNoteNextNumber ?? "000001",
+                creditNoteNumberFormat: settings.creditNoteNumberFormat ?? "number_based",
+                creditNoteDecrementOnDelete: settings.creditNoteDecrementOnDelete ?? false,
+                creditNoteShowProjectName: settings.creditNoteShowProjectName ?? false,
+                creditNoteDefaultClientNote: settings.creditNoteDefaultClientNote ?? "",
+                creditNoteDefaultTerms: settings.creditNoteDefaultTerms ?? "",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveCreditNoteSettings = async () => {
+        await saveSettings(creditNoteForm as any);
+        toast.success("Credit Note settings saved successfully");
+    };
+
+    // Finance Payment Gateway State
+    const [gatewayForm, setGatewayForm] = useState({
+        // General
+        paymentNotificationEmail: true,
+        allowCustomerModifyAmount: false,
+        // PayPal
+        paypalActive: false,
+        paypalLabel: "Paypal",
+        paypalFixedFee: "0",
+        paypalPercentageFee: "0",
+        paypalUsername: "",
+        paypalPassword: "",
+        paypalSignature: "",
+        paypalDescription: "",
+        paypalCurrencies: "USD",
+        paypalTestMode: false,
+        paypalDefaultSelected: false,
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setGatewayForm(prev => ({
+                ...prev,
+                paymentNotificationEmail: settings.paymentNotificationEmail ?? true,
+                allowCustomerModifyAmount: settings.allowCustomerModifyAmount ?? false,
+                paypalActive: settings.paypalActive ?? false,
+                paypalLabel: settings.paypalLabel ?? "Paypal",
+                paypalFixedFee: settings.paypalFixedFee ?? "0",
+                paypalPercentageFee: settings.paypalPercentageFee ?? "0",
+                paypalUsername: settings.paypalUsername ?? "",
+                paypalPassword: settings.paypalPassword ?? "",
+                paypalSignature: settings.paypalSignature ?? "",
+                paypalDescription: settings.paypalDescription ?? "Payment for Invoice {invoice_number}",
+                paypalCurrencies: settings.paypalCurrencies ?? "USD",
+                paypalTestMode: settings.paypalTestMode ?? false,
+                paypalDefaultSelected: settings.paypalDefaultSelected ?? false,
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveGatewaySettings = async () => {
+        await saveSettings(gatewayForm as any);
+        toast.success("Payment Gateway settings saved successfully");
+    };
+
     useEffect(() => {
         if (!loading) {
             setLocalSubdomain(settings.subdomain || "");
@@ -1320,6 +1396,304 @@ export default function SettingsPage() {
                             <Button
                                 className="bg-gray-900 text-white hover:bg-gray-800"
                                 onClick={handleSaveEstimateSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "finance-credit-notes") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Credit Notes</h2>
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+
+                        <div className="space-y-4">
+                            <div>
+                                <Label>Credit Note Number Prefix</Label>
+                                <Input
+                                    value={creditNoteForm.creditNoteNumberPrefix}
+                                    onChange={e => setCreditNoteForm({ ...creditNoteForm, creditNoteNumberPrefix: e.target.value })}
+                                    className="mt-1"
+                                />
+                            </div>
+                            <div>
+                                <Label className="flex items-center gap-2 mb-1"><HelpCircle className="h-4 w-4 text-gray-400" /> Next Credit Note Number</Label>
+                                <Input
+                                    value={creditNoteForm.creditNoteNextNumber}
+                                    onChange={e => setCreditNoteForm({ ...creditNoteForm, creditNoteNextNumber: e.target.value })}
+                                    className="mt-1"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Number Format */}
+                        <div>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">Credit Note Number Format</Label>
+                            <RadioGroup
+                                value={creditNoteForm.creditNoteNumberFormat}
+                                onValueChange={(val) => setCreditNoteForm({ ...creditNoteForm, creditNoteNumberFormat: val as any })}
+                                className="flex gap-4 flex-wrap"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="number_based" id="cn-fmt-number" />
+                                    <Label htmlFor="cn-fmt-number" className="font-normal">Number Based (000001)</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="year_based" id="cn-fmt-year" />
+                                    <Label htmlFor="cn-fmt-year" className="font-normal">Year Based (YYYY/000001)</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="mixed" id="cn-fmt-mixed" />
+                                    <Label htmlFor="cn-fmt-mixed" className="font-normal">000001-YY</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+
+                        <div className="space-y-6">
+                            {[
+                                { key: "creditNoteDecrementOnDelete", label: "Decrement credit note number on delete." },
+                                { key: "creditNoteShowProjectName", label: "Show Project Name On Credit Note" },
+                            ].map((item) => (
+                                <div key={item.key}>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        {item.key === "creditNoteDecrementOnDelete" && <HelpCircle className="h-4 w-4 text-gray-400" />}
+                                        {item.label}
+                                    </Label>
+                                    <RadioGroup
+                                        value={creditNoteForm[item.key as keyof typeof creditNoteForm] ? "yes" : "no"}
+                                        onValueChange={(val) => setCreditNoteForm({ ...creditNoteForm, [item.key]: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id={`cnf-${item.key}-yes`} />
+                                            <Label htmlFor={`cnf-${item.key}-yes`} className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id={`cnf-${item.key}-no`} />
+                                            <Label htmlFor={`cnf-${item.key}-no`} className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            ))}
+                        </div>
+
+                        <hr className="border-gray-100" />
+
+                        <div className="space-y-4">
+                            <div>
+                                <Label className="mb-2 block">Predefined Client Note</Label>
+                                <Textarea
+                                    value={creditNoteForm.creditNoteDefaultClientNote}
+                                    onChange={e => setCreditNoteForm({ ...creditNoteForm, creditNoteDefaultClientNote: e.target.value })}
+                                    className="h-24"
+                                />
+                            </div>
+                            <div>
+                                <Label className="mb-2 block">Predefined Terms & Conditions</Label>
+                                <Textarea
+                                    value={creditNoteForm.creditNoteDefaultTerms}
+                                    onChange={e => setCreditNoteForm({ ...creditNoteForm, creditNoteDefaultTerms: e.target.value })}
+                                    className="h-24"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveCreditNoteSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "finance-payment-gateways") {
+            const [activeGatewayTab, setActiveGatewayTab] = useState("general");
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Payment Gateways</h2>
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+                        <Tabs value={activeGatewayTab} onValueChange={setActiveGatewayTab}>
+                            <TabsList>
+                                <TabsTrigger value="general">General</TabsTrigger>
+                                <TabsTrigger value="paypal">Paypal</TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="general" className="space-y-6 mt-6">
+                                <div className="space-y-6">
+                                    {[
+                                        { key: "paymentNotificationEmail", label: "Receive notification when customer pay invoice (built-in)" },
+                                        { key: "allowCustomerModifyAmount", label: "Allow customer to modify the amount to pay (for online payments)" },
+                                    ].map((item) => (
+                                        <div key={item.key}>
+                                            <Label className="mb-2 block text-sm font-medium text-gray-700">{item.label}</Label>
+                                            <RadioGroup
+                                                value={gatewayForm[item.key as keyof typeof gatewayForm] ? "yes" : "no"}
+                                                onValueChange={(val) => setGatewayForm({ ...gatewayForm, [item.key]: val === "yes" })}
+                                                className="flex gap-4"
+                                            >
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="yes" id={`pg-${item.key}-yes`} />
+                                                    <Label htmlFor={`pg-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="no" id={`pg-${item.key}-no`} />
+                                                    <Label htmlFor={`pg-${item.key}-no`} className="font-normal">No</Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                    ))}
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="paypal" className="space-y-6 mt-6">
+                                <h3 className="text-lg font-medium">Paypal</h3>
+
+                                <div>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">Active</Label>
+                                    <RadioGroup
+                                        value={gatewayForm.paypalActive ? "yes" : "no"}
+                                        onValueChange={(val) => setGatewayForm({ ...gatewayForm, paypalActive: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="pp-active-yes" />
+                                            <Label htmlFor="pp-active-yes" className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="pp-active-no" />
+                                            <Label htmlFor="pp-active-no" className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                                <div>
+                                    <Label>Label</Label>
+                                    <Input
+                                        value={gatewayForm.paypalLabel}
+                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalLabel: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Fixed Fee</Label>
+                                    <Input
+                                        value={gatewayForm.paypalFixedFee}
+                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalFixedFee: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Percentage Fee</Label>
+                                    <Input
+                                        value={gatewayForm.paypalPercentageFee}
+                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalPercentageFee: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>PayPal API Username</Label>
+                                    <Input
+                                        value={gatewayForm.paypalUsername}
+                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalUsername: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>PayPal API Password</Label>
+                                    <Input
+                                        value={gatewayForm.paypalPassword}
+                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalPassword: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>API Signature</Label>
+                                    <Input
+                                        value={gatewayForm.paypalSignature}
+                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalSignature: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label className="mb-2 block">Gateway Dashbord Payment Description</Label>
+                                    <Textarea
+                                        value={gatewayForm.paypalDescription}
+                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalDescription: e.target.value })}
+                                        className="h-24"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Currencies (coma separated)</Label>
+                                    <Input
+                                        value={gatewayForm.paypalCurrencies}
+                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalCurrencies: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">Enable Test Mode</Label>
+                                    <RadioGroup
+                                        value={gatewayForm.paypalTestMode ? "yes" : "no"}
+                                        onValueChange={(val) => setGatewayForm({ ...gatewayForm, paypalTestMode: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="pp-test-yes" />
+                                            <Label htmlFor="pp-test-yes" className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="pp-test-no" />
+                                            <Label htmlFor="pp-test-no" className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                                <div>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">Selected by default on invoice</Label>
+                                    <RadioGroup
+                                        value={gatewayForm.paypalDefaultSelected ? "yes" : "no"}
+                                        onValueChange={(val) => setGatewayForm({ ...gatewayForm, paypalDefaultSelected: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="pp-def-yes" />
+                                            <Label htmlFor="pp-def-yes" className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="pp-def-no" />
+                                            <Label htmlFor="pp-def-no" className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                            </TabsContent>
+                        </Tabs>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveGatewaySettings}
                                 disabled={saving}
                             >
                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

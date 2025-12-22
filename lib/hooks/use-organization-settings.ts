@@ -100,6 +100,32 @@ export interface OrganizationSettings {
     estimateDefaultClientNote?: string;
     estimateDefaultTerms?: string;
 
+    // Finance Credit Notes
+    creditNoteNumberPrefix?: string;
+    creditNoteNextNumber?: string;
+    creditNoteNumberFormat?: "number_based" | "year_based" | "mixed";
+    creditNoteDecrementOnDelete?: boolean;
+    creditNoteShowProjectName?: boolean;
+    creditNoteDefaultClientNote?: string;
+    creditNoteDefaultTerms?: string;
+
+    // Finance Payment Gateways - General
+    paymentNotificationEmail?: boolean;
+    allowCustomerModifyAmount?: boolean;
+
+    // Finance Payment Gateways - PayPal
+    paypalActive?: boolean;
+    paypalLabel?: string;
+    paypalFixedFee?: string;
+    paypalPercentageFee?: string;
+    paypalUsername?: string;
+    paypalPassword?: string;
+    paypalSignature?: string;
+    paypalDescription?: string;
+    paypalCurrencies?: string;
+    paypalTestMode?: boolean;
+    paypalDefaultSelected?: boolean;
+
     // Platform
     platformName?: string;
     maintenanceMode?: boolean;
@@ -180,6 +206,30 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     estimatePipelineSortOrder: "asc",
     estimateDefaultClientNote: "",
     estimateDefaultTerms: "",
+
+    // Finance Credit Notes Defaults
+    creditNoteNumberPrefix: "CN-",
+    creditNoteNextNumber: "000001",
+    creditNoteNumberFormat: "number_based",
+    creditNoteDecrementOnDelete: false,
+    creditNoteShowProjectName: false,
+    creditNoteDefaultClientNote: "",
+    creditNoteDefaultTerms: "",
+
+    // Finance Payment Gateways Defaults
+    paymentNotificationEmail: true,
+    allowCustomerModifyAmount: false,
+    paypalActive: false,
+    paypalLabel: "Paypal",
+    paypalFixedFee: "0",
+    paypalPercentageFee: "0",
+    paypalUsername: "",
+    paypalPassword: "",
+    paypalSignature: "",
+    paypalDescription: "Payment for Invoice {invoice_number}",
+    paypalCurrencies: "USD",
+    paypalTestMode: false,
+    paypalDefaultSelected: false,
 };
 
 export function useOrganizationSettings() {
