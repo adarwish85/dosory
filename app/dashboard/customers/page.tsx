@@ -1,16 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { StatsRow } from "@/components/dashboard/customers/stats-row";
 import { CustomersTable } from "@/components/dashboard/customers/customers-table";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Filter, X } from "lucide-react";
+import { Plus, Upload, Filter } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
 import AddCustomerPanel from "@/components/dashboard/customers/AddCustomerPanel";
-import ImportWizard from "@/components/import/ImportWizard";
 import { useCustomers, useContacts } from "@/lib/hooks";
+import { TableSkeleton } from "@/components/ui/skeleton-loaders";
+
+// Dynamic import for better code splitting
+const ImportWizard = dynamic(() => import("@/components/import/ImportWizard"), {
+    ssr: false,
+});
 
 export default function CustomersPage() {
     const [showAddPanel, setShowAddPanel] = useState(false);

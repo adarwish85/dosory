@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, RotateCcw, Loader2 } from "lucide-react";
-import { useCustomers, useContacts } from "@/lib/hooks";
+import { useCustomers } from "@/lib/hooks";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -22,10 +22,12 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const { updateCustomer } = useCustomers({ status: "all" });  // Keep hook for update capability only
 
-    // Filter customers based on search
-    const filteredCustomers = customers.filter(customer =>
-        customer.company.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // PERFORMANCE: Use useMemo to prevent unnecessary recalculations
+    const filteredCustomers = useMemo(() => {
+        return customers.filter(customer =>
+            customer.company.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [customers, searchQuery]);
 
     const handleStatusToggle = async (id: string, currentStatus: string) => {
         await updateCustomer(id, {

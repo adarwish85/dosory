@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, RefreshCw } from "lucide-react";
+import { Search, RefreshCw } from "lucide-react";
 import { useInvoices } from "@/lib/hooks";
 import type { InvoiceStatus } from "@/lib/types";
 import { format } from "date-fns";
@@ -11,6 +11,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { TableSkeleton } from "@/components/ui/skeleton-loaders";
 
 import { InvoiceHeader } from "@/components/dashboard/invoices/invoice-header";
 import { InvoiceStats } from "@/components/dashboard/invoices/invoice-stats";
@@ -41,10 +42,13 @@ export default function InvoicesPage() {
     const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
     const { invoices, loading, deleteInvoice } = useInvoices({ status: statusFilter });
 
-    const filteredInvoices = invoices.filter(invoice =>
-        invoice.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        invoice.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // PERFORMANCE: Use useMemo to prevent unnecessary recalculations
+    const filteredInvoices = useMemo(() => {
+        return invoices.filter(invoice =>
+            invoice.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            invoice.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [invoices, searchQuery]);
 
     const formatDate = (timestamp: { toDate: () => Date } | null | undefined) => {
         if (!timestamp) return "-";
@@ -64,8 +68,11 @@ export default function InvoicesPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <div className="space-y-6">
+                <div className="flex justify-between">
+                    <h1 className="text-2xl font-bold">Invoices</h1>
+                </div>
+                <TableSkeleton rows={10} columns={7} />
             </div>
         );
     }

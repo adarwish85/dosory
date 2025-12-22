@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, RefreshCw, AlignJustify, Loader2 } from "lucide-react";
+import { Plus, Search, Filter, RefreshCw, AlignJustify } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useProjects } from "@/lib/hooks";
 import type { ProjectStatus } from "@/lib/types";
 import { format } from "date-fns";
 import Link from "next/link";
+import { TableSkeleton } from "@/components/ui/skeleton-loaders";
 
 const statusColors: Record<ProjectStatus, { bg: string; text: string; border: string }> = {
     not_started: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
@@ -34,10 +35,13 @@ export default function ProjectsPage() {
     const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
     const { projects, loading, projectStats } = useProjects({ status: statusFilter });
 
-    const filteredProjects = projects.filter(project =>
-        (project.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (project.customerName || "").toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // PERFORMANCE: Use useMemo to prevent unnecessary recalculations
+    const filteredProjects = useMemo(() => {
+        return projects.filter(project =>
+            (project.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (project.customerName || "").toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [projects, searchQuery]);
 
     const formatDate = (timestamp: { toDate: () => Date } | null | undefined) => {
         if (!timestamp) return "-";
@@ -50,8 +54,11 @@ export default function ProjectsPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <div className="space-y-6">
+                <div className="flex justify-between">
+                    <h1 className="text-2xl font-bold">Projects</h1>
+                </div>
+                <TableSkeleton rows={10} columns={6} />
             </div>
         );
     }
