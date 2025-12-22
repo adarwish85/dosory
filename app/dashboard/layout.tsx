@@ -85,10 +85,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         // If current subdomain doesn't match expected one, redirect
         if (expectedSubdomain && expectedSubdomain !== currentSubdomain) {
-            console.warn(`[Supressed Redirect] Would redirect from ${currentSubdomain} to ${expectedSubdomain}`);
-            // Preventing infinite loop for now
-            // const protocol = window.location.protocol;
-            // window.location.href = `${protocol}//${expectedSubdomain}.${rootDomain}/dashboard`;
+            const protocol = window.location.protocol;
+            const targetHost = `${expectedSubdomain}.${rootDomain}`;
+
+            // strict check to avoid loop
+            if (window.location.host !== targetHost) {
+                console.log(`Redirecting to tenant subdomain: ${expectedSubdomain}`);
+                window.location.href = `${protocol}//${targetHost}/dashboard`;
+            }
         }
     }, [profile, loading, settingsLoading, settings.subdomain]);
 
