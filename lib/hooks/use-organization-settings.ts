@@ -133,8 +133,9 @@ export function useOrganizationSettings() {
                     }
 
                     // Update root organization document
+                    // Update root organization document (upsert to handle missing doc)
                     const orgRef = doc(db, "organizations", profile.orgId);
-                    await updateDoc(orgRef, { subdomain: newSubdomain });
+                    await setDoc(orgRef, { subdomain: newSubdomain }, { merge: true });
                 }
             }
 
