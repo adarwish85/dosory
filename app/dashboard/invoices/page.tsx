@@ -80,7 +80,7 @@ export default function InvoicesPage() {
                 onFilterChange={setStatusFilter}
             />
             <InvoiceActions
-                showDebug={true}
+                showDebug={false}
                 onDeleteAll={async () => {
                     if (window.confirm(`Are you sure you want to DELETE ALL ${invoices.length} invoices? This cannot be undone.`)) {
                         try {
