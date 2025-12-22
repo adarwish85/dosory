@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, RefreshCw, LayoutGrid, List, FileText, ArrowLeftRight } from "lucide-react";
+import { Plus, Search, Filter, RefreshCw, LayoutGrid, List, FileText, ArrowLeftRight, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { StatsGroup } from "@/components/dashboard/customers/stats-group";
 import { useInvoices } from "@/lib/hooks/use-invoices";
 
 export default function SalesInvoicesPage() {
-    const { invoices, loading, invoiceStats } = useInvoices();
+    const { invoices, loading, invoiceStats, deleteInvoice } = useInvoices();
 
     // Helper: Calculate counts for grouped statuses
     const getCount = (status: string) => (invoiceStats?.[status] as number) || 0;
@@ -104,6 +105,22 @@ export default function SalesInvoicesPage() {
                             <Plus className="mr-2 h-4 w-4" /> Create New Invoice
                         </Button>
                     </a>
+                    <Button
+                        variant="destructive"
+                        onClick={async () => {
+                            if (window.confirm("Are you sure you want to DELETE ALL 19 invoices? This cannot be undone.")) {
+                                try {
+                                    await Promise.all(invoices.map(inv => deleteInvoice(inv.id)));
+                                    toast.success("All invoices deleted");
+                                } catch (error) {
+                                    console.error(error);
+                                    toast.error("Failed to delete all invoices");
+                                }
+                            }
+                        }}
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete All (Debug)
+                    </Button>
                 </div>
                 {/* Filters omitted for brevity */}
             </div>
