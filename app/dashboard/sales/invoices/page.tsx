@@ -109,58 +109,63 @@ export default function SalesInvoicesPage() {
             </div>
 
             {/* Table */}
-            <div className="border rounded-md bg-white">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-gray-50 hover:bg-gray-50">
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Invoice #</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Amount</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Total Tax</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Date</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Customer</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Due Date</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Status</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {invoices.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                                    No invoices found.
-                                </TableCell>
+            <div className="border rounded-md bg-white overflow-hidden flex flex-col">
+                <div className="overflow-y-auto max-h-[calc(100vh-300px)]">
+                    <Table>
+                        <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
+                            <TableRow className="bg-gray-50 hover:bg-gray-50">
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Invoice #</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Amount</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Total Tax</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Date</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Customer</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Due Date</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Status</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Actions</TableHead>
                             </TableRow>
-                        ) : (
-                            invoices.map((row) => (
-                                <TableRow key={row.id} className="h-16 group">
-                                    <TableCell className="min-w-[150px] py-3">
-                                        <div className="flex flex-col group">
-                                            <span className="text-gray-900 hover:text-blue-600 cursor-pointer text-base font-semibold">
-                                                {row.number}
-                                            </span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-gray-900">{formatCurrency(row.total)}</TableCell>
-                                    <TableCell className="text-gray-900">{formatCurrency(row.taxTotal || 0)}</TableCell>
-                                    <TableCell className="text-gray-500">{formatDate(row.date)}</TableCell>
-                                    <TableCell className="text-gray-900 hover:text-blue-600 cursor-pointer">{row.customerName}</TableCell>
-                                    <TableCell className="text-gray-900">{formatDate(row.dueDate)}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={`font-normal capitalize ${row.status === 'paid' ? 'text-green-600 border-green-200 bg-green-50' :
-                                            row.status === 'overdue' ? 'text-orange-600 border-orange-200 bg-orange-50' :
-                                                'text-gray-600 border-gray-200 bg-gray-50'
-                                            }`}>
-                                            {row.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <a href={`/dashboard/invoices/${row.id}`} className="text-xs font-medium text-gray-900 hover:underline">View</a>
+                        </TableHeader>
+                        <TableBody>
+                            {invoices.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                                        No invoices found.
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ) : (
+                                invoices.map((row) => (
+                                    <TableRow key={row.id} className="h-16 group">
+                                        <TableCell className="min-w-[150px] py-3">
+                                            <div className="flex flex-col group">
+                                                <span className="text-gray-900 hover:text-blue-600 cursor-pointer text-base font-semibold">
+                                                    {row.number || "INV-???"}
+                                                </span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-gray-900">{formatCurrency(row.total || 0)}</TableCell>
+                                        <TableCell className="text-gray-900">{formatCurrency(row.taxTotal || 0)}</TableCell>
+                                        <TableCell className="text-gray-500">{formatDate(row.date)}</TableCell>
+                                        <TableCell className="text-gray-900 hover:text-blue-600 cursor-pointer">{row.customerName || "Unknown Customer"}</TableCell>
+                                        <TableCell className="text-gray-900">{formatDate(row.dueDate)}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className={`font-normal capitalize ${row.status === 'paid' ? 'text-green-600 border-green-200 bg-green-50' :
+                                                row.status === 'overdue' ? 'text-orange-600 border-orange-200 bg-orange-50' :
+                                                    'text-gray-600 border-gray-200 bg-gray-50'
+                                                }`}>
+                                                {row.status || "draft"}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <a href={`/dashboard/invoices/${row.id}`} className="text-xs font-medium text-gray-900 hover:underline">View</a>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+            <div className="text-sm text-gray-500 mt-4">
+                Showing all {invoices.length} invoices found in database
             </div>
         </div>
     );
