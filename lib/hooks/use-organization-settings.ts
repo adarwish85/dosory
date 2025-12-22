@@ -64,7 +64,14 @@ export function useOrganizationSettings() {
 
     // Load settings
     useEffect(() => {
-        if (profileLoading || !profile?.orgId) return;
+        // Wait for profile to load
+        if (profileLoading) return;
+
+        // If no orgId (e.g. logged out or no profile), stop loading
+        if (!profile?.orgId) {
+            setLoading(false);
+            return;
+        }
 
         const loadSettings = async () => {
             try {
