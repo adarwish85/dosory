@@ -246,14 +246,7 @@ export default function SettingsPage() {
                             </div>
                         </div>
 
-                        <div>
-                            <Label>Company Name</Label>
-                            <Input
-                                value={companyName}
-                                onChange={(e) => setCompanyName(e.target.value)}
-                                placeholder="My Company"
-                            />
-                        </div>
+
 
                         <div>
                             <Label>Subdomain (Tenant URL)</Label>
