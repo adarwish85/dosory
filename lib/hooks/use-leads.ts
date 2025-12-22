@@ -9,6 +9,7 @@ import {
     query,
     where,
     orderBy,
+    limit,
     onSnapshot,
     doc,
     addDoc,
@@ -34,6 +35,7 @@ interface UseLeadsOptions {
     source?: string;
     orderByField?: "name" | "createdAt" | "value";
     orderDirection?: "asc" | "desc";
+    limit?: number; // Add pagination limit
 }
 
 export function useLeads(options: UseLeadsOptions = {}) {
@@ -43,6 +45,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         source,
         orderByField = "createdAt",
         orderDirection = "desc",
+        limit: queryLimit = 100, // Default to 100 items for performance
     } = options;
     const { profile } = useUserProfile();
     const [leads, setLeads] = useState<Lead[]>([]);
@@ -73,6 +76,9 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
         constraints.push(orderBy(orderByField, orderDirection));
 
+        // Add limit for performance - prevents loading thousands of records
+        constraints.push(limit(queryLimit));
+
         const q = query(collection(db, "leads"), ...constraints);
 
         const unsubscribe = onSnapshot(
@@ -93,7 +99,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, assignedTo, source, orderByField, orderDirection]);
+    }, [profile?.orgId, status, assignedTo, source, orderByField, orderDirection, queryLimit]);
 
     const createLead = useCallback(
         async (data: LeadFormData): Promise<string> => {

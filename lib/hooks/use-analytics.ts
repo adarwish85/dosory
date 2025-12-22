@@ -59,9 +59,15 @@ export function useAnalytics() {
             const startOfYear = new Date(now.getFullYear(), 0, 1);
 
             try {
-                // Fetch Invoices
+                // PERFORMANCE FIX: Add limits to prevent fetching all documents
+                // Fetch recent invoices only (last 500 max)
                 const invoicesRef = collection(db, "invoices");
-                const invoicesQuery = query(invoicesRef, where("orgId", "==", orgId));
+                const invoicesQuery = query(
+                    invoicesRef,
+                    where("orgId", "==", orgId),
+                    orderBy("createdAt", "desc"),
+                    limit(500) // Limit to prevent excessive reads
+                );
                 const invoicesSnap = await getDocs(invoicesQuery);
 
                 let totalRevenue = 0;
@@ -121,9 +127,14 @@ export function useAnalytics() {
                     invoiceCount: monthlyData[month].count,
                 })));
 
-                // Fetch Customers
+                // Fetch Customers (limit to recent 200)
                 const customersRef = collection(db, "customers");
-                const customersQuery = query(customersRef, where("orgId", "==", orgId));
+                const customersQuery = query(
+                    customersRef,
+                    where("orgId", "==", orgId),
+                    orderBy("createdAt", "desc"),
+                    limit(200)
+                );
                 const customersSnap = await getDocs(customersQuery);
 
                 let newThisMonth = 0;
@@ -140,9 +151,14 @@ export function useAnalytics() {
                     customerGrowthRate: customersSnap.size > 0 ? (newThisMonth / customersSnap.size) * 100 : 0,
                 });
 
-                // Fetch Proposals
+                // Fetch Proposals (limit to recent 100)
                 const proposalsRef = collection(db, "proposals");
-                const proposalsQuery = query(proposalsRef, where("orgId", "==", orgId));
+                const proposalsQuery = query(
+                    proposalsRef,
+                    where("orgId", "==", orgId),
+                    orderBy("createdAt", "desc"),
+                    limit(100)
+                );
                 const proposalsSnap = await getDocs(proposalsQuery);
 
                 let accepted = 0, pending = 0, declined = 0, proposalValue = 0;
@@ -171,6 +187,9 @@ export function useAnalytics() {
         }
 
         fetchAnalytics();
+
+        // NOTE: This runs on mount only. For live updates, consider implementing
+        // a refresh button or periodic polling (every 5 minutes) instead of real-time
     }, [user, profile?.orgId]);
 
     return {

@@ -1,20 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, RefreshCw, Upload, Loader2 } from "lucide-react";
+import { Plus, Search, Filter, RefreshCw, Upload } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useLeads } from "@/lib/hooks";
 import type { Lead, LeadStatus } from "@/lib/types";
-import ImportWizard from "@/components/import/ImportWizard";
 import Link from "next/link";
-import { LeadDetailsDialog } from "@/components/dashboard/leads/lead-details-dialog";
-import { LeadEditDialog } from "@/components/dashboard/leads/lead-edit-dialog";
+import { TableSkeleton } from "@/components/ui/skeleton-loaders";
+
+// Dynamic imports for better code splitting - these components are only loaded when needed
+const ImportWizard = dynamic(() => import("@/components/import/ImportWizard"), {
+    loading: () => <div className="text-sm text-gray-500">Loading...</div>,
+    ssr: false,
+});
+
+const LeadDetailsDialog = dynamic(
+    () => import("@/components/dashboard/leads/lead-details-dialog").then(mod => ({ default: mod.LeadDetailsDialog })),
+    { ssr: false }
+);
+
+const LeadEditDialog = dynamic(
+    () => import("@/components/dashboard/leads/lead-edit-dialog").then(mod => ({ default: mod.LeadEditDialog })),
+    { ssr: false }
+);
 
 const statusColors: Record<LeadStatus, { bg: string; text: string; border: string }> = {
     new: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-100" },
@@ -29,19 +44,25 @@ const statusColors: Record<LeadStatus, { bg: string; text: string; border: strin
 
 export default function LeadsPage() {
     const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all");
+    const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
     const [showImportWizard, setShowImportWizard] = useState(false);
-    const { leads, loading, leadStats, updateLead, deleteLead } = useLeads();
 
+    // Dialog state
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
     const [detailsOpen, setDetailsOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
 
-    // Filter leads based on search
-    const filteredLeads = leads.filter(lead =>
-        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lead.email?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const { leads, loading, leadStats, deleteLead, updateLead } = useLeads({ status: statusFilter });
+
+    // PERFORMANCE: Use useMemo to prevent unnecessary recalculations
+    const filteredLeads = useMemo(() => {
+        return leads.filter(lead =>
+            lead.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            lead.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            lead.email?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [leads, searchQuery]);
 
     const handleStatusChange = async (leadId: string, newStatus: LeadStatus) => {
         await updateLead(leadId, { status: newStatus });
@@ -73,8 +94,11 @@ export default function LeadsPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <div className="space-y-6">
+                <div className="flex justify-between">
+                    <h1 className="text-2xl font-bold">Leads</h1>
+                </div>
+                <TableSkeleton rows={10} columns={6} />
             </div>
         );
     }

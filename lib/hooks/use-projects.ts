@@ -9,6 +9,7 @@ import {
     query,
     where,
     orderBy,
+    limit,
     onSnapshot,
     doc,
     addDoc,
@@ -33,6 +34,7 @@ interface UseProjectsOptions {
     customerId?: string;
     orderByField?: "name" | "createdAt" | "deadline";
     orderDirection?: "asc" | "desc";
+    limit?: number;
 }
 
 export function useProjects(options: UseProjectsOptions = {}) {
@@ -41,6 +43,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
         customerId,
         orderByField = "createdAt",
         orderDirection = "desc",
+        limit: queryLimit = 100,
     } = options;
     const { profile } = useUserProfile();
     const [projects, setProjects] = useState<Project[]>([]);
@@ -66,6 +69,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
         }
 
         constraints.push(orderBy(orderByField, orderDirection));
+        constraints.push(limit(queryLimit));
 
         const q = query(collection(db, "projects"), ...constraints);
 
@@ -87,7 +91,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, customerId, orderByField, orderDirection]);
+    }, [profile?.orgId, status, customerId, orderByField, orderDirection, queryLimit]);
 
     const createProject = useCallback(
         async (data: ProjectFormData): Promise<string> => {
@@ -243,6 +247,7 @@ interface UseTasksOptions {
     assignee?: string;
     orderByField?: "name" | "createdAt" | "dueDate" | "priority";
     orderDirection?: "asc" | "desc";
+    limit?: number;
 }
 
 export function useTasks(options: UseTasksOptions = {}) {
@@ -253,6 +258,7 @@ export function useTasks(options: UseTasksOptions = {}) {
         assignee,
         orderByField = "createdAt",
         orderDirection = "desc",
+        limit: queryLimit = 100,
     } = options;
     const { profile } = useUserProfile();
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -286,6 +292,7 @@ export function useTasks(options: UseTasksOptions = {}) {
         }
 
         constraints.push(orderBy(orderByField, orderDirection));
+        constraints.push(limit(queryLimit));
 
         const q = query(collection(db, "tasks"), ...constraints);
 
@@ -307,7 +314,7 @@ export function useTasks(options: UseTasksOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, projectId, customerId, assignee, orderByField, orderDirection]);
+    }, [profile?.orgId, status, projectId, customerId, assignee, orderByField, orderDirection, queryLimit]);
 
     const createTask = useCallback(
         async (data: TaskFormData): Promise<string> => {

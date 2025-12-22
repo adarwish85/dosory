@@ -9,6 +9,7 @@ import {
     query,
     where,
     orderBy,
+    limit,
     onSnapshot,
     doc,
     addDoc,
@@ -31,10 +32,16 @@ interface UseCustomersOptions {
     status?: "active" | "inactive" | "archived" | "all";
     orderByField?: "company" | "createdAt";
     orderDirection?: "asc" | "desc";
+    limit?: number; // Add pagination limit
 }
 
 export function useCustomers(options: UseCustomersOptions = {}) {
-    const { status = "all", orderByField = "company", orderDirection = "asc" } = options;
+    const {
+        status = "all",
+        orderByField = "company",
+        orderDirection = "asc",
+        limit: queryLimit = 100 // Default to 100 for performance
+    } = options;
     const { profile } = useUserProfile();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
@@ -55,6 +62,7 @@ export function useCustomers(options: UseCustomersOptions = {}) {
         }
 
         constraints.push(orderBy(orderByField, orderDirection));
+        constraints.push(limit(queryLimit)); // Add limit for performance
 
         const q = query(collection(db, "customers"), ...constraints);
 
@@ -76,7 +84,7 @@ export function useCustomers(options: UseCustomersOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, orderByField, orderDirection]);
+    }, [profile?.orgId, status, orderByField, orderDirection, queryLimit]);
 
     const createCustomer = useCallback(
         async (data: CustomerFormData): Promise<string> => {
