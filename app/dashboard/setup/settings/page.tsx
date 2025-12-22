@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Settings as SettingsIcon, FileText, Globe, Mail, Wrench, HelpCircle, DollarSign, FileIcon, FileCheck, CreditCard, RefreshCw, CreditCard as PaymentIcon, Users, CheckCircle, Headphones, Target } from "lucide-react";
 import { Trash2 } from "lucide-react";
 import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
@@ -298,6 +299,201 @@ export default function SettingsPage() {
     const handleSaveGatewaySettings = async () => {
         await saveSettings(gatewayForm as any);
         toast.success("Payment Gateway settings saved successfully");
+    };
+
+    // Customer Features State
+    const [customerForm, setCustomerForm] = useState({
+        customerDefaultTheme: "perfex",
+        customerDefaultCountry: "",
+        customerVisibleTabs: ["all"],
+        customerRequiredRegistrationFields: [] as string[],
+        customerCompanyFieldRequired: true,
+        customerCompanyVatRequired: false,
+        customerAllowRegistration: true,
+        customerRequiresRegistrationConfirmation: true,
+        customerAllowPrimaryContactManageContacts: false,
+        customerEnableHoneypot: false,
+        customerAllowPrimaryContactViewBilling: false,
+        customerContactsSeeOwnFilesOnly: false,
+        customerAllowContactsDeleteOwnFiles: true,
+        customerUseKnowledgeBase: true,
+        customerAllowKnowledgeBaseWithoutRegistration: true,
+        customerShowEstimateRequestLink: true,
+        customerDefaultContactPermissions: ["invoices", "estimates", "contracts", "proposals", "support", "projects"],
+        customerInfoFormat: "{company_name}\n{street}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setCustomerForm(prev => ({
+                ...prev,
+                customerDefaultTheme: settings.customerDefaultTheme ?? "perfex",
+                customerDefaultCountry: settings.customerDefaultCountry ?? "",
+                customerVisibleTabs: settings.customerVisibleTabs ?? ["all"],
+                customerRequiredRegistrationFields: settings.customerRequiredRegistrationFields ?? [],
+                customerCompanyFieldRequired: settings.customerCompanyFieldRequired ?? true,
+                customerCompanyVatRequired: settings.customerCompanyVatRequired ?? false,
+                customerAllowRegistration: settings.customerAllowRegistration ?? true,
+                customerRequiresRegistrationConfirmation: settings.customerRequiresRegistrationConfirmation ?? true,
+                customerAllowPrimaryContactManageContacts: settings.customerAllowPrimaryContactManageContacts ?? false,
+                customerEnableHoneypot: settings.customerEnableHoneypot ?? false,
+                customerAllowPrimaryContactViewBilling: settings.customerAllowPrimaryContactViewBilling ?? false,
+                customerContactsSeeOwnFilesOnly: settings.customerContactsSeeOwnFilesOnly ?? false,
+                customerAllowContactsDeleteOwnFiles: settings.customerAllowContactsDeleteOwnFiles ?? true,
+                customerUseKnowledgeBase: settings.customerUseKnowledgeBase ?? true,
+                customerAllowKnowledgeBaseWithoutRegistration: settings.customerAllowKnowledgeBaseWithoutRegistration ?? true,
+                customerShowEstimateRequestLink: settings.customerShowEstimateRequestLink ?? true,
+                customerDefaultContactPermissions: settings.customerDefaultContactPermissions ?? ["invoices", "estimates", "contracts", "proposals", "support", "projects"],
+                customerInfoFormat: settings.customerInfoFormat ?? "{company_name}\n{street}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveCustomerSettings = async () => {
+        await saveSettings(customerForm as any);
+        toast.success("Customer settings saved successfully");
+    };
+
+    // Task Features State
+    const [tasksForm, setTasksForm] = useState({
+        tasksKanbanLimit: "50",
+        tasksAllowStaffViewAllProjectTasks: false,
+        tasksAllowEditCommentsFirstHourOnly: false,
+        tasksAutoAssignCreator: true,
+        tasksAutoAddCreatorAsFollower: true,
+        tasksStopOtherTimers: true,
+        tasksAutoStartTimer: true,
+        tasksBillableDefault: false,
+        tasksTimerRoundOff: "no_round",
+        tasksTimerRoundOffMultiples: "5",
+        tasksDefaultStatus: "not_started",
+        tasksDefaultPriority: "medium",
+        tasksModalWidth: "modal-lg",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setTasksForm(prev => ({
+                ...prev,
+                tasksKanbanLimit: settings.tasksKanbanLimit?.toString() ?? "50",
+                tasksAllowStaffViewAllProjectTasks: settings.tasksAllowStaffViewAllProjectTasks ?? false,
+                tasksAllowEditCommentsFirstHourOnly: settings.tasksAllowEditCommentsFirstHourOnly ?? false,
+                tasksAutoAssignCreator: settings.tasksAutoAssignCreator ?? true,
+                tasksAutoAddCreatorAsFollower: settings.tasksAutoAddCreatorAsFollower ?? true,
+                tasksStopOtherTimers: settings.tasksStopOtherTimers ?? true,
+                tasksAutoStartTimer: settings.tasksAutoStartTimer ?? true,
+                tasksBillableDefault: settings.tasksBillableDefault ?? false,
+                tasksTimerRoundOff: settings.tasksTimerRoundOff ?? "no_round",
+                tasksTimerRoundOffMultiples: settings.tasksTimerRoundOffMultiples ?? "5",
+                tasksDefaultStatus: settings.tasksDefaultStatus ?? "not_started",
+                tasksDefaultPriority: settings.tasksDefaultPriority ?? "medium",
+                tasksModalWidth: settings.tasksModalWidth ?? "modal-lg",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveTasksSettings = async () => {
+        await saveSettings({
+            ...tasksForm,
+            tasksKanbanLimit: parseInt(tasksForm.tasksKanbanLimit) || 50,
+        } as any);
+        toast.success("Task settings saved successfully");
+    };
+
+    // Support Features State
+    const [supportForm, setSupportForm] = useState({
+        supportUseServices: true,
+        supportDisablePublicUrl: false,
+        supportStaffLimitToAssignedDepartments: false,
+        supportStaffNotificationAssignedOnly: false,
+        supportNotifyOnNewTicket: true,
+        supportNotifyOnCustomerReply: true,
+        supportStaffOpenTicketsAllContacts: false,
+        supportAutoAssignFirstReplyStaff: false,
+        supportAllowNonStaffAccess: false,
+        supportAllowNonAdminDeleteAttachments: false,
+        supportAllowNonAdminDeleteTickets: false,
+        supportAllowCustomerChangeStatus: false,
+        supportCustomerShowContactTicketsOnly: false,
+        supportTicketReplyOrder: "asc",
+        supportEnableBadge: true,
+        supportDefaultReplyStatus: "in_progress",
+        supportMaxAttachments: "4",
+        supportAllowedExtensions: ".jpg,.png,.pdf,.doc,.zip,.rar",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setSupportForm(prev => ({
+                ...prev,
+                supportUseServices: settings.supportUseServices ?? true,
+                supportDisablePublicUrl: settings.supportDisablePublicUrl ?? false,
+                supportStaffLimitToAssignedDepartments: settings.supportStaffLimitToAssignedDepartments ?? false,
+                supportStaffNotificationAssignedOnly: settings.supportStaffNotificationAssignedOnly ?? false,
+                supportNotifyOnNewTicket: settings.supportNotifyOnNewTicket ?? true,
+                supportNotifyOnCustomerReply: settings.supportNotifyOnCustomerReply ?? true,
+                supportStaffOpenTicketsAllContacts: settings.supportStaffOpenTicketsAllContacts ?? false,
+                supportAutoAssignFirstReplyStaff: settings.supportAutoAssignFirstReplyStaff ?? false,
+                supportAllowNonStaffAccess: settings.supportAllowNonStaffAccess ?? false,
+                supportAllowNonAdminDeleteAttachments: settings.supportAllowNonAdminDeleteAttachments ?? false,
+                supportAllowNonAdminDeleteTickets: settings.supportAllowNonAdminDeleteTickets ?? false,
+                supportAllowCustomerChangeStatus: settings.supportAllowCustomerChangeStatus ?? false,
+                supportCustomerShowContactTicketsOnly: settings.supportCustomerShowContactTicketsOnly ?? false,
+                supportTicketReplyOrder: settings.supportTicketReplyOrder ?? "asc",
+                supportEnableBadge: settings.supportEnableBadge ?? true,
+                supportDefaultReplyStatus: settings.supportDefaultReplyStatus ?? "in_progress",
+                supportMaxAttachments: settings.supportMaxAttachments?.toString() ?? "4",
+                supportAllowedExtensions: settings.supportAllowedExtensions ?? ".jpg,.png,.pdf,.doc,.zip,.rar",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveSupportSettings = async () => {
+        await saveSettings({
+            ...supportForm,
+            supportMaxAttachments: parseInt(supportForm.supportMaxAttachments) || 4,
+        } as any);
+        toast.success("Support settings saved successfully");
+    };
+
+    // Leads Features State
+    const [leadsForm, setLeadsForm] = useState({
+        leadsKanbanLimit: "50",
+        leadsDefaultStatus: "mql",
+        leadsDefaultSource: "facebook",
+        leadsDuplicateValidationFields: "email",
+        leadsAutoAssignAdminAfterConvert: true,
+        leadsAllowNonAdminImport: false,
+        leadsKanbanSort: "kanban_order",
+        leadsKanbanSortOrder: "asc",
+        leadsDisableEditAfterConvert: true,
+        leadsModalWidth: "modal-lg",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setLeadsForm(prev => ({
+                ...prev,
+                leadsKanbanLimit: settings.leadsKanbanLimit?.toString() ?? "50",
+                leadsDefaultStatus: settings.leadsDefaultStatus ?? "mql",
+                leadsDefaultSource: settings.leadsDefaultSource ?? "facebook",
+                leadsDuplicateValidationFields: settings.leadsDuplicateValidationFields ?? "email",
+                leadsAutoAssignAdminAfterConvert: settings.leadsAutoAssignAdminAfterConvert ?? true,
+                leadsAllowNonAdminImport: settings.leadsAllowNonAdminImport ?? false,
+                leadsKanbanSort: settings.leadsKanbanSort ?? "kanban_order",
+                leadsKanbanSortOrder: settings.leadsKanbanSortOrder ?? "asc",
+                leadsDisableEditAfterConvert: settings.leadsDisableEditAfterConvert ?? true,
+                leadsModalWidth: settings.leadsModalWidth ?? "modal-lg",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveLeadsSettings = async () => {
+        await saveSettings({
+            ...leadsForm,
+            leadsKanbanLimit: parseInt(leadsForm.leadsKanbanLimit) || 50,
+        } as any);
+        toast.success("Leads settings saved successfully");
     };
 
     useEffect(() => {
@@ -1694,6 +1890,684 @@ export default function SettingsPage() {
                             <Button
                                 className="bg-gray-900 text-white hover:bg-gray-800"
                                 onClick={handleSaveGatewaySettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        if (activeSection === "customers") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Customers</h2>
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+
+                        <div>
+                            <Label>Default customers theme</Label>
+                            <Select
+                                value={customerForm.customerDefaultTheme}
+                                onValueChange={(val) => setCustomerForm({ ...customerForm, customerDefaultTheme: val })}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select theme" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="perfex">Perfex</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Default Country</Label>
+                            <Select
+                                value={customerForm.customerDefaultCountry}
+                                onValueChange={(val) => setCustomerForm({ ...customerForm, customerDefaultCountry: val })}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Nothing selected" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="us">United States</SelectItem>
+                                    {/* Add more countries as needed */}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Visible Tabs (Profile)</Label>
+                            <Select
+                                value={customerForm.customerVisibleTabs[0]} // Simplified for single select in prototype
+                                onValueChange={(val) => setCustomerForm({ ...customerForm, customerVisibleTabs: [val] })}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select tabs" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Required fields for registration (customers area)</Label>
+                            <Select>
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="First Name - Contact, Last Name - Contact, Email Address - Contact, Company - Company" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="default">Default Fields</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-6">
+                            {[
+                                { key: "customerCompanyFieldRequired", label: "Company field is required?" },
+                                { key: "customerCompanyVatRequired", label: "Company requires the usage of the VAT Number field" },
+                                { key: "customerAllowRegistration", label: "Allow customers to register" },
+                                { key: "customerRequiresRegistrationConfirmation", label: "Require registration confirmation from administrator after customer register" },
+                                { key: "customerAllowPrimaryContactManageContacts", label: "Allow primary contact to manage other customer contacts" },
+                                { key: "customerEnableHoneypot", label: "Enable Honeypot spam validation" },
+                                { key: "customerAllowPrimaryContactViewBilling", label: "Allow primary contact to view/edit billing & shipping details" },
+                                { key: "customerContactsSeeOwnFilesOnly", label: "Contacts see only own files uploaded in customer area (files uploaded in customer profile)", help: true },
+                                { key: "customerAllowContactsDeleteOwnFiles", label: "Allow contacts to delete own files uploaded from customers area" },
+                                { key: "customerUseKnowledgeBase", label: "Use Knowledge Base", help: true },
+                                { key: "customerAllowKnowledgeBaseWithoutRegistration", label: "Allow knowledge base to be viewed without registration" },
+                            ].map((item: any) => (
+                                <div key={item.key}>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        {item.help && <HelpCircle className="h-4 w-4 text-gray-400" />}
+                                        {item.label}
+                                    </Label>
+                                    <RadioGroup
+                                        value={customerForm[item.key as keyof typeof customerForm] ? "yes" : "no"}
+                                        onValueChange={(val) => setCustomerForm({ ...customerForm, [item.key]: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id={`cust-${item.key}-yes`} />
+                                            <Label htmlFor={`cust-${item.key}-yes`} className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id={`cust-${item.key}-no`} />
+                                            <Label htmlFor={`cust-${item.key}-no`} className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div>
+                            <Label>Show Estimate request link in customers area?</Label>
+                            <Select
+                                value={customerForm.customerShowEstimateRequestLink ? "yes" : "no"}
+                                // Simplified mapping for boolean
+                                onValueChange={(val) => setCustomerForm({ ...customerForm, customerShowEstimateRequestLink: val === "yes" })}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="yes">Estimate Request</SelectItem>
+                                    <SelectItem value="no">Hide</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label className="mb-2 block">Default contact permissions</Label>
+                            <div className="space-y-2">
+                                {["Invoices", "Estimates", "Contracts", "Proposals", "Support", "Projects"].map((perm) => (
+                                    <div key={perm} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={`perm-${perm}`}
+                                            checked={customerForm.customerDefaultContactPermissions.includes(perm.toLowerCase())}
+                                            onCheckedChange={(checked: boolean) => {
+                                                const permKey = perm.toLowerCase();
+                                                if (checked) {
+                                                    setCustomerForm({ ...customerForm, customerDefaultContactPermissions: [...customerForm.customerDefaultContactPermissions, permKey] })
+                                                } else {
+                                                    setCustomerForm({ ...customerForm, customerDefaultContactPermissions: customerForm.customerDefaultContactPermissions.filter(p => p !== permKey) })
+                                                }
+                                            }}
+                                        />
+                                        <Label htmlFor={`perm-${perm}`} className="font-normal cursor-pointer select-none">{perm}</Label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+
+                        <div>
+                            <Label className="mb-2 block flex items-center gap-2">
+                                <HelpCircle className="h-4 w-4 text-gray-400" />
+                                Customer Information Format (PDF and HTML)
+                            </Label>
+                            <Textarea
+                                value={customerForm.customerInfoFormat}
+                                onChange={e => setCustomerForm({ ...customerForm, customerInfoFormat: e.target.value })}
+                                className="h-32 font-mono text-sm"
+                            />
+                            <div className="mt-2 text-sm text-blue-500 space-x-2">
+                                <span>{`{company_name}`}</span>
+                                <span>{`{customer_id}`}</span>
+                                <span>{`{street}`}</span>
+                                <span>{`{city}`}</span>
+                                <span>{`{state}`}</span>
+                                <span>{`{zip_code}`}</span>
+                                <span>{`{country_code}`}</span>
+                                <span>{`{country_name}`}</span>
+                                <span>{`{phone}`}</span>
+                                <span>{`{vat_number}`}</span>
+                                <span>{`{vat_number_with_label}`}</span>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveCustomerSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+
+        if (activeSection === "tasks") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Tasks</h2>
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+
+                        <div>
+                            <Label>Limit tasks kanban rows per status</Label>
+                            <Input
+                                type="number"
+                                value={tasksForm.tasksKanbanLimit}
+                                onChange={e => setTasksForm({ ...tasksForm, tasksKanbanLimit: e.target.value })}
+                                className="mt-1"
+                            />
+                        </div>
+
+                        <div className="space-y-6">
+                            {[
+                                { key: "tasksAllowStaffViewAllProjectTasks", label: "Allow all staff to see all tasks related to projects (includes non-staff)" },
+                                { key: "tasksAllowEditCommentsFirstHourOnly", label: "Allow customer/staff to add/edit task comments only in the first hour (administrators not applied)" },
+                                { key: "tasksAutoAssignCreator", label: "Auto assign task creator when new task is created", help: true },
+                                { key: "tasksAutoAddCreatorAsFollower", label: "Auto add task creator as task follower when new task is created" },
+                                { key: "tasksStopOtherTimers", label: "Stop all other started timers when starting new timer" },
+                                { key: "tasksAutoStartTimer", label: "Change task status to In Progress on timer started (valid only if task status is Not Started)" },
+                                { key: "tasksBillableDefault", label: "Billable option is by default checked when new task is created? (only from admin area)" },
+                            ].map((item: any) => (
+                                <div key={item.key}>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        {item.help && <HelpCircle className="h-4 w-4 text-gray-400" />}
+                                        {item.label}
+                                    </Label>
+                                    <RadioGroup
+                                        value={tasksForm[item.key as keyof typeof tasksForm] ? "yes" : "no"}
+                                        onValueChange={(val) => setTasksForm({ ...tasksForm, [item.key]: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id={`task-${item.key}-yes`} />
+                                            <Label htmlFor={`task-${item.key}-yes`} className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id={`task-${item.key}-no`} />
+                                            <Label htmlFor={`task-${item.key}-no`} className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div>
+                            <Label>Round off task timer</Label>
+                            <Select
+                                value={tasksForm.tasksTimerRoundOff}
+                                onValueChange={(val) => setTasksForm({ ...tasksForm, tasksTimerRoundOff: val })}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="no_round">Don't round off</SelectItem>
+                                    <SelectItem value="round_up">Round up</SelectItem>
+                                    <SelectItem value="round_down">Round down</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <span>multiplies of</span>
+                            <Select
+                                value={tasksForm.tasksTimerRoundOffMultiples}
+                                onValueChange={(val) => setTasksForm({ ...tasksForm, tasksTimerRoundOffMultiples: val })}
+                            >
+                                <SelectTrigger className="w-24">
+                                    <SelectValue placeholder="5" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="5">5</SelectItem>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="15">15</SelectItem>
+                                    <SelectItem value="30">30</SelectItem>
+                                    <SelectItem value="45">45</SelectItem>
+                                    <SelectItem value="60">60</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <span>minutes</span>
+                        </div>
+
+                        <p className="text-sm text-gray-500">Applied to the Timesheets overview report and when invoicing a task/project.</p>
+
+                        <hr className="border-gray-100 my-4" />
+
+                        <div>
+                            <Label>Default status when new task is created</Label>
+                            <Select
+                                value={tasksForm.tasksDefaultStatus}
+                                onValueChange={(val) => setTasksForm({ ...tasksForm, tasksDefaultStatus: val })}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="not_started">Not Started</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Default Priority</Label>
+                            <Select
+                                value={tasksForm.tasksDefaultPriority}
+                                onValueChange={(val) => setTasksForm({ ...tasksForm, tasksDefaultPriority: val })}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="low">Low</SelectItem>
+                                    <SelectItem value="medium">Medium</SelectItem>
+                                    <SelectItem value="high">High</SelectItem>
+                                    <SelectItem value="urgent">Urgent</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Modal Width Class (modal-lg, modal-xl, modal-xxl)</Label>
+                            <Input
+                                value={tasksForm.tasksModalWidth}
+                                onChange={e => setTasksForm({ ...tasksForm, tasksModalWidth: e.target.value })}
+                                className="mt-1"
+                            />
+                        </div>
+
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveTasksSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "support") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Support</h2>
+
+                    <div className="bg-white p-6 rounded-lg border">
+                        <Tabs defaultValue="general" className="w-full">
+                            <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent mb-6">
+                                <TabsTrigger
+                                    value="general"
+                                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:bg-transparent px-4 py-2"
+                                >
+                                    General
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="email_piping"
+                                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:bg-transparent px-4 py-2"
+                                >
+                                    Email Piping
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="ticket_form"
+                                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:bg-transparent px-4 py-2"
+                                >
+                                    Ticket Form
+                                </TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="general" className="space-y-6">
+
+                                <div className="space-y-6">
+                                    {[
+                                        { key: "supportUseServices", label: "Use services" },
+                                        { key: "supportDisablePublicUrl", label: "Disable Ticket Public URL" },
+                                        { key: "supportStaffLimitToAssignedDepartments", label: "Allow staff to access only ticket that belongs to staff departments" },
+                                        { key: "supportStaffNotificationAssignedOnly", label: "Send staff-related ticket notifications to the ticket assignee only", help: true },
+                                        { key: "supportNotifyOnNewTicket", label: "Receive notification on new ticket opened", help: true },
+                                        { key: "supportNotifyOnCustomerReply", label: "Receive notification when customer reply to a ticket", help: true },
+                                        { key: "supportStaffOpenTicketsAllContacts", label: "Allow staff members to open tickets to all contacts", help: true },
+                                        { key: "supportAutoAssignFirstReplyStaff", label: "Automatically assign the ticket to the first staff that post a reply" },
+                                        { key: "supportAllowNonStaffAccess", label: "Allow access to tickets for non staff members" },
+                                        { key: "supportAllowNonAdminDeleteAttachments", label: "Allow non-admin staff members to delete ticket attachments" },
+                                        { key: "supportAllowNonAdminDeleteTickets", label: "Allow non-admin staff members to delete tickets and replies" },
+                                        { key: "supportAllowCustomerChangeStatus", label: "Allow customer to change ticket status from customers area" },
+                                        { key: "supportCustomerShowContactTicketsOnly", label: "In customers area only show tickets related to the logged in contact (Primary contact not applied)" },
+                                    ].map((item: any) => (
+                                        <div key={item.key}>
+                                            <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
+                                                {item.help && <HelpCircle className="h-4 w-4 text-gray-400" />}
+                                                {item.label}
+                                            </Label>
+                                            <RadioGroup
+                                                value={supportForm[item.key as keyof typeof supportForm] ? "yes" : "no"}
+                                                onValueChange={(val) => setSupportForm({ ...supportForm, [item.key]: val === "yes" })}
+                                                className="flex gap-4"
+                                            >
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="yes" id={`supp-${item.key}-yes`} />
+                                                    <Label htmlFor={`supp-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="no" id={`supp-${item.key}-no`} />
+                                                    <Label htmlFor={`supp-${item.key}-no`} className="font-normal">No</Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        <HelpCircle className="h-4 w-4 text-gray-400" />
+                                        Ticket Replies Order
+                                    </Label>
+                                    <RadioGroup
+                                        value={supportForm.supportTicketReplyOrder}
+                                        onValueChange={(val) => setSupportForm({ ...supportForm, supportTicketReplyOrder: val })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="asc" id="rep-asc" />
+                                            <Label htmlFor="rep-asc" className="font-normal">Ascending</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="desc" id="rep-desc" />
+                                            <Label htmlFor="rep-desc" className="font-normal">Descending</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                                <div>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">Enable support menu item badge</Label>
+                                    <RadioGroup
+                                        value={supportForm.supportEnableBadge ? "yes" : "no"}
+                                        onValueChange={(val) => setSupportForm({ ...supportForm, supportEnableBadge: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="badge-yes" />
+                                            <Label htmlFor="badge-yes" className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="badge-no" />
+                                            <Label htmlFor="badge-no" className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                                <div>
+                                    <Label>Default status selected when replying to ticket</Label>
+                                    <Select
+                                        value={supportForm.supportDefaultReplyStatus}
+                                        onValueChange={(val) => setSupportForm({ ...supportForm, supportDefaultReplyStatus: val })}
+                                    >
+                                        <SelectTrigger className="mt-1">
+                                            <SelectValue placeholder="Select" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="in_progress">In Progress</SelectItem>
+                                            <SelectItem value="answered">Answered</SelectItem>
+                                            <SelectItem value="hold">On Hold</SelectItem>
+                                            <SelectItem value="closed">Closed</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <Label>Maximum ticket attachments</Label>
+                                    <Input
+                                        type="number"
+                                        value={supportForm.supportMaxAttachments}
+                                        onChange={e => setSupportForm({ ...supportForm, supportMaxAttachments: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Allowed attachments file extensions</Label>
+                                    <Input
+                                        value={supportForm.supportAllowedExtensions}
+                                        onChange={e => setSupportForm({ ...supportForm, supportAllowedExtensions: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                            </TabsContent>
+
+                            <TabsContent value="email_piping">
+                                <div className="text-center py-8 text-gray-500">Email Piping Settings (Coming Soon)</div>
+                            </TabsContent>
+
+                            <TabsContent value="ticket_form">
+                                <div className="text-center py-8 text-gray-500">Ticket Form Settings (Coming Soon)</div>
+                            </TabsContent>
+
+                        </Tabs>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveSupportSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "leads") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Leads</h2>
+
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+
+                        <div>
+                            <Label>Limit leads kanban rows per status</Label>
+                            <Input
+                                type="number"
+                                value={leadsForm.leadsKanbanLimit}
+                                onChange={e => setLeadsForm({ ...leadsForm, leadsKanbanLimit: e.target.value })}
+                                className="mt-1"
+                            />
+                        </div>
+
+                        <div>
+                            <Label>Default status</Label>
+                            <Select
+                                value={leadsForm.leadsDefaultStatus}
+                                onValueChange={(val) => setLeadsForm({ ...leadsForm, leadsDefaultStatus: val })}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="mql">MQL</SelectItem>
+                                    <SelectItem value="sql">SQL</SelectItem>
+                                    <SelectItem value="client">Client</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Default source</Label>
+                            <Select
+                                value={leadsForm.leadsDefaultSource}
+                                onValueChange={(val) => setLeadsForm({ ...leadsForm, leadsDefaultSource: val })}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="facebook">Facebook</SelectItem>
+                                    <SelectItem value="google">Google</SelectItem>
+                                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                                    <SelectItem value="referral">Referral</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Perform validation for duplicate lead on the following fields:</Label>
+                            <Select
+                                value={leadsForm.leadsDuplicateValidationFields}
+                                onValueChange={(val) => setLeadsForm({ ...leadsForm, leadsDuplicateValidationFields: val })}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="email">Email Address</SelectItem>
+                                    <SelectItem value="phone">Phone Number</SelectItem>
+                                    <SelectItem value="both">Both</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-6">
+                            {[
+                                { key: "leadsAutoAssignAdminAfterConvert", label: "Auto assign as admin to customer after convert", help: true },
+                                { key: "leadsAllowNonAdminImport", label: "Allow non-admin staff members to import leads" },
+                            ].map((item: any) => (
+                                <div key={item.key}>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        {item.help && <HelpCircle className="h-4 w-4 text-gray-400" />}
+                                        {item.label}
+                                    </Label>
+                                    <RadioGroup
+                                        value={leadsForm[item.key as keyof typeof leadsForm] ? "yes" : "no"}
+                                        onValueChange={(val) => setLeadsForm({ ...leadsForm, [item.key]: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id={`lead-${item.key}-yes`} />
+                                            <Label htmlFor={`lead-${item.key}-yes`} className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id={`lead-${item.key}-no`} />
+                                            <Label htmlFor={`lead-${item.key}-no`} className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">Default leads kanban sort</Label>
+                            <div className="flex items-center gap-4">
+                                <div className="flex-1">
+                                    <Select
+                                        value={leadsForm.leadsKanbanSort}
+                                        onValueChange={(val) => setLeadsForm({ ...leadsForm, leadsKanbanSort: val })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="kanban_order">Kanban Order</SelectItem>
+                                            <SelectItem value="name">Name</SelectItem>
+                                            <SelectItem value="date_created">Date Created</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <RadioGroup
+                                    value={leadsForm.leadsKanbanSortOrder}
+                                    onValueChange={(val) => setLeadsForm({ ...leadsForm, leadsKanbanSortOrder: val })}
+                                    className="flex gap-4"
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="asc" id="l-sort-asc" />
+                                        <Label htmlFor="l-sort-asc" className="font-normal">Ascending</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="desc" id="l-sort-desc" />
+                                        <Label htmlFor="l-sort-desc" className="font-normal">Descending</Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">Do not allow leads to be edited after they are converted to customers (administrators not applied)</Label>
+                            <RadioGroup
+                                value={leadsForm.leadsDisableEditAfterConvert ? "yes" : "no"}
+                                onValueChange={(val) => setLeadsForm({ ...leadsForm, leadsDisableEditAfterConvert: val === "yes" })}
+                                className="flex gap-4"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="yes" id="l-noedit-yes" />
+                                    <Label htmlFor="l-noedit-yes" className="font-normal">Yes</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="no" id="l-noedit-no" />
+                                    <Label htmlFor="l-noedit-no" className="font-normal">No</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+
+                        <div>
+                            <Label>Modal Width Class (modal-lg, modal-xl, modal-xxl)</Label>
+                            <Input
+                                value={leadsForm.leadsModalWidth}
+                                onChange={e => setLeadsForm({ ...leadsForm, leadsModalWidth: e.target.value })}
+                                className="mt-1"
+                            />
+                        </div>
+
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveLeadsSettings}
                                 disabled={saving}
                             >
                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

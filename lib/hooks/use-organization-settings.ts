@@ -126,6 +126,73 @@ export interface OrganizationSettings {
     paypalTestMode?: boolean;
     paypalDefaultSelected?: boolean;
 
+    // Feature - Customers
+    customerDefaultTheme?: string;
+    customerDefaultCountry?: string;
+    customerVisibleTabs?: string[];
+    customerRequiredRegistrationFields?: string[];
+    customerCompanyFieldRequired?: boolean;
+    customerCompanyVatRequired?: boolean;
+    customerAllowRegistration?: boolean;
+    customerRequiresRegistrationConfirmation?: boolean;
+    customerAllowPrimaryContactManageContacts?: boolean;
+    customerEnableHoneypot?: boolean;
+    customerAllowPrimaryContactViewBilling?: boolean;
+    customerContactsSeeOwnFilesOnly?: boolean;
+    customerAllowContactsDeleteOwnFiles?: boolean;
+    customerUseKnowledgeBase?: boolean;
+    customerAllowKnowledgeBaseWithoutRegistration?: boolean;
+    customerShowEstimateRequestLink?: boolean; // Can be string if select dropdown
+    customerDefaultContactPermissions?: string[];
+    customerInfoFormat?: string;
+
+    // Feature - Tasks
+    tasksKanbanLimit?: number;
+    tasksAllowStaffViewAllProjectTasks?: boolean;
+    tasksAllowEditCommentsFirstHourOnly?: boolean;
+    tasksAutoAssignCreator?: boolean;
+    tasksAutoAddCreatorAsFollower?: boolean;
+    tasksStopOtherTimers?: boolean;
+    tasksAutoStartTimer?: boolean; // Change status to In Progress...
+    tasksBillableDefault?: boolean;
+    tasksTimerRoundOff?: string;
+    tasksTimerRoundOffMultiples?: string;
+    tasksDefaultStatus?: string;
+    tasksDefaultPriority?: string;
+    tasksModalWidth?: string;
+
+    // Feature - Support (General)
+    supportUseServices?: boolean;
+    supportDisablePublicUrl?: boolean;
+    supportStaffLimitToAssignedDepartments?: boolean;
+    supportStaffNotificationAssignedOnly?: boolean;
+    supportNotifyOnNewTicket?: boolean;
+    supportNotifyOnCustomerReply?: boolean;
+    supportStaffOpenTicketsAllContacts?: boolean;
+    supportAutoAssignFirstReplyStaff?: boolean;
+    supportAllowNonStaffAccess?: boolean;
+    supportAllowNonAdminDeleteAttachments?: boolean;
+    supportAllowNonAdminDeleteTickets?: boolean;
+    supportAllowCustomerChangeStatus?: boolean;
+    supportCustomerShowContactTicketsOnly?: boolean;
+    supportTicketReplyOrder?: string;
+    supportEnableBadge?: boolean;
+    supportDefaultReplyStatus?: string;
+    supportMaxAttachments?: number;
+    supportAllowedExtensions?: string;
+
+    // Feature - Leads
+    leadsKanbanLimit?: number;
+    leadsDefaultStatus?: string;
+    leadsDefaultSource?: string;
+    leadsDuplicateValidationFields?: string;
+    leadsAutoAssignAdminAfterConvert?: boolean;
+    leadsAllowNonAdminImport?: boolean;
+    leadsKanbanSort?: string;
+    leadsKanbanSortOrder?: string;
+    leadsDisableEditAfterConvert?: boolean;
+    leadsModalWidth?: string;
+
     // Platform
     platformName?: string;
     maintenanceMode?: boolean;
@@ -230,6 +297,73 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     paypalCurrencies: "USD",
     paypalTestMode: false,
     paypalDefaultSelected: false,
+
+    // Feature - Customers Defaults
+    customerDefaultTheme: "perfex",
+    customerDefaultCountry: "",
+    customerVisibleTabs: ["all"],
+    customerRequiredRegistrationFields: [],
+    customerCompanyFieldRequired: true,
+    customerCompanyVatRequired: false,
+    customerAllowRegistration: true,
+    customerRequiresRegistrationConfirmation: true,
+    customerAllowPrimaryContactManageContacts: false,
+    customerEnableHoneypot: false,
+    customerAllowPrimaryContactViewBilling: false,
+    customerContactsSeeOwnFilesOnly: false,
+    customerAllowContactsDeleteOwnFiles: true,
+    customerUseKnowledgeBase: true,
+    customerAllowKnowledgeBaseWithoutRegistration: true,
+    customerShowEstimateRequestLink: true,
+    customerDefaultContactPermissions: ["invoices", "estimates", "contracts", "proposals", "support", "projects"],
+    customerInfoFormat: "{company_name}\n{street}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
+
+    // Feature - Tasks Defaults
+    tasksKanbanLimit: 50,
+    tasksAllowStaffViewAllProjectTasks: false,
+    tasksAllowEditCommentsFirstHourOnly: false,
+    tasksAutoAssignCreator: true,
+    tasksAutoAddCreatorAsFollower: true,
+    tasksStopOtherTimers: true,
+    tasksAutoStartTimer: true,
+    tasksBillableDefault: false,
+    tasksTimerRoundOff: "no_round",
+    tasksTimerRoundOffMultiples: "5",
+    tasksDefaultStatus: "not_started",
+    tasksDefaultPriority: "medium",
+    tasksModalWidth: "modal-lg",
+
+    // Feature - Support Defaults
+    supportUseServices: true,
+    supportDisablePublicUrl: false,
+    supportStaffLimitToAssignedDepartments: false,
+    supportStaffNotificationAssignedOnly: false,
+    supportNotifyOnNewTicket: true,
+    supportNotifyOnCustomerReply: true,
+    supportStaffOpenTicketsAllContacts: false,
+    supportAutoAssignFirstReplyStaff: false,
+    supportAllowNonStaffAccess: false,
+    supportAllowNonAdminDeleteAttachments: false,
+    supportAllowNonAdminDeleteTickets: false,
+    supportAllowCustomerChangeStatus: false,
+    supportCustomerShowContactTicketsOnly: false,
+    supportTicketReplyOrder: "asc",
+    supportEnableBadge: true,
+    supportDefaultReplyStatus: "in_progress",
+    supportMaxAttachments: 4,
+    supportAllowedExtensions: ".jpg,.png,.pdf,.doc,.zip,.rar",
+
+    // Feature - Leads Defaults
+    leadsKanbanLimit: 50,
+    leadsDefaultStatus: "mql",
+    leadsDefaultSource: "facebook",
+    leadsDuplicateValidationFields: "email",
+    leadsAutoAssignAdminAfterConvert: true,
+    leadsAllowNonAdminImport: false,
+    leadsKanbanSort: "kanban_order",
+    leadsKanbanSortOrder: "asc",
+    leadsDisableEditAfterConvert: true,
+    leadsModalWidth: "modal-lg",
 };
 
 export function useOrganizationSettings() {
