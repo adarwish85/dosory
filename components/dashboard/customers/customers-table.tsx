@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -29,11 +29,11 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
         );
     }, [customers, searchQuery]);
 
-    const handleStatusToggle = async (id: string, currentStatus: string) => {
+    const handleStatusToggle = useCallback(async (id: string, currentStatus: string) => {
         await updateCustomer(id, {
             status: currentStatus === "active" ? "inactive" : "active"
         });
-    };
+    }, [updateCustomer]);
 
     const formatDate = (timestamp: { toDate: () => Date } | null) => {
         if (!timestamp) return "-";
@@ -68,7 +68,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                     </Select>
                     <Button variant="outline" className="text-gray-600">Export</Button>
                     <Button variant="outline" className="text-gray-600">Bulk Actions</Button>
-                    <Button variant="outline" size="icon" className="text-gray-600 w-9 px-0">
+                    <Button variant="outline" size="icon" className="text-gray-600 w-9 px-0" aria-label="Refresh">
                         <RotateCcw className="h-4 w-4" />
                     </Button>
                 </div>

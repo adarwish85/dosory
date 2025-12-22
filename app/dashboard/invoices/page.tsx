@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Search, RefreshCw } from "lucide-react";
@@ -123,7 +123,7 @@ export default function InvoicesPage() {
                         </Select>
                     </div>
                     <div className="relative w-64">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" aria-hidden="true" />
                         <Input
                             placeholder="Search invoices..."
                             className="pl-9 h-9 bg-white"

@@ -81,6 +81,7 @@ export default function CustomersPage() {
                                     "text-gray-700 bg-white hover:bg-gray-50",
                                     filterStatus === "active" && "border-blue-600 text-blue-600 bg-blue-50"
                                 )}
+                                aria-label="Filter customers"
                             >
                                 <Filter className={cn("mr-2 h-4 w-4", filterStatus === "active" ? "fill-blue-600" : "fill-none")} />
                                 {filterStatus === "active" ? "Active only" : "Filter"}
