@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Settings as SettingsIcon, FileText, Globe, Mail, Wrench, HelpCircle, DollarSign, FileIcon, FileCheck, CreditCard, RefreshCw, CreditCard as PaymentIcon, Users, CheckCircle, Headphones, Target } from "lucide-react";
+import { Settings as SettingsIcon, FileText, Globe, Mail, Wrench, HelpCircle, DollarSign, FileIcon, FileCheck, CreditCard, RefreshCw, CreditCard as PaymentIcon, Users, CheckCircle, Headphones, Target, Zap, Calendar, PenTool, MoreHorizontal } from "lucide-react";
 import { Trash2 } from "lucide-react";
 import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
 import { useEffect } from "react";
@@ -21,6 +21,7 @@ import { Check, X, Loader2 } from "lucide-react";
 export default function SettingsPage() {
     const [activeSection, setActiveSection] = useState("general");
     const [activeEmailTab, setActiveEmailTab] = useState("smtp");
+    const [activeGatewayTab, setActiveGatewayTab] = useState("general");
 
     // Use the hook
     const { settings, saveSettings, saving, loading, uploadLogo } = useOrganizationSettings();
@@ -848,6 +849,26 @@ export default function SettingsPage() {
                 { id: "tasks", label: "Tasks", icon: CheckCircle },
                 { id: "support", label: "Support", icon: Headphones },
                 { id: "leads", label: "Leads", icon: Target },
+            ]
+        },
+        {
+            title: "AI Integrations",
+            items: [
+                { id: "openai", label: "OpenAI", icon: Zap },
+            ]
+        },
+        {
+            title: "Other",
+            items: [
+                { id: "calendar", label: "Calendar", icon: Calendar },
+                { id: "pdf", label: "PDF", icon: FileText },
+                { id: "e-sign", label: "E-Sign", icon: PenTool },
+            ]
+        },
+        {
+            title: "Misc",
+            items: [
+                { id: "misc", label: "Misc", icon: MoreHorizontal },
             ]
         },
     ];
@@ -1970,7 +1991,6 @@ export default function SettingsPage() {
         }
 
         if (activeSection === "finance-payment-gateways") {
-            const [activeGatewayTab, setActiveGatewayTab] = useState("general");
             return (
                 <div className="space-y-6">
                     <h2 className="text-2xl font-semibold">Payment Gateways</h2>
