@@ -64,10 +64,6 @@ export default function LeadsPage() {
         );
     }, [leads, searchQuery]);
 
-    const handleStatusChange = async (leadId: string, newStatus: LeadStatus) => {
-        await updateLead(leadId, { status: newStatus });
-    };
-
     // PERFORMANCE: Use useCallback to prevent recreating functions on each render
     const handleView = useCallback((lead: Lead) => {
         setSelectedLead(lead);
