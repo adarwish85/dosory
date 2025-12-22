@@ -88,20 +88,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             const protocol = window.location.protocol;
             const targetHost = `${expectedSubdomain}.${rootDomain}`;
 
-            console.log("Subdomain Redirect Debug:", JSON.stringify({
-                host,
-                rootDomain,
-                currentSubdomain,
-                expectedSubdomain,
-                targetHost,
-                willRedirect: window.location.host !== targetHost
-            }, null, 2));
+            // Circuit Breaker: Stop infinite loops
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get("redirected")) {
+                console.warn(`[Subdomain Redirect] Loop prevented. Stopped redirect to ${targetHost}`);
+                return;
+            }
 
-            // strict check to avoid loop
+            // Strict check to ensure we are not already on the target host
             if (window.location.host !== targetHost) {
                 console.log(`Redirecting to tenant subdomain: ${expectedSubdomain}`);
-                // window.location.href = `${protocol}//${targetHost}/dashboard`;
-                // Redirect DISABLED for debugging
+                window.location.href = `${protocol}//${targetHost}/dashboard?redirected=true`;
             }
         }
     }, [profile, loading, settingsLoading, settings.subdomain]);
