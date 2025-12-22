@@ -496,6 +496,260 @@ export default function SettingsPage() {
         toast.success("Leads settings saved successfully");
     };
 
+    // OpenAI Integration State
+    const [openaiForm, setOpenaiForm] = useState({
+        openaiApiKey: "",
+        openaiModel: "gpt-4o",
+        openaiMaxTokens: "500",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setOpenaiForm(prev => ({
+                ...prev,
+                openaiApiKey: settings.openaiApiKey ?? "",
+                openaiModel: settings.openaiModel ?? "gpt-4o",
+                openaiMaxTokens: settings.openaiMaxTokens?.toString() ?? "500",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveOpenAISettings = async () => {
+        await saveSettings({
+            ...openaiForm,
+            openaiMaxTokens: parseInt(openaiForm.openaiMaxTokens) || 500,
+        } as any);
+        toast.success("OpenAI settings saved successfully");
+    };
+
+    // Calendar Settings State
+    const [calendarForm, setCalendarForm] = useState({
+        calendarEventsLimit: "4",
+        calendarDefaultView: "dayGridMonth",
+        calendarFirstDay: "0",
+        calendarShowHideNotifiedReminders: false,
+        calendarShowTicketReminders: true,
+        calendarShowLeadReminders: true,
+        calendarShowInvoices: true,
+        calendarShowCustomerReminders: true,
+        calendarShowEstimates: true,
+        calendarShowEstimateReminders: true,
+        calendarShowProposals: true,
+        calendarShowProposalReminders: true,
+        calendarShowContracts: true,
+        calendarShowInvoiceReminders: true,
+        calendarShowTasks: true,
+        calendarShowTasksStaffOnly: true,
+        calendarShowExpenseReminders: true,
+        calendarShowProjects: true,
+        calendarShowTaskReminders: true,
+        calendarShowCreditNoteReminders: true,
+        calendarInvoiceColor: "#ff6f00",
+        calendarEstimateColor: "#ff6f00",
+        calendarProposalColor: "#84c529",
+        calendarReminderColor: "#03a9f4",
+        calendarContractColor: "#b72974",
+        calendarProjectColor: "#b72974",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setCalendarForm(prev => ({
+                ...prev,
+                calendarEventsLimit: settings.calendarEventsLimit?.toString() ?? "4",
+                calendarDefaultView: settings.calendarDefaultView ?? "dayGridMonth",
+                calendarFirstDay: settings.calendarFirstDay ?? "0",
+                calendarShowHideNotifiedReminders: settings.calendarShowHideNotifiedReminders ?? false,
+                calendarShowTicketReminders: settings.calendarShowTicketReminders ?? true,
+                calendarShowLeadReminders: settings.calendarShowLeadReminders ?? true,
+                calendarShowInvoices: settings.calendarShowInvoices ?? true,
+                calendarShowCustomerReminders: settings.calendarShowCustomerReminders ?? true,
+                calendarShowEstimates: settings.calendarShowEstimates ?? true,
+                calendarShowEstimateReminders: settings.calendarShowEstimateReminders ?? true,
+                calendarShowProposals: settings.calendarShowProposals ?? true,
+                calendarShowProposalReminders: settings.calendarShowProposalReminders ?? true,
+                calendarShowContracts: settings.calendarShowContracts ?? true,
+                calendarShowInvoiceReminders: settings.calendarShowInvoiceReminders ?? true,
+                calendarShowTasks: settings.calendarShowTasks ?? true,
+                calendarShowTasksStaffOnly: settings.calendarShowTasksStaffOnly ?? true,
+                calendarShowExpenseReminders: settings.calendarShowExpenseReminders ?? true,
+                calendarShowProjects: settings.calendarShowProjects ?? true,
+                calendarShowTaskReminders: settings.calendarShowTaskReminders ?? true,
+                calendarShowCreditNoteReminders: settings.calendarShowCreditNoteReminders ?? true,
+                calendarInvoiceColor: settings.calendarInvoiceColor ?? "#ff6f00",
+                calendarEstimateColor: settings.calendarEstimateColor ?? "#ff6f00",
+                calendarProposalColor: settings.calendarProposalColor ?? "#84c529",
+                calendarReminderColor: settings.calendarReminderColor ?? "#03a9f4",
+                calendarContractColor: settings.calendarContractColor ?? "#b72974",
+                calendarProjectColor: settings.calendarProjectColor ?? "#b72974",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveCalendarSettings = async () => {
+        await saveSettings({
+            ...calendarForm,
+            calendarEventsLimit: parseInt(calendarForm.calendarEventsLimit) || 4,
+        } as any);
+        toast.success("Calendar settings saved successfully");
+    };
+
+    // PDF Settings State
+    const [pdfForm, setPdfForm] = useState({
+        pdfFont: "freesans",
+        pdfSwapDetails: false,
+        pdfFontSize: "10",
+        pdfTableHeadingColor: "#323a45",
+        pdfTableHeadingTextColor: "#ffffff",
+        pdfLogoUrl: "",
+        pdfLogoWidth: "150",
+        pdfShowStatus: true,
+        pdfShowLink: true,
+        pdfShowPayments: true,
+        pdfShowPageNumber: false,
+        pdfShowSignatureInvoice: false,
+        pdfShowSignatureEstimate: false,
+        pdfShowSignatureCreditNote: false,
+        pdfShowSignatureContract: false,
+        pdfShowSignatureProposal: false,
+        pdfSignatureImage: "",
+        pdfFormatInvoice: "A4 Portrait",
+        pdfFormatEstimate: "A4 Portrait",
+        pdfFormatProposal: "A4 Portrait",
+        pdfFormatPayment: "A4 Portrait",
+        pdfFormatCreditNote: "A4 Portrait",
+        pdfFormatContract: "A4 Portrait",
+        pdfFormatStatement: "A4 Portrait",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setPdfForm(prev => ({
+                ...prev,
+                pdfFont: settings.pdfFont ?? "freesans",
+                pdfSwapDetails: settings.pdfSwapDetails ?? false,
+                pdfFontSize: settings.pdfFontSize?.toString() ?? "10",
+                pdfTableHeadingColor: settings.pdfTableHeadingColor ?? "#323a45",
+                pdfTableHeadingTextColor: settings.pdfTableHeadingTextColor ?? "#ffffff",
+                pdfLogoUrl: settings.pdfLogoUrl ?? "",
+                pdfLogoWidth: settings.pdfLogoWidth?.toString() ?? "150",
+                pdfShowStatus: settings.pdfShowStatus ?? true,
+                pdfShowLink: settings.pdfShowLink ?? true,
+                pdfShowPayments: settings.pdfShowPayments ?? true,
+                pdfShowPageNumber: settings.pdfShowPageNumber ?? false,
+                pdfShowSignatureInvoice: settings.pdfShowSignatureInvoice ?? false,
+                pdfShowSignatureEstimate: settings.pdfShowSignatureEstimate ?? false,
+                pdfShowSignatureCreditNote: settings.pdfShowSignatureCreditNote ?? false,
+                pdfShowSignatureContract: settings.pdfShowSignatureContract ?? false,
+                pdfShowSignatureProposal: settings.pdfShowSignatureProposal ?? false,
+                pdfSignatureImage: settings.pdfSignatureImage ?? "",
+                pdfFormatInvoice: settings.pdfFormatInvoice ?? "A4 Portrait",
+                pdfFormatEstimate: settings.pdfFormatEstimate ?? "A4 Portrait",
+                pdfFormatProposal: settings.pdfFormatProposal ?? "A4 Portrait",
+                pdfFormatPayment: settings.pdfFormatPayment ?? "A4 Portrait",
+                pdfFormatCreditNote: settings.pdfFormatCreditNote ?? "A4 Portrait",
+                pdfFormatContract: settings.pdfFormatContract ?? "A4 Portrait",
+                pdfFormatStatement: settings.pdfFormatStatement ?? "A4 Portrait",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSavePdfSettings = async () => {
+        await saveSettings({
+            ...pdfForm,
+            pdfFontSize: parseInt(pdfForm.pdfFontSize) || 10,
+            pdfLogoWidth: parseInt(pdfForm.pdfLogoWidth) || 150,
+        } as any);
+        toast.success("PDF settings saved successfully");
+    };
+
+    // E-Sign Settings State
+    const [esignForm, setEsignForm] = useState({
+        esignProposalRequireSignature: true,
+        esignEstimateRequireSignature: true,
+        esignLegalBoundText: "By clicking on \"Sign\", I consent to be legally bound by this electronic representation of my signature.",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setEsignForm(prev => ({
+                ...prev,
+                esignProposalRequireSignature: settings.esignProposalRequireSignature ?? true,
+                esignEstimateRequireSignature: settings.esignEstimateRequireSignature ?? true,
+                esignLegalBoundText: settings.esignLegalBoundText ?? "By clicking on \"Sign\", I consent to be legally bound by this electronic representation of my signature.",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveEsignSettings = async () => {
+        await saveSettings(esignForm as any);
+        toast.success("E-Sign settings saved successfully");
+    };
+
+    // Misc Settings State
+    const [miscForm, setMiscForm] = useState({
+        miscRequireLoginForContract: false,
+        miscDropboxAppKey: "",
+        miscMaxFileSizeMedia: "50",
+        miscMaxFileUploadsPost: "10",
+        miscLimitTopSearchBarResults: "10",
+        miscDefaultStaffRole: "employee",
+        miscDeleteActivityLogOlderThan: "1",
+        miscShowSetupMenuHover: false,
+        miscShowHelpMenu: true,
+        miscUseMinified: true,
+        miscSaveLastTableOrder: false,
+        miscShowTableExportButton: "admin",
+        miscTablesPaginationLimit: "25",
+        miscAllowNonAdminCreateLeadStatus: false,
+        miscAllowNonAdminCreateLeadSource: false,
+        miscAllowNonAdminCreateCustomerGroup: false,
+        miscAllowNonAdminCreateService: false,
+        miscAllowNonAdminSavePredefinedReplies: false,
+        miscAllowNonAdminCreateContractType: false,
+        miscAllowNonAdminCreateExpenseCategory: false,
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setMiscForm(prev => ({
+                ...prev,
+                miscRequireLoginForContract: settings.miscRequireLoginForContract ?? false,
+                miscDropboxAppKey: settings.miscDropboxAppKey ?? "",
+                miscMaxFileSizeMedia: settings.miscMaxFileSizeMedia?.toString() ?? "50",
+                miscMaxFileUploadsPost: settings.miscMaxFileUploadsPost?.toString() ?? "10",
+                miscLimitTopSearchBarResults: settings.miscLimitTopSearchBarResults?.toString() ?? "10",
+                miscDefaultStaffRole: settings.miscDefaultStaffRole ?? "employee",
+                miscDeleteActivityLogOlderThan: settings.miscDeleteActivityLogOlderThan?.toString() ?? "1",
+                miscShowSetupMenuHover: settings.miscShowSetupMenuHover ?? false,
+                miscShowHelpMenu: settings.miscShowHelpMenu ?? true,
+                miscUseMinified: settings.miscUseMinified ?? true,
+                miscSaveLastTableOrder: settings.miscSaveLastTableOrder ?? false,
+                miscShowTableExportButton: settings.miscShowTableExportButton ?? "admin",
+                miscTablesPaginationLimit: settings.miscTablesPaginationLimit?.toString() ?? "25",
+                miscAllowNonAdminCreateLeadStatus: settings.miscAllowNonAdminCreateLeadStatus ?? false,
+                miscAllowNonAdminCreateLeadSource: settings.miscAllowNonAdminCreateLeadSource ?? false,
+                miscAllowNonAdminCreateCustomerGroup: settings.miscAllowNonAdminCreateCustomerGroup ?? false,
+                miscAllowNonAdminCreateService: settings.miscAllowNonAdminCreateService ?? false,
+                miscAllowNonAdminSavePredefinedReplies: settings.miscAllowNonAdminSavePredefinedReplies ?? false,
+                miscAllowNonAdminCreateContractType: settings.miscAllowNonAdminCreateContractType ?? false,
+                miscAllowNonAdminCreateExpenseCategory: settings.miscAllowNonAdminCreateExpenseCategory ?? false,
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveMiscSettings = async () => {
+        await saveSettings({
+            ...miscForm,
+            miscMaxFileSizeMedia: parseInt(miscForm.miscMaxFileSizeMedia) || 50,
+            miscMaxFileUploadsPost: parseInt(miscForm.miscMaxFileUploadsPost) || 10,
+            miscLimitTopSearchBarResults: parseInt(miscForm.miscLimitTopSearchBarResults) || 10,
+            miscDeleteActivityLogOlderThan: parseInt(miscForm.miscDeleteActivityLogOlderThan) || 1,
+            miscTablesPaginationLimit: parseInt(miscForm.miscTablesPaginationLimit) || 25,
+        } as any);
+        toast.success("Misc settings saved successfully");
+    };
+
     useEffect(() => {
         if (!loading) {
             setLocalSubdomain(settings.subdomain || "");
@@ -2568,6 +2822,792 @@ export default function SettingsPage() {
                             <Button
                                 className="bg-gray-900 text-white hover:bg-gray-800"
                                 onClick={handleSaveLeadsSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "calendar") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Calendar</h2>
+
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+                        <Tabs defaultValue="general" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+                                <TabsTrigger value="general">General</TabsTrigger>
+                                <TabsTrigger value="styling">Styling</TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="general" className="space-y-6 mt-6">
+                                <div>
+                                    <Label>Calendar Events Limit (Month and Week View)</Label>
+                                    <Input
+                                        type="number"
+                                        value={calendarForm.calendarEventsLimit}
+                                        onChange={e => setCalendarForm({ ...calendarForm, calendarEventsLimit: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Default View</Label>
+                                    <Select
+                                        value={calendarForm.calendarDefaultView}
+                                        onValueChange={(val) => setCalendarForm({ ...calendarForm, calendarDefaultView: val })}
+                                    >
+                                        <SelectTrigger className="mt-1">
+                                            <SelectValue placeholder="Select" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="dayGridMonth">Month</SelectItem>
+                                            <SelectItem value="timeGridWeek">Week</SelectItem>
+                                            <SelectItem value="timeGridDay">Day</SelectItem>
+                                            <SelectItem value="listWeek">Agenda Week</SelectItem>
+                                            <SelectItem value="listDay">Agenda Day</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <Label>First Day</Label>
+                                    <Select
+                                        value={calendarForm.calendarFirstDay}
+                                        onValueChange={(val) => setCalendarForm({ ...calendarForm, calendarFirstDay: val })}
+                                    >
+                                        <SelectTrigger className="mt-1">
+                                            <SelectValue placeholder="Select" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="0">Sunday</SelectItem>
+                                            <SelectItem value="1">Monday</SelectItem>
+                                            <SelectItem value="2">Tuesday</SelectItem>
+                                            <SelectItem value="3">Wednesday</SelectItem>
+                                            <SelectItem value="4">Thursday</SelectItem>
+                                            <SelectItem value="5">Friday</SelectItem>
+                                            <SelectItem value="6">Saturday</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-lg font-medium mb-4">Show on Calendar</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {[
+                                            { key: "calendarShowHideNotifiedReminders", label: "Hide notified reminders from calendar" },
+                                            { key: "calendarShowTicketReminders", label: "Ticket Reminders" },
+                                            { key: "calendarShowLeadReminders", label: "Lead Reminders" },
+                                            { key: "calendarShowInvoices", label: "Invoices" },
+                                            { key: "calendarShowCustomerReminders", label: "Customer Reminders" },
+                                            { key: "calendarShowEstimates", label: "Estimates" },
+                                            { key: "calendarShowEstimateReminders", label: "Estimate Reminders" },
+                                            { key: "calendarShowProposals", label: "Proposals" },
+                                            { key: "calendarShowProposalReminders", label: "Proposal Reminders" },
+                                            { key: "calendarShowContracts", label: "Contracts" },
+                                            { key: "calendarShowInvoiceReminders", label: "Invoice Reminders" },
+                                            { key: "calendarShowTasks", label: "Tasks" },
+                                            { key: "calendarShowTasksStaffOnly", label: "Show only tasks assigned to the logged in staff member" },
+                                            { key: "calendarShowExpenseReminders", label: "Expense Reminders" },
+                                            { key: "calendarShowProjects", label: "Projects" },
+                                            { key: "calendarShowTaskReminders", label: "Task Reminders" },
+                                            { key: "calendarShowCreditNoteReminders", label: "Credit Note Reminders" },
+                                        ].map((item) => (
+                                            <div key={item.key}>
+                                                <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                                    {item.label}
+                                                </Label>
+                                                <RadioGroup
+                                                    value={calendarForm[item.key as keyof typeof calendarForm] ? "yes" : "no"}
+                                                    onValueChange={(val) => setCalendarForm({ ...calendarForm, [item.key]: val === "yes" })}
+                                                    className="flex gap-4"
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="yes" id={`cal-${item.key}-yes`} />
+                                                        <Label htmlFor={`cal-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="no" id={`cal-${item.key}-no`} />
+                                                        <Label htmlFor={`cal-${item.key}-no`} className="font-normal">No</Label>
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="styling" className="space-y-6 mt-6">
+                                {[
+                                    { key: "calendarInvoiceColor", label: "Invoice Color" },
+                                    { key: "calendarEstimateColor", label: "Estimate Color" },
+                                    { key: "calendarProposalColor", label: "Proposal Color" },
+                                    { key: "calendarReminderColor", label: "Reminder Color" },
+                                    { key: "calendarContractColor", label: "Contract Color" },
+                                    { key: "calendarProjectColor", label: "Project Color" },
+                                ].map((item) => (
+                                    <div key={item.key}>
+                                        <Label>{item.label}</Label>
+                                        <div className="flex gap-2 mt-1">
+                                            <Input
+                                                value={calendarForm[item.key as keyof typeof calendarForm] as string}
+                                                onChange={e => setCalendarForm({ ...calendarForm, [item.key]: e.target.value })}
+                                                className="flex-1"
+                                            />
+                                            <div
+                                                className="w-10 h-10 rounded border shrink-0"
+                                                style={{ backgroundColor: calendarForm[item.key as keyof typeof calendarForm] as string }}
+                                            />
+                                            <Input
+                                                type="color"
+                                                value={calendarForm[item.key as keyof typeof calendarForm] as string}
+                                                onChange={e => setCalendarForm({ ...calendarForm, [item.key]: e.target.value })}
+                                                className="w-12 p-1 h-10"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </TabsContent>
+                        </Tabs>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveCalendarSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "pdf") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">PDF</h2>
+
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+                        <Tabs defaultValue="general" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3 max-w-[600px]">
+                                <TabsTrigger value="general">General</TabsTrigger>
+                                <TabsTrigger value="signature">Signature</TabsTrigger>
+                                <TabsTrigger value="formats">Document formats</TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="general" className="space-y-6 mt-6">
+                                <div>
+                                    <Label>PDF Font</Label>
+                                    <Select
+                                        value={pdfForm.pdfFont}
+                                        onValueChange={(val) => setPdfForm({ ...pdfForm, pdfFont: val })}
+                                    >
+                                        <SelectTrigger className="mt-1">
+                                            <SelectValue placeholder="Select" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="freesans">freesans</SelectItem>
+                                            <SelectItem value="alef">alef</SelectItem>
+                                            <SelectItem value="dejavu">dejavu</SelectItem>
+                                            <SelectItem value="roboto">roboto</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Swap Company/Customer Details (company details to right side, customer details to left side)
+                                    </Label>
+                                    <RadioGroup
+                                        value={pdfForm.pdfSwapDetails ? "yes" : "no"}
+                                        onValueChange={(val) => setPdfForm({ ...pdfForm, pdfSwapDetails: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="pdfSwapDetails-yes" />
+                                            <Label htmlFor="pdfSwapDetails-yes" className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="pdfSwapDetails-no" />
+                                            <Label htmlFor="pdfSwapDetails-no" className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                                <div>
+                                    <Label>Default font size</Label>
+                                    <Input
+                                        type="number"
+                                        value={pdfForm.pdfFontSize}
+                                        onChange={e => setPdfForm({ ...pdfForm, pdfFontSize: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label>Items table heading color</Label>
+                                        <div className="flex gap-2 mt-1">
+                                            <Input
+                                                value={pdfForm.pdfTableHeadingColor}
+                                                onChange={e => setPdfForm({ ...pdfForm, pdfTableHeadingColor: e.target.value })}
+                                                className="flex-1"
+                                            />
+                                            <div
+                                                className="w-10 h-10 rounded border shrink-0"
+                                                style={{ backgroundColor: pdfForm.pdfTableHeadingColor }}
+                                            />
+                                            <Input
+                                                type="color"
+                                                value={pdfForm.pdfTableHeadingColor}
+                                                onChange={e => setPdfForm({ ...pdfForm, pdfTableHeadingColor: e.target.value })}
+                                                className="w-12 p-1 h-10"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label>Items table heading text color</Label>
+                                        <div className="flex gap-2 mt-1">
+                                            <Input
+                                                value={pdfForm.pdfTableHeadingTextColor}
+                                                onChange={e => setPdfForm({ ...pdfForm, pdfTableHeadingTextColor: e.target.value })}
+                                                className="flex-1"
+                                            />
+                                            <div
+                                                className="w-10 h-10 rounded border shrink-0"
+                                                style={{ backgroundColor: pdfForm.pdfTableHeadingTextColor }}
+                                            />
+                                            <Input
+                                                type="color"
+                                                value={pdfForm.pdfTableHeadingTextColor}
+                                                onChange={e => setPdfForm({ ...pdfForm, pdfTableHeadingTextColor: e.target.value })}
+                                                className="w-12 p-1 h-10"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Label>Custom PDF Company Logo URL</Label>
+                                    <Input
+                                        value={pdfForm.pdfLogoUrl}
+                                        onChange={e => setPdfForm({ ...pdfForm, pdfLogoUrl: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Logo Width (PX)</Label>
+                                    <Input
+                                        type="number"
+                                        value={pdfForm.pdfLogoWidth}
+                                        onChange={e => setPdfForm({ ...pdfForm, pdfLogoWidth: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div className="space-y-4">
+                                    {[
+                                        { key: "pdfShowStatus", label: "Show Invoice/Estimate/Credit Note status on PDF documents" },
+                                        { key: "pdfShowLink", label: "Show Pay Invoice link to PDF (Not applied if invoice status is Cancelled)" },
+                                        { key: "pdfShowPayments", label: "Show invoice payments (transactions) on PDF" },
+                                        { key: "pdfShowPageNumber", label: "Show page number on PDF" },
+                                    ].map((item) => (
+                                        <div key={item.key}>
+                                            <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                                {item.label}
+                                            </Label>
+                                            <RadioGroup
+                                                value={pdfForm[item.key as keyof typeof pdfForm] ? "yes" : "no"}
+                                                onValueChange={(val) => setPdfForm({ ...pdfForm, [item.key]: val === "yes" })}
+                                                className="flex gap-4"
+                                            >
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="yes" id={`pdf-${item.key}-yes`} />
+                                                    <Label htmlFor={`pdf-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="no" id={`pdf-${item.key}-no`} />
+                                                    <Label htmlFor={`pdf-${item.key}-no`} className="font-normal">No</Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                    ))}
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="signature" className="space-y-6 mt-6">
+                                <div className="space-y-6">
+                                    {[
+                                        { key: "pdfShowSignatureInvoice", label: "Show PDF Signature on Invoice" },
+                                        { key: "pdfShowSignatureEstimate", label: "Show PDF Signature on Estimate" },
+                                        { key: "pdfShowSignatureCreditNote", label: "Show PDF Signature on Credit Note" },
+                                        { key: "pdfShowSignatureContract", label: "Show PDF Signature on Contract" },
+                                        { key: "pdfShowSignatureProposal", label: "Show PDF Signature on Proposal" },
+                                    ].map((item) => (
+                                        <div key={item.key}>
+                                            <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                                {item.label}
+                                            </Label>
+                                            <RadioGroup
+                                                value={pdfForm[item.key as keyof typeof pdfForm] ? "yes" : "no"}
+                                                onValueChange={(val) => setPdfForm({ ...pdfForm, [item.key]: val === "yes" })}
+                                                className="flex gap-4"
+                                            >
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="yes" id={`pdf-${item.key}-yes`} />
+                                                    <Label htmlFor={`pdf-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="no" id={`pdf-${item.key}-no`} />
+                                                    <Label htmlFor={`pdf-${item.key}-no`} className="font-normal">No</Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                    ))}
+
+                                    <div>
+                                        <Label>Signature Image</Label>
+                                        <div className="mt-1 flex gap-2">
+                                            <Input
+                                                type="text"
+                                                placeholder="Image URL or Path"
+                                                value={pdfForm.pdfSignatureImage}
+                                                onChange={e => setPdfForm({ ...pdfForm, pdfSignatureImage: e.target.value })}
+                                            />
+                                            {/* File upload would require more logic, sticking to text input for now as per other image fields */}
+                                        </div>
+                                        <p className="text-sm text-gray-500 mt-1">Please enter the URL of the signature image.</p>
+                                    </div>
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="formats" className="space-y-6 mt-6">
+                                {[
+                                    { key: "pdfFormatInvoice", label: "Invoice" },
+                                    { key: "pdfFormatEstimate", label: "Estimate" },
+                                    { key: "pdfFormatProposal", label: "Proposal" },
+                                    { key: "pdfFormatPayment", label: "Payment" },
+                                    { key: "pdfFormatCreditNote", label: "Credit Note" },
+                                    { key: "pdfFormatContract", label: "Contract" },
+                                    { key: "pdfFormatStatement", label: "Statement" },
+                                ].map((item) => (
+                                    <div key={item.key}>
+                                        <Label>{item.label}</Label>
+                                        <Select
+                                            value={pdfForm[item.key as keyof typeof pdfForm] as string}
+                                            onValueChange={(val) => setPdfForm({ ...pdfForm, [item.key]: val })}
+                                        >
+                                            <SelectTrigger className="mt-1">
+                                                <SelectValue placeholder="Select" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="A4 Portrait">A4 Portrait</SelectItem>
+                                                <SelectItem value="A4 Landscape">A4 Landscape</SelectItem>
+                                                <SelectItem value="Letter Portrait">Letter Portrait</SelectItem>
+                                                <SelectItem value="Letter Landscape">Letter Landscape</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                ))}
+                            </TabsContent>
+                        </Tabs>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSavePdfSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "e-sign") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">E-Sign</h2>
+
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+
+                        <div>
+                            <h3 className="text-lg font-medium mb-4">Proposal</h3>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                Require digital signature and identity confirmation on accept
+                            </Label>
+                            <RadioGroup
+                                value={esignForm.esignProposalRequireSignature ? "yes" : "no"}
+                                onValueChange={(val) => setEsignForm({ ...esignForm, esignProposalRequireSignature: val === "yes" })}
+                                className="flex gap-4"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="yes" id="esignProposalRequireSignature-yes" />
+                                    <Label htmlFor="esignProposalRequireSignature-yes" className="font-normal">Yes</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="no" id="esignProposalRequireSignature-no" />
+                                    <Label htmlFor="esignProposalRequireSignature-no" className="font-normal">No</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+
+                        <div>
+                            <h3 className="text-lg font-medium mb-4">Estimate</h3>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                Require digital signature and identity confirmation on accept
+                            </Label>
+                            <RadioGroup
+                                value={esignForm.esignEstimateRequireSignature ? "yes" : "no"}
+                                onValueChange={(val) => setEsignForm({ ...esignForm, esignEstimateRequireSignature: val === "yes" })}
+                                className="flex gap-4"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="yes" id="esignEstimateRequireSignature-yes" />
+                                    <Label htmlFor="esignEstimateRequireSignature-yes" className="font-normal">Yes</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="no" id="esignEstimateRequireSignature-no" />
+                                    <Label htmlFor="esignEstimateRequireSignature-no" className="font-normal">No</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+
+                        <div>
+                            <Label>Legal Bound Text</Label>
+                            <Textarea
+                                value={esignForm.esignLegalBoundText}
+                                onChange={e => setEsignForm({ ...esignForm, esignLegalBoundText: e.target.value })}
+                                className="mt-1 h-24"
+                            />
+                        </div>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveEsignSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "misc") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Misc</h2>
+
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+                        <Tabs defaultValue="misc" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3 max-w-[600px]">
+                                <TabsTrigger value="misc">Misc</TabsTrigger>
+                                <TabsTrigger value="tables">Tables</TabsTrigger>
+                                <TabsTrigger value="inline-create">Inline Create</TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="misc" className="space-y-6 mt-6">
+                                <div>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Require client to be logged in to view contract
+                                    </Label>
+                                    <RadioGroup
+                                        value={miscForm.miscRequireLoginForContract ? "yes" : "no"}
+                                        onValueChange={(val) => setMiscForm({ ...miscForm, miscRequireLoginForContract: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="miscRequireLoginForContract-yes" />
+                                            <Label htmlFor="miscRequireLoginForContract-yes" className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="miscRequireLoginForContract-no" />
+                                            <Label htmlFor="miscRequireLoginForContract-no" className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                                <div>
+                                    <Label>Dropbox APP Key</Label>
+                                    <Input
+                                        value={miscForm.miscDropboxAppKey}
+                                        onChange={e => setMiscForm({ ...miscForm, miscDropboxAppKey: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Max file size upload in Media (MB)</Label>
+                                    <Input
+                                        type="number"
+                                        value={miscForm.miscMaxFileSizeMedia}
+                                        onChange={e => setMiscForm({ ...miscForm, miscMaxFileSizeMedia: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center gap-1 mb-1">
+                                        <HelpCircle className="h-4 w-4 text-gray-400" />
+                                        <Label>Maximum files upload on post</Label>
+                                    </div>
+                                    <Input
+                                        type="number"
+                                        value={miscForm.miscMaxFileUploadsPost}
+                                        onChange={e => setMiscForm({ ...miscForm, miscMaxFileUploadsPost: e.target.value })}
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Limit Top Search Bar Results to</Label>
+                                    <Input
+                                        type="number"
+                                        value={miscForm.miscLimitTopSearchBarResults}
+                                        onChange={e => setMiscForm({ ...miscForm, miscLimitTopSearchBarResults: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Default Staff Role</Label>
+                                    <Select
+                                        value={miscForm.miscDefaultStaffRole}
+                                        onValueChange={(val) => setMiscForm({ ...miscForm, miscDefaultStaffRole: val })}
+                                    >
+                                        <SelectTrigger className="mt-1">
+                                            <SelectValue placeholder="Select" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="employee">Employee</SelectItem>
+                                            <SelectItem value="admin">Admin</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <Label>Delete system activity log older then X months</Label>
+                                    <Input
+                                        type="number"
+                                        value={miscForm.miscDeleteActivityLogOlderThan}
+                                        onChange={e => setMiscForm({ ...miscForm, miscDeleteActivityLogOlderThan: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                {[
+                                    { key: "miscShowSetupMenuHover", label: "Show setup menu item only when hover with mouse on main sidebar area" },
+                                    { key: "miscShowHelpMenu", label: "Show help menu item on setup menu" },
+                                    { key: "miscUseMinified", label: "Use minified files version for css and js (only system files)" },
+                                ].map((item) => (
+                                    <div key={item.key}>
+                                        <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                            {item.label}
+                                        </Label>
+                                        <RadioGroup
+                                            value={miscForm[item.key as keyof typeof miscForm] ? "yes" : "no"}
+                                            onValueChange={(val) => setMiscForm({ ...miscForm, [item.key]: val === "yes" })}
+                                            className="flex gap-4"
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="yes" id={`misc-${item.key}-yes`} />
+                                                <Label htmlFor={`misc-${item.key}-yes`} className="font-normal">Yes</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="no" id={`misc-${item.key}-no`} />
+                                                <Label htmlFor={`misc-${item.key}-no`} className="font-normal">No</Label>
+                                            </div>
+                                        </RadioGroup>
+                                    </div>
+                                ))}
+                            </TabsContent>
+
+                            <TabsContent value="tables" className="space-y-6 mt-6">
+                                <div>
+                                    <div className="flex items-center gap-1 mb-2">
+                                        <HelpCircle className="h-4 w-4 text-gray-400" />
+                                        <Label className="block text-sm font-medium text-gray-700">
+                                            Save last order for tables
+                                        </Label>
+                                    </div>
+                                    <RadioGroup
+                                        value={miscForm.miscSaveLastTableOrder ? "yes" : "no"}
+                                        onValueChange={(val) => setMiscForm({ ...miscForm, miscSaveLastTableOrder: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="miscSaveLastTableOrder-yes" />
+                                            <Label htmlFor="miscSaveLastTableOrder-yes" className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="miscSaveLastTableOrder-no" />
+                                            <Label htmlFor="miscSaveLastTableOrder-no" className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                                <div>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Show table export button
+                                    </Label>
+                                    <RadioGroup
+                                        value={miscForm.miscShowTableExportButton}
+                                        onValueChange={(val) => setMiscForm({ ...miscForm, miscShowTableExportButton: val })}
+                                        className="space-y-2"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="all" id="export-all" />
+                                            <Label htmlFor="export-all" className="font-normal">To all staff members</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="admin" id="export-admin" />
+                                            <Label htmlFor="export-admin" className="font-normal">Only to administrators</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="hide" id="export-hide" />
+                                            <Label htmlFor="export-hide" className="font-normal">Hide export button for all staff members</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                                <div>
+                                    <Label>Tables Pagination Limit</Label>
+                                    <Input
+                                        type="number"
+                                        value={miscForm.miscTablesPaginationLimit}
+                                        onChange={e => setMiscForm({ ...miscForm, miscTablesPaginationLimit: e.target.value })}
+                                        className="mt-1"
+                                    />
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="inline-create" className="space-y-6 mt-6">
+                                {[
+                                    { key: "miscAllowNonAdminCreateLeadStatus", label: "Allow non-admin staff members to create Lead Status in Lead create/edit area?" },
+                                    { key: "miscAllowNonAdminCreateLeadSource", label: "Allow non-admin staff members to create Lead Source in Lead create/edit area?" },
+                                    { key: "miscAllowNonAdminCreateCustomerGroup", label: "Allow non-admin staff members to create Customer Group in Customer create/edit area?" },
+                                    { key: "miscAllowNonAdminCreateService", label: "Allow non-admin staff members to create Service in Ticket create/edit area?" },
+                                    { key: "miscAllowNonAdminSavePredefinedReplies", label: "Allow non-admin staff members to save predefined replies from ticket message" },
+                                    { key: "miscAllowNonAdminCreateContractType", label: "Allow non-admin staff members to create Contract type in Contract create/edit area?" },
+                                    { key: "miscAllowNonAdminCreateExpenseCategory", label: "Allow non-admin staff members to create Expense Category in Expense create/edit area?" },
+                                ].map((item) => (
+                                    <div key={item.key}>
+                                        <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                            {item.label}
+                                        </Label>
+                                        <RadioGroup
+                                            value={miscForm[item.key as keyof typeof miscForm] ? "yes" : "no"}
+                                            onValueChange={(val) => setMiscForm({ ...miscForm, [item.key]: val === "yes" })}
+                                            className="flex gap-4"
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="yes" id={`misc-${item.key}-yes`} />
+                                                <Label htmlFor={`misc-${item.key}-yes`} className="font-normal">Yes</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="no" id={`misc-${item.key}-no`} />
+                                                <Label htmlFor={`misc-${item.key}-no`} className="font-normal">No</Label>
+                                            </div>
+                                        </RadioGroup>
+                                    </div>
+                                ))}
+                            </TabsContent>
+                        </Tabs>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveMiscSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "openai") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">OpenAI</h2>
+
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+
+                        <div>
+                            <Label>OpenAI API Key</Label>
+                            <div className="mt-1">
+                                <Input
+                                    type="password"
+                                    value={openaiForm.openaiApiKey}
+                                    onChange={e => setOpenaiForm({ ...openaiForm, openaiApiKey: e.target.value })}
+                                    placeholder="sk-..."
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label>OpenAI Model</Label>
+                            <Select
+                                value={openaiForm.openaiModel}
+                                onValueChange={(val) => setOpenaiForm({ ...openaiForm, openaiModel: val })}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                                    <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                                    <SelectItem value="gpt-4">GPT-4</SelectItem>
+                                    <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Max Output Tokens</Label>
+                            <Input
+                                type="number"
+                                value={openaiForm.openaiMaxTokens}
+                                onChange={e => setOpenaiForm({ ...openaiForm, openaiMaxTokens: e.target.value })}
+                                className="mt-1"
+                            />
+                        </div>
+
+                        <div className="pt-4">
+                            <h3 className="text-lg font-medium mb-2">Advanced Features</h3>
+                            <div className="flex items-center gap-4">
+                                <Button className="bg-gray-900 text-white hover:bg-gray-800 gap-2">
+                                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.49933 0.25C3.49635 0.25 0.25 3.49593 0.25 7.50024C0.25 11.5046 3.49635 14.75 7.49933 14.75C11.5023 14.75 14.75 11.5046 14.75 7.50024C14.75 3.49593 11.5023 0.25 7.49933 0.25ZM7.49933 1.75C10.674 1.75 13.25 4.32563 13.25 7.50024C13.25 10.6749 10.674 13.25 7.49933 13.25C4.32468 13.25 1.75 10.6749 1.75 7.50024C1.75 4.32563 4.32468 1.75 7.49933 1.75ZM6.82529 10.5002H8.17336V6.00024H6.82529V10.5002ZM6.82529 5.25024H8.17336V3.75024H6.82529V5.25024Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
+                                    OpenAI Fine-Tuning
+                                </Button>
+                            </div>
+                            <p className="mt-2 text-sm text-gray-500">Fine-tune OpenAI models with your knowledge base and predefined replies content for more accurate responses.</p>
+                        </div>
+
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveOpenAISettings}
                                 disabled={saving}
                             >
                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

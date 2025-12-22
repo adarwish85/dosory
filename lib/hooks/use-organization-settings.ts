@@ -193,6 +193,96 @@ export interface OrganizationSettings {
     leadsDisableEditAfterConvert?: boolean;
     leadsModalWidth?: string;
 
+    // AI Integration - OpenAI
+    openaiApiKey?: string;
+    openaiModel?: string;
+    openaiMaxTokens?: number;
+
+
+
+    // Calendar Settings
+    calendarEventsLimit?: number;
+    calendarDefaultView?: string;
+    calendarFirstDay?: string;
+    calendarShowHideNotifiedReminders?: boolean;
+    calendarShowTicketReminders?: boolean;
+    calendarShowLeadReminders?: boolean;
+    calendarShowInvoices?: boolean;
+    calendarShowCustomerReminders?: boolean;
+    calendarShowEstimates?: boolean;
+    calendarShowEstimateReminders?: boolean;
+    calendarShowProposals?: boolean;
+    calendarShowProposalReminders?: boolean;
+    calendarShowContracts?: boolean;
+    calendarShowInvoiceReminders?: boolean;
+    calendarShowTasks?: boolean;
+    calendarShowTasksStaffOnly?: boolean;
+    calendarShowExpenseReminders?: boolean;
+    calendarShowProjects?: boolean;
+    calendarShowTaskReminders?: boolean;
+    calendarShowCreditNoteReminders?: boolean;
+    calendarInvoiceColor?: string;
+    calendarEstimateColor?: string;
+    calendarProposalColor?: string;
+    calendarReminderColor?: string;
+    calendarContractColor?: string;
+    calendarProjectColor?: string;
+
+
+    // PDF Settings
+    pdfFont?: string;
+    pdfSwapDetails?: boolean;
+    pdfFontSize?: number;
+    pdfTableHeadingColor?: string;
+    pdfTableHeadingTextColor?: string;
+    pdfLogoUrl?: string;
+    pdfLogoWidth?: number;
+    pdfShowStatus?: boolean;
+    pdfShowLink?: boolean;
+    pdfShowPayments?: boolean;
+    pdfShowPageNumber?: boolean;
+    pdfShowSignatureInvoice?: boolean;
+    pdfShowSignatureEstimate?: boolean;
+    pdfShowSignatureCreditNote?: boolean;
+    pdfShowSignatureContract?: boolean;
+    pdfShowSignatureProposal?: boolean;
+    pdfSignatureImage?: string;
+    pdfFormatInvoice?: string;
+    pdfFormatEstimate?: string;
+    pdfFormatProposal?: string;
+    pdfFormatPayment?: string;
+    pdfFormatCreditNote?: string;
+    pdfFormatContract?: string;
+    pdfFormatStatement?: string;
+
+
+    // E-Sign Settings
+    esignProposalRequireSignature?: boolean;
+    esignEstimateRequireSignature?: boolean;
+    esignLegalBoundText?: string;
+
+    // Misc Settings
+    miscRequireLoginForContract?: boolean;
+    miscDropboxAppKey?: string;
+    miscMaxFileSizeMedia?: number;
+    miscMaxFileUploadsPost?: number;
+    miscLimitTopSearchBarResults?: number;
+    miscDefaultStaffRole?: string;
+    miscDeleteActivityLogOlderThan?: number;
+    miscShowSetupMenuHover?: boolean;
+    miscShowHelpMenu?: boolean;
+    miscUseMinified?: boolean;
+    miscSaveLastTableOrder?: boolean;
+    miscShowTableExportButton?: string;
+    miscTablesPaginationLimit?: number;
+    miscAllowNonAdminCreateLeadStatus?: boolean;
+    miscAllowNonAdminCreateLeadSource?: boolean;
+    miscAllowNonAdminCreateCustomerGroup?: boolean;
+    miscAllowNonAdminCreateService?: boolean;
+    miscAllowNonAdminSavePredefinedReplies?: boolean;
+    miscAllowNonAdminCreateContractType?: boolean;
+    miscAllowNonAdminCreateExpenseCategory?: boolean;
+
     // Platform
     platformName?: string;
     maintenanceMode?: boolean;
@@ -364,6 +454,92 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     leadsKanbanSortOrder: "asc",
     leadsDisableEditAfterConvert: true,
     leadsModalWidth: "modal-lg",
+
+    openaiApiKey: "",
+    openaiModel: "gpt-4o",
+    openaiMaxTokens: 500,
+
+    // Calendar Defaults
+    calendarEventsLimit: 4,
+    calendarDefaultView: "dayGridMonth",
+    calendarFirstDay: "0",
+    calendarShowHideNotifiedReminders: false,
+    calendarShowTicketReminders: true,
+    calendarShowLeadReminders: true,
+    calendarShowInvoices: true,
+    calendarShowCustomerReminders: true,
+    calendarShowEstimates: true,
+    calendarShowEstimateReminders: true,
+    calendarShowProposals: true,
+    calendarShowProposalReminders: true,
+    calendarShowContracts: true,
+    calendarShowInvoiceReminders: true,
+    calendarShowTasks: true,
+    calendarShowTasksStaffOnly: true,
+    calendarShowExpenseReminders: true,
+    calendarShowProjects: true,
+    calendarShowTaskReminders: true,
+    calendarShowCreditNoteReminders: true,
+    calendarInvoiceColor: "#ff6f00",
+    calendarEstimateColor: "#ff6f00",
+    calendarProposalColor: "#84c529",
+    calendarReminderColor: "#03a9f4",
+    calendarContractColor: "#b72974",
+    calendarProjectColor: "#b72974",
+
+
+    // PDF Defaults
+    pdfFont: "freesans",
+    pdfSwapDetails: false,
+    pdfFontSize: 10,
+    pdfTableHeadingColor: "#323a45",
+    pdfTableHeadingTextColor: "#ffffff",
+    pdfLogoUrl: "",
+    pdfLogoWidth: 150,
+    pdfShowStatus: true,
+    pdfShowLink: true,
+    pdfShowPayments: true,
+    pdfShowPageNumber: false,
+    pdfShowSignatureInvoice: false,
+    pdfShowSignatureEstimate: false,
+    pdfShowSignatureCreditNote: false,
+    pdfShowSignatureContract: false,
+    pdfShowSignatureProposal: false,
+    pdfSignatureImage: "",
+    pdfFormatInvoice: "A4 Portrait",
+    pdfFormatEstimate: "A4 Portrait",
+    pdfFormatProposal: "A4 Portrait",
+    pdfFormatPayment: "A4 Portrait",
+    pdfFormatCreditNote: "A4 Portrait",
+    pdfFormatContract: "A4 Portrait",
+    pdfFormatStatement: "A4 Portrait",
+
+    // E-Sign Defaults
+    esignProposalRequireSignature: true,
+    esignEstimateRequireSignature: true,
+    esignLegalBoundText: "By clicking on \"Sign\", I consent to be legally bound by this electronic representation of my signature.",
+
+    // Misc Defaults
+    miscRequireLoginForContract: false,
+    miscDropboxAppKey: "",
+    miscMaxFileSizeMedia: 50,
+    miscMaxFileUploadsPost: 10,
+    miscLimitTopSearchBarResults: 10,
+    miscDefaultStaffRole: "employee",
+    miscDeleteActivityLogOlderThan: 1,
+    miscShowSetupMenuHover: false,
+    miscShowHelpMenu: true,
+    miscUseMinified: true,
+    miscSaveLastTableOrder: false,
+    miscShowTableExportButton: "admin",
+    miscTablesPaginationLimit: 25,
+    miscAllowNonAdminCreateLeadStatus: false,
+    miscAllowNonAdminCreateLeadSource: false,
+    miscAllowNonAdminCreateCustomerGroup: false,
+    miscAllowNonAdminCreateService: false,
+    miscAllowNonAdminSavePredefinedReplies: false,
+    miscAllowNonAdminCreateContractType: false,
+    miscAllowNonAdminCreateExpenseCategory: false,
 };
 
 export function useOrganizationSettings() {
