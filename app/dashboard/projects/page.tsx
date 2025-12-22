@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -73,12 +73,12 @@ export default function ProjectsPage() {
                                 <Plus className="mr-2 h-4 w-4" /> New Project
                             </Button>
                         </Link>
-                        <Button variant="outline" size="icon" className="text-gray-500 bg-white">
+                        <Button variant="outline" size="icon" className="text-gray-500 bg-white" aria-label="Toggle view">
                             <AlignJustify className="h-4 w-4" />
                         </Button>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" className="text-gray-600 bg-white">
+                        <Button variant="outline" className="text-gray-600 bg-white" aria-label="Show filters">
                             <Filter className="mr-2 h-4 w-4" /> Filters
                         </Button>
                     </div>

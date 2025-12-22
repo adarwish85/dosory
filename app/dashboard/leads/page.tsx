@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -68,29 +68,34 @@ export default function LeadsPage() {
         await updateLead(leadId, { status: newStatus });
     };
 
-    const handleView = (lead: Lead) => {
+    // PERFORMANCE: Use useCallback to prevent recreating functions on each render
+    const handleView = useCallback((lead: Lead) => {
         setSelectedLead(lead);
         setDetailsOpen(true);
-    };
+    }, []);
 
-    const handleEdit = (lead: Lead) => {
+    const handleEdit = useCallback((lead: Lead) => {
         setSelectedLead(lead);
         setEditOpen(true);
-    };
+    }, []);
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = useCallback(async (id: string) => {
         if (window.confirm("Are you sure you want to delete this lead?")) {
             await deleteLead(id);
         }
-    };
+    }, [deleteLead]);
 
-    const handleSaveLead = async (id: string, data: Partial<Lead>) => {
+    const handleSaveLead = useCallback(async (id: string, data: Partial<Lead>) => {
         await updateLead(id, data);
         // If updating currently viewed lead, update state
         if (selectedLead && selectedLead.id === id) {
             setSelectedLead({ ...selectedLead, ...data } as Lead);
         }
-    };
+    }, [updateLead, selectedLead]);
+
+    const handleStatusChange = useCallback(async (leadId: string, newStatus: LeadStatus) => {
+        await updateLead(leadId, { status: newStatus });
+    }, [updateLead]);
 
     if (loading) {
         return (
@@ -136,7 +141,7 @@ export default function LeadsPage() {
                         </Button>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" className="text-gray-600 bg-white">
+                        <Button variant="outline" className="text-gray-600 bg-white" aria-label="Show filters">
                             <Filter className="mr-2 h-4 w-4" /> Filters
                         </Button>
                     </div>
