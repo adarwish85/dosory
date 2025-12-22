@@ -46,6 +46,184 @@ export default function SettingsPage() {
     const [availability, setAvailability] = useState<"idle" | "loading" | "available" | "unavailable">("idle");
     const [checkError, setCheckError] = useState("");
 
+    // Invoice Settings State
+    const [invoiceForm, setInvoiceForm] = useState({
+        invoiceNumberPrefix: "INV-",
+        invoiceNextNumber: "000001",
+        invoiceDueAfterDays: 30,
+        invoiceAllowStaffViewAssigned: false,
+        invoiceRequireClientLogin: false,
+        invoiceDeleteOnlyLast: false,
+        invoiceDecrementOnDelete: false,
+        invoiceExcludeDraftsFromClient: false,
+        invoiceShowSaleAgent: false,
+        invoiceShowProjectName: false,
+        invoiceShowTotalPaid: false,
+        invoiceShowCreditsApplied: false,
+        invoiceShowAmountDue: false,
+        invoiceAttachPdfToEmail: false,
+        invoiceNumberFormat: "number_based",
+        invoiceDefaultClientNote: "",
+        invoiceDefaultTerms: "",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setInvoiceForm(prev => ({
+                ...prev,
+                invoiceNumberPrefix: settings.invoiceNumberPrefix ?? "INV-",
+                invoiceNextNumber: settings.invoiceNextNumber ?? "000001",
+                invoiceDueAfterDays: settings.invoiceDueAfterDays ?? 30,
+                invoiceAllowStaffViewAssigned: settings.invoiceAllowStaffViewAssigned ?? false,
+                invoiceRequireClientLogin: settings.invoiceRequireClientLogin ?? false,
+                invoiceDeleteOnlyLast: settings.invoiceDeleteOnlyLast ?? false,
+                invoiceDecrementOnDelete: settings.invoiceDecrementOnDelete ?? false,
+                invoiceExcludeDraftsFromClient: settings.invoiceExcludeDraftsFromClient ?? false,
+                invoiceShowSaleAgent: settings.invoiceShowSaleAgent ?? false,
+                invoiceShowProjectName: settings.invoiceShowProjectName ?? false,
+                invoiceShowTotalPaid: settings.invoiceShowTotalPaid ?? false,
+                invoiceShowCreditsApplied: settings.invoiceShowCreditsApplied ?? false,
+                invoiceShowAmountDue: settings.invoiceShowAmountDue ?? false,
+                invoiceAttachPdfToEmail: settings.invoiceAttachPdfToEmail ?? false,
+                invoiceNumberFormat: settings.invoiceNumberFormat ?? "number_based",
+                invoiceDefaultClientNote: settings.invoiceDefaultClientNote ?? "",
+                invoiceDefaultTerms: settings.invoiceDefaultTerms ?? "",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveInvoiceSettings = async () => {
+        await saveSettings(invoiceForm as any);
+        toast.success("Invoice settings saved successfully");
+    };
+
+    // Finance General State
+    const [financeGeneralForm, setFinanceGeneralForm] = useState({
+        decimalSeparator: ".",
+        thousandSeparator: ",",
+        numberPadding: 6,
+        autoAssignSaleAgent: true,
+        showTaxPerItem: true,
+        removeTaxNameFromRow: false,
+        excludeCurrencySymbol: false,
+        defaultTax: "14.00%",
+        removeDecimalsOnZero: false,
+        amountToWordsEnable: true,
+        amountToWordsLowercase: false,
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setFinanceGeneralForm(prev => ({
+                ...prev,
+                decimalSeparator: settings.decimalSeparator ?? ".",
+                thousandSeparator: settings.thousandSeparator ?? ",",
+                numberPadding: settings.numberPadding ?? 6,
+                autoAssignSaleAgent: settings.autoAssignSaleAgent ?? true,
+                showTaxPerItem: settings.showTaxPerItem ?? true,
+                removeTaxNameFromRow: settings.removeTaxNameFromRow ?? false,
+                excludeCurrencySymbol: settings.excludeCurrencySymbol ?? false,
+                defaultTax: settings.defaultTax ?? "14.00%",
+                removeDecimalsOnZero: settings.removeDecimalsOnZero ?? false,
+                amountToWordsEnable: settings.amountToWordsEnable ?? true,
+                amountToWordsLowercase: settings.amountToWordsLowercase ?? false,
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveFinanceGeneral = async () => {
+        await saveSettings(financeGeneralForm as any);
+        toast.success("Finance settings saved successfully");
+    };
+
+    // Finance Proposal State
+    const [proposalForm, setProposalForm] = useState({
+        proposalNumberPrefix: "PRO-",
+        proposalDueAfterDays: 7,
+        proposalPipelineLimit: 50,
+        proposalPipelineSort: "pipeline_order",
+        proposalPipelineSortOrder: "asc",
+        proposalShowProjectName: true,
+        proposalExcludeDrafts: true,
+        proposalAutoConvert: false,
+        proposalAllowStaffViewAssigned: true,
+        proposalInfoFormat: "",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setProposalForm(prev => ({
+                ...prev,
+                proposalNumberPrefix: settings.proposalNumberPrefix ?? "PRO-",
+                proposalDueAfterDays: settings.proposalDueAfterDays ?? 7,
+                proposalPipelineLimit: settings.proposalPipelineLimit ?? 50,
+                proposalPipelineSort: settings.proposalPipelineSort ?? "pipeline_order",
+                proposalPipelineSortOrder: settings.proposalPipelineSortOrder ?? "asc",
+                proposalShowProjectName: settings.proposalShowProjectName ?? true,
+                proposalExcludeDrafts: settings.proposalExcludeDrafts ?? true,
+                proposalAutoConvert: settings.proposalAutoConvert ?? false,
+                proposalAllowStaffViewAssigned: settings.proposalAllowStaffViewAssigned ?? true,
+                proposalInfoFormat: settings.proposalInfoFormat ?? "{proposal_to}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{phone}\n{email}",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveProposalSettings = async () => {
+        await saveSettings(proposalForm as any);
+        toast.success("Proposal settings saved successfully");
+    };
+
+    // Finance Estimate State
+    const [estimateForm, setEstimateForm] = useState({
+        estimateNumberPrefix: "EST-",
+        estimateNextNumber: "000001",
+        estimateDueAfterDays: 7,
+        estimateDeleteOnlyLast: false,
+        estimateDecrementOnDelete: false,
+        estimateAllowStaffViewAssigned: true,
+        estimateRequireClientLogin: false,
+        estimateShowSaleAgent: false,
+        estimateShowProjectName: false,
+        estimateAutoConvert: false,
+        estimateExcludeDraftsFromClient: false,
+        estimateNumberFormat: "number_based",
+        estimatePipelineLimit: 50,
+        estimatePipelineSort: "pipeline_order",
+        estimatePipelineSortOrder: "asc",
+        estimateDefaultClientNote: "",
+        estimateDefaultTerms: "",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setEstimateForm(prev => ({
+                ...prev,
+                estimateNumberPrefix: settings.estimateNumberPrefix ?? "EST-",
+                estimateNextNumber: settings.estimateNextNumber ?? "000001",
+                estimateDueAfterDays: settings.estimateDueAfterDays ?? 7,
+                estimateDeleteOnlyLast: settings.estimateDeleteOnlyLast ?? false,
+                estimateDecrementOnDelete: settings.estimateDecrementOnDelete ?? false,
+                estimateAllowStaffViewAssigned: settings.estimateAllowStaffViewAssigned ?? true,
+                estimateRequireClientLogin: settings.estimateRequireClientLogin ?? false,
+                estimateShowSaleAgent: settings.estimateShowSaleAgent ?? false,
+                estimateShowProjectName: settings.estimateShowProjectName ?? false,
+                estimateAutoConvert: settings.estimateAutoConvert ?? false,
+                estimateExcludeDraftsFromClient: settings.estimateExcludeDraftsFromClient ?? false,
+                estimateNumberFormat: settings.estimateNumberFormat ?? "number_based",
+                estimatePipelineLimit: settings.estimatePipelineLimit ?? 50,
+                estimatePipelineSort: settings.estimatePipelineSort ?? "pipeline_order",
+                estimatePipelineSortOrder: settings.estimatePipelineSortOrder ?? "asc",
+                estimateDefaultClientNote: settings.estimateDefaultClientNote ?? "",
+                estimateDefaultTerms: settings.estimateDefaultTerms ?? "",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveEstimateSettings = async () => {
+        await saveSettings(estimateForm as any);
+        toast.success("Estimate settings saved successfully");
+    };
+
     useEffect(() => {
         if (!loading) {
             setLocalSubdomain(settings.subdomain || "");
@@ -532,6 +710,620 @@ export default function SettingsPage() {
                         <div className="pt-4">
                             <Button className="bg-gray-900 text-white hover:bg-gray-800">
                                 Save Settings
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "finance-general") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">General</h2>
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+
+                        <div className="grid grid-cols-2 gap-6">
+                            <div>
+                                <Label className="mb-2 block">Decimal Separator</Label>
+                                <Select
+                                    value={financeGeneralForm.decimalSeparator}
+                                    onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, decimalSeparator: val })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select separator" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value=".">. (Dot)</SelectItem>
+                                        <SelectItem value=",">, (Comma)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label className="mb-2 block">Thousand Separator</Label>
+                                <Select
+                                    value={financeGeneralForm.thousandSeparator}
+                                    onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, thousandSeparator: val })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select separator" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value=",">, (Comma)</SelectItem>
+                                        <SelectItem value=".">. (Dot)</SelectItem>
+                                        <SelectItem value="none">None</SelectItem>
+                                        <SelectItem value="space">Space</SelectItem>
+                                        <SelectItem value="'">' (Apostrophe)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label className="mb-2 block flex items-center gap-2">
+                                <HelpCircle className="h-4 w-4 text-gray-400" />
+                                Number padding zero's for prefix formats
+                            </Label>
+                            <p className="text-sm text-gray-500 mb-2">eq. If this value is 3 the number will be formatted: 005 or 025</p>
+                            <Input
+                                type="number"
+                                value={financeGeneralForm.numberPadding}
+                                onChange={e => setFinanceGeneralForm({ ...financeGeneralForm, numberPadding: parseInt(e.target.value) || 0 })}
+                            />
+                        </div>
+
+                        <div className="space-y-6">
+                            {[
+                                { key: "autoAssignSaleAgent", label: "Automatically assign logged in staff as sale agent" },
+                                { key: "showTaxPerItem", label: "Show TAX per item" },
+                                { key: "removeTaxNameFromRow", label: "Remove the tax name from item table row" },
+                                { key: "excludeCurrencySymbol", label: "Exclude currency symbol from items table Amount" },
+                            ].map((item) => (
+                                <div key={item.key}>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        <HelpCircle className="h-4 w-4 text-gray-400" />
+                                        {item.label}
+                                    </Label>
+                                    <RadioGroup
+                                        value={financeGeneralForm[item.key as keyof typeof financeGeneralForm] ? "yes" : "no"}
+                                        onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, [item.key]: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id={`fg-${item.key}-yes`} />
+                                            <Label htmlFor={`fg-${item.key}-yes`} className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id={`fg-${item.key}-no`} />
+                                            <Label htmlFor={`fg-${item.key}-no`} className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div>
+                            <Label className="mb-2 block">Default Tax</Label>
+                            <Select
+                                value={financeGeneralForm.defaultTax}
+                                onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, defaultTax: val })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Tax" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="0.00">0.00% (No Tax)</SelectItem>
+                                    <SelectItem value="14.00%">14.00% (VAT)</SelectItem>
+                                    <SelectItem value="5.00%">5.00%</SelectItem>
+                                    <SelectItem value="10.00%">10.00%</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div>
+                                <Label className="mb-2 block">Remove decimals on numbers/money with zero decimals (2.00 will become 2, 2.25 will stay 2.25)</Label>
+                                <RadioGroup
+                                    value={financeGeneralForm.removeDecimalsOnZero ? "yes" : "no"}
+                                    onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, removeDecimalsOnZero: val === "yes" })}
+                                    className="flex gap-4"
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="yes" id="rm-dec-yes" />
+                                        <Label htmlFor="rm-dec-yes">Yes</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="no" id="rm-dec-no" />
+                                        <Label htmlFor="rm-dec-no">No</Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+                        </div>
+
+                        <div className="border-t pt-6">
+                            <h3 className="text-lg font-medium mb-4">Amount to words</h3>
+                            <p className="text-sm text-gray-500 mb-4">Output total amount to words in invoice/estimate/proposal</p>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div>
+                                    <Label className="mb-2 block">Enable</Label>
+                                    <RadioGroup
+                                        value={financeGeneralForm.amountToWordsEnable ? "yes" : "no"}
+                                        onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, amountToWordsEnable: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="atw-en-yes" />
+                                            <Label htmlFor="atw-en-yes">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="atw-en-no" />
+                                            <Label htmlFor="atw-en-no">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                                <div>
+                                    <Label className="mb-2 block">Number words into lowercase</Label>
+                                    <RadioGroup
+                                        value={financeGeneralForm.amountToWordsLowercase ? "yes" : "no"}
+                                        onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, amountToWordsLowercase: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="atw-lc-yes" />
+                                            <Label htmlFor="atw-lc-yes">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="atw-lc-no" />
+                                            <Label htmlFor="atw-lc-no">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveFinanceGeneral}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "finance-invoices") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Invoices</h2>
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+
+                        <div className="space-y-4">
+                            <div>
+                                <Label>Invoice Number Prefix</Label>
+                                <Input
+                                    value={invoiceForm.invoiceNumberPrefix}
+                                    onChange={e => setInvoiceForm({ ...invoiceForm, invoiceNumberPrefix: e.target.value })}
+                                    className="mt-1"
+                                />
+                            </div>
+                            <div>
+                                <Label>Next Invoice Number</Label>
+                                <Input
+                                    value={invoiceForm.invoiceNumberPrefix === "number_based" ? invoiceForm.invoiceNextNumber : invoiceForm.invoiceNextNumber}
+                                    onChange={e => setInvoiceForm({ ...invoiceForm, invoiceNextNumber: e.target.value })}
+                                    className="mt-1"
+                                />
+                            </div>
+                            <div>
+                                <Label>Invoice due after (days)</Label>
+                                <Input
+                                    type="number"
+                                    value={invoiceForm.invoiceDueAfterDays}
+                                    onChange={e => setInvoiceForm({ ...invoiceForm, invoiceDueAfterDays: parseInt(e.target.value) || 0 })}
+                                    className="mt-1"
+                                />
+                            </div>
+                        </div>
+
+                        <hr className="border-gray-100" />
+
+                        {/* Boolean Settings */}
+                        <div className="space-y-6">
+                            {[
+                                { key: "invoiceAllowStaffViewAssigned", label: "Allow staff members to view invoices where they are assigned to" },
+                                { key: "invoiceRequireClientLogin", label: "Require client to be logged in to view invoice" },
+                                { key: "invoiceDeleteOnlyLast", label: "Delete invoice allowed only on last invoice" },
+                                { key: "invoiceDecrementOnDelete", label: "Decrement invoice number on delete" },
+                                { key: "invoiceExcludeDraftsFromClient", label: "Exclude invoices with draft status from customers area" },
+                                { key: "invoiceShowSaleAgent", label: "Show Sale Agent On Invoice" },
+                                { key: "invoiceShowProjectName", label: "Show Project Name On Invoice" },
+                                { key: "invoiceShowTotalPaid", label: "Show Total Paid On Invoice" },
+                                { key: "invoiceShowCreditsApplied", label: "Show Credits Applied On Invoice" },
+                                { key: "invoiceShowAmountDue", label: "Show Amount Due On Invoice" },
+                                { key: "invoiceAttachPdfToEmail", label: "Attach invoice PDF when sending payment receipt to email" },
+                            ].map((item) => (
+                                <div key={item.key}>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">{item.label}</Label>
+                                    <RadioGroup
+                                        value={invoiceForm[item.key as keyof typeof invoiceForm] ? "yes" : "no"}
+                                        onValueChange={(val) => setInvoiceForm({ ...invoiceForm, [item.key]: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id={`${item.key}-yes`} />
+                                            <Label htmlFor={`${item.key}-yes`} className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id={`${item.key}-no`} />
+                                            <Label htmlFor={`${item.key}-no`} className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            ))}
+                        </div>
+
+                        <hr className="border-gray-100" />
+
+                        {/* Number Format */}
+                        <div>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">Invoice Number Format</Label>
+                            <RadioGroup
+                                value={invoiceForm.invoiceNumberFormat}
+                                onValueChange={(val) => setInvoiceForm({ ...invoiceForm, invoiceNumberFormat: val as any })}
+                                className="flex gap-4"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="number_based" id="fmt-number" />
+                                    <Label htmlFor="fmt-number" className="font-normal">Number Based (000001)</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="year_based" id="fmt-year" />
+                                    <Label htmlFor="fmt-year" className="font-normal">Year Based (YYYY/000001)</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="mixed" id="fmt-mixed" />
+                                    <Label htmlFor="fmt-mixed" className="font-normal">000001-YY</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <Label className="mb-2 block">Predefined Client Note</Label>
+                                <Textarea
+                                    value={invoiceForm.invoiceDefaultClientNote}
+                                    onChange={e => setInvoiceForm({ ...invoiceForm, invoiceDefaultClientNote: e.target.value })}
+                                    className="h-24"
+                                    placeholder="Thank you for doing business with us..."
+                                />
+                            </div>
+                            <div>
+                                <Label className="mb-2 block">Predefined Terms & Conditions</Label>
+                                <Textarea
+                                    value={invoiceForm.invoiceDefaultTerms}
+                                    onChange={e => setInvoiceForm({ ...invoiceForm, invoiceDefaultTerms: e.target.value })}
+                                    className="h-24"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-4">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={() => saveSettings(invoiceForm as any)}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "finance-proposals") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Proposals</h2>
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+
+                        <div className="space-y-4">
+                            <div>
+                                <Label>Proposal Number Prefix</Label>
+                                <Input
+                                    value={proposalForm.proposalNumberPrefix}
+                                    onChange={e => setProposalForm({ ...proposalForm, proposalNumberPrefix: e.target.value })}
+                                    className="mt-1"
+                                />
+                            </div>
+                            <div>
+                                <Label className="flex items-center gap-2 mb-1"><HelpCircle className="h-4 w-4 text-gray-400" /> Proposal Due After (days)</Label>
+                                <Input
+                                    type="number"
+                                    value={proposalForm.proposalDueAfterDays}
+                                    onChange={e => setProposalForm({ ...proposalForm, proposalDueAfterDays: parseInt(e.target.value) || 0 })}
+                                    className="mt-1"
+                                />
+                            </div>
+                            <div>
+                                <Label>Pipeline limit per status</Label>
+                                <Input
+                                    type="number"
+                                    value={proposalForm.proposalPipelineLimit}
+                                    onChange={e => setProposalForm({ ...proposalForm, proposalPipelineLimit: parseInt(e.target.value) || 0 })}
+                                    className="mt-1"
+                                />
+                            </div>
+                        </div>
+
+                        <hr className="border-gray-100" />
+
+                        {/* Sort */}
+                        <div className="space-y-2">
+                            <Label>Default pipeline sort</Label>
+                            <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                                <Select
+                                    value={proposalForm.proposalPipelineSort}
+                                    onValueChange={(val) => setProposalForm({ ...proposalForm, proposalPipelineSort: val as any })}
+                                >
+                                    <SelectTrigger className="w-[200px]">
+                                        <SelectValue placeholder="Sort By" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="pipeline_order">Pipeline Order</SelectItem>
+                                        <SelectItem value="date">Date</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <RadioGroup
+                                    value={proposalForm.proposalPipelineSortOrder}
+                                    onValueChange={(val) => setProposalForm({ ...proposalForm, proposalPipelineSortOrder: val as any })}
+                                    className="flex gap-4"
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="asc" id="sort-asc" />
+                                        <Label htmlFor="sort-asc">Ascending</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="desc" id="sort-desc" />
+                                        <Label htmlFor="sort-desc">Descending</Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            {[
+                                { key: "proposalShowProjectName", label: "Show Project Name On Proposal" },
+                                { key: "proposalExcludeDrafts", label: "Exclude proposals with draft status from customers area" },
+                                { key: "proposalAutoConvert", label: "Auto convert the proposal to invoice after client accept (only customers related proposals)" },
+                                { key: "proposalAllowStaffViewAssigned", label: "Allow staff members to view proposals where they are assigned to" },
+                            ].map((item) => (
+                                <div key={item.key}>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">{item.label}</Label>
+                                    <RadioGroup
+                                        value={proposalForm[item.key as keyof typeof proposalForm] ? "yes" : "no"}
+                                        onValueChange={(val) => setProposalForm({ ...proposalForm, [item.key]: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id={`pf-${item.key}-yes`} />
+                                            <Label htmlFor={`pf-${item.key}-yes`} className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id={`pf-${item.key}-no`} />
+                                            <Label htmlFor={`pf-${item.key}-no`} className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            ))}
+                        </div>
+
+                        <hr className="border-gray-100" />
+
+                        <div>
+                            <Label className="mb-2 block">Proposal Info Format (PDF and HTML)</Label>
+                            <Textarea
+                                value={proposalForm.proposalInfoFormat}
+                                onChange={e => setProposalForm({ ...proposalForm, proposalInfoFormat: e.target.value })}
+                                className="h-32 font-mono text-sm"
+                            />
+                            <p className="mt-2 text-xs text-blue-600 break-all">
+                                {`{proposal_to}, {address}, {city}, {state}, {zip_code}, {country_code}, {country_name}, {phone}, {email}`}
+                            </p>
+                        </div>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveProposalSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeSection === "finance-estimates") {
+            return (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-semibold">Estimates</h2>
+                    <div className="bg-white p-6 rounded-lg border space-y-6">
+
+                        <div className="space-y-4">
+                            <div>
+                                <Label>Estimate Number Prefix</Label>
+                                <Input
+                                    value={estimateForm.estimateNumberPrefix}
+                                    onChange={e => setEstimateForm({ ...estimateForm, estimateNumberPrefix: e.target.value })}
+                                    className="mt-1"
+                                />
+                            </div>
+                            <div>
+                                <Label className="flex items-center gap-2 mb-1"><HelpCircle className="h-4 w-4 text-gray-400" /> Next estimate Number</Label>
+                                <Input
+                                    value={estimateForm.estimateNextNumber}
+                                    onChange={e => setEstimateForm({ ...estimateForm, estimateNextNumber: e.target.value })}
+                                    className="mt-1"
+                                />
+                            </div>
+                            <div>
+                                <Label className="flex items-center gap-2 mb-1"><HelpCircle className="h-4 w-4 text-gray-400" /> Estimate Due After (days)</Label>
+                                <Input
+                                    type="number"
+                                    value={estimateForm.estimateDueAfterDays}
+                                    onChange={e => setEstimateForm({ ...estimateForm, estimateDueAfterDays: parseInt(e.target.value) || 0 })}
+                                    className="mt-1"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            {[
+                                { key: "estimateDeleteOnlyLast", label: "Delete estimate allowed only on last invoice" }, // using last invoice label as per screenshot? "last invoice" text seems like copy paste error in design or actual text. I'll use text from screenshot "Delete estimate allowed only on last invoice"
+                                { key: "estimateDecrementOnDelete", label: "Decrement estimate number on delete" },
+                                { key: "estimateAllowStaffViewAssigned", label: "Allow staff members to view estimates where they are assigned to" },
+                                { key: "estimateRequireClientLogin", label: "Require client to be logged in to view estimate" },
+                                { key: "estimateShowSaleAgent", label: "Show Sale Agent On Estimate" },
+                                { key: "estimateShowProjectName", label: "Show Project Name On Estimate" },
+                                { key: "estimateAutoConvert", label: "Auto convert the estimate to invoice after client accept" },
+                                { key: "estimateExcludeDraftsFromClient", label: "Exclude estimates with draft status from customers area" },
+                            ].map((item) => (
+                                <div key={item.key}>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        {(item.key === "estimateNextNumber" || item.key === "estimateDueAfterDays" || item.key === "estimateDecrementOnDelete") && <HelpCircle className="h-4 w-4 text-gray-400" />}
+                                        {item.label}
+                                    </Label>
+                                    <RadioGroup
+                                        value={estimateForm[item.key as keyof typeof estimateForm] ? "yes" : "no"}
+                                        onValueChange={(val) => setEstimateForm({ ...estimateForm, [item.key]: val === "yes" })}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id={`ef-${item.key}-yes`} />
+                                            <Label htmlFor={`ef-${item.key}-yes`} className="font-normal">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id={`ef-${item.key}-no`} />
+                                            <Label htmlFor={`ef-${item.key}-no`} className="font-normal">No</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            ))}
+                        </div>
+
+                        <hr className="border-gray-100" />
+
+                        {/* Number Format */}
+                        <div>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">Estimate Number Format</Label>
+                            <RadioGroup
+                                value={estimateForm.estimateNumberFormat}
+                                onValueChange={(val) => setEstimateForm({ ...estimateForm, estimateNumberFormat: val as any })}
+                                className="flex gap-4 flex-wrap"
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="number_based" id="est-fmt-number" />
+                                    <Label htmlFor="est-fmt-number" className="font-normal">Number Based (000001)</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="year_based" id="est-fmt-year" />
+                                    <Label htmlFor="est-fmt-year" className="font-normal">Year Based (YYYY/000001)</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="mixed" id="est-fmt-mixed" />
+                                    <Label htmlFor="est-fmt-mixed" className="font-normal">000001-YY</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="date_based" id="est-fmt-date" />
+                                    <Label htmlFor="est-fmt-date" className="font-normal">000001/MM/YYYY</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <Label>Pipeline limit per status</Label>
+                                <Input
+                                    type="number"
+                                    value={estimateForm.estimatePipelineLimit}
+                                    onChange={e => setEstimateForm({ ...estimateForm, estimatePipelineLimit: parseInt(e.target.value) || 0 })}
+                                    className="mt-1"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Sort */}
+                        <div className="space-y-2">
+                            <Label>Default pipeline sort</Label>
+                            <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                                <Select
+                                    value={estimateForm.estimatePipelineSort}
+                                    onValueChange={(val) => setEstimateForm({ ...estimateForm, estimatePipelineSort: val as any })}
+                                >
+                                    <SelectTrigger className="w-[200px]">
+                                        <SelectValue placeholder="Sort By" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="pipeline_order">Pipeline Order</SelectItem>
+                                        <SelectItem value="date">Date</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <RadioGroup
+                                    value={estimateForm.estimatePipelineSortOrder}
+                                    onValueChange={(val) => setEstimateForm({ ...estimateForm, estimatePipelineSortOrder: val as any })}
+                                    className="flex gap-4"
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="asc" id="est-sort-asc" />
+                                        <Label htmlFor="est-sort-asc">Ascending</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="desc" id="est-sort-desc" />
+                                        <Label htmlFor="est-sort-desc">Descending</Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <Label className="mb-2 block">Predefined Client Note</Label>
+                                <Textarea
+                                    value={estimateForm.estimateDefaultClientNote}
+                                    onChange={e => setEstimateForm({ ...estimateForm, estimateDefaultClientNote: e.target.value })}
+                                    className="h-24"
+                                    placeholder="Thank you for doing business with WasilaDev"
+                                />
+                            </div>
+                            <div>
+                                <Label className="mb-2 block">Predefined Terms & Conditions</Label>
+                                <Textarea
+                                    value={estimateForm.estimateDefaultTerms}
+                                    onChange={e => setEstimateForm({ ...estimateForm, estimateDefaultTerms: e.target.value })}
+                                    className="h-24"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveEstimateSettings}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {saving ? "Saving..." : "Save Settings"}
                             </Button>
                         </div>
                     </div>

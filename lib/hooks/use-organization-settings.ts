@@ -37,6 +37,69 @@ export interface OrganizationSettings {
     updatedAt?: Date;
     createdAt?: Date;
 
+    // Invoice Settings
+    invoiceNumberPrefix?: string;
+    invoiceNextNumber?: string;
+    invoiceDueAfterDays?: number;
+    invoiceAllowStaffViewAssigned?: boolean;
+    invoiceRequireClientLogin?: boolean;
+    invoiceDeleteOnlyLast?: boolean;
+    invoiceDecrementOnDelete?: boolean;
+    invoiceExcludeDraftsFromClient?: boolean;
+    invoiceShowSaleAgent?: boolean;
+    invoiceShowProjectName?: boolean;
+    invoiceShowTotalPaid?: boolean;
+    invoiceShowCreditsApplied?: boolean;
+    invoiceShowAmountDue?: boolean;
+    invoiceAttachPdfToEmail?: boolean;
+    invoiceNumberFormat?: "number_based" | "year_based" | "mixed";
+    invoiceDefaultClientNote?: string;
+    invoiceDefaultTerms?: string;
+
+    // Finance General
+    decimalSeparator?: "." | ",";
+    thousandSeparator?: "," | "." | "none" | "space" | "'";
+    numberPadding?: number;
+    autoAssignSaleAgent?: boolean;
+    showTaxPerItem?: boolean;
+    removeTaxNameFromRow?: boolean;
+    excludeCurrencySymbol?: boolean;
+    defaultTax?: string;
+    removeDecimalsOnZero?: boolean;
+    amountToWordsEnable?: boolean;
+    amountToWordsLowercase?: boolean;
+
+    // Finance Proposals
+    proposalNumberPrefix?: string;
+    proposalDueAfterDays?: number;
+    proposalPipelineLimit?: number;
+    proposalPipelineSort?: "pipeline_order" | "date";
+    proposalPipelineSortOrder?: "asc" | "desc";
+    proposalShowProjectName?: boolean;
+    proposalExcludeDrafts?: boolean;
+    proposalAutoConvert?: boolean;
+    proposalAllowStaffViewAssigned?: boolean;
+    proposalInfoFormat?: string;
+
+    // Finance Estimates
+    estimateNumberPrefix?: string;
+    estimateNextNumber?: string;
+    estimateDueAfterDays?: number;
+    estimateDeleteOnlyLast?: boolean;
+    estimateDecrementOnDelete?: boolean;
+    estimateAllowStaffViewAssigned?: boolean;
+    estimateRequireClientLogin?: boolean;
+    estimateShowSaleAgent?: boolean;
+    estimateShowProjectName?: boolean;
+    estimateAutoConvert?: boolean;
+    estimateExcludeDraftsFromClient?: boolean;
+    estimateNumberFormat?: "number_based" | "year_based" | "mixed" | "date_based"; // Added date_based based on screenshot
+    estimatePipelineLimit?: number;
+    estimatePipelineSort?: "pipeline_order" | "date";
+    estimatePipelineSortOrder?: "asc" | "desc";
+    estimateDefaultClientNote?: string;
+    estimateDefaultTerms?: string;
+
     // Platform
     platformName?: string;
     maintenanceMode?: boolean;
@@ -54,6 +117,69 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     timezone: "Africa/Cairo",
     defaultLanguage: "en",
     subdomain: "", // Default empty
+
+    // Invoice Defaults
+    invoiceNumberPrefix: "INV-",
+    invoiceNextNumber: "000001",
+    invoiceDueAfterDays: 30,
+    invoiceAllowStaffViewAssigned: false,
+    invoiceRequireClientLogin: false,
+    invoiceDeleteOnlyLast: false,
+    invoiceDecrementOnDelete: false,
+    invoiceExcludeDraftsFromClient: false,
+    invoiceShowSaleAgent: false,
+    invoiceShowProjectName: false,
+    invoiceShowTotalPaid: false,
+    invoiceShowCreditsApplied: false,
+    invoiceShowAmountDue: false,
+    invoiceAttachPdfToEmail: false,
+    invoiceNumberFormat: "number_based",
+    invoiceDefaultClientNote: "",
+    invoiceDefaultTerms: "",
+
+    // Finance General Defaults
+    decimalSeparator: ".",
+    thousandSeparator: ",",
+    numberPadding: 6,
+    autoAssignSaleAgent: true,
+    showTaxPerItem: true,
+    removeTaxNameFromRow: false,
+    excludeCurrencySymbol: false,
+    defaultTax: "14.00%",
+    removeDecimalsOnZero: false,
+    amountToWordsEnable: true,
+    amountToWordsLowercase: false,
+
+    // Finance Proposals Defaults
+    proposalNumberPrefix: "PRO-",
+    proposalDueAfterDays: 7,
+    proposalPipelineLimit: 50,
+    proposalPipelineSort: "pipeline_order",
+    proposalPipelineSortOrder: "asc",
+    proposalShowProjectName: true,
+    proposalExcludeDrafts: true,
+    proposalAutoConvert: false,
+    proposalAllowStaffViewAssigned: true,
+    proposalInfoFormat: "{proposal_to}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{phone}\n{email}",
+
+    // Finance Estimates Defaults
+    estimateNumberPrefix: "EST-",
+    estimateNextNumber: "000001",
+    estimateDueAfterDays: 7,
+    estimateDeleteOnlyLast: false,
+    estimateDecrementOnDelete: false,
+    estimateAllowStaffViewAssigned: true,
+    estimateRequireClientLogin: false,
+    estimateShowSaleAgent: false,
+    estimateShowProjectName: false,
+    estimateAutoConvert: false,
+    estimateExcludeDraftsFromClient: false,
+    estimateNumberFormat: "number_based",
+    estimatePipelineLimit: 50,
+    estimatePipelineSort: "pipeline_order",
+    estimatePipelineSortOrder: "asc",
+    estimateDefaultClientNote: "",
+    estimateDefaultTerms: "",
 };
 
 export function useOrganizationSettings() {
