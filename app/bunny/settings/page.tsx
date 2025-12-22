@@ -14,15 +14,6 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 
-// Design system colors
-const colors = {
-    dark: "#352b38",
-    gray: "#7e808c",
-    purple: "#dad8f9",
-    light: "#f4f3f8",
-    accent: "#9b8cff",
-};
-
 interface PlatformSettings {
     platformName: string;
     supportEmail: string;
@@ -216,31 +207,28 @@ export default function SettingsPage() {
             fields: (
                 <div className="space-y-4">
                     <div>
-                        <Label style={{ color: colors.dark }}>Platform Name</Label>
+                        <Label className="text-gray-700 font-medium">Platform Name</Label>
                         <Input
                             value={settings.platformName}
                             onChange={(e) => setSettings(s => ({ ...s, platformName: e.target.value }))}
-                            className="mt-1.5"
-                            style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
+                            className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                         />
                     </div>
                     <div>
-                        <Label style={{ color: colors.dark }}>Website URL</Label>
+                        <Label className="text-gray-700 font-medium">Website URL</Label>
                         <Input
                             value={settings.websiteUrl}
                             onChange={(e) => setSettings(s => ({ ...s, websiteUrl: e.target.value }))}
-                            className="mt-1.5"
-                            style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
+                            className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                         />
                     </div>
                     <div>
-                        <Label style={{ color: colors.dark }}>Support Email</Label>
+                        <Label className="text-gray-700 font-medium">Support Email</Label>
                         <Input
                             type="email"
                             value={settings.supportEmail}
                             onChange={(e) => setSettings(s => ({ ...s, supportEmail: e.target.value }))}
-                            className="mt-1.5"
-                            style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
+                            className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                         />
                     </div>
                 </div>
@@ -252,30 +240,30 @@ export default function SettingsPage() {
             description: "Signup and security settings",
             fields: (
                 <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: colors.light }}>
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
                         <div>
-                            <Label style={{ color: colors.dark }}>Maintenance Mode</Label>
-                            <p className="text-sm" style={{ color: colors.gray }}>Disable public access temporarily</p>
+                            <Label className="text-gray-900 font-medium">Maintenance Mode</Label>
+                            <p className="text-sm text-gray-500">Disable public access temporarily</p>
                         </div>
                         <Switch
                             checked={settings.maintenanceMode}
                             onCheckedChange={(checked) => setSettings(s => ({ ...s, maintenanceMode: checked }))}
                         />
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: colors.light }}>
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
                         <div>
-                            <Label style={{ color: colors.dark }}>Allow New Signups</Label>
-                            <p className="text-sm" style={{ color: colors.gray }}>Enable tenant self-registration</p>
+                            <Label className="text-gray-900 font-medium">Allow New Signups</Label>
+                            <p className="text-sm text-gray-500">Enable tenant self-registration</p>
                         </div>
                         <Switch
                             checked={settings.allowSignups}
                             onCheckedChange={(checked) => setSettings(s => ({ ...s, allowSignups: checked }))}
                         />
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: colors.light }}>
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
                         <div>
-                            <Label style={{ color: colors.dark }}>Require Email Verification</Label>
-                            <p className="text-sm" style={{ color: colors.gray }}>Verify email before account activation</p>
+                            <Label className="text-gray-900 font-medium">Require Email Verification</Label>
+                            <p className="text-sm text-gray-500">Verify email before account activation</p>
                         </div>
                         <Switch
                             checked={settings.requireEmailVerification}
@@ -292,23 +280,21 @@ export default function SettingsPage() {
             fields: (
                 <div className="space-y-4">
                     <div>
-                        <Label style={{ color: colors.dark }}>Default Trial Days</Label>
+                        <Label className="text-gray-700 font-medium">Default Trial Days</Label>
                         <Input
                             type="number"
                             value={settings.defaultTrialDays}
                             onChange={(e) => setSettings(s => ({ ...s, defaultTrialDays: parseInt(e.target.value) || 14 }))}
-                            className="mt-1.5"
-                            style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
+                            className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                         />
                     </div>
                     <div>
-                        <Label style={{ color: colors.dark }}>Max Users per Tenant</Label>
+                        <Label className="text-gray-700 font-medium">Max Users per Tenant</Label>
                         <Input
                             type="number"
                             value={settings.maxUsersPerTenant}
                             onChange={(e) => setSettings(s => ({ ...s, maxUsersPerTenant: parseInt(e.target.value) || 50 }))}
-                            className="mt-1.5"
-                            style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
+                            className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                         />
                     </div>
                 </div>
@@ -322,75 +308,68 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label style={{ color: colors.dark }}>SMTP Host</Label>
+                            <Label className="text-gray-700 font-medium">SMTP Host</Label>
                             <Input
                                 value={settings.smtpSettings.host}
                                 onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, host: e.target.value } }))}
-                                className="mt-1.5"
+                                className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                                 placeholder="smtp.example.com"
-                                style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
                             />
                         </div>
                         <div>
-                            <Label style={{ color: colors.dark }}>Port</Label>
+                            <Label className="text-gray-700 font-medium">Port</Label>
                             <Input
                                 type="number"
                                 value={settings.smtpSettings.port}
                                 onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, port: parseInt(e.target.value) || 587 } }))}
-                                className="mt-1.5"
+                                className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                                 placeholder="587"
-                                style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
                             />
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label style={{ color: colors.dark }}>Username</Label>
+                            <Label className="text-gray-700 font-medium">Username</Label>
                             <Input
                                 value={settings.smtpSettings.username}
                                 onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, username: e.target.value } }))}
-                                className="mt-1.5"
-                                style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
+                                className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                             />
                         </div>
                         <div>
-                            <Label style={{ color: colors.dark }}>Password</Label>
+                            <Label className="text-gray-700 font-medium">Password</Label>
                             <Input
                                 type="password"
                                 value={settings.smtpSettings.password}
                                 onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, password: e.target.value } }))}
-                                className="mt-1.5"
-                                style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
+                                className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                             />
                         </div>
                     </div>
                     <div>
-                        <Label style={{ color: colors.dark }}>Encryption</Label>
+                        <Label className="text-gray-700 font-medium">Encryption</Label>
                         <Input
                             value={settings.smtpSettings.encryption}
                             onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, encryption: e.target.value as any } }))}
-                            className="mt-1.5"
+                            className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                             placeholder="ssl, tls, or none"
-                            style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label style={{ color: colors.dark }}>From Name</Label>
+                            <Label className="text-gray-700 font-medium">From Name</Label>
                             <Input
                                 value={settings.smtpSettings.fromName}
                                 onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, fromName: e.target.value } }))}
-                                className="mt-1.5"
-                                style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
+                                className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                             />
                         </div>
                         <div>
-                            <Label style={{ color: colors.dark }}>From Email</Label>
+                            <Label className="text-gray-700 font-medium">From Email</Label>
                             <Input
                                 value={settings.smtpSettings.fromEmail}
                                 onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, fromEmail: e.target.value } }))}
-                                className="mt-1.5"
-                                style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
+                                className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                             />
                         </div>
                     </div>
@@ -403,20 +382,20 @@ export default function SettingsPage() {
             description: "Alert and notification preferences",
             fields: (
                 <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: colors.light }}>
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
                         <div>
-                            <Label style={{ color: colors.dark }}>Email Notifications</Label>
-                            <p className="text-sm" style={{ color: colors.gray }}>Receive alerts via email</p>
+                            <Label className="text-gray-900 font-medium">Email Notifications</Label>
+                            <p className="text-sm text-gray-500">Receive alerts via email</p>
                         </div>
                         <Switch
                             checked={settings.emailNotifications}
                             onCheckedChange={(checked) => setSettings(s => ({ ...s, emailNotifications: checked }))}
                         />
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: colors.light }}>
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
                         <div>
-                            <Label style={{ color: colors.dark }}>Slack Notifications</Label>
-                            <p className="text-sm" style={{ color: colors.gray }}>Send alerts to Slack channel</p>
+                            <Label className="text-gray-900 font-medium">Slack Notifications</Label>
+                            <p className="text-sm text-gray-500">Send alerts to Slack channel</p>
                         </div>
                         <Switch
                             checked={settings.slackNotifications}
@@ -432,10 +411,10 @@ export default function SettingsPage() {
             description: "Customize platform appearance",
             fields: (
                 <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: colors.light }}>
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
                         <div>
-                            <Label style={{ color: colors.dark }}>Custom Branding</Label>
-                            <p className="text-sm" style={{ color: colors.gray }}>Enable white-label features</p>
+                            <Label className="text-gray-900 font-medium">Custom Branding</Label>
+                            <p className="text-sm text-gray-500">Enable white-label features</p>
                         </div>
                         <Switch
                             checked={settings.customBranding}
@@ -445,11 +424,11 @@ export default function SettingsPage() {
 
                     {/* Default Logo Upload Section */}
                     <div>
-                        <Label style={{ color: colors.dark }}>Platform Logo (Dark)</Label>
-                        <div className="mt-2 p-4 rounded-xl border-2 border-dashed" style={{ borderColor: colors.purple, backgroundColor: colors.light }}>
+                        <Label className="text-gray-700 font-medium">Platform Logo (Dark)</Label>
+                        <div className="mt-2 p-4 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 hover:bg-gray-50 transition-colors">
                             {settings.logoUrl ? (
                                 <div className="flex items-center gap-4">
-                                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-white flex items-center justify-center border" style={{ borderColor: colors.purple }}>
+                                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-white flex items-center justify-center border border-gray-200 p-2">
                                         <img
                                             src={settings.logoUrl}
                                             alt="Platform Logo"
@@ -457,15 +436,14 @@ export default function SettingsPage() {
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium" style={{ color: colors.dark }}>Logo uploaded</p>
-                                        <p className="text-xs" style={{ color: colors.gray }}>Click remove to change</p>
+                                        <p className="text-sm font-medium text-gray-900">Logo uploaded</p>
+                                        <p className="text-xs text-gray-500">Click remove to change</p>
                                     </div>
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleRemoveImage('logoUrl')}
-                                        className="rounded-xl"
-                                        style={{ borderColor: colors.purple, color: colors.dark }}
+                                        className="rounded-lg border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors"
                                     >
                                         <X className="h-4 w-4 mr-1" /> Remove
                                     </Button>
@@ -485,17 +463,17 @@ export default function SettingsPage() {
                                         className="cursor-pointer flex flex-col items-center gap-2"
                                     >
                                         {uploading['logoUrl'] ? (
-                                            <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.accent }} />
+                                            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                                         ) : (
-                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: colors.purple }}>
-                                                <Upload className="h-6 w-6" style={{ color: colors.dark }} />
+                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600">
+                                                <Upload className="h-6 w-6" />
                                             </div>
                                         )}
                                         <div>
-                                            <p className="text-sm font-medium" style={{ color: colors.dark }}>
+                                            <p className="text-sm font-medium text-gray-900">
                                                 {uploading['logoUrl'] ? "Uploading..." : "Click to upload logo"}
                                             </p>
-                                            <p className="text-xs" style={{ color: colors.gray }}>PNG, JPG up to 2MB</p>
+                                            <p className="text-xs text-gray-500">PNG, JPG up to 2MB</p>
                                         </div>
                                     </label>
                                 </div>
@@ -505,11 +483,11 @@ export default function SettingsPage() {
 
                     {/* Light Logo Upload Section */}
                     <div>
-                        <Label style={{ color: colors.dark }}>Platform Logo (Light - for dark backgrounds)</Label>
-                        <div className="mt-2 p-4 rounded-xl border-2 border-dashed" style={{ borderColor: colors.purple, backgroundColor: colors.dark }}>
+                        <Label className="text-gray-700 font-medium">Platform Logo (Light - for dark backgrounds)</Label>
+                        <div className="mt-2 p-4 rounded-xl border-2 border-dashed border-gray-200 bg-gray-900 hover:bg-gray-800 transition-colors">
                             {settings.logoLightUrl ? (
                                 <div className="flex items-center gap-4">
-                                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-900 flex items-center justify-center border border-gray-700">
+                                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-800 flex items-center justify-center border border-gray-700 p-2">
                                         <img
                                             src={settings.logoLightUrl}
                                             alt="Light Logo"
@@ -524,7 +502,7 @@ export default function SettingsPage() {
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleRemoveImage('logoLightUrl')}
-                                        className="rounded-xl border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800"
+                                        className="rounded-lg border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700 hover:border-gray-500 transition-colors"
                                     >
                                         <X className="h-4 w-4 mr-1" /> Remove
                                     </Button>
@@ -544,10 +522,10 @@ export default function SettingsPage() {
                                         className="cursor-pointer flex flex-col items-center gap-2"
                                     >
                                         {uploading['logoLightUrl'] ? (
-                                            <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.accent }} />
+                                            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
                                         ) : (
-                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gray-800">
-                                                <Upload className="h-6 w-6 text-gray-400" />
+                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gray-800 text-gray-400">
+                                                <Upload className="h-6 w-6" />
                                             </div>
                                         )}
                                         <div>
@@ -565,11 +543,11 @@ export default function SettingsPage() {
 
                     {/* Favicon Upload Section */}
                     <div>
-                        <Label style={{ color: colors.dark }}>Favicon</Label>
-                        <div className="mt-2 p-4 rounded-xl border-2 border-dashed" style={{ borderColor: colors.purple, backgroundColor: colors.light }}>
+                        <Label className="text-gray-700 font-medium">Favicon</Label>
+                        <div className="mt-2 p-4 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 hover:bg-gray-50 transition-colors">
                             {settings.faviconUrl ? (
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-white flex items-center justify-center border" style={{ borderColor: colors.purple }}>
+                                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-white flex items-center justify-center border border-gray-200 p-2">
                                         <img
                                             src={settings.faviconUrl}
                                             alt="Favicon"
@@ -577,15 +555,14 @@ export default function SettingsPage() {
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium" style={{ color: colors.dark }}>Favicon uploaded</p>
-                                        <p className="text-xs" style={{ color: colors.gray }}>Click remove to change</p>
+                                        <p className="text-sm font-medium text-gray-900">Favicon uploaded</p>
+                                        <p className="text-xs text-gray-500">Click remove to change</p>
                                     </div>
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleRemoveImage('faviconUrl')}
-                                        className="rounded-xl"
-                                        style={{ borderColor: colors.purple, color: colors.dark }}
+                                        className="rounded-lg border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors"
                                     >
                                         <X className="h-4 w-4 mr-1" /> Remove
                                     </Button>
@@ -605,17 +582,17 @@ export default function SettingsPage() {
                                         className="cursor-pointer flex flex-col items-center gap-2"
                                     >
                                         {uploading['faviconUrl'] ? (
-                                            <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.accent }} />
+                                            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                                         ) : (
-                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: colors.purple }}>
-                                                <Upload className="h-6 w-6" style={{ color: colors.dark }} />
+                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600">
+                                                <Upload className="h-6 w-6" />
                                             </div>
                                         )}
                                         <div>
-                                            <p className="text-sm font-medium" style={{ color: colors.dark }}>
+                                            <p className="text-sm font-medium text-gray-900">
                                                 {uploading['faviconUrl'] ? "Uploading..." : "Click to upload favicon"}
                                             </p>
-                                            <p className="text-xs" style={{ color: colors.gray }}>ICO, PNG up to 2MB</p>
+                                            <p className="text-xs text-gray-500">ICO, PNG up to 2MB</p>
                                         </div>
                                     </label>
                                 </div>
@@ -624,7 +601,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                        <Label style={{ color: colors.dark }}>Primary Color</Label>
+                        <Label className="text-gray-700 font-medium">Primary Color</Label>
                         <div className="flex items-center gap-2 mt-1.5">
                             <input
                                 type="color"
@@ -635,8 +612,7 @@ export default function SettingsPage() {
                             <Input
                                 value={settings.primaryColor}
                                 onChange={(e) => setSettings(s => ({ ...s, primaryColor: e.target.value }))}
-                                className="flex-1"
-                                style={{ backgroundColor: colors.light, borderColor: colors.purple, color: colors.dark }}
+                                className="flex-1 bg-white border-gray-200 focus:ring-blue-500"
                             />
                         </div>
                     </div>
@@ -648,7 +624,7 @@ export default function SettingsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.gray }} />
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
             </div>
         );
     }
@@ -657,15 +633,14 @@ export default function SettingsPage() {
         <div className="space-y-6">
             {/* Page Header */}
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold" style={{ color: colors.dark }}>Settings</h1>
-                    <p style={{ color: colors.gray }}>Configure platform-wide settings</p>
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+                    <p className="text-gray-500">Configure platform-wide settings</p>
                 </div>
                 <Button
                     onClick={saveSettings}
                     disabled={saving}
-                    className="rounded-xl"
-                    style={{ backgroundColor: colors.accent, color: "white" }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px] shadow-sm"
                 >
                     {saving ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
@@ -682,15 +657,17 @@ export default function SettingsPage() {
                 {settingSections.map((section) => {
                     const Icon = section.icon;
                     return (
-                        <Card key={section.title} className="border-0 shadow-sm rounded-2xl bg-white">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-lg" style={{ color: colors.dark }}>
-                                    <Icon className="h-5 w-5" style={{ color: colors.accent }} />
+                        <Card key={section.title} className="shadow-sm border-gray-200 rounded-xl bg-white overflow-hidden">
+                            <CardHeader className="border-b border-gray-100 pb-4 bg-gray-50/30">
+                                <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                                    <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                                        <Icon className="h-5 w-5" />
+                                    </div>
                                     {section.title}
                                 </CardTitle>
-                                <CardDescription style={{ color: colors.gray }}>{section.description}</CardDescription>
+                                <CardDescription className="text-gray-500 ml-11">{section.description}</CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-6">
                                 {section.fields}
                             </CardContent>
                         </Card>

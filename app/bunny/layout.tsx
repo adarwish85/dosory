@@ -33,11 +33,13 @@ import {
 
 // Design system colors
 const colors = {
-    dark: "#352b38",
-    gray: "#7e808c",
-    purple: "#dad8f9",
-    light: "#f4f3f8",
-    accent: "#9b8cff",
+    dark: "#111827", // Gray 900
+    gray: "#6B7280", // Gray 500
+    primary: "#0ea5e9", // Sky 500
+    primaryLight: "#e0f2fe", // Sky 100
+    background: "#f9fafb", // Gray 50
+    white: "#ffffff",
+    border: "#f3f4f6", // Gray 100
 };
 
 // Super Admin Login Form Component
@@ -83,9 +85,9 @@ function SuperAdminLoginForm({ currentUser }: { currentUser: User | null }) {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: colors.light, fontFamily: "var(--font-urbanist)" }}>
+        <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: colors.background, fontFamily: "var(--font-urbanist)" }}>
             <div className="w-full max-w-md">
-                <div className="rounded-3xl shadow-xl p-8 border" style={{ backgroundColor: "white", borderColor: colors.purple }}>
+                <div className="rounded-3xl shadow-xl p-8 border" style={{ backgroundColor: "white", borderColor: colors.border }}>
                     {/* Header */}
                     <div className="text-center mb-8">
                         <div className="flex justify-center mb-4">
@@ -97,7 +99,7 @@ function SuperAdminLoginForm({ currentUser }: { currentUser: User | null }) {
 
                     {/* Current User Notice */}
                     {currentUser && (
-                        <div className="rounded-xl p-4 mb-6" style={{ backgroundColor: colors.purple + "40", border: `1px solid ${colors.purple}` }}>
+                        <div className="rounded-xl p-4 mb-6 bg-blue-50 border border-blue-100">
                             <p className="text-sm mb-2" style={{ color: colors.dark }}>
                                 Currently signed in as: <strong>{currentUser.email}</strong>
                             </p>
@@ -108,8 +110,7 @@ function SuperAdminLoginForm({ currentUser }: { currentUser: User | null }) {
                                 variant="outline"
                                 size="sm"
                                 onClick={handleSwitchAccount}
-                                className="w-full"
-                                style={{ borderColor: colors.dark, color: colors.dark }}
+                                className="w-full text-gray-700 border-gray-300"
                             >
                                 Switch Account
                             </Button>
@@ -133,8 +134,7 @@ function SuperAdminLoginForm({ currentUser }: { currentUser: User | null }) {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="mt-1.5 rounded-xl border-2 focus:ring-2"
-                                style={{ borderColor: colors.purple, backgroundColor: colors.light }}
+                                className="mt-1.5 rounded-xl border-2 focus:ring-2 bg-gray-50 border-gray-200"
                             />
                         </div>
                         <div>
@@ -146,8 +146,7 @@ function SuperAdminLoginForm({ currentUser }: { currentUser: User | null }) {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    className="pr-10 rounded-xl border-2"
-                                    style={{ borderColor: colors.purple, backgroundColor: colors.light }}
+                                    className="pr-10 rounded-xl border-2 bg-gray-50 border-gray-200"
                                 />
                                 <button
                                     type="button"
@@ -185,7 +184,6 @@ function SuperAdminLoginForm({ currentUser }: { currentUser: User | null }) {
     );
 }
 
-
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { user, loading: authLoading } = useAuth();
     const { profile, loading: profileLoading } = useUserProfile();
@@ -194,10 +192,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     if (authLoading || profileLoading) {
         return (
-            <div className="flex h-screen items-center justify-center" style={{ backgroundColor: colors.light }}>
-                <div className="flex items-center gap-3" style={{ color: colors.dark }}>
+            <div className="flex h-screen items-center justify-center bg-gray-50">
+                <div className="flex items-center gap-3 text-gray-900">
                     <Loader2 className="h-6 w-6 animate-spin" />
-                    <span style={{ fontFamily: "var(--font-urbanist)" }}>Loading...</span>
+                    <span>Loading...</span>
                 </div>
             </div>
         );
@@ -213,130 +211,116 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
 
     const navItems = [
-        { href: "/bunny", label: "Overview", icon: LayoutDashboard },
-        { href: "/bunny/landing-builder", label: "Landing Builder", icon: Palette },
-        { href: "/bunny/tenants", label: "Tenants", icon: Building2 },
-        { href: "/bunny/subscriptions", label: "Subscriptions", icon: CreditCard },
+        { href: "/bunny", label: "Dashboard", icon: LayoutDashboard },
         { href: "/bunny/analytics", label: "Analytics", icon: BarChart3 },
+        { href: "/bunny/tenants", label: "Tenants", icon: Users }, // Changed icon to Users based on "Tenant Management"
+        { href: "/bunny/subscriptions", label: "Billing", icon: CreditCard }, // "Billing" often maps to Subscriptions/Revenue
         { href: "/bunny/settings", label: "Settings", icon: Settings },
     ];
 
     return (
         <TooltipProvider>
-            <div className="min-h-screen" style={{ backgroundColor: colors.light, fontFamily: "var(--font-urbanist)" }}>
-                {/* Icon Sidebar */}
-                <aside className="w-16 fixed left-0 top-0 bottom-0 flex flex-col items-center py-4 z-50" style={{ backgroundColor: colors.dark }}>
-                    {/* Logo */}
-                    <div className="mb-8">
-                        <PlatformLogo size="small" showText={false} />
+            <div className="min-h-screen bg-gray-50 font-sans">
+                {/* Full Sidebar */}
+                <aside className="w-64 fixed left-0 top-0 bottom-0 bg-white border-r border-gray-100 flex flex-col z-50">
+                    {/* Logo Area */}
+                    <div className="h-16 flex items-center px-6 border-b border-gray-50">
+                        <Link href="/bunny" className="flex items-center gap-2">
+                            {/* Placeholder for Logo - keeping PlatformLogo or using simple text */}
+                            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-bold">D</div>
+                            <span className="font-bold text-xl text-gray-900">Dosory</span>
+                        </Link>
                     </div>
 
                     {/* Nav Items */}
-                    <nav className="flex-1 flex flex-col items-center gap-2">
+                    <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                        <div className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            Platform
+                        </div>
                         {navItems.map((item) => {
                             const Icon = item.icon;
-                            const isActive = pathname === item.href;
+                            const isActive = pathname === item.href || (item.href !== "/bunny" && pathname.startsWith(item.href));
                             return (
-                                <Tooltip key={item.href}>
-                                    <TooltipTrigger asChild>
-                                        <Link
-                                            href={item.href}
-                                            className={cn(
-                                                "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                                                isActive
-                                                    ? "text-white"
-                                                    : "text-gray-400 hover:text-white"
-                                            )}
-                                            style={isActive ? { backgroundColor: colors.accent } : {}}
-                                        >
-                                            <Icon className="h-5 w-5" />
-                                        </Link>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right" className="rounded-lg" style={{ backgroundColor: colors.dark }}>
-                                        {item.label}
-                                    </TooltipContent>
-                                </Tooltip>
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={cn(
+                                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                                        isActive
+                                            ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600 rounded-none rounded-r-lg" // Simulating the active state style
+                                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                                    )}
+                                >
+                                    <Icon className={cn("h-5 w-5", isActive ? "text-blue-600" : "text-gray-400")} />
+                                    {item.label}
+                                </Link>
                             );
                         })}
                     </nav>
 
-                    {/* Bottom Status */}
-                    <div className="mt-auto">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="w-3 h-3 rounded-full bg-green-500 mx-auto mb-4"></div>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" style={{ backgroundColor: colors.dark }}>
-                                All systems operational
-                            </TooltipContent>
-                        </Tooltip>
+                    {/* Bottom Status / Logout */}
+                    <div className="p-4 border-t border-gray-50">
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-3 px-3 py-2 w-full text-sm font-medium text-gray-500 hover:text-red-600 transition-colors"
+                        >
+                            <LogOut className="h-5 w-5" />
+                            Log Out
+                        </button>
                     </div>
                 </aside>
 
-                {/* Top Header */}
-                <header className="ml-16 h-16 flex items-center justify-between px-6 sticky top-0 z-40" style={{ backgroundColor: colors.light }}>
-                    {/* Greeting */}
-                    <div>
-                        <h1 className="text-xl font-semibold" style={{ color: colors.dark }}>
-                            Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}
-                        </h1>
-                        <p className="text-sm" style={{ color: colors.gray }}>Super Admin Dashboard</p>
-                    </div>
-
-                    {/* Search */}
-                    <div className="flex-1 max-w-md mx-8">
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: colors.gray }} />
-                            <Input
-                                placeholder="Search"
-                                className="pl-11 h-11 rounded-xl border-2"
-                                style={{ backgroundColor: "white", borderColor: colors.purple, color: colors.dark }}
-                            />
+                {/* Main Content Wrapper */}
+                <div className="ml-64 min-h-screen flex flex-col">
+                    {/* Top Header */}
+                    <header className="h-16 bg-white border-b border-gray-100 sticky top-0 z-40 px-6 flex items-center justify-between">
+                        {/* Page Title / Breadcrumb Placeholder */}
+                        <div>
+                            {/* Dynamic title based on path could go here, for now static or simple */}
+                            <h1 className="text-lg font-semibold text-gray-800">
+                                {navItems.find(i => i.href === pathname)?.label || "Dashboard"}
+                            </h1>
                         </div>
-                    </div>
 
-                    {/* Right Side */}
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" className="rounded-xl w-10 h-10" style={{ backgroundColor: "white" }}>
-                            <Settings className="h-5 w-5" style={{ color: colors.gray }} />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="rounded-xl w-10 h-10 relative" style={{ backgroundColor: "white" }}>
-                            <Bell className="h-5 w-5" style={{ color: colors.gray }} />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </Button>
+                        {/* Right Actions */}
+                        <div className="flex items-center gap-4">
+                            <div className="relative hidden md:block w-64">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    placeholder="Search..."
+                                    className="pl-9 h-9 bg-gray-50 border-transparent focus:bg-white focus:border-blue-500 transition-all text-sm rounded-lg"
+                                />
+                            </div>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="flex items-center gap-2 rounded-xl h-10 px-3" style={{ backgroundColor: "white" }}>
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarImage src="/avatar.png" />
-                                        <AvatarFallback style={{ backgroundColor: colors.purple, color: colors.dark }}>SA</AvatarFallback>
-                                    </Avatar>
-                                    <ChevronDown className="h-4 w-4" style={{ color: colors.gray }} />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56 rounded-xl" style={{ backgroundColor: "white", borderColor: colors.purple }}>
-                                <DropdownMenuItem className="rounded-lg" style={{ color: colors.dark }}>
-                                    {user.email}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator style={{ backgroundColor: colors.purple }} />
-                                <DropdownMenuItem onClick={() => router.push("/dashboard")} className="rounded-lg cursor-pointer" style={{ color: colors.dark }}>
-                                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                                    Tenant Dashboard
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer text-red-500">
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                    Log out
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </header>
+                            <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700 relative">
+                                <Bell className="h-5 w-5" />
+                                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                            </Button>
 
-                {/* Main Content */}
-                <main className="ml-16 p-6">
-                    {children}
-                </main>
+                            <div className="h-8 w-px bg-gray-200 mx-1"></div>
+
+                            <div className="flex items-center gap-3">
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-sm font-medium text-gray-900 leading-none">{profile?.firstName || "Admin"} {profile?.lastName || "User"}</p>
+                                    <p className="text-xs text-gray-500 mt-1">Super Admin</p>
+                                </div>
+                                <Avatar className="h-9 w-9 border border-gray-200">
+                                    <AvatarImage src={profile?.photoURL || ""} />
+                                    <AvatarFallback className="bg-blue-100 text-blue-600 font-medium">
+                                        {(profile?.firstName?.[0] || user.email?.[0] || "A").toUpperCase()}
+                                    </AvatarFallback>
+                                </Avatar>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Page Content */}
+                    <main className="flex-1 p-6 overflow-x-hidden">
+                        <div className="max-w-7xl mx-auto">
+                            {children}
+                        </div>
+                    </main>
+                </div>
             </div>
         </TooltipProvider>
     );

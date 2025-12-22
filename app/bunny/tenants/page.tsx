@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription
 } from "@/components/ui/dialog";
@@ -23,7 +24,7 @@ import {
 import {
     Building2, Search, Plus, MoreHorizontal, Users, Calendar,
     CheckCircle, Clock, XCircle, Eye, LogIn, UserCheck, Edit, Trash2,
-    Loader2, Ban, Play, Mail, Phone, Globe, ChevronDown
+    Loader2, Ban, Play, Mail, Phone, Globe, ChevronDown, ArrowDown
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -366,35 +367,78 @@ export default function TenantsPage() {
     return (
         <div className="space-y-6">
             {/* Page Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4" >
                 <div>
-                    <h1 className="text-2xl font-bold text-[#352b38]">Tenants</h1>
-                    <p className="text-[#7e808c]">Manage all organizations on the platform</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Tenants</h1>
+                    <p className="text-gray-500">Manage, monitor, and support all organizations on the platform.</p>
                 </div>
-                <Button onClick={openCreateDialog} className="bg-purple-600 hover:bg-purple-700">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Tenant
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" className="bg-white">
+                        <ArrowDown className="h-4 w-4 mr-2" />
+                        Export
+                    </Button>
+                    <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Tenant
+                    </Button>
+                </div>
+            </div>
+
+            {/* Tenant Stats Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4" >
+                <Card className="border border-green-100 bg-green-50/50 shadow-sm">
+                    <CardContent className="p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-green-800">Active Tenants</p>
+                            <p className="text-2xl font-bold text-green-700 mt-1">{tenants.filter(t => t.status === 'active').length}</p>
+                        </div>
+                        <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="border border-orange-100 bg-orange-50/50 shadow-sm">
+                    <CardContent className="p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-orange-800">On Trial</p>
+                            <p className="text-2xl font-bold text-orange-700 mt-1">{tenants.filter(t => t.status === 'trial').length}</p>
+                        </div>
+                        <div className="h-10 w-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <Clock className="h-5 w-5 text-orange-600" />
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="border border-red-100 bg-red-50/50 shadow-sm">
+                    <CardContent className="p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-red-800">Suspended</p>
+                            <p className="text-2xl font-bold text-red-700 mt-1">{tenants.filter(t => t.status === 'suspended').length}</p>
+                        </div>
+                        <div className="h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center">
+                            <Ban className="h-5 w-5 text-red-600" />
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Filters */}
-            <Card className="border-0 shadow-sm rounded-2xl bg-white">
+            <Card className="border border-gray-100 shadow-sm bg-white" >
                 <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7e808c]" />
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="relative flex-1 w-full">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
-                                placeholder="Search tenants by name or email..."
+                                placeholder="Search by name, email, or domain..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
+                                className="pl-10 bg-white border-gray-200 text-gray-900 focus:ring-blue-500 focus:border-blue-500"
                             />
                         </div>
                         <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-[140px] bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]">
+                            <SelectTrigger className="w-full sm:w-[180px] bg-white border-gray-200 text-gray-700">
                                 <SelectValue placeholder="Status" />
                             </SelectTrigger>
-                            <SelectContent className="border-0 shadow-sm rounded-2xl bg-white">
+                            <SelectContent>
                                 <SelectItem value="all">All Status</SelectItem>
                                 <SelectItem value="active">Active</SelectItem>
                                 <SelectItem value="trial">Trial</SelectItem>
@@ -403,10 +447,10 @@ export default function TenantsPage() {
                             </SelectContent>
                         </Select>
                         <Select value={planFilter} onValueChange={setPlanFilter}>
-                            <SelectTrigger className="w-[140px] bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]">
+                            <SelectTrigger className="w-full sm:w-[180px] bg-white border-gray-200 text-gray-700">
                                 <SelectValue placeholder="Plan" />
                             </SelectTrigger>
-                            <SelectContent className="border-0 shadow-sm rounded-2xl bg-white">
+                            <SelectContent>
                                 <SelectItem value="all">All Plans</SelectItem>
                                 <SelectItem value="free">Free</SelectItem>
                                 <SelectItem value="starter">Starter</SelectItem>
@@ -416,193 +460,172 @@ export default function TenantsPage() {
                         </Select>
                     </div>
                 </CardContent>
-            </Card>
+            </Card >
 
             {/* Bulk Actions Bar */}
-            {selectedIds.size > 0 && (
-                <Card className="bg-purple-900/30 border-purple-500">
-                    <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[#352b38] font-medium">{selectedIds.size} tenant(s) selected</span>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-green-600 text-green-400 hover:bg-green-600 hover:text-[#352b38]"
-                                    onClick={() => { setBulkAction("activate"); setBulkSuspendDialogOpen(true); }}
-                                >
-                                    <Play className="h-4 w-4 mr-1" />
-                                    Activate
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-yellow-600 text-yellow-400 hover:bg-yellow-600 hover:text-[#352b38]"
-                                    onClick={() => { setBulkAction("suspend"); setBulkSuspendDialogOpen(true); }}
-                                >
-                                    <Ban className="h-4 w-4 mr-1" />
-                                    Suspend
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-red-600 text-red-400 hover:bg-red-600 hover:text-[#352b38]"
-                                    onClick={() => setBulkDeleteDialogOpen(true)}
-                                >
-                                    <Trash2 className="h-4 w-4 mr-1" />
-                                    Delete
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-[#7e808c]"
-                                    onClick={() => setSelectedIds(new Set())}
-                                >
-                                    Clear Selection
-                                </Button>
-                            </div>
+            {
+                selectedIds.size > 0 && (
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{selectedIds.size}</span>
+                            <span className="text-sm font-medium text-blue-900">Selected</span>
                         </div>
-                    </CardContent>
-                </Card>
-            )}
+                        <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                className="bg-white text-green-600 border border-green-200 hover:bg-green-50 shadow-sm"
+                                onClick={() => { setBulkAction("activate"); setBulkSuspendDialogOpen(true); }}
+                            >
+                                <Play className="h-3 w-3 mr-1.5" />
+                                Activate
+                            </Button>
+                            <Button
+                                size="sm"
+                                className="bg-white text-orange-600 border border-orange-200 hover:bg-orange-50 shadow-sm"
+                                onClick={() => { setBulkAction("suspend"); setBulkSuspendDialogOpen(true); }}
+                            >
+                                <Ban className="h-3 w-3 mr-1.5" />
+                                Suspend
+                            </Button>
+                            <Button
+                                size="sm"
+                                className="bg-white text-red-600 border border-red-200 hover:bg-red-50 shadow-sm"
+                                onClick={() => setBulkDeleteDialogOpen(true)}
+                            >
+                                <Trash2 className="h-3 w-3 mr-1.5" />
+                                Delete
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-gray-500 hover:text-gray-700"
+                                onClick={() => setSelectedIds(new Set())}
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* Tenants Table */}
-            <Card className="border-0 shadow-sm rounded-2xl bg-white">
-                <CardContent className="p-0">
+            <Card className="border border-gray-100 shadow-sm bg-white overflow-hidden">
+                <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-[#f4f3f8]">
-                            <tr className="border-b border-[#dad8f9]">
-                                <th className="w-12 p-4">
+                        <thead className="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th className="w-12 py-3 px-4">
                                     <Checkbox
                                         checked={isAllSelected}
                                         onCheckedChange={(checked) => selectAll(!!checked)}
+                                        className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                                     />
                                 </th>
-                                <th className="text-left p-4 text-[#7e808c] font-medium text-sm">Organization</th>
-                                <th className="text-left p-4 text-[#7e808c] font-medium text-sm">Plan</th>
-                                <th className="text-left p-4 text-[#7e808c] font-medium text-sm">Status</th>
-                                <th className="text-left p-4 text-[#7e808c] font-medium text-sm">Users</th>
-                                <th className="text-left p-4 text-[#7e808c] font-medium text-sm">Created</th>
-                                <th className="text-right p-4 text-[#7e808c] font-medium text-sm">Actions</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tenant</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Users</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
+                                <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-gray-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} className="p-8 text-center text-[#7e808c]">
-                                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+                                    <td colSpan={7} className="p-12 text-center text-gray-500">
+                                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
                                         Loading tenants...
                                     </td>
                                 </tr>
                             ) : filteredTenants.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="p-8 text-center text-[#7e808c]">
-                                        <Building2 className="h-12 w-12 mx-auto mb-3 text-gray-600" />
-                                        <p>No tenants found</p>
-                                        <p className="text-sm mt-1">Click "Add Tenant" to create one</p>
+                                    <td colSpan={7} className="p-12 text-center text-gray-500">
+                                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <Search className="h-6 w-6 text-gray-400" />
+                                        </div>
+                                        <p className="font-medium text-gray-900">No tenants found</p>
+                                        <p className="text-sm mt-1">Try adjusting your filters or search query.</p>
                                     </td>
                                 </tr>
                             ) : (
                                 filteredTenants.map((tenant) => (
-                                    <tr key={tenant.id} className={`border-b border-[#dad8f9] hover:bg-[#f4f3f8] ${selectedIds.has(tenant.id) ? 'bg-purple-900/20' : ''}`}>
-                                        <td className="w-12 p-4">
+                                    <tr key={tenant.id} className={`group hover:bg-gray-50/80 transition-colors ${selectedIds.has(tenant.id) ? 'bg-blue-50/30' : ''}`}>
+                                        <td className="py-4 px-4">
                                             <Checkbox
                                                 checked={selectedIds.has(tenant.id)}
                                                 onCheckedChange={() => toggleSelection(tenant.id)}
+                                                className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                                             />
                                         </td>
-                                        <td className="p-4">
+                                        <td className="py-4 px-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
-                                                    <Building2 className="h-5 w-5 text-[#352b38]" />
+                                                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold text-lg shadow-sm">
+                                                    {(tenant.name?.[0] || "T").toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="text-[#352b38] font-medium">{tenant.name || "Unnamed"}</p>
-                                                    <p className="text-[#7e808c] text-sm">{tenant.email}</p>
+                                                    <p className="font-semibold text-gray-900 max-w-[200px] truncate" title={tenant.name}>{tenant.name || "Unnamed"}</p>
+                                                    <p className="text-xs text-gray-500 max-w-[200px] truncate" title={tenant.email}>{tenant.email}</p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadge(tenant.plan)}`}>
-                                                {tenant.plan?.charAt(0).toUpperCase() + tenant.plan?.slice(1) || "Free"}
+                                        <td className="py-4 px-4">
+                                            <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium border",
+                                                tenant.plan === 'enterprise' ? "bg-purple-50 text-purple-700 border-purple-100" :
+                                                    tenant.plan === 'professional' ? "bg-blue-50 text-blue-700 border-blue-100" :
+                                                        tenant.plan === 'starter' ? "bg-gray-100 text-gray-700 border-gray-200" :
+                                                            "bg-gray-50 text-gray-600 border-gray-100"
+                                            )}>
+                                                {tenant.plan ? tenant.plan.charAt(0).toUpperCase() + tenant.plan.slice(1) : "Free"}
                                             </span>
                                         </td>
-                                        <td className="p-4">
+                                        <td className="py-4 px-4">
                                             <div className="flex items-center gap-2">
-                                                {getStatusIcon(tenant.status)}
-                                                <span className="text-[#352b38] capitalize">{tenant.status || "active"}</span>
+                                                {tenant.status === 'active' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                                                {tenant.status === 'trial' && <Clock className="h-4 w-4 text-orange-500" />}
+                                                {tenant.status === 'suspended' && <Ban className="h-4 w-4 text-red-500" />}
+                                                {(tenant.status !== 'active' && tenant.status !== 'trial' && tenant.status !== 'suspended') && <div className="h-2 w-2 rounded-full bg-gray-300" />}
+                                                <span className="text-sm text-gray-700 capitalize">{tenant.status || "Unknown"}</span>
                                             </div>
                                         </td>
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-2 text-[#352b38]">
-                                                <Users className="h-4 w-4 text-gray-500" />
-                                                {tenant.userCount || 0}
+                                        <td className="py-4 px-4">
+                                            <div className="flex items-center gap-1.5 text-gray-600">
+                                                <Users className="h-4 w-4 text-gray-400" />
+                                                <span className="text-sm font-medium">{tenant.userCount || 0}</span>
                                             </div>
                                         </td>
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-2 text-[#7e808c] text-sm">
-                                                <Calendar className="h-4 w-4" />
-                                                {new Date(tenant.createdAt).toLocaleDateString()}
+                                        <td className="py-4 px-4">
+                                            <div className="text-sm text-gray-500">
+                                                {new Date(tenant.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                             </div>
                                         </td>
-                                        <td className="p-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
+                                        <td className="py-4 px-4 text-right">
+                                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Button
                                                     size="sm"
-                                                    variant="outline"
-                                                    className="border-green-600 text-green-400 hover:bg-green-600 hover:text-[#352b38]"
+                                                    variant="ghost"
+                                                    className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                                    title="Sign In As"
                                                     onClick={() => handleSignInAsTenant(tenant.id, tenant.name || "Tenant")}
                                                 >
-                                                    <LogIn className="h-4 w-4 mr-1" />
-                                                    Sign In As
+                                                    <LogIn className="h-4 w-4" />
                                                 </Button>
 
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="text-[#7e808c]">
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900">
                                                             <MoreHorizontal className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="border-0 shadow-sm rounded-2xl bg-white">
-                                                        <DropdownMenuItem
-                                                            className="text-[#352b38]"
-                                                            onClick={() => openViewDialog(tenant)}
-                                                        >
-                                                            <Eye className="mr-2 h-4 w-4" />
-                                                            View Details
+                                                    <DropdownMenuContent align="end" className="w-48">
+                                                        <DropdownMenuItem onClick={() => openViewDialog(tenant)}>
+                                                            <Eye className="mr-2 h-4 w-4" /> View Details
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            className="text-[#352b38]"
-                                                            onClick={() => openEditDialog(tenant)}
-                                                        >
-                                                            <Edit className="mr-2 h-4 w-4" />
-                                                            Edit Tenant
+                                                        <DropdownMenuItem onClick={() => openEditDialog(tenant)}>
+                                                            <Edit className="mr-2 h-4 w-4" /> Edit Tenant
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuSeparator className="bg-[#dad8f9]" />
-                                                        <DropdownMenuItem
-                                                            className="text-green-400"
-                                                            onClick={() => handleSignInAsTenant(tenant.id, tenant.name || "Tenant")}
-                                                        >
-                                                            <UserCheck className="mr-2 h-4 w-4" />
-                                                            Sign In As Tenant
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator className="bg-[#dad8f9]" />
-                                                        <DropdownMenuItem
-                                                            className={tenant.status === "suspended" ? "text-green-400" : "text-yellow-400"}
-                                                            onClick={() => openSuspendDialog(tenant)}
-                                                        >
-                                                            {tenant.status === "suspended" ? (
-                                                                <><Play className="mr-2 h-4 w-4" />Activate</>
-                                                            ) : (
-                                                                <><Ban className="mr-2 h-4 w-4" />Suspend</>
-                                                            )}
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            className="text-red-400"
-                                                            onClick={() => openDeleteDialog(tenant)}
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Delete Tenant
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem className="text-red-600" onClick={() => openDeleteDialog(tenant)}>
+                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete Access
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -613,7 +636,7 @@ export default function TenantsPage() {
                             )}
                         </tbody>
                     </table>
-                </CardContent>
+                </div>
             </Card>
 
             {/* Create Tenant Dialog */}
@@ -1093,6 +1116,6 @@ export default function TenantsPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div>
+        </div >
     );
 }

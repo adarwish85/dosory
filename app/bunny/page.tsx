@@ -2,191 +2,332 @@
 
 import { useAdminStats } from "@/lib/hooks/use-admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, CreditCard, DollarSign, TrendingUp, Activity, MoreHorizontal } from "lucide-react";
-
-// Design system colors
-const colors = {
-    dark: "#352b38",
-    gray: "#7e808c",
-    purple: "#dad8f9",
-    light: "#f4f3f8",
-    accent: "#9b8cff",
-};
+import { Button } from "@/components/ui/button";
+import {
+    Building2, Users, CreditCard, DollarSign,
+    MoreHorizontal, ArrowUp, ArrowDown, Activity,
+    CheckCircle2, AlertTriangle, Clock, ExternalLink
+} from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function AdminDashboard() {
     const { stats, loading } = useAdminStats();
 
-    const statCards = [
+    // Mock data for UI development - replace with real stats where available
+    const cards = [
         {
-            title: "Total applicants",
-            value: `+${stats.totalTenants}`,
+            title: "Total Tenants",
+            value: stats.totalTenants.toLocaleString(),
+            change: "+12%",
+            trend: "up",
             icon: Building2,
-            color: "#d4c3e8",
-            iconColor: colors.dark,
-            change: "+24%",
+            iconBg: "bg-blue-50",
+            iconColor: "text-blue-600",
         },
         {
-            title: "Interviewed",
-            value: `+${stats.activeSubscriptions}`,
-            icon: CreditCard,
-            color: "#c8e6d4",
-            iconColor: "#2d5a3d",
-            change: "+14%",
+            title: "Active Trials",
+            value: stats.trialTenants.toString(),
+            change: "+5%",
+            trend: "up",
+            icon: Clock,
+            iconBg: "bg-orange-50",
+            iconColor: "text-orange-600",
         },
         {
-            title: "Job offers",
-            value: `+${stats.totalUsers}`,
-            icon: Users,
-            color: colors.purple,
-            iconColor: colors.dark,
-            change: "+30%",
+            title: "MRR",
+            value: "$425,000", // Placeholder until MRR is calculated
+            change: "+3.2%",
+            trend: "up",
+            icon: DollarSign,
+            iconBg: "bg-green-50",
+            iconColor: "text-green-600",
         },
+        {
+            title: "Enterprise Conversions",
+            value: "12",
+            subtext: "Last 30d",
+            icon: CheckCircle2,
+            iconBg: "bg-purple-50",
+            iconColor: "text-purple-600",
+        },
+    ];
+
+    const recentTenants = [
+        { name: "Acme Corp", plan: "Enterprise", revenue: "$24,000/yr", status: "Active", joined: "Oct 24, 2023", logo: "A", color: "bg-blue-100 text-blue-700" },
+        { name: "Globex Inc", plan: "Trial", revenue: "-", status: "Trial", joined: "Oct 22, 2023", logo: "G", color: "bg-orange-100 text-orange-700" },
+        { name: "Stark Ind", plan: "Pro Plan", revenue: "$4,800/yr", status: "Active", joined: "Oct 20, 2023", logo: "S", color: "bg-purple-100 text-purple-700" },
+        { name: "Oscorp", plan: "Expired", revenue: "$0", status: "Churned", joined: "Sep 15, 2023", logo: "O", color: "bg-red-100 text-red-700" },
     ];
 
     return (
         <div className="space-y-6">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {statCards.map((card) => {
+            {/* Header Area */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Admin Overview</h2>
+                    <p className="text-gray-500">Track growth metrics and manage tenant subscriptions.</p>
+                </div>
+                <div className="flex items-center bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
+                    <button className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">Last 7 Days</button>
+                    <button className="px-3 py-1.5 text-sm font-medium bg-gray-100 text-gray-900 rounded-md shadow-sm">Last 30 Days</button>
+                    <button className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">Custom</button>
+                </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {cards.map((card, i) => {
                     const Icon = card.icon;
                     return (
-                        <Card key={card.title} className="border-0 shadow-sm rounded-2xl" style={{ backgroundColor: card.color }}>
+                        <Card key={i} className="border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                             <CardContent className="p-6">
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium" style={{ color: card.iconColor }}>{card.title}</p>
-                                        <p className="text-4xl font-bold mt-2" style={{ color: card.iconColor }}>
-                                            {loading ? "..." : card.value}
-                                        </p>
-                                        <p className="text-xs mt-2 flex items-center gap-1" style={{ color: card.iconColor }}>
-                                            <TrendingUp className="h-3 w-3" />
-                                            {card.change} vs last week
-                                        </p>
+                                <div className="flex justify-between items-start">
+                                    <div className={cn("p-2 rounded-lg", card.iconBg)}>
+                                        <Icon className={cn("h-5 w-5", card.iconColor)} />
                                     </div>
-                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.5)" }}>
-                                        <Icon className="h-5 w-5" style={{ color: card.iconColor }} />
-                                    </div>
+                                    {card.change && (
+                                        <div className={cn(
+                                            "flex items-center text-xs font-medium px-2 py-1 rounded-full",
+                                            card.trend === "up" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                                        )}>
+                                            {card.trend === "up" ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
+                                            {card.change}
+                                        </div>
+                                    )}
+                                    {card.subtext && (
+                                        <span className="text-xs text-gray-400 font-medium">{card.subtext}</span>
+                                    )}
                                 </div>
-                                {/* Mini bar chart placeholder */}
-                                <div className="flex items-end gap-1 mt-4 h-12">
-                                    {[40, 65, 45, 70, 55, 80, 60, 75].map((h, i) => (
-                                        <div
-                                            key={i}
-                                            className="flex-1 rounded-t-sm opacity-60"
-                                            style={{
-                                                height: `${h}%`,
-                                                backgroundColor: card.iconColor,
-                                            }}
-                                        />
-                                    ))}
+                                <div className="mt-4">
+                                    <p className="text-sm font-medium text-gray-500">{card.title}</p>
+                                    <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                                        {loading ? "..." : card.value}
+                                    </h3>
                                 </div>
                             </CardContent>
                         </Card>
                     );
                 })}
-
-                {/* Platform Insight Card */}
-                <Card className="row-span-2 border-0 shadow-sm rounded-2xl" style={{ backgroundColor: "white" }}>
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-medium" style={{ color: colors.dark }}>Platform Insight</CardTitle>
-                            <MoreHorizontal className="h-4 w-4" style={{ color: colors.gray }} />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {[
-                                { name: "Active Tenants", value: stats.activeTenants, percent: 60, color: "#352b38" },
-                                { name: "Trial Users", value: stats.trialTenants, percent: 25, color: colors.purple },
-                                { name: "Enterprise", value: 0, percent: 10, color: "#7e808c" },
-                                { name: "Starter", value: 0, percent: 5, color: "#d4c3e8" },
-                            ].map((item) => (
-                                <div key={item.name} className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: item.color + "20" }}>
-                                        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <span className="text-sm" style={{ color: colors.dark }}>{item.name}</span>
-                                    </div>
-                                    <div className="w-24 h-2 rounded-full" style={{ backgroundColor: colors.light }}>
-                                        <div
-                                            className="h-full rounded-full"
-                                            style={{ width: `${item.percent}%`, backgroundColor: item.color }}
-                                        />
-                                    </div>
-                                    <span className="text-sm font-medium w-12 text-right" style={{ color: colors.dark }}>
-                                        {loading ? "..." : item.value}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
 
-            {/* Quick Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-0 shadow-sm rounded-2xl" style={{ backgroundColor: "white" }}>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium" style={{ color: colors.dark }}>Tenant Breakdown</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                                <span style={{ color: colors.gray }}>Active</span>
-                                <span className="font-medium" style={{ color: "#22c55e" }}>{loading ? "..." : stats.activeTenants}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Chart Column (2/3 width) */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Subscription Growth Chart */}
+                    <Card className="border border-gray-100 shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <div>
+                                <CardTitle className="text-base font-bold text-gray-900">Subscription Growth</CardTitle>
+                                <p className="text-sm text-gray-500">Revenue trend over the last 6 months</p>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span style={{ color: colors.gray }}>Trial</span>
-                                <span className="font-medium" style={{ color: "#eab308" }}>{loading ? "..." : stats.trialTenants}</span>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="h-[250px] w-full flex items-end justify-between px-4 pt-10 pb-2 gap-4">
+                                {/* CSS-only Bar Chart */}
+                                {["MAY", "JUN", "JUL", "AUG", "SEP", "OCT"].map((month, i) => {
+                                    const heights = ["40%", "55%", "45%", "65%", "80%", "95%"];
+                                    return (
+                                        <div key={month} className="flex flex-col items-center gap-2 flex-1 group cursor-pointer">
+                                            <div
+                                                className="w-full max-w-[40px] bg-blue-100 hover:bg-blue-600 rounded-t-sm transition-all relative group-hover:shadow-lg"
+                                                style={{ height: heights[i] }}
+                                            >
+                                                {/* Tooltip on hover */}
+                                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                                    ${(parseInt(heights[i]) * 1000).toLocaleString()}
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-medium text-gray-400">{month}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span style={{ color: colors.gray }}>Total</span>
-                                <span className="font-medium" style={{ color: colors.dark }}>{loading ? "..." : stats.totalTenants}</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
 
-                <Card className="border-0 shadow-sm rounded-2xl" style={{ backgroundColor: "white" }}>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium" style={{ color: colors.dark }}>Recent Activity</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-center py-4">
-                            <Activity className="h-8 w-8 mx-auto mb-2" style={{ color: colors.gray }} />
-                            <p className="text-sm" style={{ color: colors.gray }}>Activity will appear here</p>
-                        </div>
-                    </CardContent>
-                </Card>
+                    {/* Recent Tenant Activity */}
+                    <Card className="border border-gray-100 shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-base font-bold text-gray-900">Recent Tenant Activity</CardTitle>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" className="h-8 text-xs">Filter</Button>
+                                <Button variant="outline" size="sm" className="h-8 text-xs">Export</Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b border-gray-100">
+                                        <tr>
+                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">Company</th>
+                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">Plan Status</th>
+                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">Revenue</th>
+                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">Joined</th>
+                                            <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {recentTenants.map((tenant, i) => (
+                                            <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="py-4 px-6">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg", tenant.color)}>
+                                                            {tenant.logo}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-semibold text-gray-900 text-sm">{tenant.name}</p>
+                                                            <p className="text-xs text-gray-500">tech.com</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className={cn(
+                                                        "px-2.5 py-1 rounded-full text-xs font-medium border",
+                                                        tenant.status === "Active" ? "bg-green-50 text-green-700 border-green-100" :
+                                                            tenant.status === "Trial" ? "bg-orange-50 text-orange-700 border-orange-100" :
+                                                                "bg-gray-100 text-gray-700 border-gray-200"
+                                                    )}>
+                                                        {tenant.plan}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-6 text-sm text-gray-600 font-medium">
+                                                    {tenant.revenue}
+                                                </td>
+                                                <td className="py-4 px-6 text-sm text-gray-500">
+                                                    {tenant.joined}
+                                                </td>
+                                                <td className="py-4 px-6 text-right">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-blue-600">
+                                                        <ExternalLink className="h-4 w-4" />
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="p-4 border-t border-gray-100 text-center">
+                                <Link href="/bunny/tenants" className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1">
+                                    View all tenants <ExternalLink className="h-3 w-3" />
+                                </Link>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
-                <Card className="border-0 shadow-sm rounded-2xl" style={{ backgroundColor: "white" }}>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium" style={{ color: colors.dark }}>System Health</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                                <span style={{ color: colors.gray }}>API</span>
-                                <span className="text-sm flex items-center gap-1" style={{ color: "#22c55e" }}>
-                                    <Activity className="h-3 w-3" /> Healthy
-                                </span>
+                {/* Right Column (1/3 width) */}
+                <div className="space-y-6">
+                    {/* Plan Distribution */}
+                    <Card className="border border-gray-100 shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-base font-bold text-gray-900">Plan Distribution</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center justify-center py-4 relative">
+                                {/* Donut Chart Simulation with CSS Conic Gradient */}
+                                <div
+                                    className="w-48 h-48 rounded-full"
+                                    style={{
+                                        background: `conic-gradient(
+                                            #0ea5e9 0% 55%, 
+                                            #eab308 55% 75%, 
+                                            #e5e7eb 75% 100%
+                                        )`
+                                    }}
+                                >
+                                    <div className="w-32 h-32 bg-white rounded-full absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center justify-center shadow-inner">
+                                        <span className="text-3xl font-bold text-gray-900">1.2k</span>
+                                        <span className="text-xs text-gray-500 uppercase tracking-wide">Tenants</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span style={{ color: colors.gray }}>Database</span>
-                                <span className="text-sm flex items-center gap-1" style={{ color: "#22c55e" }}>
-                                    <Activity className="h-3 w-3" /> Healthy
-                                </span>
+                            <div className="space-y-3 mt-4">
+                                <div className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                        <span className="text-gray-600">Enterprise</span>
+                                    </div>
+                                    <span className="font-bold text-gray-900">55%</span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                        <span className="text-gray-600">Pro Plan</span>
+                                    </div>
+                                    <span className="font-bold text-gray-900">20%</span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-gray-200"></div>
+                                        <span className="text-gray-600">Starter</span>
+                                    </div>
+                                    <span className="font-bold text-gray-900">25%</span>
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span style={{ color: colors.gray }}>Storage</span>
-                                <span className="text-sm flex items-center gap-1" style={{ color: "#22c55e" }}>
-                                    <Activity className="h-3 w-3" /> Healthy
-                                </span>
+                        </CardContent>
+                    </Card>
+
+                    {/* Action Center */}
+                    <Card className="border border-gray-100 shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-base font-bold text-gray-900">Action Center</CardTitle>
+                            <div className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">3</div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="bg-red-50 border border-red-100 rounded-lg p-3">
+                                <div className="flex gap-3">
+                                    <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-red-900">License Expiry Risk</p>
+                                        <p className="text-xs text-red-700 mt-1">3 Enterprise licenses expiring in &lt; 48 hours.</p>
+                                        <button className="text-xs font-medium text-red-800 hover:underline mt-2">View details</button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                                <div className="flex gap-3">
+                                    <Users className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-blue-900">New Support Tickets</p>
+                                        <p className="text-xs text-blue-700 mt-1">5 high-priority tickets from Enterprise clients.</p>
+                                        <button className="text-xs font-medium text-blue-800 hover:underline mt-2">Open Helpdesk</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* System Health */}
+                    <Card className="border border-gray-100 shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base font-bold text-gray-900">System Health</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <div className="flex justify-between text-sm mb-1">
+                                    <span className="text-gray-600">API Usage</span>
+                                    <span className="font-bold text-gray-900">84%</span>
+                                </div>
+                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div className="h-full bg-orange-500 w-[84%] rounded-full"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between text-sm mb-1">
+                                    <span className="text-gray-600">Database Load</span>
+                                    <span className="font-bold text-gray-900">42%</span>
+                                </div>
+                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div className="h-full bg-green-500 w-[42%] rounded-full"></div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );

@@ -315,25 +315,34 @@ export default function SubscriptionsPage() {
     return (
         <div className="space-y-6">
             {/* Page Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-[#352b38]">Subscriptions</h1>
-                    <p className="text-[#7e808c]">Manage subscription plans and tenant billing</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Subscriptions</h1>
+                    <p className="text-gray-500">Manage subscription plans, billing cycles, and trial settings.</p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="bg-white border border-[#dad8f9]">
-                    <TabsTrigger value="plans" className="data-[state=active]:bg-purple-600">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <TabsList className="bg-white border border-gray-200 p-1 h-auto rounded-lg shadow-sm">
+                    <TabsTrigger
+                        value="plans"
+                        className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-100 border border-transparent py-2 px-4 rounded-md transition-all"
+                    >
                         <Package className="mr-2 h-4 w-4" />
                         Subscription Plans
                     </TabsTrigger>
-                    <TabsTrigger value="subscriptions" className="data-[state=active]:bg-purple-600">
+                    <TabsTrigger
+                        value="subscriptions"
+                        className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-100 border border-transparent py-2 px-4 rounded-md transition-all"
+                    >
                         <CreditCard className="mr-2 h-4 w-4" />
                         Tenant Subscriptions
                     </TabsTrigger>
-                    <TabsTrigger value="trial" className="data-[state=active]:bg-purple-600">
+                    <TabsTrigger
+                        value="trial"
+                        className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-100 border border-transparent py-2 px-4 rounded-md transition-all"
+                    >
                         <Gift className="mr-2 h-4 w-4" />
                         Trial Settings
                     </TabsTrigger>
@@ -342,7 +351,7 @@ export default function SubscriptionsPage() {
                 {/* Plans Tab */}
                 <TabsContent value="plans" className="space-y-6">
                     <div className="flex justify-end">
-                        <Button onClick={openCreateDialog} className="bg-purple-600 hover:bg-purple-700">
+                        <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
                             <Plus className="mr-2 h-4 w-4" />
                             Create Plan
                         </Button>
@@ -350,14 +359,17 @@ export default function SubscriptionsPage() {
 
                     {plansLoading ? (
                         <div className="flex justify-center py-12">
-                            <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+                            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                         </div>
                     ) : plans.length === 0 ? (
-                        <Card className="border-0 shadow-sm rounded-2xl bg-white">
+                        <Card className="border border-gray-100 shadow-sm bg-white">
                             <CardContent className="py-12 text-center">
-                                <Package className="h-12 w-12 mx-auto mb-3 text-gray-600" />
-                                <p className="text-[#7e808c] mb-4">No subscription plans created yet</p>
-                                <Button onClick={openCreateDialog} className="bg-purple-600 hover:bg-purple-700">
+                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Package className="h-6 w-6 text-gray-400" />
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-900">No plans created</h3>
+                                <p className="text-gray-500 mb-6 max-w-sm mx-auto">Get started by creating subscription plans for your tenants.</p>
+                                <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700 text-white">
                                     <Plus className="mr-2 h-4 w-4" />
                                     Create First Plan
                                 </Button>
@@ -366,53 +378,55 @@ export default function SubscriptionsPage() {
                     ) : (
                         <div className="grid md:grid-cols-3 gap-6">
                             {plans.map((plan) => (
-                                <Card key={plan.id} className={`border-0 shadow-sm rounded-2xl bg-white relative ${plan.isPopular ? 'ring-2 ring-purple-500' : ''}`}>
+                                <Card key={plan.id} className={`border shadow-sm rounded-xl bg-white relative transition-all hover:shadow-md ${plan.isPopular ? 'border-blue-200 ring-1 ring-blue-100' : 'border-gray-200'}`}>
                                     {plan.isPopular && (
-                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-purple-600 text-[#352b38] text-xs font-medium rounded-full flex items-center gap-1">
-                                            <Star className="h-3 w-3" /> Popular
+                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center gap-1 shadow-sm">
+                                            <Star className="h-3 w-3 fill-current" /> POPULAR
                                         </div>
                                     )}
                                     <CardContent className="p-6">
                                         <div className="flex items-start justify-between mb-4">
                                             <div>
-                                                <h3 className="text-xl font-bold text-[#352b38]">{plan.name}</h3>
-                                                <p className="text-[#7e808c] text-sm mt-1">{plan.description}</p>
+                                                <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
+                                                <p className="text-gray-500 text-sm mt-1 line-clamp-2 min-h-[40px]">{plan.description}</p>
                                             </div>
-                                            <div className={`px-2 py-1 rounded text-xs ${plan.isActive ? 'bg-green-600/20 text-green-400' : 'bg-gray-600/20 text-[#7e808c]'}`}>
+                                            <div className={`px-2 py-0.5 rounded-full text-xs font-semibold ${plan.isActive ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
                                                 {plan.isActive ? 'Active' : 'Inactive'}
                                             </div>
                                         </div>
 
-                                        <div className="mb-6 flex flex-col gap-1">
-                                            <div>
-                                                <span className="text-3xl font-bold text-[#352b38]">${plan.prices.monthly}</span>
-                                                <span className="text-[#7e808c]">/mo</span>
+                                        <div className="mb-6 pb-6 border-b border-gray-100">
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="text-3xl font-bold text-gray-900">${plan.prices.monthly}</span>
+                                                <span className="text-gray-500 font-medium">/mo</span>
                                             </div>
-                                            <div>
-                                                <span className="text-lg font-medium text-gray-500">${plan.prices.yearly}</span>
-                                                <span className="text-[#7e808c] text-sm">/yr</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2 mb-6">
-                                            <div className="text-sm text-[#7e808c] flex items-center gap-2">
-                                                <Users className="h-4 w-4" />
-                                                {plan.quotas.staff === -1 ? 'Unlimited staff' : `Up to ${plan.quotas.staff} staff`}
-                                            </div>
-                                            <div className="text-sm text-[#7e808c]">
-                                                {plan.modules.length} modules included
-                                            </div>
-                                            <div className="text-sm text-[#7e808c]">
-                                                {plan.features.length} features listed
+                                            <div className="mt-1 flex items-baseline gap-1.5">
+                                                <span className="text-sm font-medium text-gray-600">${plan.prices.yearly}</span>
+                                                <span className="text-xs text-gray-400">billed yearly</span>
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-2">
+                                        <div className="space-y-3 mb-6">
+                                            <div className="text-sm text-gray-600 flex items-center gap-2.5">
+                                                <Users className="h-4 w-4 text-blue-500" />
+                                                <span className="font-medium">{plan.quotas.staff === -1 ? 'Unlimited staff' : `Up to ${plan.quotas.staff} staff`}</span>
+                                            </div>
+                                            <div className="text-sm text-gray-600 flex items-center gap-2.5">
+                                                <Package className="h-4 w-4 text-purple-500" />
+                                                <span>{plan.modules.length} modules included</span>
+                                            </div>
+                                            <div className="text-sm text-gray-600 flex items-center gap-2.5">
+                                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                                <span>{plan.features.length} features listed</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2 pt-2">
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => openEditDialog(plan)}
-                                                className="flex-1 border-[#dad8f9] text-[#352b38]"
+                                                className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-50"
                                             >
                                                 <Edit className="mr-2 h-4 w-4" />
                                                 Edit
@@ -421,7 +435,7 @@ export default function SubscriptionsPage() {
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => handleDeletePlan(plan.id)}
-                                                className="border-red-600/50 text-red-400 hover:bg-red-900/20"
+                                                className="border-red-100 text-red-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 px-3"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -437,138 +451,130 @@ export default function SubscriptionsPage() {
                 <TabsContent value="subscriptions" className="space-y-6">
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <Card className="border-0 shadow-sm rounded-2xl bg-white">
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-green-600/20 flex items-center justify-center">
-                                        <CheckCircle className="h-5 w-5 text-green-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[#7e808c] text-sm">Active</p>
-                                        <p className="text-xl font-bold text-[#352b38]">
-                                            {subscriptions.filter(s => s.status === "active").length}
-                                        </p>
-                                    </div>
+                        <Card className="border border-green-100 bg-green-50/50 shadow-sm">
+                            <CardContent className="p-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-green-800">Active</p>
+                                    <p className="text-2xl font-bold text-green-700 mt-1">{subscriptions.filter(s => s.status === "active").length}</p>
+                                </div>
+                                <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <CheckCircle className="h-5 w-5 text-green-600" />
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="border-0 shadow-sm rounded-2xl bg-white">
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-yellow-600/20 flex items-center justify-center">
-                                        <Clock className="h-5 w-5 text-yellow-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[#7e808c] text-sm">Trial</p>
-                                        <p className="text-xl font-bold text-[#352b38]">
-                                            {subscriptions.filter(s => s.status === "trial").length}
-                                        </p>
-                                    </div>
+                        <Card className="border border-orange-100 bg-orange-50/50 shadow-sm">
+                            <CardContent className="p-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-orange-800">Trial</p>
+                                    <p className="text-2xl font-bold text-orange-700 mt-1">{subscriptions.filter(s => s.status === "trial").length}</p>
+                                </div>
+                                <div className="h-10 w-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                    <Clock className="h-5 w-5 text-orange-600" />
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="border-0 shadow-sm rounded-2xl bg-white">
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-red-600/20 flex items-center justify-center">
-                                        <XCircle className="h-5 w-5 text-red-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[#7e808c] text-sm">Expired</p>
-                                        <p className="text-xl font-bold text-[#352b38]">
-                                            {subscriptions.filter(s => s.status === "expired").length}
-                                        </p>
-                                    </div>
+                        <Card className="border border-red-100 bg-red-50/50 shadow-sm">
+                            <CardContent className="p-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-red-800">Expired</p>
+                                    <p className="text-2xl font-bold text-red-700 mt-1">{subscriptions.filter(s => s.status === "expired" || s.status === "cancelled").length}</p>
+                                </div>
+                                <div className="h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <XCircle className="h-5 w-5 text-red-600" />
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="border-0 shadow-sm rounded-2xl bg-white">
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-purple-600/20 flex items-center justify-center">
-                                        <DollarSign className="h-5 w-5 text-purple-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[#7e808c] text-sm">MRR</p>
-                                        <p className="text-xl font-bold text-[#352b38]">
-                                            ${subscriptions.filter(s => s.status === "active").reduce((sum, s) => sum + s.amount, 0).toLocaleString()}
-                                        </p>
-                                    </div>
+                        <Card className="border border-blue-100 bg-blue-50/50 shadow-sm">
+                            <CardContent className="p-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-blue-800">MRR</p>
+                                    <p className="text-2xl font-bold text-blue-700 mt-1">
+                                        ${subscriptions.filter(s => s.status === "active").reduce((sum, s) => sum + s.amount, 0).toLocaleString()}
+                                    </p>
+                                </div>
+                                <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <DollarSign className="h-5 w-5 text-blue-600" />
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
 
                     {/* Search */}
-                    <Card className="border-0 shadow-sm rounded-2xl bg-white">
+                    <Card className="border border-gray-100 shadow-sm bg-white">
                         <CardContent className="p-4">
                             <div className="flex items-center gap-4">
                                 <div className="relative flex-1">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7e808c]" />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <Input
-                                        placeholder="Search subscriptions..."
-                                        className="pl-10 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
+                                        placeholder="Search subscriptions by tenant or status..."
+                                        className="pl-10 bg-white border-gray-200 text-gray-900 focus:ring-blue-500 focus:border-blue-500"
                                     />
                                 </div>
-                                <Button variant="outline" className="border-[#dad8f9] text-[#352b38]">
-                                    All Status
+                                <Button variant="outline" className="border-gray-200 text-gray-600 hover:bg-gray-50">
+                                    Export
                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Subscriptions Table */}
-                    <Card className="border-0 shadow-sm rounded-2xl bg-white">
-                        <CardContent className="p-0">
+                    <Card className="border border-gray-100 shadow-sm bg-white overflow-hidden">
+                        <div className="overflow-x-auto">
                             <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-[#dad8f9]">
-                                        <th className="text-left p-4 text-[#7e808c] font-medium text-sm">Tenant</th>
-                                        <th className="text-left p-4 text-[#7e808c] font-medium text-sm">Plan</th>
-                                        <th className="text-left p-4 text-[#7e808c] font-medium text-sm">Amount</th>
-                                        <th className="text-left p-4 text-[#7e808c] font-medium text-sm">Status</th>
-                                        <th className="text-left p-4 text-[#7e808c] font-medium text-sm">Period</th>
+                                <thead className="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tenant</th>
+                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan</th>
+                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Period</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-gray-100">
                                     {subsLoading ? (
                                         <tr>
-                                            <td colSpan={5} className="p-8 text-center text-[#7e808c]">
+                                            <td colSpan={5} className="p-12 text-center text-gray-500">
+                                                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
                                                 Loading subscriptions...
                                             </td>
                                         </tr>
                                     ) : subscriptions.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="p-8 text-center text-[#7e808c]">
-                                                <CreditCard className="h-12 w-12 mx-auto mb-3 text-gray-600" />
+                                            <td colSpan={5} className="p-12 text-center text-gray-500">
+                                                <CreditCard className="h-10 w-10 mx-auto mb-3 text-gray-300" />
                                                 <p>No subscriptions found</p>
                                             </td>
                                         </tr>
                                     ) : (
                                         subscriptions.map((sub) => (
-                                            <tr key={sub.id} className="border-b border-[#dad8f9] hover:bg-[#f4f3f8]">
-                                                <td className="p-4">
-                                                    <p className="text-[#352b38] font-medium">{sub.tenantName}</p>
-                                                    <p className="text-[#7e808c] text-sm">{sub.tenantId}</p>
+                                            <tr key={sub.id} className="hover:bg-gray-50/80 transition-colors">
+                                                <td className="py-4 px-4">
+                                                    <p className="text-gray-900 font-semibold text-sm">{sub.tenantName}</p>
+                                                    <p className="text-gray-500 text-xs">{sub.tenantId}</p>
                                                 </td>
-                                                <td className="p-4">
-                                                    <span className="text-[#352b38] capitalize">{sub.plan}</span>
-                                                </td>
-                                                <td className="p-4">
-                                                    <span className="text-[#352b38] font-medium">
-                                                        ${sub.amount}/{sub.currency === "usd" ? "mo" : sub.currency}
+                                                <td className="py-4 px-4">
+                                                    <span className="bg-gray-100 text-gray-700 border border-gray-200 px-2 py-0.5 rounded text-xs font-medium capitalize">
+                                                        {sub.plan}
                                                     </span>
                                                 </td>
-                                                <td className="p-4">
+                                                <td className="py-4 px-4">
+                                                    <span className="text-gray-900 font-medium text-sm">
+                                                        ${sub.amount}
+                                                        <span className="text-gray-500 font-normal text-xs uppercase ml-0.5">{sub.currency === "usd" ? "mo" : sub.currency}</span>
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-4">
                                                     <div className="flex items-center gap-2">
                                                         {getStatusIcon(sub.status)}
-                                                        <span className="text-[#352b38] capitalize">{sub.status}</span>
+                                                        <span className="text-sm text-gray-700 capitalize">{sub.status}</span>
                                                     </div>
                                                 </td>
-                                                <td className="p-4">
-                                                    <div className="text-[#7e808c] text-sm flex items-center gap-2">
-                                                        <Calendar className="h-4 w-4" />
-                                                        {new Date(sub.startDate).toLocaleDateString()} - {new Date(sub.endDate).toLocaleDateString()}
+                                                <td className="py-4 px-4">
+                                                    <div className="text-gray-500 text-sm flex items-center gap-1.5">
+                                                        <Calendar className="h-3.5 w-3.5" />
+                                                        <span className="text-xs">
+                                                            {new Date(sub.startDate).toLocaleDateString()} - {new Date(sub.endDate).toLocaleDateString()}
+                                                        </span>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -576,7 +582,7 @@ export default function SubscriptionsPage() {
                                     )}
                                 </tbody>
                             </table>
-                        </CardContent>
+                        </div>
                     </Card>
                 </TabsContent>
 
@@ -584,13 +590,13 @@ export default function SubscriptionsPage() {
                 <TabsContent value="trial" className="space-y-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold text-[#352b38]">Free Trial Configuration</h2>
-                            <p className="text-[#7e808c] text-sm">Configure the trial period for new tenant signups</p>
+                            <h2 className="text-lg font-bold text-gray-900">Free Trial Configuration</h2>
+                            <p className="text-gray-500 text-sm">Configure the trial period for new tenant signups</p>
                         </div>
                         <Button
                             onClick={saveTrialSettings}
                             disabled={trialSaving}
-                            className="bg-purple-600 hover:bg-purple-700"
+                            className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                         >
                             {trialSaving ? (
                                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>
@@ -604,17 +610,17 @@ export default function SubscriptionsPage() {
 
                     {trialLoading ? (
                         <div className="flex justify-center py-12">
-                            <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+                            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                         </div>
                     ) : (
                         <div className="grid gap-6">
                             {/* Enable Trial Toggle */}
-                            <Card className="border-0 shadow-sm rounded-2xl bg-white">
+                            <Card className="border border-gray-100 shadow-sm bg-white">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <Label className="text-[#352b38] text-lg">Enable Free Trial</Label>
-                                            <p className="text-[#7e808c] text-sm mt-1">Allow new tenants to start with a free trial period</p>
+                                            <Label className="text-gray-900 text-base font-semibold">Enable Free Trial</Label>
+                                            <p className="text-gray-500 text-sm mt-1">Allow new tenants to start with a free trial period</p>
                                         </div>
                                         <Switch
                                             checked={trialSettings.isEnabled}
@@ -625,57 +631,69 @@ export default function SubscriptionsPage() {
                             </Card>
 
                             {/* Duration & Limits */}
-                            <Card className="border-0 shadow-sm rounded-2xl bg-white">
+                            <Card className="border border-gray-100 shadow-sm bg-white">
                                 <CardContent className="p-6">
-                                    <h3 className="text-[#352b38] font-medium mb-4">Duration & Limits</h3>
-                                    <div className="grid md:grid-cols-2 gap-6">
+                                    <h3 className="text-gray-900 font-semibold mb-6 flex items-center gap-2">
+                                        <Clock className="h-4 w-4 text-blue-500" />
+                                        Duration & Limits
+                                    </h3>
+                                    <div className="grid md:grid-cols-2 gap-8">
                                         <div>
-                                            <Label className="text-[#352b38]">Trial Duration (Days)</Label>
-                                            <Input
-                                                type="number"
-                                                value={trialSettings.durationDays}
-                                                onChange={(e) => setTrialSettings(prev => ({ ...prev, durationDays: Number(e.target.value) }))}
-                                                className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                                min={1}
-                                                max={90}
-                                            />
-                                            <p className="text-gray-500 text-xs mt-1">Common values: 7, 14, 30 days</p>
+                                            <Label className="text-gray-700 font-medium">Trial Duration (Days)</Label>
+                                            <div className="mt-2 relative">
+                                                <Input
+                                                    type="number"
+                                                    value={trialSettings.durationDays}
+                                                    onChange={(e) => setTrialSettings(prev => ({ ...prev, durationDays: Number(e.target.value) }))}
+                                                    className="bg-white border-gray-200 text-gray-900 focus:ring-blue-500 focus:border-blue-500 pr-12"
+                                                    min={1}
+                                                    max={90}
+                                                />
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-medium">days</div>
+                                            </div>
+                                            <p className="text-gray-400 text-xs mt-2">Common values: 7, 14, 30 days</p>
                                         </div>
                                         <div>
-                                            <Label className="text-[#352b38]">Max Users During Trial</Label>
-                                            <Input
-                                                type="number"
-                                                value={trialSettings.maxUsers}
-                                                onChange={(e) => setTrialSettings(prev => ({ ...prev, maxUsers: Number(e.target.value) }))}
-                                                className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                                min={1}
-                                            />
-                                            <p className="text-gray-500 text-xs mt-1">Set to -1 for unlimited users</p>
+                                            <Label className="text-gray-700 font-medium">Max Users During Trial</Label>
+                                            <div className="mt-2">
+                                                <Input
+                                                    type="number"
+                                                    value={trialSettings.maxUsers}
+                                                    onChange={(e) => setTrialSettings(prev => ({ ...prev, maxUsers: Number(e.target.value) }))}
+                                                    className="bg-white border-gray-200 text-gray-900 focus:ring-blue-500 focus:border-blue-500"
+                                                    min={1}
+                                                />
+                                            </div>
+                                            <p className="text-gray-400 text-xs mt-2">Set to -1 for unlimited users</p>
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
 
                             {/* Modules */}
-                            <Card className="border-0 shadow-sm rounded-2xl bg-white">
+                            <Card className="border border-gray-100 shadow-sm bg-white">
                                 <CardContent className="p-6">
-                                    <h3 className="text-[#352b38] font-medium mb-4">Modules Available in Trial</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <h3 className="text-gray-900 font-semibold mb-6 flex items-center gap-2">
+                                        <Package className="h-4 w-4 text-purple-500" />
+                                        Modules Available in Trial
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {AVAILABLE_MODULES.map((module) => (
                                             <label
                                                 key={module.id}
-                                                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${trialSettings.modules.includes(module.id)
-                                                    ? 'border-purple-500 bg-purple-600/10'
-                                                    : 'border-[#dad8f9] hover:border-gray-500'
+                                                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${trialSettings.modules.includes(module.id)
+                                                    ? 'border-blue-500 bg-blue-50/50'
+                                                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
                                                     }`}
                                             >
                                                 <Checkbox
                                                     checked={trialSettings.modules.includes(module.id)}
                                                     onCheckedChange={() => toggleTrialModule(module.id)}
-                                                    className="mt-0.5"
+                                                    className="mt-0.5 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                                                 />
                                                 <div>
-                                                    <p className="font-medium text-sm text-[#352b38]">{module.name}</p>
+                                                    <p className={`font-medium text-sm ${trialSettings.modules.includes(module.id) ? 'text-blue-900' : 'text-gray-700'}`}>{module.name}</p>
+                                                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{module.description}</p>
                                                 </div>
                                             </label>
                                         ))}
@@ -684,38 +702,45 @@ export default function SubscriptionsPage() {
                             </Card>
 
                             {/* Features */}
-                            <Card className="border-0 shadow-sm rounded-2xl bg-white">
+                            <Card className="border border-gray-100 shadow-sm bg-white">
                                 <CardContent className="p-6">
-                                    <h3 className="text-[#352b38] font-medium mb-4">Trial Features (shown on signup)</h3>
-                                    <div className="flex gap-2 mb-4">
+                                    <h3 className="text-gray-900 font-semibold mb-6 flex items-center gap-2">
+                                        <Star className="h-4 w-4 text-orange-500" />
+                                        Trial Features Highlight
+                                    </h3>
+                                    <div className="flex gap-2 mb-6">
                                         <Input
                                             value={trialFeatureInput}
                                             onChange={(e) => setTrialFeatureInput(e.target.value)}
                                             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTrialFeature())}
-                                            placeholder="Add a feature highlight..."
-                                            className="bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
+                                            placeholder="Add a feature highlight (e.g. 'No credit card required')"
+                                            className="bg-white border-gray-200 text-gray-900 focus:ring-blue-500 focus:border-blue-500"
                                         />
-                                        <Button onClick={addTrialFeature} className="bg-purple-600 hover:bg-purple-700">
-                                            <Plus className="h-4 w-4" />
+                                        <Button onClick={addTrialFeature} className="bg-gray-900 hover:bg-black text-white">
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Add
                                         </Button>
                                     </div>
                                     <div className="space-y-2">
                                         {trialSettings.features.map((feature, i) => (
-                                            <div key={i} className="flex items-center justify-between p-3 bg-[#f4f3f8] rounded-lg">
-                                                <span className="text-sm text-[#352b38] flex items-center gap-2">
-                                                    <CheckCircle className="h-4 w-4 text-green-400" />
+                                            <div key={i} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-lg group hover:border-gray-200 transition-colors">
+                                                <span className="text-sm text-gray-700 flex items-center gap-2">
+                                                    <CheckCircle className="h-4 w-4 text-green-500" />
                                                     {feature}
                                                 </span>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => removeTrialFeature(i)}
-                                                    className="text-red-400 hover:text-red-300 h-7 w-7 p-0"
+                                                    className="text-gray-400 hover:text-red-500 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                                                 >
-                                                    <Trash2 className="h-3 w-3" />
+                                                    <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </div>
                                         ))}
+                                        {trialSettings.features.length === 0 && (
+                                            <p className="text-sm text-gray-400 italic text-center py-4">No features added yet.</p>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -727,19 +752,19 @@ export default function SubscriptionsPage() {
             {/* Plan Wizard Sheet */}
             <Sheet open={dialogOpen} onOpenChange={setDialogOpen}>
                 <SheetContent side="right" className="w-full sm:w-[600px] sm:max-w-none p-0 flex flex-col h-full bg-white z-[100]">
-                    <div className="p-6 border-b">
-                        <SheetTitle className="text-xl font-bold text-[#352b38]">{editingPlan ? 'Edit Plan' : 'Create Subscription Plan'}</SheetTitle>
+                    <div className="p-6 border-b border-gray-100">
+                        <SheetTitle className="text-xl font-bold text-gray-900">{editingPlan ? 'Edit Plan' : 'Create Subscription Plan'}</SheetTitle>
                         <SheetDescription>Configure plan details, pricing, and limits.</SheetDescription>
                         {/* Progress Steps */}
                         <div className="flex items-center gap-2 mt-6">
                             {[1, 2, 3, 4, 5].map((step) => (
                                 <div key={step} className="flex items-center">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${wizardStep >= step ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400'
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${wizardStep >= step ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-400'
                                         }`}>
                                         {step}
                                     </div>
                                     {step < 5 && (
-                                        <div className={`w-8 h-0.5 mx-1 ${wizardStep > step ? 'bg-purple-600' : 'bg-gray-100'}`} />
+                                        <div className={`w-8 h-0.5 mx-1 ${wizardStep > step ? 'bg-blue-600' : 'bg-gray-100'}`} />
                                     )}
                                 </div>
                             ))}
@@ -751,28 +776,28 @@ export default function SubscriptionsPage() {
                             {/* Step 1: Basic Info */}
                             {wizardStep === 1 && (
                                 <div className="space-y-4">
-                                    <h3 className="font-medium text-lg text-[#352b38]">Basic Information</h3>
+                                    <h3 className="font-semibold text-lg text-gray-900">Basic Information</h3>
                                     <div>
-                                        <Label className="text-[#352b38]">Plan Name</Label>
+                                        <Label className="text-gray-700 font-medium">Plan Name</Label>
                                         <Input
                                             value={planData.name}
                                             onChange={(e) => setPlanData(prev => ({ ...prev, name: e.target.value }))}
                                             placeholder="e.g. Starter, Pro, Enterprise"
-                                            className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
+                                            className="mt-1.5 bg-white border-gray-200 text-gray-900 focus:ring-blue-500 focus:border-blue-500"
                                         />
                                     </div>
                                     <div>
-                                        <Label className="text-[#352b38]">Description</Label>
+                                        <Label className="text-gray-700 font-medium">Description</Label>
                                         <Textarea
                                             value={planData.description}
                                             onChange={(e) => setPlanData(prev => ({ ...prev, description: e.target.value }))}
                                             placeholder="What's this plan for?"
-                                            className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
+                                            className="mt-1.5 bg-white border-gray-200 text-gray-900 focus:ring-blue-500 focus:border-blue-500 min-h-[100px]"
                                         />
                                     </div>
-                                    <div className="flex items-center justify-between p-4 bg-[#f4f3f8] rounded-lg">
+                                    <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-lg">
                                         <div>
-                                            <Label className="text-[#352b38]">Mark as Popular</Label>
+                                            <Label className="text-gray-900 font-medium">Mark as Popular</Label>
                                             <p className="text-gray-500 text-xs">Highlight this plan with a badge</p>
                                         </div>
                                         <Switch
@@ -780,9 +805,9 @@ export default function SubscriptionsPage() {
                                             onCheckedChange={(checked) => setPlanData(prev => ({ ...prev, isPopular: checked }))}
                                         />
                                     </div>
-                                    <div className="flex items-center justify-between p-4 bg-[#f4f3f8] rounded-lg">
+                                    <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-lg">
                                         <div>
-                                            <Label className="text-[#352b38]">Active</Label>
+                                            <Label className="text-gray-900 font-medium">Active</Label>
                                             <p className="text-gray-500 text-xs">Show in pricing page</p>
                                         </div>
                                         <Switch
@@ -796,60 +821,63 @@ export default function SubscriptionsPage() {
                             {/* Step 2: Pricing */}
                             {wizardStep === 2 && (
                                 <div className="space-y-4">
-                                    <h3 className="font-medium text-lg text-[#352b38]">Pricing</h3>
+                                    <h3 className="font-semibold text-lg text-gray-900">Pricing</h3>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <Label className="text-[#352b38]">Monthly Price (USD)</Label>
+                                            <Label className="text-gray-700 font-medium">Monthly Price (USD)</Label>
                                             <div className="relative mt-1.5">
-                                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7e808c]" />
+                                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                                 <Input
                                                     type="number"
                                                     value={planData.prices.monthly}
                                                     onChange={(e) => setPlanData(prev => ({ ...prev, prices: { ...prev.prices, monthly: Number(e.target.value) } }))}
-                                                    className="pl-10 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
+                                                    className="pl-10 bg-white border-gray-200 text-gray-900 focus:ring-blue-500 focus:border-blue-500"
                                                 />
                                             </div>
                                         </div>
                                         <div>
-                                            <Label className="text-[#352b38]">Yearly Price (USD)</Label>
+                                            <Label className="text-gray-700 font-medium">Yearly Price (USD)</Label>
                                             <div className="relative mt-1.5">
-                                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7e808c]" />
+                                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                                 <Input
                                                     type="number"
                                                     value={planData.prices.yearly}
                                                     onChange={(e) => setPlanData(prev => ({ ...prev, prices: { ...prev.prices, yearly: Number(e.target.value) } }))}
-                                                    className="pl-10 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
+                                                    className="pl-10 bg-white border-gray-200 text-gray-900 focus:ring-blue-500 focus:border-blue-500"
                                                 />
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <Label className="text-[#352b38]">Plan Feature Bullets</Label>
+                                    <div className="pt-4">
+                                        <Label className="text-gray-700 font-medium">Plan Feature Bullets</Label>
                                         <div className="flex gap-2 mt-1.5">
                                             <Input
                                                 value={featureInput}
                                                 onChange={(e) => setFeatureInput(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
                                                 placeholder="Add a feature bullet..."
-                                                className="bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
+                                                className="bg-white border-gray-200 text-gray-900 focus:ring-blue-500 focus:border-blue-500"
                                             />
-                                            <Button onClick={addFeature} type="button" className="bg-purple-600">
+                                            <Button onClick={addFeature} type="button" className="bg-blue-600 hover:bg-blue-700 text-white">
                                                 <Plus className="h-4 w-4" />
                                             </Button>
                                         </div>
-                                        <div className="mt-3 space-y-2 max-h-[150px] overflow-y-auto">
+                                        <div className="mt-3 space-y-2 max-h-[200px] overflow-y-auto">
                                             {planData.features.map((feature, i) => (
-                                                <div key={i} className="flex items-center justify-between p-2 bg-[#f4f3f8] rounded">
-                                                    <span className="text-sm flex items-center gap-2">
-                                                        <CheckCircle className="h-4 w-4 text-green-400" />
+                                                <div key={i} className="flex items-center justify-between p-2 pl-3 bg-gray-50 border border-gray-100 rounded-md group hover:border-gray-200 transition-colors">
+                                                    <span className="text-sm flex items-center gap-2 text-gray-700">
+                                                        <CheckCircle className="h-4 w-4 text-green-500" />
                                                         {feature}
                                                     </span>
-                                                    <Button variant="ghost" size="sm" onClick={() => removeFeature(i)} className="text-red-400 h-7 w-7 p-0">
+                                                    <Button variant="ghost" size="sm" onClick={() => removeFeature(i)} className="text-gray-400 hover:text-red-500 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <Trash2 className="h-3 w-3" />
                                                     </Button>
                                                 </div>
                                             ))}
+                                            {planData.features.length === 0 && (
+                                                <p className="text-sm text-gray-400 italic">No features added.</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -859,7 +887,7 @@ export default function SubscriptionsPage() {
                             {wizardStep === 3 && (
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <h3 className="font-medium text-lg text-[#352b38]">Select Modules</h3>
+                                        <h3 className="font-semibold text-lg text-gray-900">Select Modules</h3>
                                         <p className="text-sm text-gray-500">Choose the features included in this plan.</p>
                                     </div>
 
@@ -870,18 +898,18 @@ export default function SubscriptionsPage() {
                                                 <div
                                                     key={module.id}
                                                     className={`
-                                                        relative flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all
-                                                        ${isEnabled ? 'bg-purple-50/50 border-purple-200 ring-1 ring-purple-100' : 'bg-white border-gray-200 hover:border-purple-200 hover:bg-gray-50'}
+                                                        relative flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-sm
+                                                        ${isEnabled ? 'bg-blue-50/50 border-blue-200 ring-1 ring-blue-100' : 'bg-white border-gray-200 hover:border-blue-200 hover:bg-gray-50'}
                                                     `}
                                                     onClick={() => toggleModule(module.id)}
                                                 >
                                                     <Checkbox
                                                         checked={isEnabled}
                                                         onCheckedChange={() => toggleModule(module.id)}
-                                                        className="mt-0.5"
+                                                        className="mt-0.5 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                                                     />
                                                     <div>
-                                                        <span className="font-medium text-sm text-[#352b38] block">{module.name}</span>
+                                                        <span className={`font-medium text-sm block ${isEnabled ? 'text-blue-900' : 'text-gray-900'}`}>{module.name}</span>
                                                         <span className="text-[11px] text-gray-500 leading-tight block mt-0.5">{module.description}</span>
                                                     </div>
                                                 </div>
@@ -895,13 +923,15 @@ export default function SubscriptionsPage() {
                             {wizardStep === 4 && (
                                 <div className="space-y-6">
                                     <div className="space-y-1">
-                                        <h3 className="font-medium text-lg text-[#352b38]">Resource Limits</h3>
+                                        <h3 className="font-semibold text-lg text-gray-900">Resource Limits</h3>
                                         <p className="text-sm text-gray-500">Set usage quotas for enabled modules.</p>
                                     </div>
 
                                     {/* Core Limits */}
-                                    <div className="p-4 bg-gray-50 rounded-lg border border-[#dad8f9]">
-                                        <h4 className="font-semibold text-xs uppercase tracking-wider text-gray-500 mb-3">Platform Core Limits</h4>
+                                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                        <h4 className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-4 flex items-center gap-2">
+                                            <Users className="h-3 w-3" /> Platform Core Limits
+                                        </h4>
                                         <div className="grid grid-cols-2 gap-4">
                                             {[
                                                 { key: 'staff', label: 'Max Staff' },
@@ -918,11 +948,11 @@ export default function SubscriptionsPage() {
                                                                 value={val === -1 ? '' : val}
                                                                 disabled={val === -1}
                                                                 onChange={(e) => setPlanData(prev => ({ ...prev, quotas: { ...prev.quotas, [qKey]: Number(e.target.value) } }))}
-                                                                className="h-9 bg-white" placeholder="Limit"
+                                                                className="h-9 bg-white border-gray-200 focus:ring-blue-500" placeholder="Limit"
                                                             />
                                                             <Button
                                                                 variant={val === -1 ? 'default' : 'outline'}
-                                                                className={`px-3 ${val === -1 ? 'bg-purple-600' : ''}`}
+                                                                className={`px-3 h-9 ${val === -1 ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-200 text-gray-700'}`}
                                                                 onClick={() => setPlanData(prev => ({ ...prev, quotas: { ...prev.quotas, [qKey]: val === -1 ? 10 : -1 } }))}
                                                                 title="Toggle Unlimited"
                                                             >∞ </Button>
@@ -935,18 +965,18 @@ export default function SubscriptionsPage() {
 
                                     {/* Module Quotas */}
                                     <div className="space-y-3">
-                                        <h4 className="font-semibold text-xs uppercase tracking-wider text-gray-500 pl-1">Module Limits</h4>
+                                        <h4 className="font-semibold text-xs uppercase tracking-wider text-gray-500 pl-1 mt-4">Module Limits</h4>
                                         {AVAILABLE_MODULES.filter(m => planData.modules.includes(m.id) && MODULE_QUOTA_MAP[m.id]).map(module => {
                                             const quotaKey = MODULE_QUOTA_MAP[module.id];
                                             const currentQuota = quotaKey ? planData.quotas[quotaKey] : null;
 
                                             return (
-                                                <div key={module.id} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
+                                                <div key={module.id} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:border-blue-200 transition-colors">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="h-8 w-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                                                        <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                                                             <Package className="h-4 w-4" />
                                                         </div>
-                                                        <span className="text-sm font-medium text-[#352b38]">{module.name}</span>
+                                                        <span className="text-sm font-medium text-gray-900">{module.name}</span>
                                                     </div>
 
                                                     <div className="flex items-center gap-2">
@@ -956,12 +986,12 @@ export default function SubscriptionsPage() {
                                                             value={currentQuota === -1 ? '' : (currentQuota ?? '')}
                                                             disabled={currentQuota === -1}
                                                             onChange={(e) => quotaKey && setPlanData(prev => ({ ...prev, quotas: { ...prev.quotas, [quotaKey]: Number(e.target.value) } }))}
-                                                            className="h-8 w-24 text-right" placeholder="#"
+                                                            className="h-8 w-24 text-right bg-white border-gray-200" placeholder="#"
                                                         />
                                                         <Button
                                                             size="sm"
                                                             variant={currentQuota === -1 ? 'default' : 'outline'}
-                                                            className={`h-8 w-8 p-0 ${currentQuota === -1 ? 'bg-purple-600' : 'border-gray-200'}`}
+                                                            className={`h-8 w-8 p-0 ${currentQuota === -1 ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-200 text-gray-500'}`}
                                                             onClick={() => quotaKey && setPlanData(prev => ({ ...prev, quotas: { ...prev.quotas, [quotaKey]: currentQuota === -1 ? 50 : -1 } }))}
                                                         >∞ </Button>
                                                     </div>
@@ -969,7 +999,9 @@ export default function SubscriptionsPage() {
                                             )
                                         })}
                                         {AVAILABLE_MODULES.filter(m => planData.modules.includes(m.id) && MODULE_QUOTA_MAP[m.id]).length === 0 && (
-                                            <p className="text-sm text-gray-400 italic pl-1">No limits to configure for selected modules.</p>
+                                            <div className="p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                                <p className="text-sm text-gray-400 italic">No limits to configure for selected modules.</p>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -979,18 +1011,18 @@ export default function SubscriptionsPage() {
                             {wizardStep === 5 && (
                                 <div className="space-y-6">
                                     <div className="space-y-1">
-                                        <h3 className="font-medium text-lg text-[#352b38]">Capabilities & Review</h3>
+                                        <h3 className="font-semibold text-lg text-gray-900">Capabilities & Review</h3>
                                         <p className="text-sm text-gray-500">Configure advanced features.</p>
                                     </div>
 
                                     <div className="grid grid-cols-1 gap-3">
-                                        <div className="flex items-center justify-between p-4 bg-white border border-[#dad8f9] rounded-xl hover:border-purple-300 transition-colors">
+                                        <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 transition-colors shadow-sm">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                                                     <Users className="h-5 w-5" />
                                                 </div>
                                                 <div>
-                                                    <Label className="text-[#352b38] font-medium block">Client Portal</Label>
+                                                    <Label className="text-gray-900 font-medium block">Client Portal</Label>
                                                     <p className="text-gray-500 text-xs mt-0.5">Allow tenants to invite customers to a portal</p>
                                                 </div>
                                             </div>
@@ -1000,9 +1032,9 @@ export default function SubscriptionsPage() {
                                             />
                                         </div>
 
-                                        <div className="flex items-center justify-between p-4 bg-white border border-[#dad8f9] rounded-xl">
+                                        <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
                                             <div>
-                                                <Label className="text-[#352b38]">Custom Domain</Label>
+                                                <Label className="text-gray-900 font-medium">Custom Domain</Label>
                                                 <p className="text-gray-500 text-xs">Allow connecting own domain</p>
                                             </div>
                                             <Switch
@@ -1010,9 +1042,9 @@ export default function SubscriptionsPage() {
                                                 onCheckedChange={(checked) => setPlanData(prev => ({ ...prev, capabilities: { ...prev.capabilities, customDomain: checked } }))}
                                             />
                                         </div>
-                                        <div className="flex items-center justify-between p-4 bg-white border border-[#dad8f9] rounded-xl">
+                                        <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
                                             <div>
-                                                <Label className="text-[#352b38]">Subdomain</Label>
+                                                <Label className="text-gray-900 font-medium">Subdomain</Label>
                                                 <p className="text-gray-500 text-xs">Allow custom subdomain</p>
                                             </div>
                                             <Switch
@@ -1023,17 +1055,20 @@ export default function SubscriptionsPage() {
                                     </div>
 
                                     {/* Summary */}
-                                    <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                                        <h4 className="font-semibold text-sm uppercase text-gray-500 mb-3 tracking-wider">Plan Summary</h4>
-                                        <div className="grid grid-cols-2 gap-y-2 text-sm">
+                                    <div className="mt-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
+                                        <h4 className="font-bold text-xs uppercase text-gray-400 mb-4 tracking-wider">Plan Summary</h4>
+                                        <div className="grid grid-cols-2 gap-y-3 text-sm">
                                             <span className="text-gray-500">Name</span>
-                                            <span className="font-medium text-right">{planData.name || '-'}</span>
+                                            <span className="font-medium text-right text-gray-900">{planData.name || '-'}</span>
 
                                             <span className="text-gray-500">Price</span>
-                                            <span className="font-medium text-right">${planData.prices.monthly}/mo • ${planData.prices.yearly}/yr</span>
+                                            <span className="font-medium text-right text-gray-900">${planData.prices.monthly}/mo • ${planData.prices.yearly}/yr</span>
 
                                             <span className="text-gray-500">Modules</span>
-                                            <span className="font-medium text-right">{planData.modules.length} Enabled</span>
+                                            <span className="font-medium text-right text-gray-900">{planData.modules.length} Enabled</span>
+
+                                            <span className="text-gray-500">Features</span>
+                                            <span className="font-medium text-right text-gray-900">{planData.features.length} Listed</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1041,26 +1076,26 @@ export default function SubscriptionsPage() {
                         </div>
                     </div>
 
-                    <div className="p-6 border-t bg-gray-50 flex justify-between">
+                    <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between rounded-bl-xl rounded-br-xl">
                         <div>
                             {wizardStep > 1 && (
-                                <Button variant="outline" onClick={() => setWizardStep(s => s - 1)} className="border-[#dad8f9] text-[#352b38]">
+                                <Button variant="outline" onClick={() => setWizardStep(s => s - 1)} className="border-gray-200 text-gray-700 bg-white hover:bg-gray-100">
                                     <ArrowLeft className="mr-2 h-4 w-4" />
                                     Back
                                 </Button>
                             )}
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-[#dad8f9] text-[#352b38]">
+                            <Button variant="outline" onClick={() => setDialogOpen(false)} className="border-gray-200 text-gray-700 bg-white hover:bg-gray-100">
                                 Cancel
                             </Button>
                             {wizardStep < 5 ? (
-                                <Button onClick={() => setWizardStep(s => s + 1)} className="bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-200">
-                                    Next
+                                <Button onClick={() => setWizardStep(s => s + 1)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                                    Next Step
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
                             ) : (
-                                <Button onClick={handleSavePlan} disabled={saving} className="bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-200 min-w-[120px]">
+                                <Button onClick={handleSavePlan} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white shadow-sm min-w-[120px]">
                                     {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save Plan'}
                                 </Button>
                             )}
