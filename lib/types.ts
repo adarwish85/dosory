@@ -91,6 +91,9 @@ export interface Lead extends BaseEntity {
     dateConverted?: Timestamp;
     convertedToCustomerId?: string;
     lastContactedAt?: Timestamp;
+    position?: string;
+    defaultLanguage?: string;
+    isPublic?: boolean;
 }
 
 export type LeadStatus =
