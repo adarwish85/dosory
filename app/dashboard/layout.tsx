@@ -89,8 +89,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             const targetHost = `${expectedSubdomain}.${rootDomain}`;
 
             // Circuit Breaker: Stop infinite loops
+            // We allow the redirect if we are "upgrading" from the default orgId subdomain to a custom one
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get("redirected")) {
+            const isUpgrading = currentSubdomain === profile.orgId && expectedSubdomain !== profile.orgId;
+
+            if (urlParams.get("redirected") && !isUpgrading) {
                 console.warn(`[Subdomain Redirect] Loop prevented. Stopped redirect to ${targetHost}`);
                 return;
             }
