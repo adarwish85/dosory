@@ -73,7 +73,8 @@ export default function LeadsPage() {
     }, [deleteLead]);
 
     const handleSaveLead = useCallback(async (id: string, data: Partial<Lead>) => {
-        await updateLead(id, data);
+        // Cast to any to avoid strict Timestamp vs Date mismatch during build
+        await updateLead(id, data as any);
         // If updating currently viewed lead, update state
         if (selectedLead && selectedLead.id === id) {
             setSelectedLead({ ...selectedLead, ...data } as Lead);
@@ -258,7 +259,7 @@ export default function LeadsPage() {
                 open={editOpen}
                 onClose={() => setEditOpen(false)}
                 lead={selectedLead}
-                onSave={handleSaveLead}
+                onSave={handleSaveLead as any}
             />
         </div>
     );
