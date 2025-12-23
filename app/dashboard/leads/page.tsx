@@ -22,7 +22,7 @@ const ImportWizard = dynamic(() => import("@/components/import/ImportWizard"), {
 });
 
 const LeadDetailsDialog = dynamic(
-    () => import("@/components/dashboard/leads/lead-details-dialog").then(mod => ({ default: mod.LeadDetailsDialog })),
+    () => import("@/components/dashboard/leads/lead-details-dialog").then(mod => ({ default: mod.LeadDetailsSheet })),
     { ssr: false }
 );
 
