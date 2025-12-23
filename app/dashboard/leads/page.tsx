@@ -27,7 +27,7 @@ const LeadDetailsDialog = dynamic(
 );
 
 const LeadEditDialog = dynamic(
-    () => import("@/components/dashboard/leads/lead-edit-dialog").then(mod => ({ default: mod.LeadEditDialog })),
+    () => import("@/components/dashboard/leads/lead-edit-dialog").then(mod => ({ default: mod.LeadEditSheet })),
     { ssr: false }
 );
 
