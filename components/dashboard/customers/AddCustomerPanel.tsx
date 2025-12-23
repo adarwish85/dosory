@@ -4,7 +4,6 @@ import { useState } from "react";
 import { X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
@@ -23,125 +22,84 @@ interface AddCustomerPanelProps {
     onSuccess?: () => void;
 }
 
-const currencies = [
-    { value: "USD", label: "USD - US Dollar" },
-    { value: "EUR", label: "EUR - Euro" },
-    { value: "GBP", label: "GBP - British Pound" },
-    { value: "AED", label: "AED - UAE Dirham" },
-    { value: "SAR", label: "SAR - Saudi Riyal" },
-];
-
-const languages = [
-    { value: "en", label: "English" },
-    { value: "ar", label: "Arabic" },
-    { value: "es", label: "Spanish" },
-    { value: "fr", label: "French" },
-];
-
-const countries = [
-    { value: "AE", label: "United Arab Emirates" },
-    { value: "SA", label: "Saudi Arabia" },
-    { value: "US", label: "United States" },
-    { value: "UK", label: "United Kingdom" },
-    { value: "EG", label: "Egypt" },
-];
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { customerFormSchema, type CustomerFormData } from "@/lib/schemas";
+import {
+    CURRENCIES,
+    LANGUAGES,
+    COUNTRIES,
+    CUSTOMER_GROUPS
+} from "@/lib/constants";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
 
 export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustomerPanelProps) {
     const { createCustomer, loading } = useCustomers();
     const [activeTab, setActiveTab] = useState<"details" | "billing">("details");
     const [newCustomerId, setNewCustomerId] = useState<string | null>(null);
     const [showContactDialog, setShowContactDialog] = useState(false);
-    const [formData, setFormData] = useState({
-        // Customer Details
-        company: "",
-        vatNumber: "",
-        phone: "",
-        website: "",
-        groups: "",
-        currency: "",
-        language: "",
-        // Billing & Shipping
-        address: "",
-        city: "",
-        state: "",
-        zipCode: "",
-        country: "",
-        // Shipping (same structure)
-        shippingAddress: "",
-        shippingCity: "",
-        shippingState: "",
-        shippingZipCode: "",
-        shippingCountry: "",
+    const [shouldOpenContact, setShouldOpenContact] = useState(false);
+
+    const form = useForm<CustomerFormData>({
+        resolver: zodResolver(customerFormSchema) as any,
+        defaultValues: {
+            company: "",
+            vatNumber: "",
+            phone: "",
+            website: "",
+            groups: [],
+            currency: "USD",
+            defaultLanguage: "en",
+            status: "active",
+            notes: "",
+            address: {
+                street: "",
+                city: "",
+                state: "",
+                zipCode: "",
+                country: "",
+            },
+            shippingAddress: {
+                street: "",
+                city: "",
+                state: "",
+                zipCode: "",
+                country: "",
+            }
+        },
     });
 
-    const handleChange = (field: string, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleSave = async (createContact: boolean = false) => {
-        if (!formData.company.trim()) {
-            alert("Company name is required");
-            return;
-        }
-
+    const onSubmit = async (data: CustomerFormData) => {
         try {
-            // Build customer data, only include website if valid URL
-            const customerData: any = {
-                company: formData.company,
-                status: "active" as const,
-                currency: formData.currency || undefined,
-                defaultLanguage: formData.language || undefined,
-                address: {
-                    street: formData.address || undefined,
-                    city: formData.city || undefined,
-                    state: formData.state || undefined,
-                    zipCode: formData.zipCode || undefined,
-                    country: formData.country || undefined,
-                },
-            };
-
-            // Only add optional fields if they have values
-            if (formData.vatNumber) customerData.vatNumber = formData.vatNumber;
-            if (formData.phone) customerData.phone = formData.phone;
-
-            // Only add website if it's a valid URL
-            if (formData.website && formData.website.startsWith('http')) {
-                customerData.website = formData.website;
-            }
-
-            // Add shipping address if different from billing
-            if (formData.shippingAddress || formData.shippingCity) {
-                customerData.shippingAddress = {
-                    street: formData.shippingAddress || formData.address || undefined,
-                    city: formData.shippingCity || formData.city || undefined,
-                    state: formData.shippingState || formData.state || undefined,
-                    zipCode: formData.shippingZipCode || formData.zipCode || undefined,
-                    country: formData.shippingCountry || formData.country || undefined,
-                };
-            }
-
-            const customerId = await createCustomer(customerData);
+            // Ensure website is valid URL or empty string (zod handles validation but double check if needed)
+            const customerId = await createCustomer(data);
             setNewCustomerId(customerId);
 
-            // If createContact flag is set, open contact dialog
-            if (createContact) {
+            if (shouldOpenContact) {
                 setShowContactDialog(true);
             } else {
                 onSuccess?.();
                 onClose();
             }
 
-            // Reset form
-            setFormData({
-                company: "", vatNumber: "", phone: "", website: "", groups: "",
-                currency: "", language: "", address: "", city: "", state: "",
-                zipCode: "", country: "", shippingAddress: "", shippingCity: "",
-                shippingState: "", shippingZipCode: "", shippingCountry: "",
-            });
+            form.reset();
         } catch (error: any) {
             console.error("Failed to create customer:", error);
-            alert(`Failed to create customer: ${error.message || "Unknown error"}`);
+            // Form error handling would go here
         }
+    };
+
+    // Wrapper to handle the two save buttons
+    const handleSaveClick = (openContact: boolean) => {
+        setShouldOpenContact(openContact);
+        form.handleSubmit(onSubmit)();
     };
 
     return (
@@ -199,197 +157,328 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6">
                     {activeTab === "details" && (
-                        <div className="space-y-5">
-                            {/* Company */}
-                            <div>
-                                <Label className="text-gray-700">
-                                    <span className="text-red-500">*</span> Company
-                                </Label>
-                                <Input
-                                    value={formData.company}
-                                    onChange={(e) => handleChange("company", e.target.value)}
-                                    className="mt-1"
-                                    placeholder="Enter company name"
+                        <Form {...form}>
+                            <div className="space-y-5">
+                                {/* Company */}
+                                <FormField
+                                    control={form.control}
+                                    name="company"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-gray-700">
+                                                <span className="text-red-500">*</span> Company
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Enter company name" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
                                 />
-                            </div>
 
-                            {/* VAT Number */}
-                            <div>
-                                <Label className="text-gray-700">VAT Number</Label>
-                                <Input
-                                    value={formData.vatNumber}
-                                    onChange={(e) => handleChange("vatNumber", e.target.value)}
-                                    className="mt-1"
-                                    placeholder="Enter VAT number"
+                                {/* VAT Number */}
+                                <FormField
+                                    control={form.control}
+                                    name="vatNumber"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-gray-700">VAT Number</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Enter VAT number" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
                                 />
-                            </div>
 
-                            {/* Phone */}
-                            <div>
-                                <Label className="text-gray-700">Phone</Label>
-                                <Input
-                                    value={formData.phone}
-                                    onChange={(e) => handleChange("phone", e.target.value)}
-                                    className="mt-1"
-                                    placeholder="Enter phone number"
+                                {/* Phone */}
+                                <FormField
+                                    control={form.control}
+                                    name="phone"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-gray-700">Phone</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Enter phone number" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
                                 />
-                            </div>
 
-                            {/* Website */}
-                            <div>
-                                <Label className="text-gray-700">Website</Label>
-                                <Input
-                                    value={formData.website}
-                                    onChange={(e) => handleChange("website", e.target.value)}
-                                    className="mt-1"
-                                    placeholder="https://example.com"
+                                {/* Website */}
+                                <FormField
+                                    control={form.control}
+                                    name="website"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-gray-700">Website</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="https://example.com" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
                                 />
-                            </div>
 
-                            {/* Groups */}
-                            <div>
-                                <Label className="text-gray-700">Groups</Label>
-                                <div className="flex gap-2 mt-1">
-                                    <Select
-                                        value={formData.groups}
-                                        onValueChange={(value) => handleChange("groups", value)}
-                                    >
-                                        <SelectTrigger className="flex-1">
-                                            <SelectValue placeholder="Nothing selected" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="vip">VIP</SelectItem>
-                                            <SelectItem value="enterprise">Enterprise</SelectItem>
-                                            <SelectItem value="startup">Startup</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <Button variant="outline" size="icon">
-                                        <Plus className="h-4 w-4" />
-                                    </Button>
+                                {/* Groups */}
+                                <FormField
+                                    control={form.control}
+                                    name="groups"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-gray-700">Groups</FormLabel>
+                                            <div className="flex gap-2">
+                                                <Select
+                                                    onValueChange={(val) => field.onChange([val])}
+                                                    defaultValue={field.value?.[0]}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger className="flex-1">
+                                                            <SelectValue placeholder="Select group" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {CUSTOMER_GROUPS.map((g) => (
+                                                            <SelectItem key={g.value} value={g.value}>
+                                                                {g.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <Button type="button" variant="outline" size="icon">
+                                                    <Plus className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Currency & Language */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="currency"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-gray-700">Currency</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="System Default" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {CURRENCIES.map((c) => (
+                                                            <SelectItem key={c.value} value={c.value}>
+                                                                {c.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="defaultLanguage"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-gray-700">Language</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="System Default" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {LANGUAGES.map((l) => (
+                                                            <SelectItem key={l.value} value={l.value}>
+                                                                {l.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                {/* Billing Address (Primary) */}
+                                <div className="pt-4 border-t">
+                                    <h3 className="text-sm font-medium mb-3">Billing Address</h3>
+                                    <FormField
+                                        control={form.control}
+                                        name="address.street"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Street Address</FormLabel>
+                                                <FormControl>
+                                                    <Textarea {...field} rows={2} placeholder="Street address" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="grid grid-cols-2 gap-4 mt-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="address.city"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>City</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="address.state"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>State</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="address.zipCode"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Zip Code</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} />
+                                                    </FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="address.country"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Country</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select Country" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {COUNTRIES.map((c) => (
+                                                                <SelectItem key={c.value} value={c.value}>
+                                                                    {c.label}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                 </div>
                             </div>
-
-                            {/* Currency & Language */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-gray-700">Currency</Label>
-                                    <Select
-                                        value={formData.currency}
-                                        onValueChange={(value) => handleChange("currency", value)}
-                                    >
-                                        <SelectTrigger className="mt-1">
-                                            <SelectValue placeholder="System Default" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {currencies.map((c) => (
-                                                <SelectItem key={c.value} value={c.value}>
-                                                    {c.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label className="text-gray-700">Default Language</Label>
-                                    <Select
-                                        value={formData.language}
-                                        onValueChange={(value) => handleChange("language", value)}
-                                    >
-                                        <SelectTrigger className="mt-1">
-                                            <SelectValue placeholder="System Default" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {languages.map((l) => (
-                                                <SelectItem key={l.value} value={l.value}>
-                                                    {l.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            {/* Address */}
-                            <div>
-                                <Label className="text-gray-700">Address</Label>
-                                <Textarea
-                                    value={formData.address}
-                                    onChange={(e) => handleChange("address", e.target.value)}
-                                    className="mt-1"
-                                    rows={3}
-                                    placeholder="Enter address"
-                                />
-                            </div>
-                        </div>
+                        </Form>
                     )}
 
                     {activeTab === "billing" && (
-                        <div className="space-y-5">
-                            {/* Address */}
-                            <div>
-                                <Label className="text-gray-700">Address</Label>
-                                <Textarea
-                                    value={formData.shippingAddress || formData.address}
-                                    onChange={(e) => handleChange("shippingAddress", e.target.value)}
-                                    className="mt-1"
-                                    rows={3}
-                                    placeholder="Enter billing/shipping address"
+                        <Form {...form}>
+                            <div className="space-y-5">
+                                {/* Shipping Address */}
+                                <FormField
+                                    control={form.control}
+                                    name="shippingAddress.street"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Shipping Address</FormLabel>
+                                            <FormControl>
+                                                <Textarea {...field} rows={3} placeholder="Enter shipping address" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* City */}
+                                <FormField
+                                    control={form.control}
+                                    name="shippingAddress.city"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>City</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Enter city" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* State */}
+                                <FormField
+                                    control={form.control}
+                                    name="shippingAddress.state"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>State</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Enter state/province" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Zip Code */}
+                                <FormField
+                                    control={form.control}
+                                    name="shippingAddress.zipCode"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Zip Code</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Enter zip/postal code" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Country */}
+                                <FormField
+                                    control={form.control}
+                                    name="shippingAddress.country"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Country</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Country" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {COUNTRIES.map((c) => (
+                                                        <SelectItem key={c.value} value={c.value}>
+                                                            {c.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
                                 />
                             </div>
-
-                            {/* City */}
-                            <div>
-                                <Label className="text-gray-700">City</Label>
-                                <Input
-                                    value={formData.shippingCity || formData.city}
-                                    onChange={(e) => handleChange("shippingCity", e.target.value)}
-                                    className="mt-1"
-                                    placeholder="Enter city"
-                                />
-                            </div>
-
-                            {/* State */}
-                            <div>
-                                <Label className="text-gray-700">State</Label>
-                                <Input
-                                    value={formData.shippingState || formData.state}
-                                    onChange={(e) => handleChange("shippingState", e.target.value)}
-                                    className="mt-1"
-                                    placeholder="Enter state/province"
-                                />
-                            </div>
-
-                            {/* Zip Code */}
-                            <div>
-                                <Label className="text-gray-700">Zip Code</Label>
-                                <Input
-                                    value={formData.shippingZipCode || formData.zipCode}
-                                    onChange={(e) => handleChange("shippingZipCode", e.target.value)}
-                                    className="mt-1"
-                                    placeholder="Enter zip/postal code"
-                                />
-                            </div>
-
-                            {/* Country */}
-                            <div>
-                                <Label className="text-gray-700">Country</Label>
-                                <Select
-                                    value={formData.shippingCountry || formData.country}
-                                    onValueChange={(value) => handleChange("shippingCountry", value)}
-                                >
-                                    <SelectTrigger className="mt-1">
-                                        <SelectValue placeholder="Nothing selected" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {countries.map((c) => (
-                                            <SelectItem key={c.value} value={c.value}>
-                                                {c.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
+                        </Form>
                     )}
                 </div>
 
@@ -397,13 +486,13 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
                 <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50">
                     <Button
                         variant="outline"
-                        onClick={() => handleSave(true)}
+                        onClick={() => handleSaveClick(true)}
                         disabled={loading}
                     >
                         Save and create contact
                     </Button>
                     <Button
-                        onClick={() => handleSave(false)}
+                        onClick={() => handleSaveClick(false)}
                         disabled={loading}
                         className="bg-gray-900 hover:bg-gray-800"
                     >

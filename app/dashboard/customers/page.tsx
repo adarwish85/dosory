@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import AddCustomerPanel from "@/components/dashboard/customers/AddCustomerPanel";
 import { useCustomers, useContacts } from "@/lib/hooks";
 import { TableSkeleton } from "@/components/ui/skeleton-loaders";
+import { CUSTOMER_STATUSES } from "@/lib/constants";
 
 // Dynamic import for better code splitting
 const ImportWizard = dynamic(() => import("@/components/import/ImportWizard"), {
@@ -22,8 +23,8 @@ export default function CustomersPage() {
     const [showImportWizard, setShowImportWizard] = useState(false);
 
     // Fetch all customers/contacts for stats
-    const [filterStatus, setFilterStatus] = useState<"all" | "active">("all");
-    const { customers, loading } = useCustomers({ status: filterStatus });
+    const [filterStatus, setFilterStatus] = useState<string>("all");
+    const { customers, loading } = useCustomers({ status: filterStatus as any });
     const { contacts } = useContacts();
 
     // Calculate stats
@@ -101,16 +102,21 @@ export default function CustomersPage() {
                                 </div>
                             </div>
                             <div className="p-2 space-y-1">
-                                <div
-                                    className={cn(
-                                        "flex items-center gap-2 px-2 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100",
-                                        filterStatus === "active" && "bg-blue-50 text-blue-600"
-                                    )}
-                                    onClick={() => setFilterStatus("active")}
-                                >
-                                    <span className={cn("text-gray-400", filterStatus === "active" && "text-blue-600")}>☆</span>
-                                    <span>Active only</span>
-                                </div>
+                                {CUSTOMER_STATUSES.map((status) => (
+                                    <div
+                                        key={status.value}
+                                        className={cn(
+                                            "flex items-center gap-2 px-2 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100",
+                                            filterStatus === status.value && "bg-blue-50 text-blue-600"
+                                        )}
+                                        onClick={() => setFilterStatus(status.value)}
+                                    >
+                                        <span className={cn("text-gray-400", filterStatus === status.value && "text-blue-600")}>
+                                            {filterStatus === status.value ? "✓" : "☆"}
+                                        </span>
+                                        <span>{status.label} only</span>
+                                    </div>
+                                ))}
                             </div>
                         </PopoverContent>
                     </Popover>

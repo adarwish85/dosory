@@ -16,6 +16,7 @@ import {
     updateDoc,
     deleteDoc,
     getDocs,
+    getDoc,
     serverTimestamp,
     Timestamp,
     QueryConstraint,
@@ -137,8 +138,11 @@ export function useLeads(options: UseLeadsOptions = {}) {
             if (!profile?.orgId) throw new Error("No organization");
 
             // Get lead data
-            const leadDoc = leads.find((l) => l.id === leadId);
-            if (!leadDoc) throw new Error("Lead not found");
+            const leadDocRef = doc(db, "leads", leadId);
+            const leadSnap = await getDoc(leadDocRef);
+
+            if (!leadSnap.exists()) throw new Error("Lead not found");
+            const leadDoc = { id: leadSnap.id, ...leadSnap.data() } as Lead;
 
             // Check if already converted
             if (leadDoc.convertedToCustomerId) {
@@ -219,7 +223,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
             return customerRef.id;
         },
-        [profile?.orgId, profile?.uid, leads]
+        [profile?.orgId, profile?.uid]
     );
 
     // Calculate lead stats by status

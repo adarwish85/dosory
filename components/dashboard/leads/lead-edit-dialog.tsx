@@ -13,6 +13,9 @@ import { leadFormSchema, type LeadFormData } from "@/lib/schemas";
 import type { Lead } from "@/lib/types";
 import { useEffect } from "react";
 import { Printer, X, Plus } from "lucide-react";
+import { LEAD_STATUSES, LEAD_SOURCES } from "@/lib/constants";
+import { DatePicker } from "@/components/ui/date-picker";
+import { useStaff } from "@/lib/hooks/use-staff";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface LeadEditDialogProps {
@@ -23,6 +26,7 @@ interface LeadEditDialogProps {
 }
 
 export function LeadEditDialog({ open, onClose, lead, onSave }: LeadEditDialogProps) {
+    const { staff } = useStaff();
     const form = useForm({
         resolver: zodResolver(leadFormSchema),
         defaultValues: {
@@ -51,6 +55,7 @@ export function LeadEditDialog({ open, onClose, lead, onSave }: LeadEditDialogPr
                 position: lead.position || "",
                 defaultLanguage: lead.defaultLanguage || "",
                 isPublic: lead.isPublic || false,
+                lastContactedAt: lead.lastContactedAt ? lead.lastContactedAt.toDate() : undefined,
             });
         }
     }, [lead, form]);
@@ -108,14 +113,11 @@ export function LeadEditDialog({ open, onClose, lead, onSave }: LeadEditDialogPr
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="new">New</SelectItem>
-                                                            <SelectItem value="contacted">Attempted to Contact</SelectItem>
-                                                            <SelectItem value="qualified">SQL</SelectItem>
-                                                            <SelectItem value="proposal">Offer Sent</SelectItem>
-                                                            <SelectItem value="negotiation">Negotiation</SelectItem>
-                                                            <SelectItem value="won">Partner</SelectItem>
-                                                            <SelectItem value="lost">Closed: Lost</SelectItem>
-                                                            <SelectItem value="junk">Junk</SelectItem>
+                                                            {LEAD_STATUSES.map((status) => (
+                                                                <SelectItem key={status.value} value={status.value}>
+                                                                    {status.label}
+                                                                </SelectItem>
+                                                            ))}
                                                         </SelectContent>
                                                     </Select>
                                                     <Button type="button" variant="outline" size="icon" className="shrink-0">
@@ -141,9 +143,11 @@ export function LeadEditDialog({ open, onClose, lead, onSave }: LeadEditDialogPr
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="WebSite">WebSite</SelectItem>
-                                                            <SelectItem value="Referral">Referral</SelectItem>
-                                                            <SelectItem value="Social Media">Social Media</SelectItem>
+                                                            {LEAD_SOURCES.map((source) => (
+                                                                <SelectItem key={source} value={source}>
+                                                                    {source}
+                                                                </SelectItem>
+                                                            ))}
                                                         </SelectContent>
                                                     </Select>
                                                     <Button type="button" variant="outline" size="icon" className="shrink-0">
@@ -164,12 +168,16 @@ export function LeadEditDialog({ open, onClose, lead, onSave }: LeadEditDialogPr
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="Nothing selected" />
+                                                            <SelectValue placeholder="Select staff member" />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
                                                         <SelectItem value="unassigned">Unassigned</SelectItem>
-                                                        {/* Populate with actual staff */}
+                                                        {staff.map((member) => (
+                                                            <SelectItem key={member.id} value={member.id}>
+                                                                {member.firstName} {member.lastName}
+                                                            </SelectItem>
+                                                        ))}
                                                     </SelectContent>
                                                 </Select>
                                                 <FormMessage />
@@ -361,13 +369,22 @@ export function LeadEditDialog({ open, onClose, lead, onSave }: LeadEditDialogPr
                                 />
 
                                 <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <FormLabel>Last Contact</FormLabel>
-                                        <div className="relative">
-                                            <Input type="date" className="w-full" disabled />
-                                            {/* Date picker would go here */}
-                                        </div>
-                                    </div>
+                                    <FormField
+                                        control={form.control}
+                                        name="lastContactedAt"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Last Contact</FormLabel>
+                                                <FormControl>
+                                                    <DatePicker
+                                                        date={field.value}
+                                                        setDate={field.onChange}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
                                     <FormField
                                         control={form.control}

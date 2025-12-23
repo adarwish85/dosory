@@ -90,6 +90,7 @@ export const leadFormSchema = z.object({
     position: z.string().optional(),
     defaultLanguage: z.string().optional(),
     isPublic: z.boolean().default(false),
+    lastContactedAt: z.date().optional(),
 });
 
 // ============================================

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, RotateCcw, Loader2 } from "lucide-react";
 import { useCustomers } from "@/lib/hooks";
+import { CUSTOMER_GROUPS } from "@/lib/constants";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -139,11 +140,14 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1">
-                                            {customer.groups?.map((group: string) => (
-                                                <Badge key={group} variant="secondary" className="font-normal text-xs bg-gray-100 text-gray-600 hover:bg-gray-200">
-                                                    {group}
-                                                </Badge>
-                                            ))}
+                                            {customer.groups?.map((groupValue: string) => {
+                                                const groupLabel = CUSTOMER_GROUPS.find(g => g.value === groupValue)?.label || groupValue;
+                                                return (
+                                                    <Badge key={groupValue} variant="secondary" className="font-normal text-xs bg-gray-100 text-gray-600 hover:bg-gray-200">
+                                                        {groupLabel}
+                                                    </Badge>
+                                                );
+                                            })}
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-gray-500 text-xs">

@@ -31,16 +31,7 @@ const LeadEditDialog = dynamic(
     { ssr: false }
 );
 
-const statusColors: Record<LeadStatus, { bg: string; text: string; border: string }> = {
-    new: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-100" },
-    contacted: { bg: "bg-green-50", text: "text-green-600", border: "border-green-100" },
-    qualified: { bg: "bg-sky-50", text: "text-sky-600", border: "border-sky-100" },
-    proposal: { bg: "bg-yellow-50", text: "text-yellow-600", border: "border-yellow-100" },
-    negotiation: { bg: "bg-orange-50", text: "text-orange-600", border: "border-orange-100" },
-    won: { bg: "bg-green-50", text: "text-green-600", border: "border-green-100" },
-    lost: { bg: "bg-red-50", text: "text-red-600", border: "border-red-100" },
-    junk: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
-};
+import { LEAD_STATUSES, STATUS_COLORS } from "@/lib/constants";
 
 export default function LeadsPage() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -112,7 +103,7 @@ export default function LeadsPage() {
                     {Object.entries(leadStats).filter(([key]) =>
                         !["total", "totalValue"].includes(key)
                     ).map(([status, count]) => {
-                        const colors = statusColors[status as LeadStatus] || { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" };
+                        const colors = STATUS_COLORS[status as LeadStatus] || { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" };
                         return (
                             <div key={status} className={`border rounded px-3 py-1 text-xs font-medium ${colors.text} ${colors.border} ${colors.bg} flex items-center gap-2 cursor-pointer hover:opacity-80`}>
                                 <span className="font-bold text-gray-900">{count}</span> {status.replace("_", " ")}
@@ -228,14 +219,11 @@ export default function LeadsPage() {
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="new">New</SelectItem>
-                                                    <SelectItem value="contacted">Attempted to Contact</SelectItem>
-                                                    <SelectItem value="qualified">SQL</SelectItem>
-                                                    <SelectItem value="proposal">Offer Sent</SelectItem>
-                                                    <SelectItem value="negotiation">Negotiation</SelectItem>
-                                                    <SelectItem value="won">Partner</SelectItem>
-                                                    <SelectItem value="lost">Closed: Lost</SelectItem>
-                                                    <SelectItem value="junk">Junk</SelectItem>
+                                                    {LEAD_STATUSES.map((status) => (
+                                                        <SelectItem key={status.value} value={status.value}>
+                                                            {status.label}
+                                                        </SelectItem>
+                                                    ))}
                                                 </SelectContent>
                                             </Select>
                                         </TableCell>
