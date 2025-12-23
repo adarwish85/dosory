@@ -152,7 +152,7 @@ export default function ProjectsPage() {
                                 </TableRow>
                             ) : (
                                 filteredProjects.map((project, index) => {
-                                    const colors = statusColors[project.status];
+                                    const colors = statusColors[project.status] || statusColors["not_started"];
                                     return (
                                         <TableRow key={project.id}>
                                             <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
