@@ -75,7 +75,7 @@ import { formatDistanceToNow, format } from "date-fns";
 // Types
 type SelectionMode = "none" | "page" | "all";
 type SortDirection = "asc" | "desc" | null;
-type RowDensity = "compact" | "comfortable" | "spacious";
+type RowDensity = "compact" | "comfortable";
 type ViewMode = "table" | "kanban";
 type ColumnKey = "starred" | "id" | "name" | "company" | "email" | "phone" | "value" | "status" | "source" | "lastActivity" | "score" | "tags";
 type FilterOperator = "contains" | "equals" | "startsWith" | "endsWith" | "isEmpty" | "isNotEmpty" | "greaterThan" | "lessThan";
@@ -177,7 +177,7 @@ const FILTER_OPERATORS: { value: FilterOperator; label: string }[] = [
     { value: "greaterThan", label: "Greater than" }, { value: "lessThan", label: "Less than" },
 ];
 
-const ROW_DENSITY_STYLES: Record<RowDensity, string> = { compact: "py-1 text-xs", comfortable: "py-2 text-sm", spacious: "py-4 text-sm" };
+const ROW_DENSITY_STYLES: Record<RowDensity, string> = { compact: "py-1 text-xs", comfortable: "py-2 text-sm" };
 
 const getDefaultVisibleColumns = (): Record<ColumnKey, boolean> => {
     const v: Record<string, boolean> = {};
@@ -278,8 +278,9 @@ function DraggableColumnHeader({
     if (!isVisible) return null;
     const isActive = sortKey === column.key;
 
+    // Solid background for all headers to prevent bleed-through, especially for sticky ones
     return (
-        <TableHead ref={setNodeRef} style={style} className={`relative font-semibold text-gray-900 bg-gray-100/50 ${column.key === "name" ? "sticky left-12 z-10" : ""}`}>
+        <TableHead ref={setNodeRef} style={style} className={`relative font-semibold text-gray-900 bg-gray-100 ${column.key === "name" ? "sticky left-12 z-20 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]" : ""}`}>
             <div className="flex items-center gap-1 w-full">
                 <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded shrink-0"><GripVertical className="h-3 w-3 text-gray-400" /></button>
                 {column.sortable ? (
@@ -1079,7 +1080,6 @@ export default function LeadsPage() {
                                 <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
                                     <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
                                     <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="spacious">Spacious</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                                 <DropdownMenuSeparator />
 
@@ -1188,24 +1188,22 @@ export default function LeadsPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                            <TableHead className="w-12 text-center bg-gray-100/50 sticky left-0 z-10"><Checkbox checked={isAllPageSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={handleSelectAllCheckbox} /></TableHead>
+                                            <TableHead className="w-12 text-center bg-gray-100 sticky left-0 z-20"><Checkbox checked={isAllPageSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={handleSelectAllCheckbox} /></TableHead>
                                             <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
-                                                <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
-                                                    {orderedColumns.map((col) => (
-                                                        <DraggableColumnHeader
-                                                            key={col.key}
-                                                            column={col}
-                                                            sortKey={sortKey}
-                                                            sortDirection={sortDirection}
-                                                            onSort={handleSort}
-                                                            isVisible={columnVisibility[col.key]}
-                                                            width={columnWidths[col.key] || 100}
-                                                            onResize={handleColumnResize}
-                                                        />
-                                                    ))}
-                                                </SortableContext>
+                                                {orderedColumns.map((col) => (
+                                                    <DraggableColumnHeader
+                                                        key={col.key}
+                                                        column={col}
+                                                        sortKey={sortKey}
+                                                        sortDirection={sortDirection}
+                                                        onSort={handleSort}
+                                                        isVisible={columnVisibility[col.key]}
+                                                        width={columnWidths[col.key] || 100}
+                                                        onResize={handleColumnResize}
+                                                    />
+                                                ))}
                                             </SortableContext>
-                                            <TableHead className="w-24 text-center bg-gray-100/50">Actions</TableHead>
+                                            <TableHead className="w-24 text-center bg-gray-100 sticky right-0 z-20">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1214,17 +1212,17 @@ export default function LeadsPage() {
                                         ) : (
                                             paginatedLeads.map((lead, index) => (
                                                 <TableRow key={lead.id} className={`group hover:bg-gray-50 ${(selectionMode === "all" || selectedLeads.includes(lead.id)) ? 'bg-blue-50/50' : ''} ${lead.isStarred ? 'bg-yellow-50/30' : ''} ${focusedRowIndex === index ? 'ring-2 ring-inset ring-blue-500' : ''} ${ROW_DENSITY_STYLES[rowDensity]}`}>
-                                                    <TableCell className="text-center sticky left-0 z-10 bg-white group-hover:bg-gray-50"><Checkbox checked={selectionMode === "all" || selectedLeads.includes(lead.id)} onCheckedChange={(c) => handleSelectLead(lead.id, !!c)} /></TableCell>
+                                                    <TableCell className="text-center sticky left-0 z-20 bg-white group-hover:bg-gray-50"><Checkbox checked={selectionMode === "all" || selectedLeads.includes(lead.id)} onCheckedChange={(c) => handleSelectLead(lead.id, !!c)} /></TableCell>
                                                     {orderedColumns.map((col) => columnVisibility[col.key] && (
                                                         <TableCell
                                                             key={col.key}
                                                             style={{ width: columnWidths[col.key] || 100, minWidth: columnWidths[col.key] || 100 }}
-                                                            className={`overflow-hidden text-ellipsis whitespace-nowrap ${col.key === "name" ? "sticky left-12 z-10 bg-white group-hover:bg-gray-50" : ""}`}
+                                                            className={`overflow-hidden text-ellipsis whitespace-nowrap ${col.key === "name" ? "sticky left-12 z-20 bg-white group-hover:bg-gray-50 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]" : ""}`}
                                                         >
                                                             {renderCell(lead, col)}
                                                         </TableCell>
                                                     ))}
-                                                    <TableCell>
+                                                    <TableCell className="sticky right-0 z-20 bg-white group-hover:bg-gray-50">
                                                         <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleView(lead)}><ExternalLink className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
                                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(lead)}><Pencil className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
