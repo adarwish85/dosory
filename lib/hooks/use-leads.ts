@@ -20,6 +20,7 @@ import {
     serverTimestamp,
     Timestamp,
     QueryConstraint,
+    writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -131,6 +132,19 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
     const deleteLead = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "leads", id));
+    }, []);
+
+    const bulkDeleteLeads = useCallback(async (ids: string[]): Promise<void> => {
+        if (!ids.length) return;
+        const batchSize = 500;
+        for (let i = 0; i < ids.length; i += batchSize) {
+            const batch = writeBatch(db);
+            const chunk = ids.slice(i, i + batchSize);
+            chunk.forEach(id => {
+                batch.delete(doc(db, "leads", id));
+            });
+            await batch.commit();
+        }
     }, []);
 
     const convertToCustomer = useCallback(
@@ -264,6 +278,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         createLead,
         updateLead,
         deleteLead,
+        bulkDeleteLeads,
         convertToCustomer,
     };
 }

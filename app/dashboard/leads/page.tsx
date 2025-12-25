@@ -570,7 +570,7 @@ export default function LeadsPage() {
     }, []);
 
     const tableRef = useRef<HTMLDivElement>(null);
-    const { leads, loading, leadStats, deleteLead, updateLead } = useLeads({ status: statusFilter });
+    const { leads, loading, leadStats, deleteLead, updateLead, bulkDeleteLeads } = useLeads({ status: statusFilter });
 
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
     const orderedColumns = useMemo(() => columnOrder.map(key => DEFAULT_COLUMNS.find(c => c.key === key)!).filter(Boolean), [columnOrder]);
@@ -688,7 +688,24 @@ export default function LeadsPage() {
     const handleView = useCallback((lead: Lead) => { setSelectedLead(lead); setDetailsOpen(true); }, []);
     const handleEdit = useCallback((lead: Lead) => { setSelectedLead(lead); setEditOpen(true); }, []);
     const handleDelete = useCallback(async (id: string) => { if (window.confirm("Delete?")) await deleteLead(id); }, [deleteLead]);
-    const handleBulkDelete = useCallback(async () => { if (selectedLeads.length === 0) return; if (window.confirm(`Delete ${selectionMode === "all" ? totalRecords : selectedLeads.length}?`)) { for (const id of selectedLeads) await deleteLead(id); handleClearSelection(); } }, [selectedLeads, selectionMode, totalRecords, deleteLead, handleClearSelection]);
+    const handleBulkDelete = useCallback(async () => {
+        if (selectedLeads.length === 0) return;
+
+        // Safety check: Don't allow accidental mass deletion without explicit confirmation of count
+        const count = selectionMode === "all" ? totalRecords : selectedLeads.length;
+        if (!window.confirm(`Are you sure you want to delete ${count} leads? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            await bulkDeleteLeads(selectedLeads);
+            handleClearSelection();
+            // Optional: Show success toast here
+        } catch (error) {
+            console.error("Bulk delete failed:", error);
+            alert("Failed to delete leads. Please try again.");
+        }
+    }, [selectedLeads, selectionMode, totalRecords, bulkDeleteLeads, handleClearSelection]);
     const handleInlineEdit = useCallback(async (id: string, field: ColumnKey, value: string) => { await updateLead(id, { [field]: value } as any); }, [updateLead]);
     const handleSaveLead = useCallback(async (id: string, data: Partial<Lead>) => { await updateLead(id, data as any); if (selectedLead?.id === id) setSelectedLead({ ...selectedLead, ...data } as Lead); }, [updateLead, selectedLead]);
     const handleStatusChange = useCallback(async (leadId: string, newStatus: LeadStatus) => { await updateLead(leadId, { status: newStatus }); }, [updateLead]);
