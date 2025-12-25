@@ -3,27 +3,73 @@
 import { useCustomer } from "./customer-context";
 import { DollarSign, Briefcase, Activity, CheckCircle, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useInvoices, useProjects } from "@/lib/hooks";
+import { format } from "date-fns";
 
 export function CustomerOverview() {
-    const { customer, loading } = useCustomer();
+    const { customer, contacts, loading: customerLoading } = useCustomer();
 
-    if (loading || !customer) return <div>Loading...</div>;
+    // Fetch Financials
+    const { invoiceStats, loading: invoicesLoading } = useInvoices({
+        customerId: customer?.id,
+        status: "all"
+    });
 
-    // Mock Data for Widgets (Recommendations)
+    // Fetch Projects
+    const { projects, loading: projectsLoading } = useProjects({
+        customerId: customer?.id
+    });
+
+    const loading = customerLoading || invoicesLoading || projectsLoading;
+
+    if (loading || !customer) return <div className="p-8">Loading overview...</div>;
+
+    // Financial Data
     const financials = {
-        invoiced: 45000,
-        paid: 38200,
-        due: 6800,
+        invoiced: invoiceStats.totalAmount || 0,
+        paid: invoiceStats.totalPaid || 0,
+        due: invoiceStats.totalDue || 0,
         currency: customer.currency?.toUpperCase() || "USD"
     };
 
+    // Project Data
     const projectStats = {
-        active: 2,
-        completed: 5,
-        total: 7
+        active: projects.filter(p => p.status === 'active' || p.status === 'in_progress').length,
+        completed: projects.filter(p => p.status === 'completed').length,
+        total: projects.length
     };
 
-    const healthScore = 85;
+    // Engagement / Health Calculation
+    let healthScore = 0;
+
+    // 1. Contact Info (+20)
+    if (customer.email || customer.phone) healthScore += 10;
+    if (customer.address?.street) healthScore += 10;
+
+    // 2. Portal Access (+20)
+    const hasPortalAccess = contacts.some(c => c.portalAccess?.enabled);
+    if (hasPortalAccess) healthScore += 20;
+
+    // 3. Financial Activity (+30)
+    if (financials.invoiced > 0) healthScore += 10;
+    if (financials.paid > 0) healthScore += 20;
+
+    // 4. Project Activity (+30)
+    if (projectStats.total > 0) healthScore += 10;
+    if (projectStats.active > 0) healthScore += 20;
+
+    healthScore = Math.min(healthScore, 100);
+
+    // Last Login Logic
+    let lastLoginDate: Date | null = null;
+    contacts.forEach(c => {
+        if (c.portalAccess?.lastLogin) {
+            const loginDate = c.portalAccess.lastLogin.toDate();
+            if (!lastLoginDate || loginDate > lastLoginDate) {
+                lastLoginDate = loginDate;
+            }
+        }
+    });
 
     return (
         <div className="space-y-6">
@@ -74,7 +120,11 @@ export function CustomerOverview() {
                                 <div className="text-xs text-gray-500 uppercase">Total</div>
                             </div>
                         </div>
-                        <div className="text-xs text-center text-blue-600 cursor-pointer hover:underline">View All Projects →</div>
+                        {projectStats.total > 0 && (
+                            <div className="text-xs text-center text-blue-600 cursor-pointer hover:underline" onClick={() => window.location.href = `/dashboard/customers/${customer.id}/projects`}>
+                                View All Projects →
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -87,18 +137,28 @@ export function CustomerOverview() {
                     <div className="space-y-2">
                         <div className="flex justify-between text-sm mb-1">
                             <span>Health Score</span>
-                            <span className="font-bold text-purple-700">{healthScore}/100</span>
+                            <span className={`font-bold ${healthScore >= 70 ? 'text-green-600' : healthScore >= 40 ? 'text-yellow-600' : 'text-gray-600'}`}>
+                                {healthScore}/100
+                            </span>
                         </div>
                         <Progress value={healthScore} className="h-2" />
                         <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
-                            <div className="flex items-center gap-1 text-gray-600"><CheckCircle className="h-3 w-3 text-green-500" /> Portal Active</div>
-                            <div className="flex items-center gap-1 text-gray-600"><Clock className="h-3 w-3 text-yellow-500" /> Last Login: 2d ago</div>
+                            <div className="flex items-center gap-1 text-gray-600">
+                                <CheckCircle className={`h-3 w-3 ${hasPortalAccess ? "text-green-500" : "text-gray-300"}`} />
+                                {hasPortalAccess ? "Portal Active" : "No Portal Access"}
+                            </div>
+                            {lastLoginDate && (
+                                <div className="flex items-center gap-1 text-gray-600">
+                                    <Clock className="h-3 w-3 text-yellow-500" />
+                                    Last: {format(lastLoginDate, "MMM d")}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Recent Activity Placeholder */}
+            {/* Recent Activity Placeholder (Could be expanded later) */}
             <div className="border rounded-lg bg-white p-6 shadow-sm">
                 <h3 className="font-semibold mb-4">Recent Activity</h3>
                 <div className="text-sm text-gray-500 italic">No recent activity logged.</div>

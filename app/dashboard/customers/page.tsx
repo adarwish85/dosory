@@ -536,16 +536,93 @@ export default function CustomersPage() {
     const isAllPageSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedCustomers.includes(id));
     const isSomeSelected = selectedCustomers.length > 0 && !isAllPageSelected;
 
+    // Customer Quick View Card
+    function CustomerQuickViewCard({ customer }: { customer: Customer }) {
+        return (
+            <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 border">
+                        <AvatarFallback className="bg-blue-100 text-blue-700 font-bold">
+                            {customer.company.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-900">{customer.company}</h4>
+                        <div className="flex gap-2 text-xs text-gray-500 mt-0.5">
+                            <Badge variant="outline" className={customer.status === "active" ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-50 text-gray-700"}>
+                                {customer.status}
+                            </Badge>
+                            {customer.createdAt && <span>Joined {formatDistanceToNow(customer.createdAt.toDate(), { addSuffix: true })}</span>}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    {customer.phone && (
+                        <div className="flex items-center gap-1.5 overflow-hidden">
+                            <Phone className="h-3 w-3 shrink-0 text-gray-400" />
+                            <span className="truncate">{customer.phone}</span>
+                        </div>
+                    )}
+                    {customer.email && (
+                        <div className="flex items-center gap-1.5 overflow-hidden">
+                            <Mail className="h-3 w-3 shrink-0 text-gray-400" />
+                            <span className="truncate">{customer.email}</span>
+                        </div>
+                    )}
+                    {customer.website && (
+                        <div className="flex items-center gap-1.5 overflow-hidden col-span-2">
+                            <Globe className="h-3 w-3 shrink-0 text-gray-400" />
+                            <a href={customer.website.startsWith('http') ? customer.website : `https://${customer.website}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline truncate">
+                                {customer.website}
+                            </a>
+                        </div>
+                    )}
+                    {customer.address?.city && (
+                        <div className="flex items-center gap-1.5 overflow-hidden col-span-2">
+                            <Building className="h-3 w-3 shrink-0 text-gray-400" />
+                            <span className="truncate">{customer.address.city}, {customer.address.country}</span>
+                        </div>
+                    )}
+                </div>
+
+                {customer.groups && customer.groups.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1 border-t">
+                        {customer.groups.slice(0, 3).map(g => (
+                            <Badge key={g} variant="secondary" className="text-[10px] px-1.5">{g}</Badge>
+                        ))}
+                        {customer.groups.length > 3 && (
+                            <span className="text-[10px] text-gray-400">+{customer.groups.length - 3} more</span>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     // Render Helper
     const renderCell = (customer: Customer, col: ColumnDef) => {
         switch (col.key) {
             case "id": return <span className="text-gray-500 font-mono text-xs">{customer.id.substring(0, 6)}</span>;
             case "company": return (
                 <div className="flex flex-col relative group">
-                    <Link href={`/dashboard/customers/${customer.id}`} className="font-medium text-blue-600 hover:underline">{customer.company}</Link>
+                    <HoverCard>
+                        <HoverCardTrigger asChild>
+                            <Link href={`/dashboard/customers/${customer.id}`} className="font-medium text-blue-600 hover:underline block w-fit">
+                                {customer.company}
+                            </Link>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80" align="start">
+                            <CustomerQuickViewCard customer={customer} />
+                        </HoverCardContent>
+                    </HoverCard>
+
                     {rowDensity === "comfortable" && (
-                        <div className="flex gap-2 text-[10px] text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-0 bg-white/90 backdrop-blur-sm z-10 pr-2 py-0.5 rounded shadow-sm border border-gray-100">
+                        <div className="flex gap-2 text-[10px] text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-0 bg-white/90 backdrop-blur-sm z-10 pr-2 py-0.5 rounded shadow-sm border border-gray-100 pointer-events-auto">
                             <Link href={`/dashboard/customers/${customer.id}`} className="hover:text-blue-600 flex items-center gap-0.5"><ExternalLink className="h-2.5 w-2.5" /> View</Link>
+                            <span className="text-gray-300">|</span>
+                            <Link href={`/dashboard/customers/${customer.id}/profile`} className="hover:text-blue-600 flex items-center gap-0.5"><Pencil className="h-2.5 w-2.5" /> Edit</Link>
+                            <span className="text-gray-300">|</span>
                             <button onClick={async (e) => { e.stopPropagation(); if (window.confirm("Delete?")) await deleteCustomer(customer.id); }} className="hover:text-red-600 flex items-center gap-0.5"><Trash className="h-2.5 w-2.5" /> Delete</button>
                         </div>
                     )}
