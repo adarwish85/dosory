@@ -941,8 +941,6 @@ export default function LeadsPage() {
                         <div className="flex items-center gap-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity mt-0.5 h-4">
                             <button className="text-blue-600 hover:underline font-medium" onClick={(e) => { e.stopPropagation(); handleView(lead); }}>View</button>
                             <span className="text-gray-300">|</span>
-                            <button className="text-blue-600 hover:underline font-medium" onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setEditOpen(true); }}>Edit</button>
-                            <span className="text-gray-300">|</span>
                             <button className="text-red-600 hover:underline font-medium" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this lead?")) deleteLead(lead.id); }}>Delete</button>
                         </div>
                     )}

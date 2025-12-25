@@ -127,12 +127,7 @@ export function LeadProfileForm() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard/leads")}>
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <h2 className="text-xl font-bold text-gray-900">Lead Profile</h2>
-            </div>
+            <h2 className="text-xl font-bold text-gray-900">Lead Profile</h2>
 
             <form onSubmit={handleSubmit(onSave)}>
                 <Tabs defaultValue="details" className="w-full">
@@ -148,11 +143,11 @@ export function LeadProfileForm() {
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="details" className="mt-6 space-y-6 max-w-3xl">
-                        {/* Status & Source Row */}
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="grid gap-2">
-                                <Label className="text-red-500">* Status</Label>
+                    <TabsContent value="details" className="mt-6 space-y-4">
+                        {/* Row 1: Status, Source */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-1.5">
+                                <Label className="text-red-500 text-sm">* Status</Label>
                                 <Select defaultValue={lead.status} onValueChange={(val) => setValue("status", val)}>
                                     <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                                     <SelectContent>
@@ -162,8 +157,8 @@ export function LeadProfileForm() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="grid gap-2">
-                                <Label className="text-red-500">* Source</Label>
+                            <div className="grid gap-1.5">
+                                <Label className="text-red-500 text-sm">* Source</Label>
                                 <Select defaultValue={lead.source} onValueChange={(val) => setValue("source", val)}>
                                     <SelectTrigger><SelectValue placeholder="Select source" /></SelectTrigger>
                                     <SelectContent>
@@ -173,54 +168,60 @@ export function LeadProfileForm() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="grid gap-2">
-                                <Label>Lead Value (EGP)</Label>
-                                <Input type="number" {...register("value")} />
-                            </div>
                         </div>
 
-                        {/* Name & Contact */}
+                        {/* Row 2: Name, Company */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label className="text-red-500">* Name</Label>
+                            <div className="grid gap-1.5">
+                                <Label className="text-red-500 text-sm">* Name</Label>
                                 <Input {...register("name", { required: true })} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label>Company</Label>
+                            <div className="grid gap-1.5">
+                                <Label className="text-sm">Company</Label>
                                 <Input {...register("company")} />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="grid gap-2">
-                                <Label>Email</Label>
+                        {/* Row 3: Email, Phone */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-1.5">
+                                <Label className="text-sm">Email</Label>
                                 <Input {...register("email")} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label>Phone</Label>
+                            <div className="grid gap-1.5">
+                                <Label className="text-sm">Phone</Label>
                                 <Input {...register("phone")} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label>Position</Label>
-                                <Input {...register("position")} />
                             </div>
                         </div>
 
+                        {/* Row 4: Position, Website */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label>Website</Label>
+                            <div className="grid gap-1.5">
+                                <Label className="text-sm">Position</Label>
+                                <Input {...register("position")} />
+                            </div>
+                            <div className="grid gap-1.5">
+                                <Label className="text-sm">Website</Label>
                                 <Input {...register("website")} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label>Tags</Label>
+                        </div>
+
+                        {/* Row 5: Lead Value, Tags */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-1.5">
+                                <Label className="text-sm">Lead Value (EGP)</Label>
+                                <Input type="number" {...register("value")} />
+                            </div>
+                            <div className="grid gap-1.5">
+                                <Label className="text-sm">Tags</Label>
                                 <Input placeholder="Comma-separated" {...register("tags")} />
                             </div>
                         </div>
 
-                        {/* Address */}
+                        {/* Row 6: Country, City */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label>Country</Label>
+                            <div className="grid gap-1.5">
+                                <Label className="text-sm">Country</Label>
                                 <Select defaultValue={lead.address?.country || ""} onValueChange={(val) => setValue("address.country", val)}>
                                     <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
                                     <SelectContent className="max-h-[200px]">
@@ -230,33 +231,35 @@ export function LeadProfileForm() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="grid gap-2">
-                                <Label>City</Label>
+                            <div className="grid gap-1.5">
+                                <Label className="text-sm">City</Label>
                                 <Input {...register("address.city")} />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="grid gap-2">
-                                <Label>Street Address</Label>
+                        {/* Row 7: Street, State */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-1.5">
+                                <Label className="text-sm">Street Address</Label>
                                 <Input {...register("address.street")} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label>State</Label>
-                                <Input {...register("address.state")} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label>Zip Code</Label>
-                                <Input {...register("address.zipCode")} />
+                            <div className="grid gap-1.5">
+                                <Label className="text-sm">State / Zip Code</Label>
+                                <div className="flex gap-2">
+                                    <Input placeholder="State" {...register("address.state")} />
+                                    <Input placeholder="Zip" className="w-28" {...register("address.zipCode")} />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label>Description</Label>
-                            <Textarea className="min-h-[100px]" {...register("description")} />
+                        {/* Row 8: Description */}
+                        <div className="grid gap-1.5">
+                            <Label className="text-sm">Description</Label>
+                            <Textarea className="min-h-[80px]" {...register("description")} />
                         </div>
 
-                        <div className="flex gap-2">
+                        {/* Actions */}
+                        <div className="flex gap-2 pt-2">
                             <Button type="submit">Save Changes</Button>
                             <Button type="button" variant="outline" onClick={() => router.push("/dashboard/leads")}>
                                 Cancel

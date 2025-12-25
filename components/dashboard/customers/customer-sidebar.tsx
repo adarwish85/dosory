@@ -45,16 +45,28 @@ export function CustomerSidebar() {
     return (
         <TooltipProvider delayDuration={0}>
             <div className={cn(
-                "border-r bg-gray-50/50 min-h-screen py-4 flex flex-col transition-all duration-300",
+                "border-r bg-gray-50/50 min-h-screen py-4 flex flex-col transition-all duration-300 relative",
                 collapsed ? "w-16" : "w-64"
             )}>
-                {/* Header with Back Button and Collapse Toggle */}
-                <div className={cn("flex items-center mb-2", collapsed ? "px-2 justify-center" : "px-4 justify-between")}>
+                {/* Edge Toggle Button - Fixed Position */}
+                <button
+                    onClick={() => setCollapsed(!collapsed)}
+                    className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-6 w-6 bg-white border border-gray-200 rounded-md shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
+                >
+                    {collapsed ? (
+                        <ChevronRight className="h-3.5 w-3.5 text-gray-500" />
+                    ) : (
+                        <ChevronLeft className="h-3.5 w-3.5 text-gray-500" />
+                    )}
+                </button>
+
+                {/* Back Button */}
+                <div className={cn("mb-2", collapsed ? "px-2" : "px-4")}>
                     {collapsed ? (
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Link href="/dashboard/customers">
-                                    <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
+                                    <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700 w-full">
                                         <ArrowLeft className="h-4 w-4" />
                                     </Button>
                                 </Link>
@@ -68,12 +80,6 @@ export function CustomerSidebar() {
                                 Back to Customers
                             </Button>
                         </Link>
-                    )}
-
-                    {!collapsed && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600" onClick={() => setCollapsed(true)}>
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
                     )}
                 </div>
 
@@ -148,20 +154,6 @@ export function CustomerSidebar() {
                         );
                     })}
                 </nav>
-
-                {/* Expand Button at Bottom (when collapsed) */}
-                {collapsed && (
-                    <div className="px-2 pt-4 border-t">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="w-full text-gray-400 hover:text-gray-600" onClick={() => setCollapsed(false)}>
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right">Expand Sidebar</TooltipContent>
-                        </Tooltip>
-                    </div>
-                )}
             </div>
         </TooltipProvider>
     );
