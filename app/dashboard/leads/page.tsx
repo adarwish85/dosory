@@ -36,6 +36,10 @@ import {
     DropdownMenuCheckboxItem,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuSubContent,
+    DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import {
     Popover,
@@ -919,31 +923,56 @@ export default function LeadsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-2 border-r pr-2 mr-2">
-                            <span className="text-sm text-gray-500">Show</span>
-                            <Select value={recordsPerPage.toString()} onValueChange={(v) => { setRecordsPerPage(parseInt(v)); setCurrentPage(1); }}><SelectTrigger className="w-[70px] h-9"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="10">10</SelectItem><SelectItem value="30">30</SelectItem><SelectItem value="50">50</SelectItem><SelectItem value="100">100</SelectItem></SelectContent></Select>
-                        </div>
-
-                        {/* Saved Views */}
+                        {/* Unified Views Dropdown */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className={activeViewId ? "border-purple-500 text-purple-600" : ""}>
-                                    <Bookmark className="mr-2 h-4 w-4" />
-                                    Views
-                                    {savedViews.length > 0 && <Badge className="ml-2 bg-purple-600 text-white h-5 min-w-[20px] px-1 rounded-full text-[10px]">{savedViews.length}</Badge>}
+                                    <LayoutList className="mr-2 h-4 w-4" />
+                                    Display
+                                    {(activeViewId || savedViews.length > 0) && <Badge className="ml-2 bg-purple-600 text-white h-5 min-w-[20px] px-1 rounded-full text-[10px]">{activeViewId ? 1 : savedViews.length}</Badge>}
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                                <DropdownMenuLabel>Saved Views</DropdownMenuLabel>
+                            <DropdownMenuContent align="end" className="w-64">
+                                <DropdownMenuLabel>Layout</DropdownMenuLabel>
+                                <div className="px-2 py-1">
+                                    <div className="flex bg-gray-100 p-1 rounded-md">
+                                        <button onClick={() => setViewMode("table")} className={`flex-1 flex items-center justify-center p-1 rounded text-xs font-medium transition-all ${viewMode === "table" ? "bg-white shadow" : "text-gray-500 hover:text-gray-900"}`}><Table2 className="h-3 w-3 mr-1" /> Table</button>
+                                        <button onClick={() => setViewMode("kanban")} className={`flex-1 flex items-center justify-center p-1 rounded text-xs font-medium transition-all ${viewMode === "kanban" ? "bg-white shadow" : "text-gray-500 hover:text-gray-900"}`}><Kanban className="h-3 w-3 mr-1" /> Board</button>
+                                    </div>
+                                </div>
                                 <DropdownMenuSeparator />
+
+                                <DropdownMenuLabel>Density</DropdownMenuLabel>
+                                <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
+                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="spacious">Spacious</DropdownMenuRadioItem>
+                                </DropdownMenuRadioGroup>
+                                <DropdownMenuSeparator />
+
+                                <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger><Columns className="h-4 w-4 mr-2" /> Columns ({visibleColumnsCount})</DropdownMenuSubTrigger>
+                                    <DropdownMenuPortal>
+                                        <DropdownMenuSubContent className="w-48">
+                                            <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            {DEFAULT_COLUMNS.map((c) => <DropdownMenuCheckboxItem key={c.key} checked={columnVisibility[c.key]} onCheckedChange={() => toggleColumn(c.key)} disabled={c.required}>{c.label}</DropdownMenuCheckboxItem>)}
+                                            <DropdownMenuSeparator />
+                                            <div className="flex gap-1 p-1"><Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={showAllColumns}>All</Button><Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={resetColumns}>Reset</Button></div>
+                                        </DropdownMenuSubContent>
+                                    </DropdownMenuPortal>
+                                </DropdownMenuSub>
+                                <DropdownMenuSeparator />
+
+                                <DropdownMenuLabel>Saved Views</DropdownMenuLabel>
                                 {savedViews.length === 0 ? (
-                                    <div className="px-2 py-3 text-sm text-gray-500 text-center">No saved views yet</div>
+                                    <div className="px-2 py-2 text-xs text-gray-500 text-center italic">No saved views</div>
                                 ) : (
                                     savedViews.map((view) => (
                                         <div key={view.id} className="flex items-center group">
                                             <DropdownMenuItem className="flex-1" onClick={() => applyView(view)}>
                                                 <FolderOpen className="mr-2 h-4 w-4" />
-                                                <span className="flex-1">{view.name}</span>
+                                                <span className="flex-1 truncate">{view.name}</span>
                                                 {view.isDefault && <Badge variant="secondary" className="text-[10px] ml-1">Default</Badge>}
                                                 {activeViewId === view.id && <Badge className="bg-purple-600 text-[10px] ml-1">Active</Badge>}
                                             </DropdownMenuItem>
@@ -971,7 +1000,7 @@ export default function LeadsPage() {
                                 </DropdownMenuItem>
                                 {activeViewId && (
                                     <DropdownMenuItem onClick={() => setActiveViewId(null)}>
-                                        <X className="mr-2 h-4 w-4" /> Clear Active View
+                                        <X className="mr-2 h-4 w-4" /> Reset to Default
                                     </DropdownMenuItem>
                                 )}
                             </DropdownMenuContent>
@@ -981,23 +1010,12 @@ export default function LeadsPage() {
                     </div>
                 </div>
 
-                {/* Filter & View Controls Row */}
+                {/* Filter Row */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 flex-1 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 flex-1 w-full">
                         <div className="relative flex-1 max-w-md"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" /><Input placeholder="Search name, company, email..." className="pl-9" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); handleClearSelection(); }} /></div>
 
                         <Popover open={showFilters} onOpenChange={setShowFilters}><PopoverTrigger asChild><Button variant="outline" className={hasActiveFilters ? "border-blue-500 text-blue-600" : ""}><Filter className="mr-2 h-4 w-4" />Filters{hasActiveFilters && <Badge className="ml-2 bg-blue-600 text-white h-5 min-w-[20px] px-1 rounded-full text-[10px]">{(statusFilter !== "all" ? 1 : 0) + advancedFilters.length}</Badge>}</Button></PopoverTrigger><PopoverContent align="start" className="w-[520px]"><div className="space-y-4"><div className="flex items-center justify-between"><h4 className="font-medium">Filters</h4>{hasActiveFilters && <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs">Clear</Button>}</div><div className="space-y-2"><label className="text-sm font-medium">Status</label><Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as LeadStatus | "all"); setCurrentPage(1); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{LEAD_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}><div className="flex gap-2"><span>{s.label}</span></div></SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><label className="text-sm font-medium">Conditions</label><div className="space-y-2 max-h-48 overflow-y-auto">{advancedFilters.map((f, i) => <FilterRow key={f.id} filter={f} columns={DEFAULT_COLUMNS} onUpdate={updateFilter} onRemove={removeFilter} showLogic={i > 0} logic={filterLogic} onLogicChange={setFilterLogic} />)}</div><Button variant="outline" size="sm" onClick={addFilter} className="w-full"><PlusCircle className="mr-2 h-4 w-4" />Add condition</Button></div></div></PopoverContent></Popover>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        {/* View Toggle */}
-                        <div className="flex border rounded-md">
-                            <Button variant={viewMode === "table" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-r-none" onClick={() => setViewMode("table")}><Table2 className="h-4 w-4" /></Button>
-                            <Button variant={viewMode === "kanban" ? "default" : "ghost"} size="icon" className="h-9 w-9 rounded-l-none" onClick={() => setViewMode("kanban")}><Kanban className="h-4 w-4" /></Button>
-                        </div>
-
-                        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon"><LayoutList className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Density</DropdownMenuLabel><DropdownMenuSeparator /><DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}><DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem><DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem><DropdownMenuRadioItem value="spacious">Spacious</DropdownMenuRadioItem></DropdownMenuRadioGroup></DropdownMenuContent></DropdownMenu>
-                        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon"><Columns className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-48"><DropdownMenuLabel className="flex justify-between"><span>Columns</span><span className="text-xs text-gray-400">{visibleColumnsCount}/{DEFAULT_COLUMNS.length}</span></DropdownMenuLabel><DropdownMenuSeparator />{DEFAULT_COLUMNS.map((c) => <DropdownMenuCheckboxItem key={c.key} checked={columnVisibility[c.key]} onCheckedChange={() => toggleColumn(c.key)} disabled={c.required}>{c.label}</DropdownMenuCheckboxItem>)}<DropdownMenuSeparator /><div className="flex gap-1 p-1"><Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={showAllColumns}>All</Button><Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={resetColumns}>Reset</Button></div></DropdownMenuContent></DropdownMenu>
                     </div>
                 </div>
 
@@ -1058,7 +1076,24 @@ export default function LeadsPage() {
                             </DndContext>
                         </div>
 
-                        <div className="flex items-center justify-between"><div className="text-sm text-gray-600 font-medium">Total: {totalRecords}</div><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={totalRecords} startRecord={totalRecords === 0 ? 0 : startIndex + 1} endRecord={endIndex} compact /></div>
+                        <div className="flex items-center justify-between py-2">
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm text-gray-600 font-medium">Total: {totalRecords}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-500">Rows:</span>
+                                    <Select value={recordsPerPage.toString()} onValueChange={(v) => { setRecordsPerPage(parseInt(v)); setCurrentPage(1); }}>
+                                        <SelectTrigger className="w-[65px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="10">10</SelectItem>
+                                            <SelectItem value="30">30</SelectItem>
+                                            <SelectItem value="50">50</SelectItem>
+                                            <SelectItem value="100">100</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={totalRecords} startRecord={totalRecords === 0 ? 0 : startIndex + 1} endRecord={endIndex} compact />
+                        </div>
                         <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Enter View • Space Select • Double-click Edit • Drag headers • ★ Star to pin</div>
                     </>
                 ) : (
