@@ -634,6 +634,8 @@ export default function LeadsPage() {
             }
             return v;
         }));
+        setNewViewName("");
+        setShowSaveViewDialog(false);
     }, [activeViewId, columnVisibility, columnOrder, sortKey, sortDirection, advancedFilters, filterLogic, statusFilter, rowDensity, columnWidths, recordsPerPage]);
 
     // Save current state as a new view
