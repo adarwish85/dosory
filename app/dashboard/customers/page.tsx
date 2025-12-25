@@ -238,6 +238,47 @@ function Pagination({ currentPage, totalPages, onPageChange, totalRecords, start
     );
 }
 
+// Customer Stats Bar
+function CustomerStatsBar({ customers }: { customers: Customer[] }) {
+    const totalCount = customers.length;
+    const activeCount = customers.filter(c => c.status === "active").length;
+    const inactiveCount = customers.filter(c => c.status === "inactive").length;
+    const portalCount = customers.filter(c => c.portalEnabled).length;
+
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex flex-col">
+                <div className="flex items-center gap-2 text-blue-600 mb-2">
+                    <Users className="h-4 w-4" />
+                    <span className="text-xs font-semibold uppercase tracking-wider">Total Customers</span>
+                </div>
+                <div className="text-2xl font-bold text-blue-900">{totalCount}</div>
+            </div>
+            <div className="bg-green-50 border border-green-100 rounded-lg p-4 flex flex-col">
+                <div className="flex items-center gap-2 text-green-600 mb-2">
+                    <CheckSquare className="h-4 w-4" />
+                    <span className="text-xs font-semibold uppercase tracking-wider">Active</span>
+                </div>
+                <div className="text-2xl font-bold text-green-900">{activeCount}</div>
+            </div>
+            <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 flex flex-col">
+                <div className="flex items-center gap-2 text-yellow-600 mb-2">
+                    <Clock className="h-4 w-4" />
+                    <span className="text-xs font-semibold uppercase tracking-wider">Inactive</span>
+                </div>
+                <div className="text-2xl font-bold text-yellow-900">{inactiveCount}</div>
+            </div>
+            <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 flex flex-col">
+                <div className="flex items-center gap-2 text-purple-600 mb-2">
+                    <Globe className="h-4 w-4" />
+                    <span className="text-xs font-semibold uppercase tracking-wider">Portal Users</span>
+                </div>
+                <div className="text-2xl font-bold text-purple-900">{portalCount}</div>
+            </div>
+        </div>
+    );
+}
+
 export default function CustomersPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
@@ -476,7 +517,6 @@ export default function CustomersPage() {
                     {rowDensity === "comfortable" && (
                         <div className="flex gap-2 text-[10px] text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-0 bg-white/90 backdrop-blur-sm z-10 pr-2 py-0.5 rounded shadow-sm border border-gray-100">
                             <Link href={`/dashboard/customers/${customer.id}`} className="hover:text-blue-600 flex items-center gap-0.5"><ExternalLink className="h-2.5 w-2.5" /> View</Link>
-                            <button onClick={() => { }} className="hover:text-blue-600 flex items-center gap-0.5"><Pencil className="h-2.5 w-2.5" /> Edit</button>
                             <button onClick={async (e) => { e.stopPropagation(); if (window.confirm("Delete?")) await deleteCustomer(customer.id); }} className="hover:text-red-600 flex items-center gap-0.5"><Trash className="h-2.5 w-2.5" /> Delete</button>
                         </div>
                     )}
@@ -497,6 +537,9 @@ export default function CustomersPage() {
     return (
         <TooltipProvider>
             <div className="h-full flex flex-col space-y-4 p-4 md:p-8 max-w-[1600px] mx-auto w-full">
+
+
+                <CustomerStatsBar customers={customers} />
 
                 {/* Header Toolbar */}
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-between">
@@ -536,8 +579,8 @@ export default function CustomersPage() {
                         {/* Views & Dislay Control */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="gap-2 bg-white">
-                                    <LayoutList className="h-4 w-4" /> Views <ChevronDown className="h-3 w-3 opacity-50" />
+                                <Button variant="outline" className="gap-2 bg-white text-purple-600 border-purple-200 hover:bg-purple-50">
+                                    <LayoutList className="h-4 w-4" /> Display <Badge variant="secondary" className="ml-1 px-1 py-0 h-4 bg-purple-100 text-purple-700">1</Badge>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56">
