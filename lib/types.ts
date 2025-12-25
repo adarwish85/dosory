@@ -95,6 +95,7 @@ export interface Lead extends BaseEntity {
     defaultLanguage?: string;
     isPublic?: boolean;
     isStarred?: boolean;
+    leadScore?: number; // 0-100 score based on criteria
 }
 
 export type LeadStatus =

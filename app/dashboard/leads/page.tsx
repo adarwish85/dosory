@@ -12,7 +12,7 @@ import {
     ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash, ExternalLink,
     LayoutList, DollarSign, Users, TrendingUp, GripVertical, PlusCircle,
     Star, Clock, FileDown, Mail, Phone, AlertTriangle, RefreshCcw,
-    Bookmark, BookmarkPlus, Save, FolderOpen, MoreVertical
+    Bookmark, BookmarkPlus, Save, FolderOpen, MoreVertical, Tag, Zap, Send
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +68,7 @@ import { formatDistanceToNow, format } from "date-fns";
 type SelectionMode = "none" | "page" | "all";
 type SortDirection = "asc" | "desc" | null;
 type RowDensity = "compact" | "comfortable" | "spacious";
-type ColumnKey = "starred" | "id" | "name" | "company" | "email" | "phone" | "value" | "status" | "source" | "lastActivity";
+type ColumnKey = "starred" | "id" | "name" | "company" | "email" | "phone" | "value" | "status" | "source" | "lastActivity" | "score" | "tags";
 type FilterOperator = "contains" | "equals" | "startsWith" | "endsWith" | "isEmpty" | "isNotEmpty" | "greaterThan" | "lessThan";
 type FilterLogic = "AND" | "OR";
 
@@ -102,9 +102,47 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
     { key: "phone", label: "Phone", defaultVisible: true },
     { key: "value", label: "Value", defaultVisible: true, sortable: true },
     { key: "status", label: "Status", defaultVisible: true, sortable: true },
-    { key: "source", label: "Source", defaultVisible: true, sortable: true },
-    { key: "lastActivity", label: "Last Activity", defaultVisible: true, sortable: true },
+    { key: "score", label: "Score", defaultVisible: true, sortable: true, width: "w-20" },
+    { key: "tags", label: "Tags", defaultVisible: true },
+    { key: "source", label: "Source", defaultVisible: false, sortable: true },
+    { key: "lastActivity", label: "Last Activity", defaultVisible: false, sortable: true },
 ];
+
+// Calculate lead score based on criteria (0-100)
+function calculateLeadScore(lead: Lead): number {
+    let score = 0;
+    // Has email (+15)
+    if (lead.email) score += 15;
+    // Has phone (+15)
+    if (lead.phone) score += 15;
+    // Has company name (+10)
+    if (lead.company) score += 10;
+    // Has value (+15 scaled)
+    if (lead.value && lead.value > 0) score += Math.min(15, Math.floor(lead.value / 1000));
+    // Status progression (+20 max)
+    const statusScores: Record<string, number> = { new: 5, contacted: 10, qualified: 15, proposal: 18, negotiation: 20, won: 20, lost: 0, junk: 0 };
+    score += statusScores[lead.status] || 0;
+    // Recent activity (+15)
+    if (lead.lastContactedAt) {
+        const daysSinceContact = Math.floor((Date.now() - lead.lastContactedAt.toMillis()) / (1000 * 60 * 60 * 24));
+        if (daysSinceContact < 7) score += 15;
+        else if (daysSinceContact < 30) score += 10;
+        else if (daysSinceContact < 90) score += 5;
+    }
+    // Has tags (+5)
+    if (lead.tags && lead.tags.length > 0) score += 5;
+    // Is starred (+5 bonus)
+    if (lead.isStarred) score += 5;
+    return Math.min(100, score);
+}
+
+// Score color based on value
+function getScoreColor(score: number): string {
+    if (score >= 80) return "bg-green-100 text-green-800";
+    if (score >= 60) return "bg-blue-100 text-blue-800";
+    if (score >= 40) return "bg-yellow-100 text-yellow-800";
+    return "bg-gray-100 text-gray-600";
+}
 
 const FILTER_OPERATORS: { value: FilterOperator; label: string }[] = [
     { value: "contains", label: "Contains" }, { value: "equals", label: "Equals" },
@@ -543,6 +581,18 @@ export default function LeadsPage() {
         });
     }, [leads]);
 
+    // Batch email - open mailto with all selected leads
+    const handleBatchEmail = useCallback(() => {
+        const selectedLeadData = processedLeads.filter(l => selectedLeads.includes(l.id));
+        const emails = selectedLeadData.filter(l => l.email).map(l => l.email);
+        if (emails.length === 0) {
+            alert("No email addresses found in selected leads");
+            return;
+        }
+        const mailto = `mailto:${emails.join(",")}?subject=Follow-up with Leads`;
+        window.open(mailto, "_blank");
+    }, [processedLeads, selectedLeads]);
+
     const clearAllFilters = useCallback(() => { setStatusFilter("all"); setSearchQuery(""); setAdvancedFilters([]); setCurrentPage(1); handleClearSelection(); }, [handleClearSelection]);
 
     const handleTableKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
@@ -603,6 +653,42 @@ export default function LeadsPage() {
                     <TooltipContent>{formatFullDate(lead.lastContactedAt)}</TooltipContent>
                 </Tooltip>
             );
+            case "score": {
+                const score = lead.leadScore ?? calculateLeadScore(lead);
+                return (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getScoreColor(score)}`}>
+                                <Zap className="h-3 w-3" />
+                                {score}
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <div className="text-xs">
+                                <p className="font-medium">Lead Score: {score}/100</p>
+                                <p className="text-gray-400 mt-1">Based on: contact info, value, status, activity</p>
+                            </div>
+                        </TooltipContent>
+                    </Tooltip>
+                );
+            }
+            case "tags": return lead.tags && lead.tags.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                    {lead.tags.slice(0, 3).map((tag, i) => (
+                        <Badge key={i} variant="secondary" className="text-[10px] px-1.5 py-0">
+                            <Tag className="h-2 w-2 mr-0.5" />{tag}
+                        </Badge>
+                    ))}
+                    {lead.tags.length > 3 && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 cursor-help">+{lead.tags.length - 3}</Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>{lead.tags.slice(3).join(", ")}</TooltipContent>
+                        </Tooltip>
+                    )}
+                </div>
+            ) : <span className="text-gray-400">-</span>;
             default: return null;
         }
     };
@@ -639,6 +725,10 @@ export default function LeadsPage() {
                                             <RefreshCcw className="mr-2 h-4 w-4" /> {s.label}
                                         </DropdownMenuItem>
                                     ))}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={handleBatchEmail}>
+                                        <Send className="mr-2 h-4 w-4" /> Send Email to Selected
+                                    </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
