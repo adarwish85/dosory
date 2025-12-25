@@ -580,16 +580,53 @@ export default function CustomersPage() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="gap-2 bg-white text-purple-600 border-purple-200 hover:bg-purple-50">
-                                    <LayoutList className="h-4 w-4" /> Display <Badge variant="secondary" className="ml-1 px-1 py-0 h-4 bg-purple-100 text-purple-700">1</Badge>
+                                    <LayoutList className="h-4 w-4" /> Display <Badge variant="secondary" className="ml-1 px-1 py-0 h-4 bg-purple-100 text-purple-700">{activeViewId ? 1 : savedViews.length}</Badge>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuContent align="end" className="w-64">
+                                <DropdownMenuLabel>Density</DropdownMenuLabel>
+                                <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
+                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
+                                </DropdownMenuRadioGroup>
+                                <DropdownMenuSeparator />
+
+                                <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger>
+                                        <Columns className="h-4 w-4 mr-2" /> Columns ({visibleColumnsCount})
+                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuPortal>
+                                        <DropdownMenuSubContent className="w-48">
+                                            <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            {DEFAULT_COLUMNS.map((col) => (
+                                                <DropdownMenuCheckboxItem
+                                                    key={col.key}
+                                                    checked={columnVisibility[col.key]}
+                                                    onCheckedChange={() => toggleColumn(col.key)}
+                                                    disabled={col.required}
+                                                >
+                                                    {col.label}
+                                                </DropdownMenuCheckboxItem>
+                                            ))}
+                                            <DropdownMenuSeparator />
+                                            <div className="flex gap-1 p-1">
+                                                <Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={() => setColumnVisibility(Object.fromEntries(DEFAULT_COLUMNS.map(c => [c.key, true])) as any)}>All</Button>
+                                                <Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={() => setColumnVisibility(getDefaultVisibleColumns())}>Reset</Button>
+                                            </div>
+                                        </DropdownMenuSubContent>
+                                    </DropdownMenuPortal>
+                                </DropdownMenuSub>
+                                <DropdownMenuSeparator />
+
                                 <DropdownMenuLabel>Saved Views</DropdownMenuLabel>
                                 {savedViews.length > 0 ? (
                                     savedViews.map(view => (
-                                        <div key={view.id} className="flex items-center justify-between px-2 py-1.5 hover:bg-gray-100 rounded-sm group">
-                                            <span className={`text-sm cursor-pointer flex-1 ${activeViewId === view.id ? "font-medium text-blue-600" : ""}`} onClick={() => applyView(view)}>{view.name} {view.isDefault && <span className="text-xs text-gray-400 ml-1">(Default)</span>}</span>
-                                            <button onClick={(e) => { e.stopPropagation(); deleteView(view.id); }} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded text-gray-500"><Trash className="h-3 w-3" /></button>
+                                        <div key={view.id} className="flex items-center justify-between px-2 py-1.5 hover:bg-gray-100 rounded-sm group relative">
+                                            <span className={`text-sm cursor-pointer flex-1 ${activeViewId === view.id ? "font-medium text-blue-600" : ""}`} onClick={() => applyView(view)}>
+                                                {view.name} {view.isDefault && <span className="text-xs text-gray-400 ml-1">(Default)</span>}
+                                            </span>
+                                            <button onClick={(e) => { e.stopPropagation(); deleteView(view.id); }} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded text-gray-500 absolute right-2"><Trash className="h-3 w-3" /></button>
                                         </div>
                                     ))
                                 ) : <div className="px-2 py-4 text-xs text-gray-400 text-center">No saved views</div>}
@@ -597,22 +634,6 @@ export default function CustomersPage() {
                                 <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setShowSaveViewDialog(true); }}>
                                     <Save className="mr-2 h-4 w-4" /> Save Current View
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuLabel>Density</DropdownMenuLabel>
-                                <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                </DropdownMenuRadioGroup>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuLabel>Columns</DropdownMenuLabel>
-                                <div className="px-2 py-1.5 grid grid-cols-2 gap-2">
-                                    {DEFAULT_COLUMNS.map(col => (
-                                        <div key={col.key} className="flex items-center space-x-2">
-                                            <Checkbox id={`col-${col.key}`} checked={columnVisibility[col.key]} onCheckedChange={() => toggleColumn(col.key)} disabled={col.required} />
-                                            <label htmlFor={`col-${col.key}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 truncate" title={col.label}>{col.label}</label>
-                                        </div>
-                                    ))}
-                                </div>
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <Button variant="ghost" size="icon" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4 text-gray-500" /></Button>
