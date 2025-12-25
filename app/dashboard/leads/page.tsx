@@ -591,7 +591,10 @@ export default function LeadsPage() {
     useEffect(() => {
         // Only save if views have been loaded to avoid overwriting with initial empty state
         if (viewsLoaded) {
+            console.log("Saving views to storage:", savedViews);
             localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(savedViews));
+        } else {
+            console.log("Skipping save: views not loaded yet");
         }
     }, [savedViews, viewsLoaded]);
 
@@ -635,6 +638,7 @@ export default function LeadsPage() {
 
     // Save current state as a new view
     const saveCurrentView = useCallback((name: string, setAsDefault: boolean = false) => {
+        console.log("Saving new view:", name);
         const newView: SavedView = {
             id: crypto.randomUUID(),
             name,
@@ -651,6 +655,7 @@ export default function LeadsPage() {
             createdAt: Date.now(),
         };
         setSavedViews(prev => {
+            console.log("Updating savedViews state. Prev:", prev, "New:", newView);
             // If setting as default, remove default from others
             const updated = setAsDefault ? prev.map(v => ({ ...v, isDefault: false })) : prev;
             return [...updated, newView];
@@ -1166,19 +1171,30 @@ export default function LeadsPage() {
 
 
                 {/* Save View Dialog */}
-                <Popover open={showSaveViewDialog} onOpenChange={setShowSaveViewDialog}>
-                    <PopoverContent align="end" className="w-72">
-                        <div className="space-y-3">
-                            <h4 className="font-medium flex items-center gap-2"><Save className="h-4 w-4" /> Save Current View</h4>
-                            <Input placeholder="View name..." value={newViewName} onChange={(e) => setNewViewName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && newViewName.trim()) saveCurrentView(newViewName.trim()); }} />
-                            <div className="flex gap-2">
-                                <Button size="sm" className="flex-1" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim())}>Save New</Button>
-                                {activeViewId && <Button size="sm" variant="secondary" className="flex-1" onClick={updateCurrentView}>Update Active</Button>}
-                                <Button size="sm" variant="outline" className="flex-1" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim(), true)}>Standard</Button>
+                {/* Save View Dialog */}
+                <Dialog open={showSaveViewDialog} onOpenChange={setShowSaveViewDialog}>
+                    <DialogContent className="sm:max-w-sm">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2"><Save className="h-5 w-5" /> Save Current View</DialogTitle>
+                            <DialogDescription>
+                                Save your current filters, columns, and sort preferences.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="view-name">View Name</Label>
+                                <Input id="view-name" placeholder="e.g. High Value Leads" value={newViewName} onChange={(e) => setNewViewName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && newViewName.trim()) saveCurrentView(newViewName.trim()); }} />
                             </div>
                         </div>
-                    </PopoverContent>
-                </Popover>
+                        <DialogFooter className="flex-col sm:flex-col gap-2">
+                            <div className="flex gap-2 w-full">
+                                <Button className="flex-1" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim())}>Save New</Button>
+                                {activeViewId && <Button variant="secondary" className="flex-1" onClick={updateCurrentView}>Update Active</Button>}
+                            </div>
+                            <Button variant="outline" className="w-full" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim(), true)}>Save as Default View</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
                 {hasActiveFilters && <div className="flex items-center gap-2 text-sm flex-wrap"><span className="text-gray-500">Active:</span>{statusFilter !== "all" && <Badge variant="secondary" className="flex items-center gap-1">Status: {statusFilter}<button onClick={() => setStatusFilter("all")} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button></Badge>}{advancedFilters.map((f, i) => <Badge key={f.id} variant="secondary" className="flex items-center gap-1">{i > 0 && <span className="text-gray-400 mr-1">{filterLogic}</span>}{f.field} {f.operator} {f.value && `"${f.value}"`}<button onClick={() => removeFilter(f.id)} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button></Badge>)}</div>}
 
@@ -1186,7 +1202,7 @@ export default function LeadsPage() {
 
                 {viewMode === "table" ? (
                     <>
-                        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={totalRecords} startRecord={totalRecords === 0 ? 0 : startIndex + 1} endRecord={endIndex} />
+
 
                         <div ref={tableRef} tabIndex={0} onKeyDown={handleTableKeyDown} className="border rounded-md bg-white overflow-x-auto focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -1208,7 +1224,7 @@ export default function LeadsPage() {
                                                     />
                                                 ))}
                                             </SortableContext>
-                                            <TableHead className="w-24 text-center bg-gray-100 sticky right-0 z-20">Actions</TableHead>
+
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1227,13 +1243,7 @@ export default function LeadsPage() {
                                                             {renderCell(lead, col)}
                                                         </TableCell>
                                                     ))}
-                                                    <TableCell className="sticky right-0 z-20 bg-white group-hover:bg-gray-50">
-                                                        <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleView(lead)}><ExternalLink className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
-                                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(lead)}><Pencil className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
-                                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(lead.id)}><Trash className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
-                                                        </div>
-                                                    </TableCell>
+
                                                 </TableRow>
                                             ))
                                         )}
