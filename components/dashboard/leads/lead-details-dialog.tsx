@@ -21,6 +21,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { ConvertLeadWizard } from "./ConvertLeadWizard";
 import { DatePicker } from "@/components/ui/date-picker";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, onSnapshot, orderBy, Timestamp } from "firebase/firestore";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -70,6 +73,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     const [taskDueDate, setTaskDueDate] = useState<Date | undefined>();
     const [taskPriority, setTaskPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
     const [savingTask, setSavingTask] = useState(false);
+
+    // Error state for user feedback
+    const [error, setError] = useState<string | null>(null);
 
     // Hooks
     const { profile } = useUserProfile();
@@ -121,8 +127,12 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
 
     // Save note handler
     const handleSaveNote = async () => {
-        if (!noteText.trim() || !lead?.id || !profile?.orgId) return;
+        if (!noteText.trim() || !lead?.id || !profile?.orgId) {
+            setError("Cannot save note: Missing required data");
+            return;
+        }
 
+        setError(null);
         setSavingNote(true);
         try {
             await addDoc(collection(db, "leadNotes"), {
@@ -133,8 +143,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                 createdBy: profile.uid,
             });
             setNoteText("");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to save note:", error);
+            setError(`Failed to save note: ${error.message || "Unknown error"}`);
         } finally {
             setSavingNote(false);
         }
@@ -151,8 +162,12 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
 
     // Save reminder handler
     const handleSaveReminder = async () => {
-        if (!reminderDesc.trim() || !reminderDate || !lead?.id || !profile?.orgId) return;
+        if (!reminderDesc.trim() || !reminderDate || !lead?.id || !profile?.orgId) {
+            setError("Please fill in all required fields");
+            return;
+        }
 
+        setError(null);
         setSavingReminder(true);
         try {
             await addDoc(collection(db, "leadReminders"), {
@@ -168,8 +183,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
             setReminderDesc("");
             setReminderDate(undefined);
             setShowReminderDialog(false);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to save reminder:", error);
+            setError(`Failed to save reminder: ${error.message || "Unknown error"}`);
         } finally {
             setSavingReminder(false);
         }
@@ -440,6 +456,12 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                 {/* Notes Tab */}
                                 <TabsContent value="notes" className="m-0">
                                     <div className="space-y-4">
+                                        {error && (
+                                            <Alert variant="destructive" className="mb-4">
+                                                <AlertCircle className="h-4 w-4" />
+                                                <AlertDescription>{error}</AlertDescription>
+                                            </Alert>
+                                        )}
                                         <div className="bg-yellow-50 p-4 rounded-md border border-yellow-100">
                                             <Textarea
                                                 placeholder="Type a note..."
@@ -650,7 +672,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Date & Time *</Label>
-                                <DatePicker
+                                <DateTimePicker
                                     date={reminderDate}
                                     setDate={setReminderDate}
                                 />
