@@ -591,10 +591,7 @@ export default function LeadsPage() {
     useEffect(() => {
         // Only save if views have been loaded to avoid overwriting with initial empty state
         if (viewsLoaded) {
-            console.log("Saving views to storage:", savedViews);
             localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(savedViews));
-        } else {
-            console.log("Skipping save: views not loaded yet");
         }
     }, [savedViews, viewsLoaded]);
 
@@ -638,7 +635,6 @@ export default function LeadsPage() {
 
     // Save current state as a new view
     const saveCurrentView = useCallback((name: string, setAsDefault: boolean = false) => {
-        console.log("Saving new view:", name);
         const newView: SavedView = {
             id: crypto.randomUUID(),
             name,
@@ -655,7 +651,6 @@ export default function LeadsPage() {
             createdAt: Date.now(),
         };
         setSavedViews(prev => {
-            console.log("Updating savedViews state. Prev:", prev, "New:", newView);
             // If setting as default, remove default from others
             const updated = setAsDefault ? prev.map(v => ({ ...v, isDefault: false })) : prev;
             return [...updated, newView];
@@ -1206,7 +1201,7 @@ export default function LeadsPage() {
 
                         <div ref={tableRef} tabIndex={0} onKeyDown={handleTableKeyDown} className="border rounded-md bg-white overflow-x-auto focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                                <Table>
+                                <Table className="table-fixed">
                                     <TableHeader>
                                         <TableRow className="bg-gray-50 hover:bg-gray-50">
                                             <TableHead className="w-[48px] min-w-[48px] max-w-[48px] text-center bg-gray-100 sticky left-0 z-30 p-0"><div className="flex items-center justify-center w-full h-full"><Checkbox checked={isAllPageSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={handleSelectAllCheckbox} /></div></TableHead>
