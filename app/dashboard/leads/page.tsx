@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect, KeyboardEvent } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -504,6 +505,7 @@ function KanbanBoard({ leads, onStatusChange, onView, onEdit }: { leads: Lead[];
 }
 
 export default function LeadsPage() {
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
     const [selectionMode, setSelectionMode] = useState<SelectionMode>("none");
@@ -785,7 +787,7 @@ export default function LeadsPage() {
     const isAllPageSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedLeads.includes(id));
     const isSomeSelected = selectedLeads.length > 0 && !isAllPageSelected;
 
-    const handleView = useCallback((lead: Lead) => { setSelectedLead(lead); setDetailsOpen(true); }, []);
+    const handleView = useCallback((lead: Lead) => { router.push(`/dashboard/leads/${lead.id}`); }, [router]);
     const handleEdit = useCallback((lead: Lead) => { setSelectedLead(lead); setEditOpen(true); }, []);
     const handleDelete = useCallback(async (id: string) => { if (window.confirm("Delete?")) await deleteLead(id); }, [deleteLead]);
     const handleBulkDelete = useCallback(async () => {
