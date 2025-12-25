@@ -92,33 +92,51 @@ export function useLeads(options: UseLeadsOptions = {}) {
     }, [profile?.orgId, status, assignedTo, source, searchQuery]);
 
     // Effect: Fetch Stats & Total Count
-    // We do this separately to avoid blocking the UI if it takes longer, 
-    // and because it's a different query type (Aggregation).
     useEffect(() => {
         let isMounted = true;
         const fetchStatsAndCount = async () => {
             if (!profile?.orgId) return;
             try {
-                // 1. Aggregation for global stats (Total Database Value)
+                // 1. Aggregation for global stats
                 const globalQ = query(collection(db, "leads"), where("orgId", "==", profile.orgId));
-                const aggSnap = await getAggregateFromServer(globalQ, {
-                    totalCount: count(),
-                    totalValue: sum("value")
-                });
+                // Fallback to client-side count if aggregation fails (or for development locally if indexes miss)
+                // Actually, getAggregateFromServer requires index. getCountFromServer is cheaper/supported more broadly without specific composite index sometimes?
+                // For "Total Value", we definitely need aggregation.
 
-                // 2. Count for Pagination (Respects filters)
+                // We'll wrap in try/catch individual parts to ensure partial success
+                let globalTotal = 0;
+                let globalValue = 0;
+
+                try {
+                    const aggSnap = await getAggregateFromServer(globalQ, {
+                        totalCount: count(),
+                        totalValue: sum("value")
+                    });
+                    globalTotal = aggSnap.data().totalCount;
+                    globalValue = aggSnap.data().totalValue;
+                } catch (aggErr) {
+                    console.warn("Aggregation failed (likely missing index), falling back to basic count:", aggErr);
+                    // Fallback for count only
+                    try {
+                        const countSnap = await getCountFromServer(globalQ);
+                        globalTotal = countSnap.data().count;
+                    } catch (ignore) { }
+                }
+
+                if (!isMounted) return;
+
+                // 2. Count for Pagination
                 const constraints = getBaseConstraints();
-                // Ensure constraints are valid for count query
                 const filterQ = query(collection(db, "leads"), ...constraints);
-                const countSnap = await getCountFromServer(filterQ);
+                const filterCountSnap = await getCountFromServer(filterQ);
 
                 if (isMounted) {
                     setLeadStats(prev => ({
                         ...prev,
-                        total: aggSnap.data().totalCount,
-                        totalValue: aggSnap.data().totalValue
+                        total: globalTotal,
+                        totalValue: globalValue
                     }));
-                    setTotalRecords(countSnap.data().count);
+                    setTotalRecords(filterCountSnap.data().count);
                 }
             } catch (err) {
                 console.error("Error fetching stats:", err);
@@ -127,7 +145,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
         fetchStatsAndCount();
         return () => { isMounted = false; };
-    }, [profile?.orgId, getBaseConstraints]); // Re-run when filters change
+    }, [profile?.orgId, getBaseConstraints]);
 
     // Effect: Fetch Paginated Data
     useEffect(() => {

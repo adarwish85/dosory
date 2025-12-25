@@ -269,7 +269,7 @@ function QuickStatsBar({ leads, totalValue, totalCount }: { leads: Lead[]; total
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-blue-600 mb-1"><Users className="h-4 w-4" /><span className="text-xs font-medium uppercase">Total</span></div>
-                <div className="text-2xl font-bold text-blue-900">{totalCount ?? leads.length}</div>
+                <div className="text-2xl font-bold text-blue-900">{totalCount !== undefined ? totalCount : leads.length}</div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1"><DollarSign className="h-4 w-4" /><span className="text-xs font-medium uppercase">Value</span></div>
@@ -573,6 +573,9 @@ export default function LeadsPage() {
         setSavedViews(prev => prev.map(v => ({ ...v, isDefault: v.id === viewId })));
     }, []);
 
+    // State for Search Debounce
+    const [localSearch, setLocalSearch] = useState(searchQuery);
+
     const tableRef = useRef<HTMLDivElement>(null);
     const { leads, loading, leadStats, totalRecords: serverTotal, deleteLead, updateLead, bulkDeleteLeads, bulkDeleteAllMatches } = useLeads({
         status: statusFilter,
@@ -650,6 +653,19 @@ export default function LeadsPage() {
     const handleSelectAllRecords = useCallback(() => { setSelectedLeads([]); setSelectionMode("all"); }, []);
     const handleClearSelection = useCallback(() => { setSelectedLeads([]); setSelectionMode("none"); }, []);
     const handleSelectAllCheckbox = useCallback((checked: boolean) => { if (checked) handleSelectAllOnPage(); else handleClearSelection(); }, [handleSelectAllOnPage, handleClearSelection]);
+
+    // Debounce Search Effect
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (localSearch !== searchQuery) {
+                setSearchQuery(localSearch);
+                setCurrentPage(1);
+                handleClearSelection();
+            }
+        }, 500); // 500ms delay
+        return () => clearTimeout(timer);
+    }, [localSearch, searchQuery, handleClearSelection]);
+
     const handleSelectLead = useCallback((leadId: string, checked: boolean) => {
         if (selectionMode === "all") {
             setSelectionMode("page");
@@ -1024,7 +1040,15 @@ export default function LeadsPage() {
                 {/* Filter Row */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2 flex-1 w-full">
-                        <div className="relative flex-1 max-w-md"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" /><Input placeholder="Search name, company, email..." className="pl-9" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); handleClearSelection(); }} /></div>
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                            <Input
+                                placeholder="Search name, company, email..."
+                                className="pl-9"
+                                value={localSearch}
+                                onChange={(e) => setLocalSearch(e.target.value)}
+                            />
+                        </div>
 
                         <Popover open={showFilters} onOpenChange={setShowFilters}><PopoverTrigger asChild><Button variant="outline" className={hasActiveFilters ? "border-blue-500 text-blue-600" : ""}><Filter className="mr-2 h-4 w-4" />Filters{hasActiveFilters && <Badge className="ml-2 bg-blue-600 text-white h-5 min-w-[20px] px-1 rounded-full text-[10px]">{(statusFilter !== "all" ? 1 : 0) + advancedFilters.length}</Badge>}</Button></PopoverTrigger><PopoverContent align="start" className="w-[520px]"><div className="space-y-4"><div className="flex items-center justify-between"><h4 className="font-medium">Filters</h4>{hasActiveFilters && <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs">Clear</Button>}</div><div className="space-y-2"><label className="text-sm font-medium">Status</label><Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as LeadStatus | "all"); setCurrentPage(1); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{LEAD_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}><div className="flex gap-2"><span>{s.label}</span></div></SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><label className="text-sm font-medium">Conditions</label><div className="space-y-2 max-h-48 overflow-y-auto">{advancedFilters.map((f, i) => <FilterRow key={f.id} filter={f} columns={DEFAULT_COLUMNS} onUpdate={updateFilter} onRemove={removeFilter} showLogic={i > 0} logic={filterLogic} onLogicChange={setFilterLogic} />)}</div><Button variant="outline" size="sm" onClick={addFilter} className="w-full"><PlusCircle className="mr-2 h-4 w-4" />Add condition</Button></div></div></PopoverContent></Popover>
                     </div>
