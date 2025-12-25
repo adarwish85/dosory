@@ -889,7 +889,7 @@ export default function CustomersPage() {
                                                 <TableCell
                                                     key={col.key}
                                                     style={{ width: columnWidths[col.key] || 100, minWidth: columnWidths[col.key] || 100 }}
-                                                    className={`overflow-hidden text-ellipsis whitespace-nowrap ${col.key === "company" ? `sticky left-[48px] z-30 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${selectionMode === "all" || selectedCustomers.includes(customer.id) ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50` : ""}`}
+                                                    className={`${col.key === "company" ? "overflow-visible" : "overflow-hidden text-ellipsis"} whitespace-nowrap ${col.key === "company" ? `sticky left-[48px] z-30 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${selectionMode === "all" || selectedCustomers.includes(customer.id) ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50` : ""}`}
                                                 >
                                                     {renderCell(customer, col)}
                                                 </TableCell>

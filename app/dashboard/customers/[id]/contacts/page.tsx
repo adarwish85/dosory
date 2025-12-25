@@ -48,6 +48,7 @@ export default function ContactsPage() {
     const [rowsPerPage, setRowsPerPage] = useState(25);
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [editingContact, setEditingContact] = useState<any>(null); // For edit dialog
 
     // Saved Views state
     const [savedViews, setSavedViews] = useState<ContactsSavedView[]>([]);
@@ -442,13 +443,12 @@ export default function ContactsPage() {
                                                     )}
                                                 </span>
                                                 <div className="hidden group-hover:flex items-center gap-2 mt-0.5 text-xs">
-                                                    <ContactDialog
-                                                        customerId={customerId || undefined}
-                                                        customerName={customer?.company}
-                                                        contact={contact}
+                                                    <button
+                                                        className="text-gray-600 hover:text-blue-600 hover:underline"
+                                                        onClick={() => setEditingContact(contact)}
                                                     >
-                                                        <button className="text-gray-600 hover:text-blue-600 hover:underline">Edit</button>
-                                                    </ContactDialog>
+                                                        Edit
+                                                    </button>
                                                     <span className="text-gray-300">|</span>
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
@@ -551,6 +551,18 @@ export default function ContactsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Controlled Edit Contact Dialog */}
+            {editingContact && (
+                <ContactDialog
+                    customerId={customerId || undefined}
+                    customerName={customer?.company}
+                    contact={editingContact}
+                    open={!!editingContact}
+                    onOpenChange={(open) => { if (!open) setEditingContact(null); }}
+                    onSuccess={() => setEditingContact(null)}
+                />
+            )}
         </div>
     );
 }
