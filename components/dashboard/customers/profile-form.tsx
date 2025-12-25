@@ -118,16 +118,7 @@ export function CustomerProfileForm() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => router.push("/dashboard/customers")}
-                >
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <h2 className="text-xl font-bold text-gray-900">Customer Profile</h2>
-            </div>
+            <h2 className="text-xl font-bold text-gray-900">Customer Profile</h2>
 
             <form onSubmit={handleSubmit(onSave)}>
                 <Tabs defaultValue="details" className="w-full">
