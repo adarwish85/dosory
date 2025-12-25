@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, FileText, CheckSquare, Paperclip, Bell, StickyNote, Activity, Printer, X, Pencil, Plus, Loader2, Trash2, Calendar, Clock, Upload } from "lucide-react";
+import { User, FileText, CheckSquare, Paperclip, Bell, StickyNote, Activity, Printer, X, Pencil, Plus, Loader2, Trash2, Calendar, Clock, Upload, Phone, Mail, CalendarPlus, Zap, CheckCircle, XCircle, TrendingUp, ArrowRight, AlertTriangle, ExternalLink } from "lucide-react";
 import type { Lead, Task as TaskType } from "@/lib/types";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -49,6 +49,76 @@ interface LeadReminder {
     notifyBefore: string;
     createdAt: Timestamp;
 }
+
+// Status Pipeline for Conversion Meter
+const STATUS_PIPELINE = [
+    { key: "new", label: "New", color: "bg-gray-400" },
+    { key: "contacted", label: "Contacted", color: "bg-blue-400" },
+    { key: "qualified", label: "Qualified", color: "bg-purple-500" },
+    { key: "proposal", label: "Proposal", color: "bg-yellow-500" },
+    { key: "negotiation", label: "Negotiation", color: "bg-orange-500" },
+    { key: "won", label: "Won", color: "bg-green-500" },
+] as const;
+
+// Calculate lead score with breakdown
+function calculateLeadScoreWithBreakdown(lead: Lead): { score: number; breakdown: { label: string; earned: boolean; points: number }[] } {
+    const breakdown: { label: string; earned: boolean; points: number }[] = [];
+    let score = 0;
+
+    // Has email (+15)
+    const hasEmail = !!lead.email;
+    breakdown.push({ label: "Has email", earned: hasEmail, points: 15 });
+    if (hasEmail) score += 15;
+
+    // Has phone (+15)
+    const hasPhone = !!lead.phone;
+    breakdown.push({ label: "Has phone", earned: hasPhone, points: 15 });
+    if (hasPhone) score += 15;
+
+    // Has company (+10)
+    const hasCompany = !!lead.company;
+    breakdown.push({ label: "Has company", earned: hasCompany, points: 10 });
+    if (hasCompany) score += 10;
+
+    // Has value (+15)
+    const hasValue = !!lead.value && lead.value > 0;
+    breakdown.push({ label: "Has deal value", earned: hasValue, points: 15 });
+    if (hasValue) score += 15;
+
+    // Status progression (+20 max)
+    const statusScores: Record<string, number> = { new: 5, contacted: 10, qualified: 15, proposal: 18, negotiation: 20, won: 20, lost: 0, junk: 0 };
+    const statusPoints = statusScores[lead.status] || 0;
+    breakdown.push({ label: `Status: ${lead.status}`, earned: statusPoints > 0, points: statusPoints });
+    score += statusPoints;
+
+    // Has tags (+5)
+    const hasTags = !!lead.tags && lead.tags.length > 0;
+    breakdown.push({ label: "Has tags", earned: hasTags, points: 5 });
+    if (hasTags) score += 5;
+
+    // Has source (+5)
+    const hasSource = !!lead.source;
+    breakdown.push({ label: "Has source", earned: hasSource, points: 5 });
+    if (hasSource) score += 5;
+
+    // Is starred (+5)
+    const isStarred = !!lead.isStarred;
+    breakdown.push({ label: "Is starred", earned: isStarred, points: 5 });
+    if (isStarred) score += 5;
+
+    return { score: Math.min(100, score), breakdown };
+}
+
+// Data Completeness Fields
+const COMPLETENESS_FIELDS: { key: keyof Lead | "address"; label: string }[] = [
+    { key: "email", label: "Email" },
+    { key: "phone", label: "Phone" },
+    { key: "company", label: "Company" },
+    { key: "value", label: "Deal Value" },
+    { key: "website", label: "Website" },
+    { key: "address", label: "Address" },
+    { key: "source", label: "Source" },
+];
 
 export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsSheetProps) {
     const [activeTab, setActiveTab] = useState("profile");
@@ -306,54 +376,209 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                         <ScrollArea className="flex-1 bg-gray-50/30">
                             <div className="p-6">
                                 {/* Profile Tab */}
-                                <TabsContent value="profile" className="m-0 space-y-8">
-                                    {/* Action Banner */}
-                                    <div className="flex items-center justify-between p-4 bg-white border rounded-lg shadow-sm">
-                                        <div className="flex items-center gap-4">
-                                            <Avatar className="h-12 w-12 border">
-                                                <AvatarFallback className="bg-blue-100 text-blue-700 font-bold text-lg">{lead.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <h4 className="font-semibold text-gray-900">{lead.name}</h4>
-                                                <p className="text-sm text-gray-500">{lead.position || "No title"} at {lead.company || "No company"}</p>
+                                <TabsContent value="profile" className="m-0 space-y-6">
+                                    {/* Top Row: Lead Score + Quick Actions */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                        {/* Lead Score Card */}
+                                        {(() => {
+                                            const { score, breakdown } = calculateLeadScoreWithBreakdown(lead);
+                                            const scoreColor = score >= 70 ? "text-green-600" : score >= 40 ? "text-yellow-600" : "text-red-500";
+                                            const bgColor = score >= 70 ? "from-green-50 to-green-100 border-green-200" : score >= 40 ? "from-yellow-50 to-yellow-100 border-yellow-200" : "from-red-50 to-red-100 border-red-200";
+                                            return (
+                                                <div className={`p-4 bg-gradient-to-br ${bgColor} border rounded-lg shadow-sm lg:col-span-1`}>
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <Zap className={`h-5 w-5 ${scoreColor}`} />
+                                                            <h3 className="font-semibold text-gray-900">Lead Score</h3>
+                                                        </div>
+                                                        <span className={`text-3xl font-bold ${scoreColor}`}>{score}</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                                                        <div className={`h-2 rounded-full ${score >= 70 ? "bg-green-500" : score >= 40 ? "bg-yellow-500" : "bg-red-400"}`} style={{ width: `${score}%` }} />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        {breakdown.slice(0, 5).map((item, i) => (
+                                                            <div key={i} className="flex items-center justify-between text-xs">
+                                                                <span className="flex items-center gap-1">
+                                                                    {item.earned ? <CheckCircle className="h-3 w-3 text-green-500" /> : <XCircle className="h-3 w-3 text-gray-300" />}
+                                                                    <span className={item.earned ? "text-gray-700" : "text-gray-400"}>{item.label}</span>
+                                                                </span>
+                                                                <span className={item.earned ? "text-green-600 font-medium" : "text-gray-400"}>+{item.points}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Quick Actions */}
+                                        <div className="p-4 bg-white border rounded-lg shadow-sm lg:col-span-2">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <TrendingUp className="h-5 w-5 text-blue-600" />
+                                                <h3 className="font-semibold text-gray-900">Quick Actions</h3>
+                                            </div>
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                {lead.phone && (
+                                                    <a href={`tel:${lead.phone}`} className="flex flex-col items-center gap-1 p-3 rounded-lg bg-green-50 hover:bg-green-100 border border-green-200 transition-colors">
+                                                        <Phone className="h-5 w-5 text-green-600" />
+                                                        <span className="text-xs font-medium text-green-700">Call</span>
+                                                    </a>
+                                                )}
+                                                {lead.email && (
+                                                    <a href={`mailto:${lead.email}`} className="flex flex-col items-center gap-1 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors">
+                                                        <Mail className="h-5 w-5 text-blue-600" />
+                                                        <span className="text-xs font-medium text-blue-700">Email</span>
+                                                    </a>
+                                                )}
+                                                <button onClick={() => setShowTaskDialog(true)} className="flex flex-col items-center gap-1 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors">
+                                                    <CalendarPlus className="h-5 w-5 text-purple-600" />
+                                                    <span className="text-xs font-medium text-purple-700">Schedule</span>
+                                                </button>
+                                                <button onClick={() => { setActiveTab("notes"); }} className="flex flex-col items-center gap-1 p-3 rounded-lg bg-orange-50 hover:bg-orange-100 border border-orange-200 transition-colors">
+                                                    <StickyNote className="h-5 w-5 text-orange-600" />
+                                                    <span className="text-xs font-medium text-orange-700">Add Note</span>
+                                                </button>
                                             </div>
                                         </div>
-                                        <Button
-                                            className="bg-gray-900 text-white hover:bg-gray-800"
-                                            onClick={() => setShowConvertWizard(true)}
-                                        >
-                                            <User className="mr-2 h-4 w-4" /> Convert to Customer
-                                        </Button>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-6">
-                                            <div className="flex items-center gap-2 pb-2 border-b">
+                                    {/* Conversion Pipeline */}
+                                    <div className="p-4 bg-white border rounded-lg shadow-sm">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <ArrowRight className="h-5 w-5 text-blue-600" />
+                                                <h3 className="font-semibold text-gray-900">Conversion Pipeline</h3>
+                                            </div>
+                                            <Button size="sm" variant="outline" onClick={() => setShowConvertWizard(true)}>
+                                                <User className="mr-1 h-4 w-4" /> Convert to Customer
+                                            </Button>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            {STATUS_PIPELINE.map((stage, i) => {
+                                                const isActive = lead.status === stage.key;
+                                                const isPast = STATUS_PIPELINE.findIndex(s => s.key === lead.status) > i;
+                                                return (
+                                                    <div key={stage.key} className="flex-1 flex flex-col items-center">
+                                                        <div className={`w-full h-2 rounded-full ${isPast || isActive ? stage.color : "bg-gray-200"}`} />
+                                                        <span className={`text-[10px] mt-1 ${isActive ? "font-bold text-gray-900" : isPast ? "text-gray-600" : "text-gray-400"}`}>{stage.label}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        {lead.status === "new" && (
+                                            <p className="mt-3 text-sm text-blue-600 flex items-center gap-1"><AlertTriangle className="h-4 w-4" /> Suggested action: <strong>Make first contact</strong></p>
+                                        )}
+                                        {lead.status === "contacted" && (
+                                            <p className="mt-3 text-sm text-purple-600 flex items-center gap-1"><AlertTriangle className="h-4 w-4" /> Suggested action: <strong>Qualify this lead</strong></p>
+                                        )}
+                                        {lead.status === "qualified" && (
+                                            <p className="mt-3 text-sm text-yellow-600 flex items-center gap-1"><AlertTriangle className="h-4 w-4" /> Suggested action: <strong>Send a proposal</strong></p>
+                                        )}
+                                    </div>
+
+                                    {/* Data Completeness & Related Items */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Data Completeness */}
+                                        <div className="p-4 bg-white border rounded-lg shadow-sm">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <CheckSquare className="h-5 w-5 text-green-600" />
+                                                <h3 className="font-semibold text-gray-900">Data Completeness</h3>
+                                            </div>
+                                            {(() => {
+                                                const complete = COMPLETENESS_FIELDS.filter(f => {
+                                                    if (f.key === "address") return lead.address?.street || lead.address?.city;
+                                                    return !!(lead as any)[f.key];
+                                                }).length;
+                                                const percent = Math.round((complete / COMPLETENESS_FIELDS.length) * 100);
+                                                return (
+                                                    <>
+                                                        <div className="flex items-center justify-between text-sm mb-2">
+                                                            <span className="text-gray-600">{complete}/{COMPLETENESS_FIELDS.length} fields</span>
+                                                            <span className={percent === 100 ? "text-green-600 font-medium" : "text-yellow-600 font-medium"}>{percent}%</span>
+                                                        </div>
+                                                        <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                                                            <div className={`h-2 rounded-full ${percent === 100 ? "bg-green-500" : percent >= 50 ? "bg-yellow-500" : "bg-red-400"}`} style={{ width: `${percent}%` }} />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            {COMPLETENESS_FIELDS.map(field => {
+                                                                const hasValue = field.key === "address"
+                                                                    ? (lead.address?.street || lead.address?.city)
+                                                                    : !!(lead as any)[field.key];
+                                                                return (
+                                                                    <div key={field.key} className="flex items-center justify-between text-xs">
+                                                                        <span className="flex items-center gap-1">
+                                                                            {hasValue ? <CheckCircle className="h-3 w-3 text-green-500" /> : <XCircle className="h-3 w-3 text-red-400" />}
+                                                                            <span className={hasValue ? "text-gray-700" : "text-red-500"}>{field.label}</span>
+                                                                        </span>
+                                                                        {!hasValue && (
+                                                                            <button onClick={() => onEdit(lead)} className="text-blue-600 hover:underline text-[10px]">Add</button>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        {/* Related Items Summary */}
+                                        <div className="p-4 bg-white border rounded-lg shadow-sm">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <FileText className="h-5 w-5 text-purple-600" />
+                                                <h3 className="font-semibold text-gray-900">Related Items</h3>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <button onClick={() => setActiveTab("proposals")} className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                                                    <span className="flex items-center gap-2 text-sm"><FileText className="h-4 w-4 text-blue-500" /> Proposals</span>
+                                                    <Badge variant="secondary">{proposals.length}</Badge>
+                                                </button>
+                                                <button onClick={() => setActiveTab("tasks")} className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                                                    <span className="flex items-center gap-2 text-sm"><CheckSquare className="h-4 w-4 text-green-500" /> Tasks</span>
+                                                    <div className="flex items-center gap-1">
+                                                        <Badge variant="outline" className="text-orange-600">{relatedTasks.filter(t => t.status !== "completed").length} open</Badge>
+                                                        <Badge variant="secondary">{relatedTasks.filter(t => t.status === "completed").length} done</Badge>
+                                                    </div>
+                                                </button>
+                                                <button onClick={() => setActiveTab("reminders")} className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                                                    <span className="flex items-center gap-2 text-sm"><Bell className="h-4 w-4 text-yellow-500" /> Reminders</span>
+                                                    <Badge variant="secondary">{reminders.length}</Badge>
+                                                </button>
+                                                <button onClick={() => setActiveTab("notes")} className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                                                    <span className="flex items-center gap-2 text-sm"><StickyNote className="h-4 w-4 text-orange-500" /> Notes</span>
+                                                    <Badge variant="secondary">{notes.length}</Badge>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Lead Info & System Info (Collapsible Cards) */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="p-4 bg-white border rounded-lg shadow-sm">
+                                            <div className="flex items-center gap-2 pb-2 border-b mb-3">
                                                 <User className="h-4 w-4 text-gray-500" />
                                                 <h3 className="text-sm font-semibold text-gray-900">Lead Information</h3>
                                             </div>
-                                            <div className="grid grid-cols-[120px_1fr] gap-y-4 text-sm">
+                                            <div className="grid grid-cols-[100px_1fr] gap-y-2 text-sm">
                                                 <div className="text-gray-500">Email</div>
-                                                <div className="font-medium text-blue-600">{lead.email || "-"}</div>
+                                                <div className="font-medium text-blue-600">{lead.email ? <a href={`mailto:${lead.email}`}>{lead.email}</a> : "-"}</div>
                                                 <div className="text-gray-500">Phone</div>
-                                                <div className="font-medium">{lead.phone || "-"}</div>
+                                                <div className="font-medium">{lead.phone ? <a href={`tel:${lead.phone}`} className="text-blue-600">{lead.phone}</a> : "-"}</div>
                                                 <div className="text-gray-500">Website</div>
-                                                <div className="font-medium text-blue-600">{lead.website || "-"}</div>
+                                                <div className="font-medium">{lead.website ? <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="text-blue-600 flex items-center gap-1">{lead.website} <ExternalLink className="h-3 w-3" /></a> : "-"}</div>
                                                 <div className="text-gray-500">Value</div>
                                                 <div className="font-medium">{lead.value ? `$${lead.value.toLocaleString()}` : "-"}</div>
                                                 <div className="text-gray-500">Address</div>
-                                                <div className="font-medium text-gray-900">
-                                                    {[lead.address?.street, lead.address?.city, lead.address?.country].filter(Boolean).join(", ") || "-"}
-                                                </div>
+                                                <div className="font-medium text-gray-900">{[lead.address?.street, lead.address?.city, lead.address?.country].filter(Boolean).join(", ") || "-"}</div>
                                             </div>
                                         </div>
 
-                                        <div className="space-y-6">
-                                            <div className="flex items-center gap-2 pb-2 border-b">
+                                        <div className="p-4 bg-white border rounded-lg shadow-sm">
+                                            <div className="flex items-center gap-2 pb-2 border-b mb-3">
                                                 <Activity className="h-4 w-4 text-gray-500" />
                                                 <h3 className="text-sm font-semibold text-gray-900">System Information</h3>
                                             </div>
-                                            <div className="grid grid-cols-[120px_1fr] gap-y-4 text-sm">
+                                            <div className="grid grid-cols-[100px_1fr] gap-y-2 text-sm">
                                                 <div className="text-gray-500">Status</div>
                                                 <div><Badge variant="secondary" className="capitalize">{lead.status}</Badge></div>
                                                 <div className="text-gray-500">Source</div>
@@ -381,12 +606,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         </div>
                                     </div>
 
+                                    {/* Description */}
                                     {lead.description && (
-                                        <div className="space-y-3 pt-4 border-t">
-                                            <h3 className="text-sm font-semibold text-gray-900">Description</h3>
-                                            <div className="p-4 bg-gray-50 rounded-md border text-sm text-gray-700 whitespace-pre-wrap">
-                                                {lead.description}
-                                            </div>
+                                        <div className="p-4 bg-white border rounded-lg shadow-sm">
+                                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Description</h3>
+                                            <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700 whitespace-pre-wrap">{lead.description}</div>
                                         </div>
                                     )}
                                 </TabsContent>
