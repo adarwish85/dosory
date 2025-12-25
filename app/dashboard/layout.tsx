@@ -100,8 +100,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             // Strict check to ensure we are not already on the target host
             if (window.location.host !== targetHost) {
-                console.log(`Redirecting to tenant subdomain: ${expectedSubdomain}`);
-                window.location.href = `${protocol}//${targetHost}/dashboard?redirected=true`;
+                console.log(`[DashboardLayout] Redirecting to tenant subdomain: ${expectedSubdomain} from ${currentSubdomain}`);
+
+                const currentPath = window.location.pathname;
+                const currentSearch = new URLSearchParams(window.location.search);
+                currentSearch.set("redirected", "true");
+
+                window.location.href = `${protocol}//${targetHost}${currentPath}?${currentSearch.toString()}`;
             }
         }
     }, [profile, loading, settingsLoading, settings.subdomain]);

@@ -206,6 +206,11 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 createdBy: profile.uid,
             });
 
+            // Optimistic Update
+            setLeads(prev => [{ id: docRef.id, ...data, name_lower: data.name.toLowerCase() } as Lead, ...prev]);
+            setTotalRecords(prev => prev + 1);
+            setLeadStats(prev => ({ ...prev, total: prev.total + 1, totalValue: prev.totalValue + (data.value || 0) }));
+
             return docRef.id;
         },
         [profile?.orgId, profile?.uid]
@@ -223,11 +228,28 @@ export function useLeads(options: UseLeadsOptions = {}) {
     );
 
     const deleteLead = useCallback(async (id: string): Promise<void> => {
+        // Optimistic Update
+        const leadToDelete = leads.find(l => l.id === id);
+        const value = leadToDelete?.value || 0;
+
+        setLeads(prev => prev.filter(l => l.id !== id));
+        setTotalRecords(prev => Math.max(0, prev - 1));
+        setLeadStats(prev => ({ ...prev, total: Math.max(0, prev.total - 1), totalValue: Math.max(0, prev.totalValue - value) }));
+
         await deleteDoc(doc(db, "leads", id));
-    }, []);
+    }, [leads]);
 
     const bulkDeleteLeads = useCallback(async (ids: string[]): Promise<void> => {
         if (!ids.length) return;
+
+        // Optimistic Update
+        const leadsToDelete = leads.filter(l => ids.includes(l.id));
+        const totalVal = leadsToDelete.reduce((sum, l) => sum + (l.value || 0), 0);
+
+        setLeads(prev => prev.filter(l => !ids.includes(l.id)));
+        setTotalRecords(prev => Math.max(0, prev - ids.length));
+        setLeadStats(prev => ({ ...prev, total: Math.max(0, prev.total - ids.length), totalValue: Math.max(0, prev.totalValue - totalVal) }));
+
         const batchSize = 500;
         for (let i = 0; i < ids.length; i += batchSize) {
             const batch = writeBatch(db);
@@ -237,7 +259,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
             });
             await batch.commit();
         }
-    }, []);
+    }, [leads]);
 
     // Bulk Delete All Matches (Server-Side)
     const bulkDeleteAllMatches = useCallback(async () => {
