@@ -693,17 +693,13 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
             </SheetContent>
 
             {/* Conversion Wizard */}
-            {lead && (
-                <ConvertLeadWizard
-                    open={showConvertWizard}
-                    onClose={() => {
-                        setShowConvertWizard(false);
-                        onClose();
-                    }}
-                    lead={lead}
-                    onConvert={convertToCustomer}
-                />
-            )}
+            {/* Conversion Wizard */}
+            <ConvertLeadWizard
+                open={showConvertWizard}
+                onClose={() => setShowConvertWizard(false)}
+                lead={lead}
+                onConvert={convertToCustomer}
+            />
 
             {/* New Task Dialog */}
             <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
