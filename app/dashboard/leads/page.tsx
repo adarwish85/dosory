@@ -97,21 +97,38 @@ interface SavedView {
     statusFilter: LeadStatus | "all";
     rowDensity: RowDensity;
     isDefault?: boolean;
+    columnWidths?: Record<string, number>;
     createdAt: number;
 }
 
 const SAVED_VIEWS_STORAGE_KEY = "leads_saved_views";
 
+// Default pixel widths
+const DEFAULT_COLUMN_WIDTHS: Record<ColumnKey, number> = {
+    starred: 40,
+    id: 60,
+    name: 200,
+    company: 150,
+    email: 200,
+    phone: 150,
+    value: 100,
+    status: 120,
+    score: 80,
+    tags: 150,
+    source: 120,
+    lastActivity: 150
+};
+
 const DEFAULT_COLUMNS: ColumnDef[] = [
-    { key: "starred", label: "★", defaultVisible: true, width: "w-10" },
-    { key: "id", label: "#", defaultVisible: true, width: "w-16" },
+    { key: "starred", label: "★", defaultVisible: true },
+    { key: "id", label: "#", defaultVisible: true },
     { key: "name", label: "Name", defaultVisible: true, required: true, sortable: true },
     { key: "company", label: "Company", defaultVisible: true, sortable: true },
     { key: "email", label: "Email", defaultVisible: true, sortable: true },
     { key: "phone", label: "Phone", defaultVisible: true },
     { key: "value", label: "Value", defaultVisible: true, sortable: true },
     { key: "status", label: "Status", defaultVisible: true, sortable: true },
-    { key: "score", label: "Score", defaultVisible: true, sortable: true, width: "w-20" },
+    { key: "score", label: "Score", defaultVisible: true, sortable: true },
     { key: "tags", label: "Tags", defaultVisible: true },
     { key: "source", label: "Source", defaultVisible: false, sortable: true },
     { key: "lastActivity", label: "Last Activity", defaultVisible: false, sortable: true },
@@ -232,22 +249,51 @@ function QuickViewCard({ lead }: { lead: Lead }) {
 }
 
 // Draggable Header
-function DraggableColumnHeader({ column, sortKey, sortDirection, onSort, isVisible }: { column: ColumnDef; sortKey: ColumnKey | null; sortDirection: SortDirection; onSort: (key: ColumnKey) => void; isVisible: boolean; }) {
+function DraggableColumnHeader({
+    column,
+    sortKey,
+    sortDirection,
+    onSort,
+    isVisible,
+    width,
+    onResize
+}: {
+    column: ColumnDef;
+    sortKey: ColumnKey | null;
+    sortDirection: SortDirection;
+    onSort: (key: ColumnKey) => void;
+    isVisible: boolean;
+    width: number;
+    onResize: (e: React.MouseEvent, key: ColumnKey) => void;
+}) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: column.key });
-    const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        width: width,
+        minWidth: width
+    };
+
     if (!isVisible) return null;
     const isActive = sortKey === column.key;
+
     return (
-        <TableHead ref={setNodeRef} style={style} className={`font-semibold text-gray-900 bg-gray-100/50 ${column.key === "name" ? "sticky left-12 z-10" : ""}`}>
-            <div className="flex items-center gap-1">
-                <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded"><GripVertical className="h-3 w-3 text-gray-400" /></button>
+        <TableHead ref={setNodeRef} style={style} className={`relative font-semibold text-gray-900 bg-gray-100/50 ${column.key === "name" ? "sticky left-12 z-10" : ""}`}>
+            <div className="flex items-center gap-1 w-full">
+                <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded shrink-0"><GripVertical className="h-3 w-3 text-gray-400" /></button>
                 {column.sortable ? (
-                    <button onClick={() => onSort(column.key)} className="flex items-center gap-1 hover:text-blue-600">
-                        {column.label}
-                        {isActive ? (sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-30" />}
+                    <button onClick={() => onSort(column.key)} className="flex items-center gap-1 hover:text-blue-600 truncate">
+                        <span className="truncate">{column.label}</span>
+                        {isActive ? (sortDirection === "asc" ? <ArrowUp className="h-3 w-3 shrink-0" /> : <ArrowDown className="h-3 w-3 shrink-0" />) : <ArrowUpDown className="h-3 w-3 opacity-30 shrink-0" />}
                     </button>
-                ) : <span>{column.label}</span>}
+                ) : <span className="truncate">{column.label}</span>}
             </div>
+            {/* Resizer Handle */}
+            <div
+                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 z-20"
+                onMouseDown={(e) => onResize(e, column.key)}
+            />
         </TableHead>
     );
 }
@@ -468,6 +514,30 @@ export default function LeadsPage() {
     const [sortKey, setSortKey] = useState<ColumnKey | null>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>(null);
     const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
+    const [columnWidths, setColumnWidths] = useState<Record<string, number>>(DEFAULT_COLUMN_WIDTHS);
+
+    // Column Resizing Logic
+    const handleColumnResize = useCallback((e: React.MouseEvent, key: ColumnKey) => {
+        e.preventDefault();
+        const startX = e.pageX;
+        const startWidth = columnWidths[key] || 100;
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+            const diff = moveEvent.pageX - startX;
+            setColumnWidths(prev => ({
+                ...prev,
+                [key]: Math.max(50, startWidth + diff) // Min width 50px
+            }));
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+    }, [columnWidths]);
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
     const [advancedFilters, setAdvancedFilters] = useState<FilterCondition[]>([]);
     const [filterLogic, setFilterLogic] = useState<FilterLogic>("AND");
@@ -528,9 +598,33 @@ export default function LeadsPage() {
         setFilterLogic(view.filterLogic);
         setStatusFilter(view.statusFilter);
         setRowDensity(view.rowDensity);
+        if (view.columnWidths) setColumnWidths(view.columnWidths); // Restore widths
         setActiveViewId(view.id);
         setCurrentPage(1);
     }, []);
+
+    // Update existing view
+    const updateCurrentView = useCallback(() => {
+        if (!activeViewId) return;
+        setSavedViews(prev => prev.map(v => {
+            if (v.id === activeViewId) {
+                return {
+                    ...v,
+                    columnVisibility,
+                    columnOrder,
+                    sortKey,
+                    sortDirection,
+                    advancedFilters,
+                    filterLogic,
+                    statusFilter,
+                    rowDensity,
+                    columnWidths, // Save widths
+                    updatedAt: Date.now()
+                };
+            }
+            return v;
+        }));
+    }, [activeViewId, columnVisibility, columnOrder, sortKey, sortDirection, advancedFilters, filterLogic, statusFilter, rowDensity, columnWidths]);
 
     // Save current state as a new view
     const saveCurrentView = useCallback((name: string, setAsDefault: boolean = false) => {
@@ -545,6 +639,7 @@ export default function LeadsPage() {
             filterLogic,
             statusFilter,
             rowDensity,
+            columnWidths, // Save widths
             isDefault: setAsDefault,
             createdAt: Date.now(),
         };
@@ -556,7 +651,7 @@ export default function LeadsPage() {
         setActiveViewId(newView.id);
         setNewViewName("");
         setShowSaveViewDialog(false);
-    }, [columnVisibility, columnOrder, sortKey, sortDirection, advancedFilters, filterLogic, statusFilter, rowDensity]);
+    }, [columnVisibility, columnOrder, sortKey, sortDirection, advancedFilters, filterLogic, statusFilter, rowDensity, columnWidths]);
 
     // Delete a saved view
     const deleteView = useCallback((viewId: string) => {
@@ -1061,8 +1156,9 @@ export default function LeadsPage() {
                             <h4 className="font-medium flex items-center gap-2"><Save className="h-4 w-4" /> Save Current View</h4>
                             <Input placeholder="View name..." value={newViewName} onChange={(e) => setNewViewName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && newViewName.trim()) saveCurrentView(newViewName.trim()); }} />
                             <div className="flex gap-2">
-                                <Button size="sm" className="flex-1" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim())}>Save</Button>
-                                <Button size="sm" variant="outline" className="flex-1" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim(), true)}>Save as Default</Button>
+                                <Button size="sm" className="flex-1" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim())}>Save New</Button>
+                                {activeViewId && <Button size="sm" variant="secondary" className="flex-1" onClick={updateCurrentView}>Update Active</Button>}
+                                <Button size="sm" variant="outline" className="flex-1" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim(), true)}>Standard</Button>
                             </div>
                         </div>
                     </PopoverContent>
@@ -1083,7 +1179,20 @@ export default function LeadsPage() {
                                         <TableRow className="bg-gray-50 hover:bg-gray-50">
                                             <TableHead className="w-12 text-center bg-gray-100/50 sticky left-0 z-10"><Checkbox checked={isAllPageSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={handleSelectAllCheckbox} /></TableHead>
                                             <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
-                                                {orderedColumns.map((col) => <DraggableColumnHeader key={col.key} column={col} sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} isVisible={columnVisibility[col.key]} />)}
+                                                <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
+                                                    {orderedColumns.map((col) => (
+                                                        <DraggableColumnHeader
+                                                            key={col.key}
+                                                            column={col}
+                                                            sortKey={sortKey}
+                                                            sortDirection={sortDirection}
+                                                            onSort={handleSort}
+                                                            isVisible={columnVisibility[col.key]}
+                                                            width={columnWidths[col.key] || 100}
+                                                            onResize={handleColumnResize}
+                                                        />
+                                                    ))}
+                                                </SortableContext>
                                             </SortableContext>
                                             <TableHead className="w-24 text-center bg-gray-100/50">Actions</TableHead>
                                         </TableRow>
@@ -1095,7 +1204,15 @@ export default function LeadsPage() {
                                             paginatedLeads.map((lead, index) => (
                                                 <TableRow key={lead.id} className={`group hover:bg-gray-50 ${(selectionMode === "all" || selectedLeads.includes(lead.id)) ? 'bg-blue-50/50' : ''} ${lead.isStarred ? 'bg-yellow-50/30' : ''} ${focusedRowIndex === index ? 'ring-2 ring-inset ring-blue-500' : ''} ${ROW_DENSITY_STYLES[rowDensity]}`}>
                                                     <TableCell className="text-center sticky left-0 z-10 bg-white group-hover:bg-gray-50"><Checkbox checked={selectionMode === "all" || selectedLeads.includes(lead.id)} onCheckedChange={(c) => handleSelectLead(lead.id, !!c)} /></TableCell>
-                                                    {orderedColumns.map((col) => columnVisibility[col.key] && <TableCell key={col.key} className={col.key === "name" ? "sticky left-12 z-10 bg-white group-hover:bg-gray-50" : ""}>{renderCell(lead, col)}</TableCell>)}
+                                                    {orderedColumns.map((col) => columnVisibility[col.key] && (
+                                                        <TableCell
+                                                            key={col.key}
+                                                            style={{ width: columnWidths[col.key] || 100, minWidth: columnWidths[col.key] || 100 }}
+                                                            className={`overflow-hidden text-ellipsis whitespace-nowrap ${col.key === "name" ? "sticky left-12 z-10 bg-white group-hover:bg-gray-50" : ""}`}
+                                                        >
+                                                            {renderCell(lead, col)}
+                                                        </TableCell>
+                                                    ))}
                                                     <TableCell>
                                                         <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleView(lead)}><ExternalLink className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
