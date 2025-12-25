@@ -425,7 +425,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                 if (e.key === "Enter" && newStatusValue.trim()) {
                                     const slug = newStatusValue.toLowerCase().replace(/\s+/g, "_");
                                     setCustomStatuses(prev => [...prev, { value: slug, label: newStatusValue.trim() }]);
-                                    form.setValue("status", slug);
+                                    form.setValue("status", slug as any);
                                     setNewStatusValue("");
                                     setShowAddStatusDialog(false);
                                 }
@@ -439,7 +439,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                             onClick={() => {
                                 const slug = newStatusValue.toLowerCase().replace(/\s+/g, "_");
                                 setCustomStatuses(prev => [...prev, { value: slug, label: newStatusValue.trim() }]);
-                                form.setValue("status", slug);
+                                form.setValue("status", slug as any);
                                 setNewStatusValue("");
                                 setShowAddStatusDialog(false);
                             }}
