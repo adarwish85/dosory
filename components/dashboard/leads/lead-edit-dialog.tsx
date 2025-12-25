@@ -238,21 +238,6 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                         />
                                     </div>
 
-                                    {/* Tags */}
-                                    <FormField
-                                        control={form.control}
-                                        name="tags"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Tags</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Tag" {...field} value={field.value?.join(", ") || ""} onChange={(e) => field.onChange(e.target.value.split(",").map(t => t.trim()).filter(Boolean))} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <FormField
                                             control={form.control}
@@ -260,6 +245,19 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-red-500">* Name</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="company"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Company</FormLabel>
                                                     <FormControl>
                                                         <Input {...field} />
                                                     </FormControl>
@@ -391,20 +389,22 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                             )}
                                         />
 
-                                        <FormField
-                                            control={form.control}
-                                            name="company"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Company</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
                                     </div>
+
+                                    {/* Tags - moved to end */}
+                                    <FormField
+                                        control={form.control}
+                                        name="tags"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Tags</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Comma-separated tags" {...field} value={field.value?.join(", ") || ""} onChange={(e) => field.onChange(e.target.value.split(",").map(t => t.trim()).filter(Boolean))} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
                                     <FormField
                                         control={form.control}

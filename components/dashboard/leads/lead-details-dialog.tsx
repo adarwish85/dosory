@@ -375,26 +375,26 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
 
                         <ScrollArea className="flex-1 bg-gray-50/30">
                             <div className="p-6">
-                                {/* Profile Tab */}
-                                <TabsContent value="profile" className="m-0 space-y-6">
+                                {/* Profile Tab - Compact layout for single-screen view */}
+                                <TabsContent value="profile" className="m-0 space-y-3">
                                     {/* Top Row: Lead Score + Quick Actions */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                                         {/* Lead Score Card */}
                                         {(() => {
                                             const { score, breakdown } = calculateLeadScoreWithBreakdown(lead);
                                             const scoreColor = score >= 70 ? "text-green-600" : score >= 40 ? "text-yellow-600" : "text-red-500";
                                             const bgColor = score >= 70 ? "from-green-50 to-green-100 border-green-200" : score >= 40 ? "from-yellow-50 to-yellow-100 border-yellow-200" : "from-red-50 to-red-100 border-red-200";
                                             return (
-                                                <div className={`p-4 bg-gradient-to-br ${bgColor} border rounded-lg shadow-sm lg:col-span-1`}>
-                                                    <div className="flex items-center justify-between mb-3">
+                                                <div className={`p-3 bg-gradient-to-br ${bgColor} border rounded-lg shadow-sm lg:col-span-1`}>
+                                                    <div className="flex items-center justify-between mb-2">
                                                         <div className="flex items-center gap-2">
                                                             <Zap className={`h-5 w-5 ${scoreColor}`} />
                                                             <h3 className="font-semibold text-gray-900">Lead Score</h3>
                                                         </div>
                                                         <span className={`text-3xl font-bold ${scoreColor}`}>{score}</span>
                                                     </div>
-                                                    <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                                                        <div className={`h-2 rounded-full ${score >= 70 ? "bg-green-500" : score >= 40 ? "bg-yellow-500" : "bg-red-400"}`} style={{ width: `${score}%` }} />
+                                                    <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                                                        <div className={`h-1.5 rounded-full ${score >= 70 ? "bg-green-500" : score >= 40 ? "bg-yellow-500" : "bg-red-400"}`} style={{ width: `${score}%` }} />
                                                     </div>
                                                     <div className="space-y-1">
                                                         {breakdown.slice(0, 5).map((item, i) => (
@@ -412,8 +412,8 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         })()}
 
                                         {/* Quick Actions */}
-                                        <div className="p-4 bg-white border rounded-lg shadow-sm lg:col-span-2">
-                                            <div className="flex items-center gap-2 mb-4">
+                                        <div className="p-3 bg-white border rounded-lg shadow-sm lg:col-span-2">
+                                            <div className="flex items-center gap-2 mb-2">
                                                 <TrendingUp className="h-5 w-5 text-blue-600" />
                                                 <h3 className="font-semibold text-gray-900">Quick Actions</h3>
                                             </div>
@@ -443,8 +443,8 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     </div>
 
                                     {/* Conversion Pipeline */}
-                                    <div className="p-4 bg-white border rounded-lg shadow-sm">
-                                        <div className="flex items-center justify-between mb-4">
+                                    <div className="p-3 bg-white border rounded-lg shadow-sm">
+                                        <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-2">
                                                 <ArrowRight className="h-5 w-5 text-blue-600" />
                                                 <h3 className="font-semibold text-gray-900">Conversion Pipeline</h3>
@@ -477,12 +477,12 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     </div>
 
                                     {/* Data Completeness & Related Items */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {/* Data Completeness */}
-                                        <div className="p-4 bg-white border rounded-lg shadow-sm">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <CheckSquare className="h-5 w-5 text-green-600" />
-                                                <h3 className="font-semibold text-gray-900">Data Completeness</h3>
+                                        <div className="p-3 bg-white border rounded-lg shadow-sm">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <CheckSquare className="h-4 w-4 text-green-600" />
+                                                <h3 className="text-sm font-semibold text-gray-900">Data Completeness</h3>
                                             </div>
                                             {(() => {
                                                 const complete = COMPLETENESS_FIELDS.filter(f => {
@@ -552,8 +552,8 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         </div>
                                     </div>
 
-                                    {/* Lead Info & System Info (Collapsible Cards) */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Lead Info & System Info */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div className="p-4 bg-white border rounded-lg shadow-sm">
                                             <div className="flex items-center gap-2 pb-2 border-b mb-3">
                                                 <User className="h-4 w-4 text-gray-500" />

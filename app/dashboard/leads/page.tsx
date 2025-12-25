@@ -96,6 +96,7 @@ interface SavedView {
     filterLogic: FilterLogic;
     statusFilter: LeadStatus | "all";
     rowDensity: RowDensity;
+    recordsPerPage?: number; // Added for saving page size
     isDefault?: boolean;
     columnWidths?: Record<string, number>;
     createdAt: number;
@@ -605,7 +606,8 @@ export default function LeadsPage() {
         setFilterLogic(view.filterLogic);
         setStatusFilter(view.statusFilter);
         setRowDensity(view.rowDensity);
-        if (view.columnWidths) setColumnWidths(view.columnWidths); // Restore widths
+        if (view.columnWidths) setColumnWidths(view.columnWidths);
+        if (view.recordsPerPage) setRecordsPerPage(view.recordsPerPage);
         setActiveViewId(view.id);
         setCurrentPage(1);
     }, []);
@@ -625,13 +627,14 @@ export default function LeadsPage() {
                     filterLogic,
                     statusFilter,
                     rowDensity,
-                    columnWidths, // Save widths
+                    columnWidths,
+                    recordsPerPage,
                     updatedAt: Date.now()
                 };
             }
             return v;
         }));
-    }, [activeViewId, columnVisibility, columnOrder, sortKey, sortDirection, advancedFilters, filterLogic, statusFilter, rowDensity, columnWidths]);
+    }, [activeViewId, columnVisibility, columnOrder, sortKey, sortDirection, advancedFilters, filterLogic, statusFilter, rowDensity, columnWidths, recordsPerPage]);
 
     // Save current state as a new view
     const saveCurrentView = useCallback((name: string, setAsDefault: boolean = false) => {
@@ -646,19 +649,19 @@ export default function LeadsPage() {
             filterLogic,
             statusFilter,
             rowDensity,
-            columnWidths, // Save widths
+            columnWidths,
+            recordsPerPage,
             isDefault: setAsDefault,
             createdAt: Date.now(),
         };
         setSavedViews(prev => {
-            // If setting as default, remove default from others
             const updated = setAsDefault ? prev.map(v => ({ ...v, isDefault: false })) : prev;
             return [...updated, newView];
         });
         setActiveViewId(newView.id);
         setNewViewName("");
         setShowSaveViewDialog(false);
-    }, [columnVisibility, columnOrder, sortKey, sortDirection, advancedFilters, filterLogic, statusFilter, rowDensity, columnWidths]);
+    }, [columnVisibility, columnOrder, sortKey, sortDirection, advancedFilters, filterLogic, statusFilter, rowDensity, columnWidths, recordsPerPage]);
 
     // Delete a saved view
     const deleteView = useCallback((viewId: string) => {
@@ -1023,7 +1026,7 @@ export default function LeadsPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                         <Link href="/dashboard/leads/new"><Button className="bg-gray-900 text-white hover:bg-gray-800"><Plus className="mr-2 h-4 w-4" /> New Lead</Button></Link>
                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="outline">Actions <ChevronDown className="ml-2 h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuTrigger asChild><Button variant="outline" size="icon"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
                                 <DropdownMenuItem onClick={() => setShowImportWizard(true)}><Upload className="mr-2 h-4 w-4" /> Import</DropdownMenuItem>
                                 <DropdownMenuSeparator />
