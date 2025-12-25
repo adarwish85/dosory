@@ -1,5 +1,5 @@
-import { CustomerProfileForm } from "@/components/dashboard/customers/profile-form";
+import { CustomerOverview } from "@/components/dashboard/customers/customer-overview";
 
-export default function CustomerProfilePage() {
-    return <CustomerProfileForm />;
+export default function CustomerOverviewPage() {
+    return <CustomerOverview />;
 }

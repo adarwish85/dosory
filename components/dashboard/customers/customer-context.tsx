@@ -4,21 +4,10 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { useParams } from "next/navigation";
 import { doc, getDoc, collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Customer } from "@/lib/types";
+import { Customer, Contact } from "@/lib/types";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 
-interface Contact {
-    id: string;
-    customerId: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone?: string;
-    position?: string;
-    isPrimary?: boolean;
-    isActive?: boolean;
-    [key: string]: any;
-}
+// Local Contact interface removed. Using @/lib/types Contact.
 
 interface CustomerContextType {
     customer: Customer | null;

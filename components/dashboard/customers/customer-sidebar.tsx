@@ -9,7 +9,7 @@ import {
     User, Users, StickyNote, FileText, Receipt,
     CreditCard, FileSignature, CheckSquare,
     Calculator, Clock, LifeBuoy, Folder, Paperclip,
-    Lock, Bell, MapPin, Globe, ArrowLeft, ChevronLeft, ChevronRight
+    Lock, Bell, MapPin, Globe, ArrowLeft, ChevronLeft, ChevronRight, LayoutDashboard, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -20,8 +20,9 @@ export function CustomerSidebar() {
     const [collapsed, setCollapsed] = useState(false);
 
     const menuItems = [
-        { icon: User, label: "Profile", href: `/dashboard/customers/${customerId}` },
-        { icon: Globe, label: "Portal Settings", href: `/dashboard/customers/${customerId}/portal` },
+        { icon: LayoutDashboard, label: "Overview", href: `/dashboard/customers/${customerId}` },
+        { icon: User, label: "Profile", href: `/dashboard/customers/${customerId}/profile` },
+        { icon: Shield, label: "Customer Admins", href: `/dashboard/customers/${customerId}/admins` },
         { icon: Users, label: "Contacts", href: `/dashboard/customers/${customerId}/contacts`, badge: contacts.length || undefined },
         { icon: StickyNote, label: "Notes", href: `/dashboard/customers/${customerId}/notes` },
         { icon: FileText, label: "Statement", href: `/dashboard/customers/${customerId}/statement` },
@@ -83,21 +84,7 @@ export function CustomerSidebar() {
                     )}
                 </div>
 
-                {/* Customer Name */}
-                {!collapsed && (
-                    <div className="px-4 mb-6">
-                        <h2 className="text-lg font-bold flex items-center gap-2 truncate">
-                            {loading ? (
-                                <span className="text-gray-400">Loading...</span>
-                            ) : (
-                                <>
-                                    {customer?.company || "Unknown Customer"}
-                                    <span className="text-xs text-gray-400">▼</span>
-                                </>
-                            )}
-                        </h2>
-                    </div>
-                )}
+                {/* Customer Name Removed (Moved to Header) */}
 
                 {/* Navigation */}
                 <nav className="space-y-1 flex-1 overflow-y-auto">

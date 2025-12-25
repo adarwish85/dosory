@@ -4,6 +4,8 @@ import { CustomerSidebar } from "@/components/dashboard/customers/customer-sideb
 import { CustomerProvider } from "@/components/dashboard/customers/customer-context";
 import { use } from "react";
 
+import { CustomerProfileHeader } from "@/components/dashboard/customers/customer-profile-header";
+
 export default function CustomerProfileLayout({
     children,
     params,
@@ -20,8 +22,11 @@ export default function CustomerProfileLayout({
                 <CustomerSidebar />
 
                 {/* Main Content Area */}
-                <div className="flex-1 overflow-y-auto bg-white p-6">
-                    {children}
+                <div className="flex-1 flex flex-col h-full overflow-hidden">
+                    <CustomerProfileHeader />
+                    <div className="flex-1 overflow-y-auto bg-white p-6">
+                        {children}
+                    </div>
                 </div>
             </div>
         </CustomerProvider>
