@@ -689,16 +689,20 @@ export default function LeadsPage() {
     const handleEdit = useCallback((lead: Lead) => { setSelectedLead(lead); setEditOpen(true); }, []);
     const handleDelete = useCallback(async (id: string) => { if (window.confirm("Delete?")) await deleteLead(id); }, [deleteLead]);
     const handleBulkDelete = useCallback(async () => {
+        console.log(`[handleBulkDelete] Clicked. Selected: ${selectedLeads.length}, Mode: ${selectionMode}`);
         if (selectedLeads.length === 0) return;
 
         // Safety check: Don't allow accidental mass deletion without explicit confirmation of count
         const count = selectionMode === "all" ? totalRecords : selectedLeads.length;
         if (!window.confirm(`Are you sure you want to delete ${count} leads? This action cannot be undone.`)) {
+            console.log("[handleBulkDelete] Cancelled by user");
             return;
         }
 
         try {
+            console.log(`[handleBulkDelete] Calling bulkDeleteLeads with ${selectedLeads.length} IDs`);
             await bulkDeleteLeads(selectedLeads);
+            console.log("[handleBulkDelete] Success, clearing selection");
             handleClearSelection();
             // Optional: Show success toast here
         } catch (error) {
