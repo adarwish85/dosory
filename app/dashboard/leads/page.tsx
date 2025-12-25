@@ -12,8 +12,12 @@ import {
     ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash, ExternalLink,
     LayoutList, DollarSign, Users, TrendingUp, GripVertical, PlusCircle,
     Star, Clock, FileDown, Mail, Phone, AlertTriangle, RefreshCcw,
-    Bookmark, BookmarkPlus, Save, FolderOpen, MoreVertical, Tag, Zap, Send
+    Bookmark, BookmarkPlus, Save, FolderOpen, MoreVertical, Tag, Zap, Send,
+    Kanban, Table2, GitMerge, UserPlus, Settings2
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useLeads } from "@/lib/hooks";
@@ -68,6 +72,7 @@ import { formatDistanceToNow, format } from "date-fns";
 type SelectionMode = "none" | "page" | "all";
 type SortDirection = "asc" | "desc" | null;
 type RowDensity = "compact" | "comfortable" | "spacious";
+type ViewMode = "table" | "kanban";
 type ColumnKey = "starred" | "id" | "name" | "company" | "email" | "phone" | "value" | "status" | "source" | "lastActivity" | "score" | "tags";
 type FilterOperator = "contains" | "equals" | "startsWith" | "endsWith" | "isEmpty" | "isNotEmpty" | "greaterThan" | "lessThan";
 type FilterLogic = "AND" | "OR";
@@ -332,6 +337,120 @@ function InlineEditCell({ value, field, leadId, onSave, searchQuery }: { value: 
     return <span onDoubleClick={() => setIsEditing(true)} className="cursor-text hover:bg-gray-100 px-1 py-0.5 rounded inline-block min-w-[20px]" title="Double-click to edit"><HighlightText text={value || "-"} search={searchQuery} /></span>;
 }
 
+// Kanban Board Component
+function KanbanBoard({ leads, onStatusChange, onView, onEdit }: { leads: Lead[]; onStatusChange: (id: string, status: LeadStatus) => void; onView: (lead: Lead) => void; onEdit: (lead: Lead) => void; }) {
+    const statusColumns = LEAD_STATUSES.filter(s => !["won", "lost", "junk"].includes(s.value));
+    const closedStatuses = LEAD_STATUSES.filter(s => ["won", "lost", "junk"].includes(s.value));
+
+    const getLeadsByStatus = (status: LeadStatus) => leads.filter(l => l.status === status);
+
+    const handleDragStart = (e: React.DragEvent, leadId: string) => {
+        e.dataTransfer.setData("leadId", leadId);
+    };
+
+    const handleDrop = (e: React.DragEvent, newStatus: LeadStatus) => {
+        e.preventDefault();
+        const leadId = e.dataTransfer.getData("leadId");
+        if (leadId) onStatusChange(leadId, newStatus);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => e.preventDefault();
+
+    const renderLeadCard = (lead: Lead) => {
+        const score = lead.leadScore ?? calculateLeadScore(lead);
+        return (
+            <div
+                key={lead.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, lead.id)}
+                className="bg-white border rounded-lg p-3 cursor-move hover:shadow-md transition-shadow group"
+            >
+                <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                            <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                                {lead.name?.charAt(0)?.toUpperCase() || "?"}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-medium text-sm truncate max-w-[120px]">{lead.name}</p>
+                            {lead.company && <p className="text-xs text-gray-500 truncate max-w-[120px]">{lead.company}</p>}
+                        </div>
+                    </div>
+                    {lead.isStarred && <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />}
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                    <Badge className={`text-[10px] px-1.5 py-0 ${getScoreColor(score)}`}>
+                        <Zap className="h-2 w-2 mr-0.5" />{score}
+                    </Badge>
+                    {lead.value && <Badge variant="outline" className="text-[10px] px-1.5 py-0">${lead.value.toLocaleString()}</Badge>}
+                </div>
+                {lead.tags && lead.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                        {lead.tags.slice(0, 2).map((tag, i) => (
+                            <Badge key={i} variant="secondary" className="text-[9px] px-1 py-0">{tag}</Badge>
+                        ))}
+                    </div>
+                )}
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onView(lead)}><ExternalLink className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(lead)}><Pencil className="h-3 w-3" /></Button>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="flex gap-4 overflow-x-auto pb-4">
+            {statusColumns.map((status) => {
+                const statusLeads = getLeadsByStatus(status.value as LeadStatus);
+                const statusColor = STATUS_COLORS[status.value as LeadStatus] || { bg: "bg-gray-50", text: "text-gray-600" };
+                return (
+                    <div
+                        key={status.value}
+                        className="flex-shrink-0 w-72 bg-gray-50 rounded-lg p-3"
+                        onDrop={(e) => handleDrop(e, status.value as LeadStatus)}
+                        onDragOver={handleDragOver}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <Badge className={`${statusColor.bg} ${statusColor.text} border-0`}>{status.label}</Badge>
+                            <Badge variant="outline" className="text-xs">{statusLeads.length}</Badge>
+                        </div>
+                        <div className="space-y-2 min-h-[200px]">
+                            {statusLeads.map(renderLeadCard)}
+                            {statusLeads.length === 0 && (
+                                <div className="text-center py-8 text-sm text-gray-400 border-2 border-dashed rounded-lg">
+                                    Drag leads here
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            })}
+            {/* Closed columns - collapsed */}
+            <div className="flex-shrink-0 w-48 bg-gray-100 rounded-lg p-3">
+                <div className="text-sm font-medium text-gray-600 mb-3">Closed</div>
+                {closedStatuses.map((status) => {
+                    const statusLeads = getLeadsByStatus(status.value as LeadStatus);
+                    return (
+                        <div
+                            key={status.value}
+                            className="mb-2 p-2 bg-white rounded border"
+                            onDrop={(e) => handleDrop(e, status.value as LeadStatus)}
+                            onDragOver={handleDragOver}
+                        >
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium">{status.label}</span>
+                                <Badge variant="outline" className="text-[10px]">{statusLeads.length}</Badge>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 export default function LeadsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
@@ -358,6 +477,19 @@ export default function LeadsPage() {
     const [showSaveViewDialog, setShowSaveViewDialog] = useState(false);
     const [newViewName, setNewViewName] = useState("");
     const [activeViewId, setActiveViewId] = useState<string | null>(null);
+
+    // View mode state
+    const [viewMode, setViewMode] = useState<ViewMode>("table");
+
+    // Merge dialog state
+    const [showMergeDialog, setShowMergeDialog] = useState(false);
+    const [mergeTargetLead, setMergeTargetLead] = useState<Lead | null>(null);
+    const [mergeSourceLead, setMergeSourceLead] = useState<Lead | null>(null);
+
+    // Bulk email dialog state
+    const [showBulkEmailDialog, setShowBulkEmailDialog] = useState(false);
+    const [emailSubject, setEmailSubject] = useState("Follow-up");
+    const [emailBody, setEmailBody] = useState("");
 
     // Load saved views from localStorage on mount
     useEffect(() => {
@@ -593,6 +725,62 @@ export default function LeadsPage() {
         window.open(mailto, "_blank");
     }, [processedLeads, selectedLeads]);
 
+    // Open bulk email compose dialog
+    const openBulkEmailCompose = useCallback(() => {
+        const selectedLeadData = processedLeads.filter(l => selectedLeads.includes(l.id));
+        const leadsWithEmail = selectedLeadData.filter(l => l.email);
+        if (leadsWithEmail.length === 0) {
+            alert("No email addresses found in selected leads");
+            return;
+        }
+        setEmailBody(`Dear Lead,\n\nThank you for your interest. We would like to follow up...\n\nBest regards`);
+        setShowBulkEmailDialog(true);
+    }, [processedLeads, selectedLeads]);
+
+    // Handle sending bulk email
+    const handleSendBulkEmail = useCallback(() => {
+        const selectedLeadData = processedLeads.filter(l => selectedLeads.includes(l.id));
+        const emails = selectedLeadData.filter(l => l.email).map(l => l.email);
+        const mailto = `mailto:${emails.join(",")}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+        window.open(mailto, "_blank");
+        setShowBulkEmailDialog(false);
+    }, [processedLeads, selectedLeads, emailSubject, emailBody]);
+
+    // Open merge dialog
+    const openMergeDialog = useCallback(() => {
+        if (selectedLeads.length !== 2) {
+            alert("Please select exactly 2 leads to merge");
+            return;
+        }
+        const selected = processedLeads.filter(l => selectedLeads.includes(l.id));
+        setMergeTargetLead(selected[0]);
+        setMergeSourceLead(selected[1]);
+        setShowMergeDialog(true);
+    }, [selectedLeads, processedLeads]);
+
+    // Handle merge leads
+    const handleMergeLeads = useCallback(async () => {
+        if (!mergeTargetLead || !mergeSourceLead) return;
+        // Merge: copy missing fields from source to target, then delete source
+        const mergedData: Partial<Lead> = {};
+        if (!mergeTargetLead.email && mergeSourceLead.email) mergedData.email = mergeSourceLead.email;
+        if (!mergeTargetLead.phone && mergeSourceLead.phone) mergedData.phone = mergeSourceLead.phone;
+        if (!mergeTargetLead.company && mergeSourceLead.company) mergedData.company = mergeSourceLead.company;
+        if (!mergeTargetLead.value && mergeSourceLead.value) mergedData.value = mergeSourceLead.value;
+        if (!mergeTargetLead.website && mergeSourceLead.website) mergedData.website = mergeSourceLead.website;
+        if (!mergeTargetLead.description && mergeSourceLead.description) mergedData.description = mergeSourceLead.description;
+        // Merge tags
+        const mergedTags = [...(mergeTargetLead.tags || []), ...(mergeSourceLead.tags || [])];
+        mergedData.tags = [...new Set(mergedTags)];
+
+        await updateLead(mergeTargetLead.id, mergedData as any);
+        await deleteLead(mergeSourceLead.id);
+        setShowMergeDialog(false);
+        setMergeTargetLead(null);
+        setMergeSourceLead(null);
+        handleClearSelection();
+    }, [mergeTargetLead, mergeSourceLead, updateLead, deleteLead, handleClearSelection]);
+
     const clearAllFilters = useCallback(() => { setStatusFilter("all"); setSearchQuery(""); setAdvancedFilters([]); setCurrentPage(1); handleClearSelection(); }, [handleClearSelection]);
 
     const handleTableKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
@@ -729,6 +917,14 @@ export default function LeadsPage() {
                                     <DropdownMenuItem onClick={handleBatchEmail}>
                                         <Send className="mr-2 h-4 w-4" /> Send Email to Selected
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={openBulkEmailCompose}>
+                                        <Mail className="mr-2 h-4 w-4" /> Compose Email...
+                                    </DropdownMenuItem>
+                                    {selectedLeads.length === 2 && (
+                                        <DropdownMenuItem onClick={openMergeDialog}>
+                                            <GitMerge className="mr-2 h-4 w-4" /> Merge Selected
+                                        </DropdownMenuItem>
+                                    )}
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -745,6 +941,13 @@ export default function LeadsPage() {
                         <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon"><LayoutList className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuLabel>Density</DropdownMenuLabel><DropdownMenuSeparator /><DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}><DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem><DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem><DropdownMenuRadioItem value="spacious">Spacious</DropdownMenuRadioItem></DropdownMenuRadioGroup></DropdownMenuContent></DropdownMenu>
                         <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon"><Columns className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-48"><DropdownMenuLabel className="flex justify-between"><span>Columns</span><span className="text-xs text-gray-400">{visibleColumnsCount}/{DEFAULT_COLUMNS.length}</span></DropdownMenuLabel><DropdownMenuSeparator />{DEFAULT_COLUMNS.map((c) => <DropdownMenuCheckboxItem key={c.key} checked={columnVisibility[c.key]} onCheckedChange={() => toggleColumn(c.key)} disabled={c.required}>{c.label}</DropdownMenuCheckboxItem>)}<DropdownMenuSeparator /><div className="flex gap-1 p-1"><Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={showAllColumns}>All</Button><Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={resetColumns}>Reset</Button></div></DropdownMenuContent></DropdownMenu>
                         <Popover open={showFilters} onOpenChange={setShowFilters}><PopoverTrigger asChild><Button variant="outline" className={hasActiveFilters ? "border-blue-500 text-blue-600" : ""}><Filter className="mr-2 h-4 w-4" />Filters{hasActiveFilters && <Badge className="ml-2 bg-blue-600 text-white h-5 min-w-[20px] px-1 rounded-full text-[10px]">{(statusFilter !== "all" ? 1 : 0) + advancedFilters.length}</Badge>}</Button></PopoverTrigger><PopoverContent align="end" className="w-[520px]"><div className="space-y-4"><div className="flex items-center justify-between"><h4 className="font-medium">Filters</h4>{hasActiveFilters && <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs">Clear</Button>}</div><div className="space-y-2"><label className="text-sm font-medium">Status</label><Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as LeadStatus | "all"); setCurrentPage(1); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{LEAD_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}><div className="flex gap-2"><span>{s.label}</span>{leadStats[s.value] !== undefined && <Badge variant="secondary" className="text-[10px] h-4 px-1">{leadStats[s.value]}</Badge>}</div></SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><label className="text-sm font-medium">Conditions</label><div className="space-y-2 max-h-48 overflow-y-auto">{advancedFilters.map((f, i) => <FilterRow key={f.id} filter={f} columns={DEFAULT_COLUMNS} onUpdate={updateFilter} onRemove={removeFilter} showLogic={i > 0} logic={filterLogic} onLogicChange={setFilterLogic} />)}</div><Button variant="outline" size="sm" onClick={addFilter} className="w-full"><PlusCircle className="mr-2 h-4 w-4" />Add condition</Button></div></div></PopoverContent></Popover>
+
+                        {/* View Toggle */}
+                        <div className="flex border rounded-md">
+                            <Button variant={viewMode === "table" ? "default" : "ghost"} size="icon" className="rounded-r-none" onClick={() => setViewMode("table")}><Table2 className="h-4 w-4" /></Button>
+                            <Button variant={viewMode === "kanban" ? "default" : "ghost"} size="icon" className="rounded-l-none" onClick={() => setViewMode("kanban")}><Kanban className="h-4 w-4" /></Button>
+                        </div>
+
                         <Button variant="outline" size="icon" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" /></Button>
 
                         {/* Saved Views */}
@@ -819,49 +1022,110 @@ export default function LeadsPage() {
                 {hasActiveFilters && <div className="flex items-center gap-2 text-sm flex-wrap"><span className="text-gray-500">Active:</span>{statusFilter !== "all" && <Badge variant="secondary" className="flex items-center gap-1">Status: {statusFilter}<button onClick={() => setStatusFilter("all")} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button></Badge>}{advancedFilters.map((f, i) => <Badge key={f.id} variant="secondary" className="flex items-center gap-1">{i > 0 && <span className="text-gray-400 mr-1">{filterLogic}</span>}{f.field} {f.operator} {f.value && `"${f.value}"`}<button onClick={() => removeFilter(f.id)} className="ml-1 hover:text-red-500"><X className="h-3 w-3" /></button></Badge>)}</div>}
 
                 <SelectionBanner selectionMode={selectionMode} selectedCount={selectedLeads.length} pageCount={paginatedLeads.length} totalCount={totalRecords} onSelectAll={handleSelectAllRecords} onClearSelection={handleClearSelection} />
-                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={totalRecords} startRecord={totalRecords === 0 ? 0 : startIndex + 1} endRecord={endIndex} />
 
-                <div ref={tableRef} tabIndex={0} onKeyDown={handleTableKeyDown} className="border rounded-md bg-white overflow-x-auto focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                    <TableHead className="w-12 text-center bg-gray-100/50 sticky left-0 z-10"><Checkbox checked={isAllPageSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={handleSelectAllCheckbox} /></TableHead>
-                                    <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
-                                        {orderedColumns.map((col) => <DraggableColumnHeader key={col.key} column={col} sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} isVisible={columnVisibility[col.key]} />)}
-                                    </SortableContext>
-                                    <TableHead className="w-24 text-center bg-gray-100/50">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {paginatedLeads.length === 0 ? (
-                                    <TableRow><TableCell colSpan={visibleColumnsCount + 2} className="text-center py-10 text-muted-foreground">{searchQuery ? "No matches" : "No leads"}</TableCell></TableRow>
-                                ) : (
-                                    paginatedLeads.map((lead, index) => (
-                                        <TableRow key={lead.id} className={`group hover:bg-gray-50 ${selectedLeads.includes(lead.id) ? 'bg-blue-50/50' : ''} ${lead.isStarred ? 'bg-yellow-50/30' : ''} ${focusedRowIndex === index ? 'ring-2 ring-inset ring-blue-500' : ''} ${ROW_DENSITY_STYLES[rowDensity]}`}>
-                                            <TableCell className="text-center sticky left-0 z-10 bg-white group-hover:bg-gray-50"><Checkbox checked={selectedLeads.includes(lead.id)} onCheckedChange={(c) => handleSelectLead(lead.id, !!c)} /></TableCell>
-                                            {orderedColumns.map((col) => columnVisibility[col.key] && <TableCell key={col.key} className={col.key === "name" ? "sticky left-12 z-10 bg-white group-hover:bg-gray-50" : ""}>{renderCell(lead, col)}</TableCell>)}
-                                            <TableCell>
-                                                <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleView(lead)}><ExternalLink className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(lead)}><Pencil className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(lead.id)}><Trash className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
-                                                </div>
-                                            </TableCell>
+                {viewMode === "table" ? (
+                    <>
+                        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={totalRecords} startRecord={totalRecords === 0 ? 0 : startIndex + 1} endRecord={endIndex} />
+
+                        <div ref={tableRef} tabIndex={0} onKeyDown={handleTableKeyDown} className="border rounded-md bg-white overflow-x-auto focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-gray-50 hover:bg-gray-50">
+                                            <TableHead className="w-12 text-center bg-gray-100/50 sticky left-0 z-10"><Checkbox checked={isAllPageSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={handleSelectAllCheckbox} /></TableHead>
+                                            <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
+                                                {orderedColumns.map((col) => <DraggableColumnHeader key={col.key} column={col} sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} isVisible={columnVisibility[col.key]} />)}
+                                            </SortableContext>
+                                            <TableHead className="w-24 text-center bg-gray-100/50">Actions</TableHead>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </DndContext>
-                </div>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {paginatedLeads.length === 0 ? (
+                                            <TableRow><TableCell colSpan={visibleColumnsCount + 2} className="text-center py-10 text-muted-foreground">{searchQuery ? "No matches" : "No leads"}</TableCell></TableRow>
+                                        ) : (
+                                            paginatedLeads.map((lead, index) => (
+                                                <TableRow key={lead.id} className={`group hover:bg-gray-50 ${selectedLeads.includes(lead.id) ? 'bg-blue-50/50' : ''} ${lead.isStarred ? 'bg-yellow-50/30' : ''} ${focusedRowIndex === index ? 'ring-2 ring-inset ring-blue-500' : ''} ${ROW_DENSITY_STYLES[rowDensity]}`}>
+                                                    <TableCell className="text-center sticky left-0 z-10 bg-white group-hover:bg-gray-50"><Checkbox checked={selectedLeads.includes(lead.id)} onCheckedChange={(c) => handleSelectLead(lead.id, !!c)} /></TableCell>
+                                                    {orderedColumns.map((col) => columnVisibility[col.key] && <TableCell key={col.key} className={col.key === "name" ? "sticky left-12 z-10 bg-white group-hover:bg-gray-50" : ""}>{renderCell(lead, col)}</TableCell>)}
+                                                    <TableCell>
+                                                        <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleView(lead)}><ExternalLink className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
+                                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(lead)}><Pencil className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
+                                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(lead.id)}><Trash className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </DndContext>
+                        </div>
 
-                <div className="flex items-center justify-between"><div className="text-sm text-gray-600 font-medium">Total: {totalRecords}</div><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={totalRecords} startRecord={totalRecords === 0 ? 0 : startIndex + 1} endRecord={endIndex} compact /></div>
-                <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Enter View • Space Select • Double-click Edit • Drag headers • ★ Star to pin</div>
+                        <div className="flex items-center justify-between"><div className="text-sm text-gray-600 font-medium">Total: {totalRecords}</div><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={totalRecords} startRecord={totalRecords === 0 ? 0 : startIndex + 1} endRecord={endIndex} compact /></div>
+                        <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Enter View • Space Select • Double-click Edit • Drag headers • ★ Star to pin</div>
+                    </>
+                ) : (
+                    <KanbanBoard leads={processedLeads} onStatusChange={handleStatusChange} onView={handleView} onEdit={handleEdit} />
+                )}
 
                 <ImportWizard open={showImportWizard} onClose={() => setShowImportWizard(false)} module="leads" onSuccess={(count) => console.log(`Imported ${count}`)} />
                 <LeadDetailsDialog open={detailsOpen} onClose={() => setDetailsOpen(false)} lead={selectedLead} onEdit={() => { setDetailsOpen(false); setEditOpen(true); }} />
                 <LeadEditDialog open={editOpen} onClose={() => setEditOpen(false)} lead={selectedLead} onSave={handleSaveLead as any} />
+
+                {/* Merge Dialog */}
+                <Dialog open={showMergeDialog} onOpenChange={setShowMergeDialog}>
+                    <DialogContent className="max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2"><GitMerge className="h-5 w-5" /> Merge Leads</DialogTitle>
+                            <DialogDescription>Combine two leads into one. Missing fields from the source will be copied to the target.</DialogDescription>
+                        </DialogHeader>
+                        {mergeTargetLead && mergeSourceLead && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-3 border rounded-lg bg-green-50">
+                                        <div className="text-xs text-green-600 font-medium mb-1">TARGET (Keep)</div>
+                                        <p className="font-medium">{mergeTargetLead.name}</p>
+                                        <p className="text-sm text-gray-500">{mergeTargetLead.email}</p>
+                                    </div>
+                                    <div className="p-3 border rounded-lg bg-red-50">
+                                        <div className="text-xs text-red-600 font-medium mb-1">SOURCE (Delete)</div>
+                                        <p className="font-medium">{mergeSourceLead.name}</p>
+                                        <p className="text-sm text-gray-500">{mergeSourceLead.email}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setShowMergeDialog(false)}>Cancel</Button>
+                            <Button onClick={handleMergeLeads} className="bg-green-600 hover:bg-green-700">Merge Leads</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Bulk Email Dialog */}
+                <Dialog open={showBulkEmailDialog} onOpenChange={setShowBulkEmailDialog}>
+                    <DialogContent className="max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2"><Mail className="h-5 w-5" /> Compose Email</DialogTitle>
+                            <DialogDescription>Send email to {selectedLeads.length} selected leads.</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Subject</Label>
+                                <Input value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} placeholder="Enter subject..." />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Message</Label>
+                                <Textarea value={emailBody} onChange={(e) => setEmailBody(e.target.value)} placeholder="Write your message..." className="min-h-[150px]" />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setShowBulkEmailDialog(false)}>Cancel</Button>
+                            <Button onClick={handleSendBulkEmail}><Send className="mr-2 h-4 w-4" /> Open in Email Client</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </TooltipProvider>
     );
