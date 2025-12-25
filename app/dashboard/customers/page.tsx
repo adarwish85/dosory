@@ -71,7 +71,44 @@ type SelectionMode = "none" | "page" | "all";
 type SortDirection = "asc" | "desc" | null;
 type RowDensity = "compact" | "comfortable";
 type ViewMode = "table" | "kanban";
-type ColumnKey = "id" | "company" | "phone" | "website" | "status" | "groups" | "vatNumber" | "city" | "country" | "createdAt";
+// Column Keys
+type ColumnKey = "id" | "company" | "phone" | "website" | "status" | "groups" | "vatNumber" | "city" | "country" | "createdAt" | "primaryContactName" | "primaryContactEmail" | "primaryContactPhone" | "primaryContactPosition";
+
+const DEFAULT_COLUMNS: ColumnDef[] = [
+    { key: "id", label: "#", defaultVisible: false, sortable: true },
+    { key: "company", label: "Company", defaultVisible: true, required: true, sortable: true },
+    { key: "status", label: "Status", defaultVisible: true, sortable: true },
+    { key: "phone", label: "Phone", defaultVisible: true },
+    { key: "groups", label: "Groups", defaultVisible: true },
+    { key: "website", label: "Website", defaultVisible: true },
+    { key: "primaryContactName", label: "Contact Name", defaultVisible: false },
+    { key: "primaryContactEmail", label: "Contact Email", defaultVisible: false },
+    { key: "primaryContactPhone", label: "Contact Phone", defaultVisible: false },
+    { key: "primaryContactPosition", label: "Title", defaultVisible: false },
+    { key: "vatNumber", label: "VAT No.", defaultVisible: false },
+    { key: "city", label: "City", defaultVisible: false },
+    { key: "country", label: "Country", defaultVisible: false },
+    { key: "createdAt", label: "Created", defaultVisible: false, sortable: true },
+];
+
+const DEFAULT_COLUMN_WIDTHS: Record<ColumnKey, number> = {
+    id: 60,
+    company: 250,
+    phone: 150,
+    website: 200,
+    status: 120,
+    groups: 150,
+    vatNumber: 120,
+    city: 150,
+    country: 120,
+    createdAt: 150,
+    primaryContactName: 180,
+    primaryContactEmail: 200,
+    primaryContactPhone: 150,
+    primaryContactPosition: 150
+};
+
+
 type FilterOperator = "contains" | "equals" | "startsWith" | "endsWith" | "isEmpty" | "isNotEmpty" | "greaterThan" | "lessThan";
 type FilterLogic = "AND" | "OR";
 
@@ -98,31 +135,7 @@ interface SavedView {
 const SAVED_VIEWS_STORAGE_KEY = "customers_saved_views";
 
 // Default pixel widths
-const DEFAULT_COLUMN_WIDTHS: Record<ColumnKey, number> = {
-    id: 60,
-    company: 250,
-    phone: 150,
-    website: 200,
-    status: 120,
-    groups: 150,
-    vatNumber: 120,
-    city: 150,
-    country: 120,
-    createdAt: 150
-};
 
-const DEFAULT_COLUMNS: ColumnDef[] = [
-    { key: "id", label: "#", defaultVisible: false, sortable: true },
-    { key: "company", label: "Company", defaultVisible: true, required: true, sortable: true },
-    { key: "status", label: "Status", defaultVisible: true, sortable: true },
-    { key: "phone", label: "Phone", defaultVisible: true },
-    { key: "groups", label: "Groups", defaultVisible: true },
-    { key: "website", label: "Website", defaultVisible: true },
-    { key: "vatNumber", label: "VAT No.", defaultVisible: false },
-    { key: "city", label: "City", defaultVisible: false },
-    { key: "country", label: "Country", defaultVisible: false },
-    { key: "createdAt", label: "Created", defaultVisible: false, sortable: true },
-];
 
 const FILTER_OPERATORS: { value: FilterOperator; label: string }[] = [
     { value: "contains", label: "Contains" }, { value: "equals", label: "Equals" },
@@ -419,12 +432,32 @@ export default function CustomersPage() {
         if (activeViewId === viewId) setActiveViewId(null);
     }, [activeViewId]);
 
+    // Toggle default status for a view
+    const setViewAsDefault = useCallback((viewId: string) => {
+        setSavedViews(prev => prev.map(v => ({
+            ...v,
+            isDefault: v.id === viewId ? !v.isDefault : false
+        })));
+    }, []);
+
     const [localSearch, setLocalSearch] = useState(searchQuery);
     const tableRef = useRef<HTMLDivElement>(null);
     const { customers, loading, deleteCustomer, updateCustomer } = useCustomers({
         status: statusFilter,
         limit: 1000 // Fetch logic limit
     });
+
+    const { contacts } = useContacts(); // Fetch all contacts for mapping
+
+    const primaryContactMap = useMemo(() => {
+        const map = new Map<string, any>();
+        contacts.forEach(c => {
+            if (c.isPrimary) {
+                map.set(c.customerId, c);
+            }
+        });
+        return map;
+    }, [contacts]);
 
     // Bulk Actions Handlers
     const handleBulkDelete = async () => {
@@ -564,12 +597,6 @@ export default function CustomersPage() {
                             <span className="truncate">{customer.phone}</span>
                         </div>
                     )}
-                    {customer.email && (
-                        <div className="flex items-center gap-1.5 overflow-hidden">
-                            <Mail className="h-3 w-3 shrink-0 text-gray-400" />
-                            <span className="truncate">{customer.email}</span>
-                        </div>
-                    )}
                     {customer.website && (
                         <div className="flex items-center gap-1.5 overflow-hidden col-span-2">
                             <Globe className="h-3 w-3 shrink-0 text-gray-400" />
@@ -602,6 +629,8 @@ export default function CustomersPage() {
 
     // Render Helper
     const renderCell = (customer: Customer, col: ColumnDef) => {
+        const primaryContact = primaryContactMap.get(customer.id);
+
         switch (col.key) {
             case "id": return <span className="text-gray-500 font-mono text-xs">{customer.id.substring(0, 6)}</span>;
             case "company": return (
@@ -636,13 +665,20 @@ export default function CustomersPage() {
             case "city": return customer.address?.city ? <span className="text-gray-600">{customer.address.city}</span> : <span className="text-gray-400">-</span>;
             case "country": return customer.address?.country ? <span className="text-gray-600">{customer.address.country}</span> : <span className="text-gray-400">-</span>;
             case "createdAt": return <span className="text-gray-500">{formatTimestamp(customer.createdAt)}</span>;
+
+            // Primary Contact Columns
+            case "primaryContactName": return primaryContact ? <span className="text-gray-900">{primaryContact.firstName} {primaryContact.lastName}</span> : <span className="text-gray-400 italic text-xs">No primary contact</span>;
+            case "primaryContactEmail": return primaryContact ? <a href={`mailto:${primaryContact.email}`} className="text-gray-600 hover:text-blue-600">{primaryContact.email}</a> : <span className="text-gray-400">-</span>;
+            case "primaryContactPhone": return primaryContact?.phone ? <span className="text-gray-600">{primaryContact.phone}</span> : <span className="text-gray-400">-</span>;
+            case "primaryContactPosition": return primaryContact?.position ? <span className="text-gray-600">{primaryContact.position}</span> : <span className="text-gray-400">-</span>;
+
             default: return <span className="text-gray-500">-</span>;
         }
     };
 
     return (
         <TooltipProvider>
-            <div className="h-full flex flex-col space-y-4 p-4 md:p-8 max-w-[1600px] mx-auto w-full">
+            <div className="h-full flex flex-col space-y-4 p-4 overflow-x-auto">
 
 
                 <CustomerStatsBar customers={customers} />
@@ -753,18 +789,40 @@ export default function CustomersPage() {
                                 <DropdownMenuLabel>Saved Views</DropdownMenuLabel>
                                 {savedViews.length > 0 ? (
                                     savedViews.map(view => (
-                                        <div key={view.id} className="flex items-center justify-between px-2 py-1.5 hover:bg-gray-100 rounded-sm group relative">
-                                            <span className={`text-sm cursor-pointer flex-1 ${activeViewId === view.id ? "font-medium text-blue-600" : ""}`} onClick={() => applyView(view)}>
-                                                {view.name} {view.isDefault && <span className="text-xs text-gray-400 ml-1">(Default)</span>}
-                                            </span>
-                                            <button onClick={(e) => { e.stopPropagation(); deleteView(view.id); }} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded text-gray-500 absolute right-2"><Trash className="h-3 w-3" /></button>
+                                        <div key={view.id} className="flex items-center group">
+                                            <DropdownMenuItem className="flex-1" onClick={() => applyView(view)}>
+                                                <FolderOpen className="mr-2 h-4 w-4" />
+                                                <span className="flex-1 truncate">{view.name}</span>
+                                                {view.isDefault && <Badge variant="secondary" className="text-[10px] ml-1">Default</Badge>}
+                                                {activeViewId === view.id && <Badge className="bg-purple-600 text-[10px] ml-1">Active</Badge>}
+                                            </DropdownMenuItem>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                                                        <MoreVertical className="h-3 w-3" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => setViewAsDefault(view.id)}>
+                                                        <Star className="mr-2 h-4 w-4" /> {view.isDefault ? "Remove Default" : "Set as Default"}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="text-red-600" onClick={() => deleteView(view.id)}>
+                                                        <Trash className="mr-2 h-4 w-4" /> Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
                                     ))
                                 ) : <div className="px-2 py-4 text-xs text-gray-400 text-center">No saved views</div>}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setShowSaveViewDialog(true); }}>
-                                    <Save className="mr-2 h-4 w-4" /> Save Current View
+                                    <BookmarkPlus className="mr-2 h-4 w-4" /> Save Current View
                                 </DropdownMenuItem>
+                                {activeViewId && (
+                                    <DropdownMenuItem onClick={() => { setActiveViewId(null); setColumnVisibility(getDefaultVisibleColumns()); setColumnOrder(DEFAULT_COLUMNS.map(c => c.key)); }}>
+                                        <X className="mr-2 h-4 w-4" /> Reset to Default
+                                    </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <Button variant="ghost" size="icon" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4 text-gray-500" /></Button>

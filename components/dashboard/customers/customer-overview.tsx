@@ -34,8 +34,8 @@ export function CustomerOverview() {
 
     // Project Data
     const projectStats = {
-        active: projects.filter(p => p.status === 'active' || p.status === 'in_progress').length,
-        completed: projects.filter(p => p.status === 'completed').length,
+        active: projects.filter(p => p.status === 'in_progress' || p.status === 'not_started').length,
+        completed: projects.filter(p => p.status === 'finished').length,
         total: projects.length
     };
 
@@ -43,7 +43,7 @@ export function CustomerOverview() {
     let healthScore = 0;
 
     // 1. Contact Info (+20)
-    if (customer.email || customer.phone) healthScore += 10;
+    if (customer.phone) healthScore += 10;
     if (customer.address?.street) healthScore += 10;
 
     // 2. Portal Access (+20)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { ContactDialog } from "@/components/dashboard/customers/contacts/contact-dialog";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { useContacts } from "@/lib/hooks/use-customers";
@@ -9,12 +9,33 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
-import { Search, RotateCcw, User, Loader2, ChevronDown, CheckSquare, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+    Search, RotateCcw, Loader2, ChevronDown, CheckSquare, ArrowUpDown, ArrowUp, ArrowDown,
+    LayoutList, FolderOpen, BookmarkPlus, Save, Star, Trash, MoreVertical, X
+} from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+    DropdownMenuLabel, DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+
+// Saved View types
+interface ContactsSavedView {
+    id: string;
+    name: string;
+    sortConfig: { key: string; direction: 'asc' | 'desc' } | null;
+    rowsPerPage: number;
+    isDefault?: boolean;
+    createdAt: number;
+}
+
+const CONTACTS_SAVED_VIEWS_KEY = "contacts_saved_views";
 
 export default function ContactsPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
@@ -27,6 +48,76 @@ export default function ContactsPage() {
     const [rowsPerPage, setRowsPerPage] = useState(25);
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    // Saved Views state
+    const [savedViews, setSavedViews] = useState<ContactsSavedView[]>([]);
+    const [viewsLoaded, setViewsLoaded] = useState(false);
+    const [showSaveViewDialog, setShowSaveViewDialog] = useState(false);
+    const [newViewName, setNewViewName] = useState("");
+    const [activeViewId, setActiveViewId] = useState<string | null>(null);
+
+    // Load saved views
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(CONTACTS_SAVED_VIEWS_KEY);
+            if (stored) {
+                const views = JSON.parse(stored) as ContactsSavedView[];
+                setSavedViews(views);
+                const defaultView = views.find(v => v.isDefault);
+                if (defaultView) {
+                    if (defaultView.sortConfig) setSortConfig(defaultView.sortConfig);
+                    if (defaultView.rowsPerPage) setRowsPerPage(defaultView.rowsPerPage);
+                    setActiveViewId(defaultView.id);
+                }
+            }
+        } catch (e) { console.error("Failed to load saved views", e); }
+        finally { setViewsLoaded(true); }
+    }, []);
+
+    // Save views to localStorage
+    useEffect(() => {
+        if (viewsLoaded) {
+            localStorage.setItem(CONTACTS_SAVED_VIEWS_KEY, JSON.stringify(savedViews));
+        }
+    }, [savedViews, viewsLoaded]);
+
+    // View handlers
+    const applyView = useCallback((view: ContactsSavedView) => {
+        if (view.sortConfig) setSortConfig(view.sortConfig);
+        setRowsPerPage(view.rowsPerPage);
+        setActiveViewId(view.id);
+        setCurrentPage(1);
+    }, []);
+
+    const saveCurrentView = useCallback((name: string, setAsDefault: boolean = false) => {
+        const newView: ContactsSavedView = {
+            id: crypto.randomUUID(),
+            name,
+            sortConfig,
+            rowsPerPage,
+            isDefault: setAsDefault,
+            createdAt: Date.now(),
+        };
+        setSavedViews(prev => {
+            const updated = setAsDefault ? prev.map(v => ({ ...v, isDefault: false })) : prev;
+            return [...updated, newView];
+        });
+        setActiveViewId(newView.id);
+        setNewViewName("");
+        setShowSaveViewDialog(false);
+    }, [sortConfig, rowsPerPage]);
+
+    const deleteView = useCallback((viewId: string) => {
+        setSavedViews(prev => prev.filter(v => v.id !== viewId));
+        if (activeViewId === viewId) setActiveViewId(null);
+    }, [activeViewId]);
+
+    const setViewAsDefault = useCallback((viewId: string) => {
+        setSavedViews(prev => prev.map(v => ({
+            ...v,
+            isDefault: v.id === viewId ? !v.isDefault : false
+        })));
+    }, []);
 
     const loading = customerLoading || contactsLoading;
 
@@ -209,6 +300,56 @@ export default function ContactsPage() {
                         )}
 
                         <Button variant="outline" className="text-gray-600">Export</Button>
+
+                        {/* Display / Saved Views Dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className={`gap-2 ${activeViewId ? "border-purple-200 text-purple-600" : "text-gray-600"}`}>
+                                    <LayoutList className="h-4 w-4" /> Display
+                                    {savedViews.length > 0 && <Badge variant="secondary" className="ml-1 px-1 py-0 h-4 bg-purple-100 text-purple-700">{savedViews.length}</Badge>}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-64">
+                                <DropdownMenuLabel>Saved Views</DropdownMenuLabel>
+                                {savedViews.length > 0 ? (
+                                    savedViews.map(view => (
+                                        <div key={view.id} className="flex items-center group">
+                                            <DropdownMenuItem className="flex-1" onClick={() => applyView(view)}>
+                                                <FolderOpen className="mr-2 h-4 w-4" />
+                                                <span className="flex-1 truncate">{view.name}</span>
+                                                {view.isDefault && <Badge variant="secondary" className="text-[10px] ml-1">Default</Badge>}
+                                                {activeViewId === view.id && <Badge className="bg-purple-600 text-[10px] ml-1">Active</Badge>}
+                                            </DropdownMenuItem>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                                                        <MoreVertical className="h-3 w-3" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => setViewAsDefault(view.id)}>
+                                                        <Star className="mr-2 h-4 w-4" /> {view.isDefault ? "Remove Default" : "Set as Default"}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="text-red-600" onClick={() => deleteView(view.id)}>
+                                                        <Trash className="mr-2 h-4 w-4" /> Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    ))
+                                ) : <div className="px-2 py-4 text-xs text-gray-400 text-center">No saved views</div>}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setShowSaveViewDialog(true); }}>
+                                    <BookmarkPlus className="mr-2 h-4 w-4" /> Save Current View
+                                </DropdownMenuItem>
+                                {activeViewId && (
+                                    <DropdownMenuItem onClick={() => { setActiveViewId(null); setSortConfig(null); setRowsPerPage(25); }}>
+                                        <X className="mr-2 h-4 w-4" /> Reset to Default
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
                         <Button variant="outline" size="icon" className="text-gray-600 w-9 px-0" onClick={() => window.location.reload()}>
                             <RotateCcw className="h-4 w-4" />
                         </Button>
@@ -388,6 +529,28 @@ export default function ContactsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Save View Dialog */}
+            <Dialog open={showSaveViewDialog} onOpenChange={setShowSaveViewDialog}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2"><Save className="h-5 w-5" /> Save Current View</DialogTitle>
+                        <DialogDescription>Save your current sort and pagination preferences.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="view-name">View Name</Label>
+                            <Input id="view-name" placeholder="e.g. Sorted by Name" value={newViewName} onChange={(e) => setNewViewName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && newViewName.trim()) saveCurrentView(newViewName.trim()); }} />
+                        </div>
+                    </div>
+                    <DialogFooter className="flex-col sm:flex-col gap-2">
+                        <div className="flex gap-2 w-full">
+                            <Button className="flex-1" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim())}>Save New</Button>
+                        </div>
+                        <Button variant="outline" className="w-full" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim(), true)}>Save as Default View</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
