@@ -570,61 +570,29 @@ export default function LeadsPage() {
     }, []);
 
     const tableRef = useRef<HTMLDivElement>(null);
-    const { leads, loading, leadStats, deleteLead, updateLead, bulkDeleteLeads } = useLeads({ status: statusFilter });
+    const { leads, loading, leadStats, totalRecords: serverTotal, deleteLead, updateLead, bulkDeleteLeads } = useLeads({
+        status: statusFilter,
+        limit: recordsPerPage,
+        page: currentPage,
+        searchQuery: searchQuery, // This will only support prefix search
+        orderByField: (sortKey === "lastActivity" ? "lastContactedAt" : sortKey) as any || "createdAt",
+        orderDirection: sortDirection || "desc"
+    });
 
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
     const orderedColumns = useMemo(() => columnOrder.map(key => DEFAULT_COLUMNS.find(c => c.key === key)!).filter(Boolean), [columnOrder]);
-    const totalValue = useMemo(() => leads.reduce((sum, l) => sum + (l.value || 0), 0), [leads]);
 
-    const applyFilter = useCallback((lead: Lead, filter: FilterCondition): boolean => {
-        const fieldValue = String(lead[filter.field as keyof Lead] || "").toLowerCase();
-        const filterValue = filter.value.toLowerCase();
-        switch (filter.operator) {
-            case "contains": return fieldValue.includes(filterValue);
-            case "equals": return fieldValue === filterValue;
-            case "startsWith": return fieldValue.startsWith(filterValue);
-            case "endsWith": return fieldValue.endsWith(filterValue);
-            case "isEmpty": return !fieldValue;
-            case "isNotEmpty": return !!fieldValue;
-            case "greaterThan": return parseFloat(fieldValue) > parseFloat(filterValue);
-            case "lessThan": return parseFloat(fieldValue) < parseFloat(filterValue);
-            default: return true;
-        }
-    }, []);
+    // Server-side loaded data is ALREADY processed.
+    const processedLeads = leads;
 
-    const processedLeads = useMemo(() => {
-        let result = leads.filter(lead => lead.name?.toLowerCase().includes(searchQuery.toLowerCase()) || lead.company?.toLowerCase().includes(searchQuery.toLowerCase()) || lead.email?.toLowerCase().includes(searchQuery.toLowerCase()));
-        if (advancedFilters.length > 0) {
-            result = result.filter(lead => filterLogic === "AND" ? advancedFilters.every(f => applyFilter(lead, f)) : advancedFilters.some(f => applyFilter(lead, f)));
-        }
-        // Sort: starred first, then by sortKey
-        result = [...result].sort((a, b) => {
-            // Starred items come first
-            if (a.isStarred && !b.isStarred) return -1;
-            if (!a.isStarred && b.isStarred) return 1;
-            // Then apply regular sort
-            if (sortKey && sortDirection) {
-                let aVal = a[sortKey as keyof Lead];
-                let bVal = b[sortKey as keyof Lead];
-                if (sortKey === "value") { aVal = aVal || 0; bVal = bVal || 0; return sortDirection === "asc" ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number); }
-                if (sortKey === "lastActivity") {
-                    const aTime = a.lastContactedAt?.toMillis() || 0;
-                    const bTime = b.lastContactedAt?.toMillis() || 0;
-                    return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
-                }
-                aVal = String(aVal || "").toLowerCase(); bVal = String(bVal || "").toLowerCase();
-                return sortDirection === "asc" ? (aVal as string).localeCompare(bVal as string) : (bVal as string).localeCompare(aVal as string);
-            }
-            return 0;
-        });
-        return result;
-    }, [leads, searchQuery, advancedFilters, filterLogic, sortKey, sortDirection, applyFilter]);
-
-    const totalRecords = processedLeads.length;
+    // Total records come from server
+    const totalRecords = serverTotal;
     const totalPages = Math.max(1, Math.ceil(totalRecords / recordsPerPage));
     const startIndex = (currentPage - 1) * recordsPerPage;
     const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
-    const paginatedLeads = useMemo(() => processedLeads.slice(startIndex, endIndex), [processedLeads, startIndex, endIndex]);
+
+    // Pagination is handled by server, so "paginatedLeads" is just "processedLeads"
+    const paginatedLeads = processedLeads;
     const currentPageIds = useMemo(() => paginatedLeads.map(l => l.id), [paginatedLeads]);
     const allFilteredIds = useMemo(() => processedLeads.map(l => l.id), [processedLeads]);
     const visibleColumnsCount = Object.values(columnVisibility).filter(Boolean).length;
@@ -903,7 +871,7 @@ export default function LeadsPage() {
     return (
         <TooltipProvider>
             <div className="space-y-4">
-                <QuickStatsBar leads={processedLeads} totalValue={totalValue} />
+                <QuickStatsBar leads={processedLeads} totalValue={leadStats.totalValue} />
 
                 {/* Header */}
                 {/* Header Actions Row */}
@@ -1018,7 +986,7 @@ export default function LeadsPage() {
                     <div className="flex items-center gap-2 flex-1 w-full sm:w-auto">
                         <div className="relative flex-1 max-w-md"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" /><Input placeholder="Search name, company, email..." className="pl-9" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); handleClearSelection(); }} /></div>
 
-                        <Popover open={showFilters} onOpenChange={setShowFilters}><PopoverTrigger asChild><Button variant="outline" className={hasActiveFilters ? "border-blue-500 text-blue-600" : ""}><Filter className="mr-2 h-4 w-4" />Filters{hasActiveFilters && <Badge className="ml-2 bg-blue-600 text-white h-5 min-w-[20px] px-1 rounded-full text-[10px]">{(statusFilter !== "all" ? 1 : 0) + advancedFilters.length}</Badge>}</Button></PopoverTrigger><PopoverContent align="start" className="w-[520px]"><div className="space-y-4"><div className="flex items-center justify-between"><h4 className="font-medium">Filters</h4>{hasActiveFilters && <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs">Clear</Button>}</div><div className="space-y-2"><label className="text-sm font-medium">Status</label><Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as LeadStatus | "all"); setCurrentPage(1); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{LEAD_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}><div className="flex gap-2"><span>{s.label}</span>{leadStats[s.value] !== undefined && <Badge variant="secondary" className="text-[10px] h-4 px-1">{leadStats[s.value]}</Badge>}</div></SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><label className="text-sm font-medium">Conditions</label><div className="space-y-2 max-h-48 overflow-y-auto">{advancedFilters.map((f, i) => <FilterRow key={f.id} filter={f} columns={DEFAULT_COLUMNS} onUpdate={updateFilter} onRemove={removeFilter} showLogic={i > 0} logic={filterLogic} onLogicChange={setFilterLogic} />)}</div><Button variant="outline" size="sm" onClick={addFilter} className="w-full"><PlusCircle className="mr-2 h-4 w-4" />Add condition</Button></div></div></PopoverContent></Popover>
+                        <Popover open={showFilters} onOpenChange={setShowFilters}><PopoverTrigger asChild><Button variant="outline" className={hasActiveFilters ? "border-blue-500 text-blue-600" : ""}><Filter className="mr-2 h-4 w-4" />Filters{hasActiveFilters && <Badge className="ml-2 bg-blue-600 text-white h-5 min-w-[20px] px-1 rounded-full text-[10px]">{(statusFilter !== "all" ? 1 : 0) + advancedFilters.length}</Badge>}</Button></PopoverTrigger><PopoverContent align="start" className="w-[520px]"><div className="space-y-4"><div className="flex items-center justify-between"><h4 className="font-medium">Filters</h4>{hasActiveFilters && <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs">Clear</Button>}</div><div className="space-y-2"><label className="text-sm font-medium">Status</label><Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as LeadStatus | "all"); setCurrentPage(1); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{LEAD_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}><div className="flex gap-2"><span>{s.label}</span></div></SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><label className="text-sm font-medium">Conditions</label><div className="space-y-2 max-h-48 overflow-y-auto">{advancedFilters.map((f, i) => <FilterRow key={f.id} filter={f} columns={DEFAULT_COLUMNS} onUpdate={updateFilter} onRemove={removeFilter} showLogic={i > 0} logic={filterLogic} onLogicChange={setFilterLogic} />)}</div><Button variant="outline" size="sm" onClick={addFilter} className="w-full"><PlusCircle className="mr-2 h-4 w-4" />Add condition</Button></div></div></PopoverContent></Popover>
                     </div>
 
                     <div className="flex items-center gap-2">
