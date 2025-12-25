@@ -280,7 +280,7 @@ function DraggableColumnHeader({
 
     // Solid background for all headers to prevent bleed-through, especially for sticky ones
     return (
-        <TableHead ref={setNodeRef} style={style} className={`relative font-semibold text-gray-900 bg-gray-100 ${column.key === "name" ? "sticky left-12 z-20 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]" : ""}`}>
+        <TableHead ref={setNodeRef} style={style} className={`relative font-semibold text-gray-900 bg-gray-100 ${column.key === "name" ? "sticky left-[48px] z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] border-r" : "border-r border-gray-200"}`}>
             <div className="flex items-center gap-1 w-full">
                 <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded shrink-0"><GripVertical className="h-3 w-3 text-gray-400" /></button>
                 {column.sortable ? (
@@ -584,9 +584,8 @@ export default function LeadsPage() {
 
     // Save views to localStorage whenever they change
     useEffect(() => {
-        if (savedViews.length > 0) {
-            localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(savedViews));
-        }
+        // Always save to localStorage to verify persistence, even if empty (user deleted all)
+        localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(savedViews));
     }, [savedViews]);
 
     // Apply a saved view
@@ -1187,7 +1186,7 @@ export default function LeadsPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                            <TableHead className="w-12 text-center bg-gray-100 sticky left-0 z-20"><Checkbox checked={isAllPageSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={handleSelectAllCheckbox} /></TableHead>
+                                            <TableHead className="w-[48px] min-w-[48px] max-w-[48px] text-center bg-gray-100 sticky left-0 z-30 p-0"><div className="flex items-center justify-center w-full h-full"><Checkbox checked={isAllPageSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={handleSelectAllCheckbox} /></div></TableHead>
                                             <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
                                                 {orderedColumns.map((col) => (
                                                     <DraggableColumnHeader
@@ -1211,12 +1210,12 @@ export default function LeadsPage() {
                                         ) : (
                                             paginatedLeads.map((lead, index) => (
                                                 <TableRow key={lead.id} className={`group hover:bg-gray-50 ${(selectionMode === "all" || selectedLeads.includes(lead.id)) ? 'bg-blue-50/50' : ''} ${lead.isStarred ? 'bg-yellow-50/30' : ''} ${focusedRowIndex === index ? 'ring-2 ring-inset ring-blue-500' : ''} ${ROW_DENSITY_STYLES[rowDensity]}`}>
-                                                    <TableCell className="text-center sticky left-0 z-20 bg-white group-hover:bg-gray-50"><Checkbox checked={selectionMode === "all" || selectedLeads.includes(lead.id)} onCheckedChange={(c) => handleSelectLead(lead.id, !!c)} /></TableCell>
+                                                    <TableCell className={`text-center sticky left-0 z-30 p-0 w-[48px] min-w-[48px] max-w-[48px] border-r ${selectionMode === "all" || selectedLeads.includes(lead.id) ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50`}><div className="flex items-center justify-center w-full h-full"><Checkbox checked={selectionMode === "all" || selectedLeads.includes(lead.id)} onCheckedChange={(c) => handleSelectLead(lead.id, !!c)} /></div></TableCell>
                                                     {orderedColumns.map((col) => columnVisibility[col.key] && (
                                                         <TableCell
                                                             key={col.key}
                                                             style={{ width: columnWidths[col.key] || 100, minWidth: columnWidths[col.key] || 100 }}
-                                                            className={`overflow-hidden text-ellipsis whitespace-nowrap ${col.key === "name" ? "sticky left-12 z-20 bg-white group-hover:bg-gray-50 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]" : ""}`}
+                                                            className={`overflow-hidden text-ellipsis whitespace-nowrap ${col.key === "name" ? `sticky left-[48px] z-30 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${selectionMode === "all" || selectedLeads.includes(lead.id) ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50` : ""}`}
                                                         >
                                                             {renderCell(lead, col)}
                                                         </TableCell>
