@@ -2,6 +2,7 @@
 
 import { LeadSidebar } from "@/components/dashboard/leads/lead-sidebar";
 import { LeadProvider } from "@/components/dashboard/leads/lead-context";
+import { LeadProfileHeader } from "@/components/dashboard/leads/lead-profile-header";
 import { use } from "react";
 
 export default function LeadProfileLayout({
@@ -15,13 +16,16 @@ export default function LeadProfileLayout({
 
     return (
         <LeadProvider>
-            <div className="flex h-full">
+            <div className="flex h-screen overflow-hidden">
                 {/* Secondary Sidebar */}
                 <LeadSidebar />
 
                 {/* Main Content Area */}
-                <div className="flex-1 overflow-y-auto bg-white p-6">
-                    {children}
+                <div className="flex-1 flex flex-col min-w-0 bg-white">
+                    <LeadProfileHeader />
+                    <div className="flex-1 overflow-y-auto p-6">
+                        {children}
+                    </div>
                 </div>
             </div>
         </LeadProvider>

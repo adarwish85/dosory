@@ -1,5 +1,7 @@
-import { LeadProfileForm } from "@/components/dashboard/leads/lead-profile-form";
+"use client";
 
-export default function LeadProfilePage() {
-    return <LeadProfileForm />;
+import { LeadOverview } from "@/components/dashboard/leads/lead-overview";
+
+export default function LeadOverviewPage() {
+    return <LeadOverview />;
 }
