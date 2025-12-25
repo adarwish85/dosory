@@ -549,6 +549,7 @@ export default function LeadsPage() {
 
     // Saved views state
     const [savedViews, setSavedViews] = useState<SavedView[]>([]);
+    const [viewsLoaded, setViewsLoaded] = useState(false);
     const [showSaveViewDialog, setShowSaveViewDialog] = useState(false);
     const [newViewName, setNewViewName] = useState("");
     const [activeViewId, setActiveViewId] = useState<string | null>(null);
@@ -579,14 +580,20 @@ export default function LeadsPage() {
                     applyView(defaultView);
                 }
             }
-        } catch (e) { console.error("Failed to load saved views", e); }
+        } catch (e) {
+            console.error("Failed to load saved views", e);
+        } finally {
+            setViewsLoaded(true);
+        }
     }, []);
 
     // Save views to localStorage whenever they change
     useEffect(() => {
-        // Always save to localStorage to verify persistence, even if empty (user deleted all)
-        localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(savedViews));
-    }, [savedViews]);
+        // Only save if views have been loaded to avoid overwriting with initial empty state
+        if (viewsLoaded) {
+            localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(savedViews));
+        }
+    }, [savedViews, viewsLoaded]);
 
     // Apply a saved view
     const applyView = useCallback((view: SavedView) => {
