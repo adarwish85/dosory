@@ -421,10 +421,39 @@ export default function CustomersPage() {
 
     const [localSearch, setLocalSearch] = useState(searchQuery);
     const tableRef = useRef<HTMLDivElement>(null);
-    const { customers, loading, deleteCustomer } = useCustomers({
+    const { customers, loading, deleteCustomer, updateCustomer } = useCustomers({
         status: statusFilter,
         limit: 1000 // Fetch logic limit
     });
+
+    // Bulk Actions Handlers
+    const handleBulkDelete = async () => {
+        if (!window.confirm(`Delete ${selectionMode === "all" ? totalRecords : selectedCustomers.length} customers?`)) return;
+        try {
+            // If selectionMode is "all", we might need a backend bulk delete. 
+            // For now, we only delete loaded/selected items ID-by-ID as per current architecture.
+            const idsToDelete = selectionMode === "all" ? currentPageIds : selectedCustomers; // "all" logic usually triggers a backend job, here we simplify to client-side batch for MVP
+            // Actually, selectedCustomers holds IDs.
+            await Promise.all(selectedCustomers.map(id => deleteCustomer(id)));
+            setSelectedCustomers([]);
+            setSelectionMode("none");
+        } catch (e) {
+            console.error("Bulk delete failed", e);
+            alert("Failed to delete some customers.");
+        }
+    };
+
+    const handleBulkStatusUpdate = async (status: EntityStatus) => {
+        if (!window.confirm(`Update status of ${selectedCustomers.length} customers to "${status}"?`)) return;
+        try {
+            await Promise.all(selectedCustomers.map(id => updateCustomer(id, { status })));
+            setSelectedCustomers([]);
+            setSelectionMode("none");
+        } catch (e) {
+            console.error("Bulk status update failed", e);
+            alert("Failed to update status.");
+        }
+    };
 
     // Client-side filtering and sorting
     const processedCustomers = useMemo(() => {
@@ -551,6 +580,31 @@ export default function CustomersPage() {
                             <DropdownMenuTrigger asChild><Button variant="outline" size="icon"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent><DropdownMenuItem onClick={() => setShowImportWizard(true)}><Upload className="mr-2 h-4 w-4" /> Import Customers</DropdownMenuItem></DropdownMenuContent>
                         </DropdownMenu>
+
+                        {selectedCustomers.length > 0 && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                                        <Badge className="mr-2 bg-blue-600">{selectionMode === "all" ? totalRecords : selectedCustomers.length}</Badge>
+                                        Bulk <ChevronDown className="ml-2 h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start">
+                                    <DropdownMenuLabel>With {selectionMode === "all" ? totalRecords : selectedCustomers.length} selected</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuLabel className="text-xs text-gray-500">Change Status To</DropdownMenuLabel>
+                                    {CUSTOMER_STATUSES.map((s) => (
+                                        <DropdownMenuItem key={s.value} onClick={() => handleBulkStatusUpdate(s.value as EntityStatus)}>
+                                            <RefreshCcw className="mr-2 h-4 w-4" /> {s.label}
+                                        </DropdownMenuItem>
+                                    ))}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-2 flex-1 w-full max-w-md mx-6">
