@@ -472,6 +472,7 @@ export interface Ticket extends BaseEntity {
     lastReply?: Timestamp;
     lastReplyByStaff: boolean;
     tags?: string[];
+    customerName?: string;
 }
 
 export type TicketPriority = "low" | "medium" | "high";
