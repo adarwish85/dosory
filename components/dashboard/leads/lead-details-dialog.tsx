@@ -10,10 +10,12 @@ import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useProposals } from "@/lib/hooks/use-sales";
 import { useTasks } from "@/lib/hooks/use-projects";
+import { useLeads } from "@/lib/hooks/use-leads";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { ConvertLeadWizard } from "./ConvertLeadWizard";
 
 interface LeadDetailsSheetProps {
     open: boolean;
@@ -24,10 +26,12 @@ interface LeadDetailsSheetProps {
 
 export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsSheetProps) {
     const [activeTab, setActiveTab] = useState("profile");
+    const [showConvertWizard, setShowConvertWizard] = useState(false);
 
-    // Hooks for fetching related data
+    // Hooks for fetching related data and conversion
     const { proposals } = useProposals({ leadId: lead?.id });
     const { tasks } = useTasks(); // Fetch all tasks, filter client-side for relatedTo
+    const { convertToCustomer } = useLeads();
 
     // Filter tasks related to this lead
     const relatedTasks = tasks.filter(t => t.relatedTo?.type === "lead" && t.relatedTo?.id === lead?.id);
@@ -111,7 +115,10 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 <p className="text-sm text-gray-500">{lead.position || "No title"} at {lead.company || "No company"}</p>
                                             </div>
                                         </div>
-                                        <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                                        <Button
+                                            className="bg-gray-900 text-white hover:bg-gray-800"
+                                            onClick={() => setShowConvertWizard(true)}
+                                        >
                                             <User className="mr-2 h-4 w-4" /> Convert to Customer
                                         </Button>
                                     </div>
@@ -279,6 +286,19 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                     </Tabs>
                 </div>
             </SheetContent>
+
+            {/* Conversion Wizard */}
+            {lead && (
+                <ConvertLeadWizard
+                    open={showConvertWizard}
+                    onClose={() => {
+                        setShowConvertWizard(false);
+                        onClose(); // Close the details sheet after conversion
+                    }}
+                    lead={lead}
+                    onConvert={convertToCustomer}
+                />
+            )}
         </Sheet>
     );
 }

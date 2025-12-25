@@ -134,7 +134,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
     }, []);
 
     const convertToCustomer = useCallback(
-        async (leadId: string): Promise<string> => {
+        async (leadId: string, overrides?: { company?: string; email?: string }): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
 
             // Get lead data
@@ -149,12 +149,19 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 throw new Error("Lead already converted to customer: " + leadDoc.convertedToCustomerId);
             }
 
-            // Create customer
+            // Apply overrides for missing data
+            const finalCompany = overrides?.company || leadDoc.company || leadDoc.name;
+            const finalEmail = overrides?.email || leadDoc.email || "";
+
+            // Create customer with additional lead data
             const customerRef = await addDoc(collection(db, "customers"), {
-                company: leadDoc.company || leadDoc.name,
+                company: finalCompany,
                 phone: leadDoc.phone,
                 website: leadDoc.website,
                 address: leadDoc.address,
+                defaultLanguage: leadDoc.defaultLanguage,
+                notes: leadDoc.description,
+                groups: leadDoc.tags,
                 status: "active",
                 fromLeadId: leadId,
                 orgId: profile.orgId,
@@ -163,25 +170,24 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 createdBy: profile.uid,
             });
 
-            // Create primary contact if email exists
-            if (leadDoc.email) {
-                await addDoc(collection(db, "contacts"), {
-                    customerId: customerRef.id,
-                    firstName: leadDoc.name.split(" ")[0] || leadDoc.name,
-                    lastName: leadDoc.name.split(" ").slice(1).join(" ") || "",
-                    email: leadDoc.email,
-                    phone: leadDoc.phone,
-                    isPrimary: true,
-                    status: "active",
-                    permissions: [],
-                    orgId: profile.orgId,
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp(),
-                    createdBy: profile.uid,
-                });
-            }
+            // Always create primary contact
+            await addDoc(collection(db, "contacts"), {
+                customerId: customerRef.id,
+                firstName: leadDoc.name.split(" ")[0] || leadDoc.name,
+                lastName: leadDoc.name.split(" ").slice(1).join(" ") || "",
+                email: finalEmail,
+                phone: leadDoc.phone,
+                position: leadDoc.position,
+                isPrimary: true,
+                status: "active",
+                permissions: [],
+                orgId: profile.orgId,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                createdBy: profile.uid,
+            });
 
-            // FIX BLE-003: Transfer proposals linked to this lead
+            // Transfer proposals linked to this lead
             const proposalsQuery = query(
                 collection(db, "proposals"),
                 where("leadId", "==", leadId),
@@ -191,13 +197,13 @@ export function useLeads(options: UseLeadsOptions = {}) {
             for (const propDoc of proposalsSnap.docs) {
                 await updateDoc(doc(db, "proposals", propDoc.id), {
                     customerId: customerRef.id,
-                    customerName: leadDoc.company || leadDoc.name,
+                    customerName: finalCompany,
                     transferredFromLeadId: leadId,
                     updatedAt: serverTimestamp(),
                 });
             }
 
-            // FIX BLE-003: Transfer estimates linked to this lead
+            // Transfer estimates linked to this lead
             const estimatesQuery = query(
                 collection(db, "estimates"),
                 where("leadId", "==", leadId),
@@ -207,19 +213,32 @@ export function useLeads(options: UseLeadsOptions = {}) {
             for (const estDoc of estimatesSnap.docs) {
                 await updateDoc(doc(db, "estimates", estDoc.id), {
                     customerId: customerRef.id,
-                    customerName: leadDoc.company || leadDoc.name,
+                    customerName: finalCompany,
                     transferredFromLeadId: leadId,
                     updatedAt: serverTimestamp(),
                 });
             }
 
-            // Update lead status
-            await updateDoc(doc(db, "leads", leadId), {
-                status: "won",
-                dateConverted: serverTimestamp(),
-                convertedToCustomerId: customerRef.id,
-                updatedAt: serverTimestamp(),
-            });
+            // Transfer tasks linked to this lead
+            const tasksQuery = query(
+                collection(db, "tasks"),
+                where("relatedTo.id", "==", leadId),
+                where("orgId", "==", profile.orgId)
+            );
+            const tasksSnap = await getDocs(tasksQuery);
+            for (const taskDoc of tasksSnap.docs) {
+                await updateDoc(doc(db, "tasks", taskDoc.id), {
+                    relatedTo: {
+                        type: "customer",
+                        id: customerRef.id,
+                    },
+                    transferredFromLeadId: leadId,
+                    updatedAt: serverTimestamp(),
+                });
+            }
+
+            // Delete the lead after successful conversion
+            await deleteDoc(doc(db, "leads", leadId));
 
             return customerRef.id;
         },
