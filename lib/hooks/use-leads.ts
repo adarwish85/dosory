@@ -218,6 +218,52 @@ export function useLeads(options: UseLeadsOptions = {}) {
         }
     }, []);
 
+    // Bulk Delete All Matches (Server-Side)
+    const bulkDeleteAllMatches = useCallback(async () => {
+        if (!profile?.orgId) return;
+        try {
+            setLoading(true);
+            const constraints = getBaseConstraints();
+            // Query for all docs matching the current filter
+            // Note: For very large datasets (10k+), this client-side loop might timeout.
+            // Ideally, this should be handled by a Cloud Function.
+            const q = query(collection(db, "leads"), ...constraints);
+            const snapshot = await getDocs(q);
+
+            const totalToDelete = snapshot.size;
+            if (totalToDelete === 0) { setLoading(false); return; }
+
+            const batchSize = 500;
+            const chunks = [];
+            let currentBatch = writeBatch(db);
+            let count = 0;
+
+            snapshot.docs.forEach((docSnap) => {
+                currentBatch.delete(docSnap.ref);
+                count++;
+                if (count === batchSize) {
+                    chunks.push(currentBatch.commit());
+                    currentBatch = writeBatch(db);
+                    count = 0;
+                }
+            });
+            if (count > 0) chunks.push(currentBatch.commit());
+
+            await Promise.all(chunks);
+
+            // Fetch fresh stats after full deletion
+            setLeads([]);
+            setTotalRecords(0);
+            setLeadStats(prev => ({ ...prev, total: Math.max(0, prev.total - totalToDelete) }));
+            setLoading(false);
+        } catch (err) {
+            console.error("Error deleting all matches:", err);
+            setError(err instanceof Error ? err : new Error("Failed to delete all leads"));
+            setLoading(false);
+            throw err;
+        }
+    }, [profile?.orgId, getBaseConstraints]);
+
     const convertToCustomer = useCallback(
         async (leadId: string, overrides?: { company?: string; email?: string }): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
@@ -327,6 +373,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         updateLead,
         deleteLead,
         bulkDeleteLeads,
+        bulkDeleteAllMatches,
         convertToCustomer,
         totalRecords, // Exposed for Server-Side Pagination
     };

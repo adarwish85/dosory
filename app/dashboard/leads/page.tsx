@@ -261,7 +261,7 @@ function HighlightText({ text, search }: { text: string; search: string }) {
 }
 
 // Quick Stats
-function QuickStatsBar({ leads, totalValue }: { leads: Lead[]; totalValue: number }) {
+function QuickStatsBar({ leads, totalValue, totalCount }: { leads: Lead[]; totalValue: number; totalCount?: number }) {
     const avgValue = leads.length > 0 ? totalValue / leads.length : 0;
     const qualifiedCount = leads.filter(l => l.status === "qualified").length;
     const starredCount = leads.filter(l => l.isStarred).length;
@@ -269,7 +269,7 @@ function QuickStatsBar({ leads, totalValue }: { leads: Lead[]; totalValue: numbe
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-blue-600 mb-1"><Users className="h-4 w-4" /><span className="text-xs font-medium uppercase">Total</span></div>
-                <div className="text-2xl font-bold text-blue-900">{leads.length}</div>
+                <div className="text-2xl font-bold text-blue-900">{totalCount ?? leads.length}</div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1"><DollarSign className="h-4 w-4" /><span className="text-xs font-medium uppercase">Value</span></div>
@@ -574,7 +574,7 @@ export default function LeadsPage() {
     }, []);
 
     const tableRef = useRef<HTMLDivElement>(null);
-    const { leads, loading, leadStats, totalRecords: serverTotal, deleteLead, updateLead, bulkDeleteLeads } = useLeads({
+    const { leads, loading, leadStats, totalRecords: serverTotal, deleteLead, updateLead, bulkDeleteLeads, bulkDeleteAllMatches } = useLeads({
         status: statusFilter,
         limit: recordsPerPage,
         page: currentPage,
@@ -647,13 +647,18 @@ export default function LeadsPage() {
     const removeFilter = useCallback((id: string) => setAdvancedFilters(prev => prev.filter(f => f.id !== id)), []);
 
     const handleSelectAllOnPage = useCallback(() => { setSelectedLeads(currentPageIds); setSelectionMode("page"); }, [currentPageIds]);
-    const handleSelectAllRecords = useCallback(() => { setSelectedLeads(allFilteredIds); setSelectionMode("all"); }, [allFilteredIds]);
+    const handleSelectAllRecords = useCallback(() => { setSelectedLeads([]); setSelectionMode("all"); }, []);
     const handleClearSelection = useCallback(() => { setSelectedLeads([]); setSelectionMode("none"); }, []);
     const handleSelectAllCheckbox = useCallback((checked: boolean) => { if (checked) handleSelectAllOnPage(); else handleClearSelection(); }, [handleSelectAllOnPage, handleClearSelection]);
     const handleSelectLead = useCallback((leadId: string, checked: boolean) => {
-        if (checked) { setSelectedLeads(prev => [...prev, leadId]); if (selectedLeads.length + 1 === paginatedLeads.length) setSelectionMode("page"); }
-        else { setSelectedLeads(prev => prev.filter(id => id !== leadId)); if (selectionMode === "all") setSelectionMode("page"); if (selectedLeads.length - 1 === 0) setSelectionMode("none"); }
-    }, [selectedLeads.length, paginatedLeads.length, selectionMode]);
+        if (selectionMode === "all") {
+            setSelectionMode("page");
+            setSelectedLeads(paginatedLeads.map(l => l.id).filter(id => id !== leadId));
+        } else {
+            if (checked) { setSelectedLeads(prev => [...prev, leadId]); if (selectedLeads.length + 1 === paginatedLeads.length) setSelectionMode("page"); }
+            else { setSelectedLeads(prev => prev.filter(id => id !== leadId)); if (selectedLeads.length - 1 === 0) setSelectionMode("none"); }
+        }
+    }, [selectionMode, paginatedLeads, selectedLeads.length]);
     const isAllPageSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedLeads.includes(id));
     const isSomeSelected = selectedLeads.length > 0 && !isAllPageSelected;
 
@@ -661,23 +666,29 @@ export default function LeadsPage() {
     const handleEdit = useCallback((lead: Lead) => { setSelectedLead(lead); setEditOpen(true); }, []);
     const handleDelete = useCallback(async (id: string) => { if (window.confirm("Delete?")) await deleteLead(id); }, [deleteLead]);
     const handleBulkDelete = useCallback(async () => {
-        if (selectedLeads.length === 0) return;
+        if (selectedLeads.length === 0 && selectionMode !== "all") return;
 
-        // Safety check: Don't allow accidental mass deletion without explicit confirmation of count
-        const count = selectionMode === "all" ? totalRecords : selectedLeads.length;
+        // Safety check
+        const isAll = selectionMode === "all";
+        const count = isAll ? totalRecords : selectedLeads.length;
+
         if (!window.confirm(`Are you sure you want to delete ${count} leads? This action cannot be undone.`)) {
             return;
         }
 
         try {
-            await bulkDeleteLeads(selectedLeads);
+            if (isAll) {
+                await bulkDeleteAllMatches();
+                alert(`Successfully deleted ${count} leads.`);
+            } else {
+                await bulkDeleteLeads(selectedLeads);
+            }
             handleClearSelection();
-            // Optional: Show success toast here
         } catch (error) {
             console.error("Bulk delete failed:", error);
             alert("Failed to delete leads. Please try again.");
         }
-    }, [selectedLeads, selectionMode, totalRecords, bulkDeleteLeads, handleClearSelection]);
+    }, [selectedLeads, selectionMode, totalRecords, bulkDeleteLeads, bulkDeleteAllMatches, handleClearSelection]);
     const handleInlineEdit = useCallback(async (id: string, field: ColumnKey, value: string) => { await updateLead(id, { [field]: value } as any); }, [updateLead]);
     const handleSaveLead = useCallback(async (id: string, data: Partial<Lead>) => { await updateLead(id, data as any); if (selectedLead?.id === id) setSelectedLead({ ...selectedLead, ...data } as Lead); }, [updateLead, selectedLead]);
     const handleStatusChange = useCallback(async (leadId: string, newStatus: LeadStatus) => { await updateLead(leadId, { status: newStatus }); }, [updateLead]);
@@ -875,7 +886,7 @@ export default function LeadsPage() {
     return (
         <TooltipProvider>
             <div className="space-y-4">
-                <QuickStatsBar leads={processedLeads} totalValue={leadStats.totalValue} />
+                <QuickStatsBar leads={processedLeads} totalValue={leadStats.totalValue} totalCount={leadStats.total} />
 
                 {/* Header */}
                 {/* Header Actions Row */}
@@ -1058,8 +1069,8 @@ export default function LeadsPage() {
                                             <TableRow><TableCell colSpan={visibleColumnsCount + 2} className="text-center py-10 text-muted-foreground">{searchQuery ? "No matches" : "No leads"}</TableCell></TableRow>
                                         ) : (
                                             paginatedLeads.map((lead, index) => (
-                                                <TableRow key={lead.id} className={`group hover:bg-gray-50 ${selectedLeads.includes(lead.id) ? 'bg-blue-50/50' : ''} ${lead.isStarred ? 'bg-yellow-50/30' : ''} ${focusedRowIndex === index ? 'ring-2 ring-inset ring-blue-500' : ''} ${ROW_DENSITY_STYLES[rowDensity]}`}>
-                                                    <TableCell className="text-center sticky left-0 z-10 bg-white group-hover:bg-gray-50"><Checkbox checked={selectedLeads.includes(lead.id)} onCheckedChange={(c) => handleSelectLead(lead.id, !!c)} /></TableCell>
+                                                <TableRow key={lead.id} className={`group hover:bg-gray-50 ${(selectionMode === "all" || selectedLeads.includes(lead.id)) ? 'bg-blue-50/50' : ''} ${lead.isStarred ? 'bg-yellow-50/30' : ''} ${focusedRowIndex === index ? 'ring-2 ring-inset ring-blue-500' : ''} ${ROW_DENSITY_STYLES[rowDensity]}`}>
+                                                    <TableCell className="text-center sticky left-0 z-10 bg-white group-hover:bg-gray-50"><Checkbox checked={selectionMode === "all" || selectedLeads.includes(lead.id)} onCheckedChange={(c) => handleSelectLead(lead.id, !!c)} /></TableCell>
                                                     {orderedColumns.map((col) => columnVisibility[col.key] && <TableCell key={col.key} className={col.key === "name" ? "sticky left-12 z-10 bg-white group-hover:bg-gray-50" : ""}>{renderCell(lead, col)}</TableCell>)}
                                                     <TableCell>
                                                         <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
