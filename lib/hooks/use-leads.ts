@@ -47,7 +47,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         source,
         orderByField = "createdAt",
         orderDirection = "desc",
-        limit: queryLimit = 100, // Default to 100 items for performance
+        limit: queryLimit = 500, // Increased to 500 to verify data depth
     } = options;
     const { profile } = useUserProfile();
     const [leads, setLeads] = useState<Lead[]>([]);
