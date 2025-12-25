@@ -77,6 +77,7 @@ export interface Address {
 
 export interface Lead extends BaseEntity {
     name: string;
+    name_lower?: string; // For case-insensitive search
     company?: string;
     email?: string;
     phone?: string;

@@ -82,10 +82,11 @@ export function useLeads(options: UseLeadsOptions = {}) {
         if (assignedTo) c.push(where("assignedTo", "==", assignedTo));
         if (source) c.push(where("source", "==", source));
 
-        // Search (Prefix only)
+        // Search (Prefix only, Case-Insensitive)
         if (searchQuery) {
-            c.push(where("name", ">=", searchQuery));
-            c.push(where("name", "<=", searchQuery + '\uf8ff'));
+            const lowerQuery = searchQuery.toLowerCase();
+            c.push(where("name_lower", ">=", lowerQuery));
+            c.push(where("name_lower", "<=", lowerQuery + '\uf8ff'));
         }
 
         return c;
@@ -198,6 +199,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
             const docRef = await addDoc(collection(db, "leads"), {
                 ...data,
+                name_lower: data.name.toLowerCase(),
                 orgId: profile.orgId,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
@@ -213,6 +215,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         async (id: string, data: Partial<LeadFormData>): Promise<void> => {
             await updateDoc(doc(db, "leads", id), {
                 ...data,
+                ...(data.name ? { name_lower: data.name.toLowerCase() } : {}),
                 updatedAt: serverTimestamp(),
             });
         },
