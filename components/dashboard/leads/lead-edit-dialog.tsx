@@ -116,7 +116,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
     return (
         <Sheet open={open} onOpenChange={onClose}>
             <SheetContent className="w-[90%] sm:max-w-[800px] p-0 gap-0 bg-white flex flex-col">
-                <SheetHeader className="px-6 py-4 border-b flex flex-row items-center justify-between sticky top-0 bg-white z-10 shrink-0">
+                <SheetHeader className="px-4 py-3 border-b flex flex-row items-center justify-between sticky top-0 bg-white z-10 shrink-0">
                     <SheetTitle className="text-xl font-bold flex items-center gap-2">
                         Edit Lead #{lead.id.substring(0, 4)}
                     </SheetTitle>
@@ -129,9 +129,9 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
 
                 <div className="flex-1 overflow-hidden flex flex-col bg-gray-50/30">
                     <ScrollArea className="flex-1">
-                        <div className="p-6">
+                        <div className="p-4">
                             <Form {...form}>
-                                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
                                     {/* Duplicate Warning */}
                                     {duplicateWarning && (
                                         <Alert variant="destructive" className="bg-yellow-50 border-yellow-300 text-yellow-800">
@@ -150,7 +150,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                     )}
 
                                     {/* Top Row: Status, Source, Assigned */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <FormField
                                             control={form.control}
                                             name="status"
@@ -238,7 +238,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormField
                                             control={form.control}
                                             name="name"
