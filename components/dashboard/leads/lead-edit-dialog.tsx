@@ -11,12 +11,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { leadFormSchema, type LeadFormData } from "@/lib/schemas";
 import type { Lead } from "@/lib/types";
-import { useEffect } from "react";
-import { Printer, X, Plus } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Printer, X, Plus, AlertTriangle } from "lucide-react";
 import { LEAD_STATUSES, LEAD_SOURCES } from "@/lib/constants";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useStaff } from "@/lib/hooks/use-staff";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useLeads } from "@/lib/hooks";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface LeadEditSheetProps {
     open: boolean;
@@ -27,6 +29,9 @@ interface LeadEditSheetProps {
 
 export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProps) {
     const { staff } = useStaff();
+    const { leads } = useLeads({});
+    const [duplicateWarning, setDuplicateWarning] = useState<{ type: "email" | "phone"; duplicates: Lead[] } | null>(null);
+
     const form = useForm({
         resolver: zodResolver(leadFormSchema),
         defaultValues: {
@@ -60,6 +65,42 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
         }
     }, [lead, form]);
 
+    // Check for duplicates when email or phone changes
+    const watchedEmail = form.watch("email");
+    const watchedPhone = form.watch("phone");
+
+    useEffect(() => {
+        if (!lead || !leads.length) return;
+
+        // Check for email duplicates
+        if (watchedEmail) {
+            const emailDuplicates = leads.filter(l =>
+                l.id !== lead.id &&
+                l.email &&
+                l.email.toLowerCase() === watchedEmail.toLowerCase()
+            );
+            if (emailDuplicates.length > 0) {
+                setDuplicateWarning({ type: "email", duplicates: emailDuplicates });
+                return;
+            }
+        }
+
+        // Check for phone duplicates
+        if (watchedPhone) {
+            const phoneDuplicates = leads.filter(l =>
+                l.id !== lead.id &&
+                l.phone &&
+                l.phone.replace(/\D/g, '') === watchedPhone.replace(/\D/g, '')
+            );
+            if (phoneDuplicates.length > 0) {
+                setDuplicateWarning({ type: "phone", duplicates: phoneDuplicates });
+                return;
+            }
+        }
+
+        setDuplicateWarning(null);
+    }, [watchedEmail, watchedPhone, leads, lead]);
+
     const handleSubmit = async (data: LeadFormData) => {
         if (!lead) return;
         try {
@@ -91,6 +132,23 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                         <div className="p-6">
                             <Form {...form}>
                                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                                    {/* Duplicate Warning */}
+                                    {duplicateWarning && (
+                                        <Alert variant="destructive" className="bg-yellow-50 border-yellow-300 text-yellow-800">
+                                            <AlertTriangle className="h-4 w-4" />
+                                            <AlertTitle>Potential Duplicate Found!</AlertTitle>
+                                            <AlertDescription>
+                                                A lead with this {duplicateWarning.type} already exists: {duplicateWarning.duplicates.map((d, i) => (
+                                                    <span key={d.id}>
+                                                        {i > 0 && ", "}
+                                                        <strong>{d.name}</strong>
+                                                        {d.company && ` (${d.company})`}
+                                                    </span>
+                                                ))}
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+
                                     {/* Top Row: Status, Source, Assigned */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <FormField

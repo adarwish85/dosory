@@ -9,19 +9,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { leadFormSchema, type LeadFormData } from "@/lib/schemas";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, AlertTriangle } from "lucide-react";
 import { LEAD_STATUSES, LEAD_SOURCES } from "@/lib/constants";
 import { useStaff } from "@/lib/hooks/use-staff";
 import { useLeads } from "@/lib/hooks/use-leads";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import type { Lead } from "@/lib/types";
 
 export default function NewLeadPage() {
     const router = useRouter();
     const { staff } = useStaff();
-    const { createLead } = useLeads();
+    const { createLead, leads } = useLeads();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [duplicateWarning, setDuplicateWarning] = useState<{ type: "email" | "phone"; duplicates: Lead[] } | null>(null);
 
     const form = useForm({
         resolver: zodResolver(leadFormSchema),
@@ -55,6 +58,36 @@ export default function NewLeadPage() {
         }
     };
 
+    // Check for duplicates when email or phone changes
+    const watchedEmail = form.watch("email");
+    const watchedPhone = form.watch("phone");
+
+    useEffect(() => {
+        if (!leads.length) return;
+
+        if (watchedEmail) {
+            const emailDuplicates = leads.filter(l =>
+                l.email && l.email.toLowerCase() === watchedEmail.toLowerCase()
+            );
+            if (emailDuplicates.length > 0) {
+                setDuplicateWarning({ type: "email", duplicates: emailDuplicates });
+                return;
+            }
+        }
+
+        if (watchedPhone) {
+            const phoneDuplicates = leads.filter(l =>
+                l.phone && l.phone.replace(/\D/g, '') === watchedPhone.replace(/\D/g, '')
+            );
+            if (phoneDuplicates.length > 0) {
+                setDuplicateWarning({ type: "phone", duplicates: phoneDuplicates });
+                return;
+            }
+        }
+
+        setDuplicateWarning(null);
+    }, [watchedEmail, watchedPhone, leads]);
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -85,6 +118,23 @@ export default function NewLeadPage() {
             <div className="bg-white rounded-lg border shadow-sm p-6">
                 <Form {...form}>
                     <form className="space-y-8">
+                        {/* Duplicate Warning */}
+                        {duplicateWarning && (
+                            <Alert variant="destructive" className="bg-yellow-50 border-yellow-300 text-yellow-800">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>Potential Duplicate Found!</AlertTitle>
+                                <AlertDescription>
+                                    A lead with this {duplicateWarning.type} already exists: {duplicateWarning.duplicates.map((d, i) => (
+                                        <span key={d.id}>
+                                            {i > 0 && ", "}
+                                            <strong>{d.name}</strong>
+                                            {d.company && ` (${d.company})`}
+                                        </span>
+                                    ))}
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
                         {/* Basic Information */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
