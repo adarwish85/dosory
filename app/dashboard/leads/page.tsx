@@ -11,7 +11,8 @@ import {
     ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckSquare, Columns,
     ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash, ExternalLink,
     LayoutList, DollarSign, Users, TrendingUp, GripVertical, PlusCircle,
-    Star, Clock, FileDown, Mail, Phone, AlertTriangle, RefreshCcw
+    Star, Clock, FileDown, Mail, Phone, AlertTriangle, RefreshCcw,
+    Bookmark, BookmarkPlus, Save, FolderOpen, MoreVertical
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +74,24 @@ type FilterLogic = "AND" | "OR";
 
 interface ColumnDef { key: ColumnKey; label: string; defaultVisible: boolean; required?: boolean; sortable?: boolean; width?: string; }
 interface FilterCondition { id: string; field: ColumnKey; operator: FilterOperator; value: string; }
+
+// Saved View type
+interface SavedView {
+    id: string;
+    name: string;
+    columnVisibility: Record<ColumnKey, boolean>;
+    columnOrder: ColumnKey[];
+    sortKey: ColumnKey | null;
+    sortDirection: SortDirection;
+    advancedFilters: FilterCondition[];
+    filterLogic: FilterLogic;
+    statusFilter: LeadStatus | "all";
+    rowDensity: RowDensity;
+    isDefault?: boolean;
+    createdAt: number;
+}
+
+const SAVED_VIEWS_STORAGE_KEY = "leads_saved_views";
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
     { key: "starred", label: "★", defaultVisible: true, width: "w-10" },
@@ -295,6 +314,90 @@ export default function LeadsPage() {
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
     const [detailsOpen, setDetailsOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
+
+    // Saved views state
+    const [savedViews, setSavedViews] = useState<SavedView[]>([]);
+    const [showSaveViewDialog, setShowSaveViewDialog] = useState(false);
+    const [newViewName, setNewViewName] = useState("");
+    const [activeViewId, setActiveViewId] = useState<string | null>(null);
+
+    // Load saved views from localStorage on mount
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(SAVED_VIEWS_STORAGE_KEY);
+            if (stored) {
+                const views = JSON.parse(stored) as SavedView[];
+                setSavedViews(views);
+                // Apply default view if exists
+                const defaultView = views.find(v => v.isDefault);
+                if (defaultView) {
+                    applyView(defaultView);
+                }
+            }
+        } catch (e) { console.error("Failed to load saved views", e); }
+    }, []);
+
+    // Save views to localStorage whenever they change
+    useEffect(() => {
+        if (savedViews.length > 0) {
+            localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(savedViews));
+        }
+    }, [savedViews]);
+
+    // Apply a saved view
+    const applyView = useCallback((view: SavedView) => {
+        setColumnVisibility(view.columnVisibility);
+        setColumnOrder(view.columnOrder);
+        setSortKey(view.sortKey);
+        setSortDirection(view.sortDirection);
+        setAdvancedFilters(view.advancedFilters);
+        setFilterLogic(view.filterLogic);
+        setStatusFilter(view.statusFilter);
+        setRowDensity(view.rowDensity);
+        setActiveViewId(view.id);
+        setCurrentPage(1);
+    }, []);
+
+    // Save current state as a new view
+    const saveCurrentView = useCallback((name: string, setAsDefault: boolean = false) => {
+        const newView: SavedView = {
+            id: crypto.randomUUID(),
+            name,
+            columnVisibility,
+            columnOrder,
+            sortKey,
+            sortDirection,
+            advancedFilters,
+            filterLogic,
+            statusFilter,
+            rowDensity,
+            isDefault: setAsDefault,
+            createdAt: Date.now(),
+        };
+        setSavedViews(prev => {
+            // If setting as default, remove default from others
+            const updated = setAsDefault ? prev.map(v => ({ ...v, isDefault: false })) : prev;
+            return [...updated, newView];
+        });
+        setActiveViewId(newView.id);
+        setNewViewName("");
+        setShowSaveViewDialog(false);
+    }, [columnVisibility, columnOrder, sortKey, sortDirection, advancedFilters, filterLogic, statusFilter, rowDensity]);
+
+    // Delete a saved view
+    const deleteView = useCallback((viewId: string) => {
+        setSavedViews(prev => {
+            const updated = prev.filter(v => v.id !== viewId);
+            if (updated.length === 0) localStorage.removeItem(SAVED_VIEWS_STORAGE_KEY);
+            return updated;
+        });
+        if (activeViewId === viewId) setActiveViewId(null);
+    }, [activeViewId]);
+
+    // Set a view as default
+    const setViewAsDefault = useCallback((viewId: string) => {
+        setSavedViews(prev => prev.map(v => ({ ...v, isDefault: v.id === viewId })));
+    }, []);
 
     const tableRef = useRef<HTMLDivElement>(null);
     const { leads, loading, leadStats, deleteLead, updateLead } = useLeads({ status: statusFilter });
@@ -553,6 +656,73 @@ export default function LeadsPage() {
                         <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon"><Columns className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-48"><DropdownMenuLabel className="flex justify-between"><span>Columns</span><span className="text-xs text-gray-400">{visibleColumnsCount}/{DEFAULT_COLUMNS.length}</span></DropdownMenuLabel><DropdownMenuSeparator />{DEFAULT_COLUMNS.map((c) => <DropdownMenuCheckboxItem key={c.key} checked={columnVisibility[c.key]} onCheckedChange={() => toggleColumn(c.key)} disabled={c.required}>{c.label}</DropdownMenuCheckboxItem>)}<DropdownMenuSeparator /><div className="flex gap-1 p-1"><Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={showAllColumns}>All</Button><Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={resetColumns}>Reset</Button></div></DropdownMenuContent></DropdownMenu>
                         <Popover open={showFilters} onOpenChange={setShowFilters}><PopoverTrigger asChild><Button variant="outline" className={hasActiveFilters ? "border-blue-500 text-blue-600" : ""}><Filter className="mr-2 h-4 w-4" />Filters{hasActiveFilters && <Badge className="ml-2 bg-blue-600 text-white h-5 min-w-[20px] px-1 rounded-full text-[10px]">{(statusFilter !== "all" ? 1 : 0) + advancedFilters.length}</Badge>}</Button></PopoverTrigger><PopoverContent align="end" className="w-[520px]"><div className="space-y-4"><div className="flex items-center justify-between"><h4 className="font-medium">Filters</h4>{hasActiveFilters && <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs">Clear</Button>}</div><div className="space-y-2"><label className="text-sm font-medium">Status</label><Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as LeadStatus | "all"); setCurrentPage(1); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{LEAD_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}><div className="flex gap-2"><span>{s.label}</span>{leadStats[s.value] !== undefined && <Badge variant="secondary" className="text-[10px] h-4 px-1">{leadStats[s.value]}</Badge>}</div></SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><label className="text-sm font-medium">Conditions</label><div className="space-y-2 max-h-48 overflow-y-auto">{advancedFilters.map((f, i) => <FilterRow key={f.id} filter={f} columns={DEFAULT_COLUMNS} onUpdate={updateFilter} onRemove={removeFilter} showLogic={i > 0} logic={filterLogic} onLogicChange={setFilterLogic} />)}</div><Button variant="outline" size="sm" onClick={addFilter} className="w-full"><PlusCircle className="mr-2 h-4 w-4" />Add condition</Button></div></div></PopoverContent></Popover>
                         <Button variant="outline" size="icon" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" /></Button>
+
+                        {/* Saved Views */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className={activeViewId ? "border-purple-500 text-purple-600" : ""}>
+                                    <Bookmark className="mr-2 h-4 w-4" />
+                                    Views
+                                    {savedViews.length > 0 && <Badge className="ml-2 bg-purple-600 text-white h-5 min-w-[20px] px-1 rounded-full text-[10px]">{savedViews.length}</Badge>}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuLabel>Saved Views</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {savedViews.length === 0 ? (
+                                    <div className="px-2 py-3 text-sm text-gray-500 text-center">No saved views yet</div>
+                                ) : (
+                                    savedViews.map((view) => (
+                                        <div key={view.id} className="flex items-center group">
+                                            <DropdownMenuItem className="flex-1" onClick={() => applyView(view)}>
+                                                <FolderOpen className="mr-2 h-4 w-4" />
+                                                <span className="flex-1">{view.name}</span>
+                                                {view.isDefault && <Badge variant="secondary" className="text-[10px] ml-1">Default</Badge>}
+                                                {activeViewId === view.id && <Badge className="bg-purple-600 text-[10px] ml-1">Active</Badge>}
+                                            </DropdownMenuItem>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                                                        <MoreVertical className="h-3 w-3" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => setViewAsDefault(view.id)}>
+                                                        <Star className="mr-2 h-4 w-4" /> {view.isDefault ? "Remove Default" : "Set as Default"}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="text-red-600" onClick={() => deleteView(view.id)}>
+                                                        <Trash className="mr-2 h-4 w-4" /> Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    ))
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setShowSaveViewDialog(true)}>
+                                    <BookmarkPlus className="mr-2 h-4 w-4" /> Save Current View
+                                </DropdownMenuItem>
+                                {activeViewId && (
+                                    <DropdownMenuItem onClick={() => setActiveViewId(null)}>
+                                        <X className="mr-2 h-4 w-4" /> Clear Active View
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {/* Save View Dialog */}
+                        <Popover open={showSaveViewDialog} onOpenChange={setShowSaveViewDialog}>
+                            <PopoverContent align="end" className="w-72">
+                                <div className="space-y-3">
+                                    <h4 className="font-medium flex items-center gap-2"><Save className="h-4 w-4" /> Save Current View</h4>
+                                    <Input placeholder="View name..." value={newViewName} onChange={(e) => setNewViewName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && newViewName.trim()) saveCurrentView(newViewName.trim()); }} />
+                                    <div className="flex gap-2">
+                                        <Button size="sm" className="flex-1" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim())}>Save</Button>
+                                        <Button size="sm" variant="outline" className="flex-1" disabled={!newViewName.trim()} onClick={() => saveCurrentView(newViewName.trim(), true)}>Save as Default</Button>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
 
