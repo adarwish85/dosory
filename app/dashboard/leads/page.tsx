@@ -916,12 +916,23 @@ export default function LeadsPage() {
             );
             case "id": return <span className="font-medium text-gray-500">{lead.id.substring(0, 4)}</span>;
             case "name": return (
-                <HoverCard openDelay={300} closeDelay={100}>
-                    <HoverCardTrigger asChild>
-                        <span><InlineEditCell value={lead.name || ""} field="name" leadId={lead.id} onSave={handleInlineEdit} searchQuery={searchQuery} /></span>
-                    </HoverCardTrigger>
-                    <HoverCardContent side="right" align="start" className="p-0 border-0 bg-transparent shadow-none"><QuickViewCard lead={lead} /></HoverCardContent>
-                </HoverCard>
+                <div className="flex flex-col">
+                    <HoverCard openDelay={300} closeDelay={100}>
+                        <HoverCardTrigger asChild>
+                            <span><InlineEditCell value={lead.name || ""} field="name" leadId={lead.id} onSave={handleInlineEdit} searchQuery={searchQuery} /></span>
+                        </HoverCardTrigger>
+                        <HoverCardContent side="right" align="start" className="p-0 border-0 bg-transparent shadow-none"><QuickViewCard lead={lead} /></HoverCardContent>
+                    </HoverCard>
+                    {rowDensity === "comfortable" && (
+                        <div className="flex items-center gap-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity mt-0.5 h-4">
+                            <button className="text-blue-600 hover:underline font-medium" onClick={(e) => { e.stopPropagation(); handleView(lead); }}>View</button>
+                            <span className="text-gray-300">|</span>
+                            <button className="text-blue-600 hover:underline font-medium" onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); setEditOpen(true); }}>Edit</button>
+                            <span className="text-gray-300">|</span>
+                            <button className="text-red-600 hover:underline font-medium" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this lead?")) deleteLead(lead.id); }}>Delete</button>
+                        </div>
+                    )}
+                </div>
             );
             case "company": return <InlineEditCell value={lead.company || ""} field="company" leadId={lead.id} onSave={handleInlineEdit} searchQuery={searchQuery} />;
             case "email": return lead.email ? (
