@@ -86,6 +86,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
+                console.log(`[useLeads] Snapshot Received. Docs: ${snapshot.docs.length}. Metadata:`, snapshot.metadata);
                 const data = snapshot.docs.map((doc) => ({
                     id: doc.id,
                     ...doc.data(),
@@ -135,13 +136,14 @@ export function useLeads(options: UseLeadsOptions = {}) {
     }, []);
 
     const bulkDeleteLeads = useCallback(async (ids: string[]): Promise<void> => {
-        console.log(`[bulkDelete] requesting delete for ${ids.length} leads`);
+        console.log(`[bulkDelete] requesting delete for ${ids.length} leads. First ID: ${ids[0]}`);
         if (!ids.length) return;
         const batchSize = 500;
         for (let i = 0; i < ids.length; i += batchSize) {
             const batch = writeBatch(db);
             const chunk = ids.slice(i, i + batchSize);
             chunk.forEach(id => {
+                if (!id) console.error("[bulkDelete] Found empty ID in chunk!");
                 batch.delete(doc(db, "leads", id));
             });
             console.log(`[bulkDelete] Committing batch ${i / batchSize + 1}`);
