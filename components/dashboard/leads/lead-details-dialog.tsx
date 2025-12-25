@@ -573,16 +573,116 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
 
                                 {/* Activity Tab */}
                                 <TabsContent value="activity" className="m-0">
-                                    <div className="pl-4 border-l-2 border-gray-100 space-y-6">
-                                        <div className="relative">
-                                            <div className="absolute -left-[21px] top-1 h-3 w-3 bg-blue-500 rounded-full border-2 border-white ring-1 ring-gray-100"></div>
-                                            <p className="text-sm text-gray-900 font-medium">Lead Created</p>
-                                            <p className="text-xs text-gray-500">{lead.createdAt ? format(lead.createdAt.toDate(), "MMM d, yyyy @ h:mm a") : "Unknown date"}</p>
-                                        </div>
-                                        <div className="relative">
-                                            <div className="absolute -left-[21px] top-1 h-3 w-3 bg-gray-300 rounded-full border-2 border-white ring-1 ring-gray-100"></div>
-                                            <p className="text-sm text-gray-900">Status updated to <span className="font-medium text-gray-700">{lead.status}</span></p>
-                                            <p className="text-xs text-gray-500">Just now</p>
+                                    <div className="space-y-4">
+                                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                                            <Activity className="h-5 w-5" /> Activity Timeline
+                                        </h3>
+                                        <div className="pl-4 border-l-2 border-gray-200 space-y-6">
+                                            {/* Lead Created */}
+                                            <div className="relative">
+                                                <div className="absolute -left-[21px] top-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white ring-1 ring-gray-200"></div>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="p-2 bg-green-50 rounded-lg">
+                                                        <Plus className="h-4 w-4 text-green-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-900">Lead Created</p>
+                                                        <p className="text-xs text-gray-500">{lead.createdAt ? format(lead.createdAt.toDate(), "MMM d, yyyy @ h:mm a") : "Unknown date"}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Notes as timeline items */}
+                                            {notes.map((note) => (
+                                                <div key={note.id} className="relative">
+                                                    <div className="absolute -left-[21px] top-1 h-3 w-3 bg-blue-500 rounded-full border-2 border-white ring-1 ring-gray-200"></div>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-2 bg-blue-50 rounded-lg">
+                                                            <StickyNote className="h-4 w-4 text-blue-600" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-medium text-gray-900">Note Added</p>
+                                                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{note.content}</p>
+                                                            <p className="text-xs text-gray-500 mt-1">{note.createdAt ? format(note.createdAt.toDate(), "MMM d, yyyy @ h:mm a") : ""}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {/* Reminders as timeline items */}
+                                            {reminders.map((reminder) => (
+                                                <div key={reminder.id} className="relative">
+                                                    <div className="absolute -left-[21px] top-1 h-3 w-3 bg-amber-500 rounded-full border-2 border-white ring-1 ring-gray-200"></div>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-2 bg-amber-50 rounded-lg">
+                                                            <Bell className="h-4 w-4 text-amber-600" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-medium text-gray-900">Reminder Set</p>
+                                                            <p className="text-sm text-gray-600 mt-1">{reminder.description}</p>
+                                                            <p className="text-xs text-gray-500 mt-1">For: {reminder.date ? format(reminder.date.toDate(), "MMM d, yyyy @ h:mm a") : ""}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {/* Tasks as timeline items */}
+                                            {relatedTasks.map((task) => (
+                                                <div key={task.id} className="relative">
+                                                    <div className="absolute -left-[21px] top-1 h-3 w-3 bg-purple-500 rounded-full border-2 border-white ring-1 ring-gray-200"></div>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-2 bg-purple-50 rounded-lg">
+                                                            <CheckSquare className="h-4 w-4 text-purple-600" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-sm font-medium text-gray-900">Task Created: {task.name}</p>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <Badge variant="secondary" className="text-xs capitalize">{task.status.replace(/_/g, ' ')}</Badge>
+                                                                <Badge variant="outline" className="text-xs capitalize">{task.priority}</Badge>
+                                                            </div>
+                                                            <p className="text-xs text-gray-500 mt-1">{task.createdAt ? format(task.createdAt.toDate(), "MMM d, yyyy @ h:mm a") : ""}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {/* Last Contacted */}
+                                            {lead.lastContactedAt && (
+                                                <div className="relative">
+                                                    <div className="absolute -left-[21px] top-1 h-3 w-3 bg-indigo-500 rounded-full border-2 border-white ring-1 ring-gray-200"></div>
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-2 bg-indigo-50 rounded-lg">
+                                                            <Clock className="h-4 w-4 text-indigo-600" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-900">Last Contacted</p>
+                                                            <p className="text-xs text-gray-500">{format(lead.lastContactedAt.toDate(), "MMM d, yyyy @ h:mm a")}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Current Status */}
+                                            <div className="relative">
+                                                <div className="absolute -left-[21px] top-1 h-3 w-3 bg-gray-400 rounded-full border-2 border-white ring-1 ring-gray-200"></div>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="p-2 bg-gray-50 rounded-lg">
+                                                        <Activity className="h-4 w-4 text-gray-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm text-gray-900">Current Status: <Badge variant="secondary" className="capitalize ml-1">{lead.status}</Badge></p>
+                                                        <p className="text-xs text-gray-500">Updated: {lead.updatedAt ? format(lead.updatedAt.toDate(), "MMM d, yyyy @ h:mm a") : "Unknown"}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Empty state */}
+                                            {notes.length === 0 && reminders.length === 0 && relatedTasks.length === 0 && (
+                                                <div className="relative">
+                                                    <div className="absolute -left-[21px] top-1 h-3 w-3 bg-gray-300 rounded-full border-2 border-white ring-1 ring-gray-200"></div>
+                                                    <p className="text-sm text-gray-500 italic">No additional activity recorded yet. Add notes, reminders, or tasks to see them here.</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </TabsContent>

@@ -11,7 +11,7 @@ import {
     ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CheckSquare, Columns,
     ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash, ExternalLink,
     LayoutList, DollarSign, Users, TrendingUp, GripVertical, PlusCircle,
-    Star, Clock, FileDown
+    Star, Clock, FileDown, Mail, Phone, AlertTriangle, RefreshCcw
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -421,6 +421,25 @@ export default function LeadsPage() {
     const handleStatusChange = useCallback(async (leadId: string, newStatus: LeadStatus) => { await updateLead(leadId, { status: newStatus }); }, [updateLead]);
     const handleToggleStar = useCallback(async (leadId: string, isStarred: boolean) => { await updateLead(leadId, { isStarred } as any); }, [updateLead]);
 
+    // Bulk status update
+    const handleBulkStatusUpdate = useCallback(async (newStatus: LeadStatus) => {
+        if (selectedLeads.length === 0) return;
+        if (window.confirm(`Update ${selectionMode === "all" ? totalRecords : selectedLeads.length} leads to "${newStatus}"?`)) {
+            for (const id of selectedLeads) await updateLead(id, { status: newStatus });
+            handleClearSelection();
+        }
+    }, [selectedLeads, selectionMode, totalRecords, updateLead, handleClearSelection]);
+
+    // Duplicate detection
+    const findDuplicates = useCallback((email: string, phone: string, excludeId?: string): Lead[] => {
+        return leads.filter(l => {
+            if (excludeId && l.id === excludeId) return false;
+            const emailMatch = email && l.email && l.email.toLowerCase() === email.toLowerCase();
+            const phoneMatch = phone && l.phone && l.phone.replace(/\D/g, '') === phone.replace(/\D/g, '');
+            return emailMatch || phoneMatch;
+        });
+    }, [leads]);
+
     const clearAllFilters = useCallback(() => { setStatusFilter("all"); setSearchQuery(""); setAdvancedFilters([]); setCurrentPage(1); handleClearSelection(); }, [handleClearSelection]);
 
     const handleTableKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
@@ -453,8 +472,18 @@ export default function LeadsPage() {
                 </HoverCard>
             );
             case "company": return <InlineEditCell value={lead.company || ""} field="company" leadId={lead.id} onSave={handleInlineEdit} searchQuery={searchQuery} />;
-            case "email": return <InlineEditCell value={lead.email || ""} field="email" leadId={lead.id} onSave={handleInlineEdit} searchQuery={searchQuery} />;
-            case "phone": return <InlineEditCell value={lead.phone || ""} field="phone" leadId={lead.id} onSave={handleInlineEdit} searchQuery={searchQuery} />;
+            case "email": return lead.email ? (
+                <a href={`mailto:${lead.email}`} className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline" onClick={(e) => e.stopPropagation()}>
+                    <Mail className="h-3 w-3" />
+                    <HighlightText text={lead.email} search={searchQuery} />
+                </a>
+            ) : <span className="text-gray-400">-</span>;
+            case "phone": return lead.phone ? (
+                <a href={`tel:${lead.phone}`} className="flex items-center gap-1 text-green-600 hover:text-green-800 hover:underline" onClick={(e) => e.stopPropagation()}>
+                    <Phone className="h-3 w-3" />
+                    <HighlightText text={lead.phone} search={searchQuery} />
+                </a>
+            ) : <span className="text-gray-400">-</span>;
             case "value": return <span className="text-gray-900 font-mono">{lead.value ? `$${lead.value.toLocaleString()}` : "-"}</span>;
             case "status": return (
                 <Select value={lead.status} onValueChange={(v) => handleStatusChange(lead.id, v as LeadStatus)}>
@@ -500,6 +529,13 @@ export default function LeadsPage() {
                                 <DropdownMenuTrigger asChild><Button variant="outline" className="border-blue-200 bg-blue-50 text-blue-700"><Badge className="mr-2 bg-blue-600">{selectionMode === "all" ? totalRecords : selectedLeads.length}</Badge>Bulk <ChevronDown className="ml-2 h-4 w-4" /></Button></DropdownMenuTrigger>
                                 <DropdownMenuContent align="start">
                                     <DropdownMenuLabel>With {selectionMode === "all" ? totalRecords : selectedLeads.length} selected</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuLabel className="text-xs text-gray-500">Change Status To</DropdownMenuLabel>
+                                    {LEAD_STATUSES.map((s) => (
+                                        <DropdownMenuItem key={s.value} onClick={() => handleBulkStatusUpdate(s.value as LeadStatus)}>
+                                            <RefreshCcw className="mr-2 h-4 w-4" /> {s.label}
+                                        </DropdownMenuItem>
+                                    ))}
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
