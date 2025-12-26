@@ -69,7 +69,7 @@ export function CustomerSidebar() {
                 {/* Edge Toggle Button - Fixed Position */}
                 <button
                     onClick={handleToggleCollapse}
-                    className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-6 w-6 bg-white border border-gray-200 rounded-md shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
+                    className="absolute -right-3 top-16 z-10 h-6 w-6 bg-white border border-gray-200 rounded-md shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
                 >
                     {collapsed ? (
                         <ChevronRight className="h-3.5 w-3.5 text-gray-500" />

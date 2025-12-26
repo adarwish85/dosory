@@ -49,6 +49,7 @@ export default function ContactsPage() {
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [editingContact, setEditingContact] = useState<any>(null); // For edit dialog
+    const [portalAccessContact, setPortalAccessContact] = useState<any>(null); // For portal setup dialog
 
     // Saved Views state
     const [savedViews, setSavedViews] = useState<ContactsSavedView[]>([]);
@@ -203,14 +204,35 @@ export default function ContactsPage() {
         }
     };
 
-    const handleToggleActive = async (contactId: string, currentStatus: string) => {
-        try {
-            const newStatus = currentStatus === "active" ? "inactive" : "active";
-            await updateContact(contactId, { status: newStatus as any });
-            toast.success(newStatus === "active" ? "Contact activated" : "Contact deactivated");
-        } catch (error) {
-            console.error("Error toggling status:", error);
-            toast.error("Failed to update status");
+    const handleTogglePortalAccess = async (contact: any) => {
+        const currentPortalAccess = contact.portalAccess || false;
+
+        if (currentPortalAccess) {
+            // Turning OFF - just update portalAccess
+            try {
+                await updateContact(contact.id, { portalAccess: false });
+                toast.success("Portal access disabled");
+            } catch (error) {
+                console.error("Error toggling portal access:", error);
+                toast.error("Failed to update portal access");
+            }
+        } else {
+            // Turning ON - check if contact has portal config (permissions set or password was set before)
+            const hasPortalConfig = contact.permissions && contact.permissions.length > 0;
+
+            if (hasPortalConfig) {
+                // Just reactivate - user had config before
+                try {
+                    await updateContact(contact.id, { portalAccess: true });
+                    toast.success("Portal access enabled");
+                } catch (error) {
+                    console.error("Error toggling portal access:", error);
+                    toast.error("Failed to update portal access");
+                }
+            } else {
+                // Open dialog at step 2 to configure portal access
+                setPortalAccessContact(contact);
+            }
         }
     };
 
@@ -410,7 +432,7 @@ export default function ContactsPage() {
                                 </div>
                             </TableHead>
                             <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Phone</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Active</TableHead>
+                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Portal</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -482,9 +504,9 @@ export default function ContactsPage() {
                                     <TableCell className="py-4 text-gray-700">{contact.phone || "-"}</TableCell>
                                     <TableCell className="py-4">
                                         <Switch
-                                            checked={contact.status === "active"}
+                                            checked={contact.portalAccess || false}
                                             className="data-[state=checked]:bg-blue-600 scale-90"
-                                            onCheckedChange={() => handleToggleActive(contact.id, contact.status || "active")}
+                                            onCheckedChange={() => handleTogglePortalAccess(contact)}
                                         />
                                     </TableCell>
                                 </TableRow>
@@ -562,6 +584,19 @@ export default function ContactsPage() {
                     open={!!editingContact}
                     onOpenChange={(open) => { if (!open) setEditingContact(null); }}
                     onSuccess={() => setEditingContact(null)}
+                />
+            )}
+
+            {/* Portal Access Setup Dialog - Opens at step 2 */}
+            {portalAccessContact && (
+                <ContactDialog
+                    customerId={customerId || undefined}
+                    customerName={customer?.company}
+                    contact={{ ...portalAccessContact, portalAccess: true }}
+                    open={!!portalAccessContact}
+                    onOpenChange={(open) => { if (!open) setPortalAccessContact(null); }}
+                    onSuccess={() => setPortalAccessContact(null)}
+                    initialStep={2}
                 />
             )}
         </div>

@@ -78,7 +78,8 @@ export function ContactDialog({
     contact,
     open: controlledOpen,
     onOpenChange: controlledOnOpenChange,
-    onSuccess
+    onSuccess,
+    initialStep = 1
 }: {
     children?: React.ReactNode;
     customerId?: string;
@@ -87,8 +88,9 @@ export function ContactDialog({
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     onSuccess?: () => void;
+    initialStep?: number;
 }) {
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(initialStep);
     const [internalOpen, setInternalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -148,12 +150,13 @@ export function ContactDialog({
     const handleOpenChange = (newOpen: boolean) => {
         setOpen(newOpen);
         if (newOpen) {
-            // Re-initialize data when opening
+            // Re-initialize data and step when opening
             setFormData(getInitialFormData());
+            setStep(initialStep);
         } else {
             // Reset state slightly delayed for animation
             setTimeout(() => {
-                setStep(1);
+                setStep(initialStep);
                 setShowPassword(false);
                 if (!contact) {
                     setFormData(defaultFormData);
