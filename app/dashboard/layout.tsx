@@ -55,6 +55,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [rightSidebarOpen, setRightSidebarOpen] = useState(true); // Default expanded
     const [setupOpen, setSetupOpen] = useState(false);
     const [staffProfile, setStaffProfile] = useState<StaffProfile | null>(null);
+    const [expandedSections, setExpandedSections] = useState<string[]>(["Sales"]); // Default expanded
 
     const RIGHT_SIDEBAR_KEY = "dashboard_right_sidebar_collapsed";
 
@@ -183,24 +184,59 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const navItems = [
         { href: "/dashboard", label: "Home", icon: Home, module: "home" },
-        { href: "/dashboard/customers", label: "Customers", icon: Users, module: "customers" },
         {
             label: "Sales",
             icon: Zap,
-            module: "invoices",
+            module: "sales",
             children: [
-                { href: "/dashboard/sales/estimates", label: "Estimates" },
-                { href: "/dashboard/invoices", label: "Invoices" },
+                { href: "/dashboard/leads", label: "Leads", module: "leads" },
+                { href: "/dashboard/customers", label: "Customers", module: "customers" },
+                { href: "/dashboard/sales/estimates", label: "Estimates", module: "invoices" },
+                { href: "/dashboard/contracts", label: "Contracts", module: "contracts" },
             ]
         },
-        { href: "/dashboard/expenses", label: "Expenses", icon: FileText, module: "expenses" },
-        { href: "/dashboard/contracts", label: "Contracts", icon: Scroll, module: "contracts" },
-        { href: "/dashboard/projects", label: "Projects", icon: FolderKanban, module: "projects" },
-        { href: "/dashboard/tasks", label: "Tasks", icon: CheckSquare, module: "tasks" },
-        { href: "/dashboard/support", label: "Support", icon: LifeBuoy, module: "support" },
-        { href: "/dashboard/leads", label: "Leads", icon: Target, module: "leads" },
-        { href: "/dashboard/knowledge-base", label: "Knowledge Base", icon: Book, module: "knowledge" },
-        { href: "/dashboard/reports", label: "Reports", icon: BarChart, module: "reports" },
+        {
+            label: "Marketing",
+            icon: Book,
+            module: "marketing",
+            children: [
+                { href: "/dashboard/knowledge-base", label: "Knowledge Base", module: "knowledge" },
+            ]
+        },
+        {
+            label: "Projects",
+            icon: FolderKanban,
+            module: "projects",
+            children: [
+                { href: "/dashboard/projects", label: "Projects", module: "projects" },
+                { href: "/dashboard/tasks", label: "Tasks", module: "tasks" },
+            ]
+        },
+        {
+            label: "Accounting",
+            icon: DollarSign,
+            module: "accounting",
+            children: [
+                { href: "/dashboard/invoices", label: "Invoices", module: "invoices" },
+                { href: "/dashboard/expenses", label: "Expenses", module: "expenses" },
+            ]
+        },
+        {
+            label: "Support",
+            icon: LifeBuoy,
+            module: "support",
+            children: [
+                { href: "/dashboard/support", label: "Support", module: "support" },
+            ]
+        },
+        {
+            label: "Reports",
+            icon: BarChart,
+            module: "reports",
+            children: [
+                { href: "/dashboard/reports", label: "Reports", module: "reports" },
+            ]
+        },
     ];
 
     // Filter nav items based on user permissions
@@ -346,22 +382,51 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 const isActive = item.href ? pathname === item.href : false;
 
                                 if (item.children) {
+                                    const isExpanded = expandedSections.includes(item.label);
+                                    const hasActiveChild = item.children.some(child => pathname === child.href || pathname.startsWith(child.href + '/'));
+
+                                    const toggleSection = () => {
+                                        setExpandedSections(prev =>
+                                            prev.includes(item.label)
+                                                ? prev.filter(s => s !== item.label)
+                                                : [...prev, item.label]
+                                        );
+                                    };
+
                                     return (
                                         <div key={item.label}>
-                                            <div className="flex items-center gap-2 p-2 rounded-lg text-[#65676B]">
-                                                <div className="w-8 h-8 rounded-full bg-[#E4E6EB] flex items-center justify-center">
-                                                    <Icon className="h-4 w-4" />
+                                            <button
+                                                onClick={toggleSection}
+                                                className={cn(
+                                                    "flex items-center justify-between w-full p-2 rounded-lg transition-colors",
+                                                    hasActiveChild ? "text-[#0A66C2]" : "text-[#65676B] hover:bg-[#E4E6EB]"
+                                                )}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <div className={cn(
+                                                        "w-8 h-8 rounded-full flex items-center justify-center",
+                                                        hasActiveChild ? "bg-[#0A66C2] text-white" : "bg-[#E4E6EB]"
+                                                    )}>
+                                                        <Icon className="h-4 w-4" />
+                                                    </div>
+                                                    <span className="font-medium text-sm">{item.label}</span>
                                                 </div>
-                                                <span className="font-medium text-sm">{item.label}</span>
-                                            </div>
-                                            <div className="ml-5 space-y-0.5">
+                                                <ChevronDown className={cn(
+                                                    "h-4 w-4 transition-transform duration-200",
+                                                    isExpanded ? "rotate-180" : ""
+                                                )} />
+                                            </button>
+                                            <div className={cn(
+                                                "ml-5 space-y-0.5 overflow-hidden transition-all duration-200",
+                                                isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                                            )}>
                                                 {item.children.map((child) => (
                                                     <Link
                                                         key={child.href}
                                                         href={child.href}
                                                         className={cn(
                                                             "block py-1.5 px-3 rounded-lg text-sm transition-colors",
-                                                            pathname === child.href
+                                                            pathname === child.href || pathname.startsWith(child.href + '/')
                                                                 ? "bg-[#E7F3FF] text-[#0A66C2] font-medium"
                                                                 : "text-[#65676B] hover:bg-[#E4E6EB]"
                                                         )}
