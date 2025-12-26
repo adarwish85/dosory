@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -12,10 +12,27 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+const LEAD_SIDEBAR_KEY = "lead_sidebar_collapsed";
+
 export function LeadSidebar() {
     const pathname = usePathname();
     const { lead, loading, leadId } = useLead();
-    const [collapsed, setCollapsed] = useState(false);
+    const [collapsed, setCollapsed] = useState(true); // Default collapsed
+
+    // Load preference from localStorage on mount
+    useEffect(() => {
+        const saved = localStorage.getItem(LEAD_SIDEBAR_KEY);
+        if (saved !== null) {
+            setCollapsed(saved === "true");
+        }
+    }, []);
+
+    // Save preference to localStorage when changed
+    const handleToggleCollapse = () => {
+        const newValue = !collapsed;
+        setCollapsed(newValue);
+        localStorage.setItem(LEAD_SIDEBAR_KEY, String(newValue));
+    };
 
     const menuItems = [
         { icon: LayoutDashboard, label: "Overview", href: `/dashboard/leads/${leadId}` },
@@ -37,7 +54,7 @@ export function LeadSidebar() {
             )}>
                 {/* Edge Toggle Button - Fixed Position */}
                 <button
-                    onClick={() => setCollapsed(!collapsed)}
+                    onClick={handleToggleCollapse}
                     className="absolute -right-3 top-16 z-10 h-6 w-6 bg-white border border-gray-200 rounded-md shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors"
                 >
                     {collapsed ? (
