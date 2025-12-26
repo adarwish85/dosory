@@ -361,6 +361,7 @@ export default function ContactsPage() {
                         <Input
                             placeholder="Search..."
                             className="pl-9"
+                            autoComplete="off"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />

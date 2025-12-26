@@ -52,9 +52,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { profile } = useUserProfile();
     const { permissions, isAdmin, loading: permissionsLoading } = usePermissions();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
+    const [rightSidebarOpen, setRightSidebarOpen] = useState(true); // Default expanded
     const [setupOpen, setSetupOpen] = useState(false);
     const [staffProfile, setStaffProfile] = useState<StaffProfile | null>(null);
+
+    const RIGHT_SIDEBAR_KEY = "dashboard_right_sidebar_collapsed";
+
+    // Load right sidebar preference from localStorage
+    useEffect(() => {
+        const saved = localStorage.getItem(RIGHT_SIDEBAR_KEY);
+        if (saved !== null) {
+            setRightSidebarOpen(saved !== "true"); // saved "true" means collapsed, so inverse for open state
+        }
+    }, []);
+
+    // Handler to toggle right sidebar and persist preference
+    const handleToggleRightSidebar = () => {
+        const newValue = !rightSidebarOpen;
+        setRightSidebarOpen(newValue);
+        localStorage.setItem(RIGHT_SIDEBAR_KEY, String(!newValue)); // Save collapsed state
+    };
 
     // Enforce Tenant Subdomain
     useEffect(() => {
@@ -410,7 +427,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                         {/* Toggle Right Sidebar Button */}
                         <button
-                            onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+                            onClick={handleToggleRightSidebar}
                             className={cn(
                                 "hidden lg:flex fixed z-50 items-center justify-center w-3 h-8 bg-white rounded-l-md shadow-sm border-y border-l border-[#E0E0E0] hover:bg-[#F3F2EF] transition-all duration-300",
                                 isImpersonating ? "top-28" : "top-[70px]",
