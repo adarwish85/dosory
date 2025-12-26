@@ -38,7 +38,6 @@ export function LeadSidebar() {
         { icon: LayoutDashboard, label: "Overview", href: `/dashboard/leads/${leadId}` },
         { icon: User, label: "Profile", href: `/dashboard/leads/${leadId}/profile` },
         { icon: StickyNote, label: "Notes", href: `/dashboard/leads/${leadId}/notes` },
-        { icon: FileSignature, label: "Proposals", href: `/dashboard/leads/${leadId}/proposals` },
         { icon: Calculator, label: "Estimates", href: `/dashboard/leads/${leadId}/estimates` },
         { icon: CheckSquare, label: "Tasks", href: `/dashboard/leads/${leadId}/tasks` },
         { icon: Paperclip, label: "Files", href: `/dashboard/leads/${leadId}/files` },

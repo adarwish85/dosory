@@ -8,7 +8,7 @@ import { useCustomer } from "./customer-context";
 import {
     User, Users, StickyNote, FileText, Receipt,
     CreditCard, FileSignature, CheckSquare,
-    Calculator, Clock, LifeBuoy, Folder, Paperclip,
+    Calculator, LifeBuoy, Folder, Paperclip,
     Lock, Bell, MapPin, Globe, ArrowLeft, ChevronLeft, ChevronRight, LayoutDashboard, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,10 +45,8 @@ export function CustomerSidebar() {
         { icon: FileText, label: "Statement", href: `/dashboard/customers/${customerId}/statement` },
         { icon: Receipt, label: "Invoices", href: `/dashboard/customers/${customerId}/invoices` },
         { icon: CreditCard, label: "Payments", href: `/dashboard/customers/${customerId}/payments` },
-        { icon: FileSignature, label: "Proposals", href: `/dashboard/customers/${customerId}/proposals` },
         { icon: FileText, label: "Credit Notes", href: `/dashboard/customers/${customerId}/credit-notes` },
         { icon: Calculator, label: "Estimates", href: `/dashboard/customers/${customerId}/estimates` },
-        { icon: Clock, label: "Subscriptions", href: `/dashboard/customers/${customerId}/subscriptions` },
         { icon: Receipt, label: "Expenses", href: `/dashboard/customers/${customerId}/expenses` },
         { icon: FileSignature, label: "Contracts", href: `/dashboard/customers/${customerId}/contracts` },
         { icon: Folder, label: "Projects", href: `/dashboard/customers/${customerId}/projects` },

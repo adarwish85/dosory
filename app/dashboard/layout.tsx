@@ -15,7 +15,7 @@ import {
     Bell, Search, Menu, Building2, Store, Monitor, Wallet,
     Briefcase, FileSignature, Receipt, Database, LayoutTemplate,
     FolderKanban, LogOut, Loader2, DollarSign, X,
-    User, Zap, RefreshCcw, Scroll, LifeBuoy, Target, Book, BarChart,
+    User, Zap, Scroll, LifeBuoy, Target, Book, BarChart,
     Plus, ChevronDown, Home, Calendar, Clock, PanelRightClose, PanelRightOpen
 } from "lucide-react";
 import { PlatformLogo, usePlatformSettings } from "@/lib/hooks/use-platform-settings";
@@ -189,12 +189,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             icon: Zap,
             module: "invoices",
             children: [
-                { href: "/dashboard/sales/proposals", label: "Proposals" },
                 { href: "/dashboard/sales/estimates", label: "Estimates" },
                 { href: "/dashboard/invoices", label: "Invoices" },
             ]
         },
-        { href: "/dashboard/subscriptions", label: "Subscriptions", icon: RefreshCcw, module: "subscriptions" },
         { href: "/dashboard/expenses", label: "Expenses", icon: FileText, module: "expenses" },
         { href: "/dashboard/contracts", label: "Contracts", icon: Scroll, module: "contracts" },
         { href: "/dashboard/projects", label: "Projects", icon: FolderKanban, module: "projects" },

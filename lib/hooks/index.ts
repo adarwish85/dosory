@@ -12,11 +12,10 @@ export { useInvoices, useInvoice } from "./use-invoices";
 // Projects & Tasks
 export { useProjects, useProject, useTasks, useTask } from "./use-projects";
 
-// Expenses, Subscriptions & Contracts
+// Expenses & Contracts
 export {
     useExpenses,
     useExpenseCategories,
-    useSubscriptions,
     useContracts,
 } from "./use-expenses";
 
@@ -40,5 +39,6 @@ export {
     useOrganization,
 } from "./use-settings";
 
-// Sales (Estimates, Proposals)
-export { useEstimates, useProposals } from "./use-sales";
+// Sales (Estimates)
+export { useEstimates } from "./use-sales";
+

@@ -5,10 +5,9 @@ import { pdf } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import InvoicePDF from "@/components/pdf/InvoicePDF";
-import ProposalPDF from "@/components/pdf/ProposalPDF";
 
 interface DownloadPDFButtonProps {
-    type: "invoice" | "proposal";
+    type: "invoice";
     data: any;
     orgName?: string;
     orgEmail?: string;
@@ -34,64 +33,30 @@ export default function DownloadPDFButton({
         setGenerating(true);
 
         try {
-            let doc;
-            let defaultFilename;
-
-            if (type === "invoice") {
-                doc = (
-                    <InvoicePDF
-                        invoice={{
-                            number: data.number || data.id,
-                            status: data.status,
-                            createdAt: formatDate(data.createdAt),
-                            dueDate: formatDate(data.dueDate),
-                            customerName: data.customerName || "Customer",
-                            customerEmail: data.customerEmail,
-                            customerAddress: data.customerAddress,
-                            items: data.items || [],
-                            subtotal: data.subtotal || data.total || 0,
-                            tax: data.tax || 0,
-                            total: data.total || 0,
-                            amountPaid: data.amountPaid || 0,
-                            amountDue: data.amountDue || data.total || 0,
-                            currency: data.currency || "USD",
-                            notes: data.notes,
-                        }}
-                        orgName={orgName}
-                        orgEmail={orgEmail}
-                    />
-                );
-                defaultFilename = `Invoice-${data.number || data.id}.pdf`;
-            } else {
-                const portalUrl = typeof window !== "undefined"
-                    ? `${window.location.origin}/portal/${data.id}`
-                    : "";
-
-                doc = (
-                    <ProposalPDF
-                        proposal={{
-                            number: data.number || data.id,
-                            subject: data.subject || "Proposal",
-                            status: data.status,
-                            createdAt: formatDate(data.createdAt),
-                            openTill: formatDate(data.openTill),
-                            customerName: data.customerName || "Customer",
-                            customerEmail: data.customerEmail,
-                            content: data.content,
-                            items: data.items || [],
-                            subtotal: data.subtotal || data.total || 0,
-                            tax: data.tax || 0,
-                            total: data.total || 0,
-                            currency: data.currency || "USD",
-                            terms: data.terms,
-                        }}
-                        orgName={orgName}
-                        orgEmail={orgEmail}
-                        portalUrl={portalUrl}
-                    />
-                );
-                defaultFilename = `Proposal-${data.number || data.id}.pdf`;
-            }
+            const doc = (
+                <InvoicePDF
+                    invoice={{
+                        number: data.number || data.id,
+                        status: data.status,
+                        createdAt: formatDate(data.createdAt),
+                        dueDate: formatDate(data.dueDate),
+                        customerName: data.customerName || "Customer",
+                        customerEmail: data.customerEmail,
+                        customerAddress: data.customerAddress,
+                        items: data.items || [],
+                        subtotal: data.subtotal || data.total || 0,
+                        tax: data.tax || 0,
+                        total: data.total || 0,
+                        amountPaid: data.amountPaid || 0,
+                        amountDue: data.amountDue || data.total || 0,
+                        currency: data.currency || "USD",
+                        notes: data.notes,
+                    }}
+                    orgName={orgName}
+                    orgEmail={orgEmail}
+                />
+            );
+            const defaultFilename = `Invoice-${data.number || data.id}.pdf`;
 
             // Generate PDF blob
             const blob = await pdf(doc).toBlob();
