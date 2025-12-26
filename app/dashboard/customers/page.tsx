@@ -365,8 +365,17 @@ export default function CustomersPage() {
     }, [savedViews, viewsLoaded]);
 
     const applyView = useCallback((view: SavedView) => {
-        setColumnVisibility(view.columnVisibility);
-        setColumnOrder(view.columnOrder);
+        // Merge saved columnOrder with any new columns from DEFAULT_COLUMNS that aren't in the saved view
+        const savedOrder = view.columnOrder || [];
+        const allColumnKeys = DEFAULT_COLUMNS.map(c => c.key);
+        const missingColumns = allColumnKeys.filter(k => !savedOrder.includes(k));
+        const mergedOrder = [...savedOrder, ...missingColumns];
+
+        // Merge columnVisibility to include new columns (default to their defaultVisible value)
+        const mergedVisibility = { ...getDefaultVisibleColumns(), ...view.columnVisibility };
+
+        setColumnVisibility(mergedVisibility);
+        setColumnOrder(mergedOrder);
         setSortKey(view.sortKey);
         setSortDirection(view.sortDirection);
         setStatusFilter(view.statusFilter);
@@ -396,6 +405,8 @@ export default function CustomersPage() {
             }
             return v;
         }));
+        setShowSaveViewDialog(false);
+        // Note: Toast imported from sonner should be added if not already
     }, [activeViewId, columnVisibility, columnOrder, sortKey, sortDirection, statusFilter, rowDensity, columnWidths]);
 
     const saveCurrentView = useCallback((name: string, setAsDefault: boolean = false) => {
@@ -634,10 +645,10 @@ export default function CustomersPage() {
         switch (col.key) {
             case "id": return <span className="text-gray-500 font-mono text-xs">{customer.id.substring(0, 6)}</span>;
             case "company": return (
-                <div className="flex flex-col relative group">
+                <div className="flex flex-col relative group min-w-0">
                     <HoverCard>
                         <HoverCardTrigger asChild>
-                            <Link href={`/dashboard/customers/${customer.id}`} className="font-medium text-blue-600 hover:underline block w-fit">
+                            <Link href={`/dashboard/customers/${customer.id}`} className="font-medium text-blue-600 hover:underline block truncate max-w-full">
                                 {customer.company}
                             </Link>
                         </HoverCardTrigger>
@@ -647,7 +658,7 @@ export default function CustomersPage() {
                     </HoverCard>
 
                     {rowDensity === "comfortable" && (
-                        <div className="flex gap-2 text-[10px] text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-0 bg-white/90 backdrop-blur-sm z-10 pr-2 py-0.5 rounded shadow-sm border border-gray-100 pointer-events-auto">
+                        <div className="flex gap-2 text-[10px] text-gray-400 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Link href={`/dashboard/customers/${customer.id}`} className="hover:text-blue-600 flex items-center gap-0.5"><ExternalLink className="h-2.5 w-2.5" /> View</Link>
                             <span className="text-gray-300">|</span>
                             <Link href={`/dashboard/customers/${customer.id}/profile`} className="hover:text-blue-600 flex items-center gap-0.5"><Pencil className="h-2.5 w-2.5" /> Edit</Link>
@@ -888,8 +899,8 @@ export default function CustomersPage() {
                                             {orderedColumns.map((col) => columnVisibility[col.key] && (
                                                 <TableCell
                                                     key={col.key}
-                                                    style={{ width: columnWidths[col.key] || 100, minWidth: columnWidths[col.key] || 100 }}
-                                                    className={`${col.key === "company" ? "overflow-visible" : "overflow-hidden text-ellipsis"} whitespace-nowrap ${col.key === "company" ? `sticky left-[48px] z-30 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${selectionMode === "all" || selectedCustomers.includes(customer.id) ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50` : ""}`}
+                                                    style={{ width: columnWidths[col.key] || 100, minWidth: columnWidths[col.key] || 100, maxWidth: columnWidths[col.key] || 100 }}
+                                                    className={`overflow-hidden text-ellipsis whitespace-nowrap ${col.key === "company" ? `sticky left-[48px] z-30 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${selectionMode === "all" || selectedCustomers.includes(customer.id) ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50` : ""}`}
                                                 >
                                                     {renderCell(customer, col)}
                                                 </TableCell>
