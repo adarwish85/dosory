@@ -18,7 +18,7 @@ const CUSTOMER_SIDEBAR_KEY = "customer_sidebar_collapsed";
 
 export function CustomerSidebar() {
     const pathname = usePathname();
-    const { customer, contacts, loading, customerId } = useCustomer();
+    const { customer, contacts, loading, customerId, recordCounts } = useCustomer();
     const [collapsed, setCollapsed] = useState(true); // Default collapsed
 
     // Load preference from localStorage on mount
@@ -40,21 +40,21 @@ export function CustomerSidebar() {
     const menuItems = [
         { icon: LayoutDashboard, label: "Overview", href: `/dashboard/customers/${customerId}` },
         { icon: User, label: "Profile", href: `/dashboard/customers/${customerId}/profile` },
-        { icon: Users, label: "Contacts", href: `/dashboard/customers/${customerId}/contacts`, badge: contacts.length || undefined },
-        { icon: StickyNote, label: "Notes", href: `/dashboard/customers/${customerId}/notes` },
+        { icon: Users, label: "Contacts", href: `/dashboard/customers/${customerId}/contacts`, badge: recordCounts.contacts || undefined },
+        { icon: StickyNote, label: "Notes", href: `/dashboard/customers/${customerId}/notes`, badge: recordCounts.notes || undefined },
         { icon: FileText, label: "Statement", href: `/dashboard/customers/${customerId}/statement` },
-        { icon: Receipt, label: "Invoices", href: `/dashboard/customers/${customerId}/invoices` },
-        { icon: CreditCard, label: "Payments", href: `/dashboard/customers/${customerId}/payments` },
-        { icon: FileText, label: "Credit Notes", href: `/dashboard/customers/${customerId}/credit-notes` },
-        { icon: Calculator, label: "Estimates", href: `/dashboard/customers/${customerId}/estimates` },
-        { icon: Receipt, label: "Expenses", href: `/dashboard/customers/${customerId}/expenses` },
-        { icon: FileSignature, label: "Contracts", href: `/dashboard/customers/${customerId}/contracts` },
-        { icon: Folder, label: "Projects", href: `/dashboard/customers/${customerId}/projects` },
-        { icon: CheckSquare, label: "Tasks", href: `/dashboard/customers/${customerId}/tasks` },
-        { icon: LifeBuoy, label: "Tickets", href: `/dashboard/customers/${customerId}/tickets` },
-        { icon: Paperclip, label: "Files", href: `/dashboard/customers/${customerId}/files` },
+        { icon: Receipt, label: "Invoices", href: `/dashboard/customers/${customerId}/invoices`, badge: recordCounts.invoices || undefined },
+        { icon: CreditCard, label: "Payments", href: `/dashboard/customers/${customerId}/payments`, badge: recordCounts.payments || undefined },
+        { icon: FileText, label: "Credit Notes", href: `/dashboard/customers/${customerId}/credit-notes`, badge: recordCounts.creditNotes || undefined },
+        { icon: Calculator, label: "Estimates", href: `/dashboard/customers/${customerId}/estimates`, badge: recordCounts.estimates || undefined },
+        { icon: Receipt, label: "Expenses", href: `/dashboard/customers/${customerId}/expenses`, badge: recordCounts.expenses || undefined },
+        { icon: FileSignature, label: "Contracts", href: `/dashboard/customers/${customerId}/contracts`, badge: recordCounts.contracts || undefined },
+        { icon: Folder, label: "Projects", href: `/dashboard/customers/${customerId}/projects`, badge: recordCounts.projects || undefined },
+        { icon: CheckSquare, label: "Tasks", href: `/dashboard/customers/${customerId}/tasks`, badge: recordCounts.tasks || undefined },
+        { icon: LifeBuoy, label: "Tickets", href: `/dashboard/customers/${customerId}/tickets`, badge: recordCounts.tickets || undefined },
+        { icon: Paperclip, label: "Files", href: `/dashboard/customers/${customerId}/files`, badge: recordCounts.files || undefined },
         { icon: Lock, label: "Vault", href: `/dashboard/customers/${customerId}/vault` },
-        { icon: Bell, label: "Reminders", href: `/dashboard/customers/${customerId}/reminders` },
+        { icon: Bell, label: "Reminders", href: `/dashboard/customers/${customerId}/reminders`, badge: recordCounts.reminders || undefined },
         { icon: MapPin, label: "Map", href: `/dashboard/customers/${customerId}/map` },
     ];
 

@@ -2,12 +2,27 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useParams } from "next/navigation";
-import { doc, getDoc, collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, onSnapshot, orderBy, getCountFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Customer, Contact } from "@/lib/types";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 
-// Local Contact interface removed. Using @/lib/types Contact.
+// Record counts for sidebar badges
+interface RecordCounts {
+    contacts: number;
+    notes: number;
+    invoices: number;
+    payments: number;
+    creditNotes: number;
+    estimates: number;
+    expenses: number;
+    contracts: number;
+    projects: number;
+    tasks: number;
+    tickets: number;
+    files: number;
+    reminders: number;
+}
 
 interface CustomerContextType {
     customer: Customer | null;
@@ -15,7 +30,24 @@ interface CustomerContextType {
     loading: boolean;
     error: Error | null;
     customerId: string | null;
+    recordCounts: RecordCounts;
 }
+
+const defaultCounts: RecordCounts = {
+    contacts: 0,
+    notes: 0,
+    invoices: 0,
+    payments: 0,
+    creditNotes: 0,
+    estimates: 0,
+    expenses: 0,
+    contracts: 0,
+    projects: 0,
+    tasks: 0,
+    tickets: 0,
+    files: 0,
+    reminders: 0,
+};
 
 const CustomerContext = createContext<CustomerContextType>({
     customer: null,
@@ -23,6 +55,7 @@ const CustomerContext = createContext<CustomerContextType>({
     loading: true,
     error: null,
     customerId: null,
+    recordCounts: defaultCounts,
 });
 
 export function useCustomer() {
@@ -46,6 +79,7 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
+    const [recordCounts, setRecordCounts] = useState<RecordCounts>(defaultCounts);
 
     useEffect(() => {
         if (!customerId) {
@@ -94,6 +128,7 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
                 ...doc.data(),
             })) as Contact[];
             setContacts(contactsData);
+            setRecordCounts(prev => ({ ...prev, contacts: contactsData.length }));
         }, (err) => {
             console.error("Error loading contacts:", err);
         });
@@ -101,8 +136,54 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
         return () => unsubscribe();
     }, [customerId, profile?.orgId]);
 
+    // Fetch record counts for all sections
+    useEffect(() => {
+        if (!customerId || !profile?.orgId) return;
+
+        const fetchCounts = async () => {
+            const orgId = profile.orgId;
+            const collections = [
+                { key: "notes", collection: "notes" },
+                { key: "invoices", collection: "invoices" },
+                { key: "payments", collection: "payments" },
+                { key: "creditNotes", collection: "creditNotes" },
+                { key: "estimates", collection: "estimates" },
+                { key: "expenses", collection: "expenses" },
+                { key: "contracts", collection: "contracts" },
+                { key: "projects", collection: "projects" },
+                { key: "tasks", collection: "tasks" },
+                { key: "tickets", collection: "tickets" },
+                { key: "files", collection: "customerFiles" },
+                { key: "reminders", collection: "reminders" },
+            ];
+
+            const counts: Partial<RecordCounts> = {};
+
+            await Promise.all(
+                collections.map(async ({ key, collection: collName }) => {
+                    try {
+                        const q = query(
+                            collection(db, collName),
+                            where("orgId", "==", orgId),
+                            where("customerId", "==", customerId)
+                        );
+                        const snapshot = await getCountFromServer(q);
+                        counts[key as keyof RecordCounts] = snapshot.data().count;
+                    } catch {
+                        // Collection may not have customerId field - ignore silently
+                        counts[key as keyof RecordCounts] = 0;
+                    }
+                })
+            );
+
+            setRecordCounts(prev => ({ ...prev, ...counts }));
+        };
+
+        fetchCounts();
+    }, [customerId, profile?.orgId]);
+
     return (
-        <CustomerContext.Provider value={{ customer, contacts, loading, error, customerId }}>
+        <CustomerContext.Provider value={{ customer, contacts, loading, error, customerId, recordCounts }}>
             {children}
         </CustomerContext.Provider>
     );
