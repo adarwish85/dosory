@@ -1,20 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { useInvoices } from "@/lib/hooks/use-invoices";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, FileDown, RefreshCw, Loader2 } from "lucide-react";
+import { Plus, Search, FileDown, RefreshCw, Loader2, Eye, Pencil, Trash2 } from "lucide-react";
 import { StatsGroup } from "@/components/dashboard/customers/stats-group";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { format } from "date-fns";
+import { InvoiceSheet } from "@/components/dashboard/customers/invoices/invoice-sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function InvoicesPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { invoices, loading: invoicesLoading, invoiceStats } = useInvoices({ customerId: customerId || undefined });
+    const [showInvoiceSheet, setShowInvoiceSheet] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     if (customerLoading || invoicesLoading) {
         return (
@@ -54,106 +59,155 @@ export default function InvoicesPage() {
         return status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
     };
 
-    return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold text-gray-900">Invoices</h2>
-            </div>
+    // Filter invoices
+    const filteredInvoices = searchQuery
+        ? invoices.filter(inv =>
+            String(inv.number).includes(searchQuery) ||
+            inv.status?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        : invoices;
 
-            <div className="flex gap-2">
-                <Link href={`/dashboard/invoices/new?customerId=${customerId}`}>
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
+    return (
+        <TooltipProvider>
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-bold text-gray-900">Invoices</h2>
+                </div>
+
+                <div className="flex gap-2">
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={() => setShowInvoiceSheet(true)}>
                         <Plus className="mr-2 h-4 w-4" /> Create New Invoice
                     </Button>
-                </Link>
-                <Button variant="outline" className="text-gray-700">
-                    <FileDown className="mr-2 h-4 w-4" /> Zip Invoices
-                </Button>
-            </div>
-
-            <div className="flex justify-end">
-                <Select defaultValue="2025">
-                    <SelectTrigger className="w-[100px]">
-                        <SelectValue placeholder="2025" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="2025">2025</SelectItem>
-                        <SelectItem value="2024">2024</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-
-            <StatsGroup
-                items={[
-                    { label: "Outstanding Invoices", amount: formatCurrency(invoiceStats?.totalDue || 0), color: "orange" },
-                    { label: "Past Due Invoices", amount: formatCurrency(invoiceStats?.amountsByStatus?.overdue || 0), color: "default" },
-                    { label: "Paid Invoices", amount: formatCurrency(invoiceStats?.totalPaid || 0), color: "green" },
-                ]}
-            />
-
-            <div className="space-y-4">
-                <div className="flex justify-between items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <Select defaultValue="25">
-                            <SelectTrigger className="w-[70px]">
-                                <SelectValue placeholder="25" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="25">25</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline">Export</Button>
-                        <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
-                    </div>
-                    <div className="relative w-64">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search..." className="pl-9" />
-                    </div>
+                    <Button variant="outline" className="text-gray-700">
+                        <FileDown className="mr-2 h-4 w-4" /> Zip Invoices
+                    </Button>
                 </div>
 
-                <div className="border rounded-md bg-white">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Invoice #</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Amount</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Total Tax</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Date</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Due Date</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {invoices.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                                        No invoices found for {customer?.company || "this customer"}
-                                    </TableCell>
+                <div className="flex justify-end">
+                    <Select defaultValue="2025">
+                        <SelectTrigger className="w-[100px]">
+                            <SelectValue placeholder="2025" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="2025">2025</SelectItem>
+                            <SelectItem value="2024">2024</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <StatsGroup
+                    items={[
+                        { label: "Outstanding Invoices", amount: formatCurrency(invoiceStats?.totalDue || 0), color: "orange" },
+                        { label: "Past Due Invoices", amount: formatCurrency(invoiceStats?.amountsByStatus?.overdue || 0), color: "default" },
+                        { label: "Paid Invoices", amount: formatCurrency(invoiceStats?.totalPaid || 0), color: "green" },
+                    ]}
+                />
+
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <Select defaultValue="25">
+                                <SelectTrigger className="w-[70px]">
+                                    <SelectValue placeholder="25" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="25">25</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Button variant="outline">Export</Button>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="outline" size="icon">
+                                        <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Refresh</TooltipContent>
+                            </Tooltip>
+                        </div>
+                        <div className="relative w-64">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                            <Input
+                                placeholder="Search..."
+                                className="pl-9"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                autoComplete="new-password"
+                                name="invoices-search-nofill"
+                                data-lpignore="true"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="border rounded-md bg-white">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-gray-50 hover:bg-gray-50">
+                                    <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Invoice #</TableHead>
+                                    <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Amount</TableHead>
+                                    <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Total Tax</TableHead>
+                                    <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Date</TableHead>
+                                    <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Due Date</TableHead>
+                                    <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Status</TableHead>
+                                    <TableHead className="font-semibold text-gray-900 bg-gray-100/50 w-20">Actions</TableHead>
                                 </TableRow>
-                            ) : (
-                                invoices.map((invoice) => (
-                                    <TableRow key={invoice.id}>
-                                        <TableCell className="font-medium text-blue-600 hover:underline cursor-pointer">
-                                            <Link href={`/dashboard/invoices/${invoice.id}`}>
-                                                INV-{String(invoice.number).padStart(6, "0")}
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell>{formatCurrency(invoice.total)}</TableCell>
-                                        <TableCell>{formatCurrency(invoice.taxTotal || 0)}</TableCell>
-                                        <TableCell>{formatDate(invoice.date)}</TableCell>
-                                        <TableCell>{formatDate(invoice.dueDate)}</TableCell>
-                                        <TableCell>
-                                            <Badge className={`${getStatusBadge(invoice.status)} font-normal`}>
-                                                {formatStatus(invoice.status)}
-                                            </Badge>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredInvoices.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                                            {searchQuery ? "No invoices match your search" : `No invoices found for ${customer?.company || "this customer"}`}
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                ) : (
+                                    filteredInvoices.map((invoice) => (
+                                        <TableRow key={invoice.id} className="group">
+                                            <TableCell className="font-medium text-blue-600 hover:underline cursor-pointer">
+                                                <Link href={`/dashboard/invoices/${invoice.id}`}>
+                                                    INV-{String(invoice.number).padStart(6, "0")}
+                                                </Link>
+                                            </TableCell>
+                                            <TableCell>{formatCurrency(invoice.total)}</TableCell>
+                                            <TableCell>{formatCurrency(invoice.taxTotal || 0)}</TableCell>
+                                            <TableCell>{formatDate(invoice.date)}</TableCell>
+                                            <TableCell>{formatDate(invoice.dueDate)}</TableCell>
+                                            <TableCell>
+                                                <Badge className={`${getStatusBadge(invoice.status)} font-normal`}>
+                                                    {formatStatus(invoice.status)}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                                                                <Link href={`/dashboard/invoices/${invoice.id}`}>
+                                                                    <Eye className="h-4 w-4 text-gray-500" />
+                                                                </Link>
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>View</TooltipContent>
+                                                    </Tooltip>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
+
+                {/* Invoice Creation Sheet */}
+                <InvoiceSheet
+                    open={showInvoiceSheet}
+                    onOpenChange={setShowInvoiceSheet}
+                    customerId={customerId || ""}
+                    customerName={customer?.company}
+                    onSuccess={() => { }}
+                />
             </div>
-        </div>
+        </TooltipProvider>
     );
 }
