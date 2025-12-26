@@ -1,10 +1,20 @@
 module.exports = {
     ci: {
         collect: {
-            url: ['http://localhost:3000/', 'http://localhost:3000/login'],
+            url: [
+                'http://localhost:3000/',
+                'http://localhost:3000/login',
+                'http://localhost:3000/dashboard',
+                'http://localhost:3000/dashboard/customers',
+                'http://localhost:3000/dashboard/invoices',
+            ],
             startServerCommand: 'npm run start',
             startServerReadyPattern: 'ready started server',
             numberOfRuns: 3,
+            settings: {
+                preset: 'desktop',
+                chromeFlags: '--no-sandbox --headless',
+            },
         },
         assert: {
             assertions: {
