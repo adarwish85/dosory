@@ -1,0 +1,181 @@
+{
+    "common": {
+        "save": "Save",
+        "saveSettings": "Save Settings",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "view": "View",
+        "create": "Create",
+        "add": "Add",
+        "remove": "Remove",
+        "search": "Search",
+        "filter": "Filter",
+        "export": "Export",
+        "import": "Import",
+        "loading": "Loading...",
+        "noData": "No data available",
+        "actions": "Actions",
+        "status": "Status",
+        "date": "Date",
+        "amount": "Amount",
+        "total": "Total",
+        "subtotal": "Subtotal",
+        "tax": "Tax",
+        "discount": "Discount",
+        "yes": "Yes",
+        "no": "No",
+        "all": "All",
+        "none": "None",
+        "back": "Back",
+        "next": "Next",
+        "previous": "Previous",
+        "submit": "Submit",
+        "confirm": "Confirm",
+        "close": "Close"
+    },
+    "navigation": {
+        "home": "Home",
+        "dashboard": "Dashboard",
+        "customers": "Customers",
+        "leads": "Leads",
+        "invoices": "Invoices",
+        "estimates": "Estimates",
+        "contracts": "Contracts",
+        "projects": "Projects",
+        "tasks": "Tasks",
+        "expenses": "Expenses",
+        "support": "Support",
+        "reports": "Reports",
+        "settings": "Settings",
+        "setup": "Setup",
+        "sales": "Sales",
+        "marketing": "Marketing",
+        "accounting": "Accounting"
+    },
+    "auth": {
+        "login": "Login",
+        "logout": "Logout",
+        "signUp": "Sign Up",
+        "forgotPassword": "Forgot Password",
+        "resetPassword": "Reset Password",
+        "email": "Email",
+        "password": "Password",
+        "confirmPassword": "Confirm Password"
+    },
+    "customers": {
+        "title": "Customers",
+        "customer": "Customer",
+        "addCustomer": "Add Customer",
+        "editCustomer": "Edit Customer",
+        "deleteCustomer": "Delete Customer",
+        "company": "Company",
+        "contact": "Contact",
+        "phone": "Phone",
+        "address": "Address",
+        "city": "City",
+        "country": "Country",
+        "website": "Website",
+        "notes": "Notes"
+    },
+    "invoices": {
+        "title": "Invoices",
+        "invoice": "Invoice",
+        "invoiceNumber": "Invoice #",
+        "createInvoice": "Create Invoice",
+        "editInvoice": "Edit Invoice",
+        "dueDate": "Due Date",
+        "issueDate": "Issue Date",
+        "amountDue": "Amount Due",
+        "amountPaid": "Amount Paid",
+        "status": {
+            "draft": "Draft",
+            "sent": "Sent",
+            "paid": "Paid",
+            "unpaid": "Unpaid",
+            "partiallyPaid": "Partially Paid",
+            "overdue": "Overdue",
+            "cancelled": "Cancelled"
+        },
+        "stats": {
+            "outstanding": "Outstanding",
+            "pastDue": "Past Due",
+            "totalPaid": "Total Paid"
+        }
+    },
+    "estimates": {
+        "title": "Estimates",
+        "estimate": "Estimate",
+        "createEstimate": "Create Estimate",
+        "validUntil": "Valid Until",
+        "status": {
+            "draft": "Draft",
+            "sent": "Sent",
+            "accepted": "Accepted",
+            "declined": "Declined",
+            "expired": "Expired"
+        }
+    },
+    "projects": {
+        "title": "Projects",
+        "project": "Project",
+        "createProject": "Create Project",
+        "startDate": "Start Date",
+        "deadline": "Deadline",
+        "progress": "Progress",
+        "status": {
+            "notStarted": "Not Started",
+            "inProgress": "In Progress",
+            "onHold": "On Hold",
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+        }
+    },
+    "tasks": {
+        "title": "Tasks",
+        "task": "Task",
+        "createTask": "Create Task",
+        "assignee": "Assignee",
+        "priority": "Priority",
+        "dueDate": "Due Date",
+        "status": {
+            "notStarted": "Not Started",
+            "inProgress": "In Progress",
+            "testing": "Testing",
+            "awaitingFeedback": "Awaiting Feedback",
+            "completed": "Completed"
+        },
+        "priority": {
+            "low": "Low",
+            "medium": "Medium",
+            "high": "High",
+            "urgent": "Urgent"
+        }
+    },
+    "settings": {
+        "title": "Settings",
+        "general": "General",
+        "companyInfo": "Company Information",
+        "localization": "Localization",
+        "email": "Email",
+        "finance": "Finance",
+        "invoiceSettings": "Invoice Settings",
+        "dateFormat": "Date Format",
+        "timeFormat": "Time Format",
+        "timezone": "Timezone",
+        "language": "Language",
+        "currency": "Currency"
+    },
+    "errors": {
+        "generic": "An error occurred. Please try again.",
+        "notFound": "Resource not found",
+        "unauthorized": "You are not authorized to perform this action",
+        "validation": "Please check your input and try again"
+    },
+    "success": {
+        "saved": "Saved successfully",
+        "created": "Created successfully",
+        "updated": "Updated successfully",
+        "deleted": "Deleted successfully"
+    }
+}

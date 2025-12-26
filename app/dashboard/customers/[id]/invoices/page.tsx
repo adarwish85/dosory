@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useRef, KeyboardEvent } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { useInvoices } from "@/lib/hooks/use-invoices";
 import { useFormatters } from "@/lib/hooks/use-formatters";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -75,6 +76,7 @@ export default function InvoicesPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { invoices, loading: invoicesLoading, invoiceStats } = useInvoices({ customerId: customerId || undefined });
     const { formatDate, formatCurrency } = useFormatters();
+    const { t } = useTranslation();
     const tableRef = useRef<HTMLDivElement>(null);
 
     // UI State
@@ -207,17 +209,17 @@ export default function InvoicesPage() {
         <TooltipProvider>
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Invoices</h1>
+                    <h1 className="text-2xl font-bold">{t("invoices.title")}</h1>
                     <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={openCreateWizard}>
-                        <Plus className="mr-2 h-4 w-4" />New Invoice
+                        <Plus className="mr-2 h-4 w-4" />{t("invoices.createInvoice")}
                     </Button>
                 </div>
 
                 {/* Stats */}
                 <StatsGroup items={[
-                    { label: "Outstanding", amount: formatInvoiceCurrency(invoiceStats?.totalDue || 0), color: "orange" },
-                    { label: "Past Due", amount: formatInvoiceCurrency(invoiceStats?.amountsByStatus?.overdue || 0), color: "default" },
-                    { label: "Paid", amount: formatInvoiceCurrency(invoiceStats?.totalPaid || 0), color: "green" },
+                    { label: t("invoices.stats.outstanding"), amount: formatInvoiceCurrency(invoiceStats?.totalDue || 0), color: "orange" },
+                    { label: t("invoices.stats.pastDue"), amount: formatInvoiceCurrency(invoiceStats?.amountsByStatus?.overdue || 0), color: "default" },
+                    { label: t("invoices.stats.totalPaid"), amount: formatInvoiceCurrency(invoiceStats?.totalPaid || 0), color: "green" },
                 ]} />
 
                 {/* Compact Toolbar */}

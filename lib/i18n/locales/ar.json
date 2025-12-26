@@ -1,0 +1,181 @@
+{
+    "common": {
+        "save": "حفظ",
+        "saveSettings": "حفظ الإعدادات",
+        "cancel": "إلغاء",
+        "delete": "حذف",
+        "edit": "تعديل",
+        "view": "عرض",
+        "create": "إنشاء",
+        "add": "إضافة",
+        "remove": "إزالة",
+        "search": "بحث",
+        "filter": "تصفية",
+        "export": "تصدير",
+        "import": "استيراد",
+        "loading": "جاري التحميل...",
+        "noData": "لا توجد بيانات",
+        "actions": "إجراءات",
+        "status": "الحالة",
+        "date": "التاريخ",
+        "amount": "المبلغ",
+        "total": "الإجمالي",
+        "subtotal": "المجموع الفرعي",
+        "tax": "الضريبة",
+        "discount": "الخصم",
+        "yes": "نعم",
+        "no": "لا",
+        "all": "الكل",
+        "none": "لا شيء",
+        "back": "رجوع",
+        "next": "التالي",
+        "previous": "السابق",
+        "submit": "إرسال",
+        "confirm": "تأكيد",
+        "close": "إغلاق"
+    },
+    "navigation": {
+        "home": "الرئيسية",
+        "dashboard": "لوحة التحكم",
+        "customers": "العملاء",
+        "leads": "العملاء المحتملين",
+        "invoices": "الفواتير",
+        "estimates": "عروض الأسعار",
+        "contracts": "العقود",
+        "projects": "المشاريع",
+        "tasks": "المهام",
+        "expenses": "المصروفات",
+        "support": "الدعم",
+        "reports": "التقارير",
+        "settings": "الإعدادات",
+        "setup": "الإعداد",
+        "sales": "المبيعات",
+        "marketing": "التسويق",
+        "accounting": "المحاسبة"
+    },
+    "auth": {
+        "login": "تسجيل الدخول",
+        "logout": "تسجيل الخروج",
+        "signUp": "إنشاء حساب",
+        "forgotPassword": "نسيت كلمة المرور",
+        "resetPassword": "إعادة تعيين كلمة المرور",
+        "email": "البريد الإلكتروني",
+        "password": "كلمة المرور",
+        "confirmPassword": "تأكيد كلمة المرور"
+    },
+    "customers": {
+        "title": "العملاء",
+        "customer": "عميل",
+        "addCustomer": "إضافة عميل",
+        "editCustomer": "تعديل العميل",
+        "deleteCustomer": "حذف العميل",
+        "company": "الشركة",
+        "contact": "جهة الاتصال",
+        "phone": "الهاتف",
+        "address": "العنوان",
+        "city": "المدينة",
+        "country": "الدولة",
+        "website": "الموقع الإلكتروني",
+        "notes": "ملاحظات"
+    },
+    "invoices": {
+        "title": "الفواتير",
+        "invoice": "فاتورة",
+        "invoiceNumber": "رقم الفاتورة",
+        "createInvoice": "إنشاء فاتورة",
+        "editInvoice": "تعديل الفاتورة",
+        "dueDate": "تاريخ الاستحقاق",
+        "issueDate": "تاريخ الإصدار",
+        "amountDue": "المبلغ المستحق",
+        "amountPaid": "المبلغ المدفوع",
+        "status": {
+            "draft": "مسودة",
+            "sent": "مرسلة",
+            "paid": "مدفوعة",
+            "unpaid": "غير مدفوعة",
+            "partiallyPaid": "مدفوعة جزئياً",
+            "overdue": "متأخرة",
+            "cancelled": "ملغاة"
+        },
+        "stats": {
+            "outstanding": "المستحق",
+            "pastDue": "متأخر السداد",
+            "totalPaid": "إجمالي المدفوع"
+        }
+    },
+    "estimates": {
+        "title": "عروض الأسعار",
+        "estimate": "عرض سعر",
+        "createEstimate": "إنشاء عرض سعر",
+        "validUntil": "صالح حتى",
+        "status": {
+            "draft": "مسودة",
+            "sent": "مرسل",
+            "accepted": "مقبول",
+            "declined": "مرفوض",
+            "expired": "منتهي الصلاحية"
+        }
+    },
+    "projects": {
+        "title": "المشاريع",
+        "project": "مشروع",
+        "createProject": "إنشاء مشروع",
+        "startDate": "تاريخ البدء",
+        "deadline": "الموعد النهائي",
+        "progress": "التقدم",
+        "status": {
+            "notStarted": "لم يبدأ",
+            "inProgress": "قيد التنفيذ",
+            "onHold": "معلق",
+            "completed": "مكتمل",
+            "cancelled": "ملغى"
+        }
+    },
+    "tasks": {
+        "title": "المهام",
+        "task": "مهمة",
+        "createTask": "إنشاء مهمة",
+        "assignee": "المكلف",
+        "priority": "الأولوية",
+        "dueDate": "تاريخ الاستحقاق",
+        "status": {
+            "notStarted": "لم تبدأ",
+            "inProgress": "قيد التنفيذ",
+            "testing": "تحت الاختبار",
+            "awaitingFeedback": "بانتظار التعليقات",
+            "completed": "مكتملة"
+        },
+        "priority": {
+            "low": "منخفضة",
+            "medium": "متوسطة",
+            "high": "عالية",
+            "urgent": "عاجلة"
+        }
+    },
+    "settings": {
+        "title": "الإعدادات",
+        "general": "عام",
+        "companyInfo": "معلومات الشركة",
+        "localization": "الإعدادات المحلية",
+        "email": "البريد الإلكتروني",
+        "finance": "المالية",
+        "invoiceSettings": "إعدادات الفواتير",
+        "dateFormat": "صيغة التاريخ",
+        "timeFormat": "صيغة الوقت",
+        "timezone": "المنطقة الزمنية",
+        "language": "اللغة",
+        "currency": "العملة"
+    },
+    "errors": {
+        "generic": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+        "notFound": "المورد غير موجود",
+        "unauthorized": "غير مصرح لك بتنفيذ هذا الإجراء",
+        "validation": "يرجى التحقق من المدخلات والمحاولة مرة أخرى"
+    },
+    "success": {
+        "saved": "تم الحفظ بنجاح",
+        "created": "تم الإنشاء بنجاح",
+        "updated": "تم التحديث بنجاح",
+        "deleted": "تم الحذف بنجاح"
+    }
+}
