@@ -1004,6 +1004,7 @@ export default function SettingsPage() {
                             </p>
                         </div>
 
+                        {/* Custom Domain feature hidden for this version
                         <div>
                             <Label>Custom Domain (Optional)</Label>
                             <Input
@@ -1012,6 +1013,7 @@ export default function SettingsPage() {
                                 onChange={(e) => setMainDomain(e.target.value)}
                             />
                         </div>
+                        */}
 
                         <div>
                             <Label className="mb-3 block">RTL Admin Area (Right to Left)</Label>
