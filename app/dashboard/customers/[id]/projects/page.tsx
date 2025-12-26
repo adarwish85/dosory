@@ -19,7 +19,8 @@ import {
 import {
     Search, Plus, MoreVertical, ChevronDown, LayoutList, Download,
     ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, Eye, Pencil,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+    FolderKanban, PlayCircle, CheckCircle2, RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -207,18 +208,27 @@ export default function ProjectsPage() {
                 </div>
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Total Projects</div>
-                        <div className="text-2xl font-bold text-gray-900">{projectStats.total}</div>
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-blue-600 mb-1">
+                            <FolderKanban className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Total</span>
+                        </div>
+                        <div className="text-2xl font-bold text-blue-900">{projectStats.total}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">In Progress</div>
-                        <div className="text-2xl font-bold text-blue-600">{projectStats['in_progress'] || 0}</div>
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-orange-600 mb-1">
+                            <PlayCircle className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">In Progress</span>
+                        </div>
+                        <div className="text-2xl font-bold text-orange-900">{projectStats['in_progress'] || 0}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Completed</div>
-                        <div className="text-2xl font-bold text-green-600">{projectStats['finished'] || 0}</div>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-green-600 mb-1">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Completed</span>
+                        </div>
+                        <div className="text-2xl font-bold text-green-900">{projectStats['finished'] || 0}</div>
                     </div>
                 </div>
 
@@ -253,8 +263,8 @@ export default function ProjectsPage() {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    {/* Reset */}
-                    <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setSearchQuery(""); setSortKey(null); setSortDirection(null); setSelectedIds([]); }}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Reset filters</TooltipContent></Tooltip>
+                    {/* Refresh */}
+                    <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Refresh</TooltipContent></Tooltip>
 
                     <div className="flex-1" />
 

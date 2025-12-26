@@ -18,7 +18,8 @@ import {
 import {
     Search, Plus, MoreVertical, ChevronDown, LayoutList, Download,
     ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, Eye, Pencil,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+    ListTodo, CheckCircle2, CircleDot, RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -217,18 +218,27 @@ export default function TasksPage() {
                 </div>
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Total Tasks</div>
-                        <div className="text-2xl font-bold text-gray-900">{taskStats.total}</div>
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-blue-600 mb-1">
+                            <ListTodo className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Total</span>
+                        </div>
+                        <div className="text-2xl font-bold text-blue-900">{taskStats.total}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Completed</div>
-                        <div className="text-2xl font-bold text-green-600">{taskStats['complete'] || 0}</div>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-green-600 mb-1">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Completed</span>
+                        </div>
+                        <div className="text-2xl font-bold text-green-900">{taskStats['complete'] || 0}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Open</div>
-                        <div className="text-2xl font-bold text-blue-600">{taskStats.total - (taskStats['complete'] || 0)}</div>
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-orange-600 mb-1">
+                            <CircleDot className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Open</span>
+                        </div>
+                        <div className="text-2xl font-bold text-orange-900">{taskStats.total - (taskStats['complete'] || 0)}</div>
                     </div>
                 </div>
 

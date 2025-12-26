@@ -18,7 +18,8 @@ import {
 import {
     Search, Plus, MoreVertical, ChevronDown, LayoutList, Download,
     ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, Eye, Pencil,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+    FileSignature, DollarSign, CheckCircle2, RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -211,18 +212,27 @@ export default function ContractsPage() {
                 </div>
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Total Contracts</div>
-                        <div className="text-2xl font-bold text-gray-900">{contractStats.total}</div>
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-blue-600 mb-1">
+                            <FileSignature className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Total</span>
+                        </div>
+                        <div className="text-2xl font-bold text-blue-900">{contractStats.total}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Total Value</div>
-                        <div className="text-2xl font-bold text-blue-600">{formatCurrency(contractStats.totalValue)}</div>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-green-600 mb-1">
+                            <DollarSign className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Total Value</span>
+                        </div>
+                        <div className="text-2xl font-bold text-green-900">{formatCurrency(contractStats.totalValue)}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Active Contracts</div>
-                        <div className="text-2xl font-bold text-green-600">{contractStats['active'] || 0}</div>
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-purple-600 mb-1">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Active</span>
+                        </div>
+                        <div className="text-2xl font-bold text-purple-900">{contractStats['active'] || 0}</div>
                     </div>
                 </div>
 

@@ -18,7 +18,8 @@ import {
 import {
     Search, Plus, MoreVertical, ChevronDown, LayoutList, Download,
     ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, Eye, Pencil,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+    CreditCard, CircleCheck, RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -206,14 +207,20 @@ export default function CreditNotesPage() {
                 </div>
 
                 {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Open Credits</div>
-                        <div className="text-2xl font-bold text-blue-600">{formatCurrency(openTotal)}</div>
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-blue-600 mb-1">
+                            <CreditCard className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Open Credits</span>
+                        </div>
+                        <div className="text-2xl font-bold text-blue-900">{formatCurrency(openTotal)}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Applied Credits</div>
-                        <div className="text-2xl font-bold text-green-600">{formatCurrency(closedTotal)}</div>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-green-600 mb-1">
+                            <CircleCheck className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Applied Credits</span>
+                        </div>
+                        <div className="text-2xl font-bold text-green-900">{formatCurrency(closedTotal)}</div>
                     </div>
                 </div>
 

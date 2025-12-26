@@ -18,7 +18,8 @@ import {
 import {
     Search, Plus, MoreVertical, ChevronDown, LayoutList, Download,
     ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, Bell, BellOff, Trash2,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+    Sparkles, Clock, CalendarClock, AlertTriangle, RefreshCw
 } from "lucide-react";
 import { format, isPast, isToday } from "date-fns";
 import { toast } from "sonner";
@@ -218,22 +219,34 @@ export default function RemindersPage() {
                 </div>
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-4 gap-4">
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Total</div>
-                        <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-blue-600 mb-1">
+                            <Sparkles className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Total</span>
+                        </div>
+                        <div className="text-2xl font-bold text-blue-900">{stats.total}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Today</div>
-                        <div className="text-2xl font-bold text-orange-600">{stats.today}</div>
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-orange-600 mb-1">
+                            <Clock className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Today</span>
+                        </div>
+                        <div className="text-2xl font-bold text-orange-900">{stats.today}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Upcoming</div>
-                        <div className="text-2xl font-bold text-blue-600">{stats.upcoming}</div>
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-purple-600 mb-1">
+                            <CalendarClock className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Upcoming</span>
+                        </div>
+                        <div className="text-2xl font-bold text-purple-900">{stats.upcoming}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Overdue</div>
-                        <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
+                    <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-red-600 mb-1">
+                            <AlertTriangle className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Overdue</span>
+                        </div>
+                        <div className="text-2xl font-bold text-red-900">{stats.overdue}</div>
                     </div>
                 </div>
 

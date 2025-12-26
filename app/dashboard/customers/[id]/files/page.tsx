@@ -17,7 +17,8 @@ import {
 import {
     Search, Upload, MoreVertical, ChevronDown, LayoutList, Download,
     ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, FileText, FileImage, FileVideo, File, Trash2,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+    Files, HardDrive, RefreshCw
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -209,14 +210,20 @@ export default function FilesPage() {
                 </div>
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Total Files</div>
-                        <div className="text-2xl font-bold text-gray-900">{stats.totalFiles}</div>
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-blue-600 mb-1">
+                            <Files className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Total Files</span>
+                        </div>
+                        <div className="text-2xl font-bold text-blue-900">{stats.totalFiles}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Total Size</div>
-                        <div className="text-2xl font-bold text-blue-600">{formatFileSize(stats.totalSize)}</div>
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-purple-600 mb-1">
+                            <HardDrive className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Total Size</span>
+                        </div>
+                        <div className="text-2xl font-bold text-purple-900">{formatFileSize(stats.totalSize)}</div>
                     </div>
                 </div>
 

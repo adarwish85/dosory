@@ -18,7 +18,8 @@ import {
 import {
     Search, Plus, MoreVertical, ChevronDown, LayoutList, Download,
     ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, Eye, Pencil,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+    Receipt, CircleDollarSign, CircleOff, RefreshCw
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -201,19 +202,28 @@ export default function ExpensesPage() {
                 </div>
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Total Expenses</div>
-                        <div className="text-2xl font-bold text-gray-900">{formatCurrency(expenseStats.total)}</div>
-                        <div className="text-xs text-gray-400 mt-1">{expenseStats.count} records</div>
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-blue-600 mb-1">
+                            <Receipt className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Total</span>
+                        </div>
+                        <div className="text-2xl font-bold text-blue-900">{formatCurrency(expenseStats.total)}</div>
+                        <div className="text-xs text-blue-500 mt-1">{expenseStats.count} records</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Billable</div>
-                        <div className="text-2xl font-bold text-green-600">{formatCurrency(expenseStats.billable)}</div>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-green-600 mb-1">
+                            <CircleDollarSign className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Billable</span>
+                        </div>
+                        <div className="text-2xl font-bold text-green-900">{formatCurrency(expenseStats.billable)}</div>
                     </div>
-                    <div className="bg-white rounded-lg border p-4">
-                        <div className="text-sm text-gray-500">Non-Billable</div>
-                        <div className="text-2xl font-bold text-gray-600">{formatCurrency(expenseStats.nonBillable)}</div>
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg px-4 py-3">
+                        <div className="flex items-center gap-2 text-gray-600 mb-1">
+                            <CircleOff className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">Non-Billable</span>
+                        </div>
+                        <div className="text-2xl font-bold text-gray-900">{formatCurrency(expenseStats.nonBillable)}</div>
                     </div>
                 </div>
 
