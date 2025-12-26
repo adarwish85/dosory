@@ -24,7 +24,7 @@ export default function CustomerProfileLayout({
                 {/* Main Content Area */}
                 <div className="flex-1 flex flex-col h-full overflow-hidden">
                     <CustomerProfileHeader />
-                    <div className="flex-1 overflow-y-auto bg-white">
+                    <div className="flex-1 overflow-y-auto bg-white p-6">
                         {children}
                     </div>
                 </div>

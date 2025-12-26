@@ -608,7 +608,17 @@ export default function ContactsPage() {
                     </Select>
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search..." className="pl-9" autoComplete="off" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                        <Input
+                            placeholder="Search..."
+                            className="pl-9"
+                            autoComplete="new-password"
+                            name="contacts-search-nofill"
+                            data-lpignore="true"
+                            data-form-type="other"
+                            data-1p-ignore="true"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
                 </div>
 
