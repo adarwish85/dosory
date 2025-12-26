@@ -938,10 +938,10 @@ export default function LeadsPage() {
                         <HoverCardContent side="right" align="start" className="p-0 border-0 bg-transparent shadow-none"><QuickViewCard lead={lead} /></HoverCardContent>
                     </HoverCard>
                     {rowDensity === "comfortable" && (
-                        <div className="flex items-center gap-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity mt-0.5 h-4">
-                            <button className="text-blue-600 hover:underline font-medium" onClick={(e) => { e.stopPropagation(); handleView(lead); }}>View</button>
+                        <div className="flex gap-2 text-[10px] text-gray-400 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button className="hover:text-blue-600 flex items-center gap-0.5" onClick={(e) => { e.stopPropagation(); handleView(lead); }}><ExternalLink className="h-2.5 w-2.5" /> View</button>
                             <span className="text-gray-300">|</span>
-                            <button className="text-red-600 hover:underline font-medium" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this lead?")) deleteLead(lead.id); }}>Delete</button>
+                            <button className="hover:text-red-600 flex items-center gap-0.5" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this lead?")) deleteLead(lead.id); }}><Trash className="h-2.5 w-2.5" /> Delete</button>
                         </div>
                     )}
                 </div>
