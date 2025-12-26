@@ -22,7 +22,6 @@ export function CustomerSidebar() {
     const menuItems = [
         { icon: LayoutDashboard, label: "Overview", href: `/dashboard/customers/${customerId}` },
         { icon: User, label: "Profile", href: `/dashboard/customers/${customerId}/profile` },
-        { icon: Shield, label: "Customer Admins", href: `/dashboard/customers/${customerId}/admins` },
         { icon: Users, label: "Contacts", href: `/dashboard/customers/${customerId}/contacts`, badge: contacts.length || undefined },
         { icon: StickyNote, label: "Notes", href: `/dashboard/customers/${customerId}/notes` },
         { icon: FileText, label: "Statement", href: `/dashboard/customers/${customerId}/statement` },

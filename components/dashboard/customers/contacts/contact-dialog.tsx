@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Loader2, Eye, EyeOff, RefreshCw, Send, Lock } from "lucide-react";
+import { Plus, Loader2, Eye, EyeOff, RefreshCw, Send, Lock, Shield } from "lucide-react";
 import { useContacts } from "@/lib/hooks/use-customers";
 import { toast } from "sonner";
 import { setContactAuthPassword } from "@/app/actions/contact-auth";
@@ -21,6 +21,7 @@ interface ContactFormData {
     position: string;
     direction: string;
     isPrimary: boolean;
+    portalAccess: boolean;
     permissions: {
         invoices: boolean;
         estimates: boolean;
@@ -49,6 +50,7 @@ const defaultFormData: ContactFormData = {
     position: "",
     direction: "default",
     isPrimary: false,
+    portalAccess: false,
     permissions: {
         invoices: true,
         estimates: true,
@@ -124,6 +126,7 @@ export function ContactDialog({
             position: contact.position || "",
             direction: contact.direction || "default",
             isPrimary: contact.isPrimary || false,
+            portalAccess: contact.portalAccess || false,
             permissions: initialPermissions,
             notifications: contact.notifications || defaultFormData.notifications,
             password: "",
@@ -133,7 +136,7 @@ export function ContactDialog({
     const [formData, setFormData] = useState<ContactFormData>(getInitialFormData());
 
     const { createContact, updateContact } = useContacts({ customerId });
-    const totalSteps = 4; // Info -> Permissions -> Password -> Notifications
+    const totalSteps = 3; // Info -> Permissions & Portal Access -> Notifications
     const isEditing = !!contact?.id;
 
     const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -195,8 +198,9 @@ export function ContactDialog({
                 position: formData.position || undefined,
                 direction: formData.direction,
                 isPrimary: formData.isPrimary,
+                portalAccess: formData.portalAccess,
                 permissions: permissionsArray,
-                notifications: formData.notifications, // Save notifications too
+                notifications: formData.notifications,
                 status: "active" as const,
                 customerId,
             };
@@ -209,8 +213,8 @@ export function ContactDialog({
                 toast.success("Contact created successfully");
             }
 
-            // Handle Password Setting
-            if (formData.password) {
+            // Handle Password Setting (only if portal access is enabled)
+            if (formData.portalAccess && formData.password) {
                 const result = await setContactAuthPassword(formData.email, formData.password, `${formData.firstName} ${formData.lastName}`);
                 if (result.success) {
                     toast.success(result.action === "created" ? "Auth user created with password" : "Password updated successfully");
@@ -270,6 +274,13 @@ export function ContactDialog({
         }
     };
 
+    // Display name for header
+    const displayName = isEditing
+        ? `${formData.firstName || contact?.firstName || ""} ${formData.lastName || contact?.lastName || ""}`.trim() || "Edit Contact"
+        : formData.firstName
+            ? `${formData.firstName} ${formData.lastName}`.trim()
+            : "New Contact";
+
     return (
         <Sheet open={isOpen} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
@@ -285,7 +296,7 @@ export function ContactDialog({
                     <div className="flex justify-between items-start">
                         <div>
                             <SheetTitle className="text-xl font-bold">
-                                {isEditing ? "Edit Contact" : (formData.firstName || "New Contact")} {formData.lastName}
+                                {displayName}
                             </SheetTitle>
                             {customerName && <p className="text-sm text-muted-foreground mt-1">{customerName}</p>}
                         </div>
@@ -296,10 +307,10 @@ export function ContactDialog({
                 </SheetHeader>
 
                 <div className="flex-1 overflow-y-auto px-6 py-4 bg-white">
-                    {/* STEP 1: Basic Info - Unchanged */}
+                    {/* STEP 1: Basic Info */}
                     {step === 1 && (
                         <div className="space-y-5">
-                            {/* ... Profile Image ... */}
+                            {/* Profile Image */}
                             <div className="space-y-2">
                                 <Label>Profile image</Label>
                                 <div className="flex w-full items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm">
@@ -382,96 +393,117 @@ export function ContactDialog({
                         </div>
                     )}
 
-                    {/* STEP 2: Permissions */}
+                    {/* STEP 2: Portal Access, Permissions & Password */}
                     {step === 2 && (
-                        <div className="space-y-4">
-                            <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">Permissions</h3>
-                            <p className="text-sm text-red-500">Make sure to set appropriate permissions for this contact</p>
-
-                            <div className="space-y-3">
-                                {(["invoices", "estimates", "contracts", "proposals", "support", "projects"] as const).map(perm => (
-                                    <div key={perm} className="flex items-center justify-between p-3 border rounded-md bg-gray-50/50">
-                                        <span className="font-medium text-gray-700 capitalize">{perm}</span>
-                                        <Switch
-                                            className="data-[state=checked]:bg-blue-600"
-                                            checked={formData.permissions[perm]}
-                                            onCheckedChange={(checked) => updatePermission(perm, checked)}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* STEP 3: Password (NEW) */}
-                    {step === 3 && (
                         <div className="space-y-6">
-                            <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">Security</h3>
-
-                            {/* Manual Password */}
+                            {/* Portal Access Toggle */}
                             <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-red-500 font-semibold">* <span className="text-gray-700">Password</span></Label>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 text-xs text-blue-600"
-                                        onClick={handleGeneratePassword}
-                                    >
-                                        <RefreshCw className="w-3 h-3 mr-1" />
-                                        Generate
-                                    </Button>
+                                <h3 className="font-semibold text-lg text-gray-900 border-b pb-2 flex items-center gap-2">
+                                    <Shield className="h-5 w-5 text-blue-600" />
+                                    Portal Access
+                                </h3>
+                                <div className="flex items-center justify-between p-4 border rounded-md bg-blue-50/50">
+                                    <div>
+                                        <span className="font-medium text-gray-900">Enable Portal Access</span>
+                                        <p className="text-xs text-gray-500 mt-0.5">Allow this contact to log in to the client portal</p>
+                                    </div>
+                                    <Switch
+                                        className="data-[state=checked]:bg-blue-600"
+                                        checked={formData.portalAccess}
+                                        onCheckedChange={(checked) => setFormData({ ...formData, portalAccess: checked })}
+                                    />
                                 </div>
-                                <div className="flex gap-2">
-                                    <div className="relative flex-1">
-                                        <Input
-                                            type={showPassword ? "text" : "password"}
-                                            value={formData.password}
-                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                            placeholder="Set password manually"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                            </div>
+
+                            {/* Permissions (using Checkboxes) */}
+                            <div className="space-y-3">
+                                <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">Module Permissions</h3>
+                                <p className="text-sm text-gray-500">Select which modules this contact can access in the portal</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {(["invoices", "estimates", "contracts", "proposals", "support", "projects"] as const).map(perm => (
+                                        <div key={perm} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`perm-${perm}`}
+                                                checked={formData.permissions[perm]}
+                                                onCheckedChange={(checked) => updatePermission(perm, !!checked)}
+                                                disabled={!formData.portalAccess}
+                                            />
+                                            <label
+                                                htmlFor={`perm-${perm}`}
+                                                className={`text-sm font-medium capitalize ${!formData.portalAccess ? 'text-gray-400' : 'text-gray-700'}`}
+                                            >
+                                                {perm}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Password Section (only shown if portal access enabled) */}
+                            {formData.portalAccess && (
+                                <div className="space-y-3 border-t pt-4">
+                                    <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">Portal Password</h3>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <Label>Password</Label>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 text-xs text-blue-600"
+                                                onClick={handleGeneratePassword}
+                                            >
+                                                <RefreshCw className="w-3 h-3 mr-1" />
+                                                Generate
+                                            </Button>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <div className="relative flex-1">
+                                                <Input
+                                                    type={showPassword ? "text" : "password"}
+                                                    value={formData.password}
+                                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                    placeholder="Set password manually"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                                                >
+                                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            Leave empty to keep current password. Populate to set/change password.
+                                        </p>
+                                    </div>
+
+                                    <div className="pt-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full sm:w-auto"
+                                            onClick={handleSendResetEmail}
+                                            disabled={sendingReset || !formData.email}
                                         >
-                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                        </button>
+                                            {sendingReset ? (
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            ) : (
+                                                <Send className="h-4 w-4 mr-2" />
+                                            )}
+                                            Send Reset Password Email
+                                        </Button>
                                     </div>
                                 </div>
-                                <p className="text-xs text-muted-foreground">
-                                    Note: If you populate this field, the password will be changed/set for this contact.
-                                </p>
-                            </div>
-
-                            <div className="border-t pt-4">
-                                <div className="space-y-3">
-                                    <Label className="text-gray-900">Reset Password</Label>
-                                    <p className="text-sm text-gray-500">
-                                        Send an email to <strong>{formData.email || "the user"}</strong> with a link to reset their password.
-                                    </p>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full sm:w-auto"
-                                        onClick={handleSendResetEmail}
-                                        disabled={sendingReset || !formData.email}
-                                    >
-                                        {sendingReset ? (
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        ) : (
-                                            <Send className="h-4 w-4 mr-2" />
-                                        )}
-                                        Send Reset Password Email
-                                    </Button>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     )}
 
-                    {/* STEP 4: Notifications (Was Step 3) */}
-                    {step === 4 && (
+                    {/* STEP 3: Notifications */}
+                    {step === 3 && (
                         <div className="space-y-4">
                             <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">Email Notifications</h3>
+                            <p className="text-sm text-gray-500">Select which email notifications this contact should receive</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {([
                                     { key: "invoice", label: "Invoice" },
