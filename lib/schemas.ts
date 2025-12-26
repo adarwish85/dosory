@@ -44,6 +44,7 @@ export const contactFormSchema = z.object({
     phone: z.string().optional(),
     position: z.string().optional(),
     isPrimary: z.boolean().default(false),
+    portalAccess: z.boolean().default(false),
     permissions: z
         .array(
             z.enum([

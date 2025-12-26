@@ -205,25 +205,36 @@ export default function ContactsPage() {
     };
 
     const handleTogglePortalAccess = async (contact: any) => {
-        const currentPortalAccess = contact.portalAccess || false;
+        const currentPortalEnabled = contact.portalAccess?.enabled || false;
 
-        if (currentPortalAccess) {
-            // Turning OFF - just update portalAccess
+        if (currentPortalEnabled) {
+            // Turning OFF - update portalAccess.enabled to false
             try {
-                await updateContact(contact.id, { portalAccess: false });
+                await updateContact(contact.id, {
+                    portalAccess: {
+                        ...(contact.portalAccess || {}),
+                        enabled: false
+                    }
+                } as any);
                 toast.success("Portal access disabled");
             } catch (error) {
                 console.error("Error toggling portal access:", error);
                 toast.error("Failed to update portal access");
             }
         } else {
-            // Turning ON - check if contact has portal config (permissions set or password was set before)
-            const hasPortalConfig = contact.permissions && contact.permissions.length > 0;
+            // Turning ON - check if contact has portal config (permissions set or modules configured before)
+            const hasPortalConfig = (contact.permissions && contact.permissions.length > 0) ||
+                (contact.portalAccess?.modules && contact.portalAccess.modules.length > 0);
 
             if (hasPortalConfig) {
                 // Just reactivate - user had config before
                 try {
-                    await updateContact(contact.id, { portalAccess: true });
+                    await updateContact(contact.id, {
+                        portalAccess: {
+                            ...(contact.portalAccess || {}),
+                            enabled: true
+                        }
+                    } as any);
                     toast.success("Portal access enabled");
                 } catch (error) {
                     console.error("Error toggling portal access:", error);
@@ -504,7 +515,7 @@ export default function ContactsPage() {
                                     <TableCell className="py-4 text-gray-700">{contact.phone || "-"}</TableCell>
                                     <TableCell className="py-4">
                                         <Switch
-                                            checked={contact.portalAccess || false}
+                                            checked={contact.portalAccess?.enabled || false}
                                             className="data-[state=checked]:bg-blue-600 scale-90"
                                             onCheckedChange={() => handleTogglePortalAccess(contact)}
                                         />
