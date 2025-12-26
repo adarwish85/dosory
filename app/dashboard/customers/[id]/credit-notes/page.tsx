@@ -1,41 +1,98 @@
 "use client";
 
+import { useState, useMemo, useCallback, useRef, KeyboardEvent } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { useCreditNotes } from "@/lib/hooks/use-customer-data";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, RefreshCw, Loader2 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+    DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem,
+    DropdownMenuRadioGroup, DropdownMenuRadioItem
+} from "@/components/ui/dropdown-menu";
+import {
+    Search, Plus, MoreVertical, ChevronDown, LayoutList, Download,
+    ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, Eye, Pencil,
+    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+} from "lucide-react";
 import Link from "next/link";
+import { format } from "date-fns";
+import { toast } from "sonner";
+
+// Types
+type SortDirection = "asc" | "desc" | null;
+type RowDensity = "compact" | "comfortable";
+type ColumnKey = "number" | "amount" | "date" | "status";
+
+interface ColumnDef { key: ColumnKey; label: string; defaultVisible: boolean; sortable?: boolean; width?: number; }
+
+const DEFAULT_COLUMNS: ColumnDef[] = [
+    { key: "number", label: "Credit Note #", defaultVisible: true, sortable: true, width: 140 },
+    { key: "amount", label: "Amount", defaultVisible: true, sortable: true, width: 120 },
+    { key: "date", label: "Date", defaultVisible: true, sortable: true, width: 120 },
+    { key: "status", label: "Status", defaultVisible: true, sortable: true, width: 100 },
+];
+
+const ROW_DENSITY_STYLES: Record<RowDensity, string> = { compact: "py-1 text-xs", comfortable: "py-3 text-sm" };
+
+// Highlight text component
+function HighlightText({ text, search }: { text: string; search: string }) {
+    if (!search.trim() || !text) return <>{text}</>;
+    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    return <>{parts.map((part, i) => regex.test(part) ? <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark> : <span key={i}>{part}</span>)}</>;
+}
+
+// Pagination component
+function Pagination({ currentPage, totalPages, onPageChange, totalRecords, startRecord, endRecord }: {
+    currentPage: number; totalPages: number; onPageChange: (page: number) => void;
+    totalRecords: number; startRecord: number; endRecord: number;
+}) {
+    return (
+        <div className="flex items-center justify-between text-sm text-gray-600">
+            <span>Showing {startRecord} to {endRecord} of {totalRecords}</span>
+            <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(1)} disabled={currentPage === 1}><ChevronsLeft className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></Button>
+                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium">{currentPage} / {totalPages}</span>
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-4 w-4" /></Button>
+            </div>
+        </div>
+    );
+}
 
 export default function CreditNotesPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { creditNotes, loading: creditNotesLoading } = useCreditNotes({ customerId: customerId || undefined });
+    const tableRef = useRef<HTMLDivElement>(null);
 
-    if (customerLoading || creditNotesLoading) {
-        return (
-            <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
-        );
-    }
+    // UI State
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(25);
+    const [columnVisibility, setColumnVisibility] = useState<Record<ColumnKey, boolean>>({ number: true, amount: true, date: true, status: true });
+    const [sortKey, setSortKey] = useState<ColumnKey | null>(null);
+    const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+    const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
+    const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
 
+    // Helpers
     const formatDate = (timestamp: any) => {
         if (!timestamp) return "-";
         try {
             const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
             return format(date, "dd/MM/yyyy");
-        } catch {
-            return "-";
-        }
+        } catch { return "-"; }
     };
 
-    const formatCurrency = (amount: number = 0) => {
-        return `$${amount.toFixed(2)}`;
-    };
+    const formatCurrency = (amount: number = 0) => `$${amount.toFixed(2)}`;
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
@@ -46,84 +103,242 @@ export default function CreditNotesPage() {
         return styles[status] || "bg-gray-50 text-gray-600 border-gray-100";
     };
 
-    const formatStatus = (status: string) => {
-        return status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    const formatStatus = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+
+    // Sort handler
+    const handleSort = (key: ColumnKey) => {
+        if (sortKey === key) {
+            setSortDirection(prev => prev === "asc" ? "desc" : prev === "desc" ? null : "asc");
+            if (sortDirection === "desc") setSortKey(null);
+        } else {
+            setSortKey(key);
+            setSortDirection("asc");
+        }
     };
 
-    // Calculate totals
-    const openTotal = creditNotes.filter(cn => cn.status === "open").reduce((sum, cn) => sum + cn.amount, 0);
-    const closedTotal = creditNotes.filter(cn => cn.status === "closed").reduce((sum, cn) => sum + cn.amount, 0);
+    // Toggle column
+    const toggleColumn = (key: ColumnKey) => setColumnVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+
+    // Process credit notes
+    const processedCreditNotes = useMemo(() => {
+        let result = [...creditNotes];
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            result = result.filter(cn =>
+                String(cn.number).includes(searchQuery) ||
+                cn.status?.toLowerCase().includes(lowerQuery)
+            );
+        }
+        if (sortKey && sortDirection) {
+            result.sort((a, b) => {
+                let aVal: any, bVal: any;
+                switch (sortKey) {
+                    case "number": aVal = a.number || 0; bVal = b.number || 0; break;
+                    case "amount": aVal = a.amount || 0; bVal = b.amount || 0; break;
+                    case "date": aVal = a.date?.toMillis?.() || 0; bVal = b.date?.toMillis?.() || 0; break;
+                    case "status": aVal = a.status || ""; bVal = b.status || ""; break;
+                    default: return 0;
+                }
+                if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+                if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+                return 0;
+            });
+        }
+        return result;
+    }, [creditNotes, searchQuery, sortKey, sortDirection]);
+
+    // Totals
+    const openTotal = creditNotes.filter(cn => cn.status === "open").reduce((sum, cn) => sum + (cn.amount || 0), 0);
+    const closedTotal = creditNotes.filter(cn => cn.status === "closed").reduce((sum, cn) => sum + (cn.amount || 0), 0);
+
+    // Pagination
+    const totalPages = Math.max(1, Math.ceil(processedCreditNotes.length / recordsPerPage));
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    const paginatedCreditNotes = processedCreditNotes.slice(startIndex, startIndex + recordsPerPage);
+    const startRecord = processedCreditNotes.length === 0 ? 0 : startIndex + 1;
+    const endRecord = Math.min(startIndex + recordsPerPage, processedCreditNotes.length);
+
+    // Selection handlers
+    const handleSelectAll = () => setSelectedIds(processedCreditNotes.map(cn => cn.id));
+    const handleClearSelection = () => setSelectedIds([]);
+    const handleSelectPage = () => setSelectedIds(paginatedCreditNotes.map(cn => cn.id));
+    const toggleSelect = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    const isAllSelected = paginatedCreditNotes.length > 0 && paginatedCreditNotes.every(cn => selectedIds.includes(cn.id));
+    const isSomeSelected = paginatedCreditNotes.some(cn => selectedIds.includes(cn.id)) && !isAllSelected;
+
+    // Export
+    const handleExport = () => {
+        const dataToExport = selectedIds.length > 0 ? creditNotes.filter(cn => selectedIds.includes(cn.id)) : processedCreditNotes;
+        const csv = ["Credit Note #,Amount,Date,Status", ...dataToExport.map(cn => `"CN-${cn.number}","${cn.amount}","${formatDate(cn.date)}","${cn.status}"`)].join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = "credit-notes-export.csv"; a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Exported successfully");
+    };
+
+    // Keyboard navigation
+    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+        if (focusedRowIndex === null || paginatedCreditNotes.length === 0) return;
+        switch (e.key) {
+            case "ArrowDown": e.preventDefault(); setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedCreditNotes.length - 1)); break;
+            case "ArrowUp": e.preventDefault(); setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0)); break;
+            case " ": e.preventDefault(); toggleSelect(paginatedCreditNotes[focusedRowIndex].id); break;
+        }
+    }, [focusedRowIndex, paginatedCreditNotes]);
+
+    const visibleColumns = DEFAULT_COLUMNS.filter(c => columnVisibility[c.key]);
+
+    if (customerLoading || creditNotesLoading) {
+        return <div className="p-8 flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />Loading credit notes...</div>;
+    }
 
     return (
-        <div className="space-y-6">
-            <h2 className="text-xl font-bold text-gray-900">Credit Notes</h2>
-
-            <Link href={`/dashboard/sales/credit-notes/new?customerId=${customerId}`}>
-                <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                    <Plus className="mr-2 h-4 w-4" /> Create Credit Note
-                </Button>
-            </Link>
-
-            <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded-lg border p-4">
-                    <div className="text-sm text-gray-500">Open Credits</div>
-                    <div className="text-2xl font-bold text-blue-600">{formatCurrency(openTotal)}</div>
+        <TooltipProvider>
+            <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-bold">Credit Notes</h1>
+                    <Link href={`/dashboard/sales/credit-notes/new?customerId=${customerId}`}>
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                            <Plus className="mr-2 h-4 w-4" />Create Credit Note
+                        </Button>
+                    </Link>
                 </div>
-                <div className="bg-white rounded-lg border p-4">
-                    <div className="text-sm text-gray-500">Applied Credits</div>
-                    <div className="text-2xl font-bold text-green-600">{formatCurrency(closedTotal)}</div>
-                </div>
-            </div>
 
-            <div className="space-y-4">
-                <div className="flex justify-between items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <Select defaultValue="25">
-                            <SelectTrigger className="w-[70px]">
-                                <SelectValue placeholder="25" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="25">25</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline">Export</Button>
-                        <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white rounded-lg border p-4">
+                        <div className="text-sm text-gray-500">Open Credits</div>
+                        <div className="text-2xl font-bold text-blue-600">{formatCurrency(openTotal)}</div>
                     </div>
+                    <div className="bg-white rounded-lg border p-4">
+                        <div className="text-sm text-gray-500">Applied Credits</div>
+                        <div className="text-2xl font-bold text-green-600">{formatCurrency(closedTotal)}</div>
+                    </div>
+                </div>
+
+                {/* Compact Toolbar */}
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Actions Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline"><MoreVertical className="h-4 w-4 mr-1" />Actions<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onClick={handleExport}><Download className="h-4 w-4 mr-2" />Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Display Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline"><LayoutList className="h-4 w-4 mr-1" />Display<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-48">
+                            <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                            <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
+                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                            </DropdownMenuRadioGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                            {DEFAULT_COLUMNS.map(col => (
+                                <DropdownMenuCheckboxItem key={col.key} checked={columnVisibility[col.key]} onCheckedChange={() => toggleColumn(col.key)}>{col.label}</DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Reset */}
+                    <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setSearchQuery(""); setSortKey(null); setSortDirection(null); setSelectedIds([]); }}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Reset filters</TooltipContent></Tooltip>
+
+                    <div className="flex-1" />
+
+                    {/* Records Per Page */}
+                    <Select value={String(recordsPerPage)} onValueChange={(v) => { setRecordsPerPage(Number(v)); setCurrentPage(1); }}>
+                        <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="25">25</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                            <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {/* Search */}
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search..." className="pl-9" />
+                        <Input placeholder="Search..." className="pl-9" autoComplete="new-password" name="creditnotes-search-nofill" data-lpignore="true" data-1p-ignore="true" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                     </div>
                 </div>
 
-                <div className="border rounded-md bg-white">
+                {/* Top Pagination */}
+                {processedCreditNotes.length > 0 && (
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedCreditNotes.length} startRecord={startRecord} endRecord={endRecord} />
+                )}
+
+                {/* Selection Banner */}
+                {selectedIds.length > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
+                        <span className="text-blue-800 text-sm font-medium">{selectedIds.length} credit note{selectedIds.length > 1 ? "s" : ""} selected</span>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={handleSelectAll}>Select All ({processedCreditNotes.length})</Button>
+                            <Button variant="outline" size="sm" onClick={handleClearSelection}>Clear</Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Table */}
+                <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Credit Note #</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Amount</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Date</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Status</TableHead>
+                            <TableRow className="bg-gray-50/80">
+                                <TableHead className="w-12 bg-gray-100/50">
+                                    <Checkbox checked={isAllSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={(checked) => { if (checked) handleSelectPage(); else handleClearSelection(); }} />
+                                </TableHead>
+                                {visibleColumns.map(col => (
+                                    <TableHead key={col.key} className="font-semibold text-gray-900 bg-gray-100/50" style={{ minWidth: col.width }}>
+                                        {col.sortable ? (
+                                            <Button variant="ghost" className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200" onClick={() => handleSort(col.key)}>
+                                                {col.label}
+                                                {sortKey === col.key ? (sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />) : <ArrowUpDown className="ml-1 h-4 w-4 opacity-40" />}
+                                            </Button>
+                                        ) : col.label}
+                                    </TableHead>
+                                ))}
+                                <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {creditNotes.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                                        No credit notes found for {customer?.company || "this customer"}
-                                    </TableCell>
-                                </TableRow>
+                            {paginatedCreditNotes.length === 0 ? (
+                                <TableRow><TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-gray-500">{searchQuery ? "No credit notes match your search." : `No credit notes found for ${customer?.company || "this customer"}.`}</TableCell></TableRow>
                             ) : (
-                                creditNotes.map((creditNote) => (
-                                    <TableRow key={creditNote.id}>
-                                        <TableCell className="font-medium text-blue-600">
-                                            CN-{creditNote.number}
+                                paginatedCreditNotes.map((creditNote, index) => (
+                                    <TableRow key={creditNote.id} className={`group hover:bg-gray-50 ${focusedRowIndex === index ? "bg-blue-50" : ""} ${selectedIds.includes(creditNote.id) ? "bg-blue-50/50" : ""}`} onClick={() => setFocusedRowIndex(index)}>
+                                        <TableCell className={ROW_DENSITY_STYLES[rowDensity]}>
+                                            <Checkbox checked={selectedIds.includes(creditNote.id)} onCheckedChange={() => toggleSelect(creditNote.id)} onClick={(e) => e.stopPropagation()} />
                                         </TableCell>
-                                        <TableCell>{formatCurrency(creditNote.amount)}</TableCell>
-                                        <TableCell>{formatDate(creditNote.date)}</TableCell>
-                                        <TableCell>
-                                            <Badge className={`${getStatusBadge(creditNote.status)} font-normal`}>
-                                                {formatStatus(creditNote.status)}
-                                            </Badge>
+                                        {visibleColumns.map(col => (
+                                            <TableCell key={col.key} className={ROW_DENSITY_STYLES[rowDensity]}>
+                                                {col.key === "number" && (
+                                                    <span className="text-blue-600 font-medium">
+                                                        <HighlightText text={`CN-${creditNote.number}`} search={searchQuery} />
+                                                    </span>
+                                                )}
+                                                {col.key === "amount" && <span className="font-medium">{formatCurrency(creditNote.amount)}</span>}
+
+                                                {col.key === "date" && <span>{formatDate(creditNote.date)}</span>}
+                                                {col.key === "status" && (
+                                                    <Badge className={`${getStatusBadge(creditNote.status)} font-normal`}>
+                                                        <HighlightText text={formatStatus(creditNote.status)} search={searchQuery} />
+                                                    </Badge>
+                                                )}
+                                            </TableCell>
+                                        ))}
+                                        <TableCell className={`${ROW_DENSITY_STYLES[rowDensity]} overflow-visible`}>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><Eye className="h-4 w-4 text-gray-500" /></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-4 w-4 text-gray-500" /></Button></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -131,7 +346,12 @@ export default function CreditNotesPage() {
                         </TableBody>
                     </Table>
                 </div>
+
+                {/* Bottom Pagination */}
+                {processedCreditNotes.length > 0 && (
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedCreditNotes.length} startRecord={startRecord} endRecord={endRecord} />
+                )}
             </div>
-        </div>
+        </TooltipProvider>
     );
 }
