@@ -1,34 +1,95 @@
 "use client";
 
+import { useState, useMemo, useCallback, useRef, KeyboardEvent } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { useCustomerFiles } from "@/lib/hooks/use-customer-data";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Upload, Search, RefreshCw, Loader2, FileText, FileImage, FileVideo, File, Trash2, Download } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+    DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem,
+    DropdownMenuRadioGroup, DropdownMenuRadioItem
+} from "@/components/ui/dropdown-menu";
+import {
+    Search, Upload, MoreVertical, ChevronDown, LayoutList, Download,
+    ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, FileText, FileImage, FileVideo, File, Trash2,
+    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+} from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
+
+// Types
+type SortDirection = "asc" | "desc" | null;
+type RowDensity = "compact" | "comfortable";
+type ColumnKey = "name" | "size" | "type" | "createdAt";
+
+interface ColumnDef { key: ColumnKey; label: string; defaultVisible: boolean; sortable?: boolean; width?: number; }
+
+const DEFAULT_COLUMNS: ColumnDef[] = [
+    { key: "name", label: "Name", defaultVisible: true, sortable: true, width: 250 },
+    { key: "size", label: "Size", defaultVisible: true, sortable: true, width: 100 },
+    { key: "type", label: "Type", defaultVisible: true, sortable: true, width: 100 },
+    { key: "createdAt", label: "Uploaded", defaultVisible: true, sortable: true, width: 140 },
+];
+
+const ROW_DENSITY_STYLES: Record<RowDensity, string> = { compact: "py-1 text-xs", comfortable: "py-3 text-sm" };
+
+// Highlight text component
+function HighlightText({ text, search }: { text: string; search: string }) {
+    if (!search.trim() || !text) return <>{text}</>;
+    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    return <>{parts.map((part, i) => regex.test(part) ? <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark> : <span key={i}>{part}</span>)}</>;
+}
+
+// Pagination component
+function Pagination({ currentPage, totalPages, onPageChange, totalRecords, startRecord, endRecord }: {
+    currentPage: number; totalPages: number; onPageChange: (page: number) => void;
+    totalRecords: number; startRecord: number; endRecord: number;
+}) {
+    return (
+        <div className="flex items-center justify-between text-sm text-gray-600">
+            <span>Showing {startRecord} to {endRecord} of {totalRecords}</span>
+            <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(1)} disabled={currentPage === 1}><ChevronsLeft className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></Button>
+                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium">{currentPage} / {totalPages}</span>
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-4 w-4" /></Button>
+            </div>
+        </div>
+    );
+}
 
 export default function FilesPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { files, loading: filesLoading, deleteFile } = useCustomerFiles({ customerId: customerId || undefined });
+    const tableRef = useRef<HTMLDivElement>(null);
 
-    if (customerLoading || filesLoading) {
-        return (
-            <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
-        );
-    }
+    // UI State
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(25);
+    const [columnVisibility, setColumnVisibility] = useState<Record<ColumnKey, boolean>>({
+        name: true, size: true, type: true, createdAt: true
+    });
+    const [sortKey, setSortKey] = useState<ColumnKey | null>(null);
+    const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+    const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
+    const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
 
+    // Helpers
     const formatDate = (timestamp: any) => {
         if (!timestamp) return "-";
         try {
             const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
             return format(date, "dd/MM/yyyy HH:mm");
-        } catch {
-            return "-";
-        }
+        } catch { return "-"; }
     };
 
     const formatFileSize = (bytes: number) => {
@@ -46,83 +107,238 @@ export default function FilesPage() {
         return <File className="h-4 w-4 text-gray-500" />;
     };
 
+    // Sort handler
+    const handleSort = (key: ColumnKey) => {
+        if (sortKey === key) {
+            setSortDirection(prev => prev === "asc" ? "desc" : prev === "desc" ? null : "asc");
+            if (sortDirection === "desc") setSortKey(null);
+        } else {
+            setSortKey(key);
+            setSortDirection("asc");
+        }
+    };
+
+    // Toggle column
+    const toggleColumn = (key: ColumnKey) => setColumnVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+
+    // Process files
+    const processedFiles = useMemo(() => {
+        let result = [...files];
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            result = result.filter(f =>
+                f.name.toLowerCase().includes(lowerQuery) ||
+                f.type.toLowerCase().includes(lowerQuery)
+            );
+        }
+        if (sortKey && sortDirection) {
+            result.sort((a, b) => {
+                let aVal: any, bVal: any;
+                switch (sortKey) {
+                    case "name": aVal = a.name || ""; bVal = b.name || ""; break;
+                    case "size": aVal = a.size || 0; bVal = b.size || 0; break;
+                    case "type": aVal = a.type || ""; bVal = b.type || ""; break;
+                    case "createdAt": aVal = a.createdAt?.toMillis?.() || 0; bVal = b.createdAt?.toMillis?.() || 0; break;
+                    default: return 0;
+                }
+                if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+                if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+                return 0;
+            });
+        }
+        return result;
+    }, [files, searchQuery, sortKey, sortDirection]);
+
+    // Stats
+    const stats = useMemo(() => {
+        const totalFiles = files.length;
+        const totalSize = files.reduce((acc, curr) => acc + curr.size, 0);
+        return { totalFiles, totalSize };
+    }, [files]);
+
+    // Pagination
+    const totalPages = Math.max(1, Math.ceil(processedFiles.length / recordsPerPage));
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    const paginatedFiles = processedFiles.slice(startIndex, startIndex + recordsPerPage);
+    const startRecord = processedFiles.length === 0 ? 0 : startIndex + 1;
+    const endRecord = Math.min(startIndex + recordsPerPage, processedFiles.length);
+
+    // Selection handlers
+    const handleSelectAll = () => setSelectedIds(processedFiles.map(f => f.id));
+    const handleClearSelection = () => setSelectedIds([]);
+    const handleSelectPage = () => setSelectedIds(paginatedFiles.map(f => f.id));
+    const toggleSelect = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    const isAllSelected = paginatedFiles.length > 0 && paginatedFiles.every(f => selectedIds.includes(f.id));
+    const isSomeSelected = paginatedFiles.some(f => selectedIds.includes(f.id)) && !isAllSelected;
+
+    // Export
+    const handleExport = () => {
+        const dataToExport = selectedIds.length > 0 ? files.filter(f => selectedIds.includes(f.id)) : processedFiles;
+        const csv = ["Name,Size,Type,Uploaded At,URL", ...dataToExport.map(f => `"${f.name}","${f.size}","${f.type}","${formatDate(f.createdAt)}","${f.url}"`)].join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = "files-export.csv"; a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Exported successfully");
+    };
+
+    // Keyboard navigation
+    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+        if (focusedRowIndex === null || paginatedFiles.length === 0) return;
+        switch (e.key) {
+            case "ArrowDown": e.preventDefault(); setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedFiles.length - 1)); break;
+            case "ArrowUp": e.preventDefault(); setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0)); break;
+            case " ": e.preventDefault(); toggleSelect(paginatedFiles[focusedRowIndex].id); break;
+        }
+    }, [focusedRowIndex, paginatedFiles]);
+
+    const visibleColumns = DEFAULT_COLUMNS.filter(c => columnVisibility[c.key]);
+
+    if (customerLoading || filesLoading) {
+        return <div className="p-8 flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />Loading files...</div>;
+    }
+
     return (
-        <div className="space-y-6">
-            <h2 className="text-xl font-bold text-gray-900">Files</h2>
+        <TooltipProvider>
+            <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-bold">Files</h1>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                        <Upload className="mr-2 h-4 w-4" />Upload File
+                    </Button>
+                </div>
 
-            <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                <Upload className="mr-2 h-4 w-4" /> Upload File
-            </Button>
-
-            <div className="space-y-4">
-                <div className="flex justify-between items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <Select defaultValue="25">
-                            <SelectTrigger className="w-[70px]">
-                                <SelectValue placeholder="25" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="25">25</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
+                {/* Stats Summary */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white rounded-lg border p-4">
+                        <div className="text-sm text-gray-500">Total Files</div>
+                        <div className="text-2xl font-bold text-gray-900">{stats.totalFiles}</div>
                     </div>
-                    <div className="relative w-64">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search files..." className="pl-9" />
+                    <div className="bg-white rounded-lg border p-4">
+                        <div className="text-sm text-gray-500">Total Size</div>
+                        <div className="text-2xl font-bold text-blue-600">{formatFileSize(stats.totalSize)}</div>
                     </div>
                 </div>
 
-                <div className="border rounded-md bg-white">
+                {/* Compact Toolbar */}
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Actions Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline"><MoreVertical className="h-4 w-4 mr-1" />Actions<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onClick={handleExport}><Download className="h-4 w-4 mr-2" />Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Display Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline"><LayoutList className="h-4 w-4 mr-1" />Display<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-48">
+                            <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                            <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
+                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                            </DropdownMenuRadioGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                            {DEFAULT_COLUMNS.map(col => (
+                                <DropdownMenuCheckboxItem key={col.key} checked={columnVisibility[col.key]} onCheckedChange={() => toggleColumn(col.key)}>{col.label}</DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Reset */}
+                    <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setSearchQuery(""); setSortKey(null); setSortDirection(null); setSelectedIds([]); }}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Reset filters</TooltipContent></Tooltip>
+
+                    <div className="flex-1" />
+
+                    {/* Records Per Page */}
+                    <Select value={String(recordsPerPage)} onValueChange={(v) => { setRecordsPerPage(Number(v)); setCurrentPage(1); }}>
+                        <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="25">25</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                            <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {/* Search */}
+                    <div className="relative w-64">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                        <Input placeholder="Search files..." className="pl-9" autoComplete="new-password" name="files-search-nofill" data-lpignore="true" data-1p-ignore="true" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                    </div>
+                </div>
+
+                {/* Top Pagination */}
+                {processedFiles.length > 0 && (
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedFiles.length} startRecord={startRecord} endRecord={endRecord} />
+                )}
+
+                {/* Selection Banner */}
+                {selectedIds.length > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
+                        <span className="text-blue-800 text-sm font-medium">{selectedIds.length} file{selectedIds.length > 1 ? "s" : ""} selected</span>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={handleSelectAll}>Select All ({processedFiles.length})</Button>
+                            <Button variant="outline" size="sm" onClick={handleClearSelection}>Clear</Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Table */}
+                <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">File Name</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Size</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Uploaded</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50 text-right">Actions</TableHead>
+                            <TableRow className="bg-gray-50/80">
+                                <TableHead className="w-12 bg-gray-100/50">
+                                    <Checkbox checked={isAllSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={(checked) => { if (checked) handleSelectPage(); else handleClearSelection(); }} />
+                                </TableHead>
+                                {visibleColumns.map(col => (
+                                    <TableHead key={col.key} className="font-semibold text-gray-900 bg-gray-100/50" style={{ minWidth: col.width }}>
+                                        {col.sortable ? (
+                                            <Button variant="ghost" className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200" onClick={() => handleSort(col.key)}>
+                                                {col.label}
+                                                {sortKey === col.key ? (sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />) : <ArrowUpDown className="ml-1 h-4 w-4 opacity-40" />}
+                                            </Button>
+                                        ) : col.label}
+                                    </TableHead>
+                                ))}
+                                <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {files.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                                        No files found for {customer?.company || "this customer"}
-                                    </TableCell>
-                                </TableRow>
+                            {paginatedFiles.length === 0 ? (
+                                <TableRow><TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-gray-500">{searchQuery ? "No files match your search." : `No files found for ${customer?.company || "this customer"}.`}</TableCell></TableRow>
                             ) : (
-                                files.map((file) => (
-                                    <TableRow key={file.id}>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                {getFileIcon(file.type)}
-                                                <a
-                                                    href={file.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="font-medium text-blue-600 hover:underline"
-                                                >
-                                                    {file.name}
-                                                </a>
-                                            </div>
+                                paginatedFiles.map((file, index) => (
+                                    <TableRow key={file.id} className={`group hover:bg-gray-50 ${focusedRowIndex === index ? "bg-blue-50" : ""} ${selectedIds.includes(file.id) ? "bg-blue-50/50" : ""}`} onClick={() => setFocusedRowIndex(index)}>
+                                        <TableCell className={ROW_DENSITY_STYLES[rowDensity]}>
+                                            <Checkbox checked={selectedIds.includes(file.id)} onCheckedChange={() => toggleSelect(file.id)} onClick={(e) => e.stopPropagation()} />
                                         </TableCell>
-                                        <TableCell className="text-gray-500">{formatFileSize(file.size)}</TableCell>
-                                        <TableCell className="text-gray-500">{formatDate(file.createdAt)}</TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                                    <a href={file.url} download>
-                                                        <Download className="h-4 w-4 text-gray-500" />
-                                                    </a>
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={() => deleteFile(file.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                                </Button>
+                                        {visibleColumns.map(col => (
+                                            <TableCell key={col.key} className={ROW_DENSITY_STYLES[rowDensity]}>
+                                                {col.key === "name" && (
+                                                    <div className="flex items-center gap-2">
+                                                        {getFileIcon(file.type)}
+                                                        <a href={file.url} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline">
+                                                            <HighlightText text={file.name} search={searchQuery} />
+                                                        </a>
+                                                    </div>
+                                                )}
+                                                {col.key === "size" && <span className="text-gray-500">{formatFileSize(file.size)}</span>}
+                                                {col.key === "type" && <span className="text-gray-500">{file.type}</span>}
+                                                {col.key === "createdAt" && <span>{formatDate(file.createdAt)}</span>}
+                                            </TableCell>
+                                        ))}
+                                        <TableCell className={`${ROW_DENSITY_STYLES[rowDensity]} overflow-visible`}>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Tooltip><TooltipTrigger asChild><a href={file.url} download><Button variant="ghost" size="icon" className="h-7 w-7"><Download className="h-4 w-4 text-gray-500" /></Button></a></TooltipTrigger><TooltipContent>Download</TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteFile(file.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -131,7 +347,12 @@ export default function FilesPage() {
                         </TableBody>
                     </Table>
                 </div>
+
+                {/* Bottom Pagination */}
+                {processedFiles.length > 0 && (
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedFiles.length} startRecord={startRecord} endRecord={endRecord} />
+                )}
             </div>
-        </div>
+        </TooltipProvider>
     );
 }
