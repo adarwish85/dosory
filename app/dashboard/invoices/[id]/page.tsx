@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useParams } from "next/navigation";
+import { format } from "date-fns";
 import {
     Table,
     TableBody,
@@ -26,12 +27,34 @@ interface Invoice {
     id: string;
     number: string;
     clientName: string;
-    date: string;
-    dueDate: string;
+    customerName?: string;
+    date: Timestamp | string | Date;
+    dueDate: Timestamp | string | Date;
+    createdAt?: Timestamp | string | Date;
     total: number;
     status: string;
     items: LineItem[];
+    currency?: string;
 }
+
+// Helper to format Firestore Timestamp or Date to readable string
+const formatDate = (date: Timestamp | string | Date | undefined): string => {
+    if (!date) return "-";
+    try {
+        if (date instanceof Timestamp || (date && typeof date === 'object' && 'toDate' in date)) {
+            return format((date as Timestamp).toDate(), "dd/MM/yyyy");
+        }
+        if (date instanceof Date) {
+            return format(date, "dd/MM/yyyy");
+        }
+        if (typeof date === "string") {
+            return format(new Date(date), "dd/MM/yyyy");
+        }
+        return "-";
+    } catch {
+        return "-";
+    }
+};
 
 export default function InvoiceDetailsPage() {
     const params = useParams();
@@ -112,11 +135,11 @@ export default function InvoiceDetailsPage() {
                     <CardContent className="space-y-4">
                         <div>
                             <span className="block text-sm font-medium text-muted-foreground">Date</span>
-                            <span>{invoice.date}</span>
+                            <span>{formatDate(invoice.date)}</span>
                         </div>
                         <div>
                             <span className="block text-sm font-medium text-muted-foreground">Due Date</span>
-                            <span>{invoice.dueDate}</span>
+                            <span>{formatDate(invoice.dueDate)}</span>
                         </div>
                         <div>
                             <span className="block text-sm font-medium text-muted-foreground">Status</span>
