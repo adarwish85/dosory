@@ -548,7 +548,7 @@ export function useOrganizationSettings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    // Load settings
+    // Real-time settings listener
     useEffect(() => {
         // Wait for profile to load
         if (profileLoading) return;
@@ -559,44 +559,57 @@ export function useOrganizationSettings() {
             return;
         }
 
-        const loadSettings = async () => {
+        // Import onSnapshot for real-time listening
+        const setupListeners = async () => {
+            const { onSnapshot } = await import("firebase/firestore");
+
+            // Listen to settings subcollection
+            const settingsRef = doc(db, "organizations", profile.orgId, "settings", "general");
+            const orgRef = doc(db, "organizations", profile.orgId);
+
+            // First get subdomain from org doc (one-time, subdomain rarely changes)
+            let subdomain = "";
             try {
-                // Fetch general settings from subcollection
-                const settingsRef = doc(db, "organizations", profile.orgId, "settings", "general");
-                const settingsSnap = await getDoc(settingsRef);
-
-                // Fetch root organization doc for subdomain
-                const orgRef = doc(db, "organizations", profile.orgId);
                 const orgSnap = await getDoc(orgRef);
-
-                let data: any = {};
-                if (settingsSnap.exists()) {
-                    data = { ...data, ...settingsSnap.data() };
-                }
-
                 if (orgSnap.exists()) {
-                    // Extract subdomain from root doc
-                    const orgData = orgSnap.data();
-                    if (orgData.subdomain) {
-                        data = { ...data, subdomain: orgData.subdomain };
-                    }
+                    subdomain = orgSnap.data().subdomain || "";
                 }
-
-                setSettings({
-                    ...DEFAULT_SETTINGS,
-                    ...data,
-                    // Handle dates if they exist in subcollection data
-                    updatedAt: data.updatedAt?.toDate?.(),
-                    createdAt: data.createdAt?.toDate?.(),
-                });
             } catch (error) {
-                console.error("Error loading org settings:", error);
-            } finally {
-                setLoading(false);
+                console.error("Error loading org doc:", error);
             }
+
+            // Set up real-time listener for settings
+            const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    setSettings({
+                        ...DEFAULT_SETTINGS,
+                        ...data,
+                        subdomain, // Include subdomain from org doc
+                        updatedAt: data.updatedAt?.toDate?.(),
+                        createdAt: data.createdAt?.toDate?.(),
+                    });
+                } else {
+                    // No settings doc yet, use defaults with subdomain
+                    setSettings({ ...DEFAULT_SETTINGS, subdomain });
+                }
+                setLoading(false);
+            }, (error) => {
+                console.error("Error in settings listener:", error);
+                setLoading(false);
+            });
+
+            return unsubscribe;
         };
 
-        loadSettings();
+        let unsubscribe: (() => void) | undefined;
+        setupListeners().then(unsub => {
+            unsubscribe = unsub;
+        });
+
+        return () => {
+            if (unsubscribe) unsubscribe();
+        };
     }, [profile?.orgId, profileLoading]);
 
     // Save settings

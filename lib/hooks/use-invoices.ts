@@ -48,15 +48,58 @@ function getStatusTransitionError(currentStatus: InvoiceStatus, newStatus: Invoi
     return `Cannot transition invoice from '${currentStatus}' to '${newStatus}'. Allowed transitions: ${ALLOWED_STATUS_TRANSITIONS[currentStatus].join(", ") || "none"}`;
 }
 
+
 // ============================================
-// Helper: Generate Invoice Number
+// Helper: Generate Invoice Number (Atomic)
 // ============================================
 
-async function generateInvoiceNumber(orgId: string, prefix: string = "INV-"): Promise<string> {
-    // In a real app, use a counter document or Cloud Function for atomic incrementing
-    const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `${prefix}${timestamp}${random}`;
+interface InvoiceNumberSettings {
+    prefix: string;
+    padding: number;
+}
+
+async function generateInvoiceNumber(
+    orgId: string,
+    settings?: InvoiceNumberSettings
+): Promise<{ number: number; formatted: string }> {
+    // Use Firestore transaction for atomic increment
+    const { runTransaction, increment, getDoc, setDoc } = await import("firebase/firestore");
+
+    const counterRef = doc(db, "organizations", orgId, "counters", "invoices");
+    const prefix = settings?.prefix || "INV-";
+    const padding = settings?.padding || 6;
+
+    try {
+        // Try to atomically increment using transaction
+        const result = await runTransaction(db, async (transaction) => {
+            const counterDoc = await transaction.get(counterRef);
+
+            let nextNumber = 1;
+            if (counterDoc.exists()) {
+                nextNumber = (counterDoc.data().currentNumber || 0) + 1;
+            }
+
+            transaction.set(counterRef, { currentNumber: nextNumber }, { merge: true });
+
+            return nextNumber;
+        });
+
+        // Format with padding
+        const paddedNumber = String(result).padStart(padding, "0");
+
+        return {
+            number: result,
+            formatted: `${prefix}${paddedNumber}`
+        };
+    } catch (error) {
+        console.error("Error generating invoice number:", error);
+        // Fallback to timestamp-based if transaction fails
+        const fallbackNum = Date.now();
+        return {
+            number: fallbackNum,
+            formatted: `${prefix}${fallbackNum}`
+        };
+    }
 }
 
 // ============================================
@@ -166,21 +209,30 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         async (data: InvoiceFormData): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
 
+            // Get organization settings for invoice numbering
+            const settingsRef = doc(db, "organizations", profile.orgId, "settings", "general");
+            const settingsSnap = await getDoc(settingsRef);
+            const orgSettings = settingsSnap.exists() ? settingsSnap.data() : {};
+
             // Get customer name
             const customerDoc = await getDoc(doc(db, "customers", data.customerId));
             const customerName = customerDoc.exists()
                 ? customerDoc.data().company
                 : "Unknown Customer";
 
-            // Generate invoice number
-            const number = await generateInvoiceNumber(profile.orgId);
+            // Generate invoice number using org settings
+            const invoiceNumberResult = await generateInvoiceNumber(profile.orgId, {
+                prefix: orgSettings.invoiceNumberPrefix || "INV-",
+                padding: orgSettings.numberPadding || 6,
+            });
 
             // Calculate totals
             const { subtotal, taxTotal, total } = calculateInvoiceTotals(data.items, data.discount);
 
             const docRef = await addDoc(collection(db, "invoices"), {
                 ...data,
-                number,
+                number: invoiceNumberResult.number,
+                numberFormatted: invoiceNumberResult.formatted,
                 customerName,
                 subtotal,
                 taxTotal,

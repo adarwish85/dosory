@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef, KeyboardEvent } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { useInvoices } from "@/lib/hooks/use-invoices";
+import { useFormatters } from "@/lib/hooks/use-formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,7 +23,6 @@ import {
 } from "lucide-react";
 import { StatsGroup } from "@/components/dashboard/customers/stats-group";
 import Link from "next/link";
-import { format } from "date-fns";
 import { InvoiceWizard } from "@/components/dashboard/customers/invoices/invoice-sheet";
 import { toast } from "sonner";
 
@@ -74,6 +74,7 @@ function Pagination({ currentPage, totalPages, onPageChange, totalRecords, start
 export default function InvoicesPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { invoices, loading: invoicesLoading, invoiceStats } = useInvoices({ customerId: customerId || undefined });
+    const { formatDate, formatCurrency } = useFormatters();
     const tableRef = useRef<HTMLDivElement>(null);
 
     // UI State
@@ -95,18 +96,10 @@ export default function InvoicesPage() {
     const openViewWizard = (id: string) => { setWizardMode("view"); setWizardInvoiceId(id); setWizardOpen(true); };
     const openEditWizard = (id: string) => { setWizardMode("edit"); setWizardInvoiceId(id); setWizardOpen(true); };
 
-    // Helpers
-    const formatDate = (timestamp: any) => {
-        if (!timestamp) return "-";
-        try {
-            const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
-            return format(date, "dd/MM/yyyy");
-        } catch { return "-"; }
-    };
-
-    const formatCurrency = (amount: number = 0) => {
+    // Currency formatter helper that uses customer currency
+    const formatInvoiceCurrency = (amount: number = 0) => {
         const currency = customer?.currency || "USD";
-        return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
+        return formatCurrency(amount, currency);
     };
 
     const getStatusBadge = (status: string) => {
@@ -222,9 +215,9 @@ export default function InvoicesPage() {
 
                 {/* Stats */}
                 <StatsGroup items={[
-                    { label: "Outstanding", amount: formatCurrency(invoiceStats?.totalDue || 0), color: "orange" },
-                    { label: "Past Due", amount: formatCurrency(invoiceStats?.amountsByStatus?.overdue || 0), color: "default" },
-                    { label: "Paid", amount: formatCurrency(invoiceStats?.totalPaid || 0), color: "green" },
+                    { label: "Outstanding", amount: formatInvoiceCurrency(invoiceStats?.totalDue || 0), color: "orange" },
+                    { label: "Past Due", amount: formatInvoiceCurrency(invoiceStats?.amountsByStatus?.overdue || 0), color: "default" },
+                    { label: "Paid", amount: formatInvoiceCurrency(invoiceStats?.totalPaid || 0), color: "green" },
                 ]} />
 
                 {/* Compact Toolbar */}
@@ -335,8 +328,8 @@ export default function InvoicesPage() {
                                                         <HighlightText text={`INV-${String(invoice.number).padStart(6, "0")}`} search={searchQuery} />
                                                     </Link>
                                                 )}
-                                                {col.key === "amount" && <span className="font-medium">{formatCurrency(invoice.total)}</span>}
-                                                {col.key === "tax" && <span>{formatCurrency(invoice.taxTotal || 0)}</span>}
+                                                {col.key === "amount" && <span className="font-medium">{formatInvoiceCurrency(invoice.total)}</span>}
+                                                {col.key === "tax" && <span>{formatInvoiceCurrency(invoice.taxTotal || 0)}</span>}
                                                 {col.key === "date" && <span>{formatDate(invoice.date)}</span>}
                                                 {col.key === "dueDate" && <span>{formatDate(invoice.dueDate)}</span>}
                                                 {col.key === "status" && (
