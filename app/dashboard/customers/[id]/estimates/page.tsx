@@ -97,7 +97,10 @@ export default function EstimatesPage() {
         } catch { return "-"; }
     };
 
-    const formatCurrency = (amount: number = 0) => `$${amount.toFixed(2)}`;
+    const formatCurrency = (amount: number = 0) => {
+        const currency = customer?.currency || "USD";
+        return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
+    };
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {

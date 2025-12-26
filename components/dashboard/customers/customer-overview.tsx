@@ -32,6 +32,14 @@ export function CustomerOverview() {
         currency: customer.currency?.toUpperCase() || "USD"
     };
 
+    // Currency formatter using customer's currency
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: financials.currency
+        }).format(amount);
+    };
+
     // Project Data
     const projectStats = {
         active: projects.filter(p => p.status === 'in_progress' || p.status === 'not_started').length,
@@ -86,15 +94,15 @@ export function CustomerOverview() {
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-500">Total Invoiced</span>
-                            <span className="font-bold text-gray-900">{financials.currency} {financials.invoiced.toLocaleString()}</span>
+                            <span className="font-bold text-gray-900">{formatCurrency(financials.invoiced)}</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-500">Amount Paid</span>
-                            <span className="font-bold text-green-600">{financials.currency} {financials.paid.toLocaleString()}</span>
+                            <span className="font-bold text-green-600">{formatCurrency(financials.paid)}</span>
                         </div>
                         <div className="flex justify-between items-center pt-2 border-t">
                             <span className="text-sm text-gray-500">Amount Due</span>
-                            <span className="font-bold text-red-600">{financials.currency} {financials.due.toLocaleString()}</span>
+                            <span className="font-bold text-red-600">{formatCurrency(financials.due)}</span>
                         </div>
                     </div>
                 </div>
