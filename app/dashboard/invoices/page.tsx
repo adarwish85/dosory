@@ -225,6 +225,12 @@ export default function InvoicesPage() {
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                     <div className="flex items-center gap-2">
+                        <Link href="/dashboard/invoices/new">
+                            <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                                <span className="hidden sm:inline"><span className="mr-2">+</span>Create New Invoice</span>
+                                <span className="sm:hidden">+ Invoice</span>
+                            </Button>
+                        </Link>
                         <span className="text-sm text-gray-500">Show</span>
                         <Select value={recordsPerPage.toString()} onValueChange={(v) => { setRecordsPerPage(parseInt(v)); setCurrentPage(1); }}>
                             <SelectTrigger className="w-[70px] h-9"><SelectValue /></SelectTrigger>
