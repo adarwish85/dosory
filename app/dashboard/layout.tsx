@@ -268,6 +268,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return (
         <OnboardingProvider>
+            <StickyNotesBoard />
             <div className="min-h-screen bg-[#F3F2EF]">
                 {/* Impersonation Banner */}
                 {isImpersonating && (
