@@ -82,17 +82,29 @@ export function PlatformSettingsProvider({ children }: { children: React.ReactNo
 
 // Component to handle favicon updates
 function FaviconUpdater() {
-    const { settings } = usePlatformSettings();
+    const { settings, loading } = usePlatformSettings();
 
     useEffect(() => {
-        if (!settings.faviconUrl) return;
+        if (loading) return; // Wait for settings to load
 
-        const link = (document.querySelector("link[rel*='icon']") as HTMLLinkElement) || document.createElement('link');
-        link.type = 'image/x-icon';
-        link.rel = 'shortcut icon';
-        link.href = settings.faviconUrl;
-        document.getElementsByTagName('head')[0].appendChild(link);
-    }, [settings.faviconUrl]);
+        const faviconUrl = settings.faviconUrl || "/favicon.ico";
+
+        // Update all favicon link tags to ensure browser picks up the change
+        const linkTags = document.querySelectorAll("link[rel*='icon']");
+
+        if (linkTags.length > 0) {
+            linkTags.forEach(link => {
+                (link as HTMLLinkElement).href = faviconUrl;
+            });
+        } else {
+            // Create new link if none exists
+            const link = document.createElement('link');
+            link.type = 'image/x-icon';
+            link.rel = 'icon';
+            link.href = faviconUrl;
+            document.head.appendChild(link);
+        }
+    }, [settings.faviconUrl, loading]);
 
     return null;
 }
