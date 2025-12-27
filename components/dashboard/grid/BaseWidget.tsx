@@ -75,7 +75,7 @@ export function BaseWidget({
         )}>
             {/* Widget Header */}
             <CardHeader className={cn(
-                "flex flex-row items-center justify-between py-2 px-3",
+                "flex flex-row items-center justify-between py-1 px-3",
                 styleClasses.header
             )}>
                 <div className="flex items-center gap-2">
