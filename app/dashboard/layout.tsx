@@ -35,6 +35,7 @@ import WelcomeModal from "@/components/onboarding/WelcomeModal";
 import OnboardingChecklist from "@/components/onboarding/OnboardingChecklist";
 import { SetupSidebar } from "@/components/dashboard/setup-sidebar";
 import { RightSidebar } from "@/components/dashboard/RightSidebar";
+import { StickyNotesBoard } from "@/components/dashboard/StickyNotes";
 import { NotificationsPopover } from "@/components/dashboard/notifications-popover";
 import { usePermissions, canAccessModule } from "@/lib/hooks/use-permissions";
 
