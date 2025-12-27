@@ -288,6 +288,7 @@ export default function InvoicesPage() {
                                             <TableCell className="text-center">
                                                 <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/invoices/${invoice.id}`}><Button variant="ghost" size="icon" className="h-7 w-7"><ExternalLink className="h-3.5 w-3.5" /></Button></Link></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/invoices/${invoice.id}/edit`}><Button variant="ghost" size="icon" className="h-7 w-7 text-gray-500 hover:text-blue-600"><Pencil className="h-3.5 w-3.5" /></Button></Link></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
                                                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDelete(invoice.id)}><Trash className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
                                                 </div>
                                             </TableCell>

@@ -94,7 +94,7 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
             {/* Sticky Notes */}
             <div className="mb-4">
                 <div className="flex items-center justify-between px-2 mb-2">
-                    <h3 className="text-[#65676B] font-semibold text-xs uppercase tracking-wider">Sticky Notes</h3>
+                    <h3 className="text-[#65676B] font-semibold text-xs uppercase tracking-wider">Sticky Notes ({notes.length})</h3>
                     <Button
                         variant="ghost"
                         size="icon"

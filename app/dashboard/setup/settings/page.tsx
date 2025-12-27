@@ -48,6 +48,18 @@ export default function SettingsPage() {
     const [availability, setAvailability] = useState<"idle" | "loading" | "available" | "unavailable">("idle");
     const [checkError, setCheckError] = useState("");
 
+    // Company Information State
+    const [companyInfo, setCompanyInfo] = useState({
+        address: "",
+        city: "",
+        state: "",
+        country: "",
+        zipCode: "",
+        phone: "",
+        vatNumber: "",
+        companyInfoFormat: "{company_name}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
+    });
+
     // Invoice Settings State
     const [invoiceForm, setInvoiceForm] = useState({
         invoiceNumberPrefix: "INV-",
@@ -751,6 +763,7 @@ export default function SettingsPage() {
         toast.success("Misc settings saved successfully");
     };
 
+
     useEffect(() => {
         if (!loading) {
             setLocalSubdomain(settings.subdomain || "");
@@ -759,8 +772,34 @@ export default function SettingsPage() {
             setRtlAdmin(settings.rtlAdmin ? "yes" : "no");
             setRtlCustomer(settings.rtlCustomer ? "yes" : "no");
             setAllowedFileTypes(settings.allowedFileTypes || "");
+            // Load company info
+            setCompanyInfo({
+                address: settings.address || "",
+                city: settings.city || "",
+                state: settings.state || "",
+                country: settings.country || "",
+                zipCode: settings.zipCode || "",
+                phone: settings.phone || "",
+                vatNumber: settings.vatNumber || "",
+                companyInfoFormat: (settings as any).companyInfoFormat || "{company_name}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
+            });
         }
     }, [loading, settings]);
+
+    const handleSaveCompanyInfo = async () => {
+        await saveSettings({
+            companyName,
+            address: companyInfo.address,
+            city: companyInfo.city,
+            state: companyInfo.state,
+            country: companyInfo.country,
+            zipCode: companyInfo.zipCode,
+            phone: companyInfo.phone,
+            vatNumber: companyInfo.vatNumber,
+            companyInfoFormat: companyInfo.companyInfoFormat,
+        } as any);
+        toast.success("Company information saved successfully");
+    };
 
     useEffect(() => {
         const checkAvailability = async () => {
@@ -1083,53 +1122,82 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                         <div>
                             <Label>Company Name</Label>
-                            <Input defaultValue="WasilaDev" />
+                            <Input
+                                value={companyName}
+                                onChange={(e) => setCompanyName(e.target.value)}
+                                placeholder="Enter your company name"
+                            />
                         </div>
 
                         <div>
                             <Label>Address</Label>
-                            <Input defaultValue="3a Mabotheen Buildings, Nasr City" />
+                            <Input
+                                value={companyInfo.address}
+                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, address: e.target.value }))}
+                                placeholder="Enter your address"
+                            />
                         </div>
 
                         <div>
                             <Label>City</Label>
-                            <Input defaultValue="Cairo" />
+                            <Input
+                                value={companyInfo.city}
+                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, city: e.target.value }))}
+                                placeholder="Enter your city"
+                            />
                         </div>
 
                         <div>
                             <Label>State</Label>
-                            <Input defaultValue="Cairo" />
+                            <Input
+                                value={companyInfo.state}
+                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, state: e.target.value }))}
+                                placeholder="Enter your state"
+                            />
                         </div>
 
                         <div>
                             <Label>Country Code</Label>
-                            <Input defaultValue="Egypt" />
+                            <Input
+                                value={companyInfo.country}
+                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, country: e.target.value }))}
+                                placeholder="Enter your country"
+                            />
                         </div>
 
                         <div>
                             <Label>Zip Code</Label>
-                            <Input defaultValue="11521" />
+                            <Input
+                                value={companyInfo.zipCode}
+                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, zipCode: e.target.value }))}
+                                placeholder="Enter your zip code"
+                            />
                         </div>
 
                         <div>
                             <Label>Phone</Label>
-                            <Input defaultValue="+201000081160" />
+                            <Input
+                                value={companyInfo.phone}
+                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, phone: e.target.value }))}
+                                placeholder="Enter your phone number"
+                            />
                         </div>
 
                         <div>
                             <Label>VAT Number</Label>
-                            <Input />
+                            <Input
+                                value={companyInfo.vatNumber}
+                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, vatNumber: e.target.value }))}
+                                placeholder="Enter your VAT number"
+                            />
                         </div>
 
                         <div>
                             <Label>Company Information Format (PDF and HTML)</Label>
                             <Textarea
                                 className="min-h-[150px] font-mono text-sm"
-                                defaultValue={`{company_name}
-{address}
-{city} {state}
-{country_code} {zip_code}
-{vat_number_with_label}`}
+                                value={companyInfo.companyInfoFormat}
+                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, companyInfoFormat: e.target.value }))}
                             />
                             <p className="text-sm text-gray-500 mt-2">
                                 <span className="text-blue-600">{"{company_name}"}</span> <span className="text-blue-600">{"{address}"}</span>, <span className="text-blue-600">{"{city}"}</span>, <span className="text-blue-600">{"{state}"}</span>, <span className="text-blue-600">{"{zip_code}"}</span>, <span className="text-blue-600">{"{country_code}"}</span>, <span className="text-blue-600">{"{phone}"}</span>, <span className="text-blue-600">{"{vat_number}"}</span>, <span className="text-blue-600">{"{vat_number_with_label}"}</span>
@@ -1137,8 +1205,12 @@ export default function SettingsPage() {
                         </div>
 
                         <div className="pt-4">
-                            <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                                Save Settings
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveCompanyInfo}
+                                disabled={saving}
+                            >
+                                {saving ? "Saving..." : "Save Settings"}
                             </Button>
                         </div>
                     </div>

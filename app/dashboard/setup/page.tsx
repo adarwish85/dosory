@@ -28,7 +28,7 @@ export default function SetupPage() {
                         <CardContent className="space-y-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="site-name">Site Name</Label>
-                                <Input id="site-name" defaultValue="WasilaDev Platform" />
+                                <Input id="site-name" defaultValue="My Platform" />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="lang">Default Language</Label>

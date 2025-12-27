@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
             orgId: tenantId,
             userId: userId,
             type: "success",
-            title: "Welcome to WasilaDev!",
+            title: "Welcome to your new platform!",
             message: "Your account has been successfully created. Get started by setting up your profile.",
             link: "/dashboard/setup/settings",
             read: false,

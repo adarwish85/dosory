@@ -64,9 +64,10 @@ async function generateInvoiceNumber(
     settings?: InvoiceNumberSettings
 ): Promise<{ number: number; formatted: string }> {
     // Use Firestore transaction for atomic increment
-    const { runTransaction } = await import("firebase/firestore");
+    const { runTransaction, getDoc } = await import("firebase/firestore");
 
     const counterRef = doc(db, "organizations", orgId, "counters", "invoices");
+    const settingsRef = doc(db, "organizations", orgId, "settings", "general");
     const prefix = settings?.prefix || "INV-";
     const padding = settings?.padding || 6;
 
@@ -77,7 +78,19 @@ async function generateInvoiceNumber(
 
             let nextNumber = 1;
             if (counterDoc.exists()) {
+                // Counter exists, increment it
                 nextNumber = (counterDoc.data().currentNumber || 0) + 1;
+            } else {
+                // Counter doesn't exist - check settings for initial value
+                const settingsDoc = await transaction.get(settingsRef);
+                if (settingsDoc.exists()) {
+                    const settingsData = settingsDoc.data();
+                    // Parse invoiceNextNumber - it could be a string like "000050"
+                    const configuredNextNumber = settingsData?.invoiceNextNumber;
+                    if (configuredNextNumber) {
+                        nextNumber = parseInt(configuredNextNumber, 10) || 1;
+                    }
+                }
             }
 
             transaction.set(counterRef, { currentNumber: nextNumber }, { merge: true });

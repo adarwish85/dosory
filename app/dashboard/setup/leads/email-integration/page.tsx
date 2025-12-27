@@ -37,12 +37,12 @@ export default function EmailIntegrationPage() {
 
                             <div className="space-y-2">
                                 <Label className="text-red-500">* Email address (Login)</Label>
-                                <Input type="email" defaultValue="sales@wasiladev.com" />
+                                <Input type="email" placeholder="sales@example.com" />
                             </div>
 
                             <div className="space-y-2">
                                 <Label className="text-red-500">* Password</Label>
-                                <Input type="password" defaultValue="********" />
+                                <Input type="password" />
                             </div>
 
                             <div className="space-y-2">

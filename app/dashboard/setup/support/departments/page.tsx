@@ -8,8 +8,8 @@ import { AddDepartmentDialog } from "@/components/dashboard/setup/support/add-de
 
 export default function DepartmentsPage() {
     const departments = [
-        { id: 2, name: "Development", email: "dev@wasiladev.com", calendarId: "" },
-        { id: 1, name: "Technical Support", email: "support@wasiladev.com", calendarId: "" },
+        { id: 2, name: "Development", email: "dev@example.com", calendarId: "" },
+        { id: 1, name: "Technical Support", email: "support@example.com", calendarId: "" },
     ];
 
     return (

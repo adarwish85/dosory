@@ -88,7 +88,7 @@ export default function CreateInvoicePage() {
     const [preventOverdueReminders, setPreventOverdueReminders] = useState(false);
 
     // Footer Fields
-    const [clientNote, setClientNote] = useState("Thank you for doing business with WasilaDev");
+    const [clientNote, setClientNote] = useState("Thank you for doing business with us");
     const [termsConditions, setTermsConditions] = useState("");
 
     // Items

@@ -108,7 +108,6 @@ const SAVED_VIEWS_STORAGE_KEY = "leads_saved_views";
 // Default pixel widths
 const DEFAULT_COLUMN_WIDTHS: Record<ColumnKey, number> = {
     starred: 40,
-    id: 60,
     name: 200,
     company: 150,
     email: 200,
@@ -123,7 +122,6 @@ const DEFAULT_COLUMN_WIDTHS: Record<ColumnKey, number> = {
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
     { key: "starred", label: "★", defaultVisible: true },
-    { key: "id", label: "#", defaultVisible: true },
     { key: "name", label: "Name", defaultVisible: true, required: true, sortable: true },
     { key: "company", label: "Company", defaultVisible: true, sortable: true },
     { key: "email", label: "Email", defaultVisible: true, sortable: true },
@@ -937,13 +935,7 @@ export default function LeadsPage() {
                         </HoverCardTrigger>
                         <HoverCardContent side="right" align="start" className="p-0 border-0 bg-transparent shadow-none"><QuickViewCard lead={lead} /></HoverCardContent>
                     </HoverCard>
-                    {rowDensity === "comfortable" && (
-                        <div className="flex gap-2 text-[10px] text-gray-400 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="hover:text-blue-600 flex items-center gap-0.5" onClick={(e) => { e.stopPropagation(); handleView(lead); }}><ExternalLink className="h-2.5 w-2.5" /> View</button>
-                            <span className="text-gray-300">|</span>
-                            <button className="hover:text-red-600 flex items-center gap-0.5" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this lead?")) deleteLead(lead.id); }}><Trash className="h-2.5 w-2.5" /> Delete</button>
-                        </div>
-                    )}
+
                 </div>
             );
             case "company": return <InlineEditCell value={lead.company || ""} field="company" leadId={lead.id} onSave={handleInlineEdit} searchQuery={searchQuery} />;
@@ -1224,6 +1216,7 @@ export default function LeadsPage() {
                                                     />
                                                 ))}
                                             </SortableContext>
+                                            <TableHead className="w-24 text-center bg-gray-100 border-l">Actions</TableHead>
 
                                         </TableRow>
                                     </TableHeader>
@@ -1243,6 +1236,13 @@ export default function LeadsPage() {
                                                             {renderCell(lead, col)}
                                                         </TableCell>
                                                     ))}
+                                                    <TableCell className="text-center border-l bg-white group-hover:bg-gray-50">
+                                                        <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleView(lead); }}><ExternalLink className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
+                                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-gray-500 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); handleEdit(lead); }}><Pencil className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
+                                                            <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this lead?")) deleteLead(lead.id); }}><Trash className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
+                                                        </div>
+                                                    </TableCell>
 
                                                 </TableRow>
                                             ))

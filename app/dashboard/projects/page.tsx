@@ -38,14 +38,13 @@ const statusLabels: Record<ProjectStatus, string> = {
     cancelled: "Cancelled", finished: "Finished",
 };
 
-type ColumnKey = "id" | "name" | "customer" | "status" | "progress" | "startDate" | "deadline";
+type ColumnKey = "name" | "customer" | "status" | "progress" | "startDate" | "deadline";
 type RowDensity = "compact" | "comfortable" | "spacious";
 type SelectionMode = "none" | "page" | "all";
 
 interface ColumnDef { key: ColumnKey; label: string; defaultVisible: boolean; required?: boolean; }
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
-    { key: "id", label: "#", defaultVisible: true },
     { key: "name", label: "Name", defaultVisible: true, required: true },
     { key: "customer", label: "Customer", defaultVisible: true },
     { key: "status", label: "Status", defaultVisible: true },
@@ -264,7 +263,6 @@ export default function ProjectsPage() {
                         <TableHeader>
                             <TableRow className="bg-gray-50 hover:bg-gray-50">
                                 <TableHead className="w-[40px]"><Checkbox checked={isAllPageSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={(c) => c ? handleSelectAllOnPage() : handleClearSelection()} /></TableHead>
-                                {columnVisibility.id && <TableHead className="w-10">#</TableHead>}
                                 {columnVisibility.name && <TableHead className="font-semibold text-gray-900">Name</TableHead>}
                                 {columnVisibility.customer && <TableHead>Customer</TableHead>}
                                 {columnVisibility.status && <TableHead>Status</TableHead>}
@@ -283,7 +281,6 @@ export default function ProjectsPage() {
                                     return (
                                         <TableRow key={project.id} className={`group hover:bg-gray-50 ${selectedProjects.includes(project.id) ? 'bg-blue-50/50' : ''} ${focusedRowIndex === index ? 'ring-2 ring-inset ring-blue-500' : ''} ${ROW_DENSITY_STYLES[rowDensity]}`}>
                                             <TableCell><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(c) => handleSelectProject(project.id, !!c)} /></TableCell>
-                                            {columnVisibility.id && <TableCell className="text-gray-500">{startIndex + index + 1}</TableCell>}
                                             {columnVisibility.name && <TableCell className="font-medium"><Link href={`/dashboard/projects/${project.id}`} className="text-blue-600 hover:underline"><HighlightText text={project.name || "-"} search={searchQuery} /></Link></TableCell>}
                                             {columnVisibility.customer && <TableCell className="text-gray-500"><HighlightText text={project.customerName || "-"} search={searchQuery} /></TableCell>}
                                             {columnVisibility.status && <TableCell><Badge className={`${colors.bg} ${colors.text} ${colors.border} border`}>{statusLabels[project.status]}</Badge></TableCell>}
