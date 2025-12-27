@@ -13,7 +13,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useWizard } from "../OnboardingWizard";
-import { useAuth } from "@/components/auth-provider";
+import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -24,8 +24,9 @@ interface TeamMember {
 
 export default function InviteTeamStep() {
     const { goNext, skipStep, useDummyData } = useWizard();
-    const { user } = useAuth();
-    const orgId = (user as any)?.orgId;
+    const { profile } = useUserProfile();
+    const orgId = profile?.orgId;
+    const userId = profile?.uid;
 
     const [members, setMembers] = useState<TeamMember[]>([
         { email: "", role: "staff" }
@@ -59,7 +60,12 @@ export default function InviteTeamStep() {
     };
 
     const handleSave = async () => {
-        if (!orgId) return;
+        // If no orgId, skip to next step gracefully
+        if (!orgId) {
+            console.warn("InviteTeamStep: No orgId, skipping to next step");
+            goNext();
+            return;
+        }
 
         const validMembers = members.filter(m => m.email && m.email.includes("@"));
         if (validMembers.length === 0) {
@@ -78,13 +84,15 @@ export default function InviteTeamStep() {
                     status: "pending",
                     isOnboardingDemo: useDummyData,
                     createdAt: serverTimestamp(),
-                    invitedBy: user?.uid,
+                    invitedBy: userId,
                 });
             }
 
             goNext();
         } catch (error) {
             console.error("Error sending invitations:", error);
+            // Still proceed to next step even on error
+            goNext();
         } finally {
             setIsSaving(false);
         }

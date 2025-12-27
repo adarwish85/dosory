@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWizard } from "../OnboardingWizard";
-import { useAuth } from "@/components/auth-provider";
+import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -18,8 +18,9 @@ interface LineItem {
 
 export default function CreateInvoiceStep() {
     const { goNext, useDummyData, createdCustomerId, setCreatedInvoiceId } = useWizard();
-    const { user } = useAuth();
-    const orgId = (user as any)?.orgId;
+    const { profile } = useUserProfile();
+    const orgId = profile?.orgId;
+    const userId = profile?.uid;
 
     const [lineItems, setLineItems] = useState<LineItem[]>([
         { description: "", quantity: 1, unitPrice: 0 }
@@ -57,7 +58,17 @@ export default function CreateInvoiceStep() {
     };
 
     const handleSave = async () => {
-        if (!orgId || lineItems.length === 0) return;
+        // If no orgId, skip to next step gracefully
+        if (!orgId) {
+            console.warn("CreateInvoiceStep: No orgId, skipping to next step");
+            goNext();
+            return;
+        }
+
+        if (lineItems.length === 0) {
+            goNext();
+            return;
+        }
 
         setIsSaving(true);
         try {
@@ -79,7 +90,7 @@ export default function CreateInvoiceStep() {
                 total: calculateTotal(),
                 isOnboardingDemo: useDummyData,
                 createdAt: serverTimestamp(),
-                createdBy: user?.uid,
+                createdBy: userId,
                 dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
             });
 
@@ -87,6 +98,8 @@ export default function CreateInvoiceStep() {
             goNext();
         } catch (error) {
             console.error("Error creating invoice:", error);
+            // Still proceed to next step even on error
+            goNext();
         } finally {
             setIsSaving(false);
         }
