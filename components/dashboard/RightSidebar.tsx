@@ -19,6 +19,8 @@ interface RightSidebarProps {
 
 export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
     const pathname = usePathname();
+    const { notes, addNote, toggleNoteOpen } = useStickyNotes();
+    const minimizedNotes = notes.filter(n => !n.isOpen);
 
     // Define context-aware actions
     const quickActions = useMemo(() => {
@@ -97,13 +99,13 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
                         variant="ghost"
                         size="icon"
                         className="h-5 w-5 hover:bg-black/5"
-                        onClick={() => useStickyNotes.getState().addNote()}
+                        onClick={() => addNote()}
                     >
                         <Plus className="h-3 w-3 text-[#65676B]" />
                     </Button>
                 </div>
                 <div className="flex flex-wrap gap-2 px-2">
-                    {useStickyNotes.getState().notes.filter(n => !n.isOpen).map(note => {
+                    {minimizedNotes.map(note => {
                         const colorClass = {
                             yellow: "bg-yellow-400",
                             blue: "bg-blue-400",
@@ -117,12 +119,12 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
                             <button
                                 key={note.id}
                                 className={cn("w-6 h-6 rounded-full border border-black/10 hover:ring-2 ring-black/20 hover:scale-110 transition-all", colorClass)}
-                                onClick={() => useStickyNotes.getState().toggleNoteOpen(note.id, true)}
+                                onClick={() => toggleNoteOpen(note.id, true)}
                                 title="Show Note"
                             />
                         );
                     })}
-                    {useStickyNotes.getState().notes.filter(n => !n.isOpen).length === 0 && (
+                    {minimizedNotes.length === 0 && (
                         <span className="text-xs text-gray-400 italic">No minimized notes</span>
                     )}
                 </div>

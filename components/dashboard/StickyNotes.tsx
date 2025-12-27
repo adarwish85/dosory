@@ -142,15 +142,16 @@ export function StickyNotesBoard() {
 
     return (
         <div className="fixed inset-0 pointer-events-none z-50">
-            <div className="relative w-full h-full pointer-events-auto">
+            <div className="relative w-full h-full">
                 {openNotes.map(note => (
-                    <StickyNoteCard
-                        key={note.id}
-                        note={note}
-                        onUpdate={updateNote}
-                        onDelete={deleteNote}
-                        onMinimize={(id) => toggleNoteOpen(id, false)}
-                    />
+                    <div key={note.id} className="pointer-events-auto absolute inset-0">
+                        <StickyNoteCard
+                            note={note}
+                            onUpdate={updateNote}
+                            onDelete={deleteNote}
+                            onMinimize={(id) => toggleNoteOpen(id, false)}
+                        />
+                    </div>
                 ))}
             </div>
         </div>
