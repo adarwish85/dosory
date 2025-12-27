@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteDoc, addDoc, collection, Timestamp, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import {
     Table,
     TableBody,
@@ -37,7 +38,11 @@ import {
     Ban,
     Clock,
     Trash2,
-    Plus
+    Plus,
+    ArrowLeft,
+    User,
+    Eye,
+    Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -96,9 +101,11 @@ const formatDate = (date: Timestamp | string | Date | undefined): string => {
 
 export default function InvoiceDetailsPage() {
     const params = useParams();
+    const router = useRouter();
     const id = params.id as string;
     const [invoice, setInvoice] = useState<Invoice | null>(null);
     const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     useEffect(() => {
         async function fetchInvoice() {
@@ -118,7 +125,73 @@ export default function InvoiceDetailsPage() {
         fetchInvoice();
     }, [id]);
 
-    if (loading) return <div className="p-8 flex items-center justify-center">Loading...</div>;
+    // Action Handlers
+    const handleUpdateStatus = async (newStatus: string) => {
+        if (!invoice) return;
+        setActionLoading(newStatus);
+        try {
+            await updateDoc(doc(db, "invoices", id), {
+                status: newStatus,
+                updatedAt: serverTimestamp()
+            });
+            setInvoice(prev => prev ? { ...prev, status: newStatus } : null);
+            toast.success(`Invoice marked as ${newStatus}`);
+        } catch (error) {
+            console.error("Error updating status:", error);
+            toast.error("Failed to update invoice status");
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleCopyInvoice = async () => {
+        if (!invoice) return;
+        setActionLoading("copy");
+        try {
+            const { id: _, ...invoiceData } = invoice;
+            const newInvoice = {
+                ...invoiceData,
+                number: `${invoice.number}-COPY`,
+                status: "draft",
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            };
+            const docRef = await addDoc(collection(db, "invoices"), newInvoice);
+            toast.success("Invoice copied successfully");
+            router.push(`/dashboard/invoices/${docRef.id}`);
+        } catch (error) {
+            console.error("Error copying invoice:", error);
+            toast.error("Failed to copy invoice");
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!invoice || !confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) return;
+        setActionLoading("delete");
+        try {
+            await deleteDoc(doc(db, "invoices", id));
+            toast.success("Invoice deleted");
+            router.push("/dashboard/sales/invoices");
+        } catch (error) {
+            console.error("Error deleting invoice:", error);
+            toast.error("Failed to delete invoice");
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleViewAsCustomer = () => {
+        // Open public invoice view in new tab
+        window.open(`/pay/${id}`, "_blank");
+    };
+
+    const handleCreateCreditNote = () => {
+        router.push(`/dashboard/sales/credit-notes/new?invoiceId=${id}`);
+    };
+
+    if (loading) return <div className="p-8 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
     if (!invoice) return <div className="p-8 flex items-center justify-center">Invoice not found</div>;
 
     // Derived or Default Data placeholders
@@ -149,9 +222,18 @@ export default function InvoiceDetailsPage() {
             <div className="max-w-5xl mx-auto space-y-6">
                 {/* Top Action Bar */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <Badge variant="outline" className={cn("px-3 py-1 text-sm font-medium border rounded pointer-events-none capitalize", getStatusColor(invoice.status))}>
-                        {invoice.status}
-                    </Badge>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="ghost"
+                            onClick={() => router.push('/dashboard/sales/invoices')}
+                            className="gap-2 text-gray-600 hover:text-gray-900"
+                        >
+                            <ArrowLeft className="h-4 w-4" /> Back to Invoices
+                        </Button>
+                        <Badge variant="outline" className={cn("px-3 py-1 text-sm font-medium border rounded pointer-events-none capitalize", getStatusColor(invoice.status))}>
+                            {invoice.status}
+                        </Badge>
+                    </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
                         <Button variant="outline" size="icon" className="h-9 w-9 bg-white" title="Edit Invoice">
@@ -185,15 +267,31 @@ export default function InvoiceDetailsPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-60">
-                                <DropdownMenuItem><User className="mr-2 h-4 w-4" /> View as Customer</DropdownMenuItem>
-                                <DropdownMenuItem><CreditCard className="mr-2 h-4 w-4" /> Create Credit Note</DropdownMenuItem>
-                                <DropdownMenuItem><File className="mr-2 h-4 w-4" /> Attach File</DropdownMenuItem>
-                                <DropdownMenuItem><Copy className="mr-2 h-4 w-4" /> Copy Invoice</DropdownMenuItem>
-                                <DropdownMenuItem><Send className="mr-2 h-4 w-4" /> Mark as Sent</DropdownMenuItem>
-                                <DropdownMenuItem><Ban className="mr-2 h-4 w-4" /> Mark as Cancelled</DropdownMenuItem>
-                                <DropdownMenuItem><Clock className="mr-2 h-4 w-4" /> Pause Overdue Reminders</DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleViewAsCustomer}>
+                                    <User className="mr-2 h-4 w-4" /> View as Customer
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleCreateCreditNote}>
+                                    <CreditCard className="mr-2 h-4 w-4" /> Create Credit Note
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toast.info("Attach file coming soon")}>
+                                    <File className="mr-2 h-4 w-4" /> Attach File
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleCopyInvoice} disabled={actionLoading === "copy"}>
+                                    <Copy className="mr-2 h-4 w-4" /> {actionLoading === "copy" ? "Copying..." : "Copy Invoice"}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleUpdateStatus("sent")} disabled={actionLoading === "sent"}>
+                                    <Send className="mr-2 h-4 w-4" /> Mark as Sent
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleUpdateStatus("cancelled")} disabled={actionLoading === "cancelled"}>
+                                    <Ban className="mr-2 h-4 w-4" /> Mark as Cancelled
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toast.info("Reminder pause coming soon")}>
+                                    <Clock className="mr-2 h-4 w-4" /> Pause Overdue Reminders
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-red-600"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleDelete} disabled={actionLoading === "delete"} className="text-red-600">
+                                    <Trash2 className="mr-2 h-4 w-4" /> {actionLoading === "delete" ? "Deleting..." : "Delete"}
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
 
@@ -331,6 +429,3 @@ export default function InvoiceDetailsPage() {
         </div>
     );
 }
-
-// Missing imports patch
-import { Eye, User } from "lucide-react";

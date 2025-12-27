@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MoreHorizontal, Plus, FileText, ChevronDown, CheckSquare, Clock, Flag, Folder, MessageSquare, Ticket, Scroll, Loader2 } from "lucide-react";
+import { MoreHorizontal, Plus, FileText, ChevronDown, CheckSquare, Clock, Flag, Folder, MessageSquare, Ticket, Scroll, Loader2, ArrowLeft } from "lucide-react";
 
 interface Project {
     id: string;
@@ -32,6 +32,7 @@ interface Project {
 
 export default function ProjectDetailPage() {
     const params = useParams();
+    const router = useRouter();
     const projectId = params?.id as string;
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
@@ -103,6 +104,13 @@ export default function ProjectDetailPage() {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col gap-4">
+                <Button
+                    variant="ghost"
+                    onClick={() => router.push('/dashboard/projects')}
+                    className="w-fit gap-2 text-gray-600 hover:text-gray-900 -ml-2"
+                >
+                    <ArrowLeft className="h-4 w-4" /> Back to Projects
+                </Button>
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-4">
                         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">

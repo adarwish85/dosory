@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Bold, Italic, Underline, Link, Image, MoreHorizontal, AlignLeft, AlignCenter, AlignRight, Printer, Edit2, Plus, Loader2 } from "lucide-react";
+import { Bold, Italic, Underline, Link, Image, MoreHorizontal, AlignLeft, AlignCenter, AlignRight, Printer, Edit2, Plus, Loader2, ArrowLeft } from "lucide-react";
 
 interface Ticket {
     id: string;
@@ -37,6 +37,7 @@ interface Ticket {
 
 export default function TicketPage() {
     const params = useParams();
+    const router = useRouter();
     const ticketId = params?.id as string;
     const [ticket, setTicket] = useState<Ticket | null>(null);
     const [loading, setLoading] = useState(true);
@@ -92,6 +93,13 @@ export default function TicketPage() {
         <div className="flex gap-6">
             {/* Main Content */}
             <div className="flex-1 space-y-6">
+                <Button
+                    variant="ghost"
+                    onClick={() => router.push('/dashboard/support')}
+                    className="w-fit gap-2 text-gray-600 hover:text-gray-900 -ml-2"
+                >
+                    <ArrowLeft className="h-4 w-4" /> Back to Tickets
+                </Button>
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
                         <h2 className="text-xl font-bold text-gray-900">#{ticketId?.slice(0, 4)} - {ticket.subject}</h2>
