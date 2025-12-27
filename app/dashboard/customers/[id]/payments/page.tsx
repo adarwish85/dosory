@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -50,20 +51,38 @@ function HighlightText({ text, search }: { text: string; search: string }) {
     return <>{parts.map((part, i) => regex.test(part) ? <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark> : <span key={i}>{part}</span>)}</>;
 }
 
-// Pagination component
-function Pagination({ currentPage, totalPages, onPageChange, totalRecords, startRecord, endRecord }: {
+// Pagination component - Leads Layout Standard
+function Pagination({ currentPage, totalPages, onPageChange, totalRecords, recordsPerPage, onRecordsPerPageChange }: {
     currentPage: number; totalPages: number; onPageChange: (page: number) => void;
-    totalRecords: number; startRecord: number; endRecord: number;
+    totalRecords: number; recordsPerPage: number; onRecordsPerPageChange: (value: number) => void;
 }) {
     return (
-        <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Showing {startRecord} to {endRecord} of {totalRecords}</span>
+        <div className="flex items-center justify-between text-sm text-gray-600 border-t pt-4">
+            {/* LEFT: Total */}
+            <div className="flex items-center gap-2">
+                <span className="font-medium">Total</span>
+                <Badge variant="secondary">{totalRecords}</Badge>
+            </div>
+
+            {/* CENTER: Rows per page */}
+            <div className="flex items-center gap-2">
+                <span className="text-gray-500">Rows</span>
+                <Select value={String(recordsPerPage)} onValueChange={(v) => onRecordsPerPageChange(Number(v))}>
+                    <SelectTrigger className="w-[70px] h-8"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {/* RIGHT: Compact Pagination */}
             <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(1)} disabled={currentPage === 1}><ChevronsLeft className="h-4 w-4" /></Button>
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></Button>
                 <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium">{currentPage} / {totalPages}</span>
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-4 w-4" /></Button>
             </div>
         </div>
     );
@@ -189,9 +208,6 @@ export default function PaymentsPage() {
 
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Payments</h1>
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={() => setShowPaymentDialog(true)}>
-                        <Plus className="mr-2 h-4 w-4" />Record Payment
-                    </Button>
                 </div>
 
                 {/* Total Summary */}
@@ -200,64 +216,53 @@ export default function PaymentsPage() {
                     <div className="text-2xl font-bold text-green-600">{formatPaymentCurrency(totalPayments)}</div>
                 </div>
 
-                {/* Compact Toolbar */}
-                <div className="flex flex-wrap items-center gap-2">
-                    {/* Actions Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><MoreVertical className="h-4 w-4 mr-1" />Actions<ChevronDown className="ml-1 h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem onClick={handleExport}><Download className="h-4 w-4 mr-2" />Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                {/* Toolbar - Leads Layout Standard */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    {/* LEFT: Primary Action + Dots Menu */}
+                    <div className="flex items-center gap-2">
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={() => setShowPaymentDialog(true)}>
+                            <Plus className="mr-2 h-4 w-4" />Record Payment
+                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="icon"><MoreVertical className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={handleExport}><Download className="h-4 w-4 mr-2" />Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
 
-                    {/* Display Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><LayoutList className="h-4 w-4 mr-1" />Display<ChevronDown className="ml-1 h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-48">
-                            <DropdownMenuLabel>Row Density</DropdownMenuLabel>
-                            <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
-                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                            </DropdownMenuRadioGroup>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Columns</DropdownMenuLabel>
-                            {DEFAULT_COLUMNS.map(col => (
-                                <DropdownMenuCheckboxItem key={col.key} checked={columnVisibility[col.key]} onCheckedChange={() => toggleColumn(col.key)}>{col.label}</DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    {/* CENTER: Search */}
+                    <div className="flex items-center gap-2 flex-1 w-full max-w-md mx-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                            <Input placeholder="Search payments..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                        </div>
+                    </div>
 
-                    {/* Reset */}
-                    <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setSearchQuery(""); setSortKey(null); setSortDirection(null); setSelectedIds([]); }}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Reset filters</TooltipContent></Tooltip>
-
-                    <div className="flex-1" />
-
-                    {/* Records Per Page */}
-                    <Select value={String(recordsPerPage)} onValueChange={(v) => { setRecordsPerPage(Number(v)); setCurrentPage(1); }}>
-                        <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="10">10</SelectItem>
-                            <SelectItem value="25">25</SelectItem>
-                            <SelectItem value="50">50</SelectItem>
-                            <SelectItem value="100">100</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    {/* Search */}
-                    <div className="relative w-64">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search..." className="pl-9" autoComplete="new-password" name="payments-search-nofill" data-lpignore="true" data-1p-ignore="true" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                    {/* RIGHT: Display + Refresh */}
+                    <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline"><LayoutList className="h-4 w-4 mr-2" />Display</Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                                <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
+                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                </DropdownMenuRadioGroup>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                                {DEFAULT_COLUMNS.map(col => (
+                                    <DropdownMenuCheckboxItem key={col.key} checked={columnVisibility[col.key]} onCheckedChange={() => toggleColumn(col.key)}>{col.label}</DropdownMenuCheckboxItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setSearchQuery(""); setSortKey(null); setSortDirection(null); setSelectedIds([]); }}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Reset filters</TooltipContent></Tooltip>
                     </div>
                 </div>
-
-                {/* Top Pagination */}
-                {processedPayments.length > 0 && (
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedPayments.length} startRecord={startRecord} endRecord={endRecord} />
-                )}
 
                 {/* Selection Banner */}
                 {selectedIds.length > 0 && (
@@ -330,9 +335,9 @@ export default function PaymentsPage() {
 
                 {/* Bottom Pagination */}
                 {processedPayments.length > 0 && (
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedPayments.length} startRecord={startRecord} endRecord={endRecord} />
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedPayments.length} recordsPerPage={recordsPerPage} onRecordsPerPageChange={(v) => { setRecordsPerPage(v); setCurrentPage(1); }} />
                 )}
             </div>
-        </TooltipProvider>
+        </TooltipProvider >
     );
 }
