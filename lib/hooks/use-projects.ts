@@ -421,3 +421,42 @@ export function useTasks(options: UseTasksOptions = {}) {
         updateTaskStatus,
     };
 }
+
+// ============================================
+// useTask Hook (single task)
+// ============================================
+
+export function useTask(id: string | null) {
+    const [task, setTask] = useState<Task | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<Error | null>(null);
+
+    useEffect(() => {
+        if (!id) {
+            setTask(null);
+            setLoading(false);
+            return;
+        }
+
+        const unsubscribe = onSnapshot(
+            doc(db, "tasks", id),
+            (snapshot) => {
+                if (snapshot.exists()) {
+                    setTask({ id: snapshot.id, ...snapshot.data() } as Task);
+                } else {
+                    setTask(null);
+                }
+                setLoading(false);
+            },
+            (err) => {
+                console.error("Error fetching task:", err);
+                setError(err);
+                setLoading(false);
+            }
+        );
+
+        return () => unsubscribe();
+    }, [id]);
+
+    return { task, loading, error };
+}
