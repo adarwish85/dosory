@@ -98,8 +98,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             currentSubdomain = host.replace(`.${rootDomain}`, "");
         }
 
-        // Determine expected subdomain: Use custom subdomain if set, otherwise fallback to orgId
-        const expectedSubdomain = settings.subdomain || profile.orgId;
+        // Determine expected subdomain: Use custom subdomain if set.
+        // If not set, but we are on a custom subdomain (not orgId), trust it and stay there.
+        // Otherwise fallback to orgId default.
+        const expectedSubdomain = settings.subdomain ||
+            (currentSubdomain && currentSubdomain !== profile.orgId ? currentSubdomain : profile.orgId);
 
         // If current subdomain doesn't match expected one, redirect
         if (expectedSubdomain && expectedSubdomain !== currentSubdomain) {

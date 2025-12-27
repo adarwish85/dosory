@@ -143,8 +143,8 @@ export default function InvoicesPage() {
 
     const filteredInvoices = useMemo(() => {
         return invoices.filter(invoice =>
-            invoice.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            invoice.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
+            String(invoice.number || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+            String(invoice.customerName || "").toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [invoices, searchQuery]);
 
