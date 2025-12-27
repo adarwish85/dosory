@@ -115,11 +115,42 @@ export const useDashboardStore = create<DashboardState>()(
             updateLayout: (newVisibleLayout) => {
                 const { config } = get();
 
+                // Clean layout items for comparison (only keep necessary fields)
+                const cleanLayoutItem = (item: LayoutItem) => ({
+                    i: item.i,
+                    x: item.x,
+                    y: item.y,
+                    w: item.w,
+                    h: item.h
+                });
+
+                // Check if layout actually changed
+                const currentLayoutMap = new Map(config.layout.map(l => [l.i, cleanLayoutItem(l)]));
+                let hasChanges = false;
+
+                // Check visible items
+                for (const newItem of newVisibleLayout) {
+                    const currentItem = currentLayoutMap.get(newItem.i);
+                    if (!currentItem) {
+                        hasChanges = true; // New item? Shouldn't happen in updateLayout usually
+                        break;
+                    }
+                    if (JSON.stringify(cleanLayoutItem(newItem)) !== JSON.stringify(currentItem)) {
+                        hasChanges = true;
+                        break;
+                    }
+                }
+
+                // If checking all items is cleaner:
                 // Merge new visible layout with existing hidden items to preserve their positions
                 const hiddenItems = config.layout.filter(l =>
                     !newVisibleLayout.find(nl => nl.i === l.i)
                 );
                 const mergedLayout = [...newVisibleLayout, ...hiddenItems];
+
+                if (!hasChanges && mergedLayout.length === config.layout.length) {
+                    return; // No changes detected
+                }
 
                 const newConfig = {
                     ...config,
@@ -206,7 +237,8 @@ export const useDashboardStore = create<DashboardState>()(
 
                 set({ isLoading: true });
                 try {
-                    const docRef = doc(db, "organizations", orgId, "userSettings", userId);
+                    // Changed path to users/{userId}/orgSettings/{orgId} to avoid permission issues
+                    const docRef = doc(db, "users", userId, "orgSettings", orgId);
                     const snap = await getDoc(docRef);
 
                     if (snap.exists() && snap.data().dashboardLayout) {
@@ -241,7 +273,8 @@ export const useDashboardStore = create<DashboardState>()(
                 const { config } = get();
                 set({ isSaving: true });
                 try {
-                    const docRef = doc(db, "organizations", orgId, "userSettings", userId);
+                    // Changed path to users/{userId}/orgSettings/{orgId} to avoid permission issues
+                    const docRef = doc(db, "users", userId, "orgSettings", orgId);
                     await setDoc(docRef, {
                         dashboardLayout: config
                     }, { merge: true });

@@ -141,8 +141,9 @@ export function DashboardGrid({ className }: DashboardGridProps) {
     }, [hasUnsavedChanges, handleDiscard, setEditMode]);
 
     const handleLayoutChange = useCallback((newLayout: LayoutItem[]) => {
+        if (!isEditing) return;
         updateLayout(newLayout);
-    }, [updateLayout]);
+    }, [updateLayout, isEditing]);
 
     const handleDragResizeStop = useCallback((newLayout: LayoutItem[]) => {
         updateLayout(newLayout);
