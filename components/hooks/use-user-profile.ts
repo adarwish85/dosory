@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/components/auth-provider";
+import { useImpersonation } from "@/lib/hooks/use-impersonation";
 
 export interface UserProfile {
     uid: string;
@@ -18,10 +19,14 @@ export interface UserProfile {
     phone?: string;
     jobTitle?: string;
     photoURL?: string;
+    // Added: actual role when impersonating
+    actualRole?: "superadmin" | "admin" | "staff" | "customer";
+    actualOrgId?: string;
 }
 
 export function useUserProfile() {
     const { user } = useAuth();
+    const { isImpersonating, impersonatedOrgId, originalRole } = useImpersonation();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -42,6 +47,8 @@ export function useUserProfile() {
                     console.log("User profile exists.");
                     const data = docSnap.data();
                     let orgId = data.orgId || data.organizationId;
+                    const actualOrgId = orgId;
+                    const actualRole = data.role;
 
                     // Self-healing: If orgId is missing, try to find it or fix it
                     if (!orgId) {
@@ -71,10 +78,20 @@ export function useUserProfile() {
                         }
                     }
 
+                    // Check if superadmin is impersonating a tenant
+                    if (isImpersonating && impersonatedOrgId && data.role === "superadmin") {
+                        console.log("Impersonation active - overriding orgId to:", impersonatedOrgId);
+                        orgId = impersonatedOrgId;
+                    }
+
                     setProfile({
                         uid: user.uid,
                         ...data,
-                        orgId
+                        orgId,
+                        // When impersonating, act as admin of that org but keep track of actual role
+                        role: isImpersonating && impersonatedOrgId ? "admin" : data.role,
+                        actualRole: actualRole,
+                        actualOrgId: actualOrgId
                     } as UserProfile);
                 } else {
                     console.log("Profile not found, creating new one...");
@@ -98,12 +115,14 @@ export function useUserProfile() {
         }
 
         fetchProfile();
-    }, [user]);
+    }, [user, isImpersonating, impersonatedOrgId]);
 
-    // Sync Admin to Staff Collection
+    // Sync Admin to Staff Collection (only if NOT impersonating)
     useEffect(() => {
         async function syncAdminToStaff() {
             if (!user || !profile || (profile.role !== "admin" && profile.role !== "superadmin")) return;
+            // Don't sync when impersonating
+            if (isImpersonating) return;
 
             try {
                 const staffRef = doc(db, "staff", user.uid);
@@ -119,7 +138,7 @@ export function useUserProfile() {
                         roleId: "admin",
                         isAdmin: true,
                         status: "active",
-                        orgId: profile.orgId,
+                        orgId: profile.actualOrgId || profile.orgId,
                         departmentIds: [],
                         createdAt: serverTimestamp(),
                         updatedAt: serverTimestamp(),
@@ -136,7 +155,7 @@ export function useUserProfile() {
         if (profile) {
             syncAdminToStaff();
         }
-    }, [user, profile]);
+    }, [user, profile, isImpersonating]);
 
     return { profile, loading };
 }

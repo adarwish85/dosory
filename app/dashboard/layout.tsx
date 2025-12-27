@@ -82,6 +82,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         // Wait for all data to load
         if (loading || settingsLoading || !profile?.orgId) return;
 
+        // Skip subdomain enforcement when superadmin is impersonating
+        const impersonationState = typeof window !== 'undefined'
+            ? JSON.parse(localStorage.getItem('impersonation-storage') || '{"state":{}}').state
+            : {};
+        if (impersonationState?.isImpersonating) {
+            console.log("[DashboardLayout] Skipping subdomain redirect - impersonation active");
+            return;
+        }
+
         const host = window.location.host;
 
         const isLocal = host.includes("localhost");
