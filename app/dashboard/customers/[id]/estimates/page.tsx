@@ -199,98 +199,58 @@ export default function EstimatesPage() {
     return (
         <TooltipProvider>
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Estimates</h1>
-                    <div className="flex gap-2">
+                {/* Header Toolbar */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <Link href={`/dashboard/sales/estimates/new?customerId=${customerId}`}>
                             <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                                <Plus className="mr-2 h-4 w-4" />Create New Estimate
+                                <Plus className="mr-2 h-4 w-4" />New Estimate
                             </Button>
                         </Link>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="outline" size="icon"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={handleExport}><Download className="h-4 w-4 mr-2" />Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}</DropdownMenuItem>
+                                <DropdownMenuItem><FileDown className="h-4 w-4 mr-2" />Zip Estimates</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        {selectedIds.length > 0 && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-1.5 flex items-center gap-2">
+                                <span className="text-blue-800 text-sm font-medium">{selectedIds.length} selected</span>
+                                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={handleSelectAll}>All ({processedEstimates.length})</Button>
+                                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={handleClearSelection}>Clear</Button>
+                            </div>
+                        )}
                     </div>
-                </div>
 
-                {/* Stats Group */}
-                <StatsGroup
-                    items={[
-                        { label: "Draft", amount: formatCurrency(estimateStats?.draft || 0), color: "default" },
-                        { label: "Sent", amount: formatCurrency(estimateStats?.sent || 0), color: "blue" },
-                        { label: "Expired", amount: formatCurrency(estimateStats?.expired || 0), color: "orange" },
-                        { label: "Declined", amount: formatCurrency(estimateStats?.declined || 0), color: "red" },
-                        { label: "Accepted", amount: formatCurrency(estimateStats?.accepted || 0), color: "green" },
-                    ]}
-                />
-
-                {/* Compact Toolbar */}
-                <div className="flex flex-wrap items-center gap-2">
-                    {/* Actions Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><MoreVertical className="h-4 w-4 mr-1" />Actions<ChevronDown className="ml-1 h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem onClick={handleExport}><Download className="h-4 w-4 mr-2" />Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}</DropdownMenuItem>
-                            <DropdownMenuItem><FileDown className="h-4 w-4 mr-2" />Zip Estimates</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    {/* Display Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><LayoutList className="h-4 w-4 mr-1" />Display<ChevronDown className="ml-1 h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-48">
-                            <DropdownMenuLabel>Row Density</DropdownMenuLabel>
-                            <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
-                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                            </DropdownMenuRadioGroup>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Columns</DropdownMenuLabel>
-                            {DEFAULT_COLUMNS.map(col => (
-                                <DropdownMenuCheckboxItem key={col.key} checked={columnVisibility[col.key]} onCheckedChange={() => toggleColumn(col.key)}>{col.label}</DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    {/* Reset */}
-                    <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setSearchQuery(""); setSortKey(null); setSortDirection(null); setSelectedIds([]); }}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Reset filters</TooltipContent></Tooltip>
-
-                    <div className="flex-1" />
-
-                    {/* Records Per Page */}
-                    <Select value={String(recordsPerPage)} onValueChange={(v) => { setRecordsPerPage(Number(v)); setCurrentPage(1); }}>
-                        <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="10">10</SelectItem>
-                            <SelectItem value="25">25</SelectItem>
-                            <SelectItem value="50">50</SelectItem>
-                            <SelectItem value="100">100</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    {/* Search */}
-                    <div className="relative w-64">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search..." className="pl-9" autoComplete="new-password" name="estimates-search-nofill" data-lpignore="true" data-1p-ignore="true" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                    </div>
-                </div>
-
-                {/* Top Pagination */}
-                {processedEstimates.length > 0 && (
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedEstimates.length} startRecord={startRecord} endRecord={endRecord} />
-                )}
-
-                {/* Selection Banner */}
-                {selectedIds.length > 0 && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
-                        <span className="text-blue-800 text-sm font-medium">{selectedIds.length} estimate{selectedIds.length > 1 ? "s" : ""} selected</span>
-                        <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={handleSelectAll}>Select All ({processedEstimates.length})</Button>
-                            <Button variant="outline" size="sm" onClick={handleClearSelection}>Clear</Button>
+                    <div className="flex items-center gap-2 flex-1 w-full max-w-md mx-6">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                            <Input placeholder="Search estimates..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                         </div>
                     </div>
-                )}
+
+                    <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline"><LayoutList className="h-4 w-4 mr-1" />Display<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-48">
+                                <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                                <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
+                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                </DropdownMenuRadioGroup>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                                {DEFAULT_COLUMNS.map(col => (
+                                    <DropdownMenuCheckboxItem key={col.key} checked={columnVisibility[col.key]} onCheckedChange={() => toggleColumn(col.key)}>{col.label}</DropdownMenuCheckboxItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setSearchQuery(""); setSortKey(null); setSortDirection(null); setSelectedIds([]); }}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Reset</TooltipContent></Tooltip>
+                    </div>
+                </div>
 
                 {/* Table */}
                 <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
@@ -353,10 +313,25 @@ export default function EstimatesPage() {
                     </Table>
                 </div>
 
-                {/* Bottom Pagination */}
-                {processedEstimates.length > 0 && (
+                {/* Footer */}
+                <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm text-gray-600 font-medium">Total: {processedEstimates.length}</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">Rows:</span>
+                            <Select value={recordsPerPage.toString()} onValueChange={(v) => { setRecordsPerPage(parseInt(v)); setCurrentPage(1); }}>
+                                <SelectTrigger className="w-[65px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="25">25</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                     <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedEstimates.length} startRecord={startRecord} endRecord={endRecord} />
-                )}
+                </div>
             </div>
         </TooltipProvider>
     );
