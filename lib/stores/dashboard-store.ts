@@ -90,6 +90,8 @@ interface DashboardState {
     updateGlobalSettings: (settings: { dataDensity?: DataDensity; widgetStyle?: WidgetStyle }) => Promise<void>;
     loadFromFirestore: (orgId: string, userId: string) => Promise<void>;
     syncToFirestore: (orgId: string, userId: string) => Promise<void>;
+    _hasHydrated: boolean; // Internal: tracks if localStorage was rehydrated
+    setHasHydrated: (val: boolean) => void;
 }
 
 export const useDashboardStore = create<DashboardState>()(
@@ -97,11 +99,13 @@ export const useDashboardStore = create<DashboardState>()(
         (set, get) => ({
             config: DEFAULT_CONFIG,
             isEditing: false,
-            isLoading: true,
+            isLoading: true, // Start true, set false after Firestore load
             isSaving: false,
+            _hasHydrated: false,
 
             setConfig: (config) => set({ config }),
             setEditMode: (isEditing) => set({ isEditing }),
+            setHasHydrated: (val) => set({ _hasHydrated: val }),
 
             updateLayout: async (newVisibleLayout) => {
                 const { config } = get();
@@ -244,6 +248,10 @@ export const useDashboardStore = create<DashboardState>()(
         {
             name: 'dashboard-storage',
             partialize: (state) => ({ config: state.config }), // Only persist config to localStorage
+            onRehydrateStorage: () => (state) => {
+                // Called when localStorage rehydration completes
+                state?.setHasHydrated(true);
+            }
         }
     )
 );
