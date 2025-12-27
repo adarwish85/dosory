@@ -201,7 +201,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         );
     }
 
-    if (!user || profile?.role !== "superadmin") {
+    // Check actual role (not impersonated role) for Super Admin access
+    const actualRole = profile?.actualRole || profile?.role;
+    if (!user || actualRole !== "superadmin") {
         return <SuperAdminLoginForm currentUser={user} />;
     }
 
