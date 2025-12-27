@@ -18,7 +18,8 @@ export type ActivityType =
     | "note_added"
     | "invoice_deleted"
     | "payment_received"
-    | "project_status_changed"; // Added
+    | "project_status_changed"
+    | "invoice_created"; // Added
 
 export interface Activity {
     id: string;
@@ -45,7 +46,8 @@ const ACTIVITY_ICONS: Record<ActivityType, { icon: string; color: string }> = {
     note_added: { icon: "💬", color: "text-gray-500" },
     invoice_deleted: { icon: "🗑️", color: "text-red-500" },
     payment_received: { icon: "💵", color: "text-green-600" },
-    project_status_changed: { icon: "🔄", color: "text-orange-500" }, // Added
+    project_status_changed: { icon: "🔄", color: "text-orange-500" },
+    invoice_created: { icon: "📄", color: "text-blue-500" },
 };
 
 export function getActivityMeta(type: ActivityType) {
