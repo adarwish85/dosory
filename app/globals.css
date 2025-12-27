@@ -155,3 +155,8 @@
     @apply bg-[#EEF3F8] text-[#0A66C2] border-l-2 border-[#0A66C2];
   }
 }
+
+/* React Grid Layout - Remove extra top spacing */
+.react-grid-layout {
+  margin-top: -16px !important;
+}
