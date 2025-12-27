@@ -187,15 +187,31 @@ export const useDashboardStore = create<DashboardState>()(
                 try {
                     const docRef = doc(db, "organizations", orgId, "userSettings", userId);
                     const snap = await getDoc(docRef);
+
                     if (snap.exists() && snap.data().dashboardLayout) {
-                        const data = snap.data().dashboardLayout;
-                        set({
-                            config: {
-                                ...DEFAULT_CONFIG,
-                                ...data,
-                                updatedAt: data.updatedAt || new Date().toISOString()
-                            }
-                        });
+                        const remoteData = snap.data().dashboardLayout as DashboardConfig;
+                        const { config: localConfig } = get();
+
+                        // Conflict Resolution: Use the newer version
+                        // If local is missing updatedAt (legacy), treat as old
+                        const localTime = localConfig.updatedAt ? new Date(localConfig.updatedAt).getTime() : 0;
+                        const remoteTime = remoteData.updatedAt ? new Date(remoteData.updatedAt).getTime() : 0;
+
+                        if (remoteTime > localTime) {
+                            // Remote is newer, use it
+                            set({
+                                config: {
+                                    ...DEFAULT_CONFIG,
+                                    ...remoteData,
+                                    updatedAt: remoteData.updatedAt
+                                }
+                            });
+                        } else if (localTime > remoteTime) {
+                            // Local is newer, keep it and sync to remote
+                            console.log("Local dashboard config is newer, syncing to Firestore...");
+                            get().syncToFirestore(orgId, userId);
+                        }
+                        // If equal, do nothing (local is already up to date)
                     }
                 } catch (error) {
                     console.error("Failed to load dashboard settings", error);
