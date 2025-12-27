@@ -229,116 +229,115 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
             <div className="flex-1 bg-gray-50/50 p-6">
                 <TabsContent value="profile" className="m-0 space-y-6 max-w-full">
                     <div className="bg-white p-6 rounded-lg border shadow-sm space-y-6">
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2">
-                                <Checkbox
-                                    id="admin"
-                                    checked={formData.isAdmin}
-                                    onCheckedChange={(checked) => updateField("isAdmin", !!checked)}
-                                />
-                                <Label htmlFor="admin" className="font-normal text-gray-600">Administrator</Label>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Checkbox
-                                    id="not-staff"
-                                    checked={formData.isNotStaff}
-                                    onCheckedChange={(checked) => updateField("isNotStaff", !!checked)}
-                                />
-                                <Label htmlFor="not-staff" className="font-normal text-gray-600">Not Staff Member</Label>
-                            </div>
-                        </div>
-
-                        {/* Profile Photo Section */}
-                        <div className="flex justify-center py-4">
-                            <div className="relative group">
-                                {formData.image && (
-                                    <button
-                                        onClick={handleRemovePhoto}
-                                        className="absolute -top-2 -right-2 z-10 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md transition-colors"
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </button>
-                                )}
-                                <div
-                                    className="relative cursor-pointer"
-                                    onClick={() => fileInputRef.current?.click()}
-                                >
-                                    <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
-                                        <AvatarImage src={formData.image} />
-                                        <AvatarFallback className="text-4xl bg-gray-200">
-                                            {formData.firstName?.charAt(0) || "U"}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {uploading ? (
-                                            <Loader2 className="h-8 w-8 text-white animate-spin" />
-                                        ) : (
-                                            <Camera className="h-8 w-8 text-white" />
-                                        )}
-                                    </div>
+                        <div className="flex flex-wrap gap-6 justify-between items-start">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="admin"
+                                        checked={formData.isAdmin}
+                                        onCheckedChange={(checked) => updateField("isAdmin", !!checked)}
+                                    />
+                                    <Label htmlFor="admin" className="font-normal text-gray-600">Administrator</Label>
                                 </div>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={handlePhotoUpload}
-                                    disabled={uploading}
-                                />
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="not-staff"
+                                        checked={formData.isNotStaff}
+                                        onCheckedChange={(checked) => updateField("isNotStaff", !!checked)}
+                                    />
+                                    <Label htmlFor="not-staff" className="font-normal text-gray-600">Not Staff Member</Label>
+                                </div>
                             </div>
-                        </div>
-                        <p className="text-center text-sm text-gray-500">Click on the photo to change it</p>
 
-                        {mode === "create" && !formData.image && (
-                            <div className="space-y-2">
-                                <Label>Profile Image</Label>
-                                <div className="border rounded-md px-3 py-2 flex items-center bg-white">
+                            {/* Profile Photo Section - Compact */}
+                            <div className="flex items-center gap-4">
+                                <div className="relative group">
+                                    {formData.image && (
+                                        <button
+                                            onClick={handleRemovePhoto}
+                                            className="absolute -top-1 -right-1 z-10 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 shadow-md transition-colors"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    )}
+                                    <div
+                                        className="relative cursor-pointer"
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
+                                        <Avatar className="h-20 w-20 border-2 border-white shadow-md">
+                                            <AvatarImage src={formData.image} />
+                                            <AvatarFallback className="text-2xl bg-gray-200">
+                                                {formData.firstName?.charAt(0) || "U"}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {uploading ? (
+                                                <Loader2 className="h-6 w-6 text-white animate-spin" />
+                                            ) : (
+                                                <Camera className="h-6 w-6 text-white" />
+                                            )}
+                                        </div>
+                                    </div>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handlePhotoUpload}
+                                        disabled={uploading}
+                                    />
+                                </div>
+                                {mode === "create" && !formData.image && (
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="mr-3 h-7 text-xs"
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={uploading}
                                     >
-                                        {uploading ? "Uploading..." : "Choose File"}
+                                        Upload Photo
                                     </Button>
-                                    <span className="text-sm text-gray-500">
-                                        {formData.image ? "Photo selected" : "No file chosen"}
-                                    </span>
-                                </div>
+                                )}
                             </div>
-                        )}
-
-                        <div className="space-y-2">
-                            <Label className="text-red-500">* First Name</Label>
-                            <Input
-                                required
-                                className="focus-visible:ring-blue-600 border-blue-200"
-                                value={formData.firstName}
-                                onChange={(e) => updateField("firstName", e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label className="text-red-500">* Last Name</Label>
-                            <Input
-                                required
-                                value={formData.lastName}
-                                onChange={(e) => updateField("lastName", e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label className="text-red-500">* Email</Label>
-                            <Input
-                                type="email"
-                                required
-                                value={formData.email}
-                                onChange={(e) => updateField("email", e.target.value)}
-                            />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label className="text-red-500">* First Name</Label>
+                                <Input
+                                    required
+                                    className="focus-visible:ring-blue-600 border-blue-200"
+                                    value={formData.firstName}
+                                    onChange={(e) => updateField("firstName", e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-red-500">* Last Name</Label>
+                                <Input
+                                    required
+                                    value={formData.lastName}
+                                    onChange={(e) => updateField("lastName", e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-red-500">* Email</Label>
+                                <Input
+                                    type="email"
+                                    required
+                                    value={formData.email}
+                                    onChange={(e) => updateField("email", e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Phone</Label>
+                                <Input
+                                    value={formData.phone}
+                                    onChange={(e) => updateField("phone", e.target.value)}
+                                />
+                            </div>
+
                             <div className="space-y-2">
                                 <Label>Hourly Rate</Label>
                                 <div className="relative">
@@ -353,53 +352,62 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Phone</Label>
+                                <Label>Default Language</Label>
+                                <Select
+                                    value={formData.defaultLanguage}
+                                    onValueChange={(value) => updateField("defaultLanguage", value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="System Default" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="system">System Default</SelectItem>
+                                        <SelectItem value="en">English</SelectItem>
+                                        <SelectItem value="ar">Arabic</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Direction</Label>
+                                <Select
+                                    value={formData.direction}
+                                    onValueChange={(value) => updateField("direction", value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="System Default" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="system">System Default</SelectItem>
+                                        <SelectItem value="ltr">LTR</SelectItem>
+                                        <SelectItem value="rtl">RTL</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2">Skype</Label>
                                 <Input
-                                    value={formData.phone}
-                                    onChange={(e) => updateField("phone", e.target.value)}
+                                    value={formData.skype}
+                                    onChange={(e) => updateField("skype", e.target.value)}
                                 />
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <Label className="flex items-center gap-2">Facebook</Label>
-                            <Input
-                                value={formData.facebook}
-                                onChange={(e) => updateField("facebook", e.target.value)}
-                            />
-                        </div>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2">Facebook</Label>
+                                <Input
+                                    value={formData.facebook}
+                                    onChange={(e) => updateField("facebook", e.target.value)}
+                                />
+                            </div>
 
-                        <div className="space-y-2">
-                            <Label className="flex items-center gap-2">LinkedIn</Label>
-                            <Input
-                                value={formData.linkedin}
-                                onChange={(e) => updateField("linkedin", e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label className="flex items-center gap-2">Skype</Label>
-                            <Input
-                                value={formData.skype}
-                                onChange={(e) => updateField("skype", e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label>Default Language</Label>
-                            <Select
-                                value={formData.defaultLanguage}
-                                onValueChange={(value) => updateField("defaultLanguage", value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="System Default" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="system">System Default</SelectItem>
-                                    <SelectItem value="en">English</SelectItem>
-                                    <SelectItem value="ar">Arabic</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2">LinkedIn</Label>
+                                <Input
+                                    value={formData.linkedin}
+                                    onChange={(e) => updateField("linkedin", e.target.value)}
+                                />
+                            </div>
                         </div>
 
                         <div className="space-y-2">
@@ -414,25 +422,8 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Direction</Label>
-                            <Select
-                                value={formData.direction}
-                                onValueChange={(value) => updateField("direction", value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="System Default" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="system">System Default</SelectItem>
-                                    <SelectItem value="ltr">LTR</SelectItem>
-                                    <SelectItem value="rtl">RTL</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2">
                             <Label>Member departments</Label>
-                            <div className="space-y-2 mt-2">
+                            <div className="flex flex-wrap gap-4 mt-2">
                                 <div className="flex items-center gap-2">
                                     <Checkbox
                                         id="dept-tech"

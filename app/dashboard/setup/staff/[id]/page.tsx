@@ -74,15 +74,8 @@ export default function EditStaffPage() {
     }
 
     return (
+    return (
         <div className="space-y-6">
-            <div className="grid grid-cols-5 gap-4">
-                <StatCard label="Total Logged Time" value="00:00" />
-                <StatCard label="Last Month Logged Time" value="00:00" />
-                <StatCard label="This Month Logged Time" value="00:00" highlight />
-                <StatCard label="Last Week Logged Time" value="00:00" />
-                <StatCard label="This Week Logged Time" value="00:00" />
-            </div>
-
             <div className="flex items-center gap-4">
                 <Link href="/dashboard/setup/staff">
                     <Button variant="ghost" size="icon">
@@ -95,56 +88,7 @@ export default function EditStaffPage() {
                 </h1>
             </div>
 
-            <Tabs defaultValue="staff" className="flex flex-col">
-                <div className="bg-gray-100 p-1 rounded-md mb-6 w-full inline-flex">
-                    <TabsList className="bg-transparent h-auto p-0 space-x-1 w-full justify-start">
-                        <TabTrigger value="staff">Staff</TabTrigger>
-                        <TabTrigger value="notes">Notes</TabTrigger>
-                        <TabTrigger value="timesheets">Timesheets & Reports</TabTrigger>
-                        <TabTrigger value="projects">Projects</TabTrigger>
-                    </TabsList>
-                </div>
-
-                <TabsContent value="staff" className="m-0 bg-transparent border rounded-md shadow-sm overflow-hidden">
-                    <StaffForm mode="edit" defaultValues={staff} staffId={staffId} />
-                </TabsContent>
-
-                <TabsContent value="notes" className="m-0 p-6 bg-white border rounded-md min-h-[400px]">
-                    <p className="text-gray-500">Notes content placeholder</p>
-                </TabsContent>
-                <TabsContent value="timesheets" className="m-0 p-6 bg-white border rounded-md min-h-[400px]">
-                    <p className="text-gray-500">Timesheets content placeholder</p>
-                </TabsContent>
-                <TabsContent value="projects" className="m-0 p-6 bg-white border rounded-md min-h-[400px]">
-                    <p className="text-gray-500">Projects content placeholder</p>
-                </TabsContent>
-            </Tabs>
+            <StaffForm mode="edit" defaultValues={staff} staffId={staffId} />
         </div>
     );
-}
-
-function StatCard({ label, value, highlight = false }: { label: string, value: string, highlight?: boolean }) {
-    return (
-        <Card className="shadow-sm">
-            <CardContent className="p-4">
-                <div className={`text-sm font-medium mb-1 ${highlight ? 'text-blue-600' : 'text-gray-500'}`}>
-                    {label}
-                </div>
-                <div className="text-lg font-bold text-gray-900">
-                    {value}
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-function TabTrigger({ value, children }: { value: string, children: React.ReactNode }) {
-    return (
-        <TabsTrigger
-            value={value}
-            className="data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 py-2 text-sm font-medium text-gray-600 data-[state=active]:text-gray-900 rounded-md transition-all"
-        >
-            {children}
-        </TabsTrigger>
-    )
 }

@@ -16,8 +16,6 @@ export function SetupSidebar({ isOpen, onClose, topOffset }: SetupSidebarProps) 
 
     const items = [
         { label: "Staff", href: "/dashboard/setup/staff" },
-        { label: "Join Requests", href: "/dashboard/setup/join-requests" },
-        { label: "Roles", href: "/dashboard/setup/roles" },
         { label: "Customers", href: "/dashboard/setup/customers", hasSub: true },
         { label: "Support", href: "/dashboard/setup/support", hasSub: true },
         { label: "Leads", href: "/dashboard/setup/leads", hasSub: true },
@@ -36,7 +34,7 @@ export function SetupSidebar({ isOpen, onClose, topOffset }: SetupSidebarProps) 
 
     return (
         <aside className={cn(
-            "fixed left-0 z-[60] bottom-0 w-[260px] bg-[#F8F9FB] border-r border-gray-200 shadow-2xl transition-transform duration-300 flex flex-col",
+            "fixed left-0 z-[60] bottom-0 w-[230px] bg-[#F8F9FB] border-r border-gray-200 shadow-2xl transition-transform duration-300 flex flex-col",
             topOffset,
             isOpen ? "translate-x-0" : "-translate-x-full"
         )}>
