@@ -34,6 +34,7 @@ import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import WelcomeModal from "@/components/onboarding/WelcomeModal";
 import OnboardingChecklist from "@/components/onboarding/OnboardingChecklist";
 import { SetupSidebar } from "@/components/dashboard/setup-sidebar";
+import { RightSidebar } from "@/components/dashboard/RightSidebar";
 import { NotificationsPopover } from "@/components/dashboard/notifications-popover";
 import { usePermissions, canAccessModule } from "@/lib/hooks/use-permissions";
 
@@ -250,11 +251,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return canAccessModule(permissions, isAdmin, item.module);
     });
 
-    const shortcuts = [
-        { href: "/dashboard/projects", label: "Recent Projects", icon: FolderKanban },
-        { href: "/dashboard/tasks", label: "My Tasks", icon: CheckSquare },
-        { href: "/dashboard/support", label: "Support Tickets", icon: LifeBuoy },
-    ];
+    // Shortcuts moved to RightSidebar component
 
     // Get impersonation state
     const impersonationState = typeof window !== 'undefined'
@@ -510,56 +507,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </main>
 
                     {/* Right Sidebar - Fixed & Collapsible */}
-                    <aside className={cn(
-                        `hidden lg:block w-[220px] fixed right-0 bottom-0 overflow-y-auto px-2 py-3 transition-transform duration-300 bg-[#F3F2EF] ${isImpersonating ? 'top-24' : 'top-14'}`,
-                        rightSidebarOpen ? "translate-x-0" : "translate-x-full"
-                    )}>
-                        {/* Shortcuts */}
-                        <div className="mb-3">
-                            <h3 className="text-[#65676B] font-semibold text-xs mb-2 px-2">Quick Access</h3>
-                            <nav className="space-y-0.5">
-                                {shortcuts.map((item) => {
-                                    const Icon = item.icon;
-                                    return (
-                                        <Link
-                                            key={item.href}
-                                            href={item.href}
-                                            className="flex items-center gap-2 p-2 rounded-lg text-[#1c1e21] hover:bg-[#E4E6EB] transition-colors"
-                                        >
-                                            <div className="w-8 h-8 rounded-lg bg-[#E4E6EB] flex items-center justify-center">
-                                                <Icon className="h-4 w-4 text-[#65676B]" />
-                                            </div>
-                                            <span className="text-xs font-medium">{item.label}</span>
-                                        </Link>
-                                    );
-                                })}
-                            </nav>
-                        </div>
-
-
-
-                        {/* Calendar Widget */}
-                        <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-3 mb-3">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Calendar className="h-4 w-4 text-[#0A66C2]" />
-                                <h3 className="font-semibold text-sm text-[#1c1e21]">Today</h3>
-                            </div>
-                            <p className="text-xs text-[#65676B]">
-                                {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-                            </p>
-                        </div>
-
-                        {/* Recent Activity */}
-                        <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] p-3">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Clock className="h-4 w-4 text-[#0A66C2]" />
-                                <h3 className="font-semibold text-sm text-[#1c1e21]">Recent Activity</h3>
-                            </div>
-                            <div className="text-xs text-[#65676B]">
-                                <p>No recent activity</p>
-                            </div>
-                        </div>
-                    </aside>
+                    <RightSidebar
+                        isOpen={rightSidebarOpen}
+                        topOffset={isImpersonating ? 'top-24' : 'top-14'}
+                    />
                 </div>
 
                 {/* Mobile Menu Overlay */}
