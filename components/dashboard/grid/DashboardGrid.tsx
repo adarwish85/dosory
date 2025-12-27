@@ -18,7 +18,7 @@ import {
     DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/components/auth-provider";
+import { useUserProfile } from "@/components/hooks/use-user-profile";
 import {
     useDashboardStore,
     type WidgetId,
@@ -77,7 +77,7 @@ interface DashboardGridProps {
 }
 
 export function DashboardGrid({ className }: DashboardGridProps) {
-    const { user } = useAuth();
+    const { profile } = useUserProfile();
     const [showCatalog, setShowCatalog] = useState(false);
 
     // Connect to Zustand store
@@ -96,9 +96,9 @@ export function DashboardGrid({ className }: DashboardGridProps) {
         syncToFirestore
     } = useDashboardStore();
 
-    // Get orgId/userId safely
-    const orgId = (user as any)?.orgId || user?.uid;
-    const userId = user?.uid;
+    // Get orgId/userId from user profile (not useAuth - Firebase Auth doesn't have orgId)
+    const orgId = profile?.orgId;
+    const userId = profile?.uid;
 
     // Load layout on mount
     useEffect(() => {
