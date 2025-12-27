@@ -24,6 +24,11 @@ const urbanist = Urbanist({
 export const metadata: Metadata = {
   title: "Dosory",
   description: "All-in-one CRM and ERP platform",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
