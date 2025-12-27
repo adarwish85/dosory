@@ -53,14 +53,17 @@ export function useTenants() {
         try {
             setLoading(true);
             const tenantsRef = collection(db, "organizations");
-            const q = query(tenantsRef, orderBy("createdAt", "desc"));
-            const snapshot = await getDocs(q);
+            // Don't use orderBy in query - documents without createdAt would be excluded
+            const snapshot = await getDocs(tenantsRef);
 
             const tenantsData = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
                 createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
             })) as Tenant[];
+
+            // Sort in JavaScript to include all documents
+            tenantsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
             setTenants(tenantsData);
         } catch (error) {

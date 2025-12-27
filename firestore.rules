@@ -107,9 +107,12 @@ service cloud.firestore {
       }
 
       // User-specific settings (dashboard layout, preferences)
-      // Users can only read/write their own settings
+      // Users can read/write their own settings within their org
       match /userSettings/{userId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null && (
+          request.auth.uid == userId || 
+          (belongsToOrg(orgId) && request.auth.uid == userId)
+        );
       }
       
       // Counters (for invoice numbers etc)
