@@ -31,7 +31,7 @@ import {
 import {
     Building2, Search, Plus, MoreHorizontal, Users, Calendar,
     CheckCircle, Clock, XCircle, Eye, LogIn, UserCheck, Edit, Trash2,
-    Loader2, Ban, Play, Mail, Phone, Globe, ChevronDown, ArrowDown
+    Loader2, Ban, Play, Mail, Phone, Globe, ChevronDown, ArrowDown, LogOut
 } from "lucide-react";
 import {
     DropdownMenu,

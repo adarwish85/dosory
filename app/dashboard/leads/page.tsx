@@ -107,6 +107,7 @@ const SAVED_VIEWS_STORAGE_KEY = "leads_saved_views";
 
 // Default pixel widths
 const DEFAULT_COLUMN_WIDTHS: Record<ColumnKey, number> = {
+    id: 60,
     starred: 40,
     name: 200,
     company: 150,

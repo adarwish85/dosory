@@ -9,7 +9,7 @@ import { signOut, signInWithEmailAndPassword, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import {
     LayoutDashboard, Building2, CreditCard, Users, BarChart3,
-    Settings, Bell, Search, LogOut, ChevronDown, Shield, Loader2, Eye, EyeOff, Palette
+    Settings, Bell, Search, LogOut, ChevronDown, Shield, Loader2, Eye, EyeOff, Palette, Megaphone
 } from "lucide-react";
 import { PlatformLogo } from "@/lib/hooks/use-platform-settings";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
