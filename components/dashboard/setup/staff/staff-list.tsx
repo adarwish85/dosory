@@ -249,7 +249,7 @@ export function StaffList() {
                                     <TableCell className="font-medium">
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-9 w-9">
-                                                <AvatarImage src={member.photoURL} />
+                                                <AvatarImage src={member.image || member.photoURL} />
                                                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
                                                     {member.firstName?.charAt(0) || "?"}
                                                 </AvatarFallback>

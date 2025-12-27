@@ -548,6 +548,7 @@ export interface Staff extends BaseEntity {
     status: EntityStatus;
     lastLogin?: Timestamp;
     photoURL?: string;
+    image?: string;
 }
 
 export interface Role extends BaseEntity {
