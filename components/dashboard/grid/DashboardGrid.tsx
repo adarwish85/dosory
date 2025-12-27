@@ -350,7 +350,7 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                 onDragStop={handleDragResizeStop}
                 onResizeStop={handleDragResizeStop}
                 isDraggable={isEditing}
-                isResizable={isEditing}
+                isResizable={false}
                 draggableHandle=".widget-drag-handle"
                 margin={[16, 16]}
                 containerPadding={[0, 0]}

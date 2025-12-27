@@ -243,6 +243,22 @@ export const useDashboardStore = create<DashboardState>()(
 
                     if (snap.exists() && snap.data().dashboardLayout) {
                         const remoteData = snap.data().dashboardLayout as DashboardConfig;
+
+                        // Smart Sync: Don't overwrite if local has unsaved changes and is newer
+                        const { config, hasUnsavedChanges } = get();
+                        const localTime = new Date(config.updatedAt).getTime();
+                        const remoteTime = new Date(remoteData.updatedAt || 0).getTime();
+
+                        if (hasUnsavedChanges && localTime > remoteTime) {
+                            console.log("Keeping local changes (newer than remote)");
+                            // Just update the "server version" reference, but keep our UI
+                            set({
+                                savedConfig: { ...DEFAULT_CONFIG, ...remoteData },
+                                isLoading: false
+                            });
+                            return;
+                        }
+
                         const loadedConfig = {
                             ...DEFAULT_CONFIG,
                             ...remoteData,
@@ -253,8 +269,7 @@ export const useDashboardStore = create<DashboardState>()(
                             hasUnsavedChanges: false
                         });
                     } else {
-                        // No remote data - use defaults, mark as unsaved so user can save
-                        const { config } = get();
+                        // No remote data
                         set({
                             savedConfig: null,
                             hasUnsavedChanges: false // Don't prompt for brand new users
