@@ -18,14 +18,15 @@ import {
     DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth-provider";
 import {
-    useDashboardLayout,
-    type LayoutPreset,
+    useDashboardStore,
     type WidgetId,
     type WidgetStyle,
     type DataDensity,
     type LayoutItem,
-} from "@/lib/hooks/use-dashboard-layout";
+    type LayoutPreset
+} from "@/lib/stores/dashboard-store";
 import { BaseWidget } from "./BaseWidget";
 
 // Import all widgets
@@ -76,41 +77,80 @@ interface DashboardGridProps {
 }
 
 export function DashboardGrid({ className }: DashboardGridProps) {
-    const [editMode, setEditMode] = useState(false);
+    const { user } = useAuth();
     const [showCatalog, setShowCatalog] = useState(false);
 
+    // Connect to Zustand store
     const {
-        layout,
-        widgets,
-        enabledWidgets,
         config,
-        loading,
-        saving,
-        saveLayout,
+        isEditing,
+        isLoading,
+        isSaving,
+        setEditMode,
+        updateLayout,
         applyPreset,
         toggleWidget,
         updateWidgetSettings,
         updateGlobalSettings,
-        presets,
-    } = useDashboardLayout();
+        loadFromFirestore,
+        syncToFirestore
+    } = useDashboardStore();
+
+    // Get orgId/userId safely
+    const orgId = (user as any)?.orgId || user?.uid;
+    const userId = user?.uid;
+
+    // Load layout on mount
+    useEffect(() => {
+        if (orgId && userId) {
+            loadFromFirestore(orgId, userId);
+        }
+    }, [orgId, userId, loadFromFirestore]);
+
+    // Sync to Firestore when editing stops or explicit save
+    // We'll also autosave on changes via store, but this is explicit
+    const handleSave = useCallback(async () => {
+        if (orgId && userId) {
+            await syncToFirestore(orgId, userId);
+            setEditMode(false);
+        }
+    }, [orgId, userId, syncToFirestore, setEditMode]);
 
     const handleLayoutChange = useCallback((newLayout: LayoutItem[]) => {
-        if (editMode) {
-            saveLayout(newLayout);
+        updateLayout(newLayout);
+        // Debounced save could go here, but we'll rely on explicit save for now or periodic sync
+        // Actually, for better UX, let's auto-save if in edit mode
+        if (isEditing && orgId && userId) {
+            syncToFirestore(orgId, userId);
         }
-    }, [editMode, saveLayout]);
+    }, [updateLayout, isEditing, orgId, userId, syncToFirestore]);
 
     const handlePresetChange = useCallback((preset: string) => {
         applyPreset(preset as LayoutPreset);
-    }, [applyPreset]);
+        if (orgId && userId) syncToFirestore(orgId, userId);
+    }, [applyPreset, orgId, userId, syncToFirestore]);
 
     const handleStyleChange = useCallback((style: string) => {
         updateGlobalSettings({ widgetStyle: style as WidgetStyle });
-    }, [updateGlobalSettings]);
+        if (orgId && userId) syncToFirestore(orgId, userId);
+    }, [updateGlobalSettings, orgId, userId, syncToFirestore]);
 
     const handleDensityChange = useCallback((density: string) => {
         updateGlobalSettings({ dataDensity: density as DataDensity });
-    }, [updateGlobalSettings]);
+        if (orgId && userId) syncToFirestore(orgId, userId);
+    }, [updateGlobalSettings, orgId, userId, syncToFirestore]);
+
+    // Calculate enabled widgets and their layout
+    // FORCE STATIC when not in edit mode
+    const enabledWidgets = useMemo(() => config.widgets.filter(w => w.enabled), [config.widgets]);
+    const displayLayout = useMemo(() => {
+        return config.layout
+            .filter(l => enabledWidgets.some(w => w.id === l.i))
+            .map(l => ({
+                ...l,
+                static: !isEditing // Key Fix: Force static when not editing
+            }));
+    }, [config.layout, enabledWidgets, isEditing]);
 
     // Get greeting based on time of day
     const greeting = useMemo(() => {
@@ -121,10 +161,10 @@ export function DashboardGrid({ className }: DashboardGridProps) {
         return "Working late";
     }, []);
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
             </div>
         );
     }
@@ -186,17 +226,17 @@ export function DashboardGrid({ className }: DashboardGridProps) {
 
                     {/* Edit Mode Toggle */}
                     <Button
-                        variant={editMode ? "default" : "outline"}
+                        variant={isEditing ? "default" : "outline"}
                         size="sm"
                         className="gap-2"
-                        onClick={() => setEditMode(!editMode)}
+                        onClick={isEditing ? handleSave : () => setEditMode(true)}
                     >
-                        {editMode ? <Save className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
-                        {editMode ? "Done" : "Edit"}
+                        {isEditing ? <Save className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
+                        {isEditing ? "Done" : "Edit"}
                     </Button>
 
                     {/* Add Widget Button (Edit Mode Only) */}
-                    {editMode && (
+                    {isEditing && (
                         <DropdownMenu open={showCatalog} onOpenChange={setShowCatalog}>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="gap-2">
@@ -208,12 +248,15 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                                 <DropdownMenuLabel>Widget Catalog</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {Object.entries(WIDGET_CATALOG).map(([id, meta]) => {
-                                    const widget = widgets.find(w => w.id === id);
+                                    const widget = config.widgets.find(w => w.id === id);
                                     const isEnabled = widget?.enabled ?? false;
                                     return (
                                         <DropdownMenuItem
                                             key={id}
-                                            onClick={() => toggleWidget(id as WidgetId, !isEnabled)}
+                                            onClick={() => {
+                                                toggleWidget(id as WidgetId, !isEnabled);
+                                                if (orgId && userId) syncToFirestore(orgId, userId);
+                                            }}
                                             className="flex items-center justify-between"
                                         >
                                             <div className="flex items-center gap-2">
@@ -234,34 +277,35 @@ export function DashboardGrid({ className }: DashboardGridProps) {
             </div>
 
             {/* Edit Mode Indicator */}
-            {editMode && (
+            {isEditing && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-blue-700">
                         <SlidersHorizontal className="h-4 w-4" />
                         <span className="text-sm font-medium">Edit Mode: Drag widgets to rearrange, resize corners to adjust size</span>
                     </div>
-                    {saving && <span className="text-xs text-blue-600">Saving...</span>}
+                    {isSaving && <span className="text-xs text-blue-600">Saving...</span>}
                 </div>
             )}
 
             {/* Widget Grid */}
             <GridWrapper
                 className="layout"
-                layout={layout}
+                layout={displayLayout}
                 cols={12}
                 rowHeight={80}
                 onLayoutChange={handleLayoutChange}
-                isDraggable={editMode}
-                isResizable={editMode}
+                isDraggable={isEditing}
+                isResizable={isEditing}
                 draggableHandle=".widget-drag-handle"
                 margin={[16, 16]}
                 containerPadding={[0, 0]}
             >
                 {enabledWidgets.map((widget) => {
                     const WidgetComponent = WIDGET_COMPONENTS[widget.id];
-                    const layoutItem = layout.find(l => l.i === widget.id);
+                    // We render based on enabledWidgets, so no need to find layoutItem here to return null
+                    // GridWrapper handles positioning based on key
 
-                    if (!WidgetComponent || !layoutItem) return null;
+                    if (!WidgetComponent) return null;
 
                     return (
                         <div key={widget.id}>
@@ -272,9 +316,15 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                                 settings={widget.settings}
                                 style={config.widgetStyle}
                                 density={config.dataDensity}
-                                editMode={editMode}
-                                onSettingsChange={(settings) => updateWidgetSettings(widget.id, settings)}
-                                onRemove={() => toggleWidget(widget.id, false)}
+                                editMode={isEditing}
+                                onSettingsChange={(settings) => {
+                                    updateWidgetSettings(widget.id, settings);
+                                    if (orgId && userId) syncToFirestore(orgId, userId);
+                                }}
+                                onRemove={() => {
+                                    toggleWidget(widget.id, false);
+                                    if (orgId && userId) syncToFirestore(orgId, userId);
+                                }}
                             >
                                 <WidgetComponent settings={widget.settings} density={config.dataDensity} />
                             </BaseWidget>
