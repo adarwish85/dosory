@@ -1,14 +1,12 @@
 "use client";
 
-import React from "react";
-import GridLayout from "react-grid-layout";
+import React, { useEffect, useRef, useState } from "react";
+import RGL from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
-// Get WidthProvider from module
-const ReactGridLayoutModule = require("react-grid-layout");
-const WidthProvider = ReactGridLayoutModule.WidthProvider;
-const ResponsiveGridLayout = WidthProvider(GridLayout);
+// Cast to any to bypass strict types that don't match actual component
+const GridLayout = RGL as any;
 
 export interface GridWrapperProps {
     layout: any[];
@@ -37,20 +35,39 @@ export function GridWrapper({
     children,
     className,
 }: GridWrapperProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [width, setWidth] = useState(1200);
+
+    // Measure container width for responsive behavior
+    useEffect(() => {
+        const updateWidth = () => {
+            if (containerRef.current) {
+                setWidth(containerRef.current.offsetWidth);
+            }
+        };
+
+        updateWidth();
+        window.addEventListener("resize", updateWidth);
+        return () => window.removeEventListener("resize", updateWidth);
+    }, []);
+
     return (
-        <ResponsiveGridLayout
-            className={className}
-            layout={layout}
-            cols={cols}
-            rowHeight={rowHeight}
-            onLayoutChange={onLayoutChange}
-            isDraggable={isDraggable}
-            isResizable={isResizable}
-            draggableHandle={draggableHandle}
-            margin={margin}
-            containerPadding={containerPadding}
-        >
-            {children}
-        </ResponsiveGridLayout>
+        <div ref={containerRef}>
+            <GridLayout
+                className={className}
+                layout={layout}
+                cols={cols}
+                rowHeight={rowHeight}
+                width={width}
+                onLayoutChange={onLayoutChange as any}
+                isDraggable={isDraggable}
+                isResizable={isResizable}
+                draggableHandle={draggableHandle}
+                margin={margin}
+                containerPadding={containerPadding}
+            >
+                {children}
+            </GridLayout>
+        </div>
     );
 }
