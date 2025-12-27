@@ -864,7 +864,7 @@ export default function SettingsPage() {
                 { id: "general", label: "General", icon: SettingsIcon },
                 { id: "company-information", label: "Company Information", icon: FileText },
                 { id: "localization", label: "Localization", icon: Globe },
-                { id: "email", label: "Email", icon: Mail },
+                // { id: "email", label: "Email", icon: Mail },
 
             ]
         },
@@ -3712,6 +3712,7 @@ export default function SettingsPage() {
             );
         }
 
+        /*
         if (activeSection === "email") {
             return (
                 <div className="space-y-6">
@@ -3728,12 +3729,12 @@ export default function SettingsPage() {
 
                         <TabsContent value="smtp" className="space-y-6 mt-6">
                             <div>
-                                <h3 className="text-lg font-medium mb-4">SMTP Settings <span className="text-sm text-gray-500">Setup main email</span></h3>
-
-                                <div className="space-y-4">
+                                <h3 className="text-lg font-medium">SMTP Settings <span className="text-sm font-normal text-gray-500">Setup main email</span></h3>
+                                
+                                <div className="mt-4 space-y-4">
                                     <div>
-                                        <Label>Mail Engine</Label>
-                                        <RadioGroup defaultValue="phpmailer" className="flex gap-4 mt-2">
+                                        <Label className="mb-2 block">Mail Engine</Label>
+                                        <RadioGroup defaultValue="phpmailer" className="flex items-center gap-6">
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="phpmailer" id="phpmailer" />
                                                 <Label htmlFor="phpmailer">PHPMailer</Label>
@@ -3745,22 +3746,20 @@ export default function SettingsPage() {
                                         </RadioGroup>
                                     </div>
 
-                                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                                        <p className="text-sm text-yellow-900">
-                                            The "mail" protocol is not the recommended protocol to send emails, you should strongly consider configuring the "SMTP" protocol to avoid any disruptions and delivery issues.
-                                        </p>
+                                    <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md text-yellow-800 text-sm">
+                                        The "mail" protocol is not the recommended protocol to send emails, you should strongly consider configuring the "SMTP" protocol to avoid any disruptions and delivery issues.
                                     </div>
 
                                     <div>
-                                        <Label>Email Protocol</Label>
-                                        <RadioGroup defaultValue="mail" className="flex flex-wrap gap-4 mt-2">
+                                        <Label className="mb-2 block">Email Protocol</Label>
+                                        <RadioGroup defaultValue="mail" className="flex items-center gap-6">
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="smtp" id="smtp" />
                                                 <Label htmlFor="smtp">SMTP</Label>
                                             </div>
                                             <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="oauth2" id="oauth2" />
-                                                <Label htmlFor="oauth2">Microsoft OAuth 2.0</Label>
+                                                <RadioGroupItem value="microsoft" id="microsoft" />
+                                                <Label htmlFor="microsoft">Microsoft OAuth 2.0</Label>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="gmail" id="gmail" />
@@ -3789,19 +3788,132 @@ export default function SettingsPage() {
 
                                     <div>
                                         <Label>BCC All Emails To</Label>
-                                        <Input placeholder="BCC email address" />
+                                        <Input />
+                                    </div>
+                                    
+                                    <div>
+                                        <Label className="mb-2 block">Email Signature</Label>
+                                        <Textarea className="min-h-[100px]" />
                                     </div>
 
                                     <div>
-                                        <Label>Email Signature</Label>
-                                        <Textarea defaultValue="WasilaDev Team" className="min-h-[100px]" />
+                                        <Label className="mb-2 block">Predefined Header</Label>
+                                        <Textarea className="min-h-[100px]" />
                                     </div>
 
                                     <div>
-                                        <Label>Predefined Header</Label>
-                                        <Textarea
-                                            className="min-h-[150px] font-mono text-xs"
-                                            defaultValue={`<!doctype html>
+                                        <Label className="mb-2 block">Predefined Footer</Label>
+                                        <Textarea className="min-h-[100px]" />
+                                    </div>
+
+                                    <div className="pt-4">
+                                        <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                                            Save Settings
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="queue">
+                            <div className="text-center py-12 text-gray-500">
+                                Email queue is empty
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                </div>
+            );
+        }
+
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-semibold">Email</h2>
+                    <Button variant="outline">Share details</Button>
+                </div>
+
+                <Tabs value={activeEmailTab} onValueChange={setActiveEmailTab}>
+                    <TabsList>
+                        <TabsTrigger value="smtp">SMTP Settings</TabsTrigger>
+                        <TabsTrigger value="queue">Email Queue</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="smtp" className="space-y-6 mt-6">
+                        <div>
+                            <h3 className="text-lg font-medium mb-4">SMTP Settings <span className="text-sm text-gray-500">Setup main email</span></h3>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <Label>Mail Engine</Label>
+                                    <RadioGroup defaultValue="phpmailer" className="flex gap-4 mt-2">
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="phpmailer" id="phpmailer" />
+                                            <Label htmlFor="phpmailer">PHPMailer</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="codeigniter" id="codeigniter" />
+                                            <Label htmlFor="codeigniter">CodeIgniter</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                                    <p className="text-sm text-yellow-900">
+                                        The "mail" protocol is not the recommended protocol to send emails, you should strongly consider configuring the "SMTP" protocol to avoid any disruptions and delivery issues.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <Label>Email Protocol</Label>
+                                    <RadioGroup defaultValue="mail" className="flex flex-wrap gap-4 mt-2">
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="smtp" id="smtp" />
+                                            <Label htmlFor="smtp">SMTP</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="oauth2" id="oauth2" />
+                                            <Label htmlFor="oauth2">Microsoft OAuth 2.0</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="gmail" id="gmail" />
+                                            <Label htmlFor="gmail">Gmail OAuth 2.0</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="sendmail" id="sendmail" />
+                                            <Label htmlFor="sendmail">Sendmail</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="mail" id="mail" />
+                                            <Label htmlFor="mail">Mail</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                                <div>
+                                    <Label>Email</Label>
+                                    <Input defaultValue="dev@wasiladev.com" />
+                                </div>
+
+                                <div>
+                                    <Label>Email Charset</Label>
+                                    <Input defaultValue="utf-8" />
+                                </div>
+
+                                <div>
+                                    <Label>BCC All Emails To</Label>
+                                    <Input placeholder="BCC email address" />
+                                </div>
+
+                                <div>
+                                    <Label>Email Signature</Label>
+                                    <Textarea defaultValue="WasilaDev Team" className="min-h-[100px]" />
+                                </div>
+
+                                <div>
+                                    <Label>Predefined Header</Label>
+                                    <Textarea
+                                        className="min-h-[150px] font-mono text-xs"
+                                        defaultValue={`<!doctype html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width" />
@@ -3816,14 +3928,14 @@ body {
   margin: 0;
   padding: 0;
   -ms-text-size-adjust: 100%;`}
-                                        />
-                                    </div>
+                                    />
+                                </div>
 
-                                    <div>
-                                        <Label>Predefined Footer</Label>
-                                        <Textarea
-                                            className="min-h-[150px] font-mono text-xs"
-                                            defaultValue={`</tr>
+                                <div>
+                                    <Label>Predefined Footer</Label>
+                                    <Textarea
+                                        className="min-h-[150px] font-mono text-xs"
+                                        defaultValue={`</tr>
 </table>
 </td>
 </tr>
@@ -3835,133 +3947,22 @@ body {
 <tr>
 <td class="content-block">
 <span>{companyname}</span>`}
+                                    />
+                                </div>
+
+                                <div className="border-t pt-6">
+                                    <h4 className="font-medium mb-4">Send Test Email</h4>
+                                    <p className="text-sm text-gray-600 mb-3">
+                                        Send test email to make sure that your SMTP settings is set correctly.
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            defaultValue="a.darwish@wasiladev.com"
+                                            className="flex-1"
                                         />
-                                    </div>
-
-                                    <div className="border-t pt-6">
-                                        <h4 className="font-medium mb-4">Send Test Email</h4>
-                                        <p className="text-sm text-gray-600 mb-3">
-                                            Send test email to make sure that your SMTP settings is set correctly.
-                                        </p>
-                                        <div className="flex gap-2">
-                                            <Input
-                                                defaultValue="a.darwish@wasiladev.com"
-                                                className="flex-1"
-                                            />
-                                            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                                                Test
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-4">
-                                        <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                                            Save Settings
+                                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                                            Test
                                         </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </TabsContent>
-
-                        <TabsContent value="queue" className="space-y-6 mt-6">
-                            <div className="space-y-4">
-                                <div>
-                                    <Label className="mb-3 block flex items-center gap-2">
-                                        <HelpCircle className="h-4 w-4" />
-                                        Enable Email Queue
-                                    </Label>
-                                    <RadioGroup defaultValue="yes">
-                                        <div className="flex items-center space-x-4">
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="yes" id="queue-yes" />
-                                                <Label htmlFor="queue-yes">Yes</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="no" id="queue-no" />
-                                                <Label htmlFor="queue-no">No</Label>
-                                            </div>
-                                        </div>
-                                    </RadioGroup>
-                                </div>
-
-                                <div>
-                                    <Label className="mb-3 block flex items-center gap-2">
-                                        <HelpCircle className="h-4 w-4" />
-                                        Do not add emails with attachments in the queue?
-                                    </Label>
-                                    <RadioGroup defaultValue="yes">
-                                        <div className="flex items-center space-x-4">
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="yes" id="attach-yes" />
-                                                <Label htmlFor="attach-yes">Yes</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="no" id="attach-no" />
-                                                <Label htmlFor="attach-no">No</Label>
-                                            </div>
-                                        </div>
-                                    </RadioGroup>
-                                </div>
-
-                                <div className="pt-6">
-                                    <h4 className="font-medium mb-4">Email Queue</h4>
-
-                                    <div className="bg-white rounded-lg border">
-                                        <div className="p-4 border-b flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <select className="border rounded px-3 py-1.5 text-sm">
-                                                    <option>25</option>
-                                                    <option>50</option>
-                                                    <option>100</option>
-                                                </select>
-                                                <Button variant="outline" size="sm">Export</Button>
-                                            </div>
-                                            <div className="relative">
-                                                <Input placeholder="Search..." className="w-64" />
-                                            </div>
-                                        </div>
-
-                                        <table className="w-full">
-                                            <thead className="bg-gray-50 border-b">
-                                                <tr>
-                                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
-                                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">To</th>
-                                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y">
-                                                <tr className="hover:bg-gray-50">
-                                                    <td className="px-4 py-3 text-sm">New Ticket Reply [Ticket ID: 1984]</td>
-                                                    <td className="px-4 py-3 text-sm">mohamed.fathi@egjc.com.eg</td>
-                                                    <td className="px-4 py-3 text-sm">sent</td>
-                                                    <td className="px-4 py-3 text-sm">
-                                                        <button className="text-red-600 hover:text-red-800">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                                <tr className="hover:bg-gray-50">
-                                                    <td className="px-4 py-3 text-sm">New Ticket Reply [Ticket ID: 1984]</td>
-                                                    <td className="px-4 py-3 text-sm">mohamed.fathi@egjc.com.eg</td>
-                                                    <td className="px-4 py-3 text-sm">sent</td>
-                                                    <td className="px-4 py-3 text-sm">
-                                                        <button className="text-red-600 hover:text-red-800">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-
-                                        <div className="p-4 border-t flex items-center justify-between text-sm text-gray-600">
-                                            <span>Showing 1 to 2 of 2 entries</span>
-                                            <div className="flex gap-2">
-                                                <Button variant="outline" size="sm" disabled>Previous</Button>
-                                                <Button variant="outline" size="sm" className="bg-gray-900 text-white">1</Button>
-                                                <Button variant="outline" size="sm" disabled>Next</Button>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
 
@@ -3971,11 +3972,123 @@ body {
                                     </Button>
                                 </div>
                             </div>
-                        </TabsContent>
-                    </Tabs>
-                </div>
-            );
-        }
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="queue" className="space-y-6 mt-6">
+                        <div className="space-y-4">
+                            <div>
+                                <Label className="mb-3 block flex items-center gap-2">
+                                    <HelpCircle className="h-4 w-4" />
+                                    Enable Email Queue
+                                </Label>
+                                <RadioGroup defaultValue="yes">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="queue-yes" />
+                                            <Label htmlFor="queue-yes">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="queue-no" />
+                                            <Label htmlFor="queue-no">No</Label>
+                                        </div>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+
+                            <div>
+                                <Label className="mb-3 block flex items-center gap-2">
+                                    <HelpCircle className="h-4 w-4" />
+                                    Do not add emails with attachments in the queue?
+                                </Label>
+                                <RadioGroup defaultValue="yes">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="yes" id="attach-yes" />
+                                            <Label htmlFor="attach-yes">Yes</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="no" id="attach-no" />
+                                            <Label htmlFor="attach-no">No</Label>
+                                        </div>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+
+                            <div className="pt-6">
+                                <h4 className="font-medium mb-4">Email Queue</h4>
+
+                                <div className="bg-white rounded-lg border">
+                                    <div className="p-4 border-b flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <select className="border rounded px-3 py-1.5 text-sm">
+                                                <option>25</option>
+                                                <option>50</option>
+                                                <option>100</option>
+                                            </select>
+                                            <Button variant="outline" size="sm">Export</Button>
+                                        </div>
+                                        <div className="relative">
+                                            <Input placeholder="Search..." className="w-64" />
+                                        </div>
+                                    </div>
+
+                                    <table className="w-full">
+                                        <thead className="bg-gray-50 border-b">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">To</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            <tr className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 text-sm">New Ticket Reply [Ticket ID: 1984]</td>
+                                                <td className="px-4 py-3 text-sm">mohamed.fathi@egjc.com.eg</td>
+                                                <td className="px-4 py-3 text-sm">sent</td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    <button className="text-red-600 hover:text-red-800">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 text-sm">New Ticket Reply [Ticket ID: 1984]</td>
+                                                <td className="px-4 py-3 text-sm">mohamed.fathi@egjc.com.eg</td>
+                                                <td className="px-4 py-3 text-sm">sent</td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    <button className="text-red-600 hover:text-red-800">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div className="p-4 border-t flex items-center justify-between text-sm text-gray-600">
+                                        <span>Showing 1 to 2 of 2 entries</span>
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" size="sm" disabled>Previous</Button>
+                                            <Button variant="outline" size="sm" className="bg-gray-900 text-white">1</Button>
+                                            <Button variant="outline" size="sm" disabled>Next</Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-4">
+                                <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                                    Save Settings
+                                </Button>
+                            </div>
+                        </div>
+                    </TabsContent>
+                </Tabs>
+            </div>
+        );
+    }
+    */
 
         return (
             <div className="space-y-6">
@@ -4026,6 +4139,6 @@ body {
                     {renderContent()}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

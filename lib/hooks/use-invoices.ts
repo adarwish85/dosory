@@ -75,23 +75,25 @@ async function generateInvoiceNumber(
         // Try to atomically increment using transaction
         const result = await runTransaction(db, async (transaction) => {
             const counterDoc = await transaction.get(counterRef);
+            const settingsDoc = await transaction.get(settingsRef);
 
-            let nextNumber = 1;
+            let currentCounter = 0;
             if (counterDoc.exists()) {
-                // Counter exists, increment it
-                nextNumber = (counterDoc.data().currentNumber || 0) + 1;
-            } else {
-                // Counter doesn't exist - check settings for initial value
-                const settingsDoc = await transaction.get(settingsRef);
-                if (settingsDoc.exists()) {
-                    const settingsData = settingsDoc.data();
-                    // Parse invoiceNextNumber - it could be a string like "000050"
-                    const configuredNextNumber = settingsData?.invoiceNextNumber;
-                    if (configuredNextNumber) {
-                        nextNumber = parseInt(configuredNextNumber, 10) || 1;
-                    }
+                currentCounter = counterDoc.data().currentNumber || 0;
+            }
+
+            let configuredNextNumber = 1;
+            if (settingsDoc.exists()) {
+                const settingsData = settingsDoc.data();
+                // Parse invoiceNextNumber - it could be a string like "000050"
+                if (settingsData?.invoiceNextNumber) {
+                    configuredNextNumber = parseInt(settingsData.invoiceNextNumber, 10) || 1;
                 }
             }
+
+            // The next number should be at least (current + 1), but can jump ahead 
+            // if configuredNextNumber is higher (e.g. user manually set it to 50)
+            const nextNumber = Math.max(currentCounter + 1, configuredNextNumber);
 
             transaction.set(counterRef, { currentNumber: nextNumber }, { merge: true });
 
