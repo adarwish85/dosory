@@ -689,7 +689,7 @@ export default function CustomersPage() {
 
     return (
         <TooltipProvider>
-            <div className="h-full flex flex-col space-y-4 p-4 overflow-x-auto">
+            <div className="space-y-4">
 
 
                 <CustomerStatsBar customers={customers} />
@@ -697,7 +697,7 @@ export default function CustomersPage() {
                 {/* Header Toolbar */}
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-between">
                     <div className="flex items-center gap-2 shrink-0">
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm" onClick={() => setShowAddPanel(true)}>
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={() => setShowAddPanel(true)}>
                             <Plus className="mr-2 h-4 w-4" /> New Customer
                         </Button>
                         <DropdownMenu>
