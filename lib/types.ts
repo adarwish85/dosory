@@ -547,7 +547,7 @@ export interface Staff extends BaseEntity {
     isAdmin: boolean;
     status: EntityStatus;
     lastLogin?: Timestamp;
-    profileImageUrl?: string;
+    photoURL?: string;
 }
 
 export interface Role extends BaseEntity {
