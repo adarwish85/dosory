@@ -4,7 +4,42 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { v4 as uuidv4 } from 'uuid';
+
+export type StickyNoteColor = "yellow" | "blue" | "green" | "pink" | "purple" | "orange";
+
+export interface StickyNote {
+    id: string;
+    content: string;
+    color: StickyNoteColor;
+    position: { x: number; y: number };
+    isOpen: boolean;
+    createdAt: number;
+    updatedAt: number;
+}
+
+interface StickyNotesState {
+    notes: StickyNote[];
+    isLoading: boolean;
+
+    // Actions
+    addNote: () => void;
+    updateNote: (id: string, updates: Partial<StickyNote>) => void;
+    deleteNote: (id: string) => void;
+    toggleNoteOpen: (id: string, isOpen: boolean) => void;
+
+    // Persistence
+    loadFromFirestore: (userId: string) => Promise<void>;
+    syncToFirestore: (userId: string) => Promise<void>;
+}
+
+const DEFAULT_NOTE: Partial<StickyNote> = {
+    content: "",
+    color: "yellow",
+    position: { x: 100, y: 100 },
+    isOpen: true,
+};
+
+const generateId = () => typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
 
 export type StickyNoteColor = "yellow" | "blue" | "green" | "pink" | "purple" | "orange";
 
@@ -48,7 +83,7 @@ export const useStickyNotes = create<StickyNotesState>()(
 
             addNote: () => {
                 const newNote: StickyNote = {
-                    id: uuidv4(),
+                    id: generateId(),
                     ...DEFAULT_NOTE,
                     position: { x: 100 + (get().notes.length * 20), y: 100 + (get().notes.length * 20) }, // Cascade positions
                     createdAt: Date.now(),
