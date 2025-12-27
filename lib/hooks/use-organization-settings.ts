@@ -33,10 +33,12 @@ export interface OrganizationSettings {
     timeFormat: "12" | "24";
     timezone: string;
     defaultLanguage: string;
+    currency: string;
 
     // Metadata
     updatedAt?: Date;
     createdAt?: Date;
+
 
     // Invoice Settings
     invoiceNumberPrefix?: string;
@@ -300,6 +302,7 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     timeFormat: "12",
     timezone: "Africa/Cairo",
     defaultLanguage: "en",
+    currency: "USD",
     subdomain: "", // Default empty
 
     // Invoice Defaults

@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Check, X, Loader2 } from "lucide-react";
+import { CURRENCIES, TIMEZONES } from "@/lib/constants";
 
 export default function SettingsPage() {
     const [activeSection, setActiveSection] = useState("general");
@@ -59,6 +60,33 @@ export default function SettingsPage() {
         vatNumber: "",
         companyInfoFormat: "{company_name}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
     });
+
+    // Localization State
+    const [localizationForm, setLocalizationForm] = useState({
+        dateFormat: "d/m/Y",
+        timeFormat: "12",
+        timezone: "Africa/Cairo",
+        defaultLanguage: "english",
+        currency: "USD",
+    });
+
+    useEffect(() => {
+        if (!loading) {
+            setLocalizationForm(prev => ({
+                ...prev,
+                dateFormat: settings.dateFormat ?? "d/m/Y",
+                timeFormat: settings.timeFormat ?? "12",
+                timezone: settings.timezone ?? "Africa/Cairo",
+                defaultLanguage: (settings as any).defaultLanguage ?? "english",
+                currency: settings.currency ?? "USD",
+            }));
+        }
+    }, [loading, settings]);
+
+    const handleSaveLocalization = async () => {
+        await saveSettings(localizationForm as any);
+        toast.success("Localization settings saved successfully");
+    };
 
     // Invoice Settings State
     const [invoiceForm, setInvoiceForm] = useState({
@@ -1012,7 +1040,7 @@ export default function SettingsPage() {
 
 
                         <div>
-                            <Label>Subdomain (Tenant URL)</Label>
+                            <Label>Subdomain</Label>
                             <div className="flex items-center gap-2 mt-2">
                                 <span className="text-gray-500 font-medium">https://</span>
                                 <Input
@@ -1226,7 +1254,10 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                         <div>
                             <Label>Date Format</Label>
-                            <Select defaultValue="d/m/Y">
+                            <Select
+                                value={localizationForm.dateFormat}
+                                onValueChange={(val) => setLocalizationForm({ ...localizationForm, dateFormat: val })}
+                            >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
@@ -1240,7 +1271,10 @@ export default function SettingsPage() {
 
                         <div>
                             <Label>Time Format</Label>
-                            <Select defaultValue="12">
+                            <Select
+                                value={localizationForm.timeFormat}
+                                onValueChange={(val) => setLocalizationForm({ ...localizationForm, timeFormat: val })}
+                            >
                                 <SelectTrigger>
                                     <SelectValue>12 hours</SelectValue>
                                 </SelectTrigger>
@@ -1253,21 +1287,48 @@ export default function SettingsPage() {
 
                         <div>
                             <Label>Default Timezone</Label>
-                            <Select defaultValue="Africa/Cairo">
+                            <Select
+                                value={localizationForm.timezone}
+                                onValueChange={(val) => setLocalizationForm({ ...localizationForm, timezone: val })}
+                            >
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Africa/Cairo">Africa/Cairo</SelectItem>
-                                    <SelectItem value="America/New_York">America/New York</SelectItem>
-                                    <SelectItem value="Europe/London">Europe/London</SelectItem>
+                                    {TIMEZONES.map((tz) => (
+                                        <SelectItem key={tz.value} value={tz.value}>
+                                            {tz.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Default Currency</Label>
+                            <Select
+                                value={localizationForm.currency}
+                                onValueChange={(val) => setLocalizationForm({ ...localizationForm, currency: val })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select currency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CURRENCIES.map((currency) => (
+                                        <SelectItem key={currency.value} value={currency.value}>
+                                            {currency.label}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div>
                             <Label>Default Language</Label>
-                            <Select defaultValue="english">
+                            <Select
+                                value={localizationForm.defaultLanguage}
+                                onValueChange={(val) => setLocalizationForm({ ...localizationForm, defaultLanguage: val })}
+                            >
                                 <SelectTrigger>
                                     <SelectValue>English</SelectValue>
                                 </SelectTrigger>
@@ -1275,61 +1336,21 @@ export default function SettingsPage() {
                                     <SelectItem value="english">English</SelectItem>
                                     <SelectItem value="arabic">Arabic</SelectItem>
                                     <SelectItem value="spanish">Spanish</SelectItem>
+                                    <SelectItem value="french">French</SelectItem>
+                                    <SelectItem value="german">German</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
-                        <div>
-                            <Label>Enabled Languages</Label>
-                            <Select defaultValue="all">
-                                <SelectTrigger>
-                                    <SelectValue>All</SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All</SelectItem>
-                                    <SelectItem value="selected">Selected Only</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
 
-                        <div>
-                            <Label className="mb-3 block">Disable Languages</Label>
-                            <RadioGroup defaultValue="no">
-                                <div className="flex items-center space-x-4">
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="yes" id="disable-lang-yes" />
-                                        <Label htmlFor="disable-lang-yes">Yes</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="no" id="disable-lang-no" />
-                                        <Label htmlFor="disable-lang-no">No</Label>
-                                    </div>
-                                </div>
-                            </RadioGroup>
-                        </div>
-
-                        <div>
-                            <Label className="mb-3 block flex items-center gap-2">
-                                <HelpCircle className="h-4 w-4" />
-                                Output client PDF documents from admin area in client language
-                            </Label>
-                            <RadioGroup defaultValue="no">
-                                <div className="flex items-center space-x-4">
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="yes" id="pdf-lang-yes" />
-                                        <Label htmlFor="pdf-lang-yes">Yes</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="no" id="pdf-lang-no" />
-                                        <Label htmlFor="pdf-lang-no">No</Label>
-                                    </div>
-                                </div>
-                            </RadioGroup>
-                        </div>
 
                         <div className="pt-4">
-                            <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                                Save Settings
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveLocalization}
+                                disabled={saving}
+                            >
+                                {saving ? "Saving..." : "Save Settings"}
                             </Button>
                         </div>
                     </div>
@@ -3720,13 +3741,13 @@ export default function SettingsPage() {
                         <h2 className="text-2xl font-semibold">Email</h2>
                         <Button variant="outline">Share details</Button>
                     </div>
-
+        
                     <Tabs value={activeEmailTab} onValueChange={setActiveEmailTab}>
                         <TabsList>
                             <TabsTrigger value="smtp">SMTP Settings</TabsTrigger>
                             <TabsTrigger value="queue">Email Queue</TabsTrigger>
                         </TabsList>
-
+        
                         <TabsContent value="smtp" className="space-y-6 mt-6">
                             <div>
                                 <h3 className="text-lg font-medium">SMTP Settings <span className="text-sm font-normal text-gray-500">Setup main email</span></h3>
@@ -3745,11 +3766,11 @@ export default function SettingsPage() {
                                             </div>
                                         </RadioGroup>
                                     </div>
-
+        
                                     <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md text-yellow-800 text-sm">
                                         The "mail" protocol is not the recommended protocol to send emails, you should strongly consider configuring the "SMTP" protocol to avoid any disruptions and delivery issues.
                                     </div>
-
+        
                                     <div>
                                         <Label className="mb-2 block">Email Protocol</Label>
                                         <RadioGroup defaultValue="mail" className="flex items-center gap-6">
@@ -3775,17 +3796,17 @@ export default function SettingsPage() {
                                             </div>
                                         </RadioGroup>
                                     </div>
-
+        
                                     <div>
                                         <Label>Email</Label>
                                         <Input defaultValue="dev@wasiladev.com" />
                                     </div>
-
+        
                                     <div>
                                         <Label>Email Charset</Label>
                                         <Input defaultValue="utf-8" />
                                     </div>
-
+        
                                     <div>
                                         <Label>BCC All Emails To</Label>
                                         <Input />
@@ -3795,17 +3816,17 @@ export default function SettingsPage() {
                                         <Label className="mb-2 block">Email Signature</Label>
                                         <Textarea className="min-h-[100px]" />
                                     </div>
-
+        
                                     <div>
                                         <Label className="mb-2 block">Predefined Header</Label>
                                         <Textarea className="min-h-[100px]" />
                                     </div>
-
+        
                                     <div>
                                         <Label className="mb-2 block">Predefined Footer</Label>
                                         <Textarea className="min-h-[100px]" />
                                     </div>
-
+        
                                     <div className="pt-4">
                                         <Button className="bg-gray-900 text-white hover:bg-gray-800">
                                             Save Settings
@@ -3814,7 +3835,7 @@ export default function SettingsPage() {
                                 </div>
                             </div>
                         </TabsContent>
-
+        
                         <TabsContent value="queue">
                             <div className="text-center py-12 text-gray-500">
                                 Email queue is empty
@@ -3824,24 +3845,24 @@ export default function SettingsPage() {
                 </div>
             );
         }
-
+        
         return (
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-semibold">Email</h2>
                     <Button variant="outline">Share details</Button>
                 </div>
-
+        
                 <Tabs value={activeEmailTab} onValueChange={setActiveEmailTab}>
                     <TabsList>
                         <TabsTrigger value="smtp">SMTP Settings</TabsTrigger>
                         <TabsTrigger value="queue">Email Queue</TabsTrigger>
                     </TabsList>
-
+        
                     <TabsContent value="smtp" className="space-y-6 mt-6">
                         <div>
                             <h3 className="text-lg font-medium mb-4">SMTP Settings <span className="text-sm text-gray-500">Setup main email</span></h3>
-
+        
                             <div className="space-y-4">
                                 <div>
                                     <Label>Mail Engine</Label>
@@ -3856,13 +3877,13 @@ export default function SettingsPage() {
                                         </div>
                                     </RadioGroup>
                                 </div>
-
+        
                                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
                                     <p className="text-sm text-yellow-900">
                                         The "mail" protocol is not the recommended protocol to send emails, you should strongly consider configuring the "SMTP" protocol to avoid any disruptions and delivery issues.
                                     </p>
                                 </div>
-
+        
                                 <div>
                                     <Label>Email Protocol</Label>
                                     <RadioGroup defaultValue="mail" className="flex flex-wrap gap-4 mt-2">
@@ -3888,68 +3909,68 @@ export default function SettingsPage() {
                                         </div>
                                     </RadioGroup>
                                 </div>
-
+        
                                 <div>
                                     <Label>Email</Label>
                                     <Input defaultValue="dev@wasiladev.com" />
                                 </div>
-
+        
                                 <div>
                                     <Label>Email Charset</Label>
                                     <Input defaultValue="utf-8" />
                                 </div>
-
+        
                                 <div>
                                     <Label>BCC All Emails To</Label>
                                     <Input placeholder="BCC email address" />
                                 </div>
-
+        
                                 <div>
                                     <Label>Email Signature</Label>
                                     <Textarea defaultValue="WasilaDev Team" className="min-h-[100px]" />
                                 </div>
-
+        
                                 <div>
                                     <Label>Predefined Header</Label>
                                     <Textarea
                                         className="min-h-[150px] font-mono text-xs"
                                         defaultValue={`<!doctype html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width" />
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<style>
-body {
-  background-color: #f6f6f6;
-  font-family: sans-serif;
-  -webkit-font-smoothing: antialiased;
-  font-size: 14px;
-  line-height: 1.4;
-  margin: 0;
-  padding: 0;
-  -ms-text-size-adjust: 100%;`}
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <style>
+        body {
+        background-color: #f6f6f6;
+        font-family: sans-serif;
+        -webkit-font-smoothing: antialiased;
+        font-size: 14px;
+        line-height: 1.4;
+        margin: 0;
+        padding: 0;
+        -ms-text-size-adjust: 100%;`}
                                     />
                                 </div>
-
+        
                                 <div>
                                     <Label>Predefined Footer</Label>
                                     <Textarea
                                         className="min-h-[150px] font-mono text-xs"
                                         defaultValue={`</tr>
-</table>
-</td>
-</tr>
-<!-- END MAIN CONTENT AREA →
-</table>
-<!-- START FOOTER →
-<div class="footer">
-<table border="0" cellpadding="0" cellspacing="0">
-<tr>
-<td class="content-block">
-<span>{companyname}</span>`}
+        </table>
+        </td>
+        </tr>
+        <!-- END MAIN CONTENT AREA →
+        </table>
+        <!-- START FOOTER →
+        <div class="footer">
+        <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+        <td class="content-block">
+        <span>{companyname}</span>`}
                                     />
                                 </div>
-
+        
                                 <div className="border-t pt-6">
                                     <h4 className="font-medium mb-4">Send Test Email</h4>
                                     <p className="text-sm text-gray-600 mb-3">
@@ -3965,7 +3986,7 @@ body {
                                         </Button>
                                     </div>
                                 </div>
-
+        
                                 <div className="pt-4">
                                     <Button className="bg-gray-900 text-white hover:bg-gray-800">
                                         Save Settings
@@ -3974,7 +3995,7 @@ body {
                             </div>
                         </div>
                     </TabsContent>
-
+        
                     <TabsContent value="queue" className="space-y-6 mt-6">
                         <div className="space-y-4">
                             <div>
@@ -3995,7 +4016,7 @@ body {
                                     </div>
                                 </RadioGroup>
                             </div>
-
+        
                             <div>
                                 <Label className="mb-3 block flex items-center gap-2">
                                     <HelpCircle className="h-4 w-4" />
@@ -4014,10 +4035,10 @@ body {
                                     </div>
                                 </RadioGroup>
                             </div>
-
+        
                             <div className="pt-6">
                                 <h4 className="font-medium mb-4">Email Queue</h4>
-
+        
                                 <div className="bg-white rounded-lg border">
                                     <div className="p-4 border-b flex items-center justify-between">
                                         <div className="flex items-center gap-2">
@@ -4032,7 +4053,7 @@ body {
                                             <Input placeholder="Search..." className="w-64" />
                                         </div>
                                     </div>
-
+        
                                     <table className="w-full">
                                         <thead className="bg-gray-50 border-b">
                                             <tr>
@@ -4065,7 +4086,7 @@ body {
                                             </tr>
                                         </tbody>
                                     </table>
-
+        
                                     <div className="p-4 border-t flex items-center justify-between text-sm text-gray-600">
                                         <span>Showing 1 to 2 of 2 entries</span>
                                         <div className="flex gap-2">
@@ -4076,7 +4097,7 @@ body {
                                     </div>
                                 </div>
                             </div>
-
+        
                             <div className="pt-4">
                                 <Button className="bg-gray-900 text-white hover:bg-gray-800">
                                     Save Settings
@@ -4087,8 +4108,8 @@ body {
                 </Tabs>
             </div>
         );
-    }
-    */
+        }
+        */
 
         return (
             <div className="space-y-6">
