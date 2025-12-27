@@ -291,7 +291,7 @@ export interface OrganizationSettings {
 
 const DEFAULT_SETTINGS: OrganizationSettings = {
     companyName: "",
-    platformName: "WasilaDev",
+    platformName: "",
     maintenanceMode: false,
     rtlAdmin: false,
     rtlCustomer: false,
