@@ -41,39 +41,6 @@ const DEFAULT_NOTE: Partial<StickyNote> = {
 
 const generateId = () => typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
 
-export type StickyNoteColor = "yellow" | "blue" | "green" | "pink" | "purple" | "orange";
-
-export interface StickyNote {
-    id: string;
-    content: string;
-    color: StickyNoteColor;
-    position: { x: number; y: number };
-    isOpen: boolean;
-    createdAt: number;
-    updatedAt: number;
-}
-
-interface StickyNotesState {
-    notes: StickyNote[];
-    isLoading: boolean;
-
-    // Actions
-    addNote: () => void;
-    updateNote: (id: string, updates: Partial<StickyNote>) => void;
-    deleteNote: (id: string) => void;
-    toggleNoteOpen: (id: string, isOpen: boolean) => void;
-
-    // Persistence
-    loadFromFirestore: (userId: string) => Promise<void>;
-    syncToFirestore: (userId: string) => Promise<void>;
-}
-
-const DEFAULT_NOTE: Partial<StickyNote> = {
-    content: "",
-    color: "yellow",
-    position: { x: 100, y: 100 },
-    isOpen: true,
-};
 
 export const useStickyNotes = create<StickyNotesState>()(
     persist(
