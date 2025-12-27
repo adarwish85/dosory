@@ -38,6 +38,7 @@ import { RightSidebar } from "@/components/dashboard/RightSidebar";
 import { StickyNotesBoard } from "@/components/dashboard/StickyNotes";
 import { NotificationsPopover } from "@/components/dashboard/notifications-popover";
 import { usePermissions, canAccessModule } from "@/lib/hooks/use-permissions";
+import { SystemBanners } from "@/components/dashboard/system-banners";
 
 interface StaffProfile {
     firstName?: string;
@@ -482,9 +483,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         rightSidebarOpen ? "lg:mr-[220px]" : "lg:mr-0"
                     )}>
                         <div className="w-full overflow-x-auto">
+
                             {/* Content Card */}
                             <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] min-w-0">
                                 <div className="p-4 overflow-x-auto">
+                                    <SystemBanners />
                                     {children}
                                 </div>
                             </div>

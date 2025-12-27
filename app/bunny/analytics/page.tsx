@@ -73,7 +73,14 @@ export default function AnalyticsPage() {
                 trialTenants,
                 suspendedTenants,
                 totalUsers: usersSnap.docs.length,
-                monthlyRevenue: 0, // TODO: Calculate from actual subscription data
+                monthlyRevenue: tenants.reduce((acc, t) => {
+                    if (t.status === 'active') {
+                        if (t.plan === 'enterprise') return acc + 299;
+                        if (t.plan === 'professional') return acc + 99;
+                        if (t.plan === 'starter') return acc + 29;
+                    }
+                    return acc;
+                }, 0),
                 newTenantsThisMonth,
                 conversionRate,
             });

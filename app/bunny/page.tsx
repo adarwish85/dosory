@@ -36,7 +36,7 @@ export default function AdminDashboard() {
         },
         {
             title: "MRR",
-            value: "$425,000", // Placeholder until MRR is calculated
+            value: `$${stats.monthlyRevenue.toLocaleString()}`,
             change: "+3.2%",
             trend: "up",
             icon: DollarSign,

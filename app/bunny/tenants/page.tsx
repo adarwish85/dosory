@@ -4,6 +4,13 @@ import { useState, useEffect } from "react";
 import { useTenants, Tenant } from "@/lib/hooks/use-admin";
 import { useImpersonation } from "@/lib/hooks/use-impersonation";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { logAdminAction } from "@/lib/admin-logger";
+import { useAuth } from "@/components/auth-provider";
+
+// ... existing code ...
+
+// ... rest of the file ...
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +74,7 @@ const defaultFormData: TenantFormData = {
 export default function TenantsPage() {
     const { tenants, loading, refetch } = useTenants();
     const { profile } = useUserProfile();
+    const { user } = useAuth(); // Added this
     const { startImpersonation } = useImpersonation();
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
@@ -101,10 +109,38 @@ export default function TenantsPage() {
         return matchesSearch && matchesStatus && matchesPlan;
     });
 
-    const handleSignInAsTenant = (tenantId: string, tenantName: string) => {
+    const handleSignInAsTenant = async (tenantId: string, tenantName: string) => {
         if (profile?.role) {
+            await logAdminAction(user, "impersonate_tenant", { id: tenantId, name: tenantName }, {
+                reason: "Admin dashboard access"
+            });
             startImpersonation(tenantId, tenantName, profile.role);
             router.push("/dashboard");
+        }
+    };
+
+    const handleForceLogout = async (tenant: Tenant) => {
+        if (!confirm(`Are you sure you want to force logout ALL users in ${tenant.name}? They will be required to sign in again.`)) return;
+
+        setSaving(true);
+        try {
+            const response = await fetch("/api/admin/logout-tenant", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ tenantId: tenant.id }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error);
+
+            await logAdminAction(user, "force_logout_tenant", { id: tenant.id, name: tenant.name }, { count: data.count });
+
+            alert(`Successfully logged out ${data.count} users.`);
+        } catch (error: any) {
+            console.error("Error forcing logout:", error);
+            alert("Failed to force logout.");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -206,6 +242,13 @@ export default function TenantsPage() {
             } else {
                 alert("Tenant created successfully!");
             }
+
+            // Log action
+            await logAdminAction(user, "create_tenant", { name: formData.name }, {
+                email: formData.email,
+                plan: formData.plan
+            });
+
         } catch (error: any) {
             console.error("Error creating tenant:", error);
             alert(error.message || "Failed to create tenant");
@@ -232,6 +275,14 @@ export default function TenantsPage() {
                     : null,
                 updatedAt: serverTimestamp(),
             });
+
+            await logAdminAction(user, "update_tenant", { id: selectedTenant.id, name: formData.name }, {
+                changes: {
+                    plan: formData.plan !== selectedTenant.plan ? `${selectedTenant.plan} -> ${formData.plan}` : undefined,
+                    status: formData.status !== selectedTenant.status ? `${selectedTenant.status} -> ${formData.status}` : undefined,
+                }
+            });
+
             setEditDialogOpen(false);
             refetch();
         } catch (error) {
@@ -248,6 +299,11 @@ export default function TenantsPage() {
         setSaving(true);
         try {
             await deleteDoc(doc(db, "organizations", selectedTenant.id));
+
+            await logAdminAction(user, "delete_tenant", { id: selectedTenant.id, name: selectedTenant.name }, {
+                reason: "Admin manual deletion"
+            });
+
             setDeleteDialogOpen(false);
             refetch();
         } catch (error) {
@@ -268,6 +324,12 @@ export default function TenantsPage() {
                 status: newStatus,
                 updatedAt: serverTimestamp(),
             });
+
+            const action = newStatus === "suspended" ? "suspend_tenant" : "activate_tenant";
+            await logAdminAction(user, action, { id: selectedTenant.id, name: selectedTenant.name }, {
+                previousStatus: selectedTenant.status
+            });
+
             setSuspendDialogOpen(false);
             refetch();
         } catch (error) {
@@ -622,6 +684,9 @@ export default function TenantsPage() {
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem onClick={() => openEditDialog(tenant)}>
                                                             <Edit className="mr-2 h-4 w-4" /> Edit Tenant
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem className="text-red-500" onClick={() => handleForceLogout(tenant)}>
+                                                            <LogOut className="mr-2 h-4 w-4" /> Force Logout Users
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem className="text-red-600" onClick={() => openDeleteDialog(tenant)}>

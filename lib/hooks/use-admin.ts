@@ -125,9 +125,23 @@ export function useAdminStats() {
 
                 // Calculate monthly revenue
                 let monthlyRevenue = 0;
-                activeSubsSnapshot.docs.forEach(doc => {
-                    monthlyRevenue += doc.data().amount || 0;
-                });
+
+                if (activeSubsSnapshot.size > 0) {
+                    activeSubsSnapshot.docs.forEach(doc => {
+                        monthlyRevenue += doc.data().amount || 0;
+                    });
+                } else {
+                    // Fallback: Estimate based on plan types if no subscription records
+                    // Enterprise: $299, Professional: $99, Starter: $29 (Example pricing)
+                    orgsSnapshot.docs.forEach(doc => {
+                        const data = doc.data();
+                        if (data.status === "active") {
+                            if (data.plan === "enterprise") monthlyRevenue += 299;
+                            else if (data.plan === "professional") monthlyRevenue += 99;
+                            else if (data.plan === "starter") monthlyRevenue += 29;
+                        }
+                    });
+                }
 
                 setStats({
                     totalTenants,

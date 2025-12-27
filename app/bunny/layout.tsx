@@ -215,6 +215,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: "/bunny/analytics", label: "Analytics", icon: BarChart3 },
         { href: "/bunny/tenants", label: "Tenants", icon: Users }, // Changed icon to Users based on "Tenant Management"
         { href: "/bunny/subscriptions", label: "Billing", icon: CreditCard }, // "Billing" often maps to Subscriptions/Revenue
+        { href: "/bunny/audit-logs", label: "Audit Logs", icon: Shield },
+        { href: "/bunny/broadcasts", label: "Communications", icon: Megaphone },
         { href: "/bunny/settings", label: "Settings", icon: Settings },
     ];
 
