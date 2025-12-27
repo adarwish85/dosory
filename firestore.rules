@@ -91,7 +91,8 @@ service cloud.firestore {
       // Allow read for all auth users (needed for subdomain uniqueness check across orgs)
       allow read: if request.auth != null;
       // Allow write only if org admin
-      allow create: if canCreateByOrg(); 
+      // Allow create if user is listed as owner OR if they meet the old check
+      allow create: if (request.auth != null && request.resource.data.ownerId == request.auth.uid) || canCreateByOrg(); 
       allow update: if isOrgAdmin(orgId) || isSuperAdmin();
       allow delete: if isSuperAdmin();
 

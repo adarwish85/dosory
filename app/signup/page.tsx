@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { doc, setDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
@@ -190,6 +190,10 @@ export default function SignupPage() {
             // Redirect to the new subdomain
             window.location.href = `${protocol}//${subdomain}.${rootDomain}/dashboard`;
         } catch (err: any) {
+            // If we created a user but failed to setup Firestore, delete the user so they can try again
+            if (auth.currentUser) {
+                await deleteUser(auth.currentUser);
+            }
             setError(err.message);
             setSubmitting(false);
         }
