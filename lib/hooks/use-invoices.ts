@@ -312,7 +312,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         await updateDoc(doc(db, "invoices", id), updateData);
 
         if (logActivity && newStatus === "sent") {
-            await logActivity("invoice_sent", `Sent invoice ${invoice.numberFormatted || invoice.number}`, id, "invoice");
+            await logActivity("invoice_sent", `Sent invoice ${invoice.number}`, id, "invoice");
         }
     }, [logActivity]);
 
