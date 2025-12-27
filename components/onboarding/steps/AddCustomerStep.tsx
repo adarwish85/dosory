@@ -6,14 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWizard } from "../OnboardingWizard";
-import { useAuth } from "@/components/auth-provider";
+import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function AddCustomerStep() {
     const { goNext, useDummyData, setCreatedCustomerId } = useWizard();
-    const { user } = useAuth();
-    const orgId = (user as any)?.orgId;
+    const { profile } = useUserProfile();
+    const orgId = profile?.orgId;
+    const userId = profile?.uid;
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -46,7 +47,7 @@ export default function AddCustomerStep() {
                 status: "active",
                 isOnboardingDemo: useDummyData,
                 createdAt: serverTimestamp(),
-                createdBy: user?.uid,
+                createdBy: userId,
             });
 
             setCreatedCustomerId(customerRef.id);

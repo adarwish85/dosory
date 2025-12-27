@@ -7,15 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useWizard } from "../OnboardingWizard";
-import { useAuth } from "@/components/auth-provider";
+import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 
 export default function CompanyProfileStep() {
     const { goNext, useDummyData } = useWizard();
-    const { user } = useAuth();
-    const orgId = (user as any)?.orgId;
+    const { profile } = useUserProfile();
+    const orgId = profile?.orgId;
 
     const [companyName, setCompanyName] = useState("");
     const [phone, setPhone] = useState("");
@@ -23,6 +23,7 @@ export default function CompanyProfileStep() {
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Pre-fill with dummy data if selected
@@ -55,7 +56,14 @@ export default function CompanyProfileStep() {
     };
 
     const handleSave = async () => {
-        if (!orgId) return;
+        setError(null);
+
+        if (!orgId) {
+            console.error("CompanyProfileStep: No orgId available, skipping to next step");
+            // Allow user to proceed even if orgId not ready
+            goNext();
+            return;
+        }
 
         setIsSaving(true);
         try {

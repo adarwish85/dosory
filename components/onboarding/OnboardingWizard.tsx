@@ -78,12 +78,18 @@ export default function OnboardingWizard() {
 
     const completeWizard = async () => {
         setIsClosing(true);
-        // Mark all steps as complete
-        await completeStep("welcome");
-        await completeStep("companyProfile");
-        await completeStep("firstRecord");
-        await completeStep("inviteTeam");
-        await completeStep("integrations");
+        try {
+            // Mark all steps as complete
+            await completeStep("welcome");
+            await completeStep("companyProfile");
+            await completeStep("firstRecord");
+            await completeStep("inviteTeam");
+            await completeStep("integrations");
+        } catch (error) {
+            console.error("Error completing onboarding steps:", error);
+        }
+        // Always close the wizard, even if step completion fails
+        await skipOnboarding();
     };
 
     const handleClose = async () => {

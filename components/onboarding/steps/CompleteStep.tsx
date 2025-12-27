@@ -4,17 +4,20 @@ import React, { useState, useEffect } from "react";
 import { PartyPopper, CheckCircle2, Trash2, ArrowRight, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWizard } from "../OnboardingWizard";
-import { useAuth } from "@/components/auth-provider";
+import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useOnboardingContext } from "../OnboardingProvider";
 import { doc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import confetti from "canvas-confetti";
 
 export default function CompleteStep() {
     const { useDummyData, createdCustomerId, createdInvoiceId, completeWizard } = useWizard();
-    const { user } = useAuth();
-    const orgId = (user as any)?.orgId;
+    const { profile } = useUserProfile();
+    const { skipOnboarding } = useOnboardingContext();
+    const orgId = profile?.orgId;
     const [isResetting, setIsResetting] = useState(false);
     const [resetComplete, setResetComplete] = useState(false);
+    const [isFinishing, setIsFinishing] = useState(false);
 
     // Fire confetti on mount
     useEffect(() => {
@@ -45,8 +48,6 @@ export default function CompleteStep() {
     }, []);
 
     const handleResetDemoData = async () => {
-        if (!orgId) return;
-
         setIsResetting(true);
         try {
             // Delete created customer
@@ -59,27 +60,38 @@ export default function CompleteStep() {
                 await deleteDoc(doc(db, "invoices", createdInvoiceId));
             }
 
-            // Delete any demo invitations
-            const invitationsQuery = query(
-                collection(db, "invitations"),
-                where("orgId", "==", orgId),
-                where("isOnboardingDemo", "==", true)
-            );
-            const invitationsSnap = await getDocs(invitationsQuery);
-            for (const docSnap of invitationsSnap.docs) {
-                await deleteDoc(docSnap.ref);
+            // Delete any demo invitations (only if orgId exists)
+            if (orgId) {
+                const invitationsQuery = query(
+                    collection(db, "invitations"),
+                    where("orgId", "==", orgId),
+                    where("isOnboardingDemo", "==", true)
+                );
+                const invitationsSnap = await getDocs(invitationsQuery);
+                for (const docSnap of invitationsSnap.docs) {
+                    await deleteDoc(docSnap.ref);
+                }
             }
 
             setResetComplete(true);
         } catch (error) {
             console.error("Error resetting demo data:", error);
+            // Still mark as complete so user can proceed
+            setResetComplete(true);
         } finally {
             setIsResetting(false);
         }
     };
 
     const handleFinish = async () => {
-        await completeWizard();
+        setIsFinishing(true);
+        try {
+            await completeWizard();
+        } catch (error) {
+            console.error("Error completing wizard:", error);
+            // Fallback: close wizard even if Firestore fails
+            await skipOnboarding();
+        }
     };
 
     return (
