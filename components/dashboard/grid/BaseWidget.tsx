@@ -67,7 +67,12 @@ export function BaseWidget({
     const isGradient = style === "gradient";
 
     return (
-        <Card className={cn("h-full overflow-hidden flex flex-col", styleClasses.card)}>
+        <Card className={cn(
+            "h-full overflow-hidden flex flex-col transition-all duration-200 ease-out",
+            "hover:shadow-lg hover:-translate-y-0.5",
+            editMode && "ring-2 ring-blue-500/20 cursor-move",
+            styleClasses.card
+        )}>
             {/* Widget Header */}
             <CardHeader className={cn(
                 "flex flex-row items-center justify-between py-2 px-3",

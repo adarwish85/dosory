@@ -2,8 +2,9 @@
 
 import { useTasks } from "@/lib/hooks/use-projects";
 import { CheckCircle2, Clock, AlertTriangle } from "lucide-react";
-import { format, isAfter, isBefore, startOfDay } from "date-fns";
+import { format, isBefore, startOfDay } from "date-fns";
 import Link from "next/link";
+import { WidgetSkeleton } from "./WidgetSkeleton";
 import type { WidgetSettings, DataDensity } from "@/lib/hooks/use-dashboard-layout";
 
 interface TasksWidgetProps {
@@ -12,7 +13,7 @@ interface TasksWidgetProps {
 }
 
 export function TasksWidget({ settings, density }: TasksWidgetProps) {
-    const { tasks, taskStats } = useTasks();
+    const { tasks, loading, taskStats } = useTasks();
     const limit = settings.limit || 5;
     const today = startOfDay(new Date());
 
@@ -49,6 +50,10 @@ export function TasksWidget({ settings, density }: TasksWidgetProps) {
             return false;
         }
     };
+
+    if (loading) {
+        return <WidgetSkeleton variant="list" />;
+    }
 
     return (
         <div className="h-full flex flex-col">

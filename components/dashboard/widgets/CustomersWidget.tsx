@@ -3,6 +3,7 @@
 import { useCustomers } from "@/lib/hooks/use-customers";
 import { Users, TrendingUp, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { WidgetSkeleton } from "./WidgetSkeleton";
 import type { WidgetSettings, DataDensity } from "@/lib/hooks/use-dashboard-layout";
 
 interface CustomersWidgetProps {
@@ -11,7 +12,7 @@ interface CustomersWidgetProps {
 }
 
 export function CustomersWidget({ settings, density }: CustomersWidgetProps) {
-    const { customers } = useCustomers();
+    const { customers, loading } = useCustomers();
     const limit = settings.limit || 5;
 
     const recentCustomers = [...customers]
@@ -23,6 +24,10 @@ export function CustomersWidget({ settings, density }: CustomersWidgetProps) {
         .slice(0, limit);
 
     const activeCount = customers.filter(c => c.status === "active").length;
+
+    if (loading) {
+        return <WidgetSkeleton variant="list" />;
+    }
 
     return (
         <div className="h-full flex flex-col">
