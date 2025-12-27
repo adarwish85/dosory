@@ -72,7 +72,7 @@ export function StickyNoteCard({ note, onUpdate, onDelete, onMinimize }: StickyN
     return (
         <div
             className={cn(
-                "fixed w-64 h-64 rounded-lg shadow-xl border flex flex-col z-50 transition-colors duration-200",
+                "fixed w-64 h-64 rounded-lg shadow-xl border flex flex-col z-40 transition-colors duration-200 pointer-events-auto",
                 COLORS[note.color]
             )}
             style={{
@@ -141,19 +141,16 @@ export function StickyNotesBoard() {
     if (openNotes.length === 0) return null;
 
     return (
-        <div className="fixed inset-0 pointer-events-none z-50">
-            <div className="relative w-full h-full">
-                {openNotes.map(note => (
-                    <div key={note.id} className="pointer-events-auto absolute inset-0">
-                        <StickyNoteCard
-                            note={note}
-                            onUpdate={updateNote}
-                            onDelete={deleteNote}
-                            onMinimize={(id) => toggleNoteOpen(id, false)}
-                        />
-                    </div>
-                ))}
-            </div>
-        </div>
+        <>
+            {openNotes.map(note => (
+                <StickyNoteCard
+                    key={note.id}
+                    note={note}
+                    onUpdate={updateNote}
+                    onDelete={deleteNote}
+                    onMinimize={(id) => toggleNoteOpen(id, false)}
+                />
+            ))}
+        </>
     );
 }
