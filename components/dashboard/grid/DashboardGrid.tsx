@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import {
     Edit3, Save, RotateCcw, Layout as LayoutIcon,
-    Palette, SlidersHorizontal, Plus, Loader2
+    Palette, SlidersHorizontal, Plus, Loader2, X
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { toast } from "sonner";
 import {
     useDashboardStore,
     type WidgetId,
@@ -86,6 +87,7 @@ export function DashboardGrid({ className }: DashboardGridProps) {
         isEditing,
         isLoading,
         isSaving,
+        hasUnsavedChanges,
         setEditMode,
         updateLayout,
         applyPreset,
@@ -93,10 +95,11 @@ export function DashboardGrid({ className }: DashboardGridProps) {
         updateWidgetSettings,
         updateGlobalSettings,
         loadFromFirestore,
-        syncToFirestore
+        saveToFirestore,
+        discardChanges
     } = useDashboardStore();
 
-    // Get orgId/userId from user profile (not useAuth - Firebase Auth doesn't have orgId)
+    // Get orgId/userId from user profile
     const orgId = profile?.orgId;
     const userId = profile?.uid;
 
@@ -107,15 +110,35 @@ export function DashboardGrid({ className }: DashboardGridProps) {
         }
     }, [orgId, userId, loadFromFirestore]);
 
-    // Sync to Firestore when editing stops or explicit save
-    // We'll also autosave on changes via store, but this is explicit
+    // Explicit save handler
     const handleSave = useCallback(async () => {
         if (orgId && userId) {
-            await syncToFirestore(orgId, userId);
+            const success = await saveToFirestore(orgId, userId);
+            if (success) {
+                toast.success("Dashboard layout saved!");
+                setEditMode(false);
+            } else {
+                toast.error("Failed to save layout");
+            }
+        }
+    }, [orgId, userId, saveToFirestore, setEditMode]);
+
+    // Discard changes handler
+    const handleDiscard = useCallback(() => {
+        discardChanges();
+        toast.info("Changes discarded");
+    }, [discardChanges]);
+
+    // Cancel edit mode (with confirmation if unsaved)
+    const handleCancelEdit = useCallback(() => {
+        if (hasUnsavedChanges) {
+            if (confirm("You have unsaved changes. Discard them?")) {
+                handleDiscard();
+            }
+        } else {
             setEditMode(false);
         }
-    }, [orgId, userId, syncToFirestore, setEditMode]);
-
+    }, [hasUnsavedChanges, handleDiscard, setEditMode]);
 
     const handleLayoutChange = useCallback((newLayout: LayoutItem[]) => {
         updateLayout(newLayout);
@@ -123,28 +146,25 @@ export function DashboardGrid({ className }: DashboardGridProps) {
 
     const handleDragResizeStop = useCallback((newLayout: LayoutItem[]) => {
         updateLayout(newLayout);
-        if (orgId && userId) {
-            syncToFirestore(orgId, userId);
-        }
-    }, [updateLayout, orgId, userId, syncToFirestore]);
+        // No auto-sync - user must explicitly save
+    }, [updateLayout]);
 
     const handlePresetChange = useCallback((preset: string) => {
         applyPreset(preset as LayoutPreset);
-        if (orgId && userId) syncToFirestore(orgId, userId);
-    }, [applyPreset, orgId, userId, syncToFirestore]);
+        // No auto-sync - user must explicitly save
+    }, [applyPreset]);
 
     const handleStyleChange = useCallback((style: string) => {
         updateGlobalSettings({ widgetStyle: style as WidgetStyle });
-        if (orgId && userId) syncToFirestore(orgId, userId);
-    }, [updateGlobalSettings, orgId, userId, syncToFirestore]);
+        // No auto-sync - user must explicitly save
+    }, [updateGlobalSettings]);
 
     const handleDensityChange = useCallback((density: string) => {
         updateGlobalSettings({ dataDensity: density as DataDensity });
-        if (orgId && userId) syncToFirestore(orgId, userId);
-    }, [updateGlobalSettings, orgId, userId, syncToFirestore]);
+        // No auto-sync - user must explicitly save
+    }, [updateGlobalSettings]);
 
     // Calculate enabled widgets and their layout
-    // FORCE STATIC when not in edit mode
     const enabledWidgets = useMemo(() => config.widgets.filter(w => w.enabled), [config.widgets]);
     const displayLayout = useMemo(() => {
         return config.layout
@@ -178,6 +198,20 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* Unsaved Changes Indicator */}
+                    {hasUnsavedChanges && !isEditing && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-orange-600">Unsaved changes</span>
+                            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+                                Save
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={handleDiscard}>
+                                Discard
+                            </Button>
+                        </div>
+                    )}
+
                     {/* Preset Selector */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -224,15 +258,25 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                     </DropdownMenu>
 
                     {/* Edit Mode Toggle */}
-                    <Button
-                        variant={isEditing ? "default" : "outline"}
-                        size="sm"
-                        className="gap-2"
-                        onClick={isEditing ? handleSave : () => setEditMode(true)}
-                    >
-                        {isEditing ? <Save className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
-                        {isEditing ? "Done" : "Edit"}
-                    </Button>
+                    {!isEditing ? (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => setEditMode(true)}
+                        >
+                            <Edit3 className="h-4 w-4" />
+                            Edit
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    )}
 
                     {/* Add Widget Button (Edit Mode Only) */}
                     {isEditing && (
@@ -252,10 +296,7 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                                     return (
                                         <DropdownMenuItem
                                             key={id}
-                                            onClick={() => {
-                                                toggleWidget(id as WidgetId, !isEnabled);
-                                                if (orgId && userId) syncToFirestore(orgId, userId);
-                                            }}
+                                            onClick={() => toggleWidget(id as WidgetId, !isEnabled)}
                                             className="flex items-center justify-between"
                                         >
                                             <div className="flex items-center gap-2">
@@ -275,14 +316,26 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                 </div>
             </div>
 
-            {/* Edit Mode Indicator */}
+            {/* Edit Mode Banner with Save/Discard */}
             {isEditing && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center justify-between">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-blue-700">
                         <SlidersHorizontal className="h-4 w-4" />
                         <span className="text-sm font-medium">Edit Mode: Drag widgets to rearrange, resize corners to adjust size</span>
                     </div>
-                    {isSaving && <span className="text-xs text-blue-600">Saving...</span>}
+                    <div className="flex items-center gap-2">
+                        {hasUnsavedChanges && (
+                            <span className="text-xs text-orange-600 mr-2">• Unsaved changes</span>
+                        )}
+                        <Button size="sm" variant="ghost" onClick={handleDiscard} disabled={!hasUnsavedChanges}>
+                            <RotateCcw className="h-4 w-4 mr-1" />
+                            Discard
+                        </Button>
+                        <Button size="sm" onClick={handleSave} disabled={isSaving || !hasUnsavedChanges}>
+                            {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+                            Save Layout
+                        </Button>
+                    </div>
                 </div>
             )}
 
@@ -303,8 +356,6 @@ export function DashboardGrid({ className }: DashboardGridProps) {
             >
                 {enabledWidgets.map((widget) => {
                     const WidgetComponent = WIDGET_COMPONENTS[widget.id];
-                    // We render based on enabledWidgets, so no need to find layoutItem here to return null
-                    // GridWrapper handles positioning based on key
 
                     if (!WidgetComponent) return null;
 
@@ -318,14 +369,8 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                                 style={config.widgetStyle}
                                 density={config.dataDensity}
                                 editMode={isEditing}
-                                onSettingsChange={(settings) => {
-                                    updateWidgetSettings(widget.id, settings);
-                                    if (orgId && userId) syncToFirestore(orgId, userId);
-                                }}
-                                onRemove={() => {
-                                    toggleWidget(widget.id, false);
-                                    if (orgId && userId) syncToFirestore(orgId, userId);
-                                }}
+                                onSettingsChange={(settings) => updateWidgetSettings(widget.id, settings)}
+                                onRemove={() => toggleWidget(widget.id, false)}
                             >
                                 <WidgetComponent settings={widget.settings} density={config.dataDensity} />
                             </BaseWidget>

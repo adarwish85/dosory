@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { type LayoutItem, type WidgetId, type WidgetStyle, type DataDensity, type LayoutPreset } from "@/lib/hooks/use-dashboard-layout";
 
@@ -76,21 +76,24 @@ const DEFAULT_CONFIG: DashboardConfig = {
 
 interface DashboardState {
     config: DashboardConfig;
+    savedConfig: DashboardConfig | null; // Last saved version for comparison
     isEditing: boolean;
     isLoading: boolean;
     isSaving: boolean;
+    hasUnsavedChanges: boolean;
 
     // Actions
     setConfig: (config: DashboardConfig) => void;
     setEditMode: (isEditing: boolean) => void;
-    updateLayout: (layout: LayoutItem[]) => Promise<void>;
-    applyPreset: (preset: LayoutPreset) => Promise<void>;
-    toggleWidget: (widgetId: WidgetId, enabled: boolean) => Promise<void>;
-    updateWidgetSettings: (widgetId: WidgetId, settings: Partial<WidgetSettings>) => Promise<void>;
-    updateGlobalSettings: (settings: { dataDensity?: DataDensity; widgetStyle?: WidgetStyle }) => Promise<void>;
+    updateLayout: (layout: LayoutItem[]) => void;
+    applyPreset: (preset: LayoutPreset) => void;
+    toggleWidget: (widgetId: WidgetId, enabled: boolean) => void;
+    updateWidgetSettings: (widgetId: WidgetId, settings: Partial<WidgetSettings>) => void;
+    updateGlobalSettings: (settings: { dataDensity?: DataDensity; widgetStyle?: WidgetStyle }) => void;
     loadFromFirestore: (orgId: string, userId: string) => Promise<void>;
-    syncToFirestore: (orgId: string, userId: string) => Promise<void>;
-    _hasHydrated: boolean; // Internal: tracks if localStorage was rehydrated
+    saveToFirestore: (orgId: string, userId: string) => Promise<boolean>;
+    discardChanges: () => void;
+    _hasHydrated: boolean;
     setHasHydrated: (val: boolean) => void;
 }
 
@@ -98,16 +101,18 @@ export const useDashboardStore = create<DashboardState>()(
     persist(
         (set, get) => ({
             config: DEFAULT_CONFIG,
+            savedConfig: null,
             isEditing: false,
-            isLoading: true, // Start true, set false after Firestore load
+            isLoading: true,
             isSaving: false,
+            hasUnsavedChanges: false,
             _hasHydrated: false,
 
-            setConfig: (config) => set({ config }),
+            setConfig: (config) => set({ config, hasUnsavedChanges: true }),
             setEditMode: (isEditing) => set({ isEditing }),
             setHasHydrated: (val) => set({ _hasHydrated: val }),
 
-            updateLayout: async (newVisibleLayout) => {
+            updateLayout: (newVisibleLayout) => {
                 const { config } = get();
 
                 // Merge new visible layout with existing hidden items to preserve their positions
@@ -121,11 +126,10 @@ export const useDashboardStore = create<DashboardState>()(
                     layout: mergedLayout,
                     updatedAt: new Date().toISOString()
                 };
-                set({ config: newConfig });
-                // Note: Firestore sync is handled by the component calling syncToFirestore
+                set({ config: newConfig, hasUnsavedChanges: true });
             },
 
-            applyPreset: async (preset) => {
+            applyPreset: (preset) => {
                 const { config } = get();
                 const presetLayout = PRESET_LAYOUTS[preset];
                 const enabledWidgetIds = new Set(presetLayout.map(l => l.i));
@@ -143,10 +147,10 @@ export const useDashboardStore = create<DashboardState>()(
                     updatedAt: new Date().toISOString(),
                 };
 
-                set({ config: newConfig });
+                set({ config: newConfig, hasUnsavedChanges: true });
             },
 
-            toggleWidget: async (widgetId, enabled) => {
+            toggleWidget: (widgetId, enabled) => {
                 const { config } = get();
                 const newWidgets = config.widgets.map(w =>
                     w.id === widgetId ? { ...w, enabled } : w
@@ -171,24 +175,26 @@ export const useDashboardStore = create<DashboardState>()(
                     updatedAt: new Date().toISOString(),
                 };
 
-                set({ config: newConfig });
+                set({ config: newConfig, hasUnsavedChanges: true });
             },
 
-            updateWidgetSettings: async (widgetId, settings) => {
+            updateWidgetSettings: (widgetId, settings) => {
                 const { config } = get();
                 const newWidgets = config.widgets.map(w =>
                     w.id === widgetId ? { ...w, settings: { ...w.settings, ...settings } } : w
                 );
 
                 set({
-                    config: { ...config, widgets: newWidgets, updatedAt: new Date().toISOString() }
+                    config: { ...config, widgets: newWidgets, updatedAt: new Date().toISOString() },
+                    hasUnsavedChanges: true
                 });
             },
 
-            updateGlobalSettings: async (settings) => {
+            updateGlobalSettings: (settings) => {
                 const { config } = get();
                 set({
-                    config: { ...config, ...settings, updatedAt: new Date().toISOString() }
+                    config: { ...config, ...settings, updatedAt: new Date().toISOString() },
+                    hasUnsavedChanges: true
                 });
             },
 
@@ -204,22 +210,23 @@ export const useDashboardStore = create<DashboardState>()(
                     const snap = await getDoc(docRef);
 
                     if (snap.exists() && snap.data().dashboardLayout) {
-                        // Remote data exists - ALWAYS use it as single source of truth
                         const remoteData = snap.data().dashboardLayout as DashboardConfig;
+                        const loadedConfig = {
+                            ...DEFAULT_CONFIG,
+                            ...remoteData,
+                        };
                         set({
-                            config: {
-                                ...DEFAULT_CONFIG,
-                                ...remoteData,
-                            }
+                            config: loadedConfig,
+                            savedConfig: loadedConfig,
+                            hasUnsavedChanges: false
                         });
                     } else {
-                        // No remote data - this is a new user or first sync
-                        // Keep localStorage/default and sync to Firestore
+                        // No remote data - use defaults, mark as unsaved so user can save
                         const { config } = get();
-                        const docRef = doc(db, "organizations", orgId, "userSettings", userId);
-                        await setDoc(docRef, {
-                            dashboardLayout: config
-                        }, { merge: true });
+                        set({
+                            savedConfig: null,
+                            hasUnsavedChanges: false // Don't prompt for brand new users
+                        });
                     }
                 } catch (error) {
                     console.error("Failed to load dashboard settings", error);
@@ -228,8 +235,8 @@ export const useDashboardStore = create<DashboardState>()(
                 }
             },
 
-            syncToFirestore: async (orgId, userId) => {
-                if (!orgId || !userId) return;
+            saveToFirestore: async (orgId, userId) => {
+                if (!orgId || !userId) return false;
 
                 const { config } = get();
                 set({ isSaving: true });
@@ -238,10 +245,36 @@ export const useDashboardStore = create<DashboardState>()(
                     await setDoc(docRef, {
                         dashboardLayout: config
                     }, { merge: true });
+
+                    // After successful save, update savedConfig and clear unsaved flag
+                    set({
+                        savedConfig: config,
+                        hasUnsavedChanges: false,
+                        isSaving: false
+                    });
+                    return true;
                 } catch (error) {
-                    console.error("Failed to sync dashboard settings", error);
-                } finally {
+                    console.error("Failed to save dashboard settings", error);
                     set({ isSaving: false });
+                    return false;
+                }
+            },
+
+            discardChanges: () => {
+                const { savedConfig } = get();
+                if (savedConfig) {
+                    set({
+                        config: savedConfig,
+                        hasUnsavedChanges: false,
+                        isEditing: false
+                    });
+                } else {
+                    // No saved config, reset to defaults
+                    set({
+                        config: DEFAULT_CONFIG,
+                        hasUnsavedChanges: false,
+                        isEditing: false
+                    });
                 }
             }
         }),
@@ -249,7 +282,6 @@ export const useDashboardStore = create<DashboardState>()(
             name: 'dashboard-storage',
             partialize: (state) => ({ config: state.config }), // Only persist config to localStorage
             onRehydrateStorage: () => (state) => {
-                // Called when localStorage rehydration completes
                 state?.setHasHydrated(true);
             }
         }
