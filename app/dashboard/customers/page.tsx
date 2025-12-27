@@ -91,6 +91,7 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
 ];
 
 const DEFAULT_COLUMN_WIDTHS: Record<ColumnKey, number> = {
+    id: 60,
     company: 250,
     phone: 150,
     website: 200,
