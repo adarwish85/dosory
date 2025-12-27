@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useParams } from "next/navigation";
 import { format } from "date-fns";
 import {
@@ -15,6 +14,34 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    ChevronDown,
+    FileText,
+    Mail,
+    MoreHorizontal,
+    Pencil,
+    Printer,
+    Download,
+    ExternalLink,
+    File,
+    CreditCard,
+    Copy,
+    Send,
+    Ban,
+    Clock,
+    Trash2,
+    Plus
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface LineItem {
     id: string;
@@ -32,9 +59,20 @@ interface Invoice {
     dueDate: Timestamp | string | Date;
     createdAt?: Timestamp | string | Date;
     total: number;
+    subTotal?: number;
+    tax?: number;
+    taxRate?: number;
     status: string;
     items: LineItem[];
     currency?: string;
+    projectName?: string; // Placeholder for project relation
+    projectId?: string;
+    senderName?: string;
+    senderAddress?: string[];
+    billToName?: string;
+    billToAddress?: string[];
+    shipToName?: string;
+    shipToAddress?: string[];
 }
 
 // Helper to format Firestore Timestamp or Date to readable string
@@ -80,74 +118,219 @@ export default function InvoiceDetailsPage() {
         fetchInvoice();
     }, [id]);
 
-    if (loading) return <div>Loading...</div>;
-    if (!invoice) return <div>Invoice not found</div>;
+    if (loading) return <div className="p-8 flex items-center justify-center">Loading...</div>;
+    if (!invoice) return <div className="p-8 flex items-center justify-center">Invoice not found</div>;
+
+    // Derived or Default Data placeholders
+    const projectName = invoice.projectName || "EGIC Export";
+    const senderName = invoice.senderName || "WasilaDev";
+    const senderAddress = invoice.senderAddress || ["3a Mabotheen Buildings, Nasr City", "Cairo, Cairo", "Egypt 11521"];
+    const billToName = invoice.billToName || invoice.clientName || "Egyptian German Industrial Corporation (EGIC)";
+    const billToAddress = invoice.billToAddress || ["53 EL-MANIAL ST", "Cairo, Cairo", "EG 11341"];
+    const shipToAddress = invoice.shipToAddress || ["53 EL-MANIAL ST", "Cairo, Cairo", "EG 11341"];
+
+    // Calculate totals if missing
+    const subTotal = invoice.subTotal || invoice.items.reduce((acc, item) => acc + (item.quantity * item.rate), 0);
+    const taxRate = invoice.taxRate || 0.14; // 14% VAT default
+    const tax = invoice.tax || subTotal * taxRate;
+    const total = invoice.total || subTotal + tax;
+
+    const getStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case "paid": return "bg-green-100 text-green-700 hover:bg-green-100/80";
+            case "overdue": return "bg-red-100 text-red-700 hover:bg-red-100/80";
+            case "draft": return "bg-gray-100 text-gray-700 hover:bg-gray-100/80";
+            default: return "bg-red-50 text-red-600 hover:bg-red-50/80 border-red-100"; // Unpaid default style
+        }
+    };
 
     return (
-        <div className="p-8 max-w-4xl mx-auto space-y-8">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">{invoice.number}</h2>
-                    <p className="text-muted-foreground">{invoice.clientName}</p>
-                </div>
-                <div className="space-x-2">
-                    <Button variant="outline">Download PDF</Button>
-                    <Button>Send to Client</Button>
-                </div>
-            </div>
+        <div className="min-h-screen bg-gray-50/50 p-6 md:p-8 font-sans">
+            <div className="max-w-5xl mx-auto space-y-6">
+                {/* Top Action Bar */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <Badge variant="outline" className={cn("px-3 py-1 text-sm font-medium border rounded pointer-events-none capitalize", getStatusColor(invoice.status))}>
+                        {invoice.status}
+                    </Badge>
 
-            <div className="grid grid-cols-3 gap-6">
-                <Card className="col-span-2">
-                    <CardHeader>
-                        <CardTitle>Items</CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Button variant="outline" size="icon" className="h-9 w-9 bg-white" title="Edit Invoice">
+                            <Pencil className="h-4 w-4 text-gray-600" />
+                        </Button>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="h-9 gap-1 bg-white px-3 text-gray-700">
+                                    <FileText className="h-4 w-4" />
+                                    <ChevronDown className="h-3 w-3 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem><Eye className="mr-2 h-4 w-4" /> View PDF</DropdownMenuItem>
+                                <DropdownMenuItem><ExternalLink className="mr-2 h-4 w-4" /> View in New Tab</DropdownMenuItem>
+                                <DropdownMenuItem><Download className="mr-2 h-4 w-4" /> Download</DropdownMenuItem>
+                                <DropdownMenuItem><Printer className="mr-2 h-4 w-4" /> Print</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <Button variant="outline" size="icon" className="h-9 w-9 bg-white" title="Send Email">
+                            <Mail className="h-4 w-4 text-gray-600" />
+                        </Button>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="h-9 gap-1 bg-white px-3 text-gray-700">
+                                    More
+                                    <ChevronDown className="h-3 w-3 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-60">
+                                <DropdownMenuItem><User className="mr-2 h-4 w-4" /> View as Customer</DropdownMenuItem>
+                                <DropdownMenuItem><CreditCard className="mr-2 h-4 w-4" /> Create Credit Note</DropdownMenuItem>
+                                <DropdownMenuItem><File className="mr-2 h-4 w-4" /> Attach File</DropdownMenuItem>
+                                <DropdownMenuItem><Copy className="mr-2 h-4 w-4" /> Copy Invoice</DropdownMenuItem>
+                                <DropdownMenuItem><Send className="mr-2 h-4 w-4" /> Mark as Sent</DropdownMenuItem>
+                                <DropdownMenuItem><Ban className="mr-2 h-4 w-4" /> Mark as Cancelled</DropdownMenuItem>
+                                <DropdownMenuItem><Clock className="mr-2 h-4 w-4" /> Pause Overdue Reminders</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-red-600"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <Button className="h-9 bg-green-500 hover:bg-green-600 text-white gap-2">
+                            <Plus className="h-4 w-4" /> Payment
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Main Paper Invoice Card */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 md:p-12 min-h-[800px] text-gray-900">
+
+                    {/* Project Relation Banner */}
+                    <div className="mb-10 text-gray-700">
+                        This invoice is related to project: <Link href="#" className="text-blue-600 hover:underline font-medium">{projectName}</Link>
+                    </div>
+
+                    {/* Header Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                        {/* Left: Invoice # and Sender */}
+                        <div>
+                            <h1 className="text-2xl font-bold text-blue-600 mb-6">{invoice.number}</h1>
+
+                            <div className="space-y-1 text-sm text-gray-800">
+                                <p className="font-bold">{senderName}</p>
+                                {senderAddress.map((line, i) => <p key={i}>{line}</p>)}
+                            </div>
+                        </div>
+
+                        {/* Right: Bill To & Ship To */}
+                        <div className="text-right space-y-8">
+                            {/* Bill To */}
+                            <div>
+                                <p className="text-sm font-bold text-gray-900 mb-1">Bill To</p>
+                                <p className="text-blue-600 font-medium mb-1">{billToName}</p>
+                                <div className="text-sm text-gray-500 space-y-0.5">
+                                    {billToAddress.map((line, i) => <p key={i}>{line}</p>)}
+                                </div>
+                            </div>
+
+                            {/* Ship To */}
+                            <div>
+                                <p className="text-sm font-bold text-gray-900 mb-1">Ship to</p>
+                                <div className="text-sm text-gray-500 space-y-0.5">
+                                    {shipToAddress.map((line, i) => <p key={i}>{line}</p>)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Dates & Reference Grid */}
+                    <div className="flex justify-end mb-12">
+                        <div className="text-right space-y-1 text-sm">
+                            <div className="flex justify-end gap-2">
+                                <span className="font-semibold text-gray-900">Invoice Date:</span>
+                                <span className="text-gray-700">{formatDate(invoice.date)}</span>
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <span className="font-semibold text-gray-900">Due Date:</span>
+                                <span className="text-gray-700">{formatDate(invoice.dueDate)}</span>
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <span className="font-semibold text-gray-900">Project:</span>
+                                <span className="text-gray-700">{projectName}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Items Table */}
+                    <div className="mb-8">
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead>Description</TableHead>
-                                    <TableHead className="text-right">Qty</TableHead>
-                                    <TableHead className="text-right">Rate</TableHead>
-                                    <TableHead className="text-right">Amount</TableHead>
+                                <TableRow className="bg-gray-50 hover:bg-gray-50 border-y border-gray-100">
+                                    <TableHead className="w-[50px] font-bold text-gray-900">#</TableHead>
+                                    <TableHead className="font-bold text-gray-900">Item</TableHead>
+                                    <TableHead className="text-right font-bold text-gray-900 w-[80px]">Qty</TableHead>
+                                    <TableHead className="text-right font-bold text-gray-900 w-[120px]">Rate</TableHead>
+                                    <TableHead className="text-center font-bold text-gray-900 w-[100px]">Tax</TableHead>
+                                    <TableHead className="text-right font-bold text-gray-900 w-[120px]">Amount</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {invoice.items && invoice.items.map((item) => (
-                                    <TableRow key={item.id}>
-                                        <TableCell>{item.description}</TableCell>
-                                        <TableCell className="text-right">{item.quantity}</TableCell>
-                                        <TableCell className="text-right">${item.rate.toFixed(2)}</TableCell>
-                                        <TableCell className="text-right">${(item.quantity * item.rate).toFixed(2)}</TableCell>
+                                {invoice.items && invoice.items.map((item, index) => (
+                                    <TableRow key={item.id} className="border-b border-gray-50">
+                                        <TableCell className="text-gray-500 align-top py-4">{index + 1}</TableCell>
+                                        <TableCell className="align-top py-4">
+                                            <p className="font-medium text-gray-800">{item.description}</p>
+                                            <p className="text-sm text-gray-500 mt-1">Performance Optimization (export.EGIC.com.eg) Medium Website (50 - 200 pages)</p>
+                                            <p className="text-sm text-gray-500">Quarterly maintenance fees</p>
+                                        </TableCell>
+                                        <TableCell className="text-right text-gray-700 align-top py-4">{item.quantity}</TableCell>
+                                        <TableCell className="text-right text-gray-700 align-top py-4">{item.rate.toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
+                                        <TableCell className="text-center text-gray-500 text-sm align-top py-4">
+                                            <div>VAT</div>
+                                            <div>{(taxRate * 100).toFixed(2)}%</div>
+                                        </TableCell>
+                                        <TableCell className="text-right text-gray-700 align-top py-4">{(item.quantity * item.rate).toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
                                     </TableRow>
                                 ))}
-                                <TableRow>
-                                    <TableCell colSpan={3} className="text-right font-bold">Total</TableCell>
-                                    <TableCell className="text-right font-bold">${invoice.total.toFixed(2)}</TableCell>
-                                </TableRow>
                             </TableBody>
                         </Table>
-                    </CardContent>
-                </Card>
-                <Card className="col-span-1">
-                    <CardHeader>
-                        <CardTitle>Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <span className="block text-sm font-medium text-muted-foreground">Date</span>
-                            <span>{formatDate(invoice.date)}</span>
+                    </div>
+
+                    {/* Footer / Totals */}
+                    <div className="flex justify-end pt-4 mb-20">
+                        <div className="w-72 space-y-3">
+                            <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                                <span className="font-medium text-gray-700">Sub Total</span>
+                                <span className="text-gray-600">EGP{subTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                                <span className="font-medium text-gray-700">VAT ({(taxRate * 100).toFixed(2)}%)</span>
+                                <span className="text-gray-600">EGP{tax.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                                <span className="font-medium text-gray-700">Total</span>
+                                <span className="text-gray-600">EGP{total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between text-base py-2 font-bold">
+                                <span className="text-red-500">Amount Due</span>
+                                <span className="text-red-500">EGP{total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                            </div>
                         </div>
-                        <div>
-                            <span className="block text-sm font-medium text-muted-foreground">Due Date</span>
-                            <span>{formatDate(invoice.dueDate)}</span>
+                    </div>
+
+                    <div className="mt-8 border-t pt-8">
+                        <div className="text-sm">
+                            <span className="font-bold text-gray-900 block mb-2">Note:</span>
+                            <p className="text-gray-500">Thank you for doing business with WasilaDev</p>
                         </div>
-                        <div>
-                            <span className="block text-sm font-medium text-muted-foreground">Status</span>
-                            <span className="capitalize">{invoice.status}</span>
-                        </div>
-                    </CardContent>
-                </Card>
+                    </div>
+
+                </div>
             </div>
         </div>
     );
 }
+
+// Missing imports patch
+import { Eye, User } from "lucide-react";
