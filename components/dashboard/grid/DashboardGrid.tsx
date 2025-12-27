@@ -148,12 +148,8 @@ export function DashboardGrid({ className }: DashboardGridProps) {
     const enabledWidgets = useMemo(() => config.widgets.filter(w => w.enabled), [config.widgets]);
     const displayLayout = useMemo(() => {
         return config.layout
-            .filter(l => enabledWidgets.some(w => w.id === l.i))
-            .map(l => ({
-                ...l,
-                static: !isEditing // Key Fix: Force static when not editing
-            }));
-    }, [config.layout, enabledWidgets, isEditing]);
+            .filter(l => enabledWidgets.some(w => w.id === l.i));
+    }, [config.layout, enabledWidgets]);
 
     // Get greeting based on time of day
     const greeting = useMemo(() => {

@@ -103,9 +103,20 @@ export const useDashboardStore = create<DashboardState>()(
             setConfig: (config) => set({ config }),
             setEditMode: (isEditing) => set({ isEditing }),
 
-            updateLayout: async (layout) => {
+            updateLayout: async (newVisibleLayout) => {
                 const { config } = get();
-                const newConfig = { ...config, layout, updatedAt: new Date().toISOString() };
+
+                // Merge new visible layout with existing hidden items to preserve their positions
+                const hiddenItems = config.layout.filter(l =>
+                    !newVisibleLayout.find(nl => nl.i === l.i)
+                );
+                const mergedLayout = [...newVisibleLayout, ...hiddenItems];
+
+                const newConfig = {
+                    ...config,
+                    layout: mergedLayout,
+                    updatedAt: new Date().toISOString()
+                };
                 set({ config: newConfig });
                 // Note: Firestore sync is handled by the component calling syncToFirestore
             },
