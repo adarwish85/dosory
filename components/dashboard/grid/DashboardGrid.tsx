@@ -116,14 +116,17 @@ export function DashboardGrid({ className }: DashboardGridProps) {
         }
     }, [orgId, userId, syncToFirestore, setEditMode]);
 
+
     const handleLayoutChange = useCallback((newLayout: LayoutItem[]) => {
         updateLayout(newLayout);
-        // Debounced save could go here, but we'll rely on explicit save for now or periodic sync
-        // Actually, for better UX, let's auto-save if in edit mode
-        if (isEditing && orgId && userId) {
+    }, [updateLayout]);
+
+    const handleDragResizeStop = useCallback((newLayout: LayoutItem[]) => {
+        updateLayout(newLayout);
+        if (orgId && userId) {
             syncToFirestore(orgId, userId);
         }
-    }, [updateLayout, isEditing, orgId, userId, syncToFirestore]);
+    }, [updateLayout, orgId, userId, syncToFirestore]);
 
     const handlePresetChange = useCallback((preset: string) => {
         applyPreset(preset as LayoutPreset);
@@ -294,6 +297,8 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                 cols={12}
                 rowHeight={80}
                 onLayoutChange={handleLayoutChange}
+                onDragStop={handleDragResizeStop}
+                onResizeStop={handleDragResizeStop}
                 isDraggable={isEditing}
                 isResizable={isEditing}
                 draggableHandle=".widget-drag-handle"

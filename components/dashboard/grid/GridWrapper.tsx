@@ -13,6 +13,8 @@ export interface GridWrapperProps {
     cols?: number;
     rowHeight?: number;
     onLayoutChange?: (layout: any[]) => void;
+    onDragStop?: (layout: any[]) => void;
+    onResizeStop?: (layout: any[]) => void;
     isDraggable?: boolean;
     isResizable?: boolean;
     draggableHandle?: string;
@@ -35,6 +37,8 @@ export function GridWrapper({
     cols = 12,
     rowHeight = 80,
     onLayoutChange,
+    onDragStop,
+    onResizeStop,
     isDraggable = false,
     isResizable = false,
     draggableHandle,
@@ -42,7 +46,7 @@ export function GridWrapper({
     containerPadding = [0, 0],
     children,
     className,
-}: GridWrapperProps) {
+}: GridWrapperProps & { onDragStop?: (layout: any[]) => void; onResizeStop?: (layout: any[]) => void }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [width, setWidth] = useState(1200);
 
@@ -104,6 +108,8 @@ export function GridWrapper({
                 rowHeight={responsiveRowHeight}
                 width={width}
                 onLayoutChange={onLayoutChange as any}
+                onDragStop={onDragStop}
+                onResizeStop={onResizeStop}
                 isDraggable={width >= BREAKPOINTS.sm && isDraggable}
                 isResizable={width >= BREAKPOINTS.sm && isResizable}
                 draggableHandle={draggableHandle}
