@@ -4,13 +4,13 @@ import { useState } from "react";
 import { pdf } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
-import InvoicePDF from "@/components/pdf/InvoicePDF";
+import InvoicePDF, { PDFSettings } from "@/components/pdf/InvoicePDF";
+import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
+import { useFormatters } from "@/lib/hooks/use-formatters";
 
 interface DownloadPDFButtonProps {
     type: "invoice";
     data: any;
-    orgName?: string;
-    orgEmail?: string;
     filename?: string;
     variant?: "default" | "outline" | "ghost" | "secondary";
     size?: "default" | "sm" | "lg" | "icon";
@@ -20,43 +20,56 @@ interface DownloadPDFButtonProps {
 export default function DownloadPDFButton({
     type,
     data,
-    orgName = "Dosory",
-    orgEmail = "support@dosory.com",
     filename,
     variant = "outline",
     size = "default",
     className,
 }: DownloadPDFButtonProps) {
     const [generating, setGenerating] = useState(false);
+    const { settings } = useOrganizationSettings();
+    const { formatDate } = useFormatters();
 
     const handleDownload = async () => {
         setGenerating(true);
 
         try {
+            // Build PDF settings from org settings
+            const pdfSettings: PDFSettings = {
+                font: settings.pdfFont || "Helvetica",
+                fontSize: settings.pdfFontSize || 10,
+                tableHeadingColor: settings.pdfTableHeadingColor || "#f5f5f5",
+                tableHeadingTextColor: settings.pdfTableHeadingTextColor || "#333333",
+                logoUrl: settings.logoLight || undefined,
+                showStatus: settings.pdfShowStatus !== false,
+                showPageNumber: settings.pdfShowPageNumber === true,
+            };
+
             const doc = (
                 <InvoicePDF
                     invoice={{
-                        number: data.number || data.id,
+                        number: data.numberFormatted || data.number || data.id,
                         status: data.status,
-                        createdAt: formatDate(data.createdAt),
+                        createdAt: formatDate(data.createdAt || data.date),
                         dueDate: formatDate(data.dueDate),
                         customerName: data.customerName || "Customer",
                         customerEmail: data.customerEmail,
                         customerAddress: data.customerAddress,
                         items: data.items || [],
                         subtotal: data.subtotal || data.total || 0,
-                        tax: data.tax || 0,
+                        tax: data.taxTotal || data.tax || 0,
                         total: data.total || 0,
                         amountPaid: data.amountPaid || 0,
                         amountDue: data.amountDue || data.total || 0,
                         currency: data.currency || "USD",
                         notes: data.notes,
                     }}
-                    orgName={orgName}
-                    orgEmail={orgEmail}
+                    orgName={settings.companyName || "Company"}
+                    orgAddress={[settings.address, settings.city, settings.country].filter(Boolean).join(", ")}
+                    orgEmail={undefined}
+                    pdfSettings={pdfSettings}
                 />
             );
-            const defaultFilename = `Invoice-${data.number || data.id}.pdf`;
+            const defaultFilename = `Invoice-${data.numberFormatted || data.number || data.id}.pdf`;
 
             // Generate PDF blob
             const blob = await pdf(doc).toBlob();
@@ -101,18 +114,3 @@ export default function DownloadPDFButton({
     );
 }
 
-function formatDate(date: any): string {
-    if (!date) return "N/A";
-
-    // Handle Firestore Timestamp
-    if (date?.toDate) {
-        return date.toDate().toLocaleDateString();
-    }
-
-    // Handle string or Date
-    try {
-        return new Date(date).toLocaleDateString();
-    } catch {
-        return "N/A";
-    }
-}
