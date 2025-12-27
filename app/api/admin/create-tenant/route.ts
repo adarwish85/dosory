@@ -113,15 +113,20 @@ export async function POST(request: NextRequest) {
                 const resetLink = await adminAuth.generatePasswordResetLink(email);
                 console.log("Password reset link generated:", resetLink);
 
-                // Send email via SMTP
-                const { sendPasswordResetEmail } = await import("@/lib/email");
-                const sent = await sendPasswordResetEmail(email, resetLink);
+                // Send welcome email via template
+                const { sendWelcomeTenantEmail } = await import("@/lib/email");
+                const sent = await sendWelcomeTenantEmail(
+                    email,
+                    displayName || organizationName,
+                    organizationName,
+                    resetLink
+                );
 
                 if (!sent) {
-                    console.warn("Failed to send password reset email. Check SMTP settings.");
+                    console.warn("Failed to send welcome email. Check SMTP settings.");
                 }
             } catch (emailError) {
-                console.error("Error sending password reset email:", emailError);
+                console.error("Error sending welcome email:", emailError);
                 // Continue anyway - user can use forgot password
             }
         }
