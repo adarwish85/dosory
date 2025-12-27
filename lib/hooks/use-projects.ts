@@ -22,6 +22,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useActivity } from "@/lib/hooks/use-activity";
 import type { Project, ProjectStatus, Task, TaskStatus } from "@/lib/types";
 import type { ProjectFormData, TaskFormData } from "@/lib/schemas";
 
@@ -46,6 +47,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
         limit: queryLimit = 100,
     } = options;
     const { profile } = useUserProfile();
+    const { logActivity } = useActivity({ enabled: false });
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
@@ -115,9 +117,13 @@ export function useProjects(options: UseProjectsOptions = {}) {
                 createdBy: profile.uid,
             });
 
+            if (logActivity) {
+                await logActivity("project_created", `Created project ${data.name}`, docRef.id, "project");
+            }
+
             return docRef.id;
         },
-        [profile?.orgId, profile?.uid]
+        [profile?.orgId, profile?.uid, logActivity]
     );
 
     const updateProject = useCallback(
@@ -172,7 +178,11 @@ export function useProjects(options: UseProjectsOptions = {}) {
         }
 
         await updateDoc(doc(db, "projects", id), updateData);
-    }, []);
+
+        if (logActivity) {
+            await logActivity("project_status_changed", `Project status changed to ${newStatus}`, id, "project");
+        }
+    }, [logActivity]);
 
     // Calculate project stats by status
     const projectStats = projects.reduce(
@@ -261,6 +271,7 @@ export function useTasks(options: UseTasksOptions = {}) {
         limit: queryLimit = 100,
     } = options;
     const { profile } = useUserProfile();
+    const { logActivity } = useActivity({ enabled: false });
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
@@ -380,8 +391,12 @@ export function useTasks(options: UseTasksOptions = {}) {
                 status: newStatus,
                 updatedAt: serverTimestamp(),
             });
+
+            if (newStatus === "completed" && logActivity) {
+                await logActivity("task_completed", "Task completed", id, "task");
+            }
         },
-        []
+        [logActivity]
     );
 
     // Calculate task stats
@@ -405,43 +420,4 @@ export function useTasks(options: UseTasksOptions = {}) {
         deleteTask,
         updateTaskStatus,
     };
-}
-
-// ============================================
-// useTask Hook (single task)
-// ============================================
-
-export function useTask(id: string | null) {
-    const [task, setTask] = useState<Task | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
-
-    useEffect(() => {
-        if (!id) {
-            setTask(null);
-            setLoading(false);
-            return;
-        }
-
-        const unsubscribe = onSnapshot(
-            doc(db, "tasks", id),
-            (snapshot) => {
-                if (snapshot.exists()) {
-                    setTask({ id: snapshot.id, ...snapshot.data() } as Task);
-                } else {
-                    setTask(null);
-                }
-                setLoading(false);
-            },
-            (err) => {
-                console.error("Error fetching task:", err);
-                setError(err);
-                setLoading(false);
-            }
-        );
-
-        return () => unsubscribe();
-    }, [id]);
-
-    return { task, loading, error };
 }

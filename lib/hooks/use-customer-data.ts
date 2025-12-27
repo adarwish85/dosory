@@ -19,6 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useActivity } from "@/lib/hooks/use-activity";
 
 // ============================================
 // Types
@@ -101,6 +102,7 @@ interface UsePaymentsOptions {
 export function usePayments(options: UsePaymentsOptions = {}) {
     const { customerId, invoiceId } = options;
     const { profile } = useUserProfile();
+    const { logActivity } = useActivity({ enabled: false });
     const [payments, setPayments] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -144,12 +146,24 @@ export function usePayments(options: UsePaymentsOptions = {}) {
     const createPayment = useCallback(async (data: Omit<Payment, "id" | "orgId" | "createdAt">) => {
         if (!profile?.orgId) throw new Error("No organization");
 
-        return await addDoc(collection(db, "payments"), {
+        const docRef = await addDoc(collection(db, "payments"), {
             ...data,
             orgId: profile.orgId,
             createdAt: serverTimestamp(),
         });
-    }, [profile?.orgId]);
+
+        if (logActivity) {
+            await logActivity(
+                "payment_received",
+                `Received payment of ${data.amount}`,
+                docRef.id,
+                "payment",
+                { amount: data.amount, customerId: data.customerId }
+            );
+        }
+
+        return docRef;
+    }, [profile?.orgId, logActivity]);
 
     return { payments, loading, createPayment };
 }

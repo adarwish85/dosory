@@ -21,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useActivity } from "@/lib/hooks/use-activity";
 import type { Customer, Contact } from "@/lib/types";
 import type { CustomerFormData, ContactFormData } from "@/lib/schemas";
 
@@ -43,6 +44,7 @@ export function useCustomers(options: UseCustomersOptions = {}) {
         limit: queryLimit = 100 // Default to 100 for performance
     } = options;
     const { profile } = useUserProfile();
+    const { logActivity } = useActivity({ enabled: false });
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
@@ -106,9 +108,14 @@ export function useCustomers(options: UseCustomersOptions = {}) {
                 // Silently fail if onboarding doesn't exist
             }
 
+            // Log activity
+            if (logActivity) {
+                await logActivity("customer_created", `Created customer ${data.company}`, docRef.id, "customer");
+            }
+
             return docRef.id;
         },
-        [profile?.orgId, profile?.uid]
+        [profile?.orgId, profile?.uid, logActivity]
     );
 
     const updateCustomer = useCallback(

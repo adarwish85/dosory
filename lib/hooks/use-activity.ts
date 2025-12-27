@@ -15,7 +15,10 @@ export type ActivityType =
     | "project_created"
     | "estimate_sent"
     | "contract_signed"
-    | "note_added";
+    | "note_added"
+    | "invoice_deleted"
+    | "payment_received"
+    | "project_status_changed"; // Added
 
 export interface Activity {
     id: string;
@@ -40,6 +43,9 @@ const ACTIVITY_ICONS: Record<ActivityType, { icon: string; color: string }> = {
     estimate_sent: { icon: "📋", color: "text-indigo-500" },
     contract_signed: { icon: "📝", color: "text-emerald-500" },
     note_added: { icon: "💬", color: "text-gray-500" },
+    invoice_deleted: { icon: "🗑️", color: "text-red-500" },
+    payment_received: { icon: "💵", color: "text-green-600" },
+    project_status_changed: { icon: "🔄", color: "text-orange-500" }, // Added
 };
 
 export function getActivityMeta(type: ActivityType) {
@@ -48,6 +54,7 @@ export function getActivityMeta(type: ActivityType) {
 
 interface UseActivityOptions {
     limit?: number;
+    enabled?: boolean;
 }
 
 export function useActivity(options: UseActivityOptions = {}) {
@@ -57,9 +64,10 @@ export function useActivity(options: UseActivityOptions = {}) {
 
     const orgId = (user as any)?.orgId || user?.uid;
     const fetchLimit = options.limit || 20;
+    const enabled = options.enabled ?? true;
 
     useEffect(() => {
-        if (!orgId) {
+        if (!enabled || !orgId) {
             setLoading(false);
             return;
         }

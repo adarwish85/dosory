@@ -22,6 +22,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useActivity } from "@/lib/hooks/use-activity";
 import type { Invoice, InvoiceStatus, LineItem } from "@/lib/types";
 import type { InvoiceFormData } from "@/lib/schemas";
 
@@ -63,7 +64,7 @@ async function generateInvoiceNumber(
     settings?: InvoiceNumberSettings
 ): Promise<{ number: number; formatted: string }> {
     // Use Firestore transaction for atomic increment
-    const { runTransaction, increment, getDoc, setDoc } = await import("firebase/firestore");
+    const { runTransaction } = await import("firebase/firestore");
 
     const counterRef = doc(db, "organizations", orgId, "counters", "invoices");
     const prefix = settings?.prefix || "INV-";
@@ -151,6 +152,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         orderDirection = "desc",
     } = options;
     const { profile } = useUserProfile();
+    const { logActivity } = useActivity({ enabled: false });
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
@@ -249,9 +251,13 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
                 createdBy: profile.uid,
             });
 
+            if (logActivity) {
+                await logActivity("invoice_created", `Created invoice ${invoiceNumberResult.formatted}`, docRef.id, "invoice", { amount: total });
+            }
+
             return docRef.id;
         },
-        [profile?.orgId, profile?.uid]
+        [profile?.orgId, profile?.uid, logActivity]
     );
 
     const updateInvoice = useCallback(
@@ -277,7 +283,10 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
 
     const deleteInvoice = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "invoices", id));
-    }, []);
+        if (logActivity) {
+            await logActivity("invoice_deleted", "Deleted invoice", id, "invoice");
+        }
+    }, [logActivity]);
 
     // FIX BLE-001: Status transition with validation
     const updateStatus = useCallback(async (id: string, newStatus: InvoiceStatus): Promise<void> => {
@@ -301,7 +310,11 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         if (newStatus === "viewed") updateData.viewedAt = serverTimestamp();
 
         await updateDoc(doc(db, "invoices", id), updateData);
-    }, []);
+
+        if (logActivity && newStatus === "sent") {
+            await logActivity("invoice_sent", `Sent invoice ${invoice.numberFormatted || invoice.number}`, id, "invoice");
+        }
+    }, [logActivity]);
 
     // FIX INV-002: Payment with overpayment validation
     const recordPayment = useCallback(async (
@@ -361,8 +374,12 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
             return paymentRef.id;
         });
 
+        if (logActivity) {
+            await logActivity("invoice_paid", `Received payment of ${amount}`, invoiceId, "invoice", { amount, paymentMode });
+        }
+
         return paymentId;
-    }, [profile?.orgId, profile?.uid]);
+    }, [profile?.orgId, profile?.uid, logActivity]);
 
     // Convenience functions using updateStatus
     const markAsSent = useCallback(async (id: string): Promise<void> => {
