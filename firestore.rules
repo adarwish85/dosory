@@ -88,8 +88,8 @@ service cloud.firestore {
     // Organizations: TEMPORARILY RELAXED FOR DEBUGGING
     // Organizations: key entity
     match /organizations/{orgId} {
-      // Allow read for all auth users (needed for subdomain uniqueness check across orgs)
-      allow read: if request.auth != null;
+      // Allow read for all users (including unauthenticated for subdomain check during signup)
+      allow read: if true;
       // Allow write only if org admin
       // Allow create if user is listed as owner OR if they meet the old check
       allow create: if (request.auth != null && request.resource.data.ownerId == request.auth.uid) || canCreateByOrg(); 
