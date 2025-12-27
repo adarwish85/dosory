@@ -1,16 +1,11 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const ReactGridLayout = require("react-grid-layout");
-const { WidthProvider } = ReactGridLayout;
-const GridLayout = ReactGridLayout.default || ReactGridLayout;
-import "react-grid-layout/css/styles.css";
-import "react-resizable/css/styles.css";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import {
     Edit3, Save, RotateCcw, Layout as LayoutIcon,
-    Palette, SlidersHorizontal, Plus
+    Palette, SlidersHorizontal, Plus, Loader2
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -43,7 +38,14 @@ import { CalendarWidget } from "../widgets/CalendarWidget";
 import { CustomersWidget } from "../widgets/CustomersWidget";
 import { PerformanceWidget } from "../widgets/PerformanceWidget";
 
-const ResponsiveGridLayout = WidthProvider(GridLayout);
+// Dynamic import GridWrapper to avoid SSR issues with react-grid-layout
+const GridWrapper = dynamic(
+    () => import("./GridWrapper").then((mod) => mod.GridWrapper),
+    {
+        ssr: false,
+        loading: () => <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-gray-400" /></div>
+    }
+);
 
 // Widget metadata for catalog
 const WIDGET_CATALOG: Record<WidgetId, { title: string; description: string; icon: string }> = {
@@ -243,7 +245,7 @@ export function DashboardGrid({ className }: DashboardGridProps) {
             )}
 
             {/* Widget Grid */}
-            <ResponsiveGridLayout
+            <GridWrapper
                 className="layout"
                 layout={layout}
                 cols={12}
@@ -279,7 +281,7 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                         </div>
                     );
                 })}
-            </ResponsiveGridLayout>
+            </GridWrapper>
 
             {/* Empty State */}
             {enabledWidgets.length === 0 && (
