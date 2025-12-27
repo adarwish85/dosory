@@ -3,6 +3,8 @@
 import { useState, useMemo, useCallback, useRef, KeyboardEvent } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { useExpenses } from "@/lib/hooks/use-expenses";
+import { useFormatters } from "@/lib/hooks/use-formatters";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,7 +24,6 @@ import {
     Receipt, CircleDollarSign, CircleOff, RefreshCw
 } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
 import { toast } from "sonner";
 
 // Types
@@ -72,6 +73,8 @@ function Pagination({ currentPage, totalPages, onPageChange, totalRecords, start
 export default function ExpensesPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { expenses, loading: expensesLoading, expenseStats } = useExpenses({ customerId: customerId || undefined });
+    const { formatDate, formatCurrency } = useFormatters();
+    const { t } = useTranslation();
     const tableRef = useRef<HTMLDivElement>(null);
 
     // UI State
@@ -87,18 +90,10 @@ export default function ExpensesPage() {
     const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
 
-    // Helpers
-    const formatDate = (timestamp: any) => {
-        if (!timestamp) return "-";
-        try {
-            const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
-            return format(date, "dd/MM/yyyy");
-        } catch { return "-"; }
-    };
-
-    const formatCurrency = (amount: number = 0) => {
+    // Currency formatter helper that uses customer currency
+    const formatExpenseCurrency = (amount: number = 0) => {
         const currency = customer?.currency || "USD";
-        return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
+        return formatCurrency(amount, currency);
     };
 
     const getBillableBadge = (billable: boolean) => {
@@ -211,7 +206,7 @@ export default function ExpensesPage() {
                             <Receipt className="h-4 w-4" />
                             <span className="text-xs font-medium uppercase">Total</span>
                         </div>
-                        <div className="text-2xl font-bold text-blue-900">{formatCurrency(expenseStats.total)}</div>
+                        <div className="text-2xl font-bold text-blue-900">{formatExpenseCurrency(expenseStats.total)}</div>
                         <div className="text-xs text-blue-500 mt-1">{expenseStats.count} records</div>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
@@ -219,14 +214,14 @@ export default function ExpensesPage() {
                             <CircleDollarSign className="h-4 w-4" />
                             <span className="text-xs font-medium uppercase">Billable</span>
                         </div>
-                        <div className="text-2xl font-bold text-green-900">{formatCurrency(expenseStats.billable)}</div>
+                        <div className="text-2xl font-bold text-green-900">{formatExpenseCurrency(expenseStats.billable)}</div>
                     </div>
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-gray-600 mb-1">
                             <CircleOff className="h-4 w-4" />
                             <span className="text-xs font-medium uppercase">Non-Billable</span>
                         </div>
-                        <div className="text-2xl font-bold text-gray-900">{formatCurrency(expenseStats.nonBillable)}</div>
+                        <div className="text-2xl font-bold text-gray-900">{formatExpenseCurrency(expenseStats.nonBillable)}</div>
                     </div>
                 </div>
 
@@ -338,7 +333,7 @@ export default function ExpensesPage() {
                                                     </span>
                                                 )}
                                                 {col.key === "category" && <span className="text-gray-600">{expense.categoryName}</span>}
-                                                {col.key === "amount" && <span className="font-medium">{formatCurrency(expense.amount)}</span>}
+                                                {col.key === "amount" && <span className="font-medium">{formatExpenseCurrency(expense.amount)}</span>}
                                                 {col.key === "date" && <span>{formatDate(expense.date)}</span>}
                                                 {col.key === "billable" && (
                                                     <Badge className={`${getBillableBadge(expense.billable)} font-normal`}>

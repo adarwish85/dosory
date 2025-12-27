@@ -3,6 +3,8 @@
 import { useState, useMemo, useCallback, useRef, KeyboardEvent } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { useEstimates } from "@/lib/hooks/use-sales";
+import { useFormatters } from "@/lib/hooks/use-formatters";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,7 +24,6 @@ import {
     ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileDown
 } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
 import { toast } from "sonner";
 
 // Types
@@ -73,6 +74,8 @@ function Pagination({ currentPage, totalPages, onPageChange, totalRecords, start
 export default function EstimatesPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { estimates, loading: estimatesLoading, estimateStats } = useEstimates({ customerId: customerId || undefined });
+    const { formatDate, formatCurrency } = useFormatters();
+    const { t } = useTranslation();
     const tableRef = useRef<HTMLDivElement>(null);
 
     // UI State
@@ -88,18 +91,10 @@ export default function EstimatesPage() {
     const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
 
-    // Helpers
-    const formatDate = (timestamp: any) => {
-        if (!timestamp) return "-";
-        try {
-            const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
-            return format(date, "dd/MM/yyyy");
-        } catch { return "-"; }
-    };
-
-    const formatCurrency = (amount: number = 0) => {
+    // Currency formatter helper that uses customer currency
+    const formatEstimateCurrency = (amount: number = 0) => {
         const currency = customer?.currency || "USD";
-        return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
+        return formatCurrency(amount, currency);
     };
 
     const getStatusBadge = (status: string) => {

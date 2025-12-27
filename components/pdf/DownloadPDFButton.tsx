@@ -65,7 +65,7 @@ export default function DownloadPDFButton({
                     }}
                     orgName={settings.companyName || "Company"}
                     orgAddress={[settings.address, settings.city, settings.country].filter(Boolean).join(", ")}
-                    orgEmail={undefined}
+                    orgEmail={settings.email}
                     pdfSettings={pdfSettings}
                 />
             );

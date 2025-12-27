@@ -3,6 +3,8 @@
 import { useState, useMemo, useCallback, useRef, KeyboardEvent } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { usePayments } from "@/lib/hooks/use-customer-data";
+import { useFormatters } from "@/lib/hooks/use-formatters";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,7 +22,6 @@ import {
     ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
 import { RecordPaymentDialog } from "@/components/dashboard/customers/payments/record-payment-dialog";
 import { toast } from "sonner";
 
@@ -71,6 +72,8 @@ function Pagination({ currentPage, totalPages, onPageChange, totalRecords, start
 export default function PaymentsPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { payments, loading: paymentsLoading } = usePayments({ customerId: customerId || undefined });
+    const { formatDate, formatCurrency } = useFormatters();
+    const { t } = useTranslation();
     const tableRef = useRef<HTMLDivElement>(null);
 
     // UI State
@@ -85,18 +88,10 @@ export default function PaymentsPage() {
     const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
 
-    // Helpers
-    const formatDate = (timestamp: any) => {
-        if (!timestamp) return "-";
-        try {
-            const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
-            return format(date, "dd/MM/yyyy");
-        } catch { return "-"; }
-    };
-
-    const formatCurrency = (amount: number = 0) => {
+    // Currency formatter helper that uses customer currency
+    const formatPaymentCurrency = (amount: number = 0) => {
         const currency = customer?.currency || "USD";
-        return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
+        return formatCurrency(amount, currency);
     };
 
     // Sort handler
@@ -202,7 +197,7 @@ export default function PaymentsPage() {
                 {/* Total Summary */}
                 <div className="bg-white rounded-lg border p-4 inline-block">
                     <div className="text-sm text-gray-500">Total Payments Received</div>
-                    <div className="text-2xl font-bold text-green-600">{formatCurrency(totalPayments)}</div>
+                    <div className="text-2xl font-bold text-green-600">{formatPaymentCurrency(totalPayments)}</div>
                 </div>
 
                 {/* Compact Toolbar */}
@@ -315,7 +310,7 @@ export default function PaymentsPage() {
                                                         </Link>
                                                     ) : <span className="text-gray-400">-</span>
                                                 )}
-                                                {col.key === "amount" && <span className="font-medium text-green-600">{formatCurrency(payment.amount)}</span>}
+                                                {col.key === "amount" && <span className="font-medium text-green-600">{formatPaymentCurrency(payment.amount)}</span>}
                                                 {col.key === "paymentMode" && <HighlightText text={payment.paymentMode || "-"} search={searchQuery} />}
                                                 {col.key === "transactionId" && <span className="text-gray-500 text-xs"><HighlightText text={payment.transactionId || "-"} search={searchQuery} /></span>}
                                             </TableCell>

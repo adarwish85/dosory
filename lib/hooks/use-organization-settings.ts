@@ -25,6 +25,7 @@ export interface OrganizationSettings {
     country?: string;
     zipCode?: string;
     phone?: string;
+    email?: string;
     vatNumber?: string;
 
     // Localization
