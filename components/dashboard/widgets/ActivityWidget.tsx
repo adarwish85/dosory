@@ -1,6 +1,8 @@
 "use client";
 
-import { MessageCircle, UserPlus, FileText, CheckCircle2 } from "lucide-react";
+import { useActivity, getActivityMeta, type ActivityType } from "@/lib/hooks/use-activity";
+import { formatDistanceToNow } from "date-fns";
+import { WidgetSkeleton } from "./WidgetSkeleton";
 import type { WidgetSettings, DataDensity } from "@/lib/hooks/use-dashboard-layout";
 
 interface ActivityWidgetProps {
@@ -8,46 +10,63 @@ interface ActivityWidgetProps {
     density: DataDensity;
 }
 
-// Mock activity data - in real app, fetch from Firestore
-const MOCK_ACTIVITIES = [
-    { id: "1", type: "invoice", message: "Invoice #INV-001 was paid", time: "2 min ago", icon: CheckCircle2, color: "text-green-500" },
-    { id: "2", type: "customer", message: "New customer: Acme Corp", time: "15 min ago", icon: UserPlus, color: "text-blue-500" },
-    { id: "3", type: "note", message: "Note added to Project Alpha", time: "1 hour ago", icon: MessageCircle, color: "text-purple-500" },
-    { id: "4", type: "proposal", message: "Proposal sent to TechStart", time: "2 hours ago", icon: FileText, color: "text-amber-500" },
-    { id: "5", type: "task", message: "Task 'Update pricing' completed", time: "3 hours ago", icon: CheckCircle2, color: "text-green-500" },
-    { id: "6", type: "customer", message: "New lead: Digital Agency", time: "4 hours ago", icon: UserPlus, color: "text-blue-500" },
-];
-
 export function ActivityWidget({ settings, density }: ActivityWidgetProps) {
     const limit = settings.limit || 10;
-    const activities = MOCK_ACTIVITIES.slice(0, limit);
+    const { activities, loading } = useActivity({ limit });
+
+    const formatTime = (timestamp: any) => {
+        if (!timestamp) return "";
+        try {
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return formatDistanceToNow(date, { addSuffix: true });
+        } catch {
+            return "";
+        }
+    };
+
+    if (loading) {
+        return <WidgetSkeleton variant="list" />;
+    }
+
+    if (activities.length === 0) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm">
+                <div className="text-3xl mb-2">📋</div>
+                <p>No recent activity</p>
+                <p className="text-xs mt-1">Activity will appear here as you work</p>
+            </div>
+        );
+    }
 
     return (
         <div className="h-full flex flex-col">
             <div className="flex-1 space-y-1 overflow-auto">
-                {activities.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                        No recent activity
-                    </div>
-                ) : (
-                    activities.map((activity) => {
-                        const Icon = activity.icon;
-                        return (
-                            <div
-                                key={activity.id}
-                                className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50"
-                            >
-                                <div className={`shrink-0 mt-0.5 ${activity.color}`}>
-                                    <Icon className="h-4 w-4" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-gray-700 truncate">{activity.message}</p>
-                                    <p className="text-xs text-gray-400">{activity.time}</p>
+                {activities.map((activity) => {
+                    const meta = getActivityMeta(activity.type);
+                    return (
+                        <div
+                            key={activity.id}
+                            className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <div className={`shrink-0 mt-0.5 text-lg ${meta.color}`}>
+                                {meta.icon}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm text-gray-700 line-clamp-2">{activity.message}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    {activity.userName && (
+                                        <span className="text-xs text-gray-500 font-medium truncate max-w-[80px]">
+                                            {activity.userName}
+                                        </span>
+                                    )}
+                                    <span className="text-xs text-gray-400">
+                                        {formatTime(activity.createdAt)}
+                                    </span>
                                 </div>
                             </div>
-                        );
-                    })
-                )}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
