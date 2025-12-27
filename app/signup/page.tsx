@@ -181,14 +181,27 @@ export default function SignupPage() {
                 createdBy: user.uid
             });
 
-            // Redirect to subdomain
+            // 5. Send Welcome Email (fire-and-forget)
             const protocol = window.location.protocol;
             const host = window.location.host;
             const isLocal = host.includes("localhost");
             const rootDomain = isLocal ? "localhost:3000" : "dosory.com";
+            const loginUrl = `${protocol}//${subdomain}.${rootDomain}/dashboard`;
 
-            // Redirect to the new subdomain
-            window.location.href = `${protocol}//${subdomain}.${rootDomain}/dashboard`;
+            fetch('/api/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'welcome',
+                    to: user.email,
+                    userName: orgName.split(" ")[0] || "there",
+                    orgName: orgName,
+                    loginUrl,
+                }),
+            }).catch(err => console.warn('Welcome email failed:', err));
+
+            // Redirect to subdomain
+            window.location.href = loginUrl;
         } catch (err: any) {
             // If we created a user but failed to setup Firestore, delete the user so they can try again
             if (auth.currentUser) {

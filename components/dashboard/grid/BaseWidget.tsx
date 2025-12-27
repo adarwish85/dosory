@@ -31,9 +31,9 @@ interface BaseWidgetProps {
 }
 
 const DENSITY_PADDING: Record<DataDensity, string> = {
-    compact: "p-3",
-    comfortable: "p-4",
-    spacious: "p-6",
+    compact: "p-2",
+    comfortable: "p-3",
+    spacious: "p-4",
 };
 
 const STYLE_CLASSES: Record<WidgetStyle, { card: string; header: string }> = {
