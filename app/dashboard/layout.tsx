@@ -31,7 +31,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
-import WelcomeModal from "@/components/onboarding/WelcomeModal";
+import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 import OnboardingChecklist from "@/components/onboarding/OnboardingChecklist";
 import { SetupSidebar } from "@/components/dashboard/setup-sidebar";
 import { RightSidebar } from "@/components/dashboard/RightSidebar";
@@ -563,8 +563,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 )}
             </div>
 
-            {/* Welcome Modal for Onboarding */}
-            <WelcomeModal />
+            {/* Onboarding Wizard */}
+            <OnboardingWizard />
 
             {/* Setup Sidebar */}
             <SetupSidebar
