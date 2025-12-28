@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useRef, useEffect, KeyboardEvent } from
 import { ContactDialog } from "@/components/dashboard/customers/contacts/contact-dialog";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { useContacts } from "@/lib/hooks/use-customers";
+import type { Contact } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -193,7 +194,7 @@ function Pagination({ currentPage, totalPages, onPageChange, totalRecords, start
 }
 
 // Quick View Card Component for Contact
-function QuickViewCard({ contact }: { contact: any }) {
+function QuickViewCard({ contact }: { contact: Contact }) {
     return (
         <Card className="w-72 shadow-lg border-0">
             <CardHeader className="pb-2">
@@ -253,8 +254,8 @@ export default function ContactsPage() {
     const [columnWidths, setColumnWidths] = useState<Record<string, number>>(DEFAULT_COLUMN_WIDTHS);
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
-    const [editingContact, setEditingContact] = useState<any>(null);
-    const [portalAccessContact, setPortalAccessContact] = useState<any>(null);
+    const [editingContact, setEditingContact] = useState<Contact | null>(null);
+    const [portalAccessContact, setPortalAccessContact] = useState<Contact | null>(null);
 
     // Filters state
     const [portalFilter, setPortalFilter] = useState<"all" | "enabled" | "disabled">("all");
@@ -262,7 +263,7 @@ export default function ContactsPage() {
     const [showFilters, setShowFilters] = useState(false);
 
     // Duplicate warning state
-    const [duplicateWarning, setDuplicateWarning] = useState<{ type: "email" | "phone"; contact: any } | null>(null);
+    const [duplicateWarning, setDuplicateWarning] = useState<{ type: "email" | "phone"; contact: Contact } | null>(null);
 
     // Saved Views state
     const [savedViews, setSavedViews] = useState<ContactsSavedView[]>([]);
@@ -448,7 +449,7 @@ export default function ContactsPage() {
     };
 
     // Portal access toggle
-    const handleTogglePortalAccess = async (contact: any) => {
+    const handleTogglePortalAccess = async (contact: Contact) => {
         const currentPortalEnabled = contact.portalAccess?.enabled || false;
         if (currentPortalEnabled) {
             try { await updateContact(contact.id, { portalAccess: { ...(contact.portalAccess || {}), enabled: false } } as any); toast.success("Portal access disabled"); }

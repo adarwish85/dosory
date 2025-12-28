@@ -12,6 +12,7 @@ import { useKnowledgeBase } from "@/lib/hooks";
 import { format } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
+import type { KnowledgeArticle, KnowledgeGroup } from "@/lib/types";
 import {
     Dialog,
     DialogContent,
@@ -54,7 +55,7 @@ export default function KnowledgeBasePage() {
 
     // Article Dialog State
     const [articleDialogOpen, setArticleDialogOpen] = useState(false);
-    const [editingArticle, setEditingArticle] = useState<any>(null);
+    const [editingArticle, setEditingArticle] = useState<KnowledgeArticle | null>(null);
     const [articleForm, setArticleForm] = useState({
         subject: "",
         groupId: "",
@@ -66,7 +67,7 @@ export default function KnowledgeBasePage() {
 
     // Category Dialog State
     const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<any>(null);
+    const [editingCategory, setEditingCategory] = useState<KnowledgeGroup | null>(null);
     const [categoryForm, setCategoryForm] = useState({
         name: "",
         description: "",
@@ -108,7 +109,7 @@ export default function KnowledgeBasePage() {
         setArticleDialogOpen(true);
     };
 
-    const handleEditArticle = (article: any) => {
+    const handleEditArticle = (article: KnowledgeArticle) => {
         setEditingArticle(article);
         setArticleForm({
             subject: article.subject || "",
@@ -154,7 +155,7 @@ export default function KnowledgeBasePage() {
         setCategoryDialogOpen(true);
     };
 
-    const handleEditCategory = (category: any) => {
+    const handleEditCategory = (category: KnowledgeGroup) => {
         setEditingCategory(category);
         setCategoryForm({
             name: category.name || "",
