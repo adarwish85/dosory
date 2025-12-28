@@ -467,6 +467,8 @@ export default function CustomersPage() {
         page: isClientMode ? 1 : currentPage
     });
 
+    // Fetch contacts to get primary contact for each customer
+    const { contacts } = useContacts();
 
 
     const primaryContactMap = useMemo(() => {

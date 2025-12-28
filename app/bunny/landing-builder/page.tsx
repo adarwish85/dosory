@@ -1,203 +1,152 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import {
-    Save, Loader2, Plus, Trash2, GripVertical, Eye, Palette, Type,
-    Users, FileText, BarChart3, Zap, Target, TrendingUp,
-    FolderKanban, Headphones, CreditCard, ChevronDown, Star
+    Plus, Loader2, FileText, Trash2, Eye, EyeOff,
+    Home, Settings, ExternalLink, Pencil, MoreHorizontal, ArrowUpDown
 } from "lucide-react";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { usePages, useSiteDesign, migrateOldLandingConfig } from "@/lib/hooks/use-site-pages";
+import type { SitePage } from "@/lib/types/site-builder";
 
-// Icon mapping for the icon picker
-const iconOptions = [
-    { name: "Users", icon: Users },
-    { name: "FileText", icon: FileText },
-    { name: "BarChart3", icon: BarChart3 },
-    { name: "FolderKanban", icon: FolderKanban },
-    { name: "Headphones", icon: Headphones },
-    { name: "CreditCard", icon: CreditCard },
-    { name: "Zap", icon: Zap },
-    { name: "Target", icon: Target },
-    { name: "TrendingUp", icon: TrendingUp },
-];
+export default function PagesManagerPage() {
+    const router = useRouter();
+    const { pages, loading, createPage, updatePage, deletePage } = usePages();
+    const { design, updateDesign } = useSiteDesign();
 
-interface LandingConfig {
-    hero: {
-        badge: string;
-        headline: string;
-        headlineHighlight: string;
-        subheadline: string;
-        ctaPrimary: string;
-        ctaSecondary: string;
-    };
-    features: Array<{
-        icon: string;
-        title: string;
-        description: string;
-    }>;
-    stats: Array<{
-        value: string;
-        label: string;
-        icon: string;
-    }>;
-    testimonial: {
-        quote: string;
-        author: string;
-        role: string;
-    };
-    faqs: Array<{
-        question: string;
-        answer: string;
-    }>;
-    design: {
-        primaryColor: string;
-        secondaryColor: string;
-        accentColor: string;
-    };
-}
+    const [showNewPageDialog, setShowNewPageDialog] = useState(false);
+    const [showDesignDialog, setShowDesignDialog] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [pageToDelete, setPageToDelete] = useState<SitePage | null>(null);
+    const [migrating, setMigrating] = useState(false);
 
-const defaultConfig: LandingConfig = {
-    hero: {
-        badge: "#1 Rated CRM for Growing Businesses",
-        headline: "Smarter CRM for Stronger",
-        headlineHighlight: "Sustainable Sales",
-        subheadline: "The all-in-one CRM and ERP platform that helps you manage customers, projects, invoices, and more. Scale your business without the complexity.",
-        ctaPrimary: "Start Free Trial",
-        ctaSecondary: "Watch Demo",
-    },
-    features: [
-        { icon: "Users", title: "Customer Management", description: "Track leads, contacts, and accounts in one place" },
-        { icon: "FileText", title: "Smart Invoicing", description: "Create and send professional invoices in seconds" },
-        { icon: "FolderKanban", title: "Project Management", description: "Manage projects, tasks, and deadlines efficiently" },
-        { icon: "BarChart3", title: "Analytics & Reports", description: "Real-time insights to grow your business" },
-        { icon: "Headphones", title: "Support Tickets", description: "Keep your customers happy with great support" },
-        { icon: "CreditCard", title: "Payment Processing", description: "Accept payments and manage subscriptions" },
-    ],
-    stats: [
-        { value: "$2.5M+", label: "Revenue Tracked", icon: "TrendingUp" },
-        { value: "45%", label: "Productivity Boost", icon: "Zap" },
-        { value: "10K+", label: "Active Users", icon: "Users" },
-        { value: "99.9%", label: "Uptime", icon: "Target" },
-    ],
-    testimonial: {
-        quote: "Using Dosory CRM is one of the best decisions we've made. Our sales team's productivity has increased by 45%, and we've streamlined our entire customer management process. Highly recommended!",
-        author: "John Davidson",
-        role: "CEO, TechStart Inc.",
-    },
-    faqs: [
-        { question: "How do I integrate Dosory CRM with other tools?", answer: "Dosory integrates seamlessly with popular tools like Zapier, Slack, and Google Workspace. Our REST API also allows custom integrations with any platform." },
-        { question: "Is there a free trial available?", answer: "Yes! We offer a 14-day free trial with full access to all features. No credit card required to get started." },
-        { question: "Is Dosory suitable for small businesses?", answer: "Absolutely! Dosory is designed to scale with your business. Start small and grow without limits - from solo entrepreneurs to enterprise teams." },
-        { question: "What kind of support do you offer?", answer: "We provide 24/7 email support, live chat during business hours, and comprehensive documentation. Enterprise plans include dedicated account managers." },
-    ],
-    design: {
-        primaryColor: "#0A66C2",
-        secondaryColor: "#004182",
-        accentColor: "#E7F3FF",
-    },
-};
+    // New page form
+    const [newPageTitle, setNewPageTitle] = useState("");
+    const [newPageSlug, setNewPageSlug] = useState("");
+    const [creating, setCreating] = useState(false);
 
-export default function LandingBuilderPage() {
-    const [config, setConfig] = useState<LandingConfig>(defaultConfig);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
-    const [activeTab, setActiveTab] = useState("hero");
+    // Design form
+    const [designForm, setDesignForm] = useState(design);
 
-    // Load config from Firestore
     useEffect(() => {
-        async function loadConfig() {
-            try {
-                const docRef = doc(db, "platform", "landing");
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    setConfig({ ...defaultConfig, ...docSnap.data() as LandingConfig });
-                }
-            } catch (error) {
-                console.error("Error loading landing config:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        loadConfig();
-    }, []);
+        setDesignForm(design);
+    }, [design]);
 
-    // Save config to Firestore
-    const handleSave = async () => {
-        setSaving(true);
+    // Auto-generate slug from title
+    useEffect(() => {
+        const slug = newPageTitle
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, "")
+            .replace(/\s+/g, "-")
+            .replace(/-+/g, "-")
+            .trim();
+        setNewPageSlug(slug);
+    }, [newPageTitle]);
+
+    const handleCreatePage = async () => {
+        if (!newPageTitle.trim()) return;
+        setCreating(true);
         try {
-            await setDoc(doc(db, "platform", "landing"), {
-                ...config,
-                updatedAt: serverTimestamp(),
+            const pageId = await createPage({
+                title: newPageTitle,
+                slug: newPageSlug,
+                seoTitle: newPageTitle,
+                isPublished: false,
+                isHome: false,
+                sortOrder: pages.length,
+                blocks: [],
             });
-            setSaved(true);
-            setTimeout(() => setSaved(false), 3000);
-        } catch (error) {
-            console.error("Error saving landing config:", error);
-            alert("Failed to save. Please try again.");
+            setShowNewPageDialog(false);
+            setNewPageTitle("");
+            setNewPageSlug("");
+            router.push(`/bunny/landing-builder/${pageId}`);
+        } catch (err) {
+            console.error("Error creating page:", err);
+            alert("Failed to create page");
         } finally {
-            setSaving(false);
+            setCreating(false);
         }
     };
 
-    // Update nested config
-    const updateHero = (field: keyof LandingConfig["hero"], value: string) => {
-        setConfig(prev => ({ ...prev, hero: { ...prev.hero, [field]: value } }));
+    const handleDeletePage = async () => {
+        if (!pageToDelete) return;
+        try {
+            await deletePage(pageToDelete.id);
+            setShowDeleteDialog(false);
+            setPageToDelete(null);
+        } catch (err) {
+            console.error("Error deleting page:", err);
+            alert("Failed to delete page");
+        }
     };
 
-    const updateFeature = (index: number, field: string, value: string) => {
-        setConfig(prev => ({
-            ...prev,
-            features: prev.features.map((f, i) => i === index ? { ...f, [field]: value } : f),
-        }));
+    const handleTogglePublish = async (page: SitePage) => {
+        try {
+            await updatePage(page.id, { isPublished: !page.isPublished });
+        } catch (err) {
+            console.error("Error updating page:", err);
+        }
     };
 
-    const updateStat = (index: number, field: string, value: string) => {
-        setConfig(prev => ({
-            ...prev,
-            stats: prev.stats.map((s, i) => i === index ? { ...s, [field]: value } : s),
-        }));
+    const handleMigrate = async () => {
+        setMigrating(true);
+        try {
+            const pageId = await migrateOldLandingConfig();
+            if (pageId) {
+                alert("Migration complete! Home page created.");
+            } else {
+                alert("Migration skipped (pages already exist or no old config found).");
+            }
+        } catch (err) {
+            console.error("Migration error:", err);
+            alert("Migration failed. Check console for details.");
+        } finally {
+            setMigrating(false);
+        }
     };
 
-    const updateTestimonial = (field: keyof LandingConfig["testimonial"], value: string) => {
-        setConfig(prev => ({ ...prev, testimonial: { ...prev.testimonial, [field]: value } }));
-    };
-
-    const updateFaq = (index: number, field: string, value: string) => {
-        setConfig(prev => ({
-            ...prev,
-            faqs: prev.faqs.map((f, i) => i === index ? { ...f, [field]: value } : f),
-        }));
-    };
-
-    const addFaq = () => {
-        setConfig(prev => ({
-            ...prev,
-            faqs: [...prev.faqs, { question: "", answer: "" }],
-        }));
-    };
-
-    const removeFaq = (index: number) => {
-        setConfig(prev => ({
-            ...prev,
-            faqs: prev.faqs.filter((_, i) => i !== index),
-        }));
-    };
-
-    const updateDesign = (field: keyof LandingConfig["design"], value: string) => {
-        setConfig(prev => ({ ...prev, design: { ...prev.design, [field]: value } }));
+    const handleSaveDesign = async () => {
+        try {
+            await updateDesign(designForm);
+            setShowDesignDialog(false);
+        } catch (err) {
+            console.error("Error saving design:", err);
+            alert("Failed to save design settings");
+        }
     };
 
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
             </div>
         );
     }
@@ -207,378 +156,307 @@ export default function LandingBuilderPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-[#352b38]">Landing Page Builder</h1>
-                    <p className="text-[#7e808c] mt-1">Customize your landing page content and design</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Site Builder</h1>
+                    <p className="text-gray-500 mt-1">Manage your landing pages and content</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    {pages.length === 0 && (
+                        <Button
+                            variant="outline"
+                            onClick={handleMigrate}
+                            disabled={migrating}
+                            className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                        >
+                            {migrating ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Migrating...</>
+                            ) : (
+                                <><ArrowUpDown className="mr-2 h-4 w-4" />Import Existing Config</>
+                            )}
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
-                        onClick={() => window.open("/", "_blank")}
-                        className="border-[#dad8f9] text-[#352b38] hover:bg-[#f4f3f8]"
+                        onClick={() => setShowDesignDialog(true)}
                     >
-                        <Eye className="mr-2 h-4 w-4" />
-                        Preview Live
+                        <Settings className="mr-2 h-4 w-4" />
+                        Design
                     </Button>
-                    <Button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="bg-purple-600 hover:bg-purple-700"
-                    >
-                        {saving ? (
-                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>
-                        ) : saved ? (
-                            <><Star className="mr-2 h-4 w-4" />Saved!</>
-                        ) : (
-                            <><Save className="mr-2 h-4 w-4" />Save Changes</>
-                        )}
+                    <Button onClick={() => setShowNewPageDialog(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        New Page
                     </Button>
                 </div>
             </div>
 
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="bg-white border border-[#dad8f9]">
-                    <TabsTrigger value="hero" className="data-[state=active]:bg-purple-600">Hero</TabsTrigger>
-                    <TabsTrigger value="features" className="data-[state=active]:bg-purple-600">Features</TabsTrigger>
-                    <TabsTrigger value="stats" className="data-[state=active]:bg-purple-600">Stats</TabsTrigger>
-                    <TabsTrigger value="testimonial" className="data-[state=active]:bg-purple-600">Testimonial</TabsTrigger>
-                    <TabsTrigger value="faq" className="data-[state=active]:bg-purple-600">FAQ</TabsTrigger>
-                    <TabsTrigger value="design" className="data-[state=active]:bg-purple-600">Design</TabsTrigger>
-                </TabsList>
-
-                {/* Hero Section */}
-                <TabsContent value="hero" className="space-y-6">
-                    <div className="bg-white rounded-xl p-6 border border-[#dad8f9]">
-                        <h2 className="text-lg font-semibold text-[#352b38] mb-4">Hero Section</h2>
-                        <div className="grid gap-4">
-                            <div>
-                                <Label className="text-[#352b38]">Badge Text</Label>
-                                <Input
-                                    value={config.hero.badge}
-                                    onChange={(e) => updateHero("badge", e.target.value)}
-                                    className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                    placeholder="#1 Rated CRM..."
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-[#352b38]">Headline</Label>
-                                    <Input
-                                        value={config.hero.headline}
-                                        onChange={(e) => updateHero("headline", e.target.value)}
-                                        className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="text-[#352b38]">Headline Highlight (colored text)</Label>
-                                    <Input
-                                        value={config.hero.headlineHighlight}
-                                        onChange={(e) => updateHero("headlineHighlight", e.target.value)}
-                                        className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <Label className="text-[#352b38]">Subheadline</Label>
-                                <Textarea
-                                    value={config.hero.subheadline}
-                                    onChange={(e) => updateHero("subheadline", e.target.value)}
-                                    className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                    rows={3}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-[#352b38]">Primary CTA Button</Label>
-                                    <Input
-                                        value={config.hero.ctaPrimary}
-                                        onChange={(e) => updateHero("ctaPrimary", e.target.value)}
-                                        className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="text-[#352b38]">Secondary CTA Button</Label>
-                                    <Input
-                                        value={config.hero.ctaSecondary}
-                                        onChange={(e) => updateHero("ctaSecondary", e.target.value)}
-                                        className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+            {/* Pages List */}
+            {pages.length === 0 ? (
+                <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No pages yet</h3>
+                    <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                        Create your first page or import your existing landing page configuration.
+                    </p>
+                    <div className="flex items-center justify-center gap-3">
+                        <Button variant="outline" onClick={handleMigrate} disabled={migrating}>
+                            {migrating ? "Importing..." : "Import Existing"}
+                        </Button>
+                        <Button onClick={() => setShowNewPageDialog(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create Page
+                        </Button>
                     </div>
-                </TabsContent>
-
-                {/* Features Section */}
-                <TabsContent value="features" className="space-y-4">
-                    <div className="bg-white rounded-xl p-6 border border-[#dad8f9]">
-                        <h2 className="text-lg font-semibold text-[#352b38] mb-4">Feature Cards</h2>
-                        <div className="grid gap-4">
-                            {config.features.map((feature, index) => (
-                                <div key={index} className="bg-[#f4f3f8] rounded-lg p-4 border border-[#dad8f9]">
-                                    <div className="flex items-center gap-2 mb-3 text-[#7e808c] text-sm">
-                                        <GripVertical className="h-4 w-4" />
-                                        Feature {index + 1}
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div>
-                                            <Label className="text-[#352b38]">Icon</Label>
-                                            <select
-                                                value={feature.icon}
-                                                onChange={(e) => updateFeature(index, "icon", e.target.value)}
-                                                className="w-full mt-1.5 bg-[#f4f3f8] border border-[#dad8f9] text-[#352b38] rounded-md px-3 py-2"
-                                            >
-                                                {iconOptions.map((opt) => (
-                                                    <option key={opt.name} value={opt.name}>{opt.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <Label className="text-[#352b38]">Title</Label>
-                                            <Input
-                                                value={feature.title}
-                                                onChange={(e) => updateFeature(index, "title", e.target.value)}
-                                                className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label className="text-[#352b38]">Description</Label>
-                                            <Input
-                                                value={feature.description}
-                                                onChange={(e) => updateFeature(index, "description", e.target.value)}
-                                                className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </TabsContent>
-
-                {/* Stats Section */}
-                <TabsContent value="stats" className="space-y-4">
-                    <div className="bg-white rounded-xl p-6 border border-[#dad8f9]">
-                        <h2 className="text-lg font-semibold text-[#352b38] mb-4">Statistics</h2>
-                        <div className="grid grid-cols-2 gap-4">
-                            {config.stats.map((stat, index) => (
-                                <div key={index} className="bg-[#f4f3f8] rounded-lg p-4 border border-[#dad8f9]">
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div>
-                                            <Label className="text-[#352b38]">Value</Label>
-                                            <Input
-                                                value={stat.value}
-                                                onChange={(e) => updateStat(index, "value", e.target.value)}
-                                                className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                                placeholder="$2.5M+"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label className="text-[#352b38]">Label</Label>
-                                            <Input
-                                                value={stat.label}
-                                                onChange={(e) => updateStat(index, "label", e.target.value)}
-                                                className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                                placeholder="Revenue Tracked"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label className="text-[#352b38]">Icon</Label>
-                                            <select
-                                                value={stat.icon}
-                                                onChange={(e) => updateStat(index, "icon", e.target.value)}
-                                                className="w-full mt-1.5 bg-[#f4f3f8] border border-[#dad8f9] text-[#352b38] rounded-md px-3 py-2"
-                                            >
-                                                {iconOptions.map((opt) => (
-                                                    <option key={opt.name} value={opt.name}>{opt.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </TabsContent>
-
-                {/* Testimonial Section */}
-                <TabsContent value="testimonial" className="space-y-4">
-                    <div className="bg-white rounded-xl p-6 border border-[#dad8f9]">
-                        <h2 className="text-lg font-semibold text-[#352b38] mb-4">Featured Testimonial</h2>
-                        <div className="grid gap-4">
-                            <div>
-                                <Label className="text-[#352b38]">Quote</Label>
-                                <Textarea
-                                    value={config.testimonial.quote}
-                                    onChange={(e) => updateTestimonial("quote", e.target.value)}
-                                    className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                    rows={4}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-[#352b38]">Author Name</Label>
-                                    <Input
-                                        value={config.testimonial.author}
-                                        onChange={(e) => updateTestimonial("author", e.target.value)}
-                                        className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="text-[#352b38]">Author Role</Label>
-                                    <Input
-                                        value={config.testimonial.role}
-                                        onChange={(e) => updateTestimonial("role", e.target.value)}
-                                        className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </TabsContent>
-
-                {/* FAQ Section */}
-                <TabsContent value="faq" className="space-y-4">
-                    <div className="bg-white rounded-xl p-6 border border-[#dad8f9]">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold text-[#352b38]">FAQ Items</h2>
-                            <Button onClick={addFaq} size="sm" className="bg-purple-600 hover:bg-purple-700">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add FAQ
-                            </Button>
-                        </div>
-                        <div className="space-y-4">
-                            {config.faqs.map((faq, index) => (
-                                <div key={index} className="bg-[#f4f3f8] rounded-lg p-4 border border-[#dad8f9]">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="text-[#7e808c] text-sm flex items-center gap-2">
-                                            <GripVertical className="h-4 w-4" />
-                                            FAQ {index + 1}
-                                        </span>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => removeFaq(index)}
-                                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <div>
-                                            <Label className="text-[#352b38]">Question</Label>
-                                            <Input
-                                                value={faq.question}
-                                                onChange={(e) => updateFaq(index, "question", e.target.value)}
-                                                className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label className="text-[#352b38]">Answer</Label>
-                                            <Textarea
-                                                value={faq.answer}
-                                                onChange={(e) => updateFaq(index, "answer", e.target.value)}
-                                                className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
-                                                rows={3}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </TabsContent>
-
-                {/* Design Section */}
-                <TabsContent value="design" className="space-y-4">
-                    <div className="bg-white rounded-xl p-6 border border-[#dad8f9]">
-                        <h2 className="text-lg font-semibold text-[#352b38] mb-4">Color Palette</h2>
-                        <div className="grid grid-cols-3 gap-6">
-                            <div>
-                                <Label className="text-[#352b38]">Primary Color</Label>
-                                <div className="flex items-center gap-3 mt-2">
-                                    <input
-                                        type="color"
-                                        value={config.design.primaryColor}
-                                        onChange={(e) => updateDesign("primaryColor", e.target.value)}
-                                        className="w-12 h-12 rounded-lg cursor-pointer border-0"
-                                    />
-                                    <Input
-                                        value={config.design.primaryColor}
-                                        onChange={(e) => updateDesign("primaryColor", e.target.value)}
-                                        className="bg-[#f4f3f8] border-[#dad8f9] text-[#352b38] uppercase"
-                                        placeholder="#0A66C2"
-                                    />
-                                </div>
-                                <p className="text-xs text-gray-500 mt-2">Used for buttons, links, and accents</p>
-                            </div>
-                            <div>
-                                <Label className="text-[#352b38]">Secondary Color</Label>
-                                <div className="flex items-center gap-3 mt-2">
-                                    <input
-                                        type="color"
-                                        value={config.design.secondaryColor}
-                                        onChange={(e) => updateDesign("secondaryColor", e.target.value)}
-                                        className="w-12 h-12 rounded-lg cursor-pointer border-0"
-                                    />
-                                    <Input
-                                        value={config.design.secondaryColor}
-                                        onChange={(e) => updateDesign("secondaryColor", e.target.value)}
-                                        className="bg-[#f4f3f8] border-[#dad8f9] text-[#352b38] uppercase"
-                                        placeholder="#004182"
-                                    />
-                                </div>
-                                <p className="text-xs text-gray-500 mt-2">Used for gradients and darker elements</p>
-                            </div>
-                            <div>
-                                <Label className="text-[#352b38]">Accent Color</Label>
-                                <div className="flex items-center gap-3 mt-2">
-                                    <input
-                                        type="color"
-                                        value={config.design.accentColor}
-                                        onChange={(e) => updateDesign("accentColor", e.target.value)}
-                                        className="w-12 h-12 rounded-lg cursor-pointer border-0"
-                                    />
-                                    <Input
-                                        value={config.design.accentColor}
-                                        onChange={(e) => updateDesign("accentColor", e.target.value)}
-                                        className="bg-[#f4f3f8] border-[#dad8f9] text-[#352b38] uppercase"
-                                        placeholder="#E7F3FF"
-                                    />
-                                </div>
-                                <p className="text-xs text-gray-500 mt-2">Used for light backgrounds and badges</p>
-                            </div>
-                        </div>
-
-                        {/* Color Preview */}
-                        <div className="mt-8 p-6 bg-[#f4f3f8] rounded-lg border border-[#dad8f9]">
-                            <h3 className="text-[#352b38] font-medium mb-4">Preview</h3>
+                </div>
+            ) : (
+                <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+                    {pages.map((page) => (
+                        <div
+                            key={page.id}
+                            className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                        >
                             <div className="flex items-center gap-4">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${page.isHome ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
+                                    }`}>
+                                    {page.isHome ? <Home className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-gray-900">{page.title}</span>
+                                        {page.isHome && (
+                                            <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                                                Home
+                                            </span>
+                                        )}
+                                        {!page.isPublished && (
+                                            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
+                                                Draft
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                        /{page.slug || "(home)"} · {page.blocks?.length || 0} blocks
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleTogglePublish(page)}
+                                    className={page.isPublished ? "text-green-600" : "text-gray-400"}
+                                >
+                                    {page.isPublished ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                </Button>
+
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => window.open(`/${page.slug}`, "_blank")}
+                                    disabled={!page.isPublished}
+                                >
+                                    <ExternalLink className="h-4 w-4" />
+                                </Button>
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => router.push(`/bunny/landing-builder/${page.id}`)}
+                                >
+                                    <Pencil className="mr-1 h-3 w-3" />
+                                    Edit
+                                </Button>
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => router.push(`/bunny/landing-builder/${page.id}`)}>
+                                            <Pencil className="mr-2 h-4 w-4" />
+                                            Edit Page
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => window.open(`/${page.slug}`, "_blank")}>
+                                            <ExternalLink className="mr-2 h-4 w-4" />
+                                            View Live
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            onClick={() => {
+                                                setPageToDelete(page);
+                                                setShowDeleteDialog(true);
+                                            }}
+                                            className="text-red-600"
+                                            disabled={page.isHome}
+                                        >
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Delete
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* New Page Dialog */}
+            <Dialog open={showNewPageDialog} onOpenChange={setShowNewPageDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Create New Page</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div>
+                            <Label>Page Title</Label>
+                            <Input
+                                value={newPageTitle}
+                                onChange={(e) => setNewPageTitle(e.target.value)}
+                                placeholder="About Us"
+                                className="mt-1.5"
+                            />
+                        </div>
+                        <div>
+                            <Label>URL Slug</Label>
+                            <div className="flex items-center mt-1.5">
+                                <span className="text-gray-500 text-sm mr-1">/</span>
+                                <Input
+                                    value={newPageSlug}
+                                    onChange={(e) => setNewPageSlug(e.target.value)}
+                                    placeholder="about-us"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                                This will be the URL path for the page
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowNewPageDialog(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleCreatePage} disabled={creating || !newPageTitle.trim()}>
+                            {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Create Page
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Design Settings Dialog */}
+            <Dialog open={showDesignDialog} onOpenChange={setShowDesignDialog}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Global Design Settings</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <Label>Primary Color</Label>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                    <input
+                                        type="color"
+                                        value={designForm.primaryColor}
+                                        onChange={(e) => setDesignForm({ ...designForm, primaryColor: e.target.value })}
+                                        className="w-10 h-10 rounded cursor-pointer border-0"
+                                    />
+                                    <Input
+                                        value={designForm.primaryColor}
+                                        onChange={(e) => setDesignForm({ ...designForm, primaryColor: e.target.value })}
+                                        className="uppercase text-sm"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <Label>Secondary Color</Label>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                    <input
+                                        type="color"
+                                        value={designForm.secondaryColor}
+                                        onChange={(e) => setDesignForm({ ...designForm, secondaryColor: e.target.value })}
+                                        className="w-10 h-10 rounded cursor-pointer border-0"
+                                    />
+                                    <Input
+                                        value={designForm.secondaryColor}
+                                        onChange={(e) => setDesignForm({ ...designForm, secondaryColor: e.target.value })}
+                                        className="uppercase text-sm"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <Label>Accent Color</Label>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                    <input
+                                        type="color"
+                                        value={designForm.accentColor}
+                                        onChange={(e) => setDesignForm({ ...designForm, accentColor: e.target.value })}
+                                        className="w-10 h-10 rounded cursor-pointer border-0"
+                                    />
+                                    <Input
+                                        value={designForm.accentColor}
+                                        onChange={(e) => setDesignForm({ ...designForm, accentColor: e.target.value })}
+                                        className="uppercase text-sm"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Preview */}
+                        <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+                            <p className="text-sm text-gray-500 mb-3">Preview</p>
+                            <div className="flex items-center gap-3">
                                 <button
-                                    style={{ backgroundColor: config.design.primaryColor }}
-                                    className="px-6 py-2 rounded-lg text-[#352b38] font-medium"
+                                    style={{ backgroundColor: designForm.primaryColor }}
+                                    className="px-4 py-2 rounded-lg text-white text-sm font-medium"
                                 >
                                     Primary Button
                                 </button>
                                 <button
                                     style={{
-                                        background: `linear-gradient(to right, ${config.design.primaryColor}, ${config.design.secondaryColor})`
+                                        background: `linear-gradient(to right, ${designForm.primaryColor}, ${designForm.secondaryColor})`
                                     }}
-                                    className="px-6 py-2 rounded-lg text-[#352b38] font-medium"
+                                    className="px-4 py-2 rounded-lg text-white text-sm font-medium"
                                 >
-                                    Gradient Button
+                                    Gradient
                                 </button>
                                 <div
-                                    style={{ backgroundColor: config.design.accentColor }}
-                                    className="px-4 py-2 rounded-full text-sm"
+                                    style={{ backgroundColor: designForm.accentColor }}
+                                    className="px-3 py-1 rounded-full text-sm"
                                 >
-                                    <span style={{ color: config.design.primaryColor }}>Badge Text</span>
+                                    <span style={{ color: designForm.primaryColor }}>Badge</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </TabsContent>
-            </Tabs>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowDesignDialog(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSaveDesign}>
+                            Save Design
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Page</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete "{pageToDelete?.title}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeletePage} className="bg-red-600 hover:bg-red-700">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
