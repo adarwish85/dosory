@@ -194,6 +194,25 @@ export function useLeads(options: UseLeadsOptions = {}) {
         return () => unsubscribe();
     }, [profile?.orgId, getBaseConstraints, orderByField, orderDirection, pageSize, page]);
 
+    // Reconcile totalRecords with actual fetched leads to prevent count mismatch
+    // This fixes the issue where onSnapshot updates with new data (e.g. from other users)
+    // but the one-off getCountFromServer remains stale.
+    useEffect(() => {
+        const currentCount = leads.length;
+        const currentTotalOnPage = ((page - 1) * pageSize) + currentCount;
+
+        // If we received fewer items than the limit, we know the exact total corresponds to this end of list
+        if (currentCount < pageSize) {
+            if (totalRecords !== currentTotalOnPage) {
+                setTotalRecords(currentTotalOnPage);
+            }
+        }
+        // If we have a full page, we at least know the total is >= what we see
+        else if (totalRecords < currentTotalOnPage) {
+            setTotalRecords(currentTotalOnPage);
+        }
+    }, [leads.length, pageSize, page, totalRecords]);
+
     const createLead = useCallback(
         async (data: LeadFormData): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
