@@ -25,9 +25,7 @@ export function SetupSidebar({ isOpen, onClose, topOffset }: SetupSidebarProps) 
         { label: "Modules", href: "/dashboard/setup/modules" },
         { label: "Email Templates", href: "/dashboard/setup/email-templates" },
         { label: "Custom Fields", href: "/dashboard/setup/custom-fields" },
-        { label: "GDPR", href: "/dashboard/setup/gdpr" },
         { label: "Menu Setup", href: "/dashboard/setup/menu-setup", hasSub: true },
-        { label: "Theme Style", href: "/dashboard/setup/theme-style" },
         { label: "Settings", href: "/dashboard/setup/settings" },
         { label: "Help", href: "/dashboard/setup/help" },
     ];
