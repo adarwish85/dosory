@@ -23,6 +23,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
+import { createBulkNotifications } from "@/lib/hooks/use-notifications";
 import type { Project, ProjectStatus, Task, TaskStatus } from "@/lib/types";
 import type { ProjectFormData, TaskFormData } from "@/lib/schemas";
 
@@ -343,25 +344,19 @@ export function useTasks(options: UseTasksOptions = {}) {
 
             // Create notifications for assignees
             if (data.assignees && data.assignees.length > 0) {
-                const notificationsPromises = data.assignees
+                const assigneesToNotify = data.assignees
                     .filter(userId => userId !== profile.uid) // Don't notify self
-                    .map(userId =>
-                        addDoc(collection(db, "notifications"), {
-                            orgId: profile.orgId,
-                            userId,
-                            type: "info",
-                            title: "New Task Assigned",
-                            message: `You have been assigned to task: ${data.name}`,
-                            link: "/dashboard/tasks",
-                            read: false,
-                            createdAt: serverTimestamp(),
-                            updatedAt: serverTimestamp(),
-                            createdBy: profile.uid
-                        })
-                    );
+                    .map(userId => ({ userId, orgId: profile.orgId }));
 
-                // Fire and forget notifications to not block the UI
-                Promise.all(notificationsPromises).catch(console.error);
+                if (assigneesToNotify.length > 0) {
+                    createBulkNotifications(assigneesToNotify, {
+                        type: "task.assigned",
+                        title: "New Task Assigned",
+                        message: `You have been assigned to task: ${data.name}`,
+                        link: "/dashboard/tasks",
+                        metadata: { taskId: docRef.id }
+                    }).catch(console.error);
+                }
             }
 
             return docRef.id;

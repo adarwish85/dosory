@@ -17,6 +17,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { createNotification } from "@/lib/hooks/use-notifications";
 
 // Types
 export interface TicketAuthor {
@@ -323,6 +324,19 @@ export function useAllPlatformTickets() {
                 replies: [...ticket.replies, newReply],
                 updatedAt: serverTimestamp(),
             });
+
+            // Notify the ticket creator
+            if (ticket.createdBy.uid) {
+                createNotification({
+                    type: "platform_ticket.reply",
+                    title: "New Reply on Ticket",
+                    message: `Super Admin replied to your ticket: ${ticket.subject}`,
+                    link: "/dashboard/setup/help", // Tenant help page
+                    orgId: ticket.orgId,
+                    userId: ticket.createdBy.uid,
+                    metadata: { ticketId }
+                }).catch(console.error);
+            }
         },
         [tickets]
     );

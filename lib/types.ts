@@ -115,6 +115,7 @@ export type LeadStatus =
 
 export interface Invoice extends BaseEntity {
     number: string;
+    numberFormatted?: string;
     customerId: string;
     customerName: string;
     projectId?: string;

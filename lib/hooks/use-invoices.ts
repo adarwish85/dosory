@@ -23,6 +23,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
+import { createNotification } from "@/lib/hooks/use-notifications";
 import type { Invoice, InvoiceStatus, LineItem } from "@/lib/types";
 import type { InvoiceFormData } from "@/lib/schemas";
 
@@ -329,7 +330,20 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         if (logActivity && newStatus === "sent") {
             await logActivity("invoice_sent", `Sent invoice ${invoice.number}`, id, "invoice");
         }
-    }, [logActivity]);
+
+        // Notify creator if paid
+        if (newStatus === "paid" && invoice.createdBy && invoice.createdBy !== profile?.uid) {
+            createNotification({
+                type: "invoice.paid",
+                title: "Invoice Paid",
+                message: `Invoice #${invoice.numberFormatted || invoice.number} has been marked as paid.`,
+                link: `/dashboard/sales/invoices/${id}`,
+                orgId: invoice.orgId,
+                userId: invoice.createdBy,
+                metadata: { invoiceId: id }
+            }).catch(console.error);
+        }
+    }, [logActivity, profile?.orgId, profile?.uid]);
 
     // FIX INV-002: Payment with overpayment validation
     const recordPayment = useCallback(async (
@@ -391,6 +405,25 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
 
         if (logActivity) {
             await logActivity("invoice_paid", `Received payment of ${amount}`, invoiceId, "invoice", { amount, paymentMode });
+        }
+
+        // Notify creator if fully paid
+        // Note: newStatus is calculated inside transaction but not returned. 
+        // We know logical check: newAmountDue <= 0
+        const newPaid = invoice.amountPaid + amount;
+        const newDue = invoice.total - newPaid;
+        const isPaidNow = newDue <= 0;
+
+        if (isPaidNow && invoice.createdBy && invoice.createdBy !== profile?.uid) {
+            createNotification({
+                type: "invoice.paid",
+                title: "Invoice Paid",
+                message: `Invoice #${invoice.numberFormatted || invoice.number} has been fully paid via ${paymentMode}.`,
+                link: `/dashboard/sales/invoices/${invoiceId}`,
+                orgId: invoice.orgId,
+                userId: invoice.createdBy,
+                metadata: { invoiceId }
+            }).catch(console.error);
         }
 
         return paymentId;

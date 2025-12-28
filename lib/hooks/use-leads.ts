@@ -30,6 +30,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { createNotification } from "@/lib/hooks/use-notifications";
 import type { Lead, LeadStatus } from "@/lib/types";
 import type { LeadFormData } from "@/lib/schemas";
 
@@ -211,6 +212,19 @@ export function useLeads(options: UseLeadsOptions = {}) {
             setTotalRecords(prev => prev + 1);
             setLeadStats(prev => ({ ...prev, total: prev.total + 1, totalValue: prev.totalValue + (data.value || 0) }));
 
+            // Notify assignee
+            if (data.assignedTo && data.assignedTo !== profile.uid) {
+                createNotification({
+                    type: "lead.created",
+                    title: "New Lead Assigned",
+                    message: `You have been assigned to lead: ${data.name}`,
+                    link: "/dashboard/leads",
+                    orgId: profile.orgId,
+                    userId: data.assignedTo,
+                    metadata: { leadId: docRef.id }
+                }).catch(console.error);
+            }
+
             return docRef.id;
         },
         [profile?.orgId, profile?.uid]
@@ -218,13 +232,46 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
     const updateLead = useCallback(
         async (id: string, data: Partial<LeadFormData>): Promise<void> => {
+            if (!profile?.orgId) throw new Error("No organization");
+
+            // If assignment is changing, we need to check if it's new
+            let isNewAssignment = false;
+            if (data.assignedTo !== undefined) {
+                // Optimization: We could rely on UI passing correct data, but safely we should check old doc?
+                // For now, let's assume if data.assignedTo is passed and not null, we notify if it's not me.
+                // Ideally we check if it CHANGED. 
+                // Let's fetch the doc to be safe, though it adds latency. 
+                // It's an important action, so safety > micro-perf.
+                const oldDoc = await getDoc(doc(db, "leads", id));
+                if (oldDoc.exists()) {
+                    const oldData = oldDoc.data() as Lead;
+                    if (oldData.assignedTo !== data.assignedTo) {
+                        isNewAssignment = true;
+                    }
+                }
+            }
+
             await updateDoc(doc(db, "leads", id), {
                 ...data,
                 ...(data.name ? { name_lower: data.name.toLowerCase() } : {}),
                 updatedAt: serverTimestamp(),
             });
+
+            if (isNewAssignment && data.assignedTo && data.assignedTo !== profile.uid) {
+                // Fetch name if not in data? We have name in data usually for updates? Not always.
+                // We can use generic message or fetch name.
+                createNotification({
+                    type: "lead.status_changed", // or lead.assigned
+                    title: "Lead Assigned",
+                    message: `You have been assigned to a lead.`,
+                    link: `/dashboard/leads?id=${id}`, // Open drawer or just list
+                    orgId: profile.orgId,
+                    userId: data.assignedTo,
+                    metadata: { leadId: id }
+                }).catch(console.error);
+            }
         },
-        []
+        [profile?.orgId, profile?.uid]
     );
 
     const deleteLead = useCallback(async (id: string): Promise<void> => {
