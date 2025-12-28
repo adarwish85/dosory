@@ -329,6 +329,50 @@ service cloud.firestore {
     }
 
     // ============================================
+    // KNOWLEDGE BASE
+    // ============================================
+
+    // Knowledge Base Groups/Categories
+    match /knowledgeGroups/{groupId} {
+      allow read: if canReadByOrg();
+      allow create: if canCreateByOrg();
+      allow update, delete: if canModifyByOrg();
+    }
+
+    // Knowledge Base Articles
+    match /knowledgeArticles/{articleId} {
+      allow read: if canReadByOrg();
+      allow create: if canCreateByOrg();
+      allow update, delete: if canModifyByOrg();
+    }
+
+    // ============================================
+    // MESSAGING
+    // ============================================
+
+    // Conversations
+    match /conversations/{conversationId} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.participants;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.uid in resource.data.participants;
+      allow delete: if false; // Don't allow deleting conversations
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update, delete: if false;
+      }
+    }
+
+    // Departments
+    match /departments/{departmentId} {
+      allow read: if canReadByOrg();
+      allow create: if canCreateByOrg();
+      allow update, delete: if canModifyByOrg();
+    }
+
+    // ============================================
     // SUBSCRIPTIONS (TENANT LEVEL)
     // ============================================
     

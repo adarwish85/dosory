@@ -883,7 +883,7 @@ export default function CustomersPage() {
                                             />
                                         ))}
                                     </SortableContext>
-                                    <TableHead className="w-24 text-center bg-gray-100 border-l">Actions</TableHead>
+
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -905,13 +905,7 @@ export default function CustomersPage() {
                                                 </TableCell>
                                             ))}
 
-                                            <TableCell className="text-center border-l bg-white group-hover:bg-gray-50">
-                                                <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/customers/${customer.id}`}><Button variant="ghost" size="icon" className="h-7 w-7"><ExternalLink className="h-3.5 w-3.5" /></Button></Link></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/customers/${customer.id}/profile`}><Button variant="ghost" size="icon" className="h-7 w-7 text-gray-500 hover:text-blue-600"><Pencil className="h-3.5 w-3.5" /></Button></Link></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={async (e) => { e.stopPropagation(); if (window.confirm("Delete?")) await deleteCustomer(customer.id); }}><Trash className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
-                                                </div>
-                                            </TableCell>
+
                                         </TableRow>
                                     ))
                                 )}

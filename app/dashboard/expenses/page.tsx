@@ -7,13 +7,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Plus, Search, RefreshCw, Upload, FileText, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useExpenses } from "@/lib/hooks";
+import { useExpenses, useSettings } from "@/lib/hooks";
 import { format } from "date-fns";
 import Link from "next/link";
 
 export default function ExpensesPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const { expenses, loading, expenseStats } = useExpenses();
+    const { settings } = useSettings();
+    const orgCurrency = settings.currency || "USD";
 
     const filteredExpenses = expenses.filter(exp =>
         exp.categoryName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -50,15 +52,15 @@ export default function ExpensesPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg px-4 py-3">
                     <div className="text-xs font-medium text-orange-600 uppercase">Total</div>
-                    <div className="text-2xl font-bold text-orange-900">{formatCurrency(expenseStats.total || 0)}</div>
+                    <div className="text-2xl font-bold text-orange-900">{formatCurrency(expenseStats.total || 0, orgCurrency)}</div>
                 </div>
                 <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                     <div className="text-xs font-medium text-green-600 uppercase">Billable</div>
-                    <div className="text-2xl font-bold text-green-900">{formatCurrency(expenseStats.billable || 0)}</div>
+                    <div className="text-2xl font-bold text-green-900">{formatCurrency(expenseStats.billable || 0, orgCurrency)}</div>
                 </div>
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg px-4 py-3">
                     <div className="text-xs font-medium text-gray-600 uppercase">Non Billable</div>
-                    <div className="text-2xl font-bold text-gray-900">{formatCurrency(expenseStats.nonBillable || 0)}</div>
+                    <div className="text-2xl font-bold text-gray-900">{formatCurrency(expenseStats.nonBillable || 0, orgCurrency)}</div>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                     <div className="text-xs font-medium text-blue-600 uppercase">Count</div>

@@ -378,24 +378,7 @@ export function AddStaffDialog() {
                                 </div>
                             </div>
 
-                            <div className="space-y-1 pt-2 border-t">
-                                <Label className="text-xs">Departments</Label>
-                                <div className="flex flex-wrap gap-x-4 gap-y-1">
-                                    {[["tech", "Technical"], ["dev", "Development"], ["sales", "Sales"], ["support", "Support"]].map(([dept, label]) => (
-                                        <div key={dept} className="flex items-center gap-1.5">
-                                            <Checkbox
-                                                id={`dept-${dept}`}
-                                                checked={formData.departments.includes(dept)}
-                                                onCheckedChange={() => toggleDepartment(dept)}
-                                                className="h-3.5 w-3.5"
-                                            />
-                                            <Label htmlFor={`dept-${dept}`} className="font-normal text-gray-700 text-xs">
-                                                {label}
-                                            </Label>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+
                         </div>
                     )}
 

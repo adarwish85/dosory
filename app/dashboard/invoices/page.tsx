@@ -9,7 +9,7 @@ import {
     ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Pencil, ExternalLink, Trash,
     DollarSign, FileText, Clock, CheckCircle2, AlertCircle
 } from "lucide-react";
-import { useInvoices } from "@/lib/hooks";
+import { useInvoices, useSettings } from "@/lib/hooks";
 import type { InvoiceStatus } from "@/lib/types";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -69,7 +69,7 @@ function HighlightText({ text, search }: { text: string; search: string }) {
     return <>{parts.map((part, i) => regex.test(part) ? <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark> : <span key={i}>{part}</span>)}</>;
 }
 
-function QuickStatsBar({ invoices }: { invoices: any[] }) {
+function QuickStatsBar({ invoices, currency }: { invoices: any[]; currency: string }) {
     const total = invoices.reduce((sum, i) => sum + (i.total || 0), 0);
     const paid = invoices.filter(i => i.status === "paid").reduce((sum, i) => sum + (i.total || 0), 0);
     const overdue = invoices.filter(i => i.status === "overdue").length;
@@ -82,7 +82,7 @@ function QuickStatsBar({ invoices }: { invoices: any[] }) {
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1"><DollarSign className="h-4 w-4" /><span className="text-xs font-medium uppercase">Paid</span></div>
-                <div className="text-2xl font-bold text-green-900">${paid.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-green-900">{new Intl.NumberFormat("en-US", { style: "currency", currency }).format(paid)}</div>
             </div>
             <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-red-600 mb-1"><AlertCircle className="h-4 w-4" /><span className="text-xs font-medium uppercase">Overdue</span></div>
@@ -140,6 +140,8 @@ export default function InvoicesPage() {
     const tableRef = useRef<HTMLDivElement>(null);
 
     const { invoices, loading, deleteInvoice } = useInvoices({ status: statusFilter });
+    const { settings } = useSettings();
+    const currency = settings.currency || "USD";
 
     const filteredInvoices = useMemo(() => {
         return invoices.filter(invoice =>
@@ -163,7 +165,7 @@ export default function InvoicesPage() {
         try { return format(timestamp.toDate(), "dd/MM/yyyy"); } catch { return "-"; }
     };
 
-    const formatCurrency = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+    const formatCurrency = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
 
     const handleDelete = useCallback(async (id: string) => {
         if (window.confirm("Delete this invoice?")) await deleteInvoice(id);
@@ -220,7 +222,7 @@ export default function InvoicesPage() {
         <TooltipProvider>
             <div className="space-y-6">
                 <InvoiceHeader invoices={invoices} />
-                <QuickStatsBar invoices={invoices} />
+                <QuickStatsBar invoices={invoices} currency={currency} />
 
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useSettings } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,8 @@ interface LineItem {
 
 export default function CreateEstimatePage() {
     const { profile } = useUserProfile();
+    const { settings } = useSettings();
+    const currency = settings.currency || "USD";
     const router = useRouter();
     const searchParams = useSearchParams();
     const [clients, setClients] = useState<Client[]>([]);
@@ -107,7 +110,7 @@ export default function CreateEstimatePage() {
                 status: "draft",
                 items: items,
                 total: calculateTotal(),
-                currency: "USD",
+                currency: currency,
                 createdAt: new Date().toISOString(),
             });
             router.push("/dashboard/sales/estimates");
@@ -256,7 +259,7 @@ export default function CreateEstimatePage() {
                         <div className="flex justify-end pt-4 border-t">
                             <div className="text-right">
                                 <p className="text-sm text-muted-foreground">Total Amount</p>
-                                <p className="text-2xl font-bold">${calculateTotal().toFixed(2)}</p>
+                                <p className="text-2xl font-bold">{new Intl.NumberFormat("en-US", { style: "currency", currency }).format(calculateTotal())}</p>
                             </div>
                         </div>
                     </CardContent>

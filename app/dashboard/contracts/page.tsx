@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Plus, Search, RefreshCw, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useContracts } from "@/lib/hooks";
+import { useContracts, useSettings } from "@/lib/hooks";
 import type { ContractStatus } from "@/lib/types";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -31,6 +31,8 @@ const statusLabels: Record<ContractStatus, string> = {
 export default function ContractsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const { contracts, loading, contractStats } = useContracts();
+    const { settings } = useSettings();
+    const orgCurrency = settings.currency || "USD";
 
     const filteredContracts = contracts.filter(contract =>
         contract.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -158,7 +160,7 @@ export default function ContractsPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-gray-700">{contract.customerName}</TableCell>
-                                            <TableCell className="font-medium">{formatCurrency(contract.contractValue)}</TableCell>
+                                            <TableCell className="font-medium">{formatCurrency(contract.contractValue, orgCurrency)}</TableCell>
                                             <TableCell className="text-gray-500">{formatDate(contract.startDate)}</TableCell>
                                             <TableCell className="text-gray-500">{formatDate(contract.endDate)}</TableCell>
                                             <TableCell>
