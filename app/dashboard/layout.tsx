@@ -40,6 +40,7 @@ import { NotificationsPopover } from "@/components/dashboard/notifications-popov
 import { usePermissions, canAccessModule } from "@/lib/hooks/use-permissions";
 import { SystemBanners } from "@/components/dashboard/system-banners";
 import { useNotifications } from "@/lib/hooks/use-notifications";
+import { useUnreadMessages } from "@/lib/hooks/use-chat";
 
 interface StaffProfile {
     firstName?: string;
@@ -56,6 +57,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { profile } = useUserProfile();
     const { permissions, isAdmin, loading: permissionsLoading } = usePermissions();
     const { unreadCount: notificationUnreadCount } = useNotifications();
+    const { unreadCount: messagesUnreadCount } = useUnreadMessages();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [rightSidebarOpen, setRightSidebarOpen] = useState(true); // Default expanded
     const [setupOpen, setSetupOpen] = useState(false);
@@ -326,10 +328,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             </Button>
 
                             {/* Messages Icon */}
-                            <Link href="/dashboard/messages">
+                            {/* Messages Icon */}
+                            <Link href="/dashboard/messages" className="relative">
                                 <Button size="icon" className="hidden sm:flex bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#1c1e21] rounded-full h-10 w-10">
                                     <MessageSquare className="h-5 w-5" />
                                 </Button>
+                                {messagesUnreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 flex items-center justify-center text-xs font-bold text-white bg-red-500 rounded-full">
+                                        {messagesUnreadCount > 99 ? "99+" : messagesUnreadCount}
+                                    </span>
+                                )}
                             </Link>
 
                             {/* Notifications Icon */}

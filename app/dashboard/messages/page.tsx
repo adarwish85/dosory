@@ -12,121 +12,63 @@ import {
     Paperclip,
     Smile,
     Send,
-    MoreVertical,
     Star,
-    Video,
-    ChevronDown,
+    Loader2,
+    X,
+    UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, isToday, isYesterday } from "date-fns";
+import { format } from "date-fns";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
-
-// --- Demo Data ---
-const DEMO_CONVERSATIONS = [
-    {
-        id: "1",
-        name: "Oleksandr Kompaniiets",
-        role: "Senior Graphic Designer",
-        avatar: "https://i.pravatar.cc/150?u=1",
-        lastMessage: "Hi Ahmed, I believe this will be my last...",
-        timestamp: new Date(2023, 9, 20),
-        unread: 0,
-    },
-    {
-        id: "2",
-        name: "Osama M. E. Afify, MBA",
-        role: "Chief Executive Officer",
-        avatar: "https://i.pravatar.cc/150?u=2",
-        lastMessage: "Hello Mr. Ahmed, It's my pleasure to...",
-        timestamp: new Date(2023, 9, 7),
-        unread: 0,
-    },
-    {
-        id: "3",
-        name: "Ann Ruengsorn",
-        role: "Recruiter at Tech Solutions",
-        avatar: "https://i.pravatar.cc/150?u=3",
-        lastMessage: "Your Special Guest Invitation (This is a personal...",
-        timestamp: new Date(2023, 9, 7),
-        unread: 0,
-    },
-    {
-        id: "4",
-        name: "Esraa Mostafa",
-        role: "Business solutions Engineer | Technical Support",
-        avatar: "https://i.pravatar.cc/150?u=4",
-        lastMessage: "إحنا عاملين platform بتساعد الشركات توفر في تكاليف الذكاء...",
-        timestamp: new Date(Date.now()), // Today
-        unread: 0,
-        active: true, // Currently selected in screenshot
-    },
-    {
-        id: "5",
-        name: "huda, Alaa, LinkedIn ...",
-        role: "Group Conversation",
-        avatar: "https://i.pravatar.cc/150?u=5",
-        lastMessage: "Tarek Dessouki left this conversation",
-        timestamp: new Date(2023, 8, 19),
-        unread: 0,
-    },
-];
-
-const DEMO_MESSAGES = [
-    {
-        id: "1",
-        senderId: "other",
-        content: "مساء الخير\n\nسؤال سريع\n\nبتدوروا على وسيلة تخلي استخدام الـ AI أوضح وأوفر؟",
-        timestamp: new Date(2023, 8, 30, 14, 30), // Sep 30, 2:30 PM
-    },
-    {
-        id: "2",
-        senderId: "me",
-        content: "صباح الخير يا فندم",
-        timestamp: new Date(2023, 9, 3, 10, 26), // Oct 3, 10:26 AM
-    },
-];
-
-// --- Components ---
-
-function FilterButton({ label, active = false, hasDropdown = false }: { label: string, active?: boolean, hasDropdown?: boolean }) {
-    return (
-        <button
-            className={cn(
-                "px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors flex items-center gap-1",
-                active
-                    ? "bg-[#01754F] text-white border-[#01754F]"
-                    : "bg-white text-gray-600 border-gray-400 hover:bg-gray-100 hover:border-gray-500"
-            )}
-        >
-            {label}
-            {hasDropdown && <ChevronDown className={cn("h-4 w-4", active ? "text-white" : "text-gray-600")} />}
-        </button>
-    );
-}
+import { useConversations, useChatMessages, Conversation, getOrCreateConversation, ChatParticipant } from "@/lib/hooks/use-chat";
+import { useStaff, useRoles } from "@/lib/hooks";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function MessagesPage() {
     const { profile } = useUserProfile();
-    const [selectedId, setSelectedId] = useState<string>("4");
+    const { conversations, loading: conversationsLoading } = useConversations();
+    const { staff } = useStaff();
+    const { roles } = useRoles();
+    const [selectedId, setSelectedId] = useState<string | null>(null);
     const [messageInput, setMessageInput] = useState("");
-    const [messages, setMessages] = useState(DEMO_MESSAGES);
+    const [newChatOpen, setNewChatOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const selectedConvo = DEMO_CONVERSATIONS.find((c) => c.id === selectedId);
+    // Select first conversation by default if none selected
+    useEffect(() => {
+        if (!selectedId && conversations.length > 0) {
+            setSelectedId(conversations[0].id);
+        }
+    }, [conversations, selectedId]);
+
+    const { messages, loading: messagesLoading, sendMessage } = useChatMessages(selectedId);
+
+    // Helper to get the "other" participant details
+    const getOtherParticipant = (convo: Conversation) => {
+        if (!profile) return null;
+        const otherUid = convo.participants.find(uid => uid !== profile.uid);
+        if (!otherUid) return null;
+        return convo.participantDetails[otherUid];
+    };
+
+    const selectedConvo = conversations.find((c) => c.id === selectedId);
+    const otherParticipant = selectedConvo ? getOtherParticipant(selectedConvo) : null;
 
     // Scroll to bottom on new message
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!messageInput.trim()) return;
-        const msg = {
-            id: Date.now().toString(),
-            senderId: "me",
-            content: messageInput,
-            timestamp: new Date(),
-        };
-        setMessages([...messages, msg]);
+        await sendMessage(messageInput.trim());
         setMessageInput("");
     };
 
@@ -137,6 +79,44 @@ export default function MessagesPage() {
         }
     };
 
+    const handleStartChat = async (otherUser: any) => {
+        if (!profile || !profile.orgId) return;
+
+        const currentUserParticipant: ChatParticipant = {
+            uid: profile.uid,
+            name: `${profile.firstName} ${profile.lastName}`,
+            email: profile.email,
+            photoURL: profile.photoURL || undefined,
+            role: profile.role || "Staff"
+        };
+
+        const otherUserParticipant: ChatParticipant = {
+            uid: otherUser.id,
+            name: `${otherUser.firstName} ${otherUser.lastName}`,
+            email: otherUser.email,
+            photoURL: otherUser.image || undefined,
+            role: otherUser.isAdmin ? "Administrator" : roles.find(r => r.id === otherUser.roleId)?.name || "Staff"
+        };
+
+        try {
+            const conversationId = await getOrCreateConversation(
+                currentUserParticipant,
+                otherUserParticipant,
+                profile.orgId
+            );
+            setNewChatOpen(false);
+            setSelectedId(conversationId);
+        } catch (error) {
+            console.error("Failed to start chat:", error);
+        }
+    };
+
+    // Filter staff for new chat
+    const filteredStaff = staff.filter(s =>
+        s.id !== profile?.uid &&
+        (`${s.firstName} ${s.lastName}`).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     // Date formatting helper
     const getMessageDateLabel = (date: Date) => {
         return format(date, "MMM d").toUpperCase();
@@ -144,9 +124,10 @@ export default function MessagesPage() {
 
     // Group messages by date
     const groupedMessages = messages.reduce((acc: any, msg) => {
-        const dateKey = getMessageDateLabel(msg.timestamp);
+        const date = msg.timestamp instanceof Date ? msg.timestamp : new Date();
+        const dateKey = getMessageDateLabel(date);
         if (!acc[dateKey]) acc[dateKey] = [];
-        acc[dateKey].push(msg);
+        acc[dateKey].push({ ...msg, timestamp: date });
         return acc;
     }, {});
 
@@ -162,9 +143,57 @@ export default function MessagesPage() {
                             <Button size="icon" variant="ghost" className="h-8 w-8">
                                 <MoreHorizontal className="h-5 w-5" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8">
-                                <Edit className="h-5 w-5" />
-                            </Button>
+
+                            <Dialog open={newChatOpen} onOpenChange={setNewChatOpen}>
+                                <DialogTrigger asChild>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8">
+                                        <Edit className="h-5 w-5" />
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-md">
+                                    <DialogHeader>
+                                        <DialogTitle>New Message</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="p-4 space-y-4">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input
+                                                placeholder="Search people..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                className="pl-9"
+                                            />
+                                        </div>
+                                        <div className="max-h-[300px] overflow-y-auto space-y-2">
+                                            {filteredStaff.map((person) => (
+                                                <div
+                                                    key={person.id}
+                                                    onClick={() => handleStartChat(person)}
+                                                    className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors"
+                                                >
+                                                    <Avatar>
+                                                        <AvatarImage src={person.image} />
+                                                        <AvatarFallback>{person.firstName?.[0]}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <div className="font-medium text-sm">
+                                                            {person.firstName} {person.lastName}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {person.isAdmin ? "Administrator" : roles.find(r => r.id === person.roleId)?.name || "Staff"}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {filteredStaff.length === 0 && (
+                                                <div className="text-center text-sm text-gray-500 py-4">
+                                                    No people found
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
                         </div>
                     </div>
                     <div className="relative">
@@ -176,62 +205,86 @@ export default function MessagesPage() {
                     </div>
                 </div>
 
-                {/* Filters */}
-                <div className="px-3 py-2 border-b border-gray-200 flex gap-2 overflow-x-auto no-scrollbar">
-                    <FilterButton label="Focused" active hasDropdown />
-                    <FilterButton label="Jobs" />
-                    <FilterButton label="Unread" />
-                    <FilterButton label="Connections" />
-                    <FilterButton label="InMail" />
-                    <FilterButton label="Starred" />
-                </div>
-
                 {/* List */}
                 <div className="flex-1 overflow-y-auto bg-white">
-                    {DEMO_CONVERSATIONS.map((convo) => (
-                        <div
-                            key={convo.id}
-                            onClick={() => setSelectedId(convo.id)}
-                            className={cn(
-                                "flex gap-3 p-3 cursor-pointer border-l-[6px] transition-colors hover:bg-gray-50",
-                                selectedId === convo.id
-                                    ? "border-[#01754F] bg-[#EDF3F8]"
-                                    : "border-transparent"
-                            )}
-                        >
-                            <Avatar className="h-12 w-12 flex-shrink-0">
-                                <AvatarImage src={convo.avatar} />
-                                <AvatarFallback>{convo.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <div className="flex justify-between items-baseline">
-                                    <span className="font-semibold text-gray-900 text-[15px] truncate">
-                                        {convo.name}
-                                    </span>
-                                    <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
-                                        {format(convo.timestamp, "MMM d")}
-                                    </span>
-                                </div>
-                                <p className="text-sm text-gray-600 truncate mt-0.5">
-                                    {convo.lastMessage}
-                                </p>
-                            </div>
+                    {conversationsLoading ? (
+                        <div className="flex justify-center p-8">
+                            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                         </div>
-                    ))}
+                    ) : conversations.length === 0 ? (
+                        <div className="p-8 text-center text-gray-500">
+                            <p>No conversations yet.</p>
+                            <Button
+                                variant="outline"
+                                className="mt-4"
+                                onClick={() => setNewChatOpen(true)}
+                            >
+                                Start a conversation
+                            </Button>
+                        </div>
+                    ) : conversations.length > 0 && (
+                        conversations.map((convo) => {
+                            const other = getOtherParticipant(convo);
+                            if (!other) return null;
+                            const isSelected = selectedId === convo.id;
+                            const unreadCount = convo.unreadCounts[profile?.uid || ""] || 0;
+
+                            return (
+                                <div
+                                    key={convo.id}
+                                    onClick={() => setSelectedId(convo.id)}
+                                    className={cn(
+                                        "flex gap-3 p-3 cursor-pointer border-l-[6px] transition-colors hover:bg-gray-50",
+                                        isSelected
+                                            ? "border-[#01754F] bg-[#EDF3F8]"
+                                            : "border-transparent"
+                                    )}
+                                >
+                                    <Avatar className="h-12 w-12 flex-shrink-0">
+                                        <AvatarImage src={other.photoURL} />
+                                        <AvatarFallback>{other.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                        <div className="flex justify-between items-baseline">
+                                            <span className={cn("text-[15px] truncate", unreadCount > 0 ? "font-bold text-gray-900" : "font-semibold text-gray-900")}>
+                                                {other.name}
+                                            </span>
+                                            {convo.updatedAt && (
+                                                <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
+                                                    {format(convo.updatedAt, "MMM d")}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex justify-between items-center mt-0.5">
+                                            <p className={cn("text-sm truncate max-w-[200px]", unreadCount > 0 ? "font-semibold text-gray-900" : "text-gray-600")}>
+                                                {convo.lastMessage?.senderId === profile?.uid && "You: "}
+                                                {convo.lastMessage?.content || "No messages yet"}
+                                            </p>
+                                            {unreadCount > 0 && (
+                                                <span className="bg-[#01754F] text-white text-xs font-bold rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center">
+                                                    {unreadCount}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </div>
 
             {/* Right Side - Chat Area */}
-            {selectedConvo ? (
+            {selectedConvo && otherParticipant ? (
                 <div className="hidden md:flex flex-1 bg-white rounded-lg border border-gray-300 flex-col overflow-hidden relative">
                     {/* Chat Header */}
                     <div className="px-4 py-3 border-b border-gray-200 flex items-start justify-between">
                         <div>
                             <div className="text-base font-bold text-gray-900 leading-tight">
-                                {selectedConvo.name}
+                                {otherParticipant.name}
                             </div>
                             <div className="text-xs text-gray-500 mt-1 line-clamp-1">
-                                {selectedConvo.role}
+                                {otherParticipant.role || "Staff Member"}
                             </div>
                         </div>
                         <div className="flex items-center gap-1 text-gray-600">
@@ -247,79 +300,85 @@ export default function MessagesPage() {
                     {/* Profile Link Header (Mini) */}
                     <div className="px-4 py-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer flex gap-3">
                         <Avatar className="h-10 w-10">
-                            <AvatarImage src={selectedConvo.avatar} />
-                            <AvatarFallback>{selectedConvo.name.charAt(0)}</AvatarFallback>
+                            <AvatarImage src={otherParticipant.photoURL} />
+                            <AvatarFallback>{otherParticipant.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
                             <div className="font-semibold text-sm text-gray-900 flex items-center gap-2">
-                                {selectedConvo.name} <span className="font-normal text-gray-500 text-xs">• 1st</span>
+                                {otherParticipant.name} <span className="font-normal text-gray-500 text-xs">• 1st</span>
                             </div>
-                            <div className="text-xs text-gray-600 line-clamp-1">{selectedConvo.role}</div>
+                            <div className="text-xs text-gray-600 line-clamp-1">{otherParticipant.role || "Staff Member"}</div>
                         </div>
                     </div>
 
                     {/* Messages List */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                        {/* Profile Card in Chat (Top) not shown in screenshot but typical LinkedIn */}
+                        {/* Profile Card in Chat (Top) */}
                         <div className="flex flex-col items-center py-6 border-b border-gray-100 mb-4">
                             <Avatar className="h-16 w-16 mb-2">
-                                <AvatarImage src={selectedConvo.avatar} />
-                                <AvatarFallback>{selectedConvo.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={otherParticipant.photoURL} />
+                                <AvatarFallback>{otherParticipant.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <div className="font-bold text-lg text-gray-900">{selectedConvo.name}</div>
-                            <div className="text-sm text-gray-600 text-center max-w-sm">{selectedConvo.role}</div>
+                            <div className="font-bold text-lg text-gray-900">{otherParticipant.name}</div>
+                            <div className="text-sm text-gray-600 text-center max-w-sm">{otherParticipant.role || "Staff Member"}</div>
                         </div>
 
-                        {/* Messages Grouped by Date */}
-                        {Object.entries(groupedMessages).map(([dateLabel, msgs]: [string, any]) => (
-                            <div key={dateLabel}>
-                                {/* Date Divider */}
-                                <div className="flex items-center my-5">
-                                    <div className="flex-1 h-px bg-gray-200"></div>
-                                    <span className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        {dateLabel}
-                                    </span>
-                                    <div className="flex-1 h-px bg-gray-200"></div>
-                                </div>
+                        {messagesLoading && messages.length === 0 ? (
+                            <div className="flex justify-center p-4">
+                                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                            </div>
+                        ) : (
+                            Object.entries(groupedMessages).map(([dateLabel, msgs]: [string, any]) => (
+                                <div key={dateLabel}>
+                                    {/* Date Divider */}
+                                    <div className="flex items-center my-5">
+                                        <div className="flex-1 h-px bg-gray-200"></div>
+                                        <span className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                            {dateLabel}
+                                        </span>
+                                        <div className="flex-1 h-px bg-gray-200"></div>
+                                    </div>
 
-                                {/* Messages */}
-                                <div className="space-y-4">
-                                    {msgs.map((msg: any) => (
-                                        <div
-                                            key={msg.id}
-                                            className={cn(
-                                                "flex gap-3 max-w-[85%]",
-                                                msg.senderId === "me" ? "ml-auto flex-row-reverse" : ""
-                                            )}
-                                        >
-                                            <Avatar className="h-10 w-10 flex-shrink-0">
-                                                {msg.senderId === "me" ? (
-                                                    // Placeholder for user avatar
-                                                    <AvatarImage src="https://github.com/shadcn.png" />
-                                                ) : (
-                                                    <AvatarImage src={selectedConvo.avatar} />
+                                    {/* Messages */}
+                                    <div className="space-y-4">
+                                        {msgs.map((msg: any) => (
+                                            <div
+                                                key={msg.id}
+                                                className={cn(
+                                                    "flex gap-3 max-w-[85%]",
+                                                    msg.senderId === profile?.uid ? "ml-auto flex-row-reverse" : ""
                                                 )}
-                                                <AvatarFallback>U</AvatarFallback>
-                                            </Avatar>
+                                            >
+                                                <Avatar className="h-10 w-10 flex-shrink-0">
+                                                    {msg.senderId === profile?.uid ? (
+                                                        <AvatarImage src={profile?.photoURL || ""} />
+                                                    ) : (
+                                                        <AvatarImage src={otherParticipant.photoURL} />
+                                                    )}
+                                                    <AvatarFallback>
+                                                        {msg.senderId === profile?.uid ? "ME" : otherParticipant.name.charAt(0)}
+                                                    </AvatarFallback>
+                                                </Avatar>
 
-                                            <div className={cn("flex flex-col", msg.senderId === "me" ? "items-end" : "items-start")}>
-                                                <div className="flex items-baseline gap-2 mb-1">
-                                                    <span className="font-bold text-sm text-gray-900">
-                                                        {msg.senderId === "me" ? "Ahmed Darwish" : selectedConvo.name}
-                                                    </span>
-                                                    <span className="text-xs text-gray-500">
-                                                        {format(msg.timestamp, "h:mm a")}
-                                                    </span>
-                                                </div>
-                                                <div className="text-[15px] leading-relaxed text-gray-900 whitespace-pre-wrap">
-                                                    {msg.content}
+                                                <div className={cn("flex flex-col", msg.senderId === profile?.uid ? "items-end" : "items-start")}>
+                                                    <div className="flex items-baseline gap-2 mb-1">
+                                                        <span className="font-bold text-sm text-gray-900">
+                                                            {msg.senderId === profile?.uid ? "You" : otherParticipant.name}
+                                                        </span>
+                                                        <span className="text-xs text-gray-500">
+                                                            {format(msg.timestamp, "h:mm a")}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[15px] leading-relaxed text-gray-900 whitespace-pre-wrap">
+                                                        {msg.content}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                         <div ref={messagesEndRef} />
                     </div>
 
@@ -368,7 +427,15 @@ export default function MessagesPage() {
             ) : (
                 <div className="hidden md:flex flex-1 items-center justify-center bg-white rounded-lg border border-gray-300">
                     <div className="text-center text-gray-500">
-                        Select a message to start reading
+                        {conversations.length > 0 ? "Select a message to start reading" : "No selected conversation"}
+                        <div className="mt-4">
+                            <Button
+                                variant="outline"
+                                onClick={() => setNewChatOpen(true)}
+                            >
+                                Start a conversation
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}
