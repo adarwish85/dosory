@@ -448,6 +448,20 @@ export function useKnowledgeBase() {
         [profile?.orgId, groups]
     );
 
+    const updateGroup = useCallback(
+        async (id: string, data: Partial<KnowledgeGroup>): Promise<void> => {
+            await updateDoc(doc(db, "knowledgeGroups", id), {
+                ...data,
+                updatedAt: serverTimestamp(),
+            });
+        },
+        []
+    );
+
+    const deleteGroup = useCallback(async (id: string): Promise<void> => {
+        await deleteDoc(doc(db, "knowledgeGroups", id));
+    }, []);
+
     return {
         articles,
         groups,
@@ -458,5 +472,7 @@ export function useKnowledgeBase() {
         deleteArticle,
         incrementViews,
         createGroup,
+        updateGroup,
+        deleteGroup,
     };
 }
