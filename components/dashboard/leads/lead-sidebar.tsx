@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useLead } from "./lead-context";
 import {
     LayoutDashboard, User, StickyNote, FileSignature, CheckSquare,
-    Calculator, Paperclip, Lock, Bell, ArrowLeft, ChevronLeft, ChevronRight
+    Calculator, Paperclip, Bell, ArrowLeft, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -41,7 +41,6 @@ export function LeadSidebar() {
         { icon: Calculator, label: "Estimates", href: `/dashboard/leads/${leadId}/estimates` },
         { icon: CheckSquare, label: "Tasks", href: `/dashboard/leads/${leadId}/tasks` },
         { icon: Paperclip, label: "Files", href: `/dashboard/leads/${leadId}/files` },
-        { icon: Lock, label: "Vault", href: `/dashboard/leads/${leadId}/vault` },
         { icon: Bell, label: "Reminders", href: `/dashboard/leads/${leadId}/reminders` },
     ];
 
