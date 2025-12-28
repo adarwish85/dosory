@@ -245,99 +245,155 @@ export async function migrateOldLandingConfig(): Promise<string | null> {
 
         // Fetch old landing config
         const oldConfigDoc = await getDoc(doc(db, "platform", "landing"));
-        if (!oldConfigDoc.exists()) {
-            console.log("No old landing config found");
-            return null;
-        }
 
-        const oldConfig = oldConfigDoc.data();
+        let homePageBlocks: Block[] = [];
+        let migratedFromOld = false;
 
-        // Convert to new format
-        const homePageBlocks: Block[] = [];
+        if (oldConfigDoc.exists()) {
+            const oldConfig = oldConfigDoc.data();
+            migratedFromOld = true;
 
-        // Hero block
-        if (oldConfig.hero) {
-            homePageBlocks.push({
-                id: crypto.randomUUID(),
-                type: "hero",
-                data: {
-                    badge: oldConfig.hero.badge || "",
-                    headline: oldConfig.hero.headline || "",
-                    headlineHighlight: oldConfig.hero.headlineHighlight || "",
-                    subheadline: oldConfig.hero.subheadline || "",
-                    ctaPrimaryText: oldConfig.hero.ctaPrimary || "Get Started",
-                    ctaPrimaryLink: "/signup",
-                    ctaSecondaryText: oldConfig.hero.ctaSecondary || "Learn More",
-                    ctaSecondaryLink: "#features",
-                    showSocialProof: true,
+            // Hero block
+            if (oldConfig.hero) {
+                homePageBlocks.push({
+                    id: crypto.randomUUID(),
+                    type: "hero",
+                    data: {
+                        badge: oldConfig.hero.badge || "",
+                        headline: oldConfig.hero.headline || "",
+                        headlineHighlight: oldConfig.hero.headlineHighlight || "",
+                        subheadline: oldConfig.hero.subheadline || "",
+                        ctaPrimaryText: oldConfig.hero.ctaPrimary || "Get Started",
+                        ctaPrimaryLink: "/signup",
+                        ctaSecondaryText: oldConfig.hero.ctaSecondary || "Learn More",
+                        ctaSecondaryLink: "#features",
+                        showSocialProof: true,
+                    },
+                });
+            }
+
+            // Features block
+            if (oldConfig.features?.length) {
+                homePageBlocks.push({
+                    id: crypto.randomUUID(),
+                    type: "features",
+                    data: {
+                        sectionTitle: "What Can Our CRM Do For You?",
+                        sectionSubtitle: "Everything you need to manage and grow your business",
+                        items: oldConfig.features,
+                        columns: 3,
+                    },
+                });
+            }
+
+            // Stats block
+            if (oldConfig.stats?.length) {
+                homePageBlocks.push({
+                    id: crypto.randomUUID(),
+                    type: "stats",
+                    data: {
+                        items: oldConfig.stats,
+                        backgroundColor: "primary",
+                    },
+                });
+            }
+
+            // Testimonial block
+            if (oldConfig.testimonial) {
+                homePageBlocks.push({
+                    id: crypto.randomUUID(),
+                    type: "testimonial",
+                    data: {
+                        quote: oldConfig.testimonial.quote || "",
+                        author: oldConfig.testimonial.author || "",
+                        role: oldConfig.testimonial.role || "",
+                        rating: 5,
+                    },
+                });
+            }
+
+            // FAQ block
+            if (oldConfig.faqs?.length) {
+                homePageBlocks.push({
+                    id: crypto.randomUUID(),
+                    type: "faq",
+                    data: {
+                        sectionTitle: "CRM Sales FAQs",
+                        sectionSubtitle: "Got questions? We've got answers.",
+                        items: oldConfig.faqs,
+                    },
+                });
+            }
+
+            // Migrate design settings
+            if (oldConfig.design) {
+                const { setDoc } = await import("firebase/firestore");
+                await setDoc(doc(db, DESIGN_DOC), {
+                    ...oldConfig.design,
+                });
+            }
+        } else {
+            // No old config found - create sample blocks
+            console.log("No old landing config found, creating sample home page");
+            homePageBlocks = [
+                {
+                    id: crypto.randomUUID(),
+                    type: "hero",
+                    data: {
+                        badge: "✨ Welcome",
+                        headline: "Build Your Business",
+                        headlineHighlight: "with Dosory",
+                        subheadline: "The all-in-one CRM and ERP platform for modern businesses. Manage customers, invoices, projects, and more.",
+                        ctaPrimaryText: "Get Started Free",
+                        ctaPrimaryLink: "/signup",
+                        ctaSecondaryText: "Learn More",
+                        ctaSecondaryLink: "#features",
+                        showSocialProof: true,
+                    },
                 },
-            });
-        }
-
-        // Features block
-        if (oldConfig.features?.length) {
-            homePageBlocks.push({
-                id: crypto.randomUUID(),
-                type: "features",
-                data: {
-                    sectionTitle: "What Can Our CRM Do For You?",
-                    sectionSubtitle: "Everything you need to manage and grow your business",
-                    items: oldConfig.features,
-                    columns: 3,
+                {
+                    id: crypto.randomUUID(),
+                    type: "features",
+                    data: {
+                        sectionTitle: "Everything You Need",
+                        sectionSubtitle: "Powerful features to grow your business",
+                        items: [
+                            { icon: "Users", title: "Customer Management", description: "Track leads and customers in one place." },
+                            { icon: "FileText", title: "Invoicing", description: "Create and send professional invoices." },
+                            { icon: "CheckSquare", title: "Tasks & Projects", description: "Organize work with tasks and projects." },
+                        ],
+                        columns: 3,
+                    },
                 },
-            });
-        }
-
-        // Stats block
-        if (oldConfig.stats?.length) {
-            homePageBlocks.push({
-                id: crypto.randomUUID(),
-                type: "stats",
-                data: {
-                    items: oldConfig.stats,
-                    backgroundColor: "primary",
+                {
+                    id: crypto.randomUUID(),
+                    type: "cta",
+                    data: {
+                        headline: "Ready to Get Started?",
+                        subheadline: "Start your free trial today. No credit card required.",
+                        ctaText: "Start Free Trial",
+                        ctaLink: "/signup",
+                        secondaryCtaText: "Contact Sales",
+                        secondaryCtaLink: "/login",
+                        backgroundColor: "gray",
+                    },
                 },
-            });
+            ];
         }
 
-        // Testimonial block
-        if (oldConfig.testimonial) {
+        // Always add CTA block at end if we migrated from old config
+        if (migratedFromOld) {
             homePageBlocks.push({
                 id: crypto.randomUUID(),
-                type: "testimonial",
+                type: "cta",
                 data: {
-                    quote: oldConfig.testimonial.quote || "",
-                    author: oldConfig.testimonial.author || "",
-                    role: oldConfig.testimonial.role || "",
-                    rating: 5,
-                },
-            });
-        }
-
-        // CTA block
-        homePageBlocks.push({
-            id: crypto.randomUUID(),
-            type: "cta",
-            data: {
-                headline: "Ready to Transform Your Business?",
-                subheadline: "Start your 14-day free trial today. No credit card required.",
-                ctaText: "Get Started Free",
-                ctaLink: "/signup",
-                secondaryCtaText: "Contact Sales",
-                secondaryCtaLink: "/login",
-                backgroundColor: "gray",
-            },
-        });
-
-        // FAQ block
-        if (oldConfig.faqs?.length) {
-            homePageBlocks.push({
-                id: crypto.randomUUID(),
-                type: "faq",
-                data: {
-                    sectionTitle: "CRM Sales FAQs",
-                    sectionSubtitle: "Got questions? We've got answers.",
-                    items: oldConfig.faqs,
+                    headline: "Ready to Transform Your Business?",
+                    subheadline: "Start your 14-day free trial today. No credit card required.",
+                    ctaText: "Get Started Free",
+                    ctaLink: "/signup",
+                    secondaryCtaText: "Contact Sales",
+                    secondaryCtaLink: "/login",
+                    backgroundColor: "gray",
                 },
             });
         }
@@ -355,14 +411,6 @@ export async function migrateOldLandingConfig(): Promise<string | null> {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
-
-        // Migrate design settings
-        if (oldConfig.design) {
-            const { setDoc } = await import("firebase/firestore");
-            await setDoc(doc(db, DESIGN_DOC), {
-                ...oldConfig.design,
-            });
-        }
 
         console.log("Migration complete! Home page created:", homePageRef.id);
         return homePageRef.id;

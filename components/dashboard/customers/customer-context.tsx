@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useParams } from "next/navigation";
-import { doc, getDoc, collection, query, where, onSnapshot, orderBy, getCountFromServer } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, onSnapshot, getCountFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Customer, Contact } from "@/lib/types";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -115,11 +115,11 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
             return;
         }
 
+        // Query without orderBy to avoid index requirement - sort client-side
         const q = query(
             collection(db, "contacts"),
-            where("orgId", "==", profile.orgId),
             where("customerId", "==", customerId),
-            orderBy("lastName", "asc")
+            where("orgId", "==", profile.orgId)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -127,6 +127,8 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
                 id: doc.id,
                 ...doc.data(),
             })) as Contact[];
+            // Sort client-side by lastName
+            contactsData.sort((a, b) => (a.lastName || "").localeCompare(b.lastName || ""));
             setContacts(contactsData);
             setRecordCounts(prev => ({ ...prev, contacts: contactsData.length }));
         }, (err) => {

@@ -194,7 +194,7 @@ export function DashboardGrid({ className }: DashboardGridProps) {
             {/* Dashboard Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{greeting}, {profile?.firstName || profile?.displayName?.split(" ")[0] || "there"}! 👋</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">{greeting}, {profile?.firstName || (profile?.displayName?.includes(" ") ? profile.displayName.split(" ")[0] : "there")}! 👋</h1>
                     <p className="text-sm text-gray-500">Here's what's happening with your business today.</p>
                 </div>
 
