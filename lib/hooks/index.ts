@@ -42,3 +42,5 @@ export {
 // Sales (Estimates)
 export { useEstimates } from "./use-sales";
 
+// Organization Settings
+export { useOrganizationSettings, useOrganizationSettings as useSettings } from "./use-organization-settings";
