@@ -450,6 +450,7 @@ export const staffFormSchema = z.object({
 
 export const roleFormSchema = z.object({
     name: z.string().min(1, "Role name is required"),
+    description: z.string().optional(),
     permissions: z.array(z.string()).default([]),
 });
 

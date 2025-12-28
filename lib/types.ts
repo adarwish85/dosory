@@ -553,7 +553,8 @@ export interface Staff extends BaseEntity {
 
 export interface Role extends BaseEntity {
     name: string;
-    permissions: Permission[];
+    description?: string;
+    permissions: string[];
 }
 
 export type Permission =
