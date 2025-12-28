@@ -210,7 +210,7 @@ export function useContacts(options: UseContactsOptions = {}) {
             constraints.push(where("customerId", "==", customerId));
         }
 
-        constraints.push(orderBy("lastName", "asc"));
+        // constraints.push(orderBy("lastName", "asc")); // Removed to avoid index requirement
 
         const q = query(collection(db, "contacts"), ...constraints);
 
@@ -221,6 +221,10 @@ export function useContacts(options: UseContactsOptions = {}) {
                     id: doc.id,
                     ...doc.data(),
                 })) as Contact[];
+
+                // Sort client-side
+                data.sort((a, b) => (a.lastName || "").localeCompare(b.lastName || ""));
+
                 setContacts(data);
                 setLoading(false);
             },

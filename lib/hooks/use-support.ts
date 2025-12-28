@@ -317,11 +317,10 @@ export function useKnowledgeBase() {
             return;
         }
 
-        // Fetch groups
+        // Fetch groups - Client-side sort to avoid index requirement
         const groupsQuery = query(
             collection(db, "knowledgeGroups"),
-            where("orgId", "==", profile.orgId),
-            orderBy("order", "asc")
+            where("orgId", "==", profile.orgId)
         );
 
         const unsubGroups = onSnapshot(groupsQuery, (snapshot) => {
@@ -329,14 +328,18 @@ export function useKnowledgeBase() {
                 id: doc.id,
                 ...doc.data(),
             })) as KnowledgeGroup[];
+            // Sort by order
+            data.sort((a, b) => (a.order || 0) - (b.order || 0));
             setGroups(data);
+        }, (err) => {
+            console.error("Error fetching knowledge groups:", err);
+            // Don't set global error to avoid blocking other UI, but log it
         });
 
-        // Fetch articles
+        // Fetch articles - Client-side sort to avoid index requirement
         const articlesQuery = query(
             collection(db, "knowledgeArticles"),
-            where("orgId", "==", profile.orgId),
-            orderBy("order", "asc")
+            where("orgId", "==", profile.orgId)
         );
 
         const unsubArticles = onSnapshot(
@@ -346,6 +349,8 @@ export function useKnowledgeBase() {
                     id: doc.id,
                     ...doc.data(),
                 })) as KnowledgeArticle[];
+                // Sort by order
+                data.sort((a, b) => (a.order || 0) - (b.order || 0));
                 setArticles(data);
                 setLoading(false);
             },

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { collection, query, orderBy, limit, onSnapshot, addDoc, Timestamp, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/components/auth-provider";
+import { useUserProfile } from "@/components/hooks/use-user-profile";
 
 export type ActivityType =
     | "invoice_paid"
@@ -61,10 +62,11 @@ interface UseActivityOptions {
 
 export function useActivity(options: UseActivityOptions = {}) {
     const { user } = useAuth();
+    const { profile } = useUserProfile(); // Use profile hook for reliable orgId
     const [activities, setActivities] = useState<Activity[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const orgId = (user as any)?.orgId || user?.uid;
+    const orgId = profile?.orgId;
     const fetchLimit = options.limit || 20;
     const enabled = options.enabled ?? true;
 

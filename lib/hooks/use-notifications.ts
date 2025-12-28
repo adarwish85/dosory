@@ -86,21 +86,26 @@ export function useNotifications() {
             collection(db, "notifications"),
             where("userId", "==", profile.uid),
             where("orgId", "==", profile.orgId),
-            orderBy("createdAt", "desc"),
+            // orderBy("createdAt", "desc"), // Constraint removed to avoid composite index
+            where("read", "in", [true, false]),
             limit(50)
         );
 
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
-                const data = snapshot.docs.map((doc) => {
-                    const d = doc.data();
-                    return {
-                        id: doc.id,
-                        ...d,
-                        createdAt: convertTimestamp(d.createdAt),
-                    } as Notification;
+                const data = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as Notification[];
+
+                // Client-side sort
+                data.sort((a, b) => {
+                    const dateA = a.createdAt?.getTime?.() || 0;
+                    const dateB = b.createdAt?.getTime?.() || 0;
+                    return dateB - dateA;
                 });
+
                 setNotifications(data);
                 setUnreadCount(data.filter((n) => !n.read).length);
                 setLoading(false);
