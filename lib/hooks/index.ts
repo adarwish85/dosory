@@ -44,3 +44,6 @@ export { useEstimates } from "./use-sales";
 
 // Organization Settings
 export { useOrganizationSettings, useOrganizationSettings as useSettings } from "./use-organization-settings";
+
+// Currency Formatting
+export { useCurrency } from "./use-currency";

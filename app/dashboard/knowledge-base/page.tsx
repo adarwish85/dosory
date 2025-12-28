@@ -39,6 +39,7 @@ import { Switch } from "@/components/ui/switch";
 
 export default function KnowledgeBasePage() {
     const [searchQuery, setSearchQuery] = useState("");
+    const [activeTab, setActiveTab] = useState<"articles" | "categories">("articles");
     const {
         articles,
         groups,
@@ -199,115 +200,185 @@ export default function KnowledgeBasePage() {
 
     return (
         <div className="space-y-4">
-            {/* Header Toolbar */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-2 flex-wrap">
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={handleNewArticle}>
-                        <Plus className="mr-2 h-4 w-4" />New Article
-                    </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline">
-                                <Settings2 className="mr-2 h-4 w-4" />Categories
+            {/* Tabs */}
+            <div className="border-b">
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => setActiveTab("articles")}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === "articles"
+                            ? "border-gray-900 text-gray-900"
+                            : "border-transparent text-gray-500 hover:text-gray-700"
+                            }`}
+                    >
+                        Articles ({articles.length})
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("categories")}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === "categories"
+                            ? "border-gray-900 text-gray-900"
+                            : "border-transparent text-gray-500 hover:text-gray-700"
+                            }`}
+                    >
+                        Categories ({groups.length})
+                    </button>
+                </div>
+            </div>
+
+            {/* Articles Tab */}
+            {activeTab === "articles" && (
+                <>
+                    {/* Header Toolbar */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={handleNewArticle}>
+                                <Plus className="mr-2 h-4 w-4" />New Article
                             </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-56">
-                            <DropdownMenuLabel>Categories ({groups.length})</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {groups.map((group) => (
-                                <DropdownMenuItem key={group.id} className="flex justify-between">
-                                    <span>{group.name}</span>
-                                    <div className="flex gap-1">
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleEditCategory(group); }}>
-                                            <Pencil className="h-3 w-3" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={(e) => { e.stopPropagation(); handleDeleteCategory(group.id); }}>
-                                            <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                    </div>
-                                </DropdownMenuItem>
-                            ))}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={handleNewCategory}>
-                                <FolderPlus className="mr-2 h-4 w-4" />Add Category
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                        </div>
 
-                <div className="flex items-center gap-2 flex-1 w-full max-w-md mx-6">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search articles..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                        <div className="flex items-center gap-2 flex-1 w-full max-w-md mx-6">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                                <Input placeholder="Search articles..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="icon" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" /></Button>
+                        </div>
                     </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" /></Button>
-                </div>
-            </div>
-
-            {/* Table */}
-            <div className="border rounded-md bg-white">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-gray-50 hover:bg-gray-50">
-                            <TableHead className="font-semibold text-gray-900">Article Name</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Group</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Views</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Status</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Published</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredArticles.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                                    {searchQuery ? "No articles match your search." : "No articles found. Create your first one!"}
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            filteredArticles.map((article) => (
-                                <TableRow key={article.id} className="group hover:bg-gray-50">
-                                    <TableCell className="font-medium">
-                                        <div className="flex flex-col gap-0.5">
-                                            <Link href={`/dashboard/knowledge-base/${article.id}`} className="text-blue-600 hover:underline w-fit">
-                                                {article.subject}
-                                            </Link>
-                                            {/* Hover Actions Menu */}
-                                            <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
-                                                <Link href={`/dashboard/knowledge-base/${article.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
-                                                <span className="text-gray-300">|</span>
-                                                <button onClick={() => handleEditArticle(article)} className="hover:text-blue-600 hover:underline px-0.5">Edit</button>
-                                                <span className="text-gray-300">|</span>
-                                                <button onClick={() => handleDeleteArticle(article.id)} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-gray-500">{getGroupName(article.groupId)}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-1 text-gray-500">
-                                            <Eye className="h-4 w-4" />
-                                            {article.views || 0}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge className={article.isActive ? "bg-green-100 text-green-600 border-0" : "bg-gray-100 text-gray-600 border-0"}>
-                                            {article.isActive ? "Active" : "Draft"}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-gray-500">{formatDate(article.createdAt)}</TableCell>
+                    {/* Articles Table */}
+                    <div className="border rounded-md bg-white">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-gray-50 hover:bg-gray-50">
+                                    <TableHead className="font-semibold text-gray-900">Article Name</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Category</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Views</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Status</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Published</TableHead>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredArticles.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                                            {searchQuery ? "No articles match your search." : "No articles found. Create your first one!"}
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    filteredArticles.map((article) => (
+                                        <TableRow key={article.id} className="group hover:bg-gray-50">
+                                            <TableCell className="font-medium">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <Link href={`/dashboard/knowledge-base/${article.id}`} className="text-blue-600 hover:underline w-fit">
+                                                        {article.subject}
+                                                    </Link>
+                                                    <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
+                                                        <Link href={`/dashboard/knowledge-base/${article.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
+                                                        <span className="text-gray-300">|</span>
+                                                        <button onClick={() => handleEditArticle(article)} className="hover:text-blue-600 hover:underline px-0.5">Edit</button>
+                                                        <span className="text-gray-300">|</span>
+                                                        <button onClick={() => handleDeleteArticle(article.id)} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-gray-500">{getGroupName(article.groupId)}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-1 text-gray-500">
+                                                    <Eye className="h-4 w-4" />
+                                                    {article.views || 0}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge className={article.isActive ? "bg-green-100 text-green-600 border-0" : "bg-gray-100 text-gray-600 border-0"}>
+                                                    {article.isActive ? "Active" : "Draft"}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-gray-500">{formatDate(article.createdAt)}</TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
 
-            {/* Footer */}
-            <div className="flex items-center justify-between py-2">
-                <span className="text-sm text-gray-600 font-medium">Total: {filteredArticles.length}</span>
-            </div>
+                    <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600 font-medium">Total: {filteredArticles.length}</span>
+                    </div>
+                </>
+            )}
+
+            {/* Categories Tab */}
+            {activeTab === "categories" && (
+                <>
+                    {/* Header Toolbar */}
+                    <div className="flex items-center justify-between gap-4">
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={handleNewCategory}>
+                            <Plus className="mr-2 h-4 w-4" />New Category
+                        </Button>
+                        <Button variant="outline" size="icon" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" /></Button>
+                    </div>
+
+                    {/* Categories Table */}
+                    <div className="border rounded-md bg-white">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-gray-50 hover:bg-gray-50">
+                                    <TableHead className="font-semibold text-gray-900">Name</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Description</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Color</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">Articles</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {groups.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
+                                            No categories found. Create your first one!
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    groups.map((group) => {
+                                        const articleCount = articles.filter(a => a.groupId === group.id).length;
+                                        return (
+                                            <TableRow key={group.id} className="group hover:bg-gray-50">
+                                                <TableCell className="font-medium">
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span className="text-gray-900">{group.name}</span>
+                                                        <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
+                                                            <button onClick={() => handleEditCategory(group)} className="hover:text-blue-600 hover:underline px-0.5">Edit</button>
+                                                            <span className="text-gray-300">|</span>
+                                                            <button onClick={() => handleDeleteCategory(group.id)} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-gray-500 max-w-xs truncate">{group.description || "-"}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <div
+                                                            className="w-5 h-5 rounded border"
+                                                            style={{ backgroundColor: group.color || "#3b82f6" }}
+                                                        />
+                                                        <span className="text-gray-500 text-sm">{group.color || "#3b82f6"}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge className="bg-blue-100 text-blue-600 border-0">{articleCount}</Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    <div className="flex items-center justify-between py-2">
+                        <span className="text-sm text-gray-600 font-medium">Total: {groups.length}</span>
+                    </div>
+                </>
+            )}
 
             {/* Article Dialog */}
             <Dialog open={articleDialogOpen} onOpenChange={setArticleDialogOpen}>
