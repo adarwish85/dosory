@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw } from "lucide-react";
 
-export default function SalesPaymentsPage() {
+export default function PaymentsPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center gap-4">
@@ -53,21 +53,23 @@ export default function SalesPaymentsPage() {
                             { id: "18", invoice: "INV-000111", mode: "Bank", transactionId: "", customer: "Egyptian German Industrial Corporation (EGIC)", amount: "EGP34,200.00", date: "03/09/2025" },
                             { id: "17", invoice: "INV-000109", mode: "Bank", transactionId: "", customer: "Tahweel Integrated", amount: "$912.00", date: "06/08/2025" },
                         ].map((row) => (
-                            <TableRow key={row.id}>
+                            <TableRow key={row.id} className="group">
                                 <TableCell className="min-w-[150px] py-3">
-                                    <div className="flex flex-col group">
+                                    <div className="flex flex-col">
                                         <span className="font-medium text-gray-900">{row.id}</span>
-                                        <span className="text-gray-500 text-xs mt-0.5 group-hover:hidden">View Details</span>
-                                        <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
-                                            <span className="text-xs font-medium text-gray-900 hover:underline cursor-pointer">Edit</span>
+                                        {/* Hover Actions Menu */}
+                                        <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
+                                            <span className="hover:text-blue-600 hover:underline cursor-pointer">View</span>
                                             <span className="text-gray-300">|</span>
-                                            <span className="text-xs font-medium text-red-600 hover:underline cursor-pointer">Delete</span>
+                                            <span className="hover:text-blue-600 hover:underline cursor-pointer">Edit</span>
+                                            <span className="text-gray-300">|</span>
+                                            <span className="hover:text-red-600 hover:underline cursor-pointer">Delete</span>
                                         </div>
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-gray-900">{row.invoice}</TableCell>
                                 <TableCell className="text-gray-900">{row.mode}</TableCell>
-                                <TableCell className="text-gray-900">{row.transactionId}</TableCell>
+                                <TableCell className="text-gray-900">{row.transactionId || "-"}</TableCell>
                                 <TableCell className="text-gray-900">{row.customer}</TableCell>
                                 <TableCell className="text-gray-900 font-medium">{row.amount}</TableCell>
                                 <TableCell className="text-gray-500">{row.date}</TableCell>
@@ -76,7 +78,6 @@ export default function SalesPaymentsPage() {
                     </TableBody>
                 </Table>
             </div>
-            {/* Optional Pagination if needed, though not strictly in cut screenshot it is implied by previous designs */}
             <div className="flex items-center text-sm text-gray-500 gap-2 mt-4 ml-1">
                 Showing 1 to 9 of 25 entries
                 <div className="flex gap-1 ml-auto">

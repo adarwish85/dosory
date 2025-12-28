@@ -7,12 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, Filter, RefreshCw, FileText } from "lucide-react";
 import Link from "next/link";
 
-export default function SalesCreditNotesPage() {
+export default function CreditNotesPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <Link href="/dashboard/sales/credit-notes/new">
+                    <Link href="/dashboard/accounting/credit-notes/new">
                         <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
                             <Plus className="mr-2 h-4 w-4" /> New Credit Note
                         </Button>
@@ -72,7 +72,6 @@ export default function SalesCreditNotesPage() {
                         </TableBody>
                     </Table>
                 </div>
-                {/* Empty state pagination often hidden or disabled, keeping simple structure */}
             </div>
         </div>
     );

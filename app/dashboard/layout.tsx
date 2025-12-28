@@ -237,6 +237,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             module: "accounting",
             children: [
                 { href: "/dashboard/invoices", label: "Invoices", module: "invoices" },
+                { href: "/dashboard/accounting/payments", label: "Payments", module: "invoices" },
+                { href: "/dashboard/accounting/credit-notes", label: "Credit Notes", module: "invoices" },
                 { href: "/dashboard/expenses", label: "Expenses", module: "expenses" },
             ]
         },
