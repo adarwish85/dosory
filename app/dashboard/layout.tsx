@@ -39,6 +39,7 @@ import { StickyNotesBoard } from "@/components/dashboard/StickyNotes";
 import { NotificationsPopover } from "@/components/dashboard/notifications-popover";
 import { usePermissions, canAccessModule } from "@/lib/hooks/use-permissions";
 import { SystemBanners } from "@/components/dashboard/system-banners";
+import { useNotifications } from "@/lib/hooks/use-notifications";
 
 interface StaffProfile {
     firstName?: string;
@@ -54,6 +55,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { settings, loading: settingsLoading } = useOrganizationSettings(); // Contains subdomain
     const { profile } = useUserProfile();
     const { permissions, isAdmin, loading: permissionsLoading } = usePermissions();
+    const { unreadCount: notificationUnreadCount } = useNotifications();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [rightSidebarOpen, setRightSidebarOpen] = useState(true); // Default expanded
     const [setupOpen, setSetupOpen] = useState(false);
@@ -323,8 +325,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 <Plus className="h-5 w-5" />
                             </Button>
 
-                            {/* Commented out NotificationsPopover */}
-                            {/* <NotificationsPopover /> */}
+                            {/* Messages Icon */}
+                            <Link href="/dashboard/messages">
+                                <Button size="icon" className="hidden sm:flex bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#1c1e21] rounded-full h-10 w-10">
+                                    <MessageSquare className="h-5 w-5" />
+                                </Button>
+                            </Link>
+
+                            {/* Notifications Icon */}
+                            <Link href="/dashboard/notifications" className="relative">
+                                <Button size="icon" className="hidden sm:flex bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#1c1e21] rounded-full h-10 w-10">
+                                    <Bell className="h-5 w-5" />
+                                </Button>
+                                {notificationUnreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 flex items-center justify-center text-xs font-bold text-white bg-red-500 rounded-full">
+                                        {notificationUnreadCount > 99 ? "99+" : notificationUnreadCount}
+                                    </span>
+                                )}
+                            </Link>
 
                             <Button
                                 size="icon"

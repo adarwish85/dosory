@@ -89,7 +89,7 @@ export function NotificationsPopover() {
                                             {notification.message}
                                         </p>
                                         <p className="text-[10px] text-gray-400">
-                                            {notification.createdAt ? formatDistanceToNow(notification.createdAt.toDate(), { addSuffix: true }) : "Just now"}
+                                            {notification.createdAt ? formatDistanceToNow(notification.createdAt, { addSuffix: true }) : "Just now"}
                                         </p>
                                     </div>
                                     {!notification.read && (
