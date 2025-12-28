@@ -9,7 +9,7 @@ import { signOut, signInWithEmailAndPassword, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import {
     LayoutDashboard, Building2, CreditCard, Users, BarChart3,
-    Settings, Bell, Search, LogOut, ChevronDown, Shield, Loader2, Eye, EyeOff, Palette, Megaphone, Mail, LifeBuoy
+    Settings, Bell, Search, LogOut, ChevronDown, Shield, Loader2, Eye, EyeOff, Palette, Megaphone, Mail, LifeBuoy, LayoutTemplate
 } from "lucide-react";
 import { PlatformLogo } from "@/lib/hooks/use-platform-settings";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -216,6 +216,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: "/bunny", label: "Dashboard", icon: LayoutDashboard },
         { href: "/bunny/analytics", label: "Analytics", icon: BarChart3 },
         { href: "/bunny/tenants", label: "Tenants", icon: Users },
+        { href: "/bunny/landing-builder", label: "Site Builder", icon: LayoutTemplate },
         { href: "/bunny/subscriptions", label: "Plans & Billing", icon: CreditCard },
         { href: "/bunny/email-templates", label: "Email Templates", icon: Mail },
         { href: "/bunny/audit-logs", label: "Audit Logs", icon: Shield },
