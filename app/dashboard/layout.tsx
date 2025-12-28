@@ -223,7 +223,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             ]
         },
         {
-            label: "Projects",
+            label: "Operations",
             icon: FolderKanban,
             module: "projects",
             children: [
