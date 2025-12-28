@@ -30,7 +30,7 @@ const statusLabels: Record<ContractStatus, string> = {
 
 export default function ContractsPage() {
     const [searchQuery, setSearchQuery] = useState("");
-    const { contracts, loading, contractStats } = useContracts();
+    const { contracts, loading, contractStats, deleteContract } = useContracts();
     const { settings } = useSettings();
     const orgCurrency = settings.currency || "USD";
 
@@ -143,19 +143,17 @@ export default function ContractsPage() {
                                         <TableRow key={contract.id} className="group">
                                             <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
                                             <TableCell className="min-w-[200px] py-3">
-                                                <div className="flex flex-col group">
-                                                    <Link href={`/dashboard/contracts/${contract.id}`} className="font-medium text-blue-600 hover:underline">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <Link href={`/dashboard/contracts/${contract.id}`} className="font-medium text-blue-600 hover:underline block truncate w-fit">
                                                         {contract.subject}
                                                     </Link>
-                                                    <span className="text-gray-500 text-xs mt-0.5 group-hover:hidden">ID: {contract.id.substring(0, 8)}...</span>
-                                                    <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
-                                                        <Link href={`/dashboard/contracts/${contract.id}/edit`} className="text-xs font-medium text-gray-900 hover:underline">
-                                                            Edit
-                                                        </Link>
+                                                    <span className="text-xs text-gray-400">ID: {contract.id.substring(0, 8)}...</span>
+                                                    <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
+                                                        <Link href={`/dashboard/contracts/${contract.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
                                                         <span className="text-gray-300">|</span>
-                                                        <Link href={`/dashboard/contracts/${contract.id}/delete`} className="text-xs font-medium text-red-600 hover:underline">
-                                                            Delete
-                                                        </Link>
+                                                        <Link href={`/dashboard/contracts/${contract.id}/edit`} className="hover:text-blue-600 hover:underline px-0.5">Edit</Link>
+                                                        <span className="text-gray-300">|</span>
+                                                        <button onClick={async (e) => { e.stopPropagation(); if (confirm("Delete this contract?")) await deleteContract(contract.id); }} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
                                                     </div>
                                                 </div>
                                             </TableCell>

@@ -254,10 +254,15 @@ export function StaffList() {
                                                     {member.firstName?.charAt(0) || "?"}
                                                 </AvatarFallback>
                                             </Avatar>
-                                            <div className="flex flex-col">
-                                                <Link href={`/dashboard/setup/staff/${encodeURIComponent(member.id)}`} className="font-semibold text-gray-900 hover:text-blue-600">
+                                            <div className="flex flex-col gap-0.5">
+                                                <Link href={`/dashboard/setup/staff/${encodeURIComponent(member.id)}`} className="font-semibold text-gray-900 hover:text-blue-600 block line-clamp-1">
                                                     {member.firstName} {member.lastName}
                                                 </Link>
+                                                <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4">
+                                                    <Link href={`/dashboard/setup/staff/${encodeURIComponent(member.id)}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
+                                                    <span className="text-gray-300">|</span>
+                                                    <button onClick={async (e) => { e.stopPropagation(); if (confirm("Delete staff member?")) await deleteStaff(member.id); }} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </TableCell>

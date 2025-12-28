@@ -6,8 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     Search, RefreshCw, Download, Trash2, ChevronDown, Columns, LayoutList,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Pencil, ExternalLink, Trash,
-    DollarSign, FileText, Clock, CheckCircle2, AlertCircle
+    Pencil, ExternalLink, Trash, DollarSign, FileText, Clock, AlertCircle
 } from "lucide-react";
 import { useInvoices, useSettings } from "@/lib/hooks";
 import type { InvoiceStatus } from "@/lib/types";
@@ -20,13 +19,20 @@ import { TableSkeleton, StatCardSkeleton } from "@/components/ui/skeleton-loader
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
     DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuCheckboxItem,
-    DropdownMenuRadioGroup, DropdownMenuRadioItem,
+    DropdownMenuRadioGroup, DropdownMenuRadioItem
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+// Shared Data Table Components
+import { DraggableColumnHeader, DataTableColumnDef } from "@/components/ui/data-table/draggable-column-header";
+import { DataTablePagination } from "@/components/ui/data-table/pagination";
+import { SelectionBanner, SelectionMode } from "@/components/ui/data-table/selection-banner";
+
+// DND Kit imports
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy } from "@dnd-kit/sortable";
+
 import { InvoiceHeader } from "@/components/dashboard/invoices/invoice-header";
-import { InvoiceStats } from "@/components/dashboard/invoices/invoice-stats";
-import { InvoiceActions } from "@/components/dashboard/invoices/invoice-actions";
 
 const statusColors: Record<InvoiceStatus, { bg: string; text: string; border: string }> = {
     draft: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
@@ -45,18 +51,30 @@ const statusLabels: Record<InvoiceStatus, string> = {
 
 type ColumnKey = "number" | "customer" | "date" | "dueDate" | "amount" | "status";
 type RowDensity = "compact" | "comfortable" | "spacious";
-type SelectionMode = "none" | "page" | "all";
+type SortDirection = "asc" | "desc" | null;
 
-interface ColumnDef { key: ColumnKey; label: string; defaultVisible: boolean; required?: boolean; }
+// Extend DataTableColumnDef to simulate specific key type
+interface InvoiceColumnDef extends Omit<DataTableColumnDef, 'key'> {
+    key: ColumnKey;
+}
 
-const DEFAULT_COLUMNS: ColumnDef[] = [
-    { key: "number", label: "Invoice #", defaultVisible: true, required: true },
-    { key: "customer", label: "Customer", defaultVisible: true },
-    { key: "date", label: "Date", defaultVisible: true },
-    { key: "dueDate", label: "Due Date", defaultVisible: true },
-    { key: "amount", label: "Amount", defaultVisible: true },
-    { key: "status", label: "Status", defaultVisible: true },
+const DEFAULT_COLUMNS: InvoiceColumnDef[] = [
+    { key: "number", label: "Invoice #", defaultVisible: true, required: true, sortable: true },
+    { key: "customer", label: "Customer", defaultVisible: true, sortable: true },
+    { key: "date", label: "Date", defaultVisible: true, sortable: true },
+    { key: "dueDate", label: "Due Date", defaultVisible: true, sortable: true },
+    { key: "amount", label: "Amount", defaultVisible: true, sortable: true },
+    { key: "status", label: "Status", defaultVisible: true, sortable: true },
 ];
+
+const DEFAULT_COLUMN_WIDTHS: Record<ColumnKey, number> = {
+    number: 180,
+    customer: 250,
+    date: 150,
+    dueDate: 150,
+    amount: 150,
+    status: 150
+};
 
 const ROW_DENSITY_STYLES: Record<RowDensity, string> = {
     compact: "py-1 text-xs", comfortable: "py-2 text-sm", spacious: "py-4 text-sm"
@@ -96,33 +114,6 @@ function QuickStatsBar({ invoices, currency, totalCount }: { invoices: any[]; cu
     );
 }
 
-function Pagination({ currentPage, totalPages, onPageChange, totalRecords, startRecord, endRecord, compact = false }: { currentPage: number; totalPages: number; onPageChange: (p: number) => void; totalRecords: number; startRecord: number; endRecord: number; compact?: boolean }) {
-    const canPrev = currentPage > 1, canNext = currentPage < totalPages;
-    return (
-        <div className={`flex items-center ${compact ? 'gap-1' : 'justify-between gap-4'}`}>
-            {!compact && <div className="text-sm text-gray-500">Showing {startRecord} to {endRecord} of {totalRecords}</div>}
-            <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(1)} disabled={!canPrev}><ChevronsLeft className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage - 1)} disabled={!canPrev}><ChevronLeft className="h-4 w-4" /></Button>
-                <div className="flex items-center gap-1 px-2 text-sm"><span className="text-gray-700">Page</span><span className="font-medium">{currentPage}</span><span className="text-gray-700">of {totalPages}</span></div>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage + 1)} disabled={!canNext}><ChevronRight className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(totalPages)} disabled={!canNext}><ChevronsRight className="h-4 w-4" /></Button>
-            </div>
-        </div>
-    );
-}
-
-function SelectionBanner({ selectionMode, selectedCount, totalCount, onSelectAll, onClearSelection }: { selectionMode: SelectionMode; selectedCount: number; totalCount: number; onSelectAll: () => void; onClearSelection: () => void }) {
-    if (selectionMode === "none" || selectedCount === 0) return null;
-    return (
-        <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-2 flex items-center justify-center gap-2 text-sm mb-2">
-            <span className="text-blue-800"><strong>{selectedCount}</strong> selected.</span>
-            {selectionMode === "page" && selectedCount < totalCount && <button onClick={onSelectAll} className="text-blue-600 font-medium hover:underline">Select all {totalCount}</button>}
-            <button onClick={onClearSelection} className="text-blue-600 font-medium hover:underline ml-2">Clear</button>
-        </div>
-    );
-}
-
 export default function InvoicesPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
@@ -135,6 +126,10 @@ export default function InvoicesPage() {
         DEFAULT_COLUMNS.forEach(col => { v[col.key] = col.defaultVisible; });
         return v as Record<ColumnKey, boolean>;
     });
+    const [columnOrder, setColumnOrder] = useState<ColumnKey[]>(DEFAULT_COLUMNS.map(c => c.key));
+    const [columnWidths, setColumnWidths] = useState<Record<string, number>>(DEFAULT_COLUMN_WIDTHS);
+    const [sortKey, setSortKey] = useState<ColumnKey | null>(null);
+    const [sortDirection, setSortDirection] = useState<SortDirection>(null);
     const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
     const tableRef = useRef<HTMLDivElement>(null);
@@ -145,7 +140,9 @@ export default function InvoicesPage() {
     const { invoices, loading, deleteInvoice, totalRecords: dbTotalRecords } = useInvoices({
         status: statusFilter,
         limit: isClientMode ? 1000 : recordsPerPage,
-        page: isClientMode ? 1 : currentPage
+        page: isClientMode ? 1 : currentPage,
+        orderByField: (sortKey === "date" ? "date" : (sortKey === "amount" ? "total" : (sortKey === "status" ? "status" : "createdAt"))) as any,
+        orderDirection: sortDirection || "desc"
     });
     const { settings } = useSettings();
     const currency = settings.currency || "USD";
@@ -170,8 +167,43 @@ export default function InvoicesPage() {
     const endIndex = Math.min(startIndex + paginatedInvoices.length, totalRecords);
     const currentPageIds = paginatedInvoices.map(i => i.id);
     const allFilteredIds = filteredInvoices.map(i => i.id);
-    const visibleColumns = DEFAULT_COLUMNS.filter(col => columnVisibility[col.key]);
-    const visibleColumnsCount = visibleColumns.length;
+    const orderedColumns = useMemo(() => columnOrder.map(key => DEFAULT_COLUMNS.find(c => c.key === key)!).filter(Boolean), [columnOrder]);
+    const visibleColumnsCount = Object.values(columnVisibility).filter(Boolean).length;
+
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) setColumnOrder(items => arrayMove(items, items.indexOf(active.id as ColumnKey), items.indexOf(over.id as ColumnKey)));
+    }, []);
+
+    // Column Resizing Logic
+    const handleColumnResize = useCallback((e: React.MouseEvent, key: string) => {
+        e.preventDefault();
+        const startX = e.pageX;
+        const startWidth = columnWidths[key] || 150;
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+            const diff = moveEvent.pageX - startX;
+            setColumnWidths(prev => ({
+                ...prev,
+                [key]: Math.max(50, startWidth + diff) // Min width 50px
+            }));
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+    }, [columnWidths]);
+
+    const handleSort = useCallback((key: string) => {
+        const colKey = key as ColumnKey;
+        if (sortKey === colKey) { if (sortDirection === "asc") setSortDirection("desc"); else { setSortKey(null); setSortDirection(null); } } else { setSortKey(colKey); setSortDirection("asc"); }
+    }, [sortKey, sortDirection]);
 
     const formatDate = (timestamp: { toDate: () => Date } | null | undefined) => {
         if (!timestamp) return "-";
@@ -200,9 +232,6 @@ export default function InvoicesPage() {
         else setSelectedInvoices(prev => prev.filter(i => i !== id));
     }, []);
 
-    const isAllPageSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedInvoices.includes(id));
-    const isSomeSelected = selectedInvoices.length > 0 && !isAllPageSelected;
-
     const toggleColumn = useCallback((key: ColumnKey) => {
         const col = DEFAULT_COLUMNS.find(c => c.key === key);
         if (col?.required) return;
@@ -224,12 +253,43 @@ export default function InvoicesPage() {
             case "ArrowDown": e.preventDefault(); setFocusedRowIndex(prev => prev === null ? 0 : Math.min(prev + 1, paginatedInvoices.length - 1)); break;
             case "ArrowUp": e.preventDefault(); setFocusedRowIndex(prev => prev === null ? 0 : Math.max(prev - 1, 0)); break;
             case " ": e.preventDefault(); if (focusedRowIndex !== null) { const i = paginatedInvoices[focusedRowIndex]; handleSelectInvoice(i.id, !selectedInvoices.includes(i.id)); } break;
+            case "Enter": case "ArrowRight": if (focusedRowIndex !== null) { /* Navigate to view */ } break;
         }
     }, [paginatedInvoices, focusedRowIndex, handleSelectInvoice, selectedInvoices]);
 
     useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
 
+    const isAllPageSelected = currentPageIds.length > 0 && currentPageIds.every(id => selectedInvoices.includes(id));
+    const isSomeSelected = selectedInvoices.length > 0 && !isAllPageSelected;
 
+    const renderCell = (invoice: any, column: InvoiceColumnDef) => {
+        switch (column.key) {
+            case "number": return (
+                <div className="flex flex-col gap-0.5">
+                    <Link href={`/dashboard/invoices/${invoice.id}`} className="font-medium text-blue-600 hover:underline block truncate w-fit">
+                        <HighlightText text={invoice.number || "-"} search={searchQuery} />
+                    </Link>
+                    {/* Hover Actions Menu */}
+                    <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
+                        <Link href={`/dashboard/invoices/${invoice.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
+                        <span className="text-gray-300">|</span>
+                        <Link href={`/dashboard/invoices/${invoice.id}/edit`} className="hover:text-blue-600 hover:underline px-0.5">Edit</Link>
+                        <span className="text-gray-300">|</span>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(invoice.id); }} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                    </div>
+                </div>
+            );
+            case "customer": return <span className="text-gray-700"><HighlightText text={invoice.customerName || "-"} search={searchQuery} /></span>;
+            case "date": return <span className="text-gray-500">{formatDate(invoice.date)}</span>;
+            case "dueDate": return <span className="text-gray-500">{formatDate(invoice.dueDate)}</span>;
+            case "amount": return <span className="font-medium text-gray-900">{formatCurrency(invoice.total || 0)}</span>;
+            case "status": {
+                const colors = statusColors[invoice.status as InvoiceStatus] || statusColors.draft;
+                return <Badge className={`${colors.bg} ${colors.text} ${colors.border} border shadow-none font-medium`}>{statusLabels[invoice.status as InvoiceStatus] || invoice.status}</Badge>;
+            }
+            default: return null;
+        }
+    };
 
     return (
         <TooltipProvider>
@@ -268,57 +328,63 @@ export default function InvoicesPage() {
                 </div>
 
                 <SelectionBanner selectionMode={selectionMode} selectedCount={selectedInvoices.length} totalCount={totalRecords} onSelectAll={handleSelectAllRecords} onClearSelection={handleClearSelection} />
-                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={totalRecords} startRecord={totalRecords === 0 ? 0 : startIndex + 1} endRecord={endIndex} />
 
                 {/* Table */}
                 <div ref={tableRef} tabIndex={0} onKeyDown={handleKeyDown} className="border rounded-md bg-white overflow-x-auto focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                <TableHead className="w-[40px]"><Checkbox checked={isAllPageSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={(c) => c ? handleSelectAllOnPage() : handleClearSelection()} /></TableHead>
-                                {columnVisibility.number && <TableHead className="font-semibold text-gray-900">Invoice #</TableHead>}
-                                {columnVisibility.customer && <TableHead className="font-semibold text-gray-900">Customer</TableHead>}
-                                {columnVisibility.date && <TableHead>Date</TableHead>}
-                                {columnVisibility.dueDate && <TableHead>Due Date</TableHead>}
-                                {columnVisibility.amount && <TableHead>Amount</TableHead>}
-                                {columnVisibility.status && <TableHead>Status</TableHead>}
-                                <TableHead className="w-24 text-center">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow><TableCell colSpan={visibleColumnsCount + 2} className="p-0"><TableSkeleton columns={visibleColumnsCount + 2} rows={10} /></TableCell></TableRow>
-                            ) : paginatedInvoices.length === 0 ? (
-                                <TableRow><TableCell colSpan={visibleColumnsCount + 2} className="text-center py-10 text-muted-foreground">{searchQuery ? "No matches" : "No invoices"}</TableCell></TableRow>
-                            ) : (
-                                paginatedInvoices.map((invoice, index) => {
-                                    const colors = statusColors[invoice.status];
-                                    return (
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <Table className="table-fixed">
+                            <TableHeader>
+                                <TableRow className="bg-gray-50 hover:bg-gray-50">
+                                    <TableHead className="w-[48px] min-w-[48px] max-w-[48px] text-center bg-gray-100 sticky left-0 z-30 p-0"><div className="flex items-center justify-center w-full h-full"><Checkbox checked={isAllPageSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={(c) => c ? handleSelectAllOnPage() : handleClearSelection()} /></div></TableHead>
+                                    <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
+                                        {orderedColumns.map((col) => (
+                                            <DraggableColumnHeader
+                                                key={col.key}
+                                                column={col}
+                                                sortKey={sortKey}
+                                                sortDirection={sortDirection}
+                                                onSort={handleSort}
+                                                isVisible={columnVisibility[col.key]}
+                                                width={columnWidths[col.key] || 150}
+                                                onResize={handleColumnResize}
+                                            />
+                                        ))}
+                                    </SortableContext>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {loading ? (
+                                    <TableRow><TableCell colSpan={visibleColumnsCount + 1} className="p-0"><TableSkeleton columns={visibleColumnsCount + 1} rows={10} /></TableCell></TableRow>
+                                ) : paginatedInvoices.length === 0 ? (
+                                    <TableRow><TableCell colSpan={visibleColumnsCount + 1} className="text-center py-10 text-muted-foreground">{searchQuery ? "No matches" : "No invoices"}</TableCell></TableRow>
+                                ) : (
+                                    paginatedInvoices.map((invoice, index) => (
                                         <TableRow key={invoice.id} className={`group hover:bg-gray-50 ${selectedInvoices.includes(invoice.id) ? 'bg-blue-50/50' : ''} ${focusedRowIndex === index ? 'ring-2 ring-inset ring-blue-500' : ''} ${ROW_DENSITY_STYLES[rowDensity]}`}>
-                                            <TableCell><Checkbox checked={selectedInvoices.includes(invoice.id)} onCheckedChange={(c) => handleSelectInvoice(invoice.id, !!c)} /></TableCell>
-                                            {columnVisibility.number && <TableCell className="font-medium"><Link href={`/dashboard/invoices/${invoice.id}`} className="text-blue-600 hover:underline"><HighlightText text={invoice.number || "-"} search={searchQuery} /></Link></TableCell>}
-                                            {columnVisibility.customer && <TableCell className="text-gray-700"><HighlightText text={invoice.customerName || "-"} search={searchQuery} /></TableCell>}
-                                            {columnVisibility.date && <TableCell className="text-gray-500">{formatDate(invoice.date)}</TableCell>}
-                                            {columnVisibility.dueDate && <TableCell className="text-gray-500">{formatDate(invoice.dueDate)}</TableCell>}
-                                            {columnVisibility.amount && <TableCell className="font-medium text-gray-900">{formatCurrency(invoice.total || 0)}</TableCell>}
-                                            {columnVisibility.status && <TableCell><Badge className={`${colors.bg} ${colors.text} ${colors.border} border shadow-none font-medium`}>{statusLabels[invoice.status]}</Badge></TableCell>}
-                                            <TableCell className="text-center">
-                                                <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/invoices/${invoice.id}`}><Button variant="ghost" size="icon" className="h-7 w-7"><ExternalLink className="h-3.5 w-3.5" /></Button></Link></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/invoices/${invoice.id}/edit`}><Button variant="ghost" size="icon" className="h-7 w-7 text-gray-500 hover:text-blue-600"><Pencil className="h-3.5 w-3.5" /></Button></Link></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDelete(invoice.id)}><Trash className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
-                                                </div>
-                                            </TableCell>
+                                            <TableCell className={`text-center sticky left-0 z-30 p-0 w-[48px] min-w-[48px] max-w-[48px] border-r ${selectedInvoices.includes(invoice.id) ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50`}><div className="flex items-center justify-center w-full h-full"><Checkbox checked={selectedInvoices.includes(invoice.id)} onCheckedChange={(c) => handleSelectInvoice(invoice.id, !!c)} /></div></TableCell>
+                                            {orderedColumns.map((col) => columnVisibility[col.key] && (
+                                                <TableCell
+                                                    key={col.key}
+                                                    style={{ width: columnWidths[col.key] || 150, minWidth: columnWidths[col.key] || 150 }}
+                                                    className={`overflow-hidden text-ellipsis whitespace-nowrap ${col.key === "number" ? `sticky left-[48px] z-30 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${selectedInvoices.includes(invoice.id) ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50` : ""}`}
+                                                >
+                                                    {renderCell(invoice, col)}
+                                                </TableCell>
+                                            ))}
                                         </TableRow>
-                                    );
-                                })
-                            )}
-                        </TableBody>
-                    </Table>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </DndContext>
                 </div>
 
-                <div className="flex items-center justify-between"><div className="text-sm text-gray-600 font-medium">Total: {totalRecords}</div><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={totalRecords} startRecord={totalRecords === 0 ? 0 : startIndex + 1} endRecord={endIndex} compact /></div>
-                <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Space Select • Click to view</div>
+                <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm text-gray-600 font-medium">Total: {totalRecords}</span>
+                        <DataTablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={totalRecords} startRecord={totalRecords === 0 ? 0 : startIndex + 1} endRecord={endIndex} compact />
+                    </div>
+                </div>
+                <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Drag headers • Fix columns</div>
             </div>
         </TooltipProvider>
     );

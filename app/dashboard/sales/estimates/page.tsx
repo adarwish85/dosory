@@ -32,7 +32,7 @@ const statusLabels: Record<EstimateStatus, string> = {
 
 export default function SalesEstimatesPage() {
     const [searchQuery, setSearchQuery] = useState("");
-    const { estimates, loading, estimateStats } = useEstimates();
+    const { estimates, loading, estimateStats, deleteEstimate } = useEstimates();
 
     const filteredEstimates = estimates.filter(est =>
         est.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -154,19 +154,17 @@ export default function SalesEstimatesPage() {
                                     return (
                                         <TableRow key={est.id} className="group">
                                             <TableCell className="min-w-[150px] py-3">
-                                                <div className="flex flex-col group">
-                                                    <Link href={`/dashboard/sales/estimates/${est.id}`} className="font-medium text-blue-600 hover:underline">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <Link href={`/dashboard/sales/estimates/${est.id}`} className="font-medium text-blue-600 hover:underline block truncate w-fit">
                                                         {est.number}
                                                     </Link>
-                                                    <span className="text-gray-500 text-xs mt-0.5 group-hover:hidden">View Details</span>
-                                                    <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
-                                                        <Link href={`/dashboard/sales/estimates/${est.id}/edit`} className="text-xs font-medium text-gray-900 hover:underline">
-                                                            Edit
-                                                        </Link>
+                                                    <span className="text-xs text-gray-400">View Details</span>
+                                                    <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
+                                                        <Link href={`/dashboard/sales/estimates/${est.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
                                                         <span className="text-gray-300">|</span>
-                                                        <Link href={`/dashboard/sales/estimates/${est.id}/delete`} className="text-xs font-medium text-red-600 hover:underline">
-                                                            Delete
-                                                        </Link>
+                                                        <Link href={`/dashboard/sales/estimates/${est.id}/edit`} className="hover:text-blue-600 hover:underline px-0.5">Edit</Link>
+                                                        <span className="text-gray-300">|</span>
+                                                        <button onClick={async (e) => { e.stopPropagation(); if (confirm("Delete this estimate?")) await deleteEstimate(est.id); }} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
                                                     </div>
                                                 </div>
                                             </TableCell>
