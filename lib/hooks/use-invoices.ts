@@ -19,6 +19,9 @@ import {
     Timestamp,
     QueryConstraint,
     runTransaction,
+    limit,
+    startAfter,
+    getCountFromServer,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -157,6 +160,8 @@ interface UseInvoicesOptions {
     projectId?: string;
     orderByField?: "number" | "date" | "dueDate" | "total";
     orderDirection?: "asc" | "desc";
+    limit?: number;
+    page?: number;
 }
 
 export function useInvoices(options: UseInvoicesOptions = {}) {
@@ -166,12 +171,44 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         projectId,
         orderByField = "date",
         orderDirection = "desc",
+        limit: pageSize = 50,
+        page = 1,
     } = options;
     const { profile } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
+
+    // Data State
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
+
+    // Pagination State
+    const [totalRecords, setTotalRecords] = useState(0);
+    const [cursors, setCursors] = useState<Record<number, any>>({});
+
+    // Fetch Total Count
+    useEffect(() => {
+        if (!profile?.orgId) return;
+
+        const fetchCount = async () => {
+            try {
+                const constraints: any[] = [where("orgId", "==", profile.orgId)];
+                if (status !== "all" && status) {
+                    constraints.push(where("status", "==", status));
+                }
+                if (customerId) constraints.push(where("customerId", "==", customerId));
+                if (projectId) constraints.push(where("projectId", "==", projectId));
+
+                const q = query(collection(db, "invoices"), ...constraints);
+                const snapshot = await getCountFromServer(q);
+                setTotalRecords(snapshot.data().count);
+            } catch (err) {
+                console.error("Error fetching invoice count:", err);
+            }
+        };
+
+        fetchCount();
+    }, [profile?.orgId, status, customerId, projectId]);
 
     useEffect(() => {
         if (!profile?.orgId) {
@@ -200,6 +237,13 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
 
         constraints.push(orderBy(orderByField, orderDirection || "desc"));
 
+        // Pagination
+        if (page > 1 && cursors[page - 1]) {
+            constraints.push(startAfter(cursors[page - 1]));
+        }
+
+        constraints.push(limit(pageSize));
+
         const q = query(collection(db, "invoices"), ...constraints);
 
         const unsubscribe = onSnapshot(
@@ -210,6 +254,13 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
                     id: doc.id,
                     ...doc.data(),
                 })) as Invoice[];
+
+                // Update cursor
+                if (snapshot.docs.length > 0) {
+                    const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+                    setCursors(prev => ({ ...prev, [page]: lastDoc }));
+                }
+
                 setInvoices(data);
                 setLoading(false);
             },
@@ -221,7 +272,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, customerId, projectId, orderByField, orderDirection]);
+    }, [profile?.orgId, status, customerId, projectId, orderByField, orderDirection, pageSize, page]);
 
     const createInvoice = useCallback(
         async (data: InvoiceFormData): Promise<string> => {
@@ -484,6 +535,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         loading,
         error,
         invoiceStats: extendedStats,
+        totalRecords, // Exposed for pagination
         createInvoice,
         updateInvoice,
         deleteInvoice,

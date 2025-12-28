@@ -452,12 +452,22 @@ export default function CustomersPage() {
 
     const [localSearch, setLocalSearch] = useState(searchQuery);
     const tableRef = useRef<HTMLDivElement>(null);
-    const { customers, loading, deleteCustomer, updateCustomer } = useCustomers({
+
+    // Hybrid Pagination Logic
+    const isSearching = !!searchQuery.trim();
+    const isSupportedSort = !sortKey || ["company", "createdAt"].includes(sortKey);
+    // Fallback to client-side pagination (fetch up to 1000) if searching or using non-indexed sort
+    const isClientMode = isSearching || !isSupportedSort;
+
+    const { customers, loading, deleteCustomer, updateCustomer, totalRecords: dbTotalRecords } = useCustomers({
         status: statusFilter,
-        limit: 1000 // Fetch logic limit
+        orderByField: (!isClientMode && sortKey) ? (sortKey as any) : undefined,
+        orderDirection: (!isClientMode && sortDirection) ? sortDirection : undefined,
+        limit: isClientMode ? 1000 : recordsPerPage,
+        page: isClientMode ? 1 : currentPage
     });
 
-    const { contacts } = useContacts(); // Fetch all contacts for mapping
+
 
     const primaryContactMap = useMemo(() => {
         const map = new Map<string, any>();
@@ -499,16 +509,20 @@ export default function CustomersPage() {
     };
 
     // Client-side filtering and sorting
+    // Hybrid Pagination Logic
     const processedCustomers = useMemo(() => {
+        // If not in client mode, the customers array IS the page. No client-side filtering/sorting needed.
+        if (!isClientMode) return customers;
+
         let result = [...customers];
 
-        // Search
+        // Search (only applies in client mode)
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             result = result.filter(c => c.company.toLowerCase().includes(q));
         }
 
-        // Sorting
+        // Sorting (only applies in client mode)
         if (sortKey) {
             result.sort((a, b) => {
                 const aVal = a[sortKey as keyof Customer];
@@ -521,7 +535,7 @@ export default function CustomersPage() {
                     return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
                 }
                 // Handle Timestamp
-                if ((aVal as any).toMillis && (bVal as any).toMillis) {
+                if ((aVal as any).toMillis) {
                     return sortDirection === "asc"
                         ? (aVal as any).toMillis() - (bVal as any).toMillis()
                         : (bVal as any).toMillis() - (aVal as any).toMillis();
@@ -532,13 +546,18 @@ export default function CustomersPage() {
         }
 
         return result;
-    }, [customers, searchQuery, sortKey, sortDirection]);
+    }, [customers, searchQuery, sortKey, sortDirection, isClientMode]);
 
-    const totalRecords = processedCustomers.length;
+    const totalRecords = isClientMode ? processedCustomers.length : (dbTotalRecords || 0);
     const totalPages = Math.max(1, Math.ceil(totalRecords / recordsPerPage));
+
+    // If client mode, slice. If server mode, allow all (already sliced).
+    const paginatedCustomers = isClientMode
+        ? processedCustomers.slice((currentPage - 1) * recordsPerPage, (currentPage - 1) * recordsPerPage + recordsPerPage)
+        : processedCustomers;
+
     const startIndex = (currentPage - 1) * recordsPerPage;
-    const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
-    const paginatedCustomers = processedCustomers.slice(startIndex, endIndex);
+    const endIndex = Math.min(startIndex + paginatedCustomers.length, totalRecords);
 
     const currentPageIds = useMemo(() => paginatedCustomers.map(c => c.id), [paginatedCustomers]);
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));

@@ -16,7 +16,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { TableSkeleton } from "@/components/ui/skeleton-loaders";
+import { TableSkeleton, StatCardSkeleton } from "@/components/ui/skeleton-loaders";
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
     DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuCheckboxItem,
@@ -69,8 +69,8 @@ function HighlightText({ text, search }: { text: string; search: string }) {
     return <>{parts.map((part, i) => regex.test(part) ? <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark> : <span key={i}>{part}</span>)}</>;
 }
 
-function QuickStatsBar({ invoices, currency }: { invoices: any[]; currency: string }) {
-    const total = invoices.reduce((sum, i) => sum + (i.total || 0), 0);
+function QuickStatsBar({ invoices, currency, totalCount }: { invoices: any[]; currency: string; totalCount?: number }) {
+    const total = totalCount ?? invoices.length;
     const paid = invoices.filter(i => i.status === "paid").reduce((sum, i) => sum + (i.total || 0), 0);
     const overdue = invoices.filter(i => i.status === "overdue").length;
     const draft = invoices.filter(i => i.status === "draft").length;
@@ -78,7 +78,7 @@ function QuickStatsBar({ invoices, currency }: { invoices: any[]; currency: stri
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-blue-600 mb-1"><FileText className="h-4 w-4" /><span className="text-xs font-medium uppercase">Total</span></div>
-                <div className="text-2xl font-bold text-blue-900">{invoices.length}</div>
+                <div className="text-2xl font-bold text-blue-900">{total}</div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1"><DollarSign className="h-4 w-4" /><span className="text-xs font-medium uppercase">Paid</span></div>
@@ -139,22 +139,35 @@ export default function InvoicesPage() {
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
     const tableRef = useRef<HTMLDivElement>(null);
 
-    const { invoices, loading, deleteInvoice } = useInvoices({ status: statusFilter });
+    const isSearching = !!searchQuery.trim();
+    const isClientMode = isSearching;
+
+    const { invoices, loading, deleteInvoice, totalRecords: dbTotalRecords } = useInvoices({
+        status: statusFilter,
+        limit: isClientMode ? 1000 : recordsPerPage,
+        page: isClientMode ? 1 : currentPage
+    });
     const { settings } = useSettings();
     const currency = settings.currency || "USD";
 
     const filteredInvoices = useMemo(() => {
+        if (!isClientMode) return invoices;
         return invoices.filter(invoice =>
             String(invoice.number || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
             String(invoice.customerName || "").toLowerCase().includes(searchQuery.toLowerCase())
         );
-    }, [invoices, searchQuery]);
+    }, [invoices, searchQuery, isClientMode]);
 
-    const totalRecords = filteredInvoices.length;
+    const totalRecords = isClientMode ? filteredInvoices.length : (dbTotalRecords || 0);
     const totalPages = Math.max(1, Math.ceil(totalRecords / recordsPerPage));
+
+    // If client mode, slice. If server mode, invoices IS the slice.
+    const paginatedInvoices = isClientMode
+        ? filteredInvoices.slice((currentPage - 1) * recordsPerPage, (currentPage - 1) * recordsPerPage + recordsPerPage)
+        : filteredInvoices;
+
     const startIndex = (currentPage - 1) * recordsPerPage;
-    const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
-    const paginatedInvoices = filteredInvoices.slice(startIndex, endIndex);
+    const endIndex = Math.min(startIndex + paginatedInvoices.length, totalRecords);
     const currentPageIds = paginatedInvoices.map(i => i.id);
     const allFilteredIds = filteredInvoices.map(i => i.id);
     const visibleColumns = DEFAULT_COLUMNS.filter(col => columnVisibility[col.key]);
@@ -216,13 +229,13 @@ export default function InvoicesPage() {
 
     useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
 
-    if (loading) return <div className="space-y-6"><h1 className="text-2xl font-bold">Invoices</h1><TableSkeleton rows={10} columns={7} /></div>;
+
 
     return (
         <TooltipProvider>
             <div className="space-y-6">
                 <InvoiceHeader invoices={invoices} />
-                <QuickStatsBar invoices={invoices} currency={currency} />
+                {loading ? <StatCardSkeleton count={4} /> : <QuickStatsBar invoices={invoices} currency={currency} totalCount={totalRecords} />}
 
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -273,7 +286,9 @@ export default function InvoicesPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedInvoices.length === 0 ? (
+                            {loading ? (
+                                <TableRow><TableCell colSpan={visibleColumnsCount + 2} className="p-0"><TableSkeleton columns={visibleColumnsCount + 2} rows={10} /></TableCell></TableRow>
+                            ) : paginatedInvoices.length === 0 ? (
                                 <TableRow><TableCell colSpan={visibleColumnsCount + 2} className="text-center py-10 text-muted-foreground">{searchQuery ? "No matches" : "No invoices"}</TableCell></TableRow>
                             ) : (
                                 paginatedInvoices.map((invoice, index) => {

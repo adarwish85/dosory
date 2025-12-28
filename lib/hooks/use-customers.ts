@@ -18,6 +18,8 @@ import {
     serverTimestamp,
     Timestamp,
     QueryConstraint,
+    startAfter,
+    getCountFromServer,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -33,7 +35,8 @@ interface UseCustomersOptions {
     status?: "active" | "inactive" | "archived" | "all";
     orderByField?: "company" | "createdAt";
     orderDirection?: "asc" | "desc";
-    limit?: number; // Add pagination limit
+    limit?: number;
+    page?: number;
 }
 
 export function useCustomers(options: UseCustomersOptions = {}) {
@@ -41,19 +44,51 @@ export function useCustomers(options: UseCustomersOptions = {}) {
         status = "all",
         orderByField = "company",
         orderDirection = "asc",
-        limit: queryLimit = 100 // Default to 100 for performance
+        limit: pageSize = 50,
+        page = 1,
     } = options;
     const { profile } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
+
+    // Data State
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
+    // Pagination State
+    const [totalRecords, setTotalRecords] = useState(0);
+    const [cursors, setCursors] = useState<Record<number, any>>({}); // Store QueryDocumentSnapshot
+
+    // Fetch Total Count
+    useEffect(() => {
+        if (!profile?.orgId) return;
+
+        const fetchCount = async () => {
+            try {
+                const constraints: any[] = [where("orgId", "==", profile.orgId)];
+                if (status !== "all") {
+                    constraints.push(where("status", "==", status));
+                }
+
+                const q = query(collection(db, "customers"), ...constraints);
+                const snapshot = await getCountFromServer(q);
+                setTotalRecords(snapshot.data().count);
+            } catch (err) {
+                console.error("Error fetching customer count:", err);
+            }
+        };
+
+        fetchCount();
+    }, [profile?.orgId, status]);
+
+    // Fetch Data
     useEffect(() => {
         if (!profile?.orgId) {
             setLoading(false);
             return;
         }
+
+        setLoading(true);
 
         const constraints: QueryConstraint[] = [
             where("orgId", "==", profile.orgId),
@@ -64,7 +99,13 @@ export function useCustomers(options: UseCustomersOptions = {}) {
         }
 
         constraints.push(orderBy(orderByField, orderDirection));
-        constraints.push(limit(queryLimit)); // Add limit for performance
+
+        // Pagination
+        if (page > 1 && cursors[page - 1]) {
+            constraints.push(startAfter(cursors[page - 1]));
+        }
+
+        constraints.push(limit(pageSize));
 
         const q = query(collection(db, "customers"), ...constraints);
 
@@ -75,6 +116,13 @@ export function useCustomers(options: UseCustomersOptions = {}) {
                     id: doc.id,
                     ...doc.data(),
                 })) as Customer[];
+
+                // Update cursor for next page
+                if (snapshot.docs.length > 0) {
+                    const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+                    setCursors(prev => ({ ...prev, [page]: lastDoc }));
+                }
+
                 setCustomers(data);
                 setLoading(false);
             },
@@ -86,7 +134,7 @@ export function useCustomers(options: UseCustomersOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, orderByField, orderDirection, queryLimit]);
+    }, [profile?.orgId, status, orderByField, orderDirection, pageSize, page]);
 
     const createCustomer = useCallback(
         async (data: CustomerFormData): Promise<string> => {
@@ -136,6 +184,7 @@ export function useCustomers(options: UseCustomersOptions = {}) {
         customers,
         loading,
         error,
+        totalRecords,
         createCustomer,
         updateCustomer,
         deleteCustomer,
