@@ -138,9 +138,18 @@ export default function SalesInvoicesPage() {
                                     <TableRow key={row.id} className="h-16 group">
                                         <TableCell className="min-w-[150px] py-3">
                                             <div className="flex flex-col group">
-                                                <span className="text-gray-900 hover:text-blue-600 cursor-pointer text-base font-semibold">
+                                                <a href={`/dashboard/invoices/${row.id}`} className="text-gray-900 hover:text-blue-600 cursor-pointer text-base font-semibold w-fit">
                                                     {row.number || "INV-???"}
-                                                </span>
+                                                </a>
+
+                                                {/* Hover Actions Menu */}
+                                                <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity mt-1 h-4">
+                                                    <a href={`/dashboard/invoices/${row.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</a>
+                                                    <span className="text-gray-300">|</span>
+                                                    <a href={`/dashboard/invoices/${row.id}`} className="hover:text-blue-600 hover:underline px-0.5">Edit</a>
+                                                    <span className="text-gray-300">|</span>
+                                                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (confirm("Delete?")) deleteInvoice(row.id); }} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                </div>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-gray-900">{formatCurrency(row.total || 0)}</TableCell>

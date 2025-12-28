@@ -929,14 +929,24 @@ export default function LeadsPage() {
             );
             case "id": return <span className="font-medium text-gray-500">{lead.id.substring(0, 4)}</span>;
             case "name": return (
-                <div className="flex flex-col">
+                <div className="flex flex-col gap-0.5">
                     <HoverCard openDelay={300} closeDelay={100}>
                         <HoverCardTrigger asChild>
-                            <span><InlineEditCell value={lead.name || ""} field="name" leadId={lead.id} onSave={handleInlineEdit} searchQuery={searchQuery} /></span>
+                            <span className="font-medium cursor-pointer text-gray-900 hover:text-blue-600 w-fit">
+                                <InlineEditCell value={lead.name || ""} field="name" leadId={lead.id} onSave={handleInlineEdit} searchQuery={searchQuery} />
+                            </span>
                         </HoverCardTrigger>
                         <HoverCardContent side="right" align="start" className="p-0 border-0 bg-transparent shadow-none"><QuickViewCard lead={lead} /></HoverCardContent>
                     </HoverCard>
 
+                    {/* Hover Actions Menu */}
+                    <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
+                        <button onClick={(e) => { e.stopPropagation(); handleView(lead); }} className="hover:text-blue-600 hover:underline px-0.5">View</button>
+                        <span className="text-gray-300">|</span>
+                        <button onClick={(e) => { e.stopPropagation(); handleEdit(lead); }} className="hover:text-blue-600 hover:underline px-0.5">Edit</button>
+                        <span className="text-gray-300">|</span>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(lead.id); }} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                    </div>
                 </div>
             );
             case "company": return <InlineEditCell value={lead.company || ""} field="company" leadId={lead.id} onSave={handleInlineEdit} searchQuery={searchQuery} />;

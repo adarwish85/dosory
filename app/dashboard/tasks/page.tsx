@@ -291,7 +291,17 @@ export default function TasksPage() {
                                         <TableRow key={task.id} className={`group hover:bg-gray-50 ${selectedTasks.includes(task.id) ? 'bg-blue-50/50' : ''} ${focusedRowIndex === index ? 'ring-2 ring-inset ring-blue-500' : ''} ${ROW_DENSITY_STYLES[rowDensity]}`}>
                                             <TableCell><Checkbox checked={selectedTasks.includes(task.id)} onCheckedChange={(c) => handleSelectTask(task.id, !!c)} /></TableCell>
                                             {columnVisibility.id && <TableCell className="text-gray-500">{startIndex + index + 1}</TableCell>}
-                                            {columnVisibility.name && <TableCell className="font-medium"><HighlightText text={task.name} search={searchQuery} /></TableCell>}
+                                            {columnVisibility.name && <TableCell className="font-medium">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <Link href={`/dashboard/tasks/${task.id}/edit`} className="text-gray-900 hover:text-blue-600 font-medium w-fit"><HighlightText text={task.name} search={searchQuery} /></Link>
+                                                    {/* Hover Actions Menu */}
+                                                    <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
+                                                        <Link href={`/dashboard/tasks/${task.id}/edit`} className="hover:text-blue-600 hover:underline px-0.5">Edit</Link>
+                                                        <span className="text-gray-300">|</span>
+                                                        <button onClick={() => handleDelete(task.id)} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                    </div>
+                                                </div>
+                                            </TableCell>}
                                             {columnVisibility.status && (
                                                 <TableCell>
                                                     <Select value={task.status} onValueChange={(value) => handleStatusChange(task.id, value as TaskStatus)}>

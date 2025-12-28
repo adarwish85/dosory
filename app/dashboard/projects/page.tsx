@@ -281,7 +281,19 @@ export default function ProjectsPage() {
                                     return (
                                         <TableRow key={project.id} className={`group hover:bg-gray-50 ${selectedProjects.includes(project.id) ? 'bg-blue-50/50' : ''} ${focusedRowIndex === index ? 'ring-2 ring-inset ring-blue-500' : ''} ${ROW_DENSITY_STYLES[rowDensity]}`}>
                                             <TableCell><Checkbox checked={selectedProjects.includes(project.id)} onCheckedChange={(c) => handleSelectProject(project.id, !!c)} /></TableCell>
-                                            {columnVisibility.name && <TableCell className="font-medium"><Link href={`/dashboard/projects/${project.id}`} className="text-blue-600 hover:underline"><HighlightText text={project.name || "-"} search={searchQuery} /></Link></TableCell>}
+                                            {columnVisibility.name && <TableCell className="font-medium">
+                                                <div className="flex flex-col gap-0.5">
+                                                    <Link href={`/dashboard/projects/${project.id}`} className="text-blue-600 hover:underline w-fit"><HighlightText text={project.name || "-"} search={searchQuery} /></Link>
+                                                    {/* Hover Actions Menu */}
+                                                    <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
+                                                        <Link href={`/dashboard/projects/${project.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
+                                                        <span className="text-gray-300">|</span>
+                                                        <Link href={`/dashboard/projects/${project.id}/settings`} className="hover:text-blue-600 hover:underline px-0.5">Edit</Link>
+                                                        <span className="text-gray-300">|</span>
+                                                        <button onClick={() => handleDelete(project.id)} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                    </div>
+                                                </div>
+                                            </TableCell>}
                                             {columnVisibility.customer && <TableCell className="text-gray-500"><HighlightText text={project.customerName || "-"} search={searchQuery} /></TableCell>}
                                             {columnVisibility.status && <TableCell><Badge className={`${colors.bg} ${colors.text} ${colors.border} border`}>{statusLabels[project.status]}</Badge></TableCell>}
                                             {columnVisibility.progress && <TableCell><div className="flex items-center gap-2 w-32"><Progress value={project.progress || 0} className="h-2" /><span className="text-xs text-gray-500">{project.progress || 0}%</span></div></TableCell>}

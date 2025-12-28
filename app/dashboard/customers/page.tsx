@@ -644,10 +644,10 @@ export default function CustomersPage() {
         switch (col.key) {
             case "id": return <span className="text-gray-500 font-mono text-xs">{customer.id.substring(0, 6)}</span>;
             case "company": return (
-                <div className="flex flex-col relative group min-w-0">
+                <div className="flex flex-col gap-0.5">
                     <HoverCard>
                         <HoverCardTrigger asChild>
-                            <Link href={`/dashboard/customers/${customer.id}`} className="font-medium text-blue-600 hover:underline block truncate max-w-full">
+                            <Link href={`/dashboard/customers/${customer.id}`} className="font-medium text-blue-600 hover:underline block truncate max-w-full w-fit">
                                 {customer.company}
                             </Link>
                         </HoverCardTrigger>
@@ -656,7 +656,14 @@ export default function CustomersPage() {
                         </HoverCardContent>
                     </HoverCard>
 
-
+                    {/* Hover Actions Menu */}
+                    <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
+                        <Link href={`/dashboard/customers/${customer.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
+                        <span className="text-gray-300">|</span>
+                        <Link href={`/dashboard/customers/${customer.id}/profile`} className="hover:text-blue-600 hover:underline px-0.5">Edit</Link>
+                        <span className="text-gray-300">|</span>
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (confirm("Delete?")) deleteCustomer(customer.id); }} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                    </div>
                 </div>
             );
             case "status": return <Badge variant="outline" className={customer.status === "active" ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-50 text-gray-700"}>{customer.status}</Badge>;
@@ -897,13 +904,7 @@ export default function CustomersPage() {
                                                     {renderCell(customer, col)}
                                                 </TableCell>
                                             ))}
-                                            <TableCell className="text-center border-l bg-white group-hover:bg-gray-50">
-                                                <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/customers/${customer.id}`}><Button variant="ghost" size="icon" className="h-7 w-7"><ExternalLink className="h-3.5 w-3.5" /></Button></Link></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/customers/${customer.id}/profile`}><Button variant="ghost" size="icon" className="h-7 w-7 text-gray-500 hover:text-blue-600"><Pencil className="h-3.5 w-3.5" /></Button></Link></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
-                                                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={async (e) => { e.stopPropagation(); if (window.confirm("Delete?")) await deleteCustomer(customer.id); }}><Trash className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
-                                                </div>
-                                            </TableCell>
+
                                             <TableCell className="text-center border-l bg-white group-hover:bg-gray-50">
                                                 <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/customers/${customer.id}`}><Button variant="ghost" size="icon" className="h-7 w-7"><ExternalLink className="h-3.5 w-3.5" /></Button></Link></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
