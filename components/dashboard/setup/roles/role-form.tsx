@@ -20,30 +20,195 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Pen, Loader2, Check, ShieldCheck } from "lucide-react";
+import { Plus, Pen, Loader2, ShieldCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { useRoles } from "@/lib/hooks";
 import type { Role } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
-// Permission modules and their available actions
+// Detailed permission structure with Own/Global distinctions
 const PERMISSION_MODULES = [
-    { id: "contracts", label: "Contracts", actions: ["view", "create", "edit", "delete"] },
-    { id: "credit-notes", label: "Credit Notes", actions: ["view", "create", "edit", "delete"] },
-    { id: "customers", label: "Customers", actions: ["view", "create", "edit", "delete"] },
-    { id: "estimates", label: "Estimates", actions: ["view", "create", "edit", "delete"] },
-    { id: "expenses", label: "Expenses", actions: ["view", "create", "edit", "delete"] },
-    { id: "invoices", label: "Invoices", actions: ["view", "create", "edit", "delete"] },
-    { id: "leads", label: "Leads", actions: ["view", "create", "edit", "delete"] },
-    { id: "projects", label: "Projects", actions: ["view", "create", "edit", "delete"] },
-    { id: "tasks", label: "Tasks", actions: ["view", "create", "edit", "delete"] },
-    { id: "reports", label: "Reports", actions: ["view"] },
-    { id: "settings", label: "Settings", actions: ["view", "edit"] },
-    { id: "staff", label: "Staff", actions: ["view", "create", "edit", "delete"] },
-    { id: "support", label: "Support", actions: ["view", "create", "edit", "delete"] },
+    {
+        id: "contracts",
+        label: "Contracts",
+        actions: [
+            { id: "view-own", label: "View (Own)" },
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+            { id: "view-templates", label: "View All Templates" },
+        ],
+    },
+    {
+        id: "credit-notes",
+        label: "Credit Notes",
+        actions: [
+            { id: "view-own", label: "View (Own)" },
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
+    {
+        id: "customers",
+        label: "Customers",
+        actions: [
+            { id: "view-own", label: "View (Own)" },
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
+    {
+        id: "estimates",
+        label: "Estimates",
+        actions: [
+            { id: "view-own", label: "View (Own)" },
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
+    {
+        id: "estimate-request",
+        label: "Estimate Request",
+        actions: [
+            { id: "view-own", label: "View (Own)" },
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
+    {
+        id: "expenses",
+        label: "Expenses",
+        actions: [
+            { id: "view-own", label: "View (Own)" },
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
+    {
+        id: "invoices",
+        label: "Invoices",
+        actions: [
+            { id: "view-own", label: "View (Own)" },
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
+    {
+        id: "knowledge-base",
+        label: "Knowledge Base",
+        actions: [
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
+    {
+        id: "leads",
+        label: "Leads",
+        actions: [
+            { id: "view-global", label: "View (Global)" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
+    {
+        id: "payments",
+        label: "Payments",
+        actions: [
+            { id: "view-own", label: "View (Own)" },
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
+    {
+        id: "projects",
+        label: "Projects",
+        actions: [
+            { id: "view-own", label: "View (Own)" },
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+            { id: "create-timesheets", label: "Create Timesheets" },
+            { id: "edit-milestones", label: "Edit Milestones" },
+            { id: "delete-milestones", label: "Delete Milestones" },
+        ],
+    },
+    {
+        id: "reports",
+        label: "Reports",
+        actions: [
+            { id: "view-global", label: "View (Global)" },
+            { id: "view-timesheets-report", label: "View Timesheets Report" },
+        ],
+    },
+    {
+        id: "settings",
+        label: "Settings",
+        actions: [
+            { id: "view-global", label: "View (Global)" },
+            { id: "edit", label: "Edit" },
+        ],
+    },
+    {
+        id: "staff",
+        label: "Staff",
+        actions: [
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
+    {
+        id: "staff-roles",
+        label: "Staff Roles",
+        actions: [
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
+    {
+        id: "tasks",
+        label: "Tasks",
+        actions: [
+            { id: "view-own", label: "View (Own)" },
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
+            { id: "delete", label: "Delete" },
+            { id: "edit-timesheets-global", label: "Edit Timesheets (Global)" },
+            { id: "edit-own-timesheets", label: "Edit Own Timesheets" },
+            { id: "delete-timesheets-global", label: "Delete Timesheets (Global)" },
+            { id: "delete-own-timesheets", label: "Delete Own Timesheets" },
+        ],
+    },
+    {
+        id: "task-checklist-templates",
+        label: "Task Checklist Templates",
+        actions: [
+            { id: "create", label: "Create" },
+            { id: "delete", label: "Delete" },
+        ],
+    },
 ];
-
-// Action columns for the matrix header
-const ACTION_COLUMNS = ["view", "create", "edit", "delete"];
 
 // Role templates for quick setup
 const ROLE_TEMPLATES: { name: string; description: string; permissions: string[] }[] = [
@@ -51,49 +216,52 @@ const ROLE_TEMPLATES: { name: string; description: string; permissions: string[]
         name: "Sales Manager",
         description: "Full access to leads, customers, invoices, and estimates",
         permissions: [
-            "leads-view", "leads-create", "leads-edit", "leads-delete",
-            "customers-view", "customers-create", "customers-edit",
-            "invoices-view", "invoices-create", "invoices-edit",
-            "estimates-view", "estimates-create", "estimates-edit",
-            "contracts-view", "contracts-create",
-            "reports-view",
+            "leads-view-global", "leads-delete",
+            "customers-view-own", "customers-view-global", "customers-create", "customers-edit",
+            "invoices-view-own", "invoices-view-global", "invoices-create", "invoices-edit",
+            "estimates-view-own", "estimates-view-global", "estimates-create", "estimates-edit",
+            "contracts-view-own", "contracts-view-global", "contracts-create",
+            "reports-view-global",
         ],
     },
     {
         name: "Accountant",
         description: "Full access to financial modules",
         permissions: [
-            "invoices-view", "invoices-create", "invoices-edit", "invoices-delete",
-            "expenses-view", "expenses-create", "expenses-edit", "expenses-delete",
-            "credit-notes-view", "credit-notes-create", "credit-notes-edit",
-            "customers-view",
-            "reports-view",
+            "invoices-view-own", "invoices-view-global", "invoices-create", "invoices-edit", "invoices-delete",
+            "expenses-view-own", "expenses-view-global", "expenses-create", "expenses-edit", "expenses-delete",
+            "credit-notes-view-own", "credit-notes-view-global", "credit-notes-create", "credit-notes-edit",
+            "payments-view-own", "payments-view-global", "payments-create", "payments-edit",
+            "customers-view-global",
+            "reports-view-global",
         ],
     },
     {
         name: "Support Agent",
         description: "Handle support tickets and view customers",
         permissions: [
-            "support-view", "support-create", "support-edit",
-            "customers-view",
-            "tasks-view", "tasks-create", "tasks-edit",
+            "customers-view-own", "customers-view-global",
+            "tasks-view-own", "tasks-create", "tasks-edit",
+            "knowledge-base-view-global",
         ],
     },
     {
         name: "Project Manager",
         description: "Manage projects, tasks, and team assignments",
         permissions: [
-            "projects-view", "projects-create", "projects-edit",
-            "tasks-view", "tasks-create", "tasks-edit", "tasks-delete",
-            "staff-view",
-            "customers-view",
-            "reports-view",
+            "projects-view-own", "projects-view-global", "projects-create", "projects-edit",
+            "projects-create-timesheets", "projects-edit-milestones", "projects-delete-milestones",
+            "tasks-view-own", "tasks-view-global", "tasks-create", "tasks-edit", "tasks-delete",
+            "tasks-edit-timesheets-global", "tasks-edit-own-timesheets",
+            "staff-view-global",
+            "customers-view-global",
+            "reports-view-global", "reports-view-timesheets-report",
         ],
     },
 ];
 
 interface RoleFormProps {
-    role?: Role; // If provided, we're editing
+    role?: Role;
     trigger?: React.ReactNode;
     onSuccess?: () => void;
 }
@@ -104,6 +272,7 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
     const [roleName, setRoleName] = useState("");
     const [description, setDescription] = useState("");
     const [permissions, setPermissions] = useState<string[]>([]);
+    const [expandedModules, setExpandedModules] = useState<string[]>([]);
     const { createRole, updateRole } = useRoles();
 
     const isEditing = !!role;
@@ -114,23 +283,38 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
             setRoleName(role.name || "");
             setDescription(role.description || "");
             setPermissions(role.permissions || []);
+            // Expand modules that have permissions
+            const modulesWithPerms = PERMISSION_MODULES
+                .filter(m => m.actions.some(a => (role.permissions || []).includes(`${m.id}-${a.id}`)))
+                .map(m => m.id);
+            setExpandedModules(modulesWithPerms);
         } else if (open && !role) {
             setRoleName("");
             setDescription("");
             setPermissions([]);
+            setExpandedModules([]);
         }
     }, [open, role]);
 
     const handleOpenChange = (newOpen: boolean) => {
         setOpen(newOpen);
         if (!newOpen) {
-            // Reset form on close
             setTimeout(() => {
                 setRoleName("");
                 setDescription("");
                 setPermissions([]);
+                setExpandedModules([]);
             }, 300);
         }
+    };
+
+    // Toggle module expansion
+    const toggleExpanded = (moduleId: string) => {
+        setExpandedModules(prev =>
+            prev.includes(moduleId)
+                ? prev.filter(id => id !== moduleId)
+                : [...prev, moduleId]
+        );
     };
 
     // Toggle a single permission
@@ -141,8 +325,8 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
     };
 
     // Toggle all actions for a module
-    const toggleModule = (moduleId: string, actions: string[]) => {
-        const modulePerms = actions.map(a => `${moduleId}-${a}`);
+    const toggleModule = (moduleId: string, actions: { id: string }[]) => {
+        const modulePerms = actions.map(a => `${moduleId}-${a.id}`);
         const allSelected = modulePerms.every(p => permissions.includes(p));
 
         if (allSelected) {
@@ -153,19 +337,18 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
     };
 
     // Check if all actions for a module are selected
-    const isModuleFullySelected = (moduleId: string, actions: string[]) => {
-        return actions.every(a => permissions.includes(`${moduleId}-${a}`));
+    const isModuleFullySelected = (moduleId: string, actions: { id: string }[]) => {
+        return actions.every(a => permissions.includes(`${moduleId}-${a.id}`));
     };
 
-    // Check if some (but not all) actions for a module are selected
-    const isModulePartiallySelected = (moduleId: string, actions: string[]) => {
-        const selected = actions.filter(a => permissions.includes(`${moduleId}-${a}`));
-        return selected.length > 0 && selected.length < actions.length;
+    // Check selection count for module
+    const getModuleSelectionCount = (moduleId: string, actions: { id: string }[]) => {
+        return actions.filter(a => permissions.includes(`${moduleId}-${a.id}`)).length;
     };
 
     // Select All / Deselect All
     const allPermissions = useMemo(() => {
-        return PERMISSION_MODULES.flatMap(m => m.actions.map(a => `${m.id}-${a}`));
+        return PERMISSION_MODULES.flatMap(m => m.actions.map(a => `${m.id}-${a.id}`));
     }, []);
 
     const isAllSelected = allPermissions.every(p => permissions.includes(p));
@@ -185,6 +368,11 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
             setRoleName(template.name);
             setDescription(template.description);
             setPermissions(template.permissions);
+            // Expand modules with permissions
+            const modulesWithPerms = PERMISSION_MODULES
+                .filter(m => m.actions.some(a => template.permissions.includes(`${m.id}-${a.id}`)))
+                .map(m => m.id);
+            setExpandedModules(modulesWithPerms);
             toast.success(`Applied "${template.name}" template`);
         }
     };
@@ -248,9 +436,7 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {/* Role Information */}
                     <div className="space-y-4">
-                        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                            Role Information
-                        </h3>
+                        <h3 className="font-semibold text-gray-900">Role Information</h3>
 
                         {/* Template Selector (only for new roles) */}
                         {!isEditing && (
@@ -297,88 +483,94 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="font-semibold text-gray-900">Permissions</h3>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={toggleAll}
-                                className="text-xs"
-                            >
-                                {isAllSelected ? "Deselect All" : "Select All"}
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">
+                                    {permissions.length} selected
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={toggleAll}
+                                    className="text-xs"
+                                >
+                                    {isAllSelected ? "Deselect All" : "Select All"}
+                                </Button>
+                            </div>
                         </div>
 
-                        {/* Matrix Table */}
-                        <div className="border rounded-lg overflow-hidden">
-                            {/* Header */}
-                            <div className="grid grid-cols-6 bg-gray-100 border-b">
-                                <div className="col-span-2 px-4 py-3 font-medium text-gray-700">
-                                    Module
-                                </div>
-                                {ACTION_COLUMNS.map(action => (
-                                    <div
-                                        key={action}
-                                        className="px-2 py-3 text-center font-medium text-gray-700 capitalize text-sm"
-                                    >
-                                        {action}
-                                    </div>
-                                ))}
-                            </div>
+                        {/* Accordion-style Module List */}
+                        <div className="border rounded-lg overflow-hidden divide-y">
+                            {PERMISSION_MODULES.map((module) => {
+                                const isExpanded = expandedModules.includes(module.id);
+                                const isFullySelected = isModuleFullySelected(module.id, module.actions);
+                                const selectionCount = getModuleSelectionCount(module.id, module.actions);
 
-                            {/* Rows */}
-                            <div className="divide-y">
-                                {PERMISSION_MODULES.map((module) => {
-                                    const isFullySelected = isModuleFullySelected(module.id, module.actions);
-                                    const isPartiallySelected = isModulePartiallySelected(module.id, module.actions);
-
-                                    return (
+                                return (
+                                    <div key={module.id}>
+                                        {/* Module Header */}
                                         <div
-                                            key={module.id}
-                                            className="grid grid-cols-6 hover:bg-gray-50 transition-colors"
+                                            className={cn(
+                                                "flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors",
+                                                isExpanded && "bg-gray-50"
+                                            )}
+                                            onClick={() => toggleExpanded(module.id)}
                                         >
-                                            {/* Module Name with Toggle */}
-                                            <div className="col-span-2 px-4 py-3 flex items-center gap-3">
+                                            <div className="flex items-center gap-3">
                                                 <Checkbox
                                                     checked={isFullySelected}
-                                                    className={isPartiallySelected ? "data-[state=unchecked]:bg-gray-300" : ""}
+                                                    onClick={(e) => e.stopPropagation()}
                                                     onCheckedChange={() => toggleModule(module.id, module.actions)}
                                                 />
                                                 <span className="font-medium text-gray-800">
                                                     {module.label}
                                                 </span>
+                                                {selectionCount > 0 && !isFullySelected && (
+                                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                                        {selectionCount}/{module.actions.length}
+                                                    </span>
+                                                )}
+                                                {isFullySelected && (
+                                                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                                        All
+                                                    </span>
+                                                )}
                                             </div>
-
-                                            {/* Action Checkboxes */}
-                                            {ACTION_COLUMNS.map(action => {
-                                                const permId = `${module.id}-${action}`;
-                                                const hasAction = module.actions.includes(action);
-                                                const isChecked = permissions.includes(permId);
-
-                                                return (
-                                                    <div
-                                                        key={action}
-                                                        className="px-2 py-3 flex items-center justify-center"
-                                                    >
-                                                        {hasAction ? (
-                                                            <Checkbox
-                                                                checked={isChecked}
-                                                                onCheckedChange={() => togglePermission(permId)}
-                                                                className="h-5 w-5"
-                                                            />
-                                                        ) : (
-                                                            <span className="text-gray-300">—</span>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
+                                            {isExpanded ? (
+                                                <ChevronUp className="h-4 w-4 text-gray-400" />
+                                            ) : (
+                                                <ChevronDown className="h-4 w-4 text-gray-400" />
+                                            )}
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
 
-                        {/* Permission Summary */}
-                        <div className="text-sm text-gray-500">
-                            {permissions.length} permission{permissions.length !== 1 ? "s" : ""} selected
+                                        {/* Module Actions (Expanded) */}
+                                        {isExpanded && (
+                                            <div className="px-4 py-3 bg-gray-50 border-t">
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                    {module.actions.map((action) => {
+                                                        const permId = `${module.id}-${action.id}`;
+                                                        const isChecked = permissions.includes(permId);
+
+                                                        return (
+                                                            <label
+                                                                key={action.id}
+                                                                className="flex items-center gap-2 cursor-pointer"
+                                                            >
+                                                                <Checkbox
+                                                                    checked={isChecked}
+                                                                    onCheckedChange={() => togglePermission(permId)}
+                                                                />
+                                                                <span className="text-sm text-gray-700">
+                                                                    {action.label}
+                                                                </span>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
