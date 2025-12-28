@@ -387,10 +387,27 @@ service cloud.firestore {
     // PLATFORM CONFIG (SUPERADMIN)
     // ============================================
     
-    // Platform-level configuration (landing page, etc.)
+    // Platform-level configuration (landing page, site design, etc.)
     match /platform/{docId} {
       allow read: if true;
       allow write: if isSuperAdmin();
+      
+      // Email templates subcollection
+      match /emailTemplates/templates/{templateId} {
+        allow read: if isSuperAdmin();
+        allow write: if isSuperAdmin();
+        
+        // Template versions
+        match /versions/{versionId} {
+          allow read, write: if isSuperAdmin();
+        }
+      }
+      
+      // Site pages for site builder
+      match /pages/items/{pageId} {
+        allow read: if true; // Public can read published pages
+        allow write: if isSuperAdmin();
+      }
     }
     
     // Subscription plans
@@ -398,6 +415,22 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isSuperAdmin();
     }
+
+    // Platform tickets (support tickets to super admin)
+    match /platformTickets/{ticketId} {
+      // Tenant users can read/write their own org's tickets
+      allow read: if canReadByOrg() || isSuperAdmin();
+      allow create: if request.auth != null && hasValidOrgId();
+      allow update: if canModifyByOrg() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // System banners (super admin broadcasts)
+    match /system_banners/{bannerId} {
+      allow read: if request.auth != null; // All authenticated users can read
+      allow write: if isSuperAdmin();
+    }
+
 
     // ============================================
     // OTHER COLLECTIONS
