@@ -1,0 +1,19 @@
+# Build outputs
+.next
+out
+build
+.firebase
+functions
+
+# Dependencies
+node_modules
+
+# Generated files
+*.tsbuildinfo
+coverage
+*.log
+
+# Package files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
