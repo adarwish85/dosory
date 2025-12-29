@@ -407,7 +407,8 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 createdBy: profile.uid,
             });
 
-            await addDoc(collection(db, "contacts"), {
+            // Create contact for the new customer
+            const contactData = {
                 customerId: customerRef.id,
                 firstName: leadDoc.name.split(" ")[0] || leadDoc.name,
                 lastName: leadDoc.name.split(" ").slice(1).join(" ") || "",
@@ -421,7 +422,10 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 createdBy: profile.uid,
-            });
+            };
+            console.log("[convertToCustomer] Creating contact with data:", { ...contactData, customerId: customerRef.id, orgId: profile.orgId });
+            const contactRef = await addDoc(collection(db, "contacts"), contactData);
+            console.log("[convertToCustomer] Contact created with ID:", contactRef.id);
 
             // Transfer related items (proposals, estimates, tasks)
             const transferRelated = async (coll: string, field: string) => {

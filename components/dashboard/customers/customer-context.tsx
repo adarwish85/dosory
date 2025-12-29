@@ -115,6 +115,9 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
             return;
         }
 
+        // Debug: Log query parameters
+        console.log("[CustomerProvider] Loading contacts for customerId:", customerId, "orgId:", profile.orgId);
+
         // Query without orderBy to avoid index requirement - sort client-side
         const q = query(
             collection(db, "contacts"),
@@ -127,6 +130,7 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
                 id: doc.id,
                 ...doc.data(),
             })) as Contact[];
+            console.log("[CustomerProvider] Contacts loaded:", contactsData.length, contactsData.map(c => ({ id: c.id, customerId: c.customerId, orgId: c.orgId })));
             // Sort client-side by lastName
             contactsData.sort((a, b) => (a.lastName || "").localeCompare(b.lastName || ""));
             setContacts(contactsData);
