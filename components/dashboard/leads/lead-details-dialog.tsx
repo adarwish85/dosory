@@ -161,15 +161,21 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     useEffect(() => {
         if (!lead?.id || !profile?.orgId) return;
 
+        // Query without orderBy to avoid index requirement
         const notesQuery = query(
             collection(db, "leadNotes"),
             where("leadId", "==", lead.id),
-            where("orgId", "==", profile.orgId),
-            orderBy("createdAt", "desc")
+            where("orgId", "==", profile.orgId)
         );
 
         const unsubscribe = onSnapshot(notesQuery, (snapshot) => {
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LeadNote[];
+            // Sort client-side by createdAt descending
+            data.sort((a, b) => {
+                const aTime = a.createdAt?.toMillis?.() || 0;
+                const bTime = b.createdAt?.toMillis?.() || 0;
+                return bTime - aTime; // descending
+            });
             setNotes(data);
         });
 
@@ -180,15 +186,21 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     useEffect(() => {
         if (!lead?.id || !profile?.orgId) return;
 
+        // Query without orderBy to avoid index requirement
         const remindersQuery = query(
             collection(db, "leadReminders"),
             where("leadId", "==", lead.id),
-            where("orgId", "==", profile.orgId),
-            orderBy("date", "asc")
+            where("orgId", "==", profile.orgId)
         );
 
         const unsubscribe = onSnapshot(remindersQuery, (snapshot) => {
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LeadReminder[];
+            // Sort client-side by date ascending
+            data.sort((a, b) => {
+                const aTime = a.date?.toMillis?.() || 0;
+                const bTime = b.date?.toMillis?.() || 0;
+                return aTime - bTime; // ascending
+            });
             setReminders(data);
         });
 

@@ -93,11 +93,11 @@ export function LeadProvider({ children }: LeadProviderProps) {
             return;
         }
 
+        // Query without orderBy to avoid index requirement - sort client-side
         const q = query(
             collection(db, "contacts"),
             where("orgId", "==", profile.orgId),
-            where("leadId", "==", leadId),
-            orderBy("lastName", "asc")
+            where("leadId", "==", leadId)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -105,6 +105,8 @@ export function LeadProvider({ children }: LeadProviderProps) {
                 id: doc.id,
                 ...doc.data(),
             })) as Contact[];
+            // Sort client-side by lastName
+            contactsData.sort((a, b) => (a.lastName || "").localeCompare(b.lastName || ""));
             setContacts(contactsData);
         }, (err) => {
             console.error("Error loading contacts:", err);
