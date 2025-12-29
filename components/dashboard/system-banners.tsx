@@ -18,16 +18,24 @@ export function SystemBanners() {
     const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
     useEffect(() => {
-        // Only fetch active banners
+        // Only fetch active banners - query without orderBy to avoid index requirement
         const q = query(
             collection(db, "system_banners"),
-            where("active", "==", true),
-            orderBy("createdAt", "desc")
+            where("active", "==", true)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Banner[];
+            // Sort client-side by createdAt descending
+            data.sort((a: any, b: any) => {
+                const aTime = a.createdAt?.toMillis?.() || 0;
+                const bTime = b.createdAt?.toMillis?.() || 0;
+                return bTime - aTime;
+            });
             setBanners(data);
+        }, (error) => {
+            // Silently handle permission errors - banners are optional
+            console.warn("SystemBanners: Could not load system banners:", error.message);
         });
 
         return () => unsubscribe();
