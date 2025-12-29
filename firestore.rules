@@ -223,6 +223,13 @@ service cloud.firestore {
       allow update, delete: if canModifyByOrg();
     }
 
+    // Lead Files
+    match /leadFiles/{fileId} {
+      allow read: if canReadByOrg();
+      allow create: if canCreateByOrg();
+      allow update, delete: if canModifyByOrg();
+    }
+
     // ============================================
     // SALES - INVOICES, ESTIMATES, PROPOSALS
     // ============================================
