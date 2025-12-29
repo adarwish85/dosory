@@ -471,6 +471,66 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 await updateDoc(doc(db, "tasks", taskDoc.id), { relatedTo: { type: "customer", id: customerRef.id }, transferredFromLeadId: leadId, updatedAt: serverTimestamp() });
             }
 
+            // Transfer lead notes (from subcollection to root-level notes collection)
+            console.log("[convertToCustomer] Transferring lead notes...");
+            const leadNotesRef = collection(db, "leads", leadId, "notes");
+            const leadNotesSnap = await getDocs(leadNotesRef);
+            for (const noteDoc of leadNotesSnap.docs) {
+                const noteData = noteDoc.data();
+                // Create note in root-level notes collection with customerId
+                await addDoc(collection(db, "notes"), {
+                    ...noteData,
+                    customerId: customerRef.id,
+                    orgId: profile.orgId,
+                    transferredFromLeadId: leadId,
+                    transferredFromNoteId: noteDoc.id,
+                    createdAt: noteData.createdAt || serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+                // Delete original note from lead subcollection
+                await deleteDoc(doc(db, "leads", leadId, "notes", noteDoc.id));
+            }
+            console.log(`[convertToCustomer] Transferred ${leadNotesSnap.docs.length} notes`);
+
+            // Transfer lead reminders (from leadReminders collection to reminders collection)
+            console.log("[convertToCustomer] Transferring lead reminders...");
+            const leadRemindersQuery = query(collection(db, "leadReminders"), where("leadId", "==", leadId), where("orgId", "==", profile.orgId));
+            const leadRemindersSnap = await getDocs(leadRemindersQuery);
+            for (const reminderDoc of leadRemindersSnap.docs) {
+                const reminderData = reminderDoc.data();
+                // Create reminder in root-level reminders collection with customerId
+                await addDoc(collection(db, "reminders"), {
+                    ...reminderData,
+                    customerId: customerRef.id,
+                    transferredFromLeadId: leadId,
+                    transferredFromReminderId: reminderDoc.id,
+                    updatedAt: serverTimestamp(),
+                });
+                // Delete original reminder
+                await deleteDoc(doc(db, "leadReminders", reminderDoc.id));
+            }
+            console.log(`[convertToCustomer] Transferred ${leadRemindersSnap.docs.length} reminders`);
+
+            // Transfer lead files (from leadFiles collection to customerFiles collection)
+            console.log("[convertToCustomer] Transferring lead files...");
+            const leadFilesQuery = query(collection(db, "leadFiles"), where("leadId", "==", leadId), where("orgId", "==", profile.orgId));
+            const leadFilesSnap = await getDocs(leadFilesQuery);
+            for (const fileDoc of leadFilesSnap.docs) {
+                const fileData = fileDoc.data();
+                // Create file record in customerFiles collection
+                await addDoc(collection(db, "customerFiles"), {
+                    ...fileData,
+                    customerId: customerRef.id,
+                    transferredFromLeadId: leadId,
+                    transferredFromFileId: fileDoc.id,
+                    updatedAt: serverTimestamp(),
+                });
+                // Delete original file record (note: actual file in storage remains)
+                await deleteDoc(doc(db, "leadFiles", fileDoc.id));
+            }
+            console.log(`[convertToCustomer] Transferred ${leadFilesSnap.docs.length} files`);
+
+            console.log("[convertToCustomer] Conversion complete, deleting lead...");
             await deleteDoc(doc(db, "leads", leadId));
             return customerRef.id;
         },
