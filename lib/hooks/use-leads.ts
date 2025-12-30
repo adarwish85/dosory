@@ -440,10 +440,12 @@ export function useLeads(options: UseLeadsOptions = {}) {
             });
 
             // Create contact for the new customer
+            const leadName = leadDoc.name || "Contact";
+            const nameParts = leadName.trim().split(" ");
             const contactData = {
                 customerId: customerRef.id,
-                firstName: leadDoc.name.split(" ")[0] || leadDoc.name,
-                lastName: leadDoc.name.split(" ").slice(1).join(" ") || "",
+                firstName: nameParts[0] || leadName,
+                lastName: nameParts.slice(1).join(" ") || "",
                 email: finalEmail,
                 phone: leadDoc.phone || "",
                 position: leadDoc.position || "",
@@ -460,8 +462,13 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 customerId: customerRef.id,
                 orgId: profile.orgId,
             });
-            const contactRef = await addDoc(collection(db, "contacts"), contactData);
-            console.log("[convertToCustomer] Contact created with ID:", contactRef.id);
+            try {
+                const contactRef = await addDoc(collection(db, "contacts"), contactData);
+                console.log("[convertToCustomer] Contact created with ID:", contactRef.id);
+            } catch (contactErr) {
+                console.error("[convertToCustomer] Failed to create contact:", contactErr);
+                // Don't throw - customer was already created, log and continue
+            }
 
             // Transfer related items (proposals, estimates, tasks)
             const transferRelated = async (coll: string, field: string) => {
@@ -469,6 +476,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 const snap = await getDocs(q);
                 const batch = writeBatch(db);
                 snap.docs.forEach((d) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const update: any = {
                         customerId: customerRef.id,
                         transferredFromLeadId: leadId,
@@ -637,7 +645,9 @@ export function useLead(id: string | null) {
 
     useEffect(() => {
         if (!id) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLead(null);
+
             setLoading(false);
             return;
         }
