@@ -34,6 +34,7 @@ import {
     type DataDensity,
     type LayoutItem,
     type LayoutPreset,
+    type WidgetSettings,
 } from "@/lib/stores/dashboard-store";
 import { BaseWidget } from "./BaseWidget";
 
