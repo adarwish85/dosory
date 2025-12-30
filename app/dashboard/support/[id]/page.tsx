@@ -246,7 +246,8 @@ export default function TicketPage() {
                 <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">
                         {ticket.lastReply
-                            ? `Last Reply: ${new Date(ticket.lastReply?.toDate?.() || ticket.lastReply).toLocaleDateString()}`
+                            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              `Last Reply: ${new Date((ticket.lastReply as any).toDate?.() || ticket.lastReply).toLocaleDateString()}`
                             : "No replies yet"}
                     </span>
                     <div className="flex items-center gap-2">
