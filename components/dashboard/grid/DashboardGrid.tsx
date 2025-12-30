@@ -4,8 +4,15 @@ import React, { useState, useCallback, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import {
-    Edit3, Save, RotateCcw, Layout as LayoutIcon,
-    Palette, SlidersHorizontal, Plus, Loader2, X
+    Edit3,
+    Save,
+    RotateCcw,
+    Layout as LayoutIcon,
+    Palette,
+    SlidersHorizontal,
+    Plus,
+    Loader2,
+    X,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -26,7 +33,7 @@ import {
     type WidgetStyle,
     type DataDensity,
     type LayoutItem,
-    type LayoutPreset
+    type LayoutPreset,
 } from "@/lib/stores/dashboard-store";
 import { BaseWidget } from "./BaseWidget";
 
@@ -41,13 +48,14 @@ import { CustomersWidget } from "../widgets/CustomersWidget";
 import { PerformanceWidget } from "../widgets/PerformanceWidget";
 
 // Dynamic import GridWrapper to avoid SSR issues with react-grid-layout
-const GridWrapper = dynamic(
-    () => import("./GridWrapper").then((mod) => mod.GridWrapper),
-    {
-        ssr: false,
-        loading: () => <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-gray-400" /></div>
-    }
-);
+const GridWrapper = dynamic(() => import("./GridWrapper").then((mod) => mod.GridWrapper), {
+    ssr: false,
+    loading: () => (
+        <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+    ),
+});
 
 // Widget metadata for catalog
 const WIDGET_CATALOG: Record<WidgetId, { title: string; description: string; icon: string }> = {
@@ -96,7 +104,7 @@ export function DashboardGrid({ className }: DashboardGridProps) {
         updateGlobalSettings,
         loadFromFirestore,
         saveToFirestore,
-        discardChanges
+        discardChanges,
     } = useDashboardStore();
 
     // Get orgId/userId from user profile
@@ -140,36 +148,50 @@ export function DashboardGrid({ className }: DashboardGridProps) {
         }
     }, [hasUnsavedChanges, handleDiscard, setEditMode]);
 
-    const handleLayoutChange = useCallback((newLayout: LayoutItem[]) => {
-        if (!isEditing) return;
-        updateLayout(newLayout);
-    }, [updateLayout, isEditing]);
+    const handleLayoutChange = useCallback(
+        (newLayout: LayoutItem[]) => {
+            if (!isEditing) return;
+            updateLayout(newLayout);
+        },
+        [updateLayout, isEditing]
+    );
 
-    const handleDragResizeStop = useCallback((newLayout: LayoutItem[]) => {
-        updateLayout(newLayout);
-        // No auto-sync - user must explicitly save
-    }, [updateLayout]);
+    const handleDragResizeStop = useCallback(
+        (newLayout: LayoutItem[]) => {
+            updateLayout(newLayout);
+            // No auto-sync - user must explicitly save
+        },
+        [updateLayout]
+    );
 
-    const handlePresetChange = useCallback((preset: string) => {
-        applyPreset(preset as LayoutPreset);
-        // No auto-sync - user must explicitly save
-    }, [applyPreset]);
+    const handlePresetChange = useCallback(
+        (preset: string) => {
+            applyPreset(preset as LayoutPreset);
+            // No auto-sync - user must explicitly save
+        },
+        [applyPreset]
+    );
 
-    const handleStyleChange = useCallback((style: string) => {
-        updateGlobalSettings({ widgetStyle: style as WidgetStyle });
-        // No auto-sync - user must explicitly save
-    }, [updateGlobalSettings]);
+    const handleStyleChange = useCallback(
+        (style: string) => {
+            updateGlobalSettings({ widgetStyle: style as WidgetStyle });
+            // No auto-sync - user must explicitly save
+        },
+        [updateGlobalSettings]
+    );
 
-    const handleDensityChange = useCallback((density: string) => {
-        updateGlobalSettings({ dataDensity: density as DataDensity });
-        // No auto-sync - user must explicitly save
-    }, [updateGlobalSettings]);
+    const handleDensityChange = useCallback(
+        (density: string) => {
+            updateGlobalSettings({ dataDensity: density as DataDensity });
+            // No auto-sync - user must explicitly save
+        },
+        [updateGlobalSettings]
+    );
 
     // Calculate enabled widgets and their layout
-    const enabledWidgets = useMemo(() => config.widgets.filter(w => w.enabled), [config.widgets]);
+    const enabledWidgets = useMemo(() => config.widgets.filter((w) => w.enabled), [config.widgets]);
     const displayLayout = useMemo(() => {
-        return config.layout
-            .filter(l => enabledWidgets.some(w => w.id === l.i));
+        return config.layout.filter((l) => enabledWidgets.some((w) => w.id === l.i));
     }, [config.layout, enabledWidgets]);
 
     // Get greeting based on time of day
@@ -194,7 +216,12 @@ export function DashboardGrid({ className }: DashboardGridProps) {
             {/* Dashboard Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{greeting}, {profile?.firstName || (profile?.displayName?.includes(" ") ? profile.displayName.split(" ")[0] : "there")}! 👋</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        {greeting},{" "}
+                        {profile?.firstName ||
+                            (profile?.displayName?.includes(" ") ? profile.displayName.split(" ")[0] : "there")}
+                        ! 👋
+                    </h1>
                     <p className="text-sm text-gray-500">Here's what's happening with your business today.</p>
                 </div>
 
@@ -204,7 +231,11 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-orange-600">Unsaved changes</span>
                             <Button size="sm" onClick={handleSave} disabled={isSaving}>
-                                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+                                {isSaving ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Save className="h-4 w-4 mr-1" />
+                                )}
                                 Save
                             </Button>
                             <Button size="sm" variant="ghost" onClick={handleDiscard}>
@@ -260,21 +291,12 @@ export function DashboardGrid({ className }: DashboardGridProps) {
 
                     {/* Edit Mode Toggle */}
                     {!isEditing ? (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                            onClick={() => setEditMode(true)}
-                        >
+                        <Button variant="outline" size="sm" className="gap-2" onClick={() => setEditMode(true)}>
                             <Edit3 className="h-4 w-4" />
                             Edit
                         </Button>
                     ) : (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleCancelEdit}
-                        >
+                        <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
                             <X className="h-4 w-4" />
                         </Button>
                     )}
@@ -292,7 +314,7 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                                 <DropdownMenuLabel>Widget Catalog</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {Object.entries(WIDGET_CATALOG).map(([id, meta]) => {
-                                    const widget = config.widgets.find(w => w.id === id);
+                                    const widget = config.widgets.find((w) => w.id === id);
                                     const isEnabled = widget?.enabled ?? false;
                                     return (
                                         <DropdownMenuItem
@@ -322,18 +344,22 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-blue-700">
                         <SlidersHorizontal className="h-4 w-4" />
-                        <span className="text-sm font-medium">Edit Mode: Drag widgets to rearrange, resize corners to adjust size</span>
+                        <span className="text-sm font-medium">
+                            Edit Mode: Drag widgets to rearrange, resize corners to adjust size
+                        </span>
                     </div>
                     <div className="flex items-center gap-2">
-                        {hasUnsavedChanges && (
-                            <span className="text-xs text-orange-600 mr-2">• Unsaved changes</span>
-                        )}
+                        {hasUnsavedChanges && <span className="text-xs text-orange-600 mr-2">• Unsaved changes</span>}
                         <Button size="sm" variant="ghost" onClick={handleDiscard} disabled={!hasUnsavedChanges}>
                             <RotateCcw className="h-4 w-4 mr-1" />
                             Discard
                         </Button>
                         <Button size="sm" onClick={handleSave} disabled={isSaving || !hasUnsavedChanges}>
-                            {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+                            {isSaving ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            ) : (
+                                <Save className="h-4 w-4 mr-1" />
+                            )}
                             Save Layout
                         </Button>
                     </div>
@@ -386,7 +412,12 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                     <div className="text-4xl mb-4">📊</div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">No widgets added yet</h3>
                     <p className="text-gray-500 mb-4">Click "Edit" and then "Add Widget" to customize your dashboard</p>
-                    <Button onClick={() => { setEditMode(true); setShowCatalog(true); }}>
+                    <Button
+                        onClick={() => {
+                            setEditMode(true);
+                            setShowCatalog(true);
+                        }}
+                    >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Your First Widget
                     </Button>

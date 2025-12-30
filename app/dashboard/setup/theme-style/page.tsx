@@ -35,7 +35,7 @@ export default function ThemeStylePage() {
                             <Label>Sidebar Menu/Setup Menu Background Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#FFFFFF" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#FFFFFF' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#FFFFFF" }}></div>
                             </div>
                         </div>
 
@@ -43,7 +43,7 @@ export default function ThemeStylePage() {
                             <Label>Sidebar Menu/Setup Menu Links Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#333333" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#333333' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#333333" }}></div>
                             </div>
                         </div>
 
@@ -51,7 +51,7 @@ export default function ThemeStylePage() {
                             <Label>Sidebar Menu/Setup Active Item Background Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#F5F5F5" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#F5F5F5' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#F5F5F5" }}></div>
                             </div>
                         </div>
 
@@ -59,7 +59,7 @@ export default function ThemeStylePage() {
                             <Label>Sidebar Menu/Setup Active Item Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#000000" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#000000' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#000000" }}></div>
                             </div>
                         </div>
 
@@ -68,7 +68,7 @@ export default function ThemeStylePage() {
                             <Label>Top Header Background Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#FFFFFF" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#FFFFFF' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#FFFFFF" }}></div>
                             </div>
                         </div>
 
@@ -76,7 +76,7 @@ export default function ThemeStylePage() {
                             <Label>Top Header Links Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#333333" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#333333' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#333333" }}></div>
                             </div>
                         </div>
 
@@ -85,14 +85,12 @@ export default function ThemeStylePage() {
                             <Label>Main Content Background Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#F9FAFB" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#F9FAFB' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#F9FAFB" }}></div>
                             </div>
                         </div>
                     </div>
 
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                        Save
-                    </Button>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">Save</Button>
                 </TabsContent>
 
                 <TabsContent value="customers" className="space-y-6 mt-6">
@@ -101,7 +99,7 @@ export default function ThemeStylePage() {
                             <Label>Navigation Background Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#FFFFFF" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#FFFFFF' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#FFFFFF" }}></div>
                             </div>
                         </div>
 
@@ -109,7 +107,7 @@ export default function ThemeStylePage() {
                             <Label>Navigation Links Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#333333" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#333333' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#333333" }}></div>
                             </div>
                         </div>
 
@@ -117,7 +115,7 @@ export default function ThemeStylePage() {
                             <Label>Footer Background</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#F9FAFB" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#F9FAFB' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#F9FAFB" }}></div>
                             </div>
                         </div>
 
@@ -125,14 +123,12 @@ export default function ThemeStylePage() {
                             <Label>Footer Text Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#6B7280" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#6B7280' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#6B7280" }}></div>
                             </div>
                         </div>
                     </div>
 
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                        Save
-                    </Button>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">Save</Button>
                 </TabsContent>
 
                 <TabsContent value="buttons" className="space-y-6 mt-6">
@@ -141,7 +137,7 @@ export default function ThemeStylePage() {
                             <Label>Button Default</Label>
                             <div className="flex gap-2 mt-2 items-center">
                                 <Input className="flex-1" placeholder="#E5E7EB" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#E5E7EB' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#E5E7EB" }}></div>
                                 <Button variant="outline">Button Default</Button>
                             </div>
                         </div>
@@ -150,7 +146,7 @@ export default function ThemeStylePage() {
                             <Label>Button Primary</Label>
                             <div className="flex gap-2 mt-2 items-center">
                                 <Input className="flex-1" placeholder="#1F2937" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#1F2937' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#1F2937" }}></div>
                                 <Button className="bg-gray-900 text-white">Button Primary</Button>
                             </div>
                         </div>
@@ -159,7 +155,7 @@ export default function ThemeStylePage() {
                             <Label>Button Info</Label>
                             <div className="flex gap-2 mt-2 items-center">
                                 <Input className="flex-1" placeholder="#3B82F6" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#3B82F6' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#3B82F6" }}></div>
                                 <Button className="bg-blue-600 text-white">Button Info</Button>
                             </div>
                         </div>
@@ -168,7 +164,7 @@ export default function ThemeStylePage() {
                             <Label>Button Success</Label>
                             <div className="flex gap-2 mt-2 items-center">
                                 <Input className="flex-1" placeholder="#10B981" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#10B981' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#10B981" }}></div>
                                 <Button className="bg-green-600 text-white">Button Success</Button>
                             </div>
                         </div>
@@ -177,15 +173,13 @@ export default function ThemeStylePage() {
                             <Label>Button Danger</Label>
                             <div className="flex gap-2 mt-2 items-center">
                                 <Input className="flex-1" placeholder="#EF4444" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#EF4444' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#EF4444" }}></div>
                                 <Button className="bg-red-600 text-white">Button Danger</Button>
                             </div>
                         </div>
                     </div>
 
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                        Save
-                    </Button>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">Save</Button>
                 </TabsContent>
 
                 <TabsContent value="modals" className="space-y-6 mt-6">
@@ -194,7 +188,7 @@ export default function ThemeStylePage() {
                             <Label>Heading Background</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#FFFFFF" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#FFFFFF' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#FFFFFF" }}></div>
                             </div>
                         </div>
 
@@ -202,7 +196,7 @@ export default function ThemeStylePage() {
                             <Label>Heading Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#111827" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#111827' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#111827" }}></div>
                             </div>
                         </div>
 
@@ -210,7 +204,7 @@ export default function ThemeStylePage() {
                             <Label>Close Button Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#6B7280" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#6B7280' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#6B7280" }}></div>
                             </div>
                         </div>
 
@@ -218,7 +212,7 @@ export default function ThemeStylePage() {
                             <Label>Modal Header Text Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#111827" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#111827' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#111827" }}></div>
                             </div>
                         </div>
 
@@ -235,9 +229,7 @@ export default function ThemeStylePage() {
                         </div>
                     </div>
 
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                        Save
-                    </Button>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">Save</Button>
                 </TabsContent>
 
                 <TabsContent value="tables" className="space-y-6 mt-6">
@@ -246,7 +238,7 @@ export default function ThemeStylePage() {
                             <Label>Table Links Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#3B82F6" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#3B82F6' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#3B82F6" }}></div>
                             </div>
                         </div>
 
@@ -254,7 +246,7 @@ export default function ThemeStylePage() {
                             <Label>Table Links Hover/Focus Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#2563EB" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#2563EB' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#2563EB" }}></div>
                             </div>
                         </div>
 
@@ -262,7 +254,7 @@ export default function ThemeStylePage() {
                             <Label>Table Headings Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#111827" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#111827' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#111827" }}></div>
                             </div>
                         </div>
 
@@ -272,8 +264,12 @@ export default function ThemeStylePage() {
                                 <table className="w-full">
                                     <thead className="bg-gray-50">
                                         <tr>
-                                            <th className="px-4 py-2 text-left text-sm font-medium">Example Heading 1</th>
-                                            <th className="px-4 py-2 text-left text-sm font-medium">Example Heading 2</th>
+                                            <th className="px-4 py-2 text-left text-sm font-medium">
+                                                Example Heading 1
+                                            </th>
+                                            <th className="px-4 py-2 text-left text-sm font-medium">
+                                                Example Heading 2
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -290,7 +286,7 @@ export default function ThemeStylePage() {
                             <Label>Items Table Headings Background Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#F9FAFB" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#F9FAFB' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#F9FAFB" }}></div>
                             </div>
                         </div>
 
@@ -298,14 +294,12 @@ export default function ThemeStylePage() {
                             <Label>Items Table Headings Text Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#6B7280" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#6B7280' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#6B7280" }}></div>
                             </div>
                         </div>
                     </div>
 
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                        Save
-                    </Button>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">Save</Button>
                 </TabsContent>
 
                 <TabsContent value="general" className="space-y-6 mt-6">
@@ -314,7 +308,7 @@ export default function ThemeStylePage() {
                             <Label>Links Color (href)</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#3B82F6" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#3B82F6' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#3B82F6" }}></div>
                             </div>
                         </div>
 
@@ -322,7 +316,7 @@ export default function ThemeStylePage() {
                             <Label>Links Hover/Focus Color</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#2563EB" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#2563EB' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#2563EB" }}></div>
                             </div>
                         </div>
 
@@ -330,7 +324,7 @@ export default function ThemeStylePage() {
                             <Label>Admin Login Background</Label>
                             <div className="flex gap-2 mt-2">
                                 <Input className="flex-1" placeholder="#FFFFFF" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#FFFFFF' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#FFFFFF" }}></div>
                             </div>
                         </div>
 
@@ -338,7 +332,7 @@ export default function ThemeStylePage() {
                             <Label>Text Muted</Label>
                             <div className="flex gap-2 mt-2 items-center">
                                 <Input className="flex-1" placeholder="#6B7280" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#6B7280' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#6B7280" }}></div>
                                 <span className="text-gray-500 text-sm">Example Text Muted</span>
                             </div>
                         </div>
@@ -347,7 +341,7 @@ export default function ThemeStylePage() {
                             <Label>Text Danger</Label>
                             <div className="flex gap-2 mt-2 items-center">
                                 <Input className="flex-1" placeholder="#DC2626" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#DC2626' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#DC2626" }}></div>
                                 <span className="text-red-600 text-sm">Example Text Danger</span>
                             </div>
                         </div>
@@ -356,15 +350,13 @@ export default function ThemeStylePage() {
                             <Label>Text Warning</Label>
                             <div className="flex gap-2 mt-2 items-center">
                                 <Input className="flex-1" placeholder="#F59E0B" />
-                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: '#F59E0B' }}></div>
+                                <div className="w-12 h-10 border rounded" style={{ backgroundColor: "#F59E0B" }}></div>
                                 <span className="text-amber-600 text-sm">Example Text Warning</span>
                             </div>
                         </div>
                     </div>
 
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                        Save
-                    </Button>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">Save</Button>
                 </TabsContent>
 
                 <TabsContent value="tags" className="space-y-6 mt-6">
@@ -373,7 +365,7 @@ export default function ThemeStylePage() {
                             Customize tag colors for different statuses and categories
                         </p>
                         <div className="space-y-4">
-                            {['Primary', 'Success', 'Info', 'Warning', 'Danger'].map((tag) => (
+                            {["Primary", "Success", "Info", "Warning", "Danger"].map((tag) => (
                                 <div key={tag}>
                                     <Label>{tag} Tag Color</Label>
                                     <div className="flex gap-2 mt-2">
@@ -385,9 +377,7 @@ export default function ThemeStylePage() {
                         </div>
                     </div>
 
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                        Save
-                    </Button>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">Save</Button>
                 </TabsContent>
 
                 <TabsContent value="custom" className="space-y-6 mt-6">
@@ -402,9 +392,7 @@ export default function ThemeStylePage() {
                         </p>
                     </div>
 
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                        Save
-                    </Button>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">Save</Button>
                 </TabsContent>
             </Tabs>
         </div>

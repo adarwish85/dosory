@@ -48,11 +48,7 @@ export function usePermissions(): StaffPermissions {
             try {
                 // For staff, find their staff document by authUid
                 const staffRef = collection(db, "staff");
-                const q = query(
-                    staffRef,
-                    where("authUid", "==", user.uid),
-                    where("orgId", "==", profile.orgId)
-                );
+                const q = query(staffRef, where("authUid", "==", user.uid), where("orgId", "==", profile.orgId));
                 const snapshot = await getDocs(q);
 
                 if (!snapshot.empty) {
@@ -104,11 +100,7 @@ export function usePermissions(): StaffPermissions {
  * Check if user has a specific permission
  * Admins always return true
  */
-export function hasPermission(
-    permissions: string[],
-    isAdmin: boolean,
-    requiredPermission: string
-): boolean {
+export function hasPermission(permissions: string[], isAdmin: boolean, requiredPermission: string): boolean {
     if (isAdmin) return true;
     return permissions.includes(requiredPermission);
 }
@@ -117,11 +109,7 @@ export function hasPermission(
  * Check if user can access a module (has any view permission for it)
  * Example: canAccessModule(perms, isAdmin, "customers") checks for "customers-view"
  */
-export function canAccessModule(
-    permissions: string[],
-    isAdmin: boolean,
-    module: string
-): boolean {
+export function canAccessModule(permissions: string[], isAdmin: boolean, module: string): boolean {
     if (isAdmin) return true;
     return permissions.includes(`${module}-view`);
 }

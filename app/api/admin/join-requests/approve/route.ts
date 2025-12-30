@@ -8,10 +8,7 @@ export async function POST(request: NextRequest) {
         const { requestId, roleId, isAdmin, permissions, reviewerId } = body;
 
         if (!requestId || !reviewerId) {
-            return NextResponse.json(
-                { error: "Request ID and Reviewer ID are required" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Request ID and Reviewer ID are required" }, { status: 400 });
         }
 
         // Get the request document
@@ -19,10 +16,7 @@ export async function POST(request: NextRequest) {
         const requestSnap = await requestRef.get();
 
         if (!requestSnap.exists) {
-            return NextResponse.json(
-                { error: "Request not found" },
-                { status: 404 }
-            );
+            return NextResponse.json({ error: "Request not found" }, { status: 404 });
         }
 
         const requestData = requestSnap.data();
@@ -48,7 +42,7 @@ export async function POST(request: NextRequest) {
             permissions: permissions || [],
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            createdBy: reviewerId
+            createdBy: reviewerId,
         });
 
         // 2. Update User Document
@@ -56,7 +50,7 @@ export async function POST(request: NextRequest) {
         batch.update(userRef, {
             orgId: orgId,
             role: isAdmin ? "admin" : "staff",
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
         // 3. Update Request Document
@@ -65,7 +59,7 @@ export async function POST(request: NextRequest) {
             reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
             reviewedBy: reviewerId,
             assignedRole: roleId,
-            assignedPermissions: permissions
+            assignedPermissions: permissions,
         });
 
         // Commit DB changes
@@ -98,14 +92,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             emailSent,
-            message: "Request approved successfully"
+            message: "Request approved successfully",
         });
-
     } catch (error: any) {
         console.error("Error approving request:", error);
-        return NextResponse.json(
-            { error: error.message || "Failed to approve request" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: error.message || "Failed to approve request" }, { status: 500 });
     }
 }

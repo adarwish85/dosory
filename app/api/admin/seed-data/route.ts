@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin"; // Assuming this exists or similar
 import { FieldValue } from "firebase-admin/firestore";
@@ -36,7 +35,7 @@ export async function GET(req: NextRequest) {
         const customers = [
             { name: "Acme Corp", email: "contact@acme.com", status: "active" },
             { name: "Globex Inc", email: "info@globex.com", status: "active" },
-            { name: "Soylent Corp", email: "sales@soylent.com", status: "inactive" }
+            { name: "Soylent Corp", email: "sales@soylent.com", status: "inactive" },
         ];
 
         const customerIds = [];
@@ -46,7 +45,7 @@ export async function GET(req: NextRequest) {
                 orgId,
                 createdAt: FieldValue.serverTimestamp(),
                 phone: "555-0123",
-                address: "123 Business Rd"
+                address: "123 Business Rd",
             });
             customerIds.push(ref.id);
         }
@@ -54,7 +53,7 @@ export async function GET(req: NextRequest) {
         // 2. Create Projects
         const projects = [
             { title: "Website Redesign", budget: 5000, status: "in_progress", customerId: customerIds[0] },
-            { title: "Mobile App", budget: 15000, status: "planning", customerId: customerIds[1] }
+            { title: "Mobile App", budget: 15000, status: "planning", customerId: customerIds[1] },
         ];
 
         for (const p of projects) {
@@ -62,7 +61,7 @@ export async function GET(req: NextRequest) {
                 ...p,
                 orgId,
                 createdAt: FieldValue.serverTimestamp(),
-                dueDate: new Date(Date.now() + 86400000 * 30).toISOString()
+                dueDate: new Date(Date.now() + 86400000 * 30).toISOString(),
             });
         }
 
@@ -73,12 +72,12 @@ export async function GET(req: NextRequest) {
             { amount: 3500, status: "pending", date: new Date() },
             { amount: 800, status: "overdue", date: new Date(Date.now() - 86400000 * 15) },
             { amount: 5000, status: "paid", date: new Date(Date.now() - 86400000 * 45) }, // Last month
-            { amount: 450, status: "draft", date: new Date() }
+            { amount: 450, status: "draft", date: new Date() },
         ];
 
         for (const inv of invoices) {
             const total = inv.amount;
-            const amountPaid = inv.status === 'paid' ? total : 0;
+            const amountPaid = inv.status === "paid" ? total : 0;
             const amountDue = total - amountPaid;
 
             await adminDb.collection("invoices").add({
@@ -95,12 +94,11 @@ export async function GET(req: NextRequest) {
                 amountPaid: amountPaid,
                 amountDue: amountDue,
                 currency: "USD",
-                createdBy: userId
+                createdBy: userId,
             });
         }
 
         return NextResponse.json({ success: true, message: "Data seeded successfully" });
-
     } catch (error: any) {
         console.error("Seeding error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });

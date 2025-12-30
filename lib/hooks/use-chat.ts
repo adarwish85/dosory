@@ -16,7 +16,7 @@ import {
     getDoc,
     setDoc,
     increment,
-    writeBatch
+    writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -40,7 +40,7 @@ export interface Conversation {
         content: string;
         senderId: string;
         timestamp: Date;
-        type: 'text' | 'image' | 'file';
+        type: "text" | "image" | "file";
         read: boolean;
     };
     unreadCounts: Record<string, number>;
@@ -53,7 +53,7 @@ export interface Message {
     conversationId: string;
     senderId: string;
     content: string;
-    type: 'text' | 'image' | 'file';
+    type: "text" | "image" | "file";
     attachments?: { url: string; name: string; type: string }[];
     readBy: string[];
     timestamp: Date;
@@ -91,26 +91,32 @@ export function useConversations() {
             orderBy("updatedAt", "desc")
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => {
-                const d = doc.data();
-                return {
-                    id: doc.id,
-                    ...d,
-                    updatedAt: convertTimestamp(d.updatedAt),
-                    createdAt: convertTimestamp(d.createdAt),
-                    lastMessage: d.lastMessage ? {
-                        ...d.lastMessage,
-                        timestamp: convertTimestamp(d.lastMessage.timestamp)
-                    } : undefined
-                } as Conversation;
-            });
-            setConversations(data);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching conversations:", error);
-            setLoading(false);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => {
+                    const d = doc.data();
+                    return {
+                        id: doc.id,
+                        ...d,
+                        updatedAt: convertTimestamp(d.updatedAt),
+                        createdAt: convertTimestamp(d.createdAt),
+                        lastMessage: d.lastMessage
+                            ? {
+                                  ...d.lastMessage,
+                                  timestamp: convertTimestamp(d.lastMessage.timestamp),
+                              }
+                            : undefined,
+                    } as Conversation;
+                });
+                setConversations(data);
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error fetching conversations:", error);
+                setLoading(false);
+            }
+        );
 
         return () => unsubscribe();
     }, [profile?.uid, profile?.orgId]);
@@ -121,16 +127,16 @@ export function useConversations() {
         // Check if conversation already exists with this SINGLE participant + me
         // Note: For exact match of [me, other], we'd need a more complex query or client-side check.
         // Client-side check is feasible if list isn't huge.
-        const existing = conversations.find(c =>
-            c.participants.length === 2 && c.participants.includes(participantUid)
+        const existing = conversations.find(
+            (c) => c.participants.length === 2 && c.participants.includes(participantUid)
         );
 
         if (existing) return existing.id;
 
         // Create new
-        // We need execution detail of the other user. 
+        // We need execution detail of the other user.
         // Ideally we fetch it. For now, we might need to pass it or fetch it.
-        // Let's assume we fetch it or require it passed. 
+        // Let's assume we fetch it or require it passed.
         // Use a placeholder for now, calling code usually has User object.
         return null; // TODO: Implement robust creation requiring participant details
     };
@@ -153,31 +159,32 @@ export function useChatMessages(conversationId: string | null) {
         }
 
         setLoading(true);
-        const q = query(
-            collection(db, "conversations", conversationId, "messages"),
-            orderBy("timestamp", "asc")
+        const q = query(collection(db, "conversations", conversationId, "messages"), orderBy("timestamp", "asc"));
+
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => {
+                    const d = doc.data();
+                    return {
+                        id: doc.id,
+                        ...d,
+                        timestamp: convertTimestamp(d.timestamp),
+                    } as Message;
+                });
+                setMessages(data);
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error fetching messages:", error);
+                setLoading(false);
+            }
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => {
-                const d = doc.data();
-                return {
-                    id: doc.id,
-                    ...d,
-                    timestamp: convertTimestamp(d.timestamp)
-                } as Message;
-            });
-            setMessages(data);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching messages:", error);
-            setLoading(false);
-        });
-
         // Mark as read when entering/viewing
-        // We'll do this in a separate effect or function to avoid frequent writes 
-        // but for simplicity, we call a function here? 
-        // No, `useEffect` here runs on every message update. 
+        // We'll do this in a separate effect or function to avoid frequent writes
+        // but for simplicity, we call a function here?
+        // No, `useEffect` here runs on every message update.
         // We should mark as read if the last message is not read by us.
 
         return () => unsubscribe();
@@ -193,8 +200,7 @@ export function useChatMessages(conversationId: string | null) {
         }
     }, [conversationId, messages, profile?.uid]);
 
-
-    const sendMessage = async (content: string, type: 'text' | 'image' | 'file' = "text", attachments: any[] = []) => {
+    const sendMessage = async (content: string, type: "text" | "image" | "file" = "text", attachments: any[] = []) => {
         if (!conversationId || !profile) return;
 
         const batch = writeBatch(db);
@@ -207,13 +213,13 @@ export function useChatMessages(conversationId: string | null) {
             type,
             attachments,
             readBy: [profile.uid],
-            timestamp: serverTimestamp()
+            timestamp: serverTimestamp(),
         };
         batch.set(messageRef, messageData);
 
         // 2. Update conversation (lastMessage + unreadCounts)
         // We need to increment unread count for ALL participants EXCEPT sender
-        // Since we don't have participants list here easily without fetching doc, 
+        // Since we don't have participants list here easily without fetching doc,
         // we assume we can update using `increment`.
         // We ideally need the conversation doc to know who to increment.
         // Let's Fetch conversation doc first? Or assume caller passed participants?
@@ -225,13 +231,13 @@ export function useChatMessages(conversationId: string | null) {
             const convData = convSnap.data();
             const updates: any = {
                 lastMessage: {
-                    content: type === 'text' ? content : `Sent an ${type}`,
+                    content: type === "text" ? content : `Sent an ${type}`,
                     senderId: profile.uid,
                     timestamp: serverTimestamp(),
                     type,
-                    read: false
+                    read: false,
                 },
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
             };
 
             // Increment unread for others
@@ -258,7 +264,7 @@ export function useChatMessages(conversationId: string | null) {
         // 1. Reset unread count for user in conversation
         const convRef = doc(db, "conversations", convId);
         batch.update(convRef, {
-            [`unreadCounts.${profile.uid}`]: 0
+            [`unreadCounts.${profile.uid}`]: 0,
         });
 
         // 2. Add to readBy in message
@@ -266,8 +272,8 @@ export function useChatMessages(conversationId: string | null) {
         // batch.update(msgRef, {
         //     readBy: arrayUnion(profile.uid)
         // });
-        // NOTE: arrayUnion import needed if uncommented. 
-        // For efficiency, maybe just resetting unread count is enough for the Badge. 
+        // NOTE: arrayUnion import needed if uncommented.
+        // For efficiency, maybe just resetting unread count is enough for the Badge.
         // Read receipts might be overkill for now but good to have schema ready.
 
         await batch.commit(); // Only conversation update for now to save writes
@@ -297,7 +303,7 @@ export function useUnreadMessages() {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             let total = 0;
-            snapshot.docs.forEach(doc => {
+            snapshot.docs.forEach((doc) => {
                 const count = doc.data().unreadCounts?.[profile.uid] || 0;
                 total += count;
             });
@@ -327,14 +333,14 @@ export async function getOrCreateConversation(
 
     // We have to filter client side for exact match of query limitation
     // Fetch recent ones
-    // NOTE: This could be slow if user has many chats. 
+    // NOTE: This could be slow if user has many chats.
     // Optimization: Store a deterministic ID for 1:1 chats like `uid1_uid2` (sorted)
 
     const sortedIds = [currentUser.uid, otherUser.uid].sort();
     const deterministicId = `${sortedIds[0]}_${sortedIds[1]}`;
 
-    // Try to get by deterministic ID first? 
-    // But we are using auto-IDs currently? 
+    // Try to get by deterministic ID first?
+    // But we are using auto-IDs currently?
     // Let's use deterministic ID for 1:1 conversations to ensure uniqueness easily.
 
     const docRef = doc(db, "conversations", deterministicId);
@@ -350,14 +356,14 @@ export async function getOrCreateConversation(
         participants: [currentUser.uid, otherUser.uid],
         participantDetails: {
             [currentUser.uid]: currentUser,
-            [otherUser.uid]: otherUser
+            [otherUser.uid]: otherUser,
         },
         unreadCounts: {
             [currentUser.uid]: 0,
-            [otherUser.uid]: 0
+            [otherUser.uid]: 0,
         },
         updatedAt: serverTimestamp(),
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
     };
 
     await setDoc(docRef, initialData);

@@ -53,12 +53,14 @@ export function useCurrency() {
             const curr = overrideCurrency || currency;
             const loc = currencyLocales[curr] || locale;
 
-            return new Intl.NumberFormat(loc, {
-                style: "currency",
-                currency: curr,
-            })
-                .formatToParts(0)
-                .find((part) => part.type === "currency")?.value || curr;
+            return (
+                new Intl.NumberFormat(loc, {
+                    style: "currency",
+                    currency: curr,
+                })
+                    .formatToParts(0)
+                    .find((part) => part.type === "currency")?.value || curr
+            );
         },
         [currency, locale]
     );

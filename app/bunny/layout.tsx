@@ -8,8 +8,25 @@ import { useRouter, usePathname } from "next/navigation";
 import { signOut, signInWithEmailAndPassword, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import {
-    LayoutDashboard, Building2, CreditCard, Users, BarChart3,
-    Settings, Bell, Search, LogOut, ChevronDown, Shield, Loader2, Eye, EyeOff, Palette, Megaphone, Mail, LifeBuoy, LayoutTemplate
+    LayoutDashboard,
+    Building2,
+    CreditCard,
+    Users,
+    BarChart3,
+    Settings,
+    Bell,
+    Search,
+    LogOut,
+    ChevronDown,
+    Shield,
+    Loader2,
+    Eye,
+    EyeOff,
+    Palette,
+    Megaphone,
+    Mail,
+    LifeBuoy,
+    LayoutTemplate,
 } from "lucide-react";
 import { PlatformLogo } from "@/lib/hooks/use-platform-settings";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,12 +41,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Design system colors
 const colors = {
@@ -58,13 +70,17 @@ function SuperAdminLoginForm({ currentUser }: { currentUser: User | null }) {
         try {
             if (currentUser) {
                 await signOut(auth);
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise((resolve) => setTimeout(resolve, 100));
             }
             await signInWithEmailAndPassword(auth, email, password);
             window.location.reload();
         } catch (err: any) {
             console.error("Login error:", err);
-            if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+            if (
+                err.code === "auth/invalid-credential" ||
+                err.code === "auth/wrong-password" ||
+                err.code === "auth/user-not-found"
+            ) {
                 setError("Invalid email or password");
             } else if (err.code === "auth/too-many-requests") {
                 setError("Too many attempts. Please try again later.");
@@ -85,16 +101,26 @@ function SuperAdminLoginForm({ currentUser }: { currentUser: User | null }) {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: colors.background, fontFamily: "var(--font-urbanist)" }}>
+        <div
+            className="min-h-screen flex items-center justify-center p-4"
+            style={{ backgroundColor: colors.background, fontFamily: "var(--font-urbanist)" }}
+        >
             <div className="w-full max-w-md">
-                <div className="rounded-3xl shadow-xl p-8 border" style={{ backgroundColor: "white", borderColor: colors.border }}>
+                <div
+                    className="rounded-3xl shadow-xl p-8 border"
+                    style={{ backgroundColor: "white", borderColor: colors.border }}
+                >
                     {/* Header */}
                     <div className="text-center mb-8">
                         <div className="flex justify-center mb-4">
                             <PlatformLogo size="large" showText={false} />
                         </div>
-                        <h1 className="text-2xl font-bold" style={{ color: colors.dark }}>Super Admin</h1>
-                        <p className="mt-2" style={{ color: colors.gray }}>Sign in to access the admin dashboard</p>
+                        <h1 className="text-2xl font-bold" style={{ color: colors.dark }}>
+                            Super Admin
+                        </h1>
+                        <p className="mt-2" style={{ color: colors.gray }}>
+                            Sign in to access the admin dashboard
+                        </p>
                     </div>
 
                     {/* Current User Notice */}
@@ -127,7 +153,9 @@ function SuperAdminLoginForm({ currentUser }: { currentUser: User | null }) {
                     {/* Login Form */}
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div>
-                            <Label className="text-sm font-medium" style={{ color: colors.dark }}>Email</Label>
+                            <Label className="text-sm font-medium" style={{ color: colors.dark }}>
+                                Email
+                            </Label>
                             <Input
                                 type="email"
                                 placeholder="admin@example.com"
@@ -138,7 +166,9 @@ function SuperAdminLoginForm({ currentUser }: { currentUser: User | null }) {
                             />
                         </div>
                         <div>
-                            <Label className="text-sm font-medium" style={{ color: colors.dark }}>Password</Label>
+                            <Label className="text-sm font-medium" style={{ color: colors.dark }}>
+                                Password
+                            </Label>
                             <div className="relative mt-1.5">
                                 <Input
                                     type={showPassword ? "text" : "password"}
@@ -165,7 +195,9 @@ function SuperAdminLoginForm({ currentUser }: { currentUser: User | null }) {
                             style={{ backgroundColor: colors.dark }}
                         >
                             {loading ? (
-                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in...</>
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in...
+                                </>
                             ) : (
                                 "Sign In"
                             )}
@@ -234,7 +266,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <div className="h-16 flex items-center px-6 border-b border-gray-50">
                         <Link href="/bunny" className="flex items-center gap-2">
                             {/* Placeholder for Logo - keeping PlatformLogo or using simple text */}
-                            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-bold">D</div>
+                            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-bold">
+                                D
+                            </div>
                             <span className="font-bold text-xl text-gray-900">Dosory</span>
                         </Link>
                     </div>
@@ -246,7 +280,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </div>
                         {navItems.map((item) => {
                             const Icon = item.icon;
-                            const isActive = pathname === item.href || (item.href !== "/bunny" && pathname.startsWith(item.href));
+                            const isActive =
+                                pathname === item.href || (item.href !== "/bunny" && pathname.startsWith(item.href));
                             return (
                                 <Link
                                     key={item.href}
@@ -285,7 +320,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <div>
                             {/* Dynamic title based on path could go here, for now static or simple */}
                             <h1 className="text-lg font-semibold text-gray-800">
-                                {navItems.find(i => i.href === pathname)?.label || "Dashboard"}
+                                {navItems.find((i) => i.href === pathname)?.label || "Dashboard"}
                             </h1>
                         </div>
 
@@ -308,7 +343,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                             <div className="flex items-center gap-3">
                                 <div className="text-right hidden sm:block">
-                                    <p className="text-sm font-medium text-gray-900 leading-none">{profile?.firstName || "Admin"} {profile?.lastName || "User"}</p>
+                                    <p className="text-sm font-medium text-gray-900 leading-none">
+                                        {profile?.firstName || "Admin"} {profile?.lastName || "User"}
+                                    </p>
                                     <p className="text-xs text-gray-500 mt-1">Super Admin</p>
                                 </div>
                                 <Avatar className="h-9 w-9 border border-gray-200">
@@ -323,9 +360,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                     {/* Page Content */}
                     <main className="flex-1 p-6 overflow-x-hidden">
-                        <div className="max-w-7xl mx-auto">
-                            {children}
-                        </div>
+                        <div className="max-w-7xl mx-auto">{children}</div>
                     </main>
                 </div>
             </div>

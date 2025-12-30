@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -40,7 +47,7 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
         try {
             await onConvert(lead.id, {
                 company: company || lead.company || lead.name, // Fallback logic handled in hook too, but explicit here
-                email: email || lead.email
+                email: email || lead.email,
             });
             onClose();
         } catch (err: any) {
@@ -57,9 +64,7 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>Convert Lead to Customer</DialogTitle>
-                    <DialogDescription>
-                        Turn this lead into an active customer and transfer all data.
-                    </DialogDescription>
+                    <DialogDescription>Turn this lead into an active customer and transfer all data.</DialogDescription>
                 </DialogHeader>
 
                 {step === 1 && (
@@ -114,12 +119,14 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
                                 <CheckCircle2 className="h-5 w-5" />
                                 <span>Ready to Convert</span>
                             </div>
-                            <p className="text-sm text-green-800">
-                                The following will be created:
-                            </p>
+                            <p className="text-sm text-green-800">The following will be created:</p>
                             <ul className="list-disc list-inside text-sm text-green-800 ml-1 space-y-1">
-                                <li>New Customer: <strong>{company || lead.company || lead.name}</strong></li>
-                                <li>Primary Contact: <strong>{lead.name}</strong></li>
+                                <li>
+                                    New Customer: <strong>{company || lead.company || lead.name}</strong>
+                                </li>
+                                <li>
+                                    Primary Contact: <strong>{lead.name}</strong>
+                                </li>
                                 <li>All tasks, notes, and records will be transferred.</li>
                                 <li>The original lead will be deleted.</li>
                             </ul>
@@ -137,14 +144,28 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
                 <DialogFooter>
                     {step === 1 ? (
                         <>
-                            <Button variant="outline" onClick={onClose}>Cancel</Button>
-                            <Button onClick={handleNext}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                            <Button variant="outline" onClick={onClose}>
+                                Cancel
+                            </Button>
+                            <Button onClick={handleNext}>
+                                Next <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
                         </>
                     ) : (
                         <>
-                            <Button variant="outline" onClick={() => setStep(1)} disabled={loading}>Back</Button>
-                            <Button onClick={handleConvert} disabled={loading} className="bg-green-600 hover:bg-green-700 text-white">
-                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                            <Button variant="outline" onClick={() => setStep(1)} disabled={loading}>
+                                Back
+                            </Button>
+                            <Button
+                                onClick={handleConvert}
+                                disabled={loading}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                                {loading ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                )}
                                 Confirm Conversion
                             </Button>
                         </>

@@ -81,10 +81,7 @@ export default async function DynamicPage({ params }: PageProps) {
         notFound();
     }
 
-    const [page, design] = await Promise.all([
-        getPageBySlug(slug),
-        getSiteDesign(),
-    ]);
+    const [page, design] = await Promise.all([getPageBySlug(slug), getSiteDesign()]);
 
     if (!page) {
         notFound();

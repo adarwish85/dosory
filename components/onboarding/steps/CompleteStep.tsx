@@ -30,14 +30,14 @@ export default function CompleteStep() {
                 angle: 60,
                 spread: 55,
                 origin: { x: 0 },
-                colors: ['#3b82f6', '#8b5cf6', '#06b6d4'],
+                colors: ["#3b82f6", "#8b5cf6", "#06b6d4"],
             });
             confetti({
                 particleCount: 3,
                 angle: 120,
                 spread: 55,
                 origin: { x: 1 },
-                colors: ['#3b82f6', '#8b5cf6', '#06b6d4'],
+                colors: ["#3b82f6", "#8b5cf6", "#06b6d4"],
             });
 
             if (Date.now() < end) {
@@ -105,9 +105,7 @@ export default function CompleteStep() {
 
             <div>
                 <h2 className="text-2xl font-bold text-gray-900">You&apos;re All Set! 🎉</h2>
-                <p className="text-gray-500 mt-2">
-                    Your workspace is ready to go. Here&apos;s what you accomplished:
-                </p>
+                <p className="text-gray-500 mt-2">Your workspace is ready to go. Here&apos;s what you accomplished:</p>
             </div>
 
             {/* Accomplishments */}
@@ -167,11 +165,7 @@ export default function CompleteStep() {
             )}
 
             {/* Go to Dashboard */}
-            <Button
-                onClick={handleFinish}
-                size="lg"
-                className="bg-blue-600 hover:bg-blue-700 gap-2"
-            >
+            <Button onClick={handleFinish} size="lg" className="bg-blue-600 hover:bg-blue-700 gap-2">
                 Go to Dashboard
                 <ArrowRight className="h-4 w-4" />
             </Button>

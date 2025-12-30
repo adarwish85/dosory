@@ -21,7 +21,8 @@ export default function PaymentModesPage() {
 
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
                 <p className="text-sm text-yellow-800">
-                    <span className="font-semibold">Note:</span> Payment modes listed below are offline modes. Payment gateways can be configured in Setup→ Settings →Payment Gateways
+                    <span className="font-semibold">Note:</span> Payment modes listed below are offline modes. Payment
+                    gateways can be configured in Setup→ Settings →Payment Gateways
                 </p>
             </div>
 
@@ -37,7 +38,9 @@ export default function PaymentModesPage() {
                             </SelectContent>
                         </Select>
                         <Button variant="outline">Export</Button>
-                        <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="icon">
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
                     </div>
                     <div className="relative w-64">
                         <div className="relative">
@@ -52,7 +55,9 @@ export default function PaymentModesPage() {
                         <div className="grid grid-cols-12 gap-4">
                             <div className="col-span-1 font-bold text-gray-900 text-sm">ID</div>
                             <div className="col-span-4 font-bold text-gray-900 text-sm">Payment Mode Name</div>
-                            <div className="col-span-4 font-bold text-gray-900 text-sm">Bank Accounts / Description</div>
+                            <div className="col-span-4 font-bold text-gray-900 text-sm">
+                                Bank Accounts / Description
+                            </div>
                             <div className="col-span-2 font-bold text-gray-900 text-sm">Active</div>
                             <div className="col-span-1 font-bold text-gray-900 text-sm text-right">Options</div>
                         </div>
@@ -77,11 +82,19 @@ export default function PaymentModesPage() {
                     </div>
                     <div className="px-6 py-4 border-t bg-gray-50 rounded-b-md">
                         <div className="text-xs text-gray-500 flex justify-end items-center gap-4">
-                            <span>Showing 1 to {paymentModes.length} of {paymentModes.length} entries</span>
+                            <span>
+                                Showing 1 to {paymentModes.length} of {paymentModes.length} entries
+                            </span>
                             <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="sm" disabled className="text-xs">Previous</Button>
-                                <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">1</div>
-                                <Button variant="ghost" size="sm" disabled className="text-xs">Next</Button>
+                                <Button variant="ghost" size="sm" disabled className="text-xs">
+                                    Previous
+                                </Button>
+                                <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">
+                                    1
+                                </div>
+                                <Button variant="ghost" size="sm" disabled className="text-xs">
+                                    Next
+                                </Button>
                             </div>
                         </div>
                     </div>

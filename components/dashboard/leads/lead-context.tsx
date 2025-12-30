@@ -35,7 +35,7 @@ const LeadContext = createContext<LeadContextType>({
     loading: true,
     error: null,
     leadId: null,
-    refreshLead: () => { },
+    refreshLead: () => {},
 });
 
 export function useLead() {
@@ -94,23 +94,23 @@ export function LeadProvider({ children }: LeadProviderProps) {
         }
 
         // Query without orderBy to avoid index requirement - sort client-side
-        const q = query(
-            collection(db, "contacts"),
-            where("orgId", "==", profile.orgId),
-            where("leadId", "==", leadId)
-        );
+        const q = query(collection(db, "contacts"), where("orgId", "==", profile.orgId), where("leadId", "==", leadId));
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const contactsData = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as Contact[];
-            // Sort client-side by lastName
-            contactsData.sort((a, b) => (a.lastName || "").localeCompare(b.lastName || ""));
-            setContacts(contactsData);
-        }, (err) => {
-            console.error("Error loading contacts:", err);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const contactsData = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as Contact[];
+                // Sort client-side by lastName
+                contactsData.sort((a, b) => (a.lastName || "").localeCompare(b.lastName || ""));
+                setContacts(contactsData);
+            },
+            (err) => {
+                console.error("Error loading contacts:", err);
+            }
+        );
 
         return () => unsubscribe();
     }, [leadId, profile?.orgId]);

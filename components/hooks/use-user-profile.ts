@@ -54,7 +54,8 @@ export function useUserProfile() {
                     if (!orgId) {
                         console.log("Missing orgId, attempting self-repair...");
                         // 1. Try to find an organization owned by this user
-                        const { collection, query, where, getDocs, limit, updateDoc } = await import("firebase/firestore");
+                        const { collection, query, where, getDocs, limit, updateDoc } =
+                            await import("firebase/firestore");
                         const orgsRef = collection(db, "organizations");
                         const q = query(orgsRef, where("ownerId", "==", user.uid), limit(1));
 
@@ -91,7 +92,7 @@ export function useUserProfile() {
                         // When impersonating, act as admin of that org but keep track of actual role
                         role: isImpersonating && impersonatedOrgId ? "admin" : data.role,
                         actualRole: actualRole,
-                        actualOrgId: actualOrgId
+                        actualOrgId: actualOrgId,
                     } as UserProfile);
                 } else {
                     console.log("Profile not found, creating new one...");
@@ -143,7 +144,7 @@ export function useUserProfile() {
                         createdAt: serverTimestamp(),
                         updatedAt: serverTimestamp(),
                         createdBy: user.uid,
-                        profileImageUrl: profile.photoURL || user.photoURL
+                        profileImageUrl: profile.photoURL || user.photoURL,
                     });
                     console.log("Admin synced to staff.");
                 }

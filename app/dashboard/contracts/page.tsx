@@ -34,9 +34,10 @@ export default function ContractsPage() {
     const { settings } = useSettings();
     const orgCurrency = settings.currency || "USD";
 
-    const filteredContracts = contracts.filter(contract =>
-        contract.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredContracts = contracts.filter(
+        (contract) =>
+            contract.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            contract.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const formatDate = (timestamp: { toDate: () => Date } | null | undefined) => {
@@ -77,11 +78,14 @@ export default function ContractsPage() {
 
             {/* Stats Pills */}
             <div className="flex flex-wrap gap-2">
-                {(["draft", "sent", "signed", "expired"] as ContractStatus[]).map(status => {
+                {(["draft", "sent", "signed", "expired"] as ContractStatus[]).map((status) => {
                     const colors = statusColors[status];
                     const count = contractStats[status] || 0;
                     return (
-                        <div key={status} className={`${colors.bg} ${colors.border} border rounded-full px-3 py-1 text-sm`}>
+                        <div
+                            key={status}
+                            className={`${colors.bg} ${colors.border} border rounded-full px-3 py-1 text-sm`}
+                        >
                             <span className="font-bold text-gray-900">{count}</span>{" "}
                             <span className={colors.text}>{statusLabels[status]}</span>
                         </div>
@@ -103,7 +107,9 @@ export default function ContractsPage() {
                             </SelectContent>
                         </Select>
                         <Button variant="outline">Export</Button>
-                        <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="icon">
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
                     </div>
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -133,7 +139,9 @@ export default function ContractsPage() {
                             {filteredContracts.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
-                                        {searchQuery ? "No contracts match your search." : "No contracts found. Create your first one!"}
+                                        {searchQuery
+                                            ? "No contracts match your search."
+                                            : "No contracts found. Create your first one!"}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -144,25 +152,57 @@ export default function ContractsPage() {
                                             <TableCell className="font-medium text-gray-500">{index + 1}</TableCell>
                                             <TableCell className="min-w-[200px] py-3">
                                                 <div className="flex flex-col gap-0.5">
-                                                    <Link href={`/dashboard/contracts/${contract.id}`} className="font-medium text-blue-600 hover:underline block truncate w-fit">
+                                                    <Link
+                                                        href={`/dashboard/contracts/${contract.id}`}
+                                                        className="font-medium text-blue-600 hover:underline block truncate w-fit"
+                                                    >
                                                         {contract.subject}
                                                     </Link>
-                                                    <span className="text-xs text-gray-400">ID: {contract.id.substring(0, 8)}...</span>
+                                                    <span className="text-xs text-gray-400">
+                                                        ID: {contract.id.substring(0, 8)}...
+                                                    </span>
                                                     <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
-                                                        <Link href={`/dashboard/contracts/${contract.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
+                                                        <Link
+                                                            href={`/dashboard/contracts/${contract.id}`}
+                                                            className="hover:text-blue-600 hover:underline px-0.5"
+                                                        >
+                                                            View
+                                                        </Link>
                                                         <span className="text-gray-300">|</span>
-                                                        <Link href={`/dashboard/contracts/${contract.id}/edit`} className="hover:text-blue-600 hover:underline px-0.5">Edit</Link>
+                                                        <Link
+                                                            href={`/dashboard/contracts/${contract.id}/edit`}
+                                                            className="hover:text-blue-600 hover:underline px-0.5"
+                                                        >
+                                                            Edit
+                                                        </Link>
                                                         <span className="text-gray-300">|</span>
-                                                        <button onClick={async (e) => { e.stopPropagation(); if (confirm("Delete this contract?")) await deleteContract(contract.id); }} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                if (confirm("Delete this contract?"))
+                                                                    await deleteContract(contract.id);
+                                                            }}
+                                                            className="hover:text-red-600 hover:underline px-0.5"
+                                                        >
+                                                            Delete
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-gray-700">{contract.customerName}</TableCell>
-                                            <TableCell className="font-medium">{formatCurrency(contract.contractValue, orgCurrency)}</TableCell>
-                                            <TableCell className="text-gray-500">{formatDate(contract.startDate)}</TableCell>
-                                            <TableCell className="text-gray-500">{formatDate(contract.endDate)}</TableCell>
+                                            <TableCell className="font-medium">
+                                                {formatCurrency(contract.contractValue, orgCurrency)}
+                                            </TableCell>
+                                            <TableCell className="text-gray-500">
+                                                {formatDate(contract.startDate)}
+                                            </TableCell>
+                                            <TableCell className="text-gray-500">
+                                                {formatDate(contract.endDate)}
+                                            </TableCell>
                                             <TableCell>
-                                                <Badge className={`${colors.bg} ${colors.text} ${colors.border} border`}>
+                                                <Badge
+                                                    className={`${colors.bg} ${colors.text} ${colors.border} border`}
+                                                >
                                                     {statusLabels[contract.status]}
                                                 </Badge>
                                             </TableCell>

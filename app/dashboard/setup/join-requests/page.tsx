@@ -70,15 +70,12 @@ export default function JoinRequestsPage() {
     useEffect(() => {
         if (!profile?.orgId) return;
 
-        const q = query(
-            collection(db, "join_requests"),
-            where("orgId", "==", profile.orgId)
-        );
+        const q = query(collection(db, "join_requests"), where("orgId", "==", profile.orgId));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({
+            const data = snapshot.docs.map((doc) => ({
                 id: doc.id,
-                ...doc.data()
+                ...doc.data(),
             })) as JoinRequest[];
 
             // Sort by status (pending first) then by date
@@ -116,8 +113,8 @@ export default function JoinRequestsPage() {
                     roleId: selectedRole,
                     isAdmin: isAdmin,
                     permissions: selectedPermissions,
-                    reviewerId: profile.uid
-                })
+                    reviewerId: profile.uid,
+                }),
             });
 
             if (!response.ok) {
@@ -126,7 +123,9 @@ export default function JoinRequestsPage() {
             }
 
             const data = await response.json();
-            toast.success(`${selectedRequest.userEmail} has been approved and added to the team! ${data.emailSent ? '(Email sent)' : '(Email failed)'}`);
+            toast.success(
+                `${selectedRequest.userEmail} has been approved and added to the team! ${data.emailSent ? "(Email sent)" : "(Email failed)"}`
+            );
             setApproveDialogOpen(false);
 
             // Note: Snapshot listener will automatically update the list
@@ -148,8 +147,8 @@ export default function JoinRequestsPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     requestId: request.id,
-                    reviewerId: profile.uid
-                })
+                    reviewerId: profile.uid,
+                }),
             });
 
             if (!response.ok) {
@@ -158,7 +157,9 @@ export default function JoinRequestsPage() {
             }
 
             const data = await response.json();
-            toast.success(`Request from ${request.userEmail} has been rejected. ${data.emailSent ? '(Email sent)' : '(Email failed)'}`);
+            toast.success(
+                `Request from ${request.userEmail} has been rejected. ${data.emailSent ? "(Email sent)" : "(Email failed)"}`
+            );
         } catch (error: any) {
             console.error("Error rejecting request:", error);
             toast.error(error.message || "Failed to reject request");
@@ -168,15 +169,13 @@ export default function JoinRequestsPage() {
     };
 
     const togglePermission = (permId: string) => {
-        setSelectedPermissions(prev =>
-            prev.includes(permId)
-                ? prev.filter(p => p !== permId)
-                : [...prev, permId]
+        setSelectedPermissions((prev) =>
+            prev.includes(permId) ? prev.filter((p) => p !== permId) : [...prev, permId]
         );
     };
 
     const selectAllPermissions = () => {
-        setSelectedPermissions(AVAILABLE_PERMISSIONS.map(p => p.id));
+        setSelectedPermissions(AVAILABLE_PERMISSIONS.map((p) => p.id));
     };
 
     const clearAllPermissions = () => {
@@ -191,7 +190,7 @@ export default function JoinRequestsPage() {
         );
     }
 
-    const pendingCount = requests.filter(r => r.status === "pending").length;
+    const pendingCount = requests.filter((r) => r.status === "pending").length;
 
     return (
         <div className="space-y-6">
@@ -201,9 +200,7 @@ export default function JoinRequestsPage() {
                     <p className="text-gray-500">Review and approve users who want to join your organization</p>
                 </div>
                 {pendingCount > 0 && (
-                    <Badge className="bg-orange-100 text-orange-700 border-orange-200">
-                        {pendingCount} pending
-                    </Badge>
+                    <Badge className="bg-orange-100 text-orange-700 border-orange-200">{pendingCount} pending</Badge>
                 )}
             </div>
 
@@ -212,13 +209,18 @@ export default function JoinRequestsPage() {
                     <CardContent className="flex flex-col items-center justify-center py-16">
                         <UserPlus className="h-12 w-12 text-gray-300 mb-4" />
                         <h3 className="text-lg font-medium text-gray-600">No join requests</h3>
-                        <p className="text-sm text-gray-400">Users who request to join your organization will appear here</p>
+                        <p className="text-sm text-gray-400">
+                            Users who request to join your organization will appear here
+                        </p>
                     </CardContent>
                 </Card>
             ) : (
                 <div className="space-y-4">
                     {requests.map((request) => (
-                        <Card key={request.id} className={request.status === "pending" ? "border-orange-200 bg-orange-50/30" : ""}>
+                        <Card
+                            key={request.id}
+                            className={request.status === "pending" ? "border-orange-200 bg-orange-50/30" : ""}
+                        >
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
@@ -304,7 +306,9 @@ export default function JoinRequestsPage() {
                                 checked={isAdmin}
                                 onCheckedChange={(checked) => setIsAdmin(!!checked)}
                             />
-                            <Label htmlFor="isAdmin" className="text-sm">Grant admin privileges</Label>
+                            <Label htmlFor="isAdmin" className="text-sm">
+                                Grant admin privileges
+                            </Label>
                         </div>
 
                         <div className="space-y-2">

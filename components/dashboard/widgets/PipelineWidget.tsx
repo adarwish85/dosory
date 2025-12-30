@@ -26,13 +26,13 @@ export function PipelineWidget({ settings, density }: PipelineWidgetProps) {
     };
 
     // Calculate stage counts
-    const stageCounts = PIPELINE_STAGES.map(stage => ({
+    const stageCounts = PIPELINE_STAGES.map((stage) => ({
         ...stage,
         count: getCount(stage.key),
     }));
 
     const totalLeads = leads.length || 1;
-    const maxCount = Math.max(...stageCounts.map(s => s.count), 1);
+    const maxCount = Math.max(...stageCounts.map((s) => s.count), 1);
     const wonCount = getCount("won");
 
     return (

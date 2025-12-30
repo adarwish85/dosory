@@ -1,14 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-    collection,
-    query,
-    where,
-    onSnapshot,
-    orderBy,
-    QueryConstraint
-} from "firebase/firestore";
+import { collection, query, where, onSnapshot, orderBy, QueryConstraint } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 
@@ -38,7 +31,7 @@ export function useStaff() {
         const constraints: QueryConstraint[] = [
             where("orgId", "==", profile.orgId),
             where("status", "==", "active"),
-            orderBy("firstName", "asc")
+            orderBy("firstName", "asc"),
         ];
 
         const q = query(collection(db, "staff"), ...constraints);

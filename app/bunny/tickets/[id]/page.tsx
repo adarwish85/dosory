@@ -7,23 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    ArrowLeft,
-    Loader2,
-    Send,
-    Paperclip,
-    Building2,
-    Clock,
-    User,
-    AlertCircle,
-} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Loader2, Send, Paperclip, Building2, Clock, User, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
     useAllPlatformTickets,
@@ -62,7 +47,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
         setUpdatingStatus(true);
         try {
             await updateStatus(ticket.id, newStatus);
-            toast.success(`Status updated to ${TICKET_STATUSES.find(s => s.value === newStatus)?.label}`);
+            toast.success(`Status updated to ${TICKET_STATUSES.find((s) => s.value === newStatus)?.label}`);
         } catch (error) {
             console.error("Error updating status:", error);
             toast.error("Failed to update status");
@@ -76,7 +61,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
         setUpdatingPriority(true);
         try {
             await updatePriority(ticket.id, newPriority);
-            toast.success(`Priority updated to ${TICKET_PRIORITIES.find(p => p.value === newPriority)?.label}`);
+            toast.success(`Priority updated to ${TICKET_PRIORITIES.find((p) => p.value === newPriority)?.label}`);
         } catch (error) {
             console.error("Error updating priority:", error);
             toast.error("Failed to update priority");
@@ -90,14 +75,10 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
 
         setReplying(true);
         try {
-            await addAdminReply(
-                ticket.id,
-                replyMessage.trim(),
-                {
-                    uid: profile.uid || "",
-                    name: `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || "Super Admin",
-                }
-            );
+            await addAdminReply(ticket.id, replyMessage.trim(), {
+                uid: profile.uid || "",
+                name: `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || "Super Admin",
+            });
             setReplyMessage("");
             toast.success("Reply sent!");
         } catch (error) {
@@ -110,11 +91,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
 
     const getStatusBadge = (status: TicketStatus) => {
         const config = TICKET_STATUSES.find((s) => s.value === status);
-        return (
-            <Badge className={cn("font-normal", config?.color)}>
-                {config?.label || status}
-            </Badge>
-        );
+        return <Badge className={cn("font-normal", config?.color)}>{config?.label || status}</Badge>;
     };
 
     const getPriorityBadge = (priority: TicketPriority) => {
@@ -245,9 +222,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium">{reply.author.name}</span>
                                         {reply.author.isAdmin && (
-                                            <Badge className="bg-blue-600 text-white text-[10px]">
-                                                Super Admin
-                                            </Badge>
+                                            <Badge className="bg-blue-600 text-white text-[10px]">Super Admin</Badge>
                                         )}
                                     </div>
                                 </div>
@@ -360,17 +335,13 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                         {/* Created */}
                         <div>
                             <label className="text-sm text-gray-500 block mb-1.5">Created</label>
-                            <div className="text-sm">
-                                {format(ticket.createdAt, "MMM d, yyyy 'at' h:mm a")}
-                            </div>
+                            <div className="text-sm">{format(ticket.createdAt, "MMM d, yyyy 'at' h:mm a")}</div>
                         </div>
 
                         {/* Last Updated */}
                         <div>
                             <label className="text-sm text-gray-500 block mb-1.5">Last Updated</label>
-                            <div className="text-sm">
-                                {formatDistanceToNow(ticket.updatedAt, { addSuffix: true })}
-                            </div>
+                            <div className="text-sm">{formatDistanceToNow(ticket.updatedAt, { addSuffix: true })}</div>
                         </div>
                     </div>
 

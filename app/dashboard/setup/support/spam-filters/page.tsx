@@ -37,7 +37,7 @@ export default function SpamFiltersPage() {
     );
 }
 
-function TabTrigger({ value, children }: { value: string, children: React.ReactNode }) {
+function TabTrigger({ value, children }: { value: string; children: React.ReactNode }) {
     return (
         <TabsTrigger
             value={value}
@@ -45,7 +45,7 @@ function TabTrigger({ value, children }: { value: string, children: React.ReactN
         >
             {children}
         </TabsTrigger>
-    )
+    );
 }
 
 function SpamFilterTable() {
@@ -62,7 +62,9 @@ function SpamFilterTable() {
                         </SelectContent>
                     </Select>
                     <Button variant="outline">Export</Button>
-                    <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="icon">
+                        <RefreshCw className="h-4 w-4" />
+                    </Button>
                 </div>
                 <div className="relative w-64">
                     <div className="relative">
@@ -77,9 +79,7 @@ function SpamFilterTable() {
                     <div className="font-bold text-gray-900 text-sm">Content</div>
                     <div className="font-bold text-gray-900 text-sm">Options</div>
                 </div>
-                <div className="p-8 text-center text-gray-500">
-                    No entries found
-                </div>
+                <div className="p-8 text-center text-gray-500">No entries found</div>
             </div>
         </div>
     );

@@ -18,7 +18,7 @@ export default function CelebrationBanner({
     onClose,
     title,
     message,
-    variant = "milestone"
+    variant = "milestone",
 }: CelebrationBannerProps) {
     const [visible, setVisible] = useState(false);
 
@@ -43,18 +43,16 @@ export default function CelebrationBanner({
                 visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
             )}
         >
-            <div className={cn(
-                "flex items-center gap-4 px-6 py-4 rounded-xl shadow-2xl",
-                variant === "complete"
-                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
-                    : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
-            )}>
+            <div
+                className={cn(
+                    "flex items-center gap-4 px-6 py-4 rounded-xl shadow-2xl",
+                    variant === "complete"
+                        ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+                        : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
+                )}
+            >
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                    {variant === "complete" ? (
-                        <Rocket className="h-6 w-6" />
-                    ) : (
-                        <PartyPopper className="h-6 w-6" />
-                    )}
+                    {variant === "complete" ? <Rocket className="h-6 w-6" /> : <PartyPopper className="h-6 w-6" />}
                 </div>
                 <div>
                     <h3 className="font-bold text-lg flex items-center gap-2">

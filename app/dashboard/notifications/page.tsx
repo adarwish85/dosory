@@ -27,9 +27,11 @@ import { formatDistanceToNow } from "date-fns";
 const getNotificationIcon = (type: NotificationType) => {
     if (type.startsWith("invoice")) return <DollarSign className="h-5 w-5 text-green-600" />;
     if (type.startsWith("estimate")) return <FileText className="h-5 w-5 text-blue-600" />;
-    if (type.startsWith("task") || type.startsWith("project")) return <FolderKanban className="h-5 w-5 text-purple-600" />;
+    if (type.startsWith("task") || type.startsWith("project"))
+        return <FolderKanban className="h-5 w-5 text-purple-600" />;
     if (type.startsWith("lead")) return <Target className="h-5 w-5 text-orange-600" />;
-    if (type.startsWith("ticket") || type.startsWith("platform_ticket")) return <LifeBuoy className="h-5 w-5 text-cyan-600" />;
+    if (type.startsWith("ticket") || type.startsWith("platform_ticket"))
+        return <LifeBuoy className="h-5 w-5 text-cyan-600" />;
     if (type.startsWith("staff")) return <Users className="h-5 w-5 text-indigo-600" />;
     if (type.startsWith("system")) return <Megaphone className="h-5 w-5 text-gray-600" />;
     return <Bell className="h-5 w-5 text-gray-600" />;
@@ -40,9 +42,7 @@ export default function NotificationsPage() {
     const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
     const [markingAll, setMarkingAll] = useState(false);
 
-    const filteredNotifications = activeTab === "unread"
-        ? notifications.filter((n) => !n.read)
-        : notifications;
+    const filteredNotifications = activeTab === "unread" ? notifications.filter((n) => !n.read) : notifications;
 
     const handleMarkAllRead = async () => {
         setMarkingAll(true);
@@ -53,7 +53,7 @@ export default function NotificationsPage() {
         }
     };
 
-    const handleNotificationClick = async (notification: typeof notifications[0]) => {
+    const handleNotificationClick = async (notification: (typeof notifications)[0]) => {
         if (!notification.read) {
             await markAsRead(notification.id);
         }
@@ -74,17 +74,10 @@ export default function NotificationsPage() {
                 <div className="flex items-center gap-3">
                     <Bell className="h-6 w-6 text-blue-600" />
                     <h1 className="text-2xl font-semibold text-gray-900">Notifications</h1>
-                    {unreadCount > 0 && (
-                        <Badge className="bg-red-500 text-white">{unreadCount} new</Badge>
-                    )}
+                    {unreadCount > 0 && <Badge className="bg-red-500 text-white">{unreadCount} new</Badge>}
                 </div>
                 {unreadCount > 0 && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleMarkAllRead}
-                        disabled={markingAll}
-                    >
+                    <Button variant="outline" size="sm" onClick={handleMarkAllRead} disabled={markingAll}>
                         {markingAll ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
@@ -162,12 +155,7 @@ function NotificationContent({ notification }: { notification: any }) {
             <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                     <div>
-                        <p className={cn(
-                            "text-sm",
-                            !notification.read && "font-semibold"
-                        )}>
-                            {notification.title}
-                        </p>
+                        <p className={cn("text-sm", !notification.read && "font-semibold")}>{notification.title}</p>
                         <p className="text-sm text-gray-600 mt-0.5">{notification.message}</p>
                     </div>
                     {!notification.read && (

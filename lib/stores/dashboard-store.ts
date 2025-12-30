@@ -1,8 +1,14 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { type LayoutItem, type WidgetId, type WidgetStyle, type DataDensity, type LayoutPreset } from "@/lib/hooks/use-dashboard-layout";
+import {
+    type LayoutItem,
+    type WidgetId,
+    type WidgetStyle,
+    type DataDensity,
+    type LayoutPreset,
+} from "@/lib/hooks/use-dashboard-layout";
 
 // Re-export types
 export type { LayoutItem, WidgetId, WidgetStyle, DataDensity, LayoutPreset };
@@ -121,11 +127,11 @@ export const useDashboardStore = create<DashboardState>()(
                     x: item.x,
                     y: item.y,
                     w: item.w,
-                    h: item.h
+                    h: item.h,
                 });
 
                 // Check if layout actually changed
-                const currentLayoutMap = new Map(config.layout.map(l => [l.i, cleanLayoutItem(l)]));
+                const currentLayoutMap = new Map(config.layout.map((l) => [l.i, cleanLayoutItem(l)]));
                 let hasChanges = false;
 
                 // Check visible items
@@ -143,9 +149,7 @@ export const useDashboardStore = create<DashboardState>()(
 
                 // If checking all items is cleaner:
                 // Merge new visible layout with existing hidden items to preserve their positions
-                const hiddenItems = config.layout.filter(l =>
-                    !newVisibleLayout.find(nl => nl.i === l.i)
-                );
+                const hiddenItems = config.layout.filter((l) => !newVisibleLayout.find((nl) => nl.i === l.i));
                 const mergedLayout = [...newVisibleLayout, ...hiddenItems];
 
                 if (!hasChanges && mergedLayout.length === config.layout.length) {
@@ -155,7 +159,7 @@ export const useDashboardStore = create<DashboardState>()(
                 const newConfig = {
                     ...config,
                     layout: mergedLayout,
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
                 };
                 set({ config: newConfig, hasUnsavedChanges: true });
             },
@@ -163,9 +167,9 @@ export const useDashboardStore = create<DashboardState>()(
             applyPreset: (preset) => {
                 const { config } = get();
                 const presetLayout = PRESET_LAYOUTS[preset];
-                const enabledWidgetIds = new Set(presetLayout.map(l => l.i));
+                const enabledWidgetIds = new Set(presetLayout.map((l) => l.i));
 
-                const newWidgets = DEFAULT_WIDGETS.map(w => ({
+                const newWidgets = DEFAULT_WIDGETS.map((w) => ({
                     ...w,
                     enabled: enabledWidgetIds.has(w.id),
                 }));
@@ -183,20 +187,15 @@ export const useDashboardStore = create<DashboardState>()(
 
             toggleWidget: (widgetId, enabled) => {
                 const { config } = get();
-                const newWidgets = config.widgets.map(w =>
-                    w.id === widgetId ? { ...w, enabled } : w
-                );
+                const newWidgets = config.widgets.map((w) => (w.id === widgetId ? { ...w, enabled } : w));
 
                 let newLayout = config.layout;
                 if (enabled) {
-                    if (!config.layout.find(l => l.i === widgetId)) {
-                        newLayout = [
-                            ...config.layout,
-                            { i: widgetId, x: 0, y: Infinity, w: 4, h: 3 },
-                        ];
+                    if (!config.layout.find((l) => l.i === widgetId)) {
+                        newLayout = [...config.layout, { i: widgetId, x: 0, y: Infinity, w: 4, h: 3 }];
                     }
                 } else {
-                    newLayout = config.layout.filter(l => l.i !== widgetId);
+                    newLayout = config.layout.filter((l) => l.i !== widgetId);
                 }
 
                 const newConfig = {
@@ -211,13 +210,13 @@ export const useDashboardStore = create<DashboardState>()(
 
             updateWidgetSettings: (widgetId, settings) => {
                 const { config } = get();
-                const newWidgets = config.widgets.map(w =>
+                const newWidgets = config.widgets.map((w) =>
                     w.id === widgetId ? { ...w, settings: { ...w.settings, ...settings } } : w
                 );
 
                 set({
                     config: { ...config, widgets: newWidgets, updatedAt: new Date().toISOString() },
-                    hasUnsavedChanges: true
+                    hasUnsavedChanges: true,
                 });
             },
 
@@ -225,7 +224,7 @@ export const useDashboardStore = create<DashboardState>()(
                 const { config } = get();
                 set({
                     config: { ...config, ...settings, updatedAt: new Date().toISOString() },
-                    hasUnsavedChanges: true
+                    hasUnsavedChanges: true,
                 });
             },
 
@@ -254,7 +253,7 @@ export const useDashboardStore = create<DashboardState>()(
                             // Just update the "server version" reference, but keep our UI
                             set({
                                 savedConfig: { ...DEFAULT_CONFIG, ...remoteData },
-                                isLoading: false
+                                isLoading: false,
                             });
                             return;
                         }
@@ -266,13 +265,13 @@ export const useDashboardStore = create<DashboardState>()(
                         set({
                             config: loadedConfig,
                             savedConfig: loadedConfig,
-                            hasUnsavedChanges: false
+                            hasUnsavedChanges: false,
                         });
                     } else {
                         // No remote data
                         set({
                             savedConfig: null,
-                            hasUnsavedChanges: false // Don't prompt for brand new users
+                            hasUnsavedChanges: false, // Don't prompt for brand new users
                         });
                     }
                 } catch (error) {
@@ -290,15 +289,19 @@ export const useDashboardStore = create<DashboardState>()(
                 try {
                     // Changed path to users/{userId}/orgSettings/{orgId} to avoid permission issues
                     const docRef = doc(db, "users", userId, "orgSettings", orgId);
-                    await setDoc(docRef, {
-                        dashboardLayout: config
-                    }, { merge: true });
+                    await setDoc(
+                        docRef,
+                        {
+                            dashboardLayout: config,
+                        },
+                        { merge: true }
+                    );
 
                     // After successful save, update savedConfig and clear unsaved flag
                     set({
                         savedConfig: config,
                         hasUnsavedChanges: false,
-                        isSaving: false
+                        isSaving: false,
                     });
                     return true;
                 } catch (error) {
@@ -314,24 +317,24 @@ export const useDashboardStore = create<DashboardState>()(
                     set({
                         config: savedConfig,
                         hasUnsavedChanges: false,
-                        isEditing: false
+                        isEditing: false,
                     });
                 } else {
                     // No saved config, reset to defaults
                     set({
                         config: DEFAULT_CONFIG,
                         hasUnsavedChanges: false,
-                        isEditing: false
+                        isEditing: false,
                     });
                 }
-            }
+            },
         }),
         {
-            name: 'dashboard-storage',
+            name: "dashboard-storage",
             partialize: (state) => ({ config: state.config }), // Only persist config to localStorage
             onRehydrateStorage: () => (state) => {
                 state?.setHasHydrated(true);
-            }
+            },
         }
     )
 );

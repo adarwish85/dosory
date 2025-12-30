@@ -26,10 +26,27 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import {
-    ArrowLeft, Save, Eye, Send, History, RotateCcw,
-    Loader2, Bold, Italic, Link as LinkIcon, List, ListOrdered,
-    AlignLeft, AlignCenter, AlignRight, Heading1, Heading2,
-    Code, ChevronDown, Check, X
+    ArrowLeft,
+    Save,
+    Eye,
+    Send,
+    History,
+    RotateCcw,
+    Loader2,
+    Bold,
+    Italic,
+    Link as LinkIcon,
+    List,
+    ListOrdered,
+    AlignLeft,
+    AlignCenter,
+    AlignRight,
+    Heading1,
+    Heading2,
+    Code,
+    ChevronDown,
+    Check,
+    X,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -183,7 +200,7 @@ export default function EmailTemplateEditorPage() {
         updateTemplate,
         toggleEnabled,
         resetToDefault,
-        restoreVersion
+        restoreVersion,
     } = useEmailTemplate(templateId);
 
     // Local state for editing
@@ -238,11 +255,14 @@ export default function EmailTemplateEditorPage() {
     const handleSave = async () => {
         if (!user?.uid || !template) return;
 
-        const success = await updateTemplate({
-            subject,
-            htmlContent,
-            plainTextContent: htmlToPlainText(htmlContent)
-        }, user.uid);
+        const success = await updateTemplate(
+            {
+                subject,
+                htmlContent,
+                plainTextContent: htmlToPlainText(htmlContent),
+            },
+            user.uid
+        );
 
         if (success) {
             toast.success("Template saved successfully!");
@@ -279,7 +299,7 @@ export default function EmailTemplateEditorPage() {
     };
 
     // Restore version handler
-    const handleRestoreVersion = async (version: typeof versions[0]) => {
+    const handleRestoreVersion = async (version: (typeof versions)[0]) => {
         if (!user?.uid) return;
         const success = await restoreVersion(version, user.uid);
         if (success) {
@@ -317,8 +337,8 @@ export default function EmailTemplateEditorPage() {
                 body: JSON.stringify({
                     to: testEmail,
                     subject: replaceVariables(subject, getSampleVariables()),
-                    html: replaceVariables(htmlContent, getSampleVariables())
-                })
+                    html: replaceVariables(htmlContent, getSampleVariables()),
+                }),
             });
 
             if (response.ok) {
@@ -357,7 +377,7 @@ export default function EmailTemplateEditorPage() {
             taskName: "Complete Documentation",
             dueDate: "January 15, 2025",
             logoUrl: "https://via.placeholder.com/150x50",
-            footerText: "© 2024 Dosory. All rights reserved."
+            footerText: "© 2024 Dosory. All rights reserved.",
         };
         return samples;
     };
@@ -410,33 +430,19 @@ export default function EmailTemplateEditorPage() {
                     )}
 
                     <div className="flex items-center gap-2">
-                        <Label htmlFor="enabled" className="text-sm">Enabled</Label>
-                        <Switch
-                            id="enabled"
-                            checked={template.enabled}
-                            onCheckedChange={handleToggle}
-                        />
+                        <Label htmlFor="enabled" className="text-sm">
+                            Enabled
+                        </Label>
+                        <Switch id="enabled" checked={template.enabled} onCheckedChange={handleToggle} />
                     </div>
 
-                    <Button
-                        variant="outline"
-                        onClick={() => setShowTestDialog(true)}
-                        className="gap-2"
-                    >
+                    <Button variant="outline" onClick={() => setShowTestDialog(true)} className="gap-2">
                         <Send className="h-4 w-4" />
                         Test
                     </Button>
 
-                    <Button
-                        onClick={handleSave}
-                        disabled={saving || !hasChanges}
-                        className="gap-2"
-                    >
-                        {saving ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <Save className="h-4 w-4" />
-                        )}
+                    <Button onClick={handleSave} disabled={saving || !hasChanges} className="gap-2">
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                         Save
                     </Button>
                 </div>
@@ -467,10 +473,7 @@ export default function EmailTemplateEditorPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="max-h-64 overflow-y-auto">
                                 {template.variables.map((variable) => (
-                                    <DropdownMenuItem
-                                        key={variable.key}
-                                        onClick={() => insertVariable(variable.key)}
-                                    >
+                                    <DropdownMenuItem key={variable.key} onClick={() => insertVariable(variable.key)}>
                                         <div>
                                             <div className="font-mono text-sm">{"{{" + variable.key + "}}"}</div>
                                             <div className="text-xs text-gray-500">{variable.description}</div>
@@ -480,12 +483,7 @@ export default function EmailTemplateEditorPage() {
                             </DropdownMenuContent>
                         </DropdownMenu>
 
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowVersions(true)}
-                            className="gap-2"
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => setShowVersions(true)} className="gap-2">
                             <History className="h-4 w-4" />
                             History
                         </Button>
@@ -546,9 +544,7 @@ export default function EmailTemplateEditorPage() {
                         {/* Email Header Preview */}
                         <div className="bg-gray-100 p-3 border-b">
                             <p className="text-xs text-gray-500">Subject:</p>
-                            <p className="font-medium text-sm">
-                                {replaceVariables(subject, getSampleVariables())}
-                            </p>
+                            <p className="font-medium text-sm">{replaceVariables(subject, getSampleVariables())}</p>
                         </div>
 
                         {/* Email Body Preview */}
@@ -565,9 +561,7 @@ export default function EmailTemplateEditorPage() {
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
                         <DialogTitle>Version History</DialogTitle>
-                        <DialogDescription>
-                            Previous versions of this template
-                        </DialogDescription>
+                        <DialogDescription>Previous versions of this template</DialogDescription>
                     </DialogHeader>
                     <div className="max-h-80 overflow-y-auto space-y-2">
                         {versions.length === 0 ? (
@@ -581,17 +575,14 @@ export default function EmailTemplateEditorPage() {
                                     <div>
                                         <p className="font-medium">Version {version.version}</p>
                                         <p className="text-xs text-gray-500">
-                                            {version.createdAt && formatDistanceToNow(version.createdAt.toDate(), { addSuffix: true })}
+                                            {version.createdAt &&
+                                                formatDistanceToNow(version.createdAt.toDate(), { addSuffix: true })}
                                         </p>
                                         {version.changeNote && (
                                             <p className="text-xs text-gray-400">{version.changeNote}</p>
                                         )}
                                     </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleRestoreVersion(version)}
-                                    >
+                                    <Button variant="outline" size="sm" onClick={() => handleRestoreVersion(version)}>
                                         Restore
                                     </Button>
                                 </div>
@@ -607,7 +598,8 @@ export default function EmailTemplateEditorPage() {
                     <DialogHeader>
                         <DialogTitle>Reset to Default?</DialogTitle>
                         <DialogDescription>
-                            This will restore the template to its original content. Your current version will be saved in the history.
+                            This will restore the template to its original content. Your current version will be saved
+                            in the history.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

@@ -39,7 +39,6 @@ export interface OrganizationSettings {
     updatedAt?: Date;
     createdAt?: Date;
 
-
     // Invoice Settings
     invoiceNumberPrefix?: string;
     invoiceNextNumber?: string;
@@ -201,8 +200,6 @@ export interface OrganizationSettings {
     openaiModel?: string;
     openaiMaxTokens?: number;
 
-
-
     // Calendar Settings
     calendarEventsLimit?: number;
     calendarDefaultView?: string;
@@ -231,7 +228,6 @@ export interface OrganizationSettings {
     calendarContractColor?: string;
     calendarProjectColor?: string;
 
-
     // PDF Settings
     pdfFont?: string;
     pdfSwapDetails?: boolean;
@@ -257,7 +253,6 @@ export interface OrganizationSettings {
     pdfFormatCreditNote?: string;
     pdfFormatContract?: string;
     pdfFormatStatement?: string;
-
 
     // E-Sign Settings
     esignProposalRequireSignature?: boolean;
@@ -491,7 +486,6 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     calendarContractColor: "#b72974",
     calendarProjectColor: "#b72974",
 
-
     // PDF Defaults
     pdfFont: "freesans",
     pdfSwapDetails: false,
@@ -521,7 +515,8 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     // E-Sign Defaults
     esignProposalRequireSignature: true,
     esignEstimateRequireSignature: true,
-    esignLegalBoundText: "By clicking on \"Sign\", I consent to be legally bound by this electronic representation of my signature.",
+    esignLegalBoundText:
+        'By clicking on "Sign", I consent to be legally bound by this electronic representation of my signature.',
 
     // Misc Defaults
     miscRequireLoginForContract: false,
@@ -583,31 +578,35 @@ export function useOrganizationSettings() {
             }
 
             // Set up real-time listener for settings
-            const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    setSettings({
-                        ...DEFAULT_SETTINGS,
-                        ...data,
-                        subdomain, // Include subdomain from org doc
-                        updatedAt: data.updatedAt?.toDate?.(),
-                        createdAt: data.createdAt?.toDate?.(),
-                    });
-                } else {
-                    // No settings doc yet, use defaults with subdomain
-                    setSettings({ ...DEFAULT_SETTINGS, subdomain });
+            const unsubscribe = onSnapshot(
+                settingsRef,
+                (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        setSettings({
+                            ...DEFAULT_SETTINGS,
+                            ...data,
+                            subdomain, // Include subdomain from org doc
+                            updatedAt: data.updatedAt?.toDate?.(),
+                            createdAt: data.createdAt?.toDate?.(),
+                        });
+                    } else {
+                        // No settings doc yet, use defaults with subdomain
+                        setSettings({ ...DEFAULT_SETTINGS, subdomain });
+                    }
+                    setLoading(false);
+                },
+                (error) => {
+                    console.error("Error in settings listener:", error);
+                    setLoading(false);
                 }
-                setLoading(false);
-            }, (error) => {
-                console.error("Error in settings listener:", error);
-                setLoading(false);
-            });
+            );
 
             return unsubscribe;
         };
 
         let unsubscribe: (() => void) | undefined;
-        setupListeners().then(unsub => {
+        setupListeners().then((unsub) => {
             unsubscribe = unsub;
         });
 
@@ -617,97 +616,109 @@ export function useOrganizationSettings() {
     }, [profile?.orgId, profileLoading]);
 
     // Save settings
-    const saveSettings = useCallback(async (updates: Partial<OrganizationSettings>) => {
-        if (!profile?.orgId) throw new Error("No organization");
+    const saveSettings = useCallback(
+        async (updates: Partial<OrganizationSettings>) => {
+            if (!profile?.orgId) throw new Error("No organization");
 
-        setSaving(true);
-        try {
-            // Handle Subdomain logic separately if it's being updated
-            if (updates.subdomain !== undefined) {
-                const newSubdomain = updates.subdomain.toLowerCase().trim();
+            setSaving(true);
+            try {
+                // Handle Subdomain logic separately if it's being updated
+                if (updates.subdomain !== undefined) {
+                    const newSubdomain = updates.subdomain.toLowerCase().trim();
 
-                // If subdomain is effectively changing
-                if (newSubdomain !== settings.subdomain) {
-                    // Check uniqueness
-                    const { collection, query, where, getDocs } = await import("firebase/firestore");
-                    const orgsRef = collection(db, "organizations");
-                    const q = query(orgsRef, where("subdomain", "==", newSubdomain));
-                    const querySnapshot = await getDocs(q);
+                    // If subdomain is effectively changing
+                    if (newSubdomain !== settings.subdomain) {
+                        // Check uniqueness
+                        const { collection, query, where, getDocs } = await import("firebase/firestore");
+                        const orgsRef = collection(db, "organizations");
+                        const q = query(orgsRef, where("subdomain", "==", newSubdomain));
+                        const querySnapshot = await getDocs(q);
 
-                    if (!querySnapshot.empty) {
-                        // Check if the found doc is NOT this org (collision)
-                        const existingDoc = querySnapshot.docs[0];
-                        if (existingDoc.id !== profile.orgId) {
-                            throw new Error("Subdomain is already taken.");
+                        if (!querySnapshot.empty) {
+                            // Check if the found doc is NOT this org (collision)
+                            const existingDoc = querySnapshot.docs[0];
+                            if (existingDoc.id !== profile.orgId) {
+                                throw new Error("Subdomain is already taken.");
+                            }
                         }
+
+                        // Update root organization document
+                        // Update root organization document (upsert to handle missing doc)
+                        const orgRef = doc(db, "organizations", profile.orgId);
+                        await setDoc(orgRef, { subdomain: newSubdomain }, { merge: true });
                     }
-
-                    // Update root organization document
-                    // Update root organization document (upsert to handle missing doc)
-                    const orgRef = doc(db, "organizations", profile.orgId);
-                    await setDoc(orgRef, { subdomain: newSubdomain }, { merge: true });
                 }
+
+                // Update Settings Subcollection
+                // Exclude subdomain from this update as it lives on the root doc
+                const { subdomain, ...settingsUpdates } = updates;
+
+                if (Object.keys(settingsUpdates).length > 0) {
+                    const settingsRef = doc(db, "organizations", profile.orgId, "settings", "general");
+                    await setDoc(
+                        settingsRef,
+                        {
+                            ...settingsUpdates,
+                            updatedAt: serverTimestamp(),
+                        },
+                        { merge: true }
+                    );
+                }
+
+                setSettings((prev) => ({ ...prev, ...updates }));
+
+                // Check if company profile is complete for onboarding
+                const hasCompanyInfo = updates.companyName || settings.companyName;
+                if (hasCompanyInfo) {
+                    await triggerOnboardingStep("companyProfile");
+                }
+            } catch (error) {
+                console.error("Error saving settings:", error);
+                throw error;
+            } finally {
+                setSaving(false);
             }
-
-            // Update Settings Subcollection
-            // Exclude subdomain from this update as it lives on the root doc
-            const { subdomain, ...settingsUpdates } = updates;
-
-            if (Object.keys(settingsUpdates).length > 0) {
-                const settingsRef = doc(db, "organizations", profile.orgId, "settings", "general");
-                await setDoc(settingsRef, {
-                    ...settingsUpdates,
-                    updatedAt: serverTimestamp(),
-                }, { merge: true });
-            }
-
-            setSettings(prev => ({ ...prev, ...updates }));
-
-            // Check if company profile is complete for onboarding
-            const hasCompanyInfo = updates.companyName || settings.companyName;
-            if (hasCompanyInfo) {
-                await triggerOnboardingStep("companyProfile");
-            }
-
-        } catch (error) {
-            console.error("Error saving settings:", error);
-            throw error;
-        } finally {
-            setSaving(false);
-        }
-    }, [profile?.orgId, settings.companyName, settings.subdomain]);
+        },
+        [profile?.orgId, settings.companyName, settings.subdomain]
+    );
 
     // Upload logo
-    const uploadLogo = useCallback(async (file: File, type: "light" | "dark" | "favicon"): Promise<string> => {
-        if (!profile?.orgId) throw new Error("No organization");
+    const uploadLogo = useCallback(
+        async (file: File, type: "light" | "dark" | "favicon"): Promise<string> => {
+            if (!profile?.orgId) throw new Error("No organization");
 
-        const path = `organizations/${profile.orgId}/branding/${type}-${Date.now()}`;
-        const storageRef = ref(storage, path);
+            const path = `organizations/${profile.orgId}/branding/${type}-${Date.now()}`;
+            const storageRef = ref(storage, path);
 
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
 
-        // Save URL to settings
-        const field = type === "light" ? "logoLight" : type === "dark" ? "logoDark" : "favicon";
-        await saveSettings({ [field]: url });
+            // Save URL to settings
+            const field = type === "light" ? "logoLight" : type === "dark" ? "logoDark" : "favicon";
+            await saveSettings({ [field]: url });
 
-        return url;
-    }, [profile?.orgId, saveSettings]);
+            return url;
+        },
+        [profile?.orgId, saveSettings]
+    );
 
     // Trigger onboarding step completion
-    const triggerOnboardingStep = useCallback(async (step: string) => {
-        if (!profile?.uid) return;
+    const triggerOnboardingStep = useCallback(
+        async (step: string) => {
+            if (!profile?.uid) return;
 
-        try {
-            const docRef = doc(db, "users", profile.uid, "onboarding", "state");
-            await updateDoc(docRef, {
-                [`steps.${step}`]: true,
-            });
-        } catch (error) {
-            // Silently fail if onboarding doc doesn't exist
-            console.log("Onboarding step trigger skipped:", step);
-        }
-    }, [profile?.uid]);
+            try {
+                const docRef = doc(db, "users", profile.uid, "onboarding", "state");
+                await updateDoc(docRef, {
+                    [`steps.${step}`]: true,
+                });
+            } catch (error) {
+                // Silently fail if onboarding doc doesn't exist
+                console.log("Onboarding step trigger skipped:", step);
+            }
+        },
+        [profile?.uid]
+    );
 
     return {
         settings,

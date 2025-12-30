@@ -69,8 +69,7 @@ export default function AddCustomerStep() {
                 <p className="text-sm text-gray-500 mt-1">
                     {useDummyData
                         ? "We've pre-filled demo data for you. Feel free to edit!"
-                        : "Enter your first customer's details"
-                    }
+                        : "Enter your first customer's details"}
                 </p>
             </div>
 

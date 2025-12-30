@@ -7,10 +7,10 @@ interface ValidationResult {
 
 // Invoice status transitions
 const validInvoiceTransitions: Record<string, string[]> = {
-    draft: ['sent', 'cancelled'],
-    sent: ['partial', 'paid', 'overdue', 'cancelled'],
-    partial: ['paid', 'overdue'],
-    overdue: ['partial', 'paid'],
+    draft: ["sent", "cancelled"],
+    sent: ["partial", "paid", "overdue", "cancelled"],
+    partial: ["paid", "overdue"],
+    overdue: ["partial", "paid"],
     paid: [],
     cancelled: [],
 };
@@ -32,7 +32,7 @@ interface Invoice {
 
 export function validatePaymentAmount(invoice: Invoice, amount: number): ValidationResult {
     if (amount <= 0) {
-        return { valid: false, error: 'Payment amount must be positive' };
+        return { valid: false, error: "Payment amount must be positive" };
     }
 
     const balanceDue = invoice.amountDue;
@@ -60,11 +60,11 @@ interface Estimate {
 
 export function canConvertEstimate(estimate: Estimate): ValidationResult {
     if (estimate.convertedToInvoiceId) {
-        return { valid: false, error: 'Estimate already converted to invoice' };
+        return { valid: false, error: "Estimate already converted to invoice" };
     }
 
-    if (estimate.status !== 'accepted') {
-        return { valid: false, error: 'Only accepted estimates can be converted' };
+    if (estimate.status !== "accepted") {
+        return { valid: false, error: "Only accepted estimates can be converted" };
     }
 
     return { valid: true };
@@ -78,12 +78,12 @@ interface Lead {
 
 export function canConvertLead(lead: Lead): ValidationResult {
     if (lead.convertedToCustomerId) {
-        return { valid: false, error: 'Lead already converted to customer' };
+        return { valid: false, error: "Lead already converted to customer" };
     }
 
     // Allow conversion from any status except lost
-    if (lead.status === 'lost') {
-        return { valid: false, error: 'Cannot convert lost leads' };
+    if (lead.status === "lost") {
+        return { valid: false, error: "Cannot convert lost leads" };
     }
 
     return { valid: true };
@@ -96,16 +96,16 @@ interface Proposal {
 }
 
 export function canAcceptProposal(proposal: Proposal): ValidationResult {
-    if (proposal.status === 'accepted') {
-        return { valid: false, error: 'Proposal already accepted' };
+    if (proposal.status === "accepted") {
+        return { valid: false, error: "Proposal already accepted" };
     }
 
-    if (proposal.status === 'declined') {
-        return { valid: false, error: 'Proposal was declined' };
+    if (proposal.status === "declined") {
+        return { valid: false, error: "Proposal was declined" };
     }
 
     if (new Date() > proposal.openTill) {
-        return { valid: false, error: 'Proposal has expired' };
+        return { valid: false, error: "Proposal has expired" };
     }
 
     return { valid: true };
@@ -120,11 +120,11 @@ export function isContractActive(startDate: Date, endDate: Date): boolean {
 // Multi-tenancy validation
 export function validateOrgAccess(userOrgId: string, resourceOrgId: string): ValidationResult {
     if (!userOrgId) {
-        return { valid: false, error: 'User organization required' };
+        return { valid: false, error: "User organization required" };
     }
 
     if (userOrgId !== resourceOrgId) {
-        return { valid: false, error: 'Access denied - organization mismatch' };
+        return { valid: false, error: "Access denied - organization mismatch" };
     }
 
     return { valid: true };

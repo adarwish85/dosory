@@ -3,11 +3,7 @@
 import { useState } from "react";
 import { Bell, Check, Info, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/lib/hooks/use-notifications";
@@ -19,10 +15,14 @@ export function NotificationsPopover() {
 
     const getIcon = (type: string) => {
         switch (type) {
-            case "success": return <CheckCircle className="h-4 w-4 text-green-500" />;
-            case "warning": return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-            case "error": return <XCircle className="h-4 w-4 text-red-500" />;
-            default: return <Info className="h-4 w-4 text-blue-500" />;
+            case "success":
+                return <CheckCircle className="h-4 w-4 text-green-500" />;
+            case "warning":
+                return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+            case "error":
+                return <XCircle className="h-4 w-4 text-red-500" />;
+            default:
+                return <Info className="h-4 w-4 text-blue-500" />;
         }
     };
 
@@ -36,7 +36,10 @@ export function NotificationsPopover() {
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button size="icon" className="relative bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#1c1e21] rounded-full h-10 w-10">
+                <Button
+                    size="icon"
+                    className="relative bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#1c1e21] rounded-full h-10 w-10"
+                >
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
                         <span className="absolute -top-0.5 -right-0.5 h-4 min-w-[1rem] px-1 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold shadow-sm border border-white">
@@ -78,18 +81,21 @@ export function NotificationsPopover() {
                                     )}
                                     onClick={() => handleMarkAsRead(notification.id, notification.link)}
                                 >
-                                    <div className="mt-1 shrink-0">
-                                        {getIcon(notification.type)}
-                                    </div>
+                                    <div className="mt-1 shrink-0">{getIcon(notification.type)}</div>
                                     <div className="flex-1 space-y-1">
-                                        <p className={cn("text-sm", !notification.read ? "font-semibold text-gray-900" : "text-gray-700")}>
+                                        <p
+                                            className={cn(
+                                                "text-sm",
+                                                !notification.read ? "font-semibold text-gray-900" : "text-gray-700"
+                                            )}
+                                        >
                                             {notification.title}
                                         </p>
-                                        <p className="text-xs text-gray-500 line-clamp-2">
-                                            {notification.message}
-                                        </p>
+                                        <p className="text-xs text-gray-500 line-clamp-2">{notification.message}</p>
                                         <p className="text-[10px] text-gray-400">
-                                            {notification.createdAt ? formatDistanceToNow(notification.createdAt, { addSuffix: true }) : "Just now"}
+                                            {notification.createdAt
+                                                ? formatDistanceToNow(notification.createdAt, { addSuffix: true })
+                                                : "Just now"}
                                         </p>
                                     </div>
                                     {!notification.read && (

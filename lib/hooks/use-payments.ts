@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-    collection,
-    query,
-    where,
-    orderBy,
-    onSnapshot,
-    Timestamp,
-    QueryConstraint,
-} from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, Timestamp, QueryConstraint } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 
@@ -52,10 +44,7 @@ export function usePayments(options: UsePaymentsOptions = {}) {
 
         console.log("usePayments: Building query with orgId:", profile.orgId);
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-            orderBy("date", "desc"),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId), orderBy("date", "desc")];
 
         if (customerId && customerId !== "undefined") {
             constraints.push(where("customerId", "==", customerId));

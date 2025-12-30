@@ -33,7 +33,9 @@ export default function ContractTypesPage() {
                             </SelectContent>
                         </Select>
                         <Button variant="outline">Export</Button>
-                        <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="icon">
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
                     </div>
                     <div className="relative w-64">
                         <div className="relative">
@@ -50,7 +52,10 @@ export default function ContractTypesPage() {
                     </div>
                     <div className="divide-y">
                         {contractTypes.map((type, idx) => (
-                            <div key={idx} className="px-6 py-4 flex justify-between items-center h-16 group hover:bg-gray-50 transition-colors">
+                            <div
+                                key={idx}
+                                className="px-6 py-4 flex justify-between items-center h-16 group hover:bg-gray-50 transition-colors"
+                            >
                                 <div className="flex items-center gap-2">
                                     <span className="font-medium text-gray-900">{type.name}</span>
                                     <span className="text-sm text-gray-500">{type.total}</span>
@@ -64,11 +69,19 @@ export default function ContractTypesPage() {
                     </div>
                     <div className="px-6 py-4 border-t bg-gray-50 rounded-b-md">
                         <div className="text-xs text-gray-500 flex justify-end items-center gap-4">
-                            <span>Showing 1 to {contractTypes.length} of {contractTypes.length} entries</span>
+                            <span>
+                                Showing 1 to {contractTypes.length} of {contractTypes.length} entries
+                            </span>
                             <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="sm" disabled className="text-xs">Previous</Button>
-                                <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">1</div>
-                                <Button variant="ghost" size="sm" disabled className="text-xs">Next</Button>
+                                <Button variant="ghost" size="sm" disabled className="text-xs">
+                                    Previous
+                                </Button>
+                                <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">
+                                    1
+                                </div>
+                                <Button variant="ghost" size="sm" disabled className="text-xs">
+                                    Next
+                                </Button>
                             </div>
                         </div>
                     </div>

@@ -11,14 +11,7 @@ export const LEAD_STATUSES: { value: LeadStatus; label: string }[] = [
     { value: "junk", label: "Junk" },
 ];
 
-export const LEAD_SOURCES = [
-    "WebSite",
-    "Referral",
-    "Social Media",
-    "Cold Call",
-    "Email Campaign",
-    "Other"
-] as const;
+export const LEAD_SOURCES = ["WebSite", "Referral", "Social Media", "Cold Call", "Email Campaign", "Other"] as const;
 
 export const STATUS_COLORS: Record<LeadStatus, { bg: string; text: string; border: string }> = {
     new: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-100" },

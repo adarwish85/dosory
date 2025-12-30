@@ -7,16 +7,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-    Plus, Loader2, FileText, Trash2, Eye, EyeOff,
-    Home, Settings, ExternalLink, Pencil, MoreHorizontal, ArrowUpDown
+    Plus,
+    Loader2,
+    FileText,
+    Trash2,
+    Eye,
+    EyeOff,
+    Home,
+    Settings,
+    ExternalLink,
+    Pencil,
+    MoreHorizontal,
+    ArrowUpDown,
 } from "lucide-react";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -168,16 +172,19 @@ export default function PagesManagerPage() {
                             className="border-orange-300 text-orange-600 hover:bg-orange-50"
                         >
                             {migrating ? (
-                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Migrating...</>
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Migrating...
+                                </>
                             ) : (
-                                <><ArrowUpDown className="mr-2 h-4 w-4" />Import Existing Config</>
+                                <>
+                                    <ArrowUpDown className="mr-2 h-4 w-4" />
+                                    Import Existing Config
+                                </>
                             )}
                         </Button>
                     )}
-                    <Button
-                        variant="outline"
-                        onClick={() => setShowDesignDialog(true)}
-                    >
+                    <Button variant="outline" onClick={() => setShowDesignDialog(true)}>
                         <Settings className="mr-2 h-4 w-4" />
                         Design
                     </Button>
@@ -214,8 +221,11 @@ export default function PagesManagerPage() {
                             className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
                         >
                             <div className="flex items-center gap-4">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${page.isHome ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
-                                    }`}>
+                                <div
+                                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                        page.isHome ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
+                                    }`}
+                                >
                                     {page.isHome ? <Home className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
                                 </div>
                                 <div>
@@ -273,7 +283,9 @@ export default function PagesManagerPage() {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => router.push(`/bunny/landing-builder/${page.id}`)}>
+                                        <DropdownMenuItem
+                                            onClick={() => router.push(`/bunny/landing-builder/${page.id}`)}
+                                        >
                                             <Pencil className="mr-2 h-4 w-4" />
                                             Edit Page
                                         </DropdownMenuItem>
@@ -327,9 +339,7 @@ export default function PagesManagerPage() {
                                     placeholder="about-us"
                                 />
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                                This will be the URL path for the page
-                            </p>
+                            <p className="text-xs text-gray-500 mt-1">This will be the URL path for the page</p>
                         </div>
                     </div>
                     <DialogFooter>
@@ -374,12 +384,16 @@ export default function PagesManagerPage() {
                                     <input
                                         type="color"
                                         value={designForm.secondaryColor}
-                                        onChange={(e) => setDesignForm({ ...designForm, secondaryColor: e.target.value })}
+                                        onChange={(e) =>
+                                            setDesignForm({ ...designForm, secondaryColor: e.target.value })
+                                        }
                                         className="w-10 h-10 rounded cursor-pointer border-0"
                                     />
                                     <Input
                                         value={designForm.secondaryColor}
-                                        onChange={(e) => setDesignForm({ ...designForm, secondaryColor: e.target.value })}
+                                        onChange={(e) =>
+                                            setDesignForm({ ...designForm, secondaryColor: e.target.value })
+                                        }
                                         className="uppercase text-sm"
                                     />
                                 </div>
@@ -414,7 +428,7 @@ export default function PagesManagerPage() {
                                 </button>
                                 <button
                                     style={{
-                                        background: `linear-gradient(to right, ${designForm.primaryColor}, ${designForm.secondaryColor})`
+                                        background: `linear-gradient(to right, ${designForm.primaryColor}, ${designForm.secondaryColor})`,
                                     }}
                                     className="px-4 py-2 rounded-lg text-white text-sm font-medium"
                                 >
@@ -433,9 +447,7 @@ export default function PagesManagerPage() {
                         <Button variant="outline" onClick={() => setShowDesignDialog(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={handleSaveDesign}>
-                            Save Design
-                        </Button>
+                        <Button onClick={handleSaveDesign}>Save Design</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

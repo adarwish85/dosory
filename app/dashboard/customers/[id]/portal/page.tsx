@@ -41,13 +41,14 @@ export default function CustomerPortalSettingsPage() {
     // Construct Portal URL
     // Use custom subdomain if available, otherwise orgId, or fallback to current host
     const subdomain = settings.subdomain || customer.orgId;
-    // Assuming the app is hosted on dosory.com or root domain. 
+    // Assuming the app is hosted on dosory.com or root domain.
     // If running on localhost, handle that too.
-    const rootDomain = typeof window !== 'undefined' && window.location.hostname.includes('localhost')
-        ? 'localhost:3000'
-        : (process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'dosory.com');
+    const rootDomain =
+        typeof window !== "undefined" && window.location.hostname.includes("localhost")
+            ? "localhost:3000"
+            : process.env.NEXT_PUBLIC_ROOT_DOMAIN || "dosory.com";
 
-    const protocol = typeof window !== 'undefined' ? window.location.protocol : 'https:';
+    const protocol = typeof window !== "undefined" ? window.location.protocol : "https:";
 
     // Portal URL: https://[subdomain].dosory.com/portal
     // OR if no subdomain logic yet for portal, maybe just /portal
@@ -58,9 +59,9 @@ export default function CustomerPortalSettingsPage() {
             .toString()
             .toLowerCase()
             .trim()
-            .replace(/\s+/g, '-')     // Replace spaces with -
-            .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-            .replace(/\-\-+/g, '-');  // Replace multiple - with single -
+            .replace(/\s+/g, "-") // Replace spaces with -
+            .replace(/[^\w\-]+/g, "") // Remove all non-word chars
+            .replace(/\-\-+/g, "-"); // Replace multiple - with single -
     };
 
     const companySlug = customer.company ? slugify(customer.company) : customer.id;
@@ -97,7 +98,9 @@ export default function CustomerPortalSettingsPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Portal Settings</h2>
-                    <p className="text-gray-500">Manage client portal access and configuration for {customer.company}.</p>
+                    <p className="text-gray-500">
+                        Manage client portal access and configuration for {customer.company}.
+                    </p>
                 </div>
                 <Button onClick={handleSave} disabled={saving} className="bg-gray-900 text-white hover:bg-gray-800">
                     {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -152,7 +155,8 @@ export default function CustomerPortalSettingsPage() {
                             </Button>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Share this link with your customer contacts. They will need to log in with their email address.
+                            Share this link with your customer contacts. They will need to log in with their email
+                            address.
                         </p>
                     </div>
                 </CardContent>
@@ -162,8 +166,8 @@ export default function CustomerPortalSettingsPage() {
                 <CardHeader>
                     <CardTitle>Module Visibility (Global)</CardTitle>
                     <CardDescription>
-                        Control which modules are visible to this customer's contacts by default.
-                        (Can be overridden per contact).
+                        Control which modules are visible to this customer's contacts by default. (Can be overridden per
+                        contact).
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

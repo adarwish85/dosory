@@ -4,7 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bold, Italic, Underline, Link, Image, MoreHorizontal, AlignLeft, AlignCenter, AlignRight, Plus } from "lucide-react";
+import {
+    Bold,
+    Italic,
+    Underline,
+    Link,
+    Image,
+    MoreHorizontal,
+    AlignLeft,
+    AlignCenter,
+    AlignRight,
+    Plus,
+} from "lucide-react";
 
 export default function NewArticlePage() {
     return (
@@ -32,18 +43,30 @@ export default function NewArticlePage() {
                                 <SelectItem value="1">Group 1</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline" size="icon" className="shrink-0"><Plus className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="icon" className="shrink-0">
+                            <Plus className="h-4 w-4" />
+                        </Button>
                     </div>
                 </div>
 
                 <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                         <Checkbox id="internal" />
-                        <label htmlFor="internal" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Internal Article</label>
+                        <label
+                            htmlFor="internal"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            Internal Article
+                        </label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Checkbox id="disabled" />
-                        <label htmlFor="disabled" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Disabled</label>
+                        <label
+                            htmlFor="disabled"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            Disabled
+                        </label>
                     </div>
                 </div>
 
@@ -55,12 +78,20 @@ export default function NewArticlePage() {
                         </div>
                         <div className="border-b p-2 flex items-center gap-4 text-gray-600">
                             <Select defaultValue="system">
-                                <SelectTrigger className="w-[120px] h-8 text-sm"><SelectValue placeholder="System Font" /></SelectTrigger>
-                                <SelectContent><SelectItem value="system">System Font</SelectItem></SelectContent>
+                                <SelectTrigger className="w-[120px] h-8 text-sm">
+                                    <SelectValue placeholder="System Font" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="system">System Font</SelectItem>
+                                </SelectContent>
                             </Select>
                             <Select defaultValue="12">
-                                <SelectTrigger className="w-[80px] h-8 text-sm"><SelectValue placeholder="12pt" /></SelectTrigger>
-                                <SelectContent><SelectItem value="12">12pt</SelectItem></SelectContent>
+                                <SelectTrigger className="w-[80px] h-8 text-sm">
+                                    <SelectValue placeholder="12pt" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="12">12pt</SelectItem>
+                                </SelectContent>
                             </Select>
                             <div className="h-4 w-px bg-gray-300 mx-2"></div>
                             <Bold className="w-4 h-4 cursor-pointer" />
@@ -75,9 +106,7 @@ export default function NewArticlePage() {
                             <Link className="w-4 h-4 cursor-pointer" />
                             <MoreHorizontal className="w-4 h-4 cursor-pointer ml-auto" />
                         </div>
-                        <div className="p-4 min-h-[200px] text-gray-400">
-
-                        </div>
+                        <div className="p-4 min-h-[200px] text-gray-400"></div>
                     </div>
                 </div>
             </div>

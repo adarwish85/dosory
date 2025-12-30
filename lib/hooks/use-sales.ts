@@ -46,9 +46,7 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (status !== "all") {
             constraints.push(where("status", "==", status));
@@ -83,7 +81,10 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
     }, [profile?.orgId, status, customerId]);
 
     // Calculate totals helper
-    const calculateTotals = (items: { quantity: number; rate: number; taxRate?: number }[], discount?: { type: "percentage" | "fixed"; value: number }) => {
+    const calculateTotals = (
+        items: { quantity: number; rate: number; taxRate?: number }[],
+        discount?: { type: "percentage" | "fixed"; value: number }
+    ) => {
         let subtotal = 0;
         let taxTotal = 0;
 
@@ -139,15 +140,12 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
         [profile?.orgId, profile?.uid]
     );
 
-    const updateEstimate = useCallback(
-        async (id: string, data: Partial<EstimateFormData>): Promise<void> => {
-            const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
-            if (data.date) updateData.date = Timestamp.fromDate(data.date);
-            if (data.expiryDate) updateData.expiryDate = Timestamp.fromDate(data.expiryDate);
-            await updateDoc(doc(db, "estimates", id), updateData);
-        },
-        []
-    );
+    const updateEstimate = useCallback(async (id: string, data: Partial<EstimateFormData>): Promise<void> => {
+        const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
+        if (data.date) updateData.date = Timestamp.fromDate(data.date);
+        if (data.expiryDate) updateData.expiryDate = Timestamp.fromDate(data.expiryDate);
+        await updateDoc(doc(db, "estimates", id), updateData);
+    }, []);
 
     const deleteEstimate = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "estimates", id));
@@ -175,7 +173,7 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
         await updateDoc(doc(db, "estimates", id), {
             status: "accepted",
             acceptedAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
+            updatedAt: serverTimestamp(),
         });
     }, []);
 
@@ -184,60 +182,63 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
     }, []);
 
     // FIX EST-002: Convert to invoice with duplicate check
-    const convertToInvoice = useCallback(async (id: string): Promise<string> => {
-        if (!profile?.orgId) throw new Error("No organization");
+    const convertToInvoice = useCallback(
+        async (id: string): Promise<string> => {
+            if (!profile?.orgId) throw new Error("No organization");
 
-        const estimateDoc = await getDoc(doc(db, "estimates", id));
-        if (!estimateDoc.exists()) throw new Error("Estimate not found");
+            const estimateDoc = await getDoc(doc(db, "estimates", id));
+            if (!estimateDoc.exists()) throw new Error("Estimate not found");
 
-        const estimate = estimateDoc.data() as Estimate;
+            const estimate = estimateDoc.data() as Estimate;
 
-        // Check if already converted
-        if (estimate.convertedToInvoiceId) {
-            throw new Error("Estimate already converted to invoice: " + estimate.convertedToInvoiceId);
-        }
+            // Check if already converted
+            if (estimate.convertedToInvoiceId) {
+                throw new Error("Estimate already converted to invoice: " + estimate.convertedToInvoiceId);
+            }
 
-        // Check if accepted
-        if (estimate.status !== "accepted") {
-            throw new Error("Only accepted estimates can be converted to invoices");
-        }
+            // Check if accepted
+            if (estimate.status !== "accepted") {
+                throw new Error("Only accepted estimates can be converted to invoices");
+            }
 
-        // Generate invoice number
-        const invNumber = `INV-${Date.now().toString().slice(-6).padStart(6, "0")}`;
+            // Generate invoice number
+            const invNumber = `INV-${Date.now().toString().slice(-6).padStart(6, "0")}`;
 
-        // Create invoice from estimate
-        const invoiceRef = await addDoc(collection(db, "invoices"), {
-            number: invNumber,
-            customerId: estimate.customerId,
-            customerName: estimate.customerName,
-            items: estimate.items,
-            subtotal: estimate.subtotal,
-            taxTotal: estimate.taxTotal,
-            total: estimate.total,
-            amountPaid: 0,
-            amountDue: estimate.total,
-            discount: estimate.discount,
-            status: "draft",
-            date: serverTimestamp(),
-            dueDate: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)), // 30 days
-            currency: estimate.currency || "USD",
-            fromEstimateId: id,
-            fromEstimateNumber: estimate.number,
-            orgId: profile.orgId,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            createdBy: profile.uid,
-        });
+            // Create invoice from estimate
+            const invoiceRef = await addDoc(collection(db, "invoices"), {
+                number: invNumber,
+                customerId: estimate.customerId,
+                customerName: estimate.customerName,
+                items: estimate.items,
+                subtotal: estimate.subtotal,
+                taxTotal: estimate.taxTotal,
+                total: estimate.total,
+                amountPaid: 0,
+                amountDue: estimate.total,
+                discount: estimate.discount,
+                status: "draft",
+                date: serverTimestamp(),
+                dueDate: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)), // 30 days
+                currency: estimate.currency || "USD",
+                fromEstimateId: id,
+                fromEstimateNumber: estimate.number,
+                orgId: profile.orgId,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                createdBy: profile.uid,
+            });
 
-        // Update estimate with conversion reference
-        await updateDoc(doc(db, "estimates", id), {
-            convertedToInvoiceId: invoiceRef.id,
-            convertedAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
+            // Update estimate with conversion reference
+            await updateDoc(doc(db, "estimates", id), {
+                convertedToInvoiceId: invoiceRef.id,
+                convertedAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
 
-        return invoiceRef.id;
-    }, [profile?.orgId, profile?.uid]);
+            return invoiceRef.id;
+        },
+        [profile?.orgId, profile?.uid]
+    );
 
     // Calculate estimate stats
     const estimateStats = estimates.reduce(
@@ -288,9 +289,7 @@ export function useProposals(options: UseProposalsOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (status !== "all") {
             constraints.push(where("status", "==", status));
@@ -359,15 +358,12 @@ export function useProposals(options: UseProposalsOptions = {}) {
         [profile?.orgId, profile?.uid]
     );
 
-    const updateProposal = useCallback(
-        async (id: string, data: Partial<ProposalFormData>): Promise<void> => {
-            const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
-            if (data.date) updateData.date = Timestamp.fromDate(data.date);
-            if (data.openTill) updateData.openTill = Timestamp.fromDate(data.openTill);
-            await updateDoc(doc(db, "proposals", id), updateData);
-        },
-        []
-    );
+    const updateProposal = useCallback(async (id: string, data: Partial<ProposalFormData>): Promise<void> => {
+        const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
+        if (data.date) updateData.date = Timestamp.fromDate(data.date);
+        if (data.openTill) updateData.openTill = Timestamp.fromDate(data.openTill);
+        await updateDoc(doc(db, "proposals", id), updateData);
+    }, []);
 
     const deleteProposal = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "proposals", id));

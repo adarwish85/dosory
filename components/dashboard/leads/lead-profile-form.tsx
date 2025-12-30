@@ -15,18 +15,121 @@ import { LEAD_STATUSES, LEAD_SOURCES } from "@/lib/constants";
 
 // World Countries
 const COUNTRIES = [
-    "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
-    "Bahrain", "Bangladesh", "Belarus", "Belgium", "Bolivia", "Bosnia and Herzegovina", "Brazil", "Brunei", "Bulgaria",
-    "Cambodia", "Cameroon", "Canada", "Chile", "China", "Colombia", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic",
-    "Denmark", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Estonia", "Ethiopia",
-    "Finland", "France", "Georgia", "Germany", "Ghana", "Greece", "Guatemala",
-    "Honduras", "Hong Kong", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
-    "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Latvia", "Lebanon", "Libya", "Lithuania", "Luxembourg",
-    "Malaysia", "Mexico", "Moldova", "Monaco", "Morocco", "Netherlands", "New Zealand", "Nigeria", "North Korea", "Norway",
-    "Oman", "Pakistan", "Palestine", "Panama", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar",
-    "Romania", "Russia", "Saudi Arabia", "Serbia", "Singapore", "Slovakia", "Slovenia", "South Africa", "South Korea", "Spain",
-    "Sri Lanka", "Sudan", "Sweden", "Switzerland", "Syria", "Taiwan", "Thailand", "Tunisia", "Turkey",
-    "UAE", "UK", "Ukraine", "Uruguay", "USA", "Uzbekistan", "Venezuela", "Vietnam", "Yemen", "Zimbabwe"
+    "Afghanistan",
+    "Albania",
+    "Algeria",
+    "Andorra",
+    "Angola",
+    "Argentina",
+    "Armenia",
+    "Australia",
+    "Austria",
+    "Azerbaijan",
+    "Bahrain",
+    "Bangladesh",
+    "Belarus",
+    "Belgium",
+    "Bolivia",
+    "Bosnia and Herzegovina",
+    "Brazil",
+    "Brunei",
+    "Bulgaria",
+    "Cambodia",
+    "Cameroon",
+    "Canada",
+    "Chile",
+    "China",
+    "Colombia",
+    "Costa Rica",
+    "Croatia",
+    "Cuba",
+    "Cyprus",
+    "Czech Republic",
+    "Denmark",
+    "Dominican Republic",
+    "Ecuador",
+    "Egypt",
+    "El Salvador",
+    "Estonia",
+    "Ethiopia",
+    "Finland",
+    "France",
+    "Georgia",
+    "Germany",
+    "Ghana",
+    "Greece",
+    "Guatemala",
+    "Honduras",
+    "Hong Kong",
+    "Hungary",
+    "Iceland",
+    "India",
+    "Indonesia",
+    "Iran",
+    "Iraq",
+    "Ireland",
+    "Israel",
+    "Italy",
+    "Jamaica",
+    "Japan",
+    "Jordan",
+    "Kazakhstan",
+    "Kenya",
+    "Kuwait",
+    "Latvia",
+    "Lebanon",
+    "Libya",
+    "Lithuania",
+    "Luxembourg",
+    "Malaysia",
+    "Mexico",
+    "Moldova",
+    "Monaco",
+    "Morocco",
+    "Netherlands",
+    "New Zealand",
+    "Nigeria",
+    "North Korea",
+    "Norway",
+    "Oman",
+    "Pakistan",
+    "Palestine",
+    "Panama",
+    "Paraguay",
+    "Peru",
+    "Philippines",
+    "Poland",
+    "Portugal",
+    "Qatar",
+    "Romania",
+    "Russia",
+    "Saudi Arabia",
+    "Serbia",
+    "Singapore",
+    "Slovakia",
+    "Slovenia",
+    "South Africa",
+    "South Korea",
+    "Spain",
+    "Sri Lanka",
+    "Sudan",
+    "Sweden",
+    "Switzerland",
+    "Syria",
+    "Taiwan",
+    "Thailand",
+    "Tunisia",
+    "Turkey",
+    "UAE",
+    "UK",
+    "Ukraine",
+    "Uruguay",
+    "USA",
+    "Uzbekistan",
+    "Venezuela",
+    "Vietnam",
+    "Yemen",
+    "Zimbabwe",
 ];
 
 export function LeadProfileForm() {
@@ -70,7 +173,11 @@ export function LeadProfileForm() {
                 status: data.status,
                 source: data.source,
                 value: parseFloat(data.value) || 0,
-                tags: data.tags?.split(",").map((t: string) => t.trim()).filter(Boolean) || [],
+                tags:
+                    data.tags
+                        ?.split(",")
+                        .map((t: string) => t.trim())
+                        .filter(Boolean) || [],
                 description: data.description,
                 address: {
                     street: data["address.street"],
@@ -106,10 +213,14 @@ export function LeadProfileForm() {
                     <div className="grid gap-1.5">
                         <Label className="text-red-500 text-sm">* Status</Label>
                         <Select defaultValue={lead.status} onValueChange={(val) => setValue("status", val)}>
-                            <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
                             <SelectContent>
                                 {LEAD_STATUSES.map((s) => (
-                                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                                    <SelectItem key={s.value} value={s.value}>
+                                        {s.label}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -117,10 +228,14 @@ export function LeadProfileForm() {
                     <div className="grid gap-1.5">
                         <Label className="text-red-500 text-sm">* Source</Label>
                         <Select defaultValue={lead.source} onValueChange={(val) => setValue("source", val)}>
-                            <SelectTrigger><SelectValue placeholder="Select source" /></SelectTrigger>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select source" />
+                            </SelectTrigger>
                             <SelectContent>
                                 {LEAD_SOURCES.map((s) => (
-                                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                                    <SelectItem key={s} value={s}>
+                                        {s}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -179,11 +294,18 @@ export function LeadProfileForm() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-1.5">
                         <Label className="text-sm">Country</Label>
-                        <Select defaultValue={lead.address?.country || ""} onValueChange={(val) => setValue("address.country", val)}>
-                            <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
+                        <Select
+                            defaultValue={lead.address?.country || ""}
+                            onValueChange={(val) => setValue("address.country", val)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select country" />
+                            </SelectTrigger>
                             <SelectContent className="max-h-[200px]">
                                 {COUNTRIES.map((c) => (
-                                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                                    <SelectItem key={c} value={c}>
+                                        {c}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

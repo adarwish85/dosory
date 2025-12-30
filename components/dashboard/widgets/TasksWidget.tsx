@@ -18,7 +18,7 @@ export function TasksWidget({ settings, density }: TasksWidgetProps) {
     const today = startOfDay(new Date());
 
     // Get overdue and upcoming tasks
-    const overdueTasks = tasks.filter(t => {
+    const overdueTasks = tasks.filter((t) => {
         if (t.status === "completed") return false;
         if (!t.dueDate) return false;
         try {
@@ -29,9 +29,7 @@ export function TasksWidget({ settings, density }: TasksWidgetProps) {
         }
     });
 
-    const upcomingTasks = tasks
-        .filter(t => t.status !== "completed")
-        .slice(0, limit);
+    const upcomingTasks = tasks.filter((t) => t.status !== "completed").slice(0, limit);
 
     const formatDate = (timestamp: any) => {
         if (!timestamp) return "-";
@@ -76,9 +74,7 @@ export function TasksWidget({ settings, density }: TasksWidgetProps) {
             {/* Task List */}
             <div className="flex-1 space-y-2 overflow-auto">
                 {upcomingTasks.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                        No tasks yet
-                    </div>
+                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">No tasks yet</div>
                 ) : (
                     upcomingTasks.map((task) => (
                         <Link
@@ -96,7 +92,9 @@ export function TasksWidget({ settings, density }: TasksWidgetProps) {
                                 )}
                                 <span className="text-sm truncate group-hover:text-blue-600">{task.name}</span>
                             </div>
-                            <span className={`text-xs shrink-0 ${isOverdue(task.dueDate) ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                            <span
+                                className={`text-xs shrink-0 ${isOverdue(task.dueDate) ? "text-red-500 font-medium" : "text-gray-400"}`}
+                            >
                                 {formatDate(task.dueDate)}
                             </span>
                         </Link>
@@ -105,10 +103,7 @@ export function TasksWidget({ settings, density }: TasksWidgetProps) {
             </div>
 
             {/* View All Link */}
-            <Link
-                href="/dashboard/tasks"
-                className="text-sm text-blue-600 hover:underline text-center mt-2 block"
-            >
+            <Link href="/dashboard/tasks" className="text-sm text-blue-600 hover:underline text-center mt-2 block">
                 View all tasks →
             </Link>
         </div>

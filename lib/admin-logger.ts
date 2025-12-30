@@ -17,9 +17,9 @@ export interface AdminLog {
  * Logs a sensitive admin action to Firestore 'admin_logs' collection
  */
 export async function logAdminAction(
-    user: User | null | { email?: string | null, uid: string },
+    user: User | null | { email?: string | null; uid: string },
     action: string,
-    target: { id?: string, name?: string },
+    target: { id?: string; name?: string },
     details: any = {}
 ) {
     if (!user) return;
@@ -32,7 +32,7 @@ export async function logAdminAction(
             details,
             performedBy: user.email || user.uid,
             performedAt: serverTimestamp(),
-            userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server',
+            userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "Server",
         });
     } catch (error) {
         console.error("Failed to log admin action:", error);

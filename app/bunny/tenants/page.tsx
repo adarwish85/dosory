@@ -18,20 +18,49 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogDescription,
 } from "@/components/ui/dialog";
-import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
-    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-    Building2, Search, Plus, MoreHorizontal, Users, Calendar,
-    CheckCircle, Clock, XCircle, Eye, LogIn, UserCheck, Edit, Trash2,
-    Loader2, Ban, Play, Mail, Phone, Globe, ChevronDown, ArrowDown, LogOut
+    Building2,
+    Search,
+    Plus,
+    MoreHorizontal,
+    Users,
+    Calendar,
+    CheckCircle,
+    Clock,
+    XCircle,
+    Eye,
+    LogIn,
+    UserCheck,
+    Edit,
+    Trash2,
+    Loader2,
+    Ban,
+    Play,
+    Mail,
+    Phone,
+    Globe,
+    ChevronDown,
+    ArrowDown,
+    LogOut,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -41,7 +70,18 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
-import { doc, setDoc, updateDoc, deleteDoc, serverTimestamp, collection, getDocs, query, where, writeBatch } from "firebase/firestore";
+import {
+    doc,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    serverTimestamp,
+    collection,
+    getDocs,
+    query,
+    where,
+    writeBatch,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -100,7 +140,7 @@ export default function TenantsPage() {
     const [bulkAction, setBulkAction] = useState<"suspend" | "activate">("suspend");
 
     // Apply filters
-    const filteredTenants = tenants.filter(tenant => {
+    const filteredTenants = tenants.filter((tenant) => {
         const matchesSearch =
             tenant.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             tenant.email?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -111,16 +151,26 @@ export default function TenantsPage() {
 
     const handleSignInAsTenant = async (tenantId: string, tenantName: string) => {
         if (profile?.role) {
-            await logAdminAction(user, "impersonate_tenant", { id: tenantId, name: tenantName }, {
-                reason: "Admin dashboard access"
-            });
+            await logAdminAction(
+                user,
+                "impersonate_tenant",
+                { id: tenantId, name: tenantName },
+                {
+                    reason: "Admin dashboard access",
+                }
+            );
             startImpersonation(tenantId, tenantName, profile.role);
             router.push("/dashboard");
         }
     };
 
     const handleForceLogout = async (tenant: Tenant) => {
-        if (!confirm(`Are you sure you want to force logout ALL users in ${tenant.name}? They will be required to sign in again.`)) return;
+        if (
+            !confirm(
+                `Are you sure you want to force logout ALL users in ${tenant.name}? They will be required to sign in again.`
+            )
+        )
+            return;
 
         setSaving(true);
         try {
@@ -133,7 +183,12 @@ export default function TenantsPage() {
             const data = await response.json();
             if (!response.ok) throw new Error(data.error);
 
-            await logAdminAction(user, "force_logout_tenant", { id: tenant.id, name: tenant.name }, { count: data.count });
+            await logAdminAction(
+                user,
+                "force_logout_tenant",
+                { id: tenant.id, name: tenant.name },
+                { count: data.count }
+            );
 
             alert(`Successfully logged out ${data.count} users.`);
         } catch (error: any) {
@@ -162,7 +217,7 @@ export default function TenantsPage() {
             status: tenant.status || "active",
             notes: (tenant as any).notes || "",
             subscriptionExpiry: (tenant as any).subscriptionEndsAt
-                ? new Date((tenant as any).subscriptionEndsAt).toISOString().split('T')[0]
+                ? new Date((tenant as any).subscriptionEndsAt).toISOString().split("T")[0]
                 : "",
             password: "",
             sendPasswordReset: false,
@@ -244,11 +299,15 @@ export default function TenantsPage() {
             }
 
             // Log action
-            await logAdminAction(user, "create_tenant", { name: formData.name }, {
-                email: formData.email,
-                plan: formData.plan
-            });
-
+            await logAdminAction(
+                user,
+                "create_tenant",
+                { name: formData.name },
+                {
+                    email: formData.email,
+                    plan: formData.plan,
+                }
+            );
         } catch (error: any) {
             console.error("Error creating tenant:", error);
             alert(error.message || "Failed to create tenant");
@@ -276,12 +335,23 @@ export default function TenantsPage() {
                 updatedAt: serverTimestamp(),
             });
 
-            await logAdminAction(user, "update_tenant", { id: selectedTenant.id, name: formData.name }, {
-                changes: {
-                    plan: formData.plan !== selectedTenant.plan ? `${selectedTenant.plan} -> ${formData.plan}` : undefined,
-                    status: formData.status !== selectedTenant.status ? `${selectedTenant.status} -> ${formData.status}` : undefined,
+            await logAdminAction(
+                user,
+                "update_tenant",
+                { id: selectedTenant.id, name: formData.name },
+                {
+                    changes: {
+                        plan:
+                            formData.plan !== selectedTenant.plan
+                                ? `${selectedTenant.plan} -> ${formData.plan}`
+                                : undefined,
+                        status:
+                            formData.status !== selectedTenant.status
+                                ? `${selectedTenant.status} -> ${formData.status}`
+                                : undefined,
+                    },
                 }
-            });
+            );
 
             setEditDialogOpen(false);
             refetch();
@@ -300,9 +370,14 @@ export default function TenantsPage() {
         try {
             await deleteDoc(doc(db, "organizations", selectedTenant.id));
 
-            await logAdminAction(user, "delete_tenant", { id: selectedTenant.id, name: selectedTenant.name }, {
-                reason: "Admin manual deletion"
-            });
+            await logAdminAction(
+                user,
+                "delete_tenant",
+                { id: selectedTenant.id, name: selectedTenant.name },
+                {
+                    reason: "Admin manual deletion",
+                }
+            );
 
             setDeleteDialogOpen(false);
             refetch();
@@ -326,9 +401,14 @@ export default function TenantsPage() {
             });
 
             const action = newStatus === "suspended" ? "suspend_tenant" : "activate_tenant";
-            await logAdminAction(user, action, { id: selectedTenant.id, name: selectedTenant.name }, {
-                previousStatus: selectedTenant.status
-            });
+            await logAdminAction(
+                user,
+                action,
+                { id: selectedTenant.id, name: selectedTenant.name },
+                {
+                    previousStatus: selectedTenant.status,
+                }
+            );
 
             setSuspendDialogOpen(false);
             refetch();
@@ -342,11 +422,16 @@ export default function TenantsPage() {
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case "active": return <CheckCircle className="h-4 w-4 text-green-400" />;
-            case "trial": return <Clock className="h-4 w-4 text-yellow-400" />;
-            case "suspended": return <Ban className="h-4 w-4 text-red-400" />;
-            case "cancelled": return <XCircle className="h-4 w-4 text-[#7e808c]" />;
-            default: return <Clock className="h-4 w-4 text-[#7e808c]" />;
+            case "active":
+                return <CheckCircle className="h-4 w-4 text-green-400" />;
+            case "trial":
+                return <Clock className="h-4 w-4 text-yellow-400" />;
+            case "suspended":
+                return <Ban className="h-4 w-4 text-red-400" />;
+            case "cancelled":
+                return <XCircle className="h-4 w-4 text-[#7e808c]" />;
+            default:
+                return <Clock className="h-4 w-4 text-[#7e808c]" />;
         }
     };
 
@@ -362,7 +447,7 @@ export default function TenantsPage() {
 
     // Bulk selection helpers
     const toggleSelection = (id: string) => {
-        setSelectedIds(prev => {
+        setSelectedIds((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(id)) {
                 newSet.delete(id);
@@ -375,7 +460,7 @@ export default function TenantsPage() {
 
     const selectAll = (checked: boolean) => {
         if (checked) {
-            setSelectedIds(new Set(filteredTenants.map(t => t.id)));
+            setSelectedIds(new Set(filteredTenants.map((t) => t.id)));
         } else {
             setSelectedIds(new Set());
         }
@@ -388,7 +473,7 @@ export default function TenantsPage() {
         setSaving(true);
         try {
             const batch = writeBatch(db);
-            selectedIds.forEach(id => {
+            selectedIds.forEach((id) => {
                 batch.delete(doc(db, "organizations", id));
             });
             await batch.commit();
@@ -408,7 +493,7 @@ export default function TenantsPage() {
         setSaving(true);
         try {
             const batch = writeBatch(db);
-            selectedIds.forEach(id => {
+            selectedIds.forEach((id) => {
                 batch.update(doc(db, "organizations", id), {
                     status: newStatus,
                     updatedAt: serverTimestamp(),
@@ -429,7 +514,7 @@ export default function TenantsPage() {
     return (
         <div className="space-y-6">
             {/* Page Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4" >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Tenants</h1>
                     <p className="text-gray-500">Manage, monitor, and support all organizations on the platform.</p>
@@ -447,12 +532,14 @@ export default function TenantsPage() {
             </div>
 
             {/* Tenant Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4" >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="border border-green-100 bg-green-50/50 shadow-sm">
                     <CardContent className="p-4 flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-green-800">Active Tenants</p>
-                            <p className="text-2xl font-bold text-green-700 mt-1">{tenants.filter(t => t.status === 'active').length}</p>
+                            <p className="text-2xl font-bold text-green-700 mt-1">
+                                {tenants.filter((t) => t.status === "active").length}
+                            </p>
                         </div>
                         <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
                             <CheckCircle className="h-5 w-5 text-green-600" />
@@ -463,7 +550,9 @@ export default function TenantsPage() {
                     <CardContent className="p-4 flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-orange-800">On Trial</p>
-                            <p className="text-2xl font-bold text-orange-700 mt-1">{tenants.filter(t => t.status === 'trial').length}</p>
+                            <p className="text-2xl font-bold text-orange-700 mt-1">
+                                {tenants.filter((t) => t.status === "trial").length}
+                            </p>
                         </div>
                         <div className="h-10 w-10 bg-orange-100 rounded-lg flex items-center justify-center">
                             <Clock className="h-5 w-5 text-orange-600" />
@@ -474,7 +563,9 @@ export default function TenantsPage() {
                     <CardContent className="p-4 flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-red-800">Suspended</p>
-                            <p className="text-2xl font-bold text-red-700 mt-1">{tenants.filter(t => t.status === 'suspended').length}</p>
+                            <p className="text-2xl font-bold text-red-700 mt-1">
+                                {tenants.filter((t) => t.status === "suspended").length}
+                            </p>
                         </div>
                         <div className="h-10 w-10 bg-red-100 rounded-lg flex items-center justify-center">
                             <Ban className="h-5 w-5 text-red-600" />
@@ -484,7 +575,7 @@ export default function TenantsPage() {
             </div>
 
             {/* Filters */}
-            <Card className="border border-gray-100 shadow-sm bg-white" >
+            <Card className="border border-gray-100 shadow-sm bg-white">
                 <CardContent className="p-4">
                     <div className="flex flex-col sm:flex-row items-center gap-4">
                         <div className="relative flex-1 w-full">
@@ -522,53 +613,59 @@ export default function TenantsPage() {
                         </Select>
                     </div>
                 </CardContent>
-            </Card >
+            </Card>
 
             {/* Bulk Actions Bar */}
-            {
-                selectedIds.size > 0 && (
-                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{selectedIds.size}</span>
-                            <span className="text-sm font-medium text-blue-900">Selected</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                size="sm"
-                                className="bg-white text-green-600 border border-green-200 hover:bg-green-50 shadow-sm"
-                                onClick={() => { setBulkAction("activate"); setBulkSuspendDialogOpen(true); }}
-                            >
-                                <Play className="h-3 w-3 mr-1.5" />
-                                Activate
-                            </Button>
-                            <Button
-                                size="sm"
-                                className="bg-white text-orange-600 border border-orange-200 hover:bg-orange-50 shadow-sm"
-                                onClick={() => { setBulkAction("suspend"); setBulkSuspendDialogOpen(true); }}
-                            >
-                                <Ban className="h-3 w-3 mr-1.5" />
-                                Suspend
-                            </Button>
-                            <Button
-                                size="sm"
-                                className="bg-white text-red-600 border border-red-200 hover:bg-red-50 shadow-sm"
-                                onClick={() => setBulkDeleteDialogOpen(true)}
-                            >
-                                <Trash2 className="h-3 w-3 mr-1.5" />
-                                Delete
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-gray-500 hover:text-gray-700"
-                                onClick={() => setSelectedIds(new Set())}
-                            >
-                                Cancel
-                            </Button>
-                        </div>
+            {selectedIds.size > 0 && (
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            {selectedIds.size}
+                        </span>
+                        <span className="text-sm font-medium text-blue-900">Selected</span>
                     </div>
-                )
-            }
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            className="bg-white text-green-600 border border-green-200 hover:bg-green-50 shadow-sm"
+                            onClick={() => {
+                                setBulkAction("activate");
+                                setBulkSuspendDialogOpen(true);
+                            }}
+                        >
+                            <Play className="h-3 w-3 mr-1.5" />
+                            Activate
+                        </Button>
+                        <Button
+                            size="sm"
+                            className="bg-white text-orange-600 border border-orange-200 hover:bg-orange-50 shadow-sm"
+                            onClick={() => {
+                                setBulkAction("suspend");
+                                setBulkSuspendDialogOpen(true);
+                            }}
+                        >
+                            <Ban className="h-3 w-3 mr-1.5" />
+                            Suspend
+                        </Button>
+                        <Button
+                            size="sm"
+                            className="bg-white text-red-600 border border-red-200 hover:bg-red-50 shadow-sm"
+                            onClick={() => setBulkDeleteDialogOpen(true)}
+                        >
+                            <Trash2 className="h-3 w-3 mr-1.5" />
+                            Delete
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-500 hover:text-gray-700"
+                            onClick={() => setSelectedIds(new Set())}
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             {/* Tenants Table */}
             <Card className="border border-gray-100 shadow-sm bg-white overflow-hidden">
@@ -583,12 +680,24 @@ export default function TenantsPage() {
                                         className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                                     />
                                 </th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tenant</th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan</th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Users</th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
-                                <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Tenant
+                                </th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Plan
+                                </th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Users
+                                </th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Joined
+                                </th>
+                                <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    Action
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -611,7 +720,10 @@ export default function TenantsPage() {
                                 </tr>
                             ) : (
                                 filteredTenants.map((tenant) => (
-                                    <tr key={tenant.id} className={`group hover:bg-gray-50/80 transition-colors ${selectedIds.has(tenant.id) ? 'bg-blue-50/30' : ''}`}>
+                                    <tr
+                                        key={tenant.id}
+                                        className={`group hover:bg-gray-50/80 transition-colors ${selectedIds.has(tenant.id) ? "bg-blue-50/30" : ""}`}
+                                    >
                                         <td className="py-4 px-4">
                                             <Checkbox
                                                 checked={selectedIds.has(tenant.id)}
@@ -625,28 +737,58 @@ export default function TenantsPage() {
                                                     {(tenant.name?.[0] || "T").toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-900 max-w-[200px] truncate" title={tenant.name}>{tenant.name || "Unnamed"}</p>
-                                                    <p className="text-xs text-gray-500 max-w-[200px] truncate" title={tenant.email}>{tenant.email}</p>
+                                                    <p
+                                                        className="font-semibold text-gray-900 max-w-[200px] truncate"
+                                                        title={tenant.name}
+                                                    >
+                                                        {tenant.name || "Unnamed"}
+                                                    </p>
+                                                    <p
+                                                        className="text-xs text-gray-500 max-w-[200px] truncate"
+                                                        title={tenant.email}
+                                                    >
+                                                        {tenant.email}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="py-4 px-4">
-                                            <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium border",
-                                                tenant.plan === 'enterprise' ? "bg-purple-50 text-purple-700 border-purple-100" :
-                                                    tenant.plan === 'professional' ? "bg-blue-50 text-blue-700 border-blue-100" :
-                                                        tenant.plan === 'starter' ? "bg-gray-100 text-gray-700 border-gray-200" :
-                                                            "bg-gray-50 text-gray-600 border-gray-100"
-                                            )}>
-                                                {tenant.plan ? tenant.plan.charAt(0).toUpperCase() + tenant.plan.slice(1) : "Free"}
+                                            <span
+                                                className={cn(
+                                                    "px-2.5 py-1 rounded-full text-xs font-medium border",
+                                                    tenant.plan === "enterprise"
+                                                        ? "bg-purple-50 text-purple-700 border-purple-100"
+                                                        : tenant.plan === "professional"
+                                                          ? "bg-blue-50 text-blue-700 border-blue-100"
+                                                          : tenant.plan === "starter"
+                                                            ? "bg-gray-100 text-gray-700 border-gray-200"
+                                                            : "bg-gray-50 text-gray-600 border-gray-100"
+                                                )}
+                                            >
+                                                {tenant.plan
+                                                    ? tenant.plan.charAt(0).toUpperCase() + tenant.plan.slice(1)
+                                                    : "Free"}
                                             </span>
                                         </td>
                                         <td className="py-4 px-4">
                                             <div className="flex items-center gap-2">
-                                                {tenant.status === 'active' && <CheckCircle className="h-4 w-4 text-green-500" />}
-                                                {tenant.status === 'trial' && <Clock className="h-4 w-4 text-orange-500" />}
-                                                {tenant.status === 'suspended' && <Ban className="h-4 w-4 text-red-500" />}
-                                                {(tenant.status !== 'active' && tenant.status !== 'trial' && tenant.status !== 'suspended') && <div className="h-2 w-2 rounded-full bg-gray-300" />}
-                                                <span className="text-sm text-gray-700 capitalize">{tenant.status || "Unknown"}</span>
+                                                {tenant.status === "active" && (
+                                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                                )}
+                                                {tenant.status === "trial" && (
+                                                    <Clock className="h-4 w-4 text-orange-500" />
+                                                )}
+                                                {tenant.status === "suspended" && (
+                                                    <Ban className="h-4 w-4 text-red-500" />
+                                                )}
+                                                {tenant.status !== "active" &&
+                                                    tenant.status !== "trial" &&
+                                                    tenant.status !== "suspended" && (
+                                                        <div className="h-2 w-2 rounded-full bg-gray-300" />
+                                                    )}
+                                                <span className="text-sm text-gray-700 capitalize">
+                                                    {tenant.status || "Unknown"}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="py-4 px-4">
@@ -657,7 +799,11 @@ export default function TenantsPage() {
                                         </td>
                                         <td className="py-4 px-4">
                                             <div className="text-sm text-gray-500">
-                                                {new Date(tenant.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                {new Date(tenant.createdAt).toLocaleDateString(undefined, {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric",
+                                                })}
                                             </div>
                                         </td>
                                         <td className="py-4 px-4 text-right">
@@ -667,14 +813,20 @@ export default function TenantsPage() {
                                                     variant="ghost"
                                                     className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
                                                     title="Sign In As"
-                                                    onClick={() => handleSignInAsTenant(tenant.id, tenant.name || "Tenant")}
+                                                    onClick={() =>
+                                                        handleSignInAsTenant(tenant.id, tenant.name || "Tenant")
+                                                    }
                                                 >
                                                     <LogIn className="h-4 w-4" />
                                                 </Button>
 
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0 text-gray-400 hover:text-gray-900"
+                                                        >
                                                             <MoreHorizontal className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
@@ -685,11 +837,17 @@ export default function TenantsPage() {
                                                         <DropdownMenuItem onClick={() => openEditDialog(tenant)}>
                                                             <Edit className="mr-2 h-4 w-4" /> Edit Tenant
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem className="text-red-500" onClick={() => handleForceLogout(tenant)}>
+                                                        <DropdownMenuItem
+                                                            className="text-red-500"
+                                                            onClick={() => handleForceLogout(tenant)}
+                                                        >
                                                             <LogOut className="mr-2 h-4 w-4" /> Force Logout Users
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem className="text-red-600" onClick={() => openDeleteDialog(tenant)}>
+                                                        <DropdownMenuItem
+                                                            className="text-red-600"
+                                                            onClick={() => openDeleteDialog(tenant)}
+                                                        >
                                                             <Trash2 className="mr-2 h-4 w-4" /> Delete Access
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
@@ -719,7 +877,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Organization Name *</Label>
                                 <Input
                                     value={formData.name}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                                     placeholder="Acme Inc."
                                     className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
                                 />
@@ -729,7 +887,7 @@ export default function TenantsPage() {
                                 <Input
                                     type="email"
                                     value={formData.email}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                                     placeholder="admin@acme.com"
                                     className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
                                 />
@@ -738,7 +896,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Phone</Label>
                                 <Input
                                     value={formData.phone}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                                     placeholder="+1 234 567 890"
                                     className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
                                 />
@@ -747,7 +905,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Website</Label>
                                 <Input
                                     value={formData.website}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
                                     placeholder="https://acme.com"
                                     className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
                                 />
@@ -756,7 +914,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Plan</Label>
                                 <Select
                                     value={formData.plan}
-                                    onValueChange={(v) => setFormData(prev => ({ ...prev, plan: v as any }))}
+                                    onValueChange={(v) => setFormData((prev) => ({ ...prev, plan: v as any }))}
                                 >
                                     <SelectTrigger className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]">
                                         <SelectValue />
@@ -773,7 +931,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Status</Label>
                                 <Select
                                     value={formData.status}
-                                    onValueChange={(v) => setFormData(prev => ({ ...prev, status: v as any }))}
+                                    onValueChange={(v) => setFormData((prev) => ({ ...prev, status: v as any }))}
                                 >
                                     <SelectTrigger className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]">
                                         <SelectValue />
@@ -794,7 +952,13 @@ export default function TenantsPage() {
                                         <Label className="text-sm text-[#7e808c]">Send password reset email</Label>
                                         <Switch
                                             checked={formData.sendPasswordReset}
-                                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, sendPasswordReset: checked, password: "" }))}
+                                            onCheckedChange={(checked) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    sendPasswordReset: checked,
+                                                    password: "",
+                                                }))
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -803,7 +967,9 @@ export default function TenantsPage() {
                                         <Input
                                             type="password"
                                             value={formData.password}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({ ...prev, password: e.target.value }))
+                                            }
                                             placeholder="Enter password for tenant admin"
                                             className="bg-white border-[#dad8f9] text-[#352b38]"
                                         />
@@ -824,7 +990,16 @@ export default function TenantsPage() {
                                         <Label className="text-sm text-[#7e808c]">Never expires (infinite)</Label>
                                         <Switch
                                             checked={!formData.subscriptionExpiry}
-                                            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, subscriptionExpiry: checked ? "" : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] }))}
+                                            onCheckedChange={(checked) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    subscriptionExpiry: checked
+                                                        ? ""
+                                                        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                                                              .toISOString()
+                                                              .split("T")[0],
+                                                }))
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -833,10 +1008,14 @@ export default function TenantsPage() {
                                         <Input
                                             type="date"
                                             value={formData.subscriptionExpiry}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, subscriptionExpiry: e.target.value }))}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({ ...prev, subscriptionExpiry: e.target.value }))
+                                            }
                                             className="bg-white border-[#dad8f9] text-[#352b38]"
                                         />
-                                        <p className="text-xs text-[#7e808c] mt-1">Subscription will expire on this date</p>
+                                        <p className="text-xs text-[#7e808c] mt-1">
+                                            Subscription will expire on this date
+                                        </p>
                                     </div>
                                 )}
                                 {!formData.subscriptionExpiry && (
@@ -850,7 +1029,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Notes</Label>
                                 <Textarea
                                     value={formData.notes}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                                     placeholder="Internal notes about this tenant..."
                                     className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
                                     rows={2}
@@ -859,11 +1038,26 @@ export default function TenantsPage() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setCreateDialogOpen(false)} className="border-[#dad8f9]">
+                        <Button
+                            variant="outline"
+                            onClick={() => setCreateDialogOpen(false)}
+                            className="border-[#dad8f9]"
+                        >
                             Cancel
                         </Button>
-                        <Button onClick={handleCreateTenant} disabled={saving || !formData.name || !formData.email} className="bg-purple-600 hover:bg-purple-700">
-                            {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating...</> : "Create Tenant"}
+                        <Button
+                            onClick={handleCreateTenant}
+                            disabled={saving || !formData.name || !formData.email}
+                            className="bg-purple-600 hover:bg-purple-700"
+                        >
+                            {saving ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Creating...
+                                </>
+                            ) : (
+                                "Create Tenant"
+                            )}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -874,9 +1068,7 @@ export default function TenantsPage() {
                 <DialogContent className="border-0 shadow-sm rounded-2xl bg-white text-[#352b38] max-w-lg">
                     <DialogHeader>
                         <DialogTitle>Edit Tenant</DialogTitle>
-                        <DialogDescription className="text-[#7e808c]">
-                            Update organization details
-                        </DialogDescription>
+                        <DialogDescription className="text-[#7e808c]">Update organization details</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
@@ -884,7 +1076,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Organization Name *</Label>
                                 <Input
                                     value={formData.name}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                                     className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
                                 />
                             </div>
@@ -893,7 +1085,7 @@ export default function TenantsPage() {
                                 <Input
                                     type="email"
                                     value={formData.email}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                                     className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
                                 />
                             </div>
@@ -901,7 +1093,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Phone</Label>
                                 <Input
                                     value={formData.phone}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                                     className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
                                 />
                             </div>
@@ -909,7 +1101,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Website</Label>
                                 <Input
                                     value={formData.website}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
                                     className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
                                 />
                             </div>
@@ -917,7 +1109,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Plan</Label>
                                 <Select
                                     value={formData.plan}
-                                    onValueChange={(v) => setFormData(prev => ({ ...prev, plan: v as any }))}
+                                    onValueChange={(v) => setFormData((prev) => ({ ...prev, plan: v as any }))}
                                 >
                                     <SelectTrigger className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]">
                                         <SelectValue />
@@ -934,7 +1126,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Status</Label>
                                 <Select
                                     value={formData.status}
-                                    onValueChange={(v) => setFormData(prev => ({ ...prev, status: v as any }))}
+                                    onValueChange={(v) => setFormData((prev) => ({ ...prev, status: v as any }))}
                                 >
                                     <SelectTrigger className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]">
                                         <SelectValue />
@@ -952,7 +1144,9 @@ export default function TenantsPage() {
                                 <Input
                                     type="date"
                                     value={formData.subscriptionExpiry}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, subscriptionExpiry: e.target.value }))}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({ ...prev, subscriptionExpiry: e.target.value }))
+                                    }
                                     className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
                                 />
                                 <p className="text-gray-500 text-xs mt-1">Leave empty for no expiry</p>
@@ -961,7 +1155,7 @@ export default function TenantsPage() {
                                 <Label className="text-[#352b38]">Notes</Label>
                                 <Textarea
                                     value={formData.notes}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                                     className="mt-1.5 bg-[#f4f3f8] border-[#dad8f9] text-[#352b38]"
                                     rows={2}
                                 />
@@ -972,8 +1166,19 @@ export default function TenantsPage() {
                         <Button variant="outline" onClick={() => setEditDialogOpen(false)} className="border-[#dad8f9]">
                             Cancel
                         </Button>
-                        <Button onClick={handleUpdateTenant} disabled={saving || !formData.name} className="bg-purple-600 hover:bg-purple-700">
-                            {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : "Save Changes"}
+                        <Button
+                            onClick={handleUpdateTenant}
+                            disabled={saving || !formData.name}
+                            className="bg-purple-600 hover:bg-purple-700"
+                        >
+                            {saving ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                "Save Changes"
+                            )}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -1002,7 +1207,9 @@ export default function TenantsPage() {
                                 </div>
                                 <div className="p-3 bg-[#f4f3f8] rounded-lg">
                                     <p className="text-gray-500 text-xs uppercase mb-1">Plan</p>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadge(selectedTenant.plan)}`}>
+                                    <span
+                                        className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadge(selectedTenant.plan)}`}
+                                    >
                                         {selectedTenant.plan?.charAt(0).toUpperCase() + selectedTenant.plan?.slice(1)}
                                     </span>
                                 </div>
@@ -1081,8 +1288,9 @@ export default function TenantsPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle className="text-[#352b38]">Delete Tenant</AlertDialogTitle>
                         <AlertDialogDescription className="text-[#7e808c]">
-                            Are you sure you want to delete <strong className="text-[#352b38]">{selectedTenant?.name}</strong>?
-                            This action cannot be undone and will remove all associated data.
+                            Are you sure you want to delete{" "}
+                            <strong className="text-[#352b38]">{selectedTenant?.name}</strong>? This action cannot be
+                            undone and will remove all associated data.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -1094,7 +1302,11 @@ export default function TenantsPage() {
                             className="bg-red-600 hover:bg-red-700"
                             disabled={saving}
                         >
-                            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                            {saving ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Trash2 className="mr-2 h-4 w-4" />
+                            )}
                             Delete
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -1111,8 +1323,7 @@ export default function TenantsPage() {
                         <AlertDialogDescription className="text-[#7e808c]">
                             {selectedTenant?.status === "suspended"
                                 ? `Are you sure you want to activate ${selectedTenant?.name}? They will regain access to the platform.`
-                                : `Are you sure you want to suspend ${selectedTenant?.name}? They will lose access to the platform until reactivated.`
-                            }
+                                : `Are you sure you want to suspend ${selectedTenant?.name}? They will lose access to the platform until reactivated.`}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -1121,7 +1332,11 @@ export default function TenantsPage() {
                         </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleToggleSuspend}
-                            className={selectedTenant?.status === "suspended" ? "bg-green-600 hover:bg-green-700" : "bg-yellow-600 hover:bg-yellow-700"}
+                            className={
+                                selectedTenant?.status === "suspended"
+                                    ? "bg-green-600 hover:bg-green-700"
+                                    : "bg-yellow-600 hover:bg-yellow-700"
+                            }
                             disabled={saving}
                         >
                             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -1135,7 +1350,9 @@ export default function TenantsPage() {
             <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
                 <AlertDialogContent className="border-0 shadow-sm rounded-2xl bg-white">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="text-[#352b38]">Delete {selectedIds.size} Tenant(s)</AlertDialogTitle>
+                        <AlertDialogTitle className="text-[#352b38]">
+                            Delete {selectedIds.size} Tenant(s)
+                        </AlertDialogTitle>
                         <AlertDialogDescription className="text-[#7e808c]">
                             Are you sure you want to delete {selectedIds.size} tenant(s)? This action cannot be undone.
                         </AlertDialogDescription>
@@ -1144,7 +1361,11 @@ export default function TenantsPage() {
                         <AlertDialogCancel className="bg-[#f4f3f8] border-[#dad8f9] text-[#352b38] hover:bg-[#dad8f9]">
                             Cancel
                         </AlertDialogCancel>
-                        <AlertDialogAction onClick={handleBulkDelete} disabled={saving} className="bg-red-600 hover:bg-red-700">
+                        <AlertDialogAction
+                            onClick={handleBulkDelete}
+                            disabled={saving}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
                             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Delete All
                         </AlertDialogAction>
@@ -1162,8 +1383,7 @@ export default function TenantsPage() {
                         <AlertDialogDescription className="text-[#7e808c]">
                             {bulkAction === "suspend"
                                 ? `Are you sure you want to suspend ${selectedIds.size} tenant(s)? They will lose access to the platform.`
-                                : `Are you sure you want to activate ${selectedIds.size} tenant(s)? They will regain access to the platform.`
-                            }
+                                : `Are you sure you want to activate ${selectedIds.size} tenant(s)? They will regain access to the platform.`}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -1173,7 +1393,11 @@ export default function TenantsPage() {
                         <AlertDialogAction
                             onClick={() => handleBulkStatusChange(bulkAction === "suspend" ? "suspended" : "active")}
                             disabled={saving}
-                            className={bulkAction === "suspend" ? "bg-yellow-600 hover:bg-yellow-700" : "bg-green-600 hover:bg-green-700"}
+                            className={
+                                bulkAction === "suspend"
+                                    ? "bg-yellow-600 hover:bg-yellow-700"
+                                    : "bg-green-600 hover:bg-green-700"
+                            }
                         >
                             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {bulkAction === "suspend" ? "Suspend All" : "Activate All"}
@@ -1181,6 +1405,6 @@ export default function TenantsPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div >
+        </div>
     );
 }

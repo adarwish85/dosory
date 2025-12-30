@@ -9,7 +9,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Settings as SettingsIcon, FileText, Globe, Mail, Wrench, HelpCircle, DollarSign, FileIcon, FileCheck, CreditCard, RefreshCw, CreditCard as PaymentIcon, Users, CheckCircle, Headphones, Target, Zap, Calendar, PenTool, MoreHorizontal } from "lucide-react";
+import {
+    Settings as SettingsIcon,
+    FileText,
+    Globe,
+    Mail,
+    Wrench,
+    HelpCircle,
+    DollarSign,
+    FileIcon,
+    FileCheck,
+    CreditCard,
+    RefreshCw,
+    CreditCard as PaymentIcon,
+    Users,
+    CheckCircle,
+    Headphones,
+    Target,
+    Zap,
+    Calendar,
+    PenTool,
+    MoreHorizontal,
+} from "lucide-react";
 import { Trash2 } from "lucide-react";
 import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
 import { useEffect } from "react";
@@ -58,7 +79,8 @@ export default function SettingsPage() {
         zipCode: "",
         phone: "",
         vatNumber: "",
-        companyInfoFormat: "{company_name}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
+        companyInfoFormat:
+            "{company_name}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
     });
 
     // Localization State
@@ -72,7 +94,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setLocalizationForm(prev => ({
+            setLocalizationForm((prev) => ({
                 ...prev,
                 dateFormat: settings.dateFormat ?? "d/m/Y",
                 timeFormat: settings.timeFormat ?? "12",
@@ -111,7 +133,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setInvoiceForm(prev => ({
+            setInvoiceForm((prev) => ({
                 ...prev,
                 invoiceNumberPrefix: settings.invoiceNumberPrefix ?? "INV-",
                 invoiceNextNumber: settings.invoiceNextNumber ?? "000001",
@@ -156,7 +178,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setFinanceGeneralForm(prev => ({
+            setFinanceGeneralForm((prev) => ({
                 ...prev,
                 decimalSeparator: settings.decimalSeparator ?? ".",
                 thousandSeparator: settings.thousandSeparator ?? ",",
@@ -194,7 +216,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setProposalForm(prev => ({
+            setProposalForm((prev) => ({
                 ...prev,
                 proposalNumberPrefix: settings.proposalNumberPrefix ?? "PRO-",
                 proposalDueAfterDays: settings.proposalDueAfterDays ?? 7,
@@ -205,7 +227,9 @@ export default function SettingsPage() {
                 proposalExcludeDrafts: settings.proposalExcludeDrafts ?? true,
                 proposalAutoConvert: settings.proposalAutoConvert ?? false,
                 proposalAllowStaffViewAssigned: settings.proposalAllowStaffViewAssigned ?? true,
-                proposalInfoFormat: settings.proposalInfoFormat ?? "{proposal_to}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{phone}\n{email}",
+                proposalInfoFormat:
+                    settings.proposalInfoFormat ??
+                    "{proposal_to}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{phone}\n{email}",
             }));
         }
     }, [loading, settings]);
@@ -238,7 +262,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setEstimateForm(prev => ({
+            setEstimateForm((prev) => ({
                 ...prev,
                 estimateNumberPrefix: settings.estimateNumberPrefix ?? "EST-",
                 estimateNextNumber: settings.estimateNextNumber ?? "000001",
@@ -279,7 +303,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setCreditNoteForm(prev => ({
+            setCreditNoteForm((prev) => ({
                 ...prev,
                 creditNoteNumberPrefix: settings.creditNoteNumberPrefix ?? "CN-",
                 creditNoteNextNumber: settings.creditNoteNextNumber ?? "000001",
@@ -318,7 +342,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setGatewayForm(prev => ({
+            setGatewayForm((prev) => ({
                 ...prev,
                 paymentNotificationEmail: settings.paymentNotificationEmail ?? true,
                 allowCustomerModifyAmount: settings.allowCustomerModifyAmount ?? false,
@@ -361,12 +385,13 @@ export default function SettingsPage() {
         customerAllowKnowledgeBaseWithoutRegistration: true,
         customerShowEstimateRequestLink: true,
         customerDefaultContactPermissions: ["invoices", "estimates", "contracts", "proposals", "support", "projects"],
-        customerInfoFormat: "{company_name}\n{street}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
+        customerInfoFormat:
+            "{company_name}\n{street}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
     });
 
     useEffect(() => {
         if (!loading) {
-            setCustomerForm(prev => ({
+            setCustomerForm((prev) => ({
                 ...prev,
                 customerDefaultTheme: settings.customerDefaultTheme ?? "perfex",
                 customerDefaultCountry: settings.customerDefaultCountry ?? "",
@@ -382,10 +407,20 @@ export default function SettingsPage() {
                 customerContactsSeeOwnFilesOnly: settings.customerContactsSeeOwnFilesOnly ?? false,
                 customerAllowContactsDeleteOwnFiles: settings.customerAllowContactsDeleteOwnFiles ?? true,
                 customerUseKnowledgeBase: settings.customerUseKnowledgeBase ?? true,
-                customerAllowKnowledgeBaseWithoutRegistration: settings.customerAllowKnowledgeBaseWithoutRegistration ?? true,
+                customerAllowKnowledgeBaseWithoutRegistration:
+                    settings.customerAllowKnowledgeBaseWithoutRegistration ?? true,
                 customerShowEstimateRequestLink: settings.customerShowEstimateRequestLink ?? true,
-                customerDefaultContactPermissions: settings.customerDefaultContactPermissions ?? ["invoices", "estimates", "contracts", "proposals", "support", "projects"],
-                customerInfoFormat: settings.customerInfoFormat ?? "{company_name}\n{street}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
+                customerDefaultContactPermissions: settings.customerDefaultContactPermissions ?? [
+                    "invoices",
+                    "estimates",
+                    "contracts",
+                    "proposals",
+                    "support",
+                    "projects",
+                ],
+                customerInfoFormat:
+                    settings.customerInfoFormat ??
+                    "{company_name}\n{street}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
             }));
         }
     }, [loading, settings]);
@@ -414,7 +449,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setTasksForm(prev => ({
+            setTasksForm((prev) => ({
                 ...prev,
                 tasksKanbanLimit: settings.tasksKanbanLimit?.toString() ?? "50",
                 tasksAllowStaffViewAllProjectTasks: settings.tasksAllowStaffViewAllProjectTasks ?? false,
@@ -465,7 +500,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setSupportForm(prev => ({
+            setSupportForm((prev) => ({
                 ...prev,
                 supportUseServices: settings.supportUseServices ?? true,
                 supportDisablePublicUrl: settings.supportDisablePublicUrl ?? false,
@@ -513,7 +548,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setLeadsForm(prev => ({
+            setLeadsForm((prev) => ({
                 ...prev,
                 leadsKanbanLimit: settings.leadsKanbanLimit?.toString() ?? "50",
                 leadsDefaultStatus: settings.leadsDefaultStatus ?? "mql",
@@ -546,7 +581,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setOpenaiForm(prev => ({
+            setOpenaiForm((prev) => ({
                 ...prev,
                 openaiApiKey: settings.openaiApiKey ?? "",
                 openaiModel: settings.openaiModel ?? "gpt-4o",
@@ -595,7 +630,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setCalendarForm(prev => ({
+            setCalendarForm((prev) => ({
                 ...prev,
                 calendarEventsLimit: settings.calendarEventsLimit?.toString() ?? "4",
                 calendarDefaultView: settings.calendarDefaultView ?? "dayGridMonth",
@@ -665,7 +700,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setPdfForm(prev => ({
+            setPdfForm((prev) => ({
                 ...prev,
                 pdfFont: settings.pdfFont ?? "freesans",
                 pdfSwapDetails: settings.pdfSwapDetails ?? false,
@@ -708,16 +743,19 @@ export default function SettingsPage() {
     const [esignForm, setEsignForm] = useState({
         esignProposalRequireSignature: true,
         esignEstimateRequireSignature: true,
-        esignLegalBoundText: "By clicking on \"Sign\", I consent to be legally bound by this electronic representation of my signature.",
+        esignLegalBoundText:
+            'By clicking on "Sign", I consent to be legally bound by this electronic representation of my signature.',
     });
 
     useEffect(() => {
         if (!loading) {
-            setEsignForm(prev => ({
+            setEsignForm((prev) => ({
                 ...prev,
                 esignProposalRequireSignature: settings.esignProposalRequireSignature ?? true,
                 esignEstimateRequireSignature: settings.esignEstimateRequireSignature ?? true,
-                esignLegalBoundText: settings.esignLegalBoundText ?? "By clicking on \"Sign\", I consent to be legally bound by this electronic representation of my signature.",
+                esignLegalBoundText:
+                    settings.esignLegalBoundText ??
+                    'By clicking on "Sign", I consent to be legally bound by this electronic representation of my signature.',
             }));
         }
     }, [loading, settings]);
@@ -753,7 +791,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!loading) {
-            setMiscForm(prev => ({
+            setMiscForm((prev) => ({
                 ...prev,
                 miscRequireLoginForContract: settings.miscRequireLoginForContract ?? false,
                 miscDropboxAppKey: settings.miscDropboxAppKey ?? "",
@@ -791,7 +829,6 @@ export default function SettingsPage() {
         toast.success("Misc settings saved successfully");
     };
 
-
     useEffect(() => {
         if (!loading) {
             setLocalSubdomain(settings.subdomain || "");
@@ -809,7 +846,9 @@ export default function SettingsPage() {
                 zipCode: settings.zipCode || "",
                 phone: settings.phone || "",
                 vatNumber: settings.vatNumber || "",
-                companyInfoFormat: (settings as any).companyInfoFormat || "{company_name}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
+                companyInfoFormat:
+                    (settings as any).companyInfoFormat ||
+                    "{company_name}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
             });
         }
     }, [loading, settings]);
@@ -843,10 +882,7 @@ export default function SettingsPage() {
 
             setAvailability("loading");
             try {
-                const q = query(
-                    collection(db, "organizations"),
-                    where("subdomain", "==", localSubdomain)
-                );
+                const q = query(collection(db, "organizations"), where("subdomain", "==", localSubdomain));
                 const querySnapshot = await getDocs(q);
                 if (!querySnapshot.empty) {
                     setAvailability("unavailable");
@@ -877,7 +913,7 @@ export default function SettingsPage() {
                 mainDomain,
                 rtlAdmin: rtlAdmin === "yes",
                 rtlCustomer: rtlCustomer === "yes",
-                allowedFileTypes
+                allowedFileTypes,
             });
             toast.success("Settings saved successfully");
         } catch (error) {
@@ -893,8 +929,7 @@ export default function SettingsPage() {
                 { id: "company-information", label: "Company Information", icon: FileText },
                 { id: "localization", label: "Localization", icon: Globe },
                 // { id: "email", label: "Email", icon: Mail },
-
-            ]
+            ],
         },
         {
             title: "Finance",
@@ -906,7 +941,7 @@ export default function SettingsPage() {
                 { id: "finance-credit-notes", label: "Credit Notes", icon: CreditCard },
 
                 { id: "finance-payment-gateways", label: "Payment Gateways", icon: PaymentIcon },
-            ]
+            ],
         },
         {
             title: "Configure Features",
@@ -915,13 +950,11 @@ export default function SettingsPage() {
                 { id: "tasks", label: "Tasks", icon: CheckCircle },
                 { id: "support", label: "Support", icon: Headphones },
                 { id: "leads", label: "Leads", icon: Target },
-            ]
+            ],
         },
         {
             title: "AI Integrations",
-            items: [
-                { id: "openai", label: "OpenAI", icon: Zap },
-            ]
+            items: [{ id: "openai", label: "OpenAI", icon: Zap }],
         },
         {
             title: "Other",
@@ -929,13 +962,11 @@ export default function SettingsPage() {
                 { id: "calendar", label: "Calendar", icon: Calendar },
                 { id: "pdf", label: "PDF", icon: FileText },
                 { id: "e-sign", label: "E-Sign", icon: PenTool },
-            ]
+            ],
         },
         {
             title: "Misc",
-            items: [
-                { id: "misc", label: "Misc", icon: MoreHorizontal },
-            ]
+            items: [{ id: "misc", label: "Misc", icon: MoreHorizontal }],
         },
     ];
 
@@ -951,7 +982,11 @@ export default function SettingsPage() {
                             {settings.logoLight && (
                                 <div className="mt-2 mb-2 relative w-fit">
                                     <div className="bg-gray-900 p-2 rounded-md">
-                                        <img src={settings.logoLight} alt="Light Logo" className="h-12 object-contain" />
+                                        <img
+                                            src={settings.logoLight}
+                                            alt="Light Logo"
+                                            className="h-12 object-contain"
+                                        />
                                     </div>
                                     <Button
                                         variant="ghost"
@@ -1037,15 +1072,15 @@ export default function SettingsPage() {
                             </div>
                         </div>
 
-
-
                         <div>
                             <Label>Subdomain</Label>
                             <div className="flex items-center gap-2 mt-2">
                                 <span className="text-gray-500 font-medium">https://</span>
                                 <Input
                                     value={localSubdomain}
-                                    onChange={(e) => setLocalSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                    onChange={(e) =>
+                                        setLocalSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
+                                    }
                                     placeholder="my-org"
                                     className="max-w-[200px]"
                                 />
@@ -1066,9 +1101,7 @@ export default function SettingsPage() {
                                     <X className="h-3 w-3" /> {checkError}
                                 </p>
                             )}
-                            <p className="text-xs text-muted-foreground mt-1">
-                                This will change your dashboard URL.
-                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">This will change your dashboard URL.</p>
                         </div>
 
                         {/* Custom Domain feature hidden for this version
@@ -1117,9 +1150,7 @@ export default function SettingsPage() {
                         <div>
                             <Label>Allowed file types</Label>
                             <Input value={allowedFileTypes} onChange={(e) => setAllowedFileTypes(e.target.value)} />
-                            <p className="text-sm text-gray-500 mt-1">
-                                Separate file extensions with commas
-                            </p>
+                            <p className="text-sm text-gray-500 mt-1">Separate file extensions with commas</p>
                         </div>
 
                         <div className="pt-4">
@@ -1143,7 +1174,8 @@ export default function SettingsPage() {
 
                     <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
                         <p className="text-sm text-blue-900">
-                            These information will be displayed on invoices/estimates/payments and other PDF documents where company info is required
+                            These information will be displayed on invoices/estimates/payments and other PDF documents
+                            where company info is required
                         </p>
                     </div>
 
@@ -1161,7 +1193,7 @@ export default function SettingsPage() {
                             <Label>Address</Label>
                             <Input
                                 value={companyInfo.address}
-                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, address: e.target.value }))}
+                                onChange={(e) => setCompanyInfo((prev) => ({ ...prev, address: e.target.value }))}
                                 placeholder="Enter your address"
                             />
                         </div>
@@ -1170,7 +1202,7 @@ export default function SettingsPage() {
                             <Label>City</Label>
                             <Input
                                 value={companyInfo.city}
-                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, city: e.target.value }))}
+                                onChange={(e) => setCompanyInfo((prev) => ({ ...prev, city: e.target.value }))}
                                 placeholder="Enter your city"
                             />
                         </div>
@@ -1179,7 +1211,7 @@ export default function SettingsPage() {
                             <Label>State</Label>
                             <Input
                                 value={companyInfo.state}
-                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, state: e.target.value }))}
+                                onChange={(e) => setCompanyInfo((prev) => ({ ...prev, state: e.target.value }))}
                                 placeholder="Enter your state"
                             />
                         </div>
@@ -1188,7 +1220,7 @@ export default function SettingsPage() {
                             <Label>Country Code</Label>
                             <Input
                                 value={companyInfo.country}
-                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, country: e.target.value }))}
+                                onChange={(e) => setCompanyInfo((prev) => ({ ...prev, country: e.target.value }))}
                                 placeholder="Enter your country"
                             />
                         </div>
@@ -1197,7 +1229,7 @@ export default function SettingsPage() {
                             <Label>Zip Code</Label>
                             <Input
                                 value={companyInfo.zipCode}
-                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, zipCode: e.target.value }))}
+                                onChange={(e) => setCompanyInfo((prev) => ({ ...prev, zipCode: e.target.value }))}
                                 placeholder="Enter your zip code"
                             />
                         </div>
@@ -1206,7 +1238,7 @@ export default function SettingsPage() {
                             <Label>Phone</Label>
                             <Input
                                 value={companyInfo.phone}
-                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, phone: e.target.value }))}
+                                onChange={(e) => setCompanyInfo((prev) => ({ ...prev, phone: e.target.value }))}
                                 placeholder="Enter your phone number"
                             />
                         </div>
@@ -1215,7 +1247,7 @@ export default function SettingsPage() {
                             <Label>VAT Number</Label>
                             <Input
                                 value={companyInfo.vatNumber}
-                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, vatNumber: e.target.value }))}
+                                onChange={(e) => setCompanyInfo((prev) => ({ ...prev, vatNumber: e.target.value }))}
                                 placeholder="Enter your VAT number"
                             />
                         </div>
@@ -1225,10 +1257,20 @@ export default function SettingsPage() {
                             <Textarea
                                 className="min-h-[150px] font-mono text-sm"
                                 value={companyInfo.companyInfoFormat}
-                                onChange={(e) => setCompanyInfo(prev => ({ ...prev, companyInfoFormat: e.target.value }))}
+                                onChange={(e) =>
+                                    setCompanyInfo((prev) => ({ ...prev, companyInfoFormat: e.target.value }))
+                                }
                             />
                             <p className="text-sm text-gray-500 mt-2">
-                                <span className="text-blue-600">{"{company_name}"}</span> <span className="text-blue-600">{"{address}"}</span>, <span className="text-blue-600">{"{city}"}</span>, <span className="text-blue-600">{"{state}"}</span>, <span className="text-blue-600">{"{zip_code}"}</span>, <span className="text-blue-600">{"{country_code}"}</span>, <span className="text-blue-600">{"{phone}"}</span>, <span className="text-blue-600">{"{vat_number}"}</span>, <span className="text-blue-600">{"{vat_number_with_label}"}</span>
+                                <span className="text-blue-600">{"{company_name}"}</span>{" "}
+                                <span className="text-blue-600">{"{address}"}</span>,{" "}
+                                <span className="text-blue-600">{"{city}"}</span>,{" "}
+                                <span className="text-blue-600">{"{state}"}</span>,{" "}
+                                <span className="text-blue-600">{"{zip_code}"}</span>,{" "}
+                                <span className="text-blue-600">{"{country_code}"}</span>,{" "}
+                                <span className="text-blue-600">{"{phone}"}</span>,{" "}
+                                <span className="text-blue-600">{"{vat_number}"}</span>,{" "}
+                                <span className="text-blue-600">{"{vat_number_with_label}"}</span>
                             </p>
                         </div>
 
@@ -1327,7 +1369,9 @@ export default function SettingsPage() {
                             <Label>Default Language</Label>
                             <Select
                                 value={localizationForm.defaultLanguage}
-                                onValueChange={(val) => setLocalizationForm({ ...localizationForm, defaultLanguage: val })}
+                                onValueChange={(val) =>
+                                    setLocalizationForm({ ...localizationForm, defaultLanguage: val })
+                                }
                             >
                                 <SelectTrigger>
                                     <SelectValue>English</SelectValue>
@@ -1341,8 +1385,6 @@ export default function SettingsPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-
-
 
                         <div className="pt-4">
                             <Button
@@ -1363,13 +1405,14 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                     <h2 className="text-2xl font-semibold">General</h2>
                     <div className="bg-white p-6 rounded-lg border space-y-6">
-
                         <div className="grid grid-cols-2 gap-6">
                             <div>
                                 <Label className="mb-2 block">Decimal Separator</Label>
                                 <Select
                                     value={financeGeneralForm.decimalSeparator}
-                                    onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, decimalSeparator: val })}
+                                    onValueChange={(val) =>
+                                        setFinanceGeneralForm({ ...financeGeneralForm, decimalSeparator: val })
+                                    }
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select separator" />
@@ -1384,7 +1427,9 @@ export default function SettingsPage() {
                                 <Label className="mb-2 block">Thousand Separator</Label>
                                 <Select
                                     value={financeGeneralForm.thousandSeparator}
-                                    onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, thousandSeparator: val })}
+                                    onValueChange={(val) =>
+                                        setFinanceGeneralForm({ ...financeGeneralForm, thousandSeparator: val })
+                                    }
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select separator" />
@@ -1405,20 +1450,33 @@ export default function SettingsPage() {
                                 <HelpCircle className="h-4 w-4 text-gray-400" />
                                 Number padding zero's for prefix formats
                             </Label>
-                            <p className="text-sm text-gray-500 mb-2">eq. If this value is 3 the number will be formatted: 005 or 025</p>
+                            <p className="text-sm text-gray-500 mb-2">
+                                eq. If this value is 3 the number will be formatted: 005 or 025
+                            </p>
                             <Input
                                 type="number"
                                 value={financeGeneralForm.numberPadding}
-                                onChange={e => setFinanceGeneralForm({ ...financeGeneralForm, numberPadding: parseInt(e.target.value) || 0 })}
+                                onChange={(e) =>
+                                    setFinanceGeneralForm({
+                                        ...financeGeneralForm,
+                                        numberPadding: parseInt(e.target.value) || 0,
+                                    })
+                                }
                             />
                         </div>
 
                         <div className="space-y-6">
                             {[
-                                { key: "autoAssignSaleAgent", label: "Automatically assign logged in staff as sale agent" },
+                                {
+                                    key: "autoAssignSaleAgent",
+                                    label: "Automatically assign logged in staff as sale agent",
+                                },
                                 { key: "showTaxPerItem", label: "Show TAX per item" },
                                 { key: "removeTaxNameFromRow", label: "Remove the tax name from item table row" },
-                                { key: "excludeCurrencySymbol", label: "Exclude currency symbol from items table Amount" },
+                                {
+                                    key: "excludeCurrencySymbol",
+                                    label: "Exclude currency symbol from items table Amount",
+                                },
                             ].map((item) => (
                                 <div key={item.key}>
                                     <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -1426,17 +1484,27 @@ export default function SettingsPage() {
                                         {item.label}
                                     </Label>
                                     <RadioGroup
-                                        value={financeGeneralForm[item.key as keyof typeof financeGeneralForm] ? "yes" : "no"}
-                                        onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, [item.key]: val === "yes" })}
+                                        value={
+                                            financeGeneralForm[item.key as keyof typeof financeGeneralForm]
+                                                ? "yes"
+                                                : "no"
+                                        }
+                                        onValueChange={(val) =>
+                                            setFinanceGeneralForm({ ...financeGeneralForm, [item.key]: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id={`fg-${item.key}-yes`} />
-                                            <Label htmlFor={`fg-${item.key}-yes`} className="font-normal">Yes</Label>
+                                            <Label htmlFor={`fg-${item.key}-yes`} className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id={`fg-${item.key}-no`} />
-                                            <Label htmlFor={`fg-${item.key}-no`} className="font-normal">No</Label>
+                                            <Label htmlFor={`fg-${item.key}-no`} className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -1447,7 +1515,9 @@ export default function SettingsPage() {
                             <Label className="mb-2 block">Default Tax</Label>
                             <Select
                                 value={financeGeneralForm.defaultTax}
-                                onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, defaultTax: val })}
+                                onValueChange={(val) =>
+                                    setFinanceGeneralForm({ ...financeGeneralForm, defaultTax: val })
+                                }
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select Tax" />
@@ -1463,10 +1533,18 @@ export default function SettingsPage() {
 
                         <div className="space-y-6">
                             <div>
-                                <Label className="mb-2 block">Remove decimals on numbers/money with zero decimals (2.00 will become 2, 2.25 will stay 2.25)</Label>
+                                <Label className="mb-2 block">
+                                    Remove decimals on numbers/money with zero decimals (2.00 will become 2, 2.25 will
+                                    stay 2.25)
+                                </Label>
                                 <RadioGroup
                                     value={financeGeneralForm.removeDecimalsOnZero ? "yes" : "no"}
-                                    onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, removeDecimalsOnZero: val === "yes" })}
+                                    onValueChange={(val) =>
+                                        setFinanceGeneralForm({
+                                            ...financeGeneralForm,
+                                            removeDecimalsOnZero: val === "yes",
+                                        })
+                                    }
                                     className="flex gap-4"
                                 >
                                     <div className="flex items-center space-x-2">
@@ -1483,14 +1561,21 @@ export default function SettingsPage() {
 
                         <div className="border-t pt-6">
                             <h3 className="text-lg font-medium mb-4">Amount to words</h3>
-                            <p className="text-sm text-gray-500 mb-4">Output total amount to words in invoice/estimate/proposal</p>
+                            <p className="text-sm text-gray-500 mb-4">
+                                Output total amount to words in invoice/estimate/proposal
+                            </p>
 
                             <div className="grid grid-cols-2 gap-6">
                                 <div>
                                     <Label className="mb-2 block">Enable</Label>
                                     <RadioGroup
                                         value={financeGeneralForm.amountToWordsEnable ? "yes" : "no"}
-                                        onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, amountToWordsEnable: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setFinanceGeneralForm({
+                                                ...financeGeneralForm,
+                                                amountToWordsEnable: val === "yes",
+                                            })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
@@ -1507,7 +1592,12 @@ export default function SettingsPage() {
                                     <Label className="mb-2 block">Number words into lowercase</Label>
                                     <RadioGroup
                                         value={financeGeneralForm.amountToWordsLowercase ? "yes" : "no"}
-                                        onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, amountToWordsLowercase: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setFinanceGeneralForm({
+                                                ...financeGeneralForm,
+                                                amountToWordsLowercase: val === "yes",
+                                            })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
@@ -1543,21 +1633,28 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                     <h2 className="text-2xl font-semibold">Invoices</h2>
                     <div className="bg-white p-6 rounded-lg border space-y-6">
-
                         <div className="space-y-4">
                             <div>
                                 <Label>Invoice Number Prefix</Label>
                                 <Input
                                     value={invoiceForm.invoiceNumberPrefix}
-                                    onChange={e => setInvoiceForm({ ...invoiceForm, invoiceNumberPrefix: e.target.value })}
+                                    onChange={(e) =>
+                                        setInvoiceForm({ ...invoiceForm, invoiceNumberPrefix: e.target.value })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
                             <div>
                                 <Label>Next Invoice Number</Label>
                                 <Input
-                                    value={invoiceForm.invoiceNumberPrefix === "number_based" ? invoiceForm.invoiceNextNumber : invoiceForm.invoiceNextNumber}
-                                    onChange={e => setInvoiceForm({ ...invoiceForm, invoiceNextNumber: e.target.value })}
+                                    value={
+                                        invoiceForm.invoiceNumberPrefix === "number_based"
+                                            ? invoiceForm.invoiceNextNumber
+                                            : invoiceForm.invoiceNextNumber
+                                    }
+                                    onChange={(e) =>
+                                        setInvoiceForm({ ...invoiceForm, invoiceNextNumber: e.target.value })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
@@ -1566,7 +1663,12 @@ export default function SettingsPage() {
                                 <Input
                                     type="number"
                                     value={invoiceForm.invoiceDueAfterDays}
-                                    onChange={e => setInvoiceForm({ ...invoiceForm, invoiceDueAfterDays: parseInt(e.target.value) || 0 })}
+                                    onChange={(e) =>
+                                        setInvoiceForm({
+                                            ...invoiceForm,
+                                            invoiceDueAfterDays: parseInt(e.target.value) || 0,
+                                        })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
@@ -1577,32 +1679,50 @@ export default function SettingsPage() {
                         {/* Boolean Settings */}
                         <div className="space-y-6">
                             {[
-                                { key: "invoiceAllowStaffViewAssigned", label: "Allow staff members to view invoices where they are assigned to" },
-                                { key: "invoiceRequireClientLogin", label: "Require client to be logged in to view invoice" },
+                                {
+                                    key: "invoiceAllowStaffViewAssigned",
+                                    label: "Allow staff members to view invoices where they are assigned to",
+                                },
+                                {
+                                    key: "invoiceRequireClientLogin",
+                                    label: "Require client to be logged in to view invoice",
+                                },
                                 { key: "invoiceDeleteOnlyLast", label: "Delete invoice allowed only on last invoice" },
                                 { key: "invoiceDecrementOnDelete", label: "Decrement invoice number on delete" },
-                                { key: "invoiceExcludeDraftsFromClient", label: "Exclude invoices with draft status from customers area" },
+                                {
+                                    key: "invoiceExcludeDraftsFromClient",
+                                    label: "Exclude invoices with draft status from customers area",
+                                },
                                 { key: "invoiceShowSaleAgent", label: "Show Sale Agent On Invoice" },
                                 { key: "invoiceShowProjectName", label: "Show Project Name On Invoice" },
                                 { key: "invoiceShowTotalPaid", label: "Show Total Paid On Invoice" },
                                 { key: "invoiceShowCreditsApplied", label: "Show Credits Applied On Invoice" },
                                 { key: "invoiceShowAmountDue", label: "Show Amount Due On Invoice" },
-                                { key: "invoiceAttachPdfToEmail", label: "Attach invoice PDF when sending payment receipt to email" },
+                                {
+                                    key: "invoiceAttachPdfToEmail",
+                                    label: "Attach invoice PDF when sending payment receipt to email",
+                                },
                             ].map((item) => (
                                 <div key={item.key}>
                                     <Label className="mb-2 block text-sm font-medium text-gray-700">{item.label}</Label>
                                     <RadioGroup
                                         value={invoiceForm[item.key as keyof typeof invoiceForm] ? "yes" : "no"}
-                                        onValueChange={(val) => setInvoiceForm({ ...invoiceForm, [item.key]: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setInvoiceForm({ ...invoiceForm, [item.key]: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id={`${item.key}-yes`} />
-                                            <Label htmlFor={`${item.key}-yes`} className="font-normal">Yes</Label>
+                                            <Label htmlFor={`${item.key}-yes`} className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id={`${item.key}-no`} />
-                                            <Label htmlFor={`${item.key}-no`} className="font-normal">No</Label>
+                                            <Label htmlFor={`${item.key}-no`} className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -1613,23 +1733,33 @@ export default function SettingsPage() {
 
                         {/* Number Format */}
                         <div>
-                            <Label className="mb-2 block text-sm font-medium text-gray-700">Invoice Number Format</Label>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                Invoice Number Format
+                            </Label>
                             <RadioGroup
                                 value={invoiceForm.invoiceNumberFormat}
-                                onValueChange={(val) => setInvoiceForm({ ...invoiceForm, invoiceNumberFormat: val as any })}
+                                onValueChange={(val) =>
+                                    setInvoiceForm({ ...invoiceForm, invoiceNumberFormat: val as any })
+                                }
                                 className="flex gap-4"
                             >
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="number_based" id="fmt-number" />
-                                    <Label htmlFor="fmt-number" className="font-normal">Number Based (000001)</Label>
+                                    <Label htmlFor="fmt-number" className="font-normal">
+                                        Number Based (000001)
+                                    </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="year_based" id="fmt-year" />
-                                    <Label htmlFor="fmt-year" className="font-normal">Year Based (YYYY/000001)</Label>
+                                    <Label htmlFor="fmt-year" className="font-normal">
+                                        Year Based (YYYY/000001)
+                                    </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="mixed" id="fmt-mixed" />
-                                    <Label htmlFor="fmt-mixed" className="font-normal">000001-YY</Label>
+                                    <Label htmlFor="fmt-mixed" className="font-normal">
+                                        000001-YY
+                                    </Label>
                                 </div>
                             </RadioGroup>
                         </div>
@@ -1639,7 +1769,9 @@ export default function SettingsPage() {
                                 <Label className="mb-2 block">Predefined Client Note</Label>
                                 <Textarea
                                     value={invoiceForm.invoiceDefaultClientNote}
-                                    onChange={e => setInvoiceForm({ ...invoiceForm, invoiceDefaultClientNote: e.target.value })}
+                                    onChange={(e) =>
+                                        setInvoiceForm({ ...invoiceForm, invoiceDefaultClientNote: e.target.value })
+                                    }
                                     className="h-24"
                                     placeholder="Thank you for doing business with us..."
                                 />
@@ -1648,7 +1780,9 @@ export default function SettingsPage() {
                                 <Label className="mb-2 block">Predefined Terms & Conditions</Label>
                                 <Textarea
                                     value={invoiceForm.invoiceDefaultTerms}
-                                    onChange={e => setInvoiceForm({ ...invoiceForm, invoiceDefaultTerms: e.target.value })}
+                                    onChange={(e) =>
+                                        setInvoiceForm({ ...invoiceForm, invoiceDefaultTerms: e.target.value })
+                                    }
                                     className="h-24"
                                 />
                             </div>
@@ -1674,22 +1808,30 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                     <h2 className="text-2xl font-semibold">Proposals</h2>
                     <div className="bg-white p-6 rounded-lg border space-y-6">
-
                         <div className="space-y-4">
                             <div>
                                 <Label>Proposal Number Prefix</Label>
                                 <Input
                                     value={proposalForm.proposalNumberPrefix}
-                                    onChange={e => setProposalForm({ ...proposalForm, proposalNumberPrefix: e.target.value })}
+                                    onChange={(e) =>
+                                        setProposalForm({ ...proposalForm, proposalNumberPrefix: e.target.value })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
                             <div>
-                                <Label className="flex items-center gap-2 mb-1"><HelpCircle className="h-4 w-4 text-gray-400" /> Proposal Due After (days)</Label>
+                                <Label className="flex items-center gap-2 mb-1">
+                                    <HelpCircle className="h-4 w-4 text-gray-400" /> Proposal Due After (days)
+                                </Label>
                                 <Input
                                     type="number"
                                     value={proposalForm.proposalDueAfterDays}
-                                    onChange={e => setProposalForm({ ...proposalForm, proposalDueAfterDays: parseInt(e.target.value) || 0 })}
+                                    onChange={(e) =>
+                                        setProposalForm({
+                                            ...proposalForm,
+                                            proposalDueAfterDays: parseInt(e.target.value) || 0,
+                                        })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
@@ -1698,7 +1840,12 @@ export default function SettingsPage() {
                                 <Input
                                     type="number"
                                     value={proposalForm.proposalPipelineLimit}
-                                    onChange={e => setProposalForm({ ...proposalForm, proposalPipelineLimit: parseInt(e.target.value) || 0 })}
+                                    onChange={(e) =>
+                                        setProposalForm({
+                                            ...proposalForm,
+                                            proposalPipelineLimit: parseInt(e.target.value) || 0,
+                                        })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
@@ -1712,7 +1859,9 @@ export default function SettingsPage() {
                             <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
                                 <Select
                                     value={proposalForm.proposalPipelineSort}
-                                    onValueChange={(val) => setProposalForm({ ...proposalForm, proposalPipelineSort: val as any })}
+                                    onValueChange={(val) =>
+                                        setProposalForm({ ...proposalForm, proposalPipelineSort: val as any })
+                                    }
                                 >
                                     <SelectTrigger className="w-[200px]">
                                         <SelectValue placeholder="Sort By" />
@@ -1724,7 +1873,9 @@ export default function SettingsPage() {
                                 </Select>
                                 <RadioGroup
                                     value={proposalForm.proposalPipelineSortOrder}
-                                    onValueChange={(val) => setProposalForm({ ...proposalForm, proposalPipelineSortOrder: val as any })}
+                                    onValueChange={(val) =>
+                                        setProposalForm({ ...proposalForm, proposalPipelineSortOrder: val as any })
+                                    }
                                     className="flex gap-4"
                                 >
                                     <div className="flex items-center space-x-2">
@@ -1742,24 +1893,39 @@ export default function SettingsPage() {
                         <div className="space-y-6">
                             {[
                                 { key: "proposalShowProjectName", label: "Show Project Name On Proposal" },
-                                { key: "proposalExcludeDrafts", label: "Exclude proposals with draft status from customers area" },
-                                { key: "proposalAutoConvert", label: "Auto convert the proposal to invoice after client accept (only customers related proposals)" },
-                                { key: "proposalAllowStaffViewAssigned", label: "Allow staff members to view proposals where they are assigned to" },
+                                {
+                                    key: "proposalExcludeDrafts",
+                                    label: "Exclude proposals with draft status from customers area",
+                                },
+                                {
+                                    key: "proposalAutoConvert",
+                                    label: "Auto convert the proposal to invoice after client accept (only customers related proposals)",
+                                },
+                                {
+                                    key: "proposalAllowStaffViewAssigned",
+                                    label: "Allow staff members to view proposals where they are assigned to",
+                                },
                             ].map((item) => (
                                 <div key={item.key}>
                                     <Label className="mb-2 block text-sm font-medium text-gray-700">{item.label}</Label>
                                     <RadioGroup
                                         value={proposalForm[item.key as keyof typeof proposalForm] ? "yes" : "no"}
-                                        onValueChange={(val) => setProposalForm({ ...proposalForm, [item.key]: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setProposalForm({ ...proposalForm, [item.key]: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id={`pf-${item.key}-yes`} />
-                                            <Label htmlFor={`pf-${item.key}-yes`} className="font-normal">Yes</Label>
+                                            <Label htmlFor={`pf-${item.key}-yes`} className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id={`pf-${item.key}-no`} />
-                                            <Label htmlFor={`pf-${item.key}-no`} className="font-normal">No</Label>
+                                            <Label htmlFor={`pf-${item.key}-no`} className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -1772,7 +1938,9 @@ export default function SettingsPage() {
                             <Label className="mb-2 block">Proposal Info Format (PDF and HTML)</Label>
                             <Textarea
                                 value={proposalForm.proposalInfoFormat}
-                                onChange={e => setProposalForm({ ...proposalForm, proposalInfoFormat: e.target.value })}
+                                onChange={(e) =>
+                                    setProposalForm({ ...proposalForm, proposalInfoFormat: e.target.value })
+                                }
                                 className="h-32 font-mono text-sm"
                             />
                             <p className="mt-2 text-xs text-blue-600 break-all">
@@ -1800,30 +1968,42 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                     <h2 className="text-2xl font-semibold">Estimates</h2>
                     <div className="bg-white p-6 rounded-lg border space-y-6">
-
                         <div className="space-y-4">
                             <div>
                                 <Label>Estimate Number Prefix</Label>
                                 <Input
                                     value={estimateForm.estimateNumberPrefix}
-                                    onChange={e => setEstimateForm({ ...estimateForm, estimateNumberPrefix: e.target.value })}
+                                    onChange={(e) =>
+                                        setEstimateForm({ ...estimateForm, estimateNumberPrefix: e.target.value })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
                             <div>
-                                <Label className="flex items-center gap-2 mb-1"><HelpCircle className="h-4 w-4 text-gray-400" /> Next estimate Number</Label>
+                                <Label className="flex items-center gap-2 mb-1">
+                                    <HelpCircle className="h-4 w-4 text-gray-400" /> Next estimate Number
+                                </Label>
                                 <Input
                                     value={estimateForm.estimateNextNumber}
-                                    onChange={e => setEstimateForm({ ...estimateForm, estimateNextNumber: e.target.value })}
+                                    onChange={(e) =>
+                                        setEstimateForm({ ...estimateForm, estimateNextNumber: e.target.value })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
                             <div>
-                                <Label className="flex items-center gap-2 mb-1"><HelpCircle className="h-4 w-4 text-gray-400" /> Estimate Due After (days)</Label>
+                                <Label className="flex items-center gap-2 mb-1">
+                                    <HelpCircle className="h-4 w-4 text-gray-400" /> Estimate Due After (days)
+                                </Label>
                                 <Input
                                     type="number"
                                     value={estimateForm.estimateDueAfterDays}
-                                    onChange={e => setEstimateForm({ ...estimateForm, estimateDueAfterDays: parseInt(e.target.value) || 0 })}
+                                    onChange={(e) =>
+                                        setEstimateForm({
+                                            ...estimateForm,
+                                            estimateDueAfterDays: parseInt(e.target.value) || 0,
+                                        })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
@@ -1831,32 +2011,57 @@ export default function SettingsPage() {
 
                         <div className="space-y-6">
                             {[
-                                { key: "estimateDeleteOnlyLast", label: "Delete estimate allowed only on last invoice" }, // using last invoice label as per screenshot? "last invoice" text seems like copy paste error in design or actual text. I'll use text from screenshot "Delete estimate allowed only on last invoice"
+                                {
+                                    key: "estimateDeleteOnlyLast",
+                                    label: "Delete estimate allowed only on last invoice",
+                                }, // using last invoice label as per screenshot? "last invoice" text seems like copy paste error in design or actual text. I'll use text from screenshot "Delete estimate allowed only on last invoice"
                                 { key: "estimateDecrementOnDelete", label: "Decrement estimate number on delete" },
-                                { key: "estimateAllowStaffViewAssigned", label: "Allow staff members to view estimates where they are assigned to" },
-                                { key: "estimateRequireClientLogin", label: "Require client to be logged in to view estimate" },
+                                {
+                                    key: "estimateAllowStaffViewAssigned",
+                                    label: "Allow staff members to view estimates where they are assigned to",
+                                },
+                                {
+                                    key: "estimateRequireClientLogin",
+                                    label: "Require client to be logged in to view estimate",
+                                },
                                 { key: "estimateShowSaleAgent", label: "Show Sale Agent On Estimate" },
                                 { key: "estimateShowProjectName", label: "Show Project Name On Estimate" },
-                                { key: "estimateAutoConvert", label: "Auto convert the estimate to invoice after client accept" },
-                                { key: "estimateExcludeDraftsFromClient", label: "Exclude estimates with draft status from customers area" },
+                                {
+                                    key: "estimateAutoConvert",
+                                    label: "Auto convert the estimate to invoice after client accept",
+                                },
+                                {
+                                    key: "estimateExcludeDraftsFromClient",
+                                    label: "Exclude estimates with draft status from customers area",
+                                },
                             ].map((item) => (
                                 <div key={item.key}>
                                     <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
-                                        {(item.key === "estimateNextNumber" || item.key === "estimateDueAfterDays" || item.key === "estimateDecrementOnDelete") && <HelpCircle className="h-4 w-4 text-gray-400" />}
+                                        {(item.key === "estimateNextNumber" ||
+                                            item.key === "estimateDueAfterDays" ||
+                                            item.key === "estimateDecrementOnDelete") && (
+                                            <HelpCircle className="h-4 w-4 text-gray-400" />
+                                        )}
                                         {item.label}
                                     </Label>
                                     <RadioGroup
                                         value={estimateForm[item.key as keyof typeof estimateForm] ? "yes" : "no"}
-                                        onValueChange={(val) => setEstimateForm({ ...estimateForm, [item.key]: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setEstimateForm({ ...estimateForm, [item.key]: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id={`ef-${item.key}-yes`} />
-                                            <Label htmlFor={`ef-${item.key}-yes`} className="font-normal">Yes</Label>
+                                            <Label htmlFor={`ef-${item.key}-yes`} className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id={`ef-${item.key}-no`} />
-                                            <Label htmlFor={`ef-${item.key}-no`} className="font-normal">No</Label>
+                                            <Label htmlFor={`ef-${item.key}-no`} className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -1867,27 +2072,39 @@ export default function SettingsPage() {
 
                         {/* Number Format */}
                         <div>
-                            <Label className="mb-2 block text-sm font-medium text-gray-700">Estimate Number Format</Label>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                Estimate Number Format
+                            </Label>
                             <RadioGroup
                                 value={estimateForm.estimateNumberFormat}
-                                onValueChange={(val) => setEstimateForm({ ...estimateForm, estimateNumberFormat: val as any })}
+                                onValueChange={(val) =>
+                                    setEstimateForm({ ...estimateForm, estimateNumberFormat: val as any })
+                                }
                                 className="flex gap-4 flex-wrap"
                             >
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="number_based" id="est-fmt-number" />
-                                    <Label htmlFor="est-fmt-number" className="font-normal">Number Based (000001)</Label>
+                                    <Label htmlFor="est-fmt-number" className="font-normal">
+                                        Number Based (000001)
+                                    </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="year_based" id="est-fmt-year" />
-                                    <Label htmlFor="est-fmt-year" className="font-normal">Year Based (YYYY/000001)</Label>
+                                    <Label htmlFor="est-fmt-year" className="font-normal">
+                                        Year Based (YYYY/000001)
+                                    </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="mixed" id="est-fmt-mixed" />
-                                    <Label htmlFor="est-fmt-mixed" className="font-normal">000001-YY</Label>
+                                    <Label htmlFor="est-fmt-mixed" className="font-normal">
+                                        000001-YY
+                                    </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="date_based" id="est-fmt-date" />
-                                    <Label htmlFor="est-fmt-date" className="font-normal">000001/MM/YYYY</Label>
+                                    <Label htmlFor="est-fmt-date" className="font-normal">
+                                        000001/MM/YYYY
+                                    </Label>
                                 </div>
                             </RadioGroup>
                         </div>
@@ -1898,7 +2115,12 @@ export default function SettingsPage() {
                                 <Input
                                     type="number"
                                     value={estimateForm.estimatePipelineLimit}
-                                    onChange={e => setEstimateForm({ ...estimateForm, estimatePipelineLimit: parseInt(e.target.value) || 0 })}
+                                    onChange={(e) =>
+                                        setEstimateForm({
+                                            ...estimateForm,
+                                            estimatePipelineLimit: parseInt(e.target.value) || 0,
+                                        })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
@@ -1910,7 +2132,9 @@ export default function SettingsPage() {
                             <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
                                 <Select
                                     value={estimateForm.estimatePipelineSort}
-                                    onValueChange={(val) => setEstimateForm({ ...estimateForm, estimatePipelineSort: val as any })}
+                                    onValueChange={(val) =>
+                                        setEstimateForm({ ...estimateForm, estimatePipelineSort: val as any })
+                                    }
                                 >
                                     <SelectTrigger className="w-[200px]">
                                         <SelectValue placeholder="Sort By" />
@@ -1922,7 +2146,9 @@ export default function SettingsPage() {
                                 </Select>
                                 <RadioGroup
                                     value={estimateForm.estimatePipelineSortOrder}
-                                    onValueChange={(val) => setEstimateForm({ ...estimateForm, estimatePipelineSortOrder: val as any })}
+                                    onValueChange={(val) =>
+                                        setEstimateForm({ ...estimateForm, estimatePipelineSortOrder: val as any })
+                                    }
                                     className="flex gap-4"
                                 >
                                     <div className="flex items-center space-x-2">
@@ -1942,7 +2168,9 @@ export default function SettingsPage() {
                                 <Label className="mb-2 block">Predefined Client Note</Label>
                                 <Textarea
                                     value={estimateForm.estimateDefaultClientNote}
-                                    onChange={e => setEstimateForm({ ...estimateForm, estimateDefaultClientNote: e.target.value })}
+                                    onChange={(e) =>
+                                        setEstimateForm({ ...estimateForm, estimateDefaultClientNote: e.target.value })
+                                    }
                                     className="h-24"
                                     placeholder="Thank you for doing business with WasilaDev"
                                 />
@@ -1951,7 +2179,9 @@ export default function SettingsPage() {
                                 <Label className="mb-2 block">Predefined Terms & Conditions</Label>
                                 <Textarea
                                     value={estimateForm.estimateDefaultTerms}
-                                    onChange={e => setEstimateForm({ ...estimateForm, estimateDefaultTerms: e.target.value })}
+                                    onChange={(e) =>
+                                        setEstimateForm({ ...estimateForm, estimateDefaultTerms: e.target.value })
+                                    }
                                     className="h-24"
                                 />
                             </div>
@@ -1977,21 +2207,26 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                     <h2 className="text-2xl font-semibold">Credit Notes</h2>
                     <div className="bg-white p-6 rounded-lg border space-y-6">
-
                         <div className="space-y-4">
                             <div>
                                 <Label>Credit Note Number Prefix</Label>
                                 <Input
                                     value={creditNoteForm.creditNoteNumberPrefix}
-                                    onChange={e => setCreditNoteForm({ ...creditNoteForm, creditNoteNumberPrefix: e.target.value })}
+                                    onChange={(e) =>
+                                        setCreditNoteForm({ ...creditNoteForm, creditNoteNumberPrefix: e.target.value })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
                             <div>
-                                <Label className="flex items-center gap-2 mb-1"><HelpCircle className="h-4 w-4 text-gray-400" /> Next Credit Note Number</Label>
+                                <Label className="flex items-center gap-2 mb-1">
+                                    <HelpCircle className="h-4 w-4 text-gray-400" /> Next Credit Note Number
+                                </Label>
                                 <Input
                                     value={creditNoteForm.creditNoteNextNumber}
-                                    onChange={e => setCreditNoteForm({ ...creditNoteForm, creditNoteNextNumber: e.target.value })}
+                                    onChange={(e) =>
+                                        setCreditNoteForm({ ...creditNoteForm, creditNoteNextNumber: e.target.value })
+                                    }
                                     className="mt-1"
                                 />
                             </div>
@@ -1999,49 +2234,70 @@ export default function SettingsPage() {
 
                         {/* Number Format */}
                         <div>
-                            <Label className="mb-2 block text-sm font-medium text-gray-700">Credit Note Number Format</Label>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                Credit Note Number Format
+                            </Label>
                             <RadioGroup
                                 value={creditNoteForm.creditNoteNumberFormat}
-                                onValueChange={(val) => setCreditNoteForm({ ...creditNoteForm, creditNoteNumberFormat: val as any })}
+                                onValueChange={(val) =>
+                                    setCreditNoteForm({ ...creditNoteForm, creditNoteNumberFormat: val as any })
+                                }
                                 className="flex gap-4 flex-wrap"
                             >
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="number_based" id="cn-fmt-number" />
-                                    <Label htmlFor="cn-fmt-number" className="font-normal">Number Based (000001)</Label>
+                                    <Label htmlFor="cn-fmt-number" className="font-normal">
+                                        Number Based (000001)
+                                    </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="year_based" id="cn-fmt-year" />
-                                    <Label htmlFor="cn-fmt-year" className="font-normal">Year Based (YYYY/000001)</Label>
+                                    <Label htmlFor="cn-fmt-year" className="font-normal">
+                                        Year Based (YYYY/000001)
+                                    </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="mixed" id="cn-fmt-mixed" />
-                                    <Label htmlFor="cn-fmt-mixed" className="font-normal">000001-YY</Label>
+                                    <Label htmlFor="cn-fmt-mixed" className="font-normal">
+                                        000001-YY
+                                    </Label>
                                 </div>
                             </RadioGroup>
                         </div>
 
                         <div className="space-y-6">
                             {[
-                                { key: "creditNoteDecrementOnDelete", label: "Decrement credit note number on delete." },
+                                {
+                                    key: "creditNoteDecrementOnDelete",
+                                    label: "Decrement credit note number on delete.",
+                                },
                                 { key: "creditNoteShowProjectName", label: "Show Project Name On Credit Note" },
                             ].map((item) => (
                                 <div key={item.key}>
                                     <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
-                                        {item.key === "creditNoteDecrementOnDelete" && <HelpCircle className="h-4 w-4 text-gray-400" />}
+                                        {item.key === "creditNoteDecrementOnDelete" && (
+                                            <HelpCircle className="h-4 w-4 text-gray-400" />
+                                        )}
                                         {item.label}
                                     </Label>
                                     <RadioGroup
                                         value={creditNoteForm[item.key as keyof typeof creditNoteForm] ? "yes" : "no"}
-                                        onValueChange={(val) => setCreditNoteForm({ ...creditNoteForm, [item.key]: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setCreditNoteForm({ ...creditNoteForm, [item.key]: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id={`cnf-${item.key}-yes`} />
-                                            <Label htmlFor={`cnf-${item.key}-yes`} className="font-normal">Yes</Label>
+                                            <Label htmlFor={`cnf-${item.key}-yes`} className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id={`cnf-${item.key}-no`} />
-                                            <Label htmlFor={`cnf-${item.key}-no`} className="font-normal">No</Label>
+                                            <Label htmlFor={`cnf-${item.key}-no`} className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -2055,7 +2311,12 @@ export default function SettingsPage() {
                                 <Label className="mb-2 block">Predefined Client Note</Label>
                                 <Textarea
                                     value={creditNoteForm.creditNoteDefaultClientNote}
-                                    onChange={e => setCreditNoteForm({ ...creditNoteForm, creditNoteDefaultClientNote: e.target.value })}
+                                    onChange={(e) =>
+                                        setCreditNoteForm({
+                                            ...creditNoteForm,
+                                            creditNoteDefaultClientNote: e.target.value,
+                                        })
+                                    }
                                     className="h-24"
                                 />
                             </div>
@@ -2063,7 +2324,9 @@ export default function SettingsPage() {
                                 <Label className="mb-2 block">Predefined Terms & Conditions</Label>
                                 <Textarea
                                     value={creditNoteForm.creditNoteDefaultTerms}
-                                    onChange={e => setCreditNoteForm({ ...creditNoteForm, creditNoteDefaultTerms: e.target.value })}
+                                    onChange={(e) =>
+                                        setCreditNoteForm({ ...creditNoteForm, creditNoteDefaultTerms: e.target.value })
+                                    }
                                     className="h-24"
                                 />
                             </div>
@@ -2098,23 +2361,37 @@ export default function SettingsPage() {
                             <TabsContent value="general" className="space-y-6 mt-6">
                                 <div className="space-y-6">
                                     {[
-                                        { key: "paymentNotificationEmail", label: "Receive notification when customer pay invoice (built-in)" },
-                                        { key: "allowCustomerModifyAmount", label: "Allow customer to modify the amount to pay (for online payments)" },
+                                        {
+                                            key: "paymentNotificationEmail",
+                                            label: "Receive notification when customer pay invoice (built-in)",
+                                        },
+                                        {
+                                            key: "allowCustomerModifyAmount",
+                                            label: "Allow customer to modify the amount to pay (for online payments)",
+                                        },
                                     ].map((item) => (
                                         <div key={item.key}>
-                                            <Label className="mb-2 block text-sm font-medium text-gray-700">{item.label}</Label>
+                                            <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                                {item.label}
+                                            </Label>
                                             <RadioGroup
                                                 value={gatewayForm[item.key as keyof typeof gatewayForm] ? "yes" : "no"}
-                                                onValueChange={(val) => setGatewayForm({ ...gatewayForm, [item.key]: val === "yes" })}
+                                                onValueChange={(val) =>
+                                                    setGatewayForm({ ...gatewayForm, [item.key]: val === "yes" })
+                                                }
                                                 className="flex gap-4"
                                             >
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="yes" id={`pg-${item.key}-yes`} />
-                                                    <Label htmlFor={`pg-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                    <Label htmlFor={`pg-${item.key}-yes`} className="font-normal">
+                                                        Yes
+                                                    </Label>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="no" id={`pg-${item.key}-no`} />
-                                                    <Label htmlFor={`pg-${item.key}-no`} className="font-normal">No</Label>
+                                                    <Label htmlFor={`pg-${item.key}-no`} className="font-normal">
+                                                        No
+                                                    </Label>
                                                 </div>
                                             </RadioGroup>
                                         </div>
@@ -2129,16 +2406,22 @@ export default function SettingsPage() {
                                     <Label className="mb-2 block text-sm font-medium text-gray-700">Active</Label>
                                     <RadioGroup
                                         value={gatewayForm.paypalActive ? "yes" : "no"}
-                                        onValueChange={(val) => setGatewayForm({ ...gatewayForm, paypalActive: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setGatewayForm({ ...gatewayForm, paypalActive: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id="pp-active-yes" />
-                                            <Label htmlFor="pp-active-yes" className="font-normal">Yes</Label>
+                                            <Label htmlFor="pp-active-yes" className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id="pp-active-no" />
-                                            <Label htmlFor="pp-active-no" className="font-normal">No</Label>
+                                            <Label htmlFor="pp-active-no" className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -2147,7 +2430,9 @@ export default function SettingsPage() {
                                     <Label>Label</Label>
                                     <Input
                                         value={gatewayForm.paypalLabel}
-                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalLabel: e.target.value })}
+                                        onChange={(e) =>
+                                            setGatewayForm({ ...gatewayForm, paypalLabel: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -2156,7 +2441,9 @@ export default function SettingsPage() {
                                     <Label>Fixed Fee</Label>
                                     <Input
                                         value={gatewayForm.paypalFixedFee}
-                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalFixedFee: e.target.value })}
+                                        onChange={(e) =>
+                                            setGatewayForm({ ...gatewayForm, paypalFixedFee: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -2165,7 +2452,9 @@ export default function SettingsPage() {
                                     <Label>Percentage Fee</Label>
                                     <Input
                                         value={gatewayForm.paypalPercentageFee}
-                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalPercentageFee: e.target.value })}
+                                        onChange={(e) =>
+                                            setGatewayForm({ ...gatewayForm, paypalPercentageFee: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -2174,7 +2463,9 @@ export default function SettingsPage() {
                                     <Label>PayPal API Username</Label>
                                     <Input
                                         value={gatewayForm.paypalUsername}
-                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalUsername: e.target.value })}
+                                        onChange={(e) =>
+                                            setGatewayForm({ ...gatewayForm, paypalUsername: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -2183,7 +2474,9 @@ export default function SettingsPage() {
                                     <Label>PayPal API Password</Label>
                                     <Input
                                         value={gatewayForm.paypalPassword}
-                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalPassword: e.target.value })}
+                                        onChange={(e) =>
+                                            setGatewayForm({ ...gatewayForm, paypalPassword: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -2192,7 +2485,9 @@ export default function SettingsPage() {
                                     <Label>API Signature</Label>
                                     <Input
                                         value={gatewayForm.paypalSignature}
-                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalSignature: e.target.value })}
+                                        onChange={(e) =>
+                                            setGatewayForm({ ...gatewayForm, paypalSignature: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -2201,7 +2496,9 @@ export default function SettingsPage() {
                                     <Label className="mb-2 block">Gateway Dashbord Payment Description</Label>
                                     <Textarea
                                         value={gatewayForm.paypalDescription}
-                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalDescription: e.target.value })}
+                                        onChange={(e) =>
+                                            setGatewayForm({ ...gatewayForm, paypalDescription: e.target.value })
+                                        }
                                         className="h-24"
                                     />
                                 </div>
@@ -2210,47 +2507,64 @@ export default function SettingsPage() {
                                     <Label>Currencies (coma separated)</Label>
                                     <Input
                                         value={gatewayForm.paypalCurrencies}
-                                        onChange={e => setGatewayForm({ ...gatewayForm, paypalCurrencies: e.target.value })}
+                                        onChange={(e) =>
+                                            setGatewayForm({ ...gatewayForm, paypalCurrencies: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
 
                                 <div>
-                                    <Label className="mb-2 block text-sm font-medium text-gray-700">Enable Test Mode</Label>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Enable Test Mode
+                                    </Label>
                                     <RadioGroup
                                         value={gatewayForm.paypalTestMode ? "yes" : "no"}
-                                        onValueChange={(val) => setGatewayForm({ ...gatewayForm, paypalTestMode: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setGatewayForm({ ...gatewayForm, paypalTestMode: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id="pp-test-yes" />
-                                            <Label htmlFor="pp-test-yes" className="font-normal">Yes</Label>
+                                            <Label htmlFor="pp-test-yes" className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id="pp-test-no" />
-                                            <Label htmlFor="pp-test-no" className="font-normal">No</Label>
+                                            <Label htmlFor="pp-test-no" className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
 
                                 <div>
-                                    <Label className="mb-2 block text-sm font-medium text-gray-700">Selected by default on invoice</Label>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Selected by default on invoice
+                                    </Label>
                                     <RadioGroup
                                         value={gatewayForm.paypalDefaultSelected ? "yes" : "no"}
-                                        onValueChange={(val) => setGatewayForm({ ...gatewayForm, paypalDefaultSelected: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setGatewayForm({ ...gatewayForm, paypalDefaultSelected: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id="pp-def-yes" />
-                                            <Label htmlFor="pp-def-yes" className="font-normal">Yes</Label>
+                                            <Label htmlFor="pp-def-yes" className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id="pp-def-no" />
-                                            <Label htmlFor="pp-def-no" className="font-normal">No</Label>
+                                            <Label htmlFor="pp-def-no" className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
-
                             </TabsContent>
                         </Tabs>
 
@@ -2273,7 +2587,6 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                     <h2 className="text-2xl font-semibold">Customers</h2>
                     <div className="bg-white p-6 rounded-lg border space-y-6">
-
                         <div>
                             <Label>Default customers theme</Label>
                             <Select
@@ -2293,7 +2606,9 @@ export default function SettingsPage() {
                             <Label>Default Country</Label>
                             <Select
                                 value={customerForm.customerDefaultCountry}
-                                onValueChange={(val) => setCustomerForm({ ...customerForm, customerDefaultCountry: val })}
+                                onValueChange={(val) =>
+                                    setCustomerForm({ ...customerForm, customerDefaultCountry: val })
+                                }
                             >
                                 <SelectTrigger className="mt-1">
                                     <SelectValue placeholder="Nothing selected" />
@@ -2309,7 +2624,9 @@ export default function SettingsPage() {
                             <Label>Visible Tabs (Profile)</Label>
                             <Select
                                 value={customerForm.customerVisibleTabs[0]} // Simplified for single select in prototype
-                                onValueChange={(val) => setCustomerForm({ ...customerForm, customerVisibleTabs: [val] })}
+                                onValueChange={(val) =>
+                                    setCustomerForm({ ...customerForm, customerVisibleTabs: [val] })
+                                }
                             >
                                 <SelectTrigger className="mt-1">
                                     <SelectValue placeholder="Select tabs" />
@@ -2335,16 +2652,38 @@ export default function SettingsPage() {
                         <div className="space-y-6">
                             {[
                                 { key: "customerCompanyFieldRequired", label: "Company field is required?" },
-                                { key: "customerCompanyVatRequired", label: "Company requires the usage of the VAT Number field" },
+                                {
+                                    key: "customerCompanyVatRequired",
+                                    label: "Company requires the usage of the VAT Number field",
+                                },
                                 { key: "customerAllowRegistration", label: "Allow customers to register" },
-                                { key: "customerRequiresRegistrationConfirmation", label: "Require registration confirmation from administrator after customer register" },
-                                { key: "customerAllowPrimaryContactManageContacts", label: "Allow primary contact to manage other customer contacts" },
+                                {
+                                    key: "customerRequiresRegistrationConfirmation",
+                                    label: "Require registration confirmation from administrator after customer register",
+                                },
+                                {
+                                    key: "customerAllowPrimaryContactManageContacts",
+                                    label: "Allow primary contact to manage other customer contacts",
+                                },
                                 { key: "customerEnableHoneypot", label: "Enable Honeypot spam validation" },
-                                { key: "customerAllowPrimaryContactViewBilling", label: "Allow primary contact to view/edit billing & shipping details" },
-                                { key: "customerContactsSeeOwnFilesOnly", label: "Contacts see only own files uploaded in customer area (files uploaded in customer profile)", help: true },
-                                { key: "customerAllowContactsDeleteOwnFiles", label: "Allow contacts to delete own files uploaded from customers area" },
+                                {
+                                    key: "customerAllowPrimaryContactViewBilling",
+                                    label: "Allow primary contact to view/edit billing & shipping details",
+                                },
+                                {
+                                    key: "customerContactsSeeOwnFilesOnly",
+                                    label: "Contacts see only own files uploaded in customer area (files uploaded in customer profile)",
+                                    help: true,
+                                },
+                                {
+                                    key: "customerAllowContactsDeleteOwnFiles",
+                                    label: "Allow contacts to delete own files uploaded from customers area",
+                                },
                                 { key: "customerUseKnowledgeBase", label: "Use Knowledge Base", help: true },
-                                { key: "customerAllowKnowledgeBaseWithoutRegistration", label: "Allow knowledge base to be viewed without registration" },
+                                {
+                                    key: "customerAllowKnowledgeBaseWithoutRegistration",
+                                    label: "Allow knowledge base to be viewed without registration",
+                                },
                             ].map((item: any) => (
                                 <div key={item.key}>
                                     <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -2353,16 +2692,22 @@ export default function SettingsPage() {
                                     </Label>
                                     <RadioGroup
                                         value={customerForm[item.key as keyof typeof customerForm] ? "yes" : "no"}
-                                        onValueChange={(val) => setCustomerForm({ ...customerForm, [item.key]: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setCustomerForm({ ...customerForm, [item.key]: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id={`cust-${item.key}-yes`} />
-                                            <Label htmlFor={`cust-${item.key}-yes`} className="font-normal">Yes</Label>
+                                            <Label htmlFor={`cust-${item.key}-yes`} className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id={`cust-${item.key}-no`} />
-                                            <Label htmlFor={`cust-${item.key}-no`} className="font-normal">No</Label>
+                                            <Label htmlFor={`cust-${item.key}-no`} className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -2374,7 +2719,9 @@ export default function SettingsPage() {
                             <Select
                                 value={customerForm.customerShowEstimateRequestLink ? "yes" : "no"}
                                 // Simplified mapping for boolean
-                                onValueChange={(val) => setCustomerForm({ ...customerForm, customerShowEstimateRequestLink: val === "yes" })}
+                                onValueChange={(val) =>
+                                    setCustomerForm({ ...customerForm, customerShowEstimateRequestLink: val === "yes" })
+                                }
                             >
                                 <SelectTrigger className="mt-1">
                                     <SelectValue placeholder="Select" />
@@ -2389,26 +2736,46 @@ export default function SettingsPage() {
                         <div>
                             <Label className="mb-2 block">Default contact permissions</Label>
                             <div className="space-y-2">
-                                {["Invoices", "Estimates", "Contracts", "Proposals", "Support", "Projects"].map((perm) => (
-                                    <div key={perm} className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id={`perm-${perm}`}
-                                            checked={customerForm.customerDefaultContactPermissions.includes(perm.toLowerCase())}
-                                            onCheckedChange={(checked: boolean) => {
-                                                const permKey = perm.toLowerCase();
-                                                if (checked) {
-                                                    setCustomerForm({ ...customerForm, customerDefaultContactPermissions: [...customerForm.customerDefaultContactPermissions, permKey] })
-                                                } else {
-                                                    setCustomerForm({ ...customerForm, customerDefaultContactPermissions: customerForm.customerDefaultContactPermissions.filter(p => p !== permKey) })
-                                                }
-                                            }}
-                                        />
-                                        <Label htmlFor={`perm-${perm}`} className="font-normal cursor-pointer select-none">{perm}</Label>
-                                    </div>
-                                ))}
+                                {["Invoices", "Estimates", "Contracts", "Proposals", "Support", "Projects"].map(
+                                    (perm) => (
+                                        <div key={perm} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`perm-${perm}`}
+                                                checked={customerForm.customerDefaultContactPermissions.includes(
+                                                    perm.toLowerCase()
+                                                )}
+                                                onCheckedChange={(checked: boolean) => {
+                                                    const permKey = perm.toLowerCase();
+                                                    if (checked) {
+                                                        setCustomerForm({
+                                                            ...customerForm,
+                                                            customerDefaultContactPermissions: [
+                                                                ...customerForm.customerDefaultContactPermissions,
+                                                                permKey,
+                                                            ],
+                                                        });
+                                                    } else {
+                                                        setCustomerForm({
+                                                            ...customerForm,
+                                                            customerDefaultContactPermissions:
+                                                                customerForm.customerDefaultContactPermissions.filter(
+                                                                    (p) => p !== permKey
+                                                                ),
+                                                        });
+                                                    }
+                                                }}
+                                            />
+                                            <Label
+                                                htmlFor={`perm-${perm}`}
+                                                className="font-normal cursor-pointer select-none"
+                                            >
+                                                {perm}
+                                            </Label>
+                                        </div>
+                                    )
+                                )}
                             </div>
                         </div>
-
 
                         <div>
                             <Label className="mb-2 block flex items-center gap-2">
@@ -2417,7 +2784,9 @@ export default function SettingsPage() {
                             </Label>
                             <Textarea
                                 value={customerForm.customerInfoFormat}
-                                onChange={e => setCustomerForm({ ...customerForm, customerInfoFormat: e.target.value })}
+                                onChange={(e) =>
+                                    setCustomerForm({ ...customerForm, customerInfoFormat: e.target.value })
+                                }
                                 className="h-32 font-mono text-sm"
                             />
                             <div className="mt-2 text-sm text-blue-500 space-x-2">
@@ -2450,32 +2819,52 @@ export default function SettingsPage() {
             );
         }
 
-
         if (activeSection === "tasks") {
             return (
                 <div className="space-y-6">
                     <h2 className="text-2xl font-semibold">Tasks</h2>
                     <div className="bg-white p-6 rounded-lg border space-y-6">
-
                         <div>
                             <Label>Limit tasks kanban rows per status</Label>
                             <Input
                                 type="number"
                                 value={tasksForm.tasksKanbanLimit}
-                                onChange={e => setTasksForm({ ...tasksForm, tasksKanbanLimit: e.target.value })}
+                                onChange={(e) => setTasksForm({ ...tasksForm, tasksKanbanLimit: e.target.value })}
                                 className="mt-1"
                             />
                         </div>
 
                         <div className="space-y-6">
                             {[
-                                { key: "tasksAllowStaffViewAllProjectTasks", label: "Allow all staff to see all tasks related to projects (includes non-staff)" },
-                                { key: "tasksAllowEditCommentsFirstHourOnly", label: "Allow customer/staff to add/edit task comments only in the first hour (administrators not applied)" },
-                                { key: "tasksAutoAssignCreator", label: "Auto assign task creator when new task is created", help: true },
-                                { key: "tasksAutoAddCreatorAsFollower", label: "Auto add task creator as task follower when new task is created" },
-                                { key: "tasksStopOtherTimers", label: "Stop all other started timers when starting new timer" },
-                                { key: "tasksAutoStartTimer", label: "Change task status to In Progress on timer started (valid only if task status is Not Started)" },
-                                { key: "tasksBillableDefault", label: "Billable option is by default checked when new task is created? (only from admin area)" },
+                                {
+                                    key: "tasksAllowStaffViewAllProjectTasks",
+                                    label: "Allow all staff to see all tasks related to projects (includes non-staff)",
+                                },
+                                {
+                                    key: "tasksAllowEditCommentsFirstHourOnly",
+                                    label: "Allow customer/staff to add/edit task comments only in the first hour (administrators not applied)",
+                                },
+                                {
+                                    key: "tasksAutoAssignCreator",
+                                    label: "Auto assign task creator when new task is created",
+                                    help: true,
+                                },
+                                {
+                                    key: "tasksAutoAddCreatorAsFollower",
+                                    label: "Auto add task creator as task follower when new task is created",
+                                },
+                                {
+                                    key: "tasksStopOtherTimers",
+                                    label: "Stop all other started timers when starting new timer",
+                                },
+                                {
+                                    key: "tasksAutoStartTimer",
+                                    label: "Change task status to In Progress on timer started (valid only if task status is Not Started)",
+                                },
+                                {
+                                    key: "tasksBillableDefault",
+                                    label: "Billable option is by default checked when new task is created? (only from admin area)",
+                                },
                             ].map((item: any) => (
                                 <div key={item.key}>
                                     <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -2484,16 +2873,22 @@ export default function SettingsPage() {
                                     </Label>
                                     <RadioGroup
                                         value={tasksForm[item.key as keyof typeof tasksForm] ? "yes" : "no"}
-                                        onValueChange={(val) => setTasksForm({ ...tasksForm, [item.key]: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setTasksForm({ ...tasksForm, [item.key]: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id={`task-${item.key}-yes`} />
-                                            <Label htmlFor={`task-${item.key}-yes`} className="font-normal">Yes</Label>
+                                            <Label htmlFor={`task-${item.key}-yes`} className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id={`task-${item.key}-no`} />
-                                            <Label htmlFor={`task-${item.key}-no`} className="font-normal">No</Label>
+                                            <Label htmlFor={`task-${item.key}-no`} className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -2521,7 +2916,9 @@ export default function SettingsPage() {
                             <span>multiplies of</span>
                             <Select
                                 value={tasksForm.tasksTimerRoundOffMultiples}
-                                onValueChange={(val) => setTasksForm({ ...tasksForm, tasksTimerRoundOffMultiples: val })}
+                                onValueChange={(val) =>
+                                    setTasksForm({ ...tasksForm, tasksTimerRoundOffMultiples: val })
+                                }
                             >
                                 <SelectTrigger className="w-24">
                                     <SelectValue placeholder="5" />
@@ -2538,7 +2935,9 @@ export default function SettingsPage() {
                             <span>minutes</span>
                         </div>
 
-                        <p className="text-sm text-gray-500">Applied to the Timesheets overview report and when invoicing a task/project.</p>
+                        <p className="text-sm text-gray-500">
+                            Applied to the Timesheets overview report and when invoicing a task/project.
+                        </p>
 
                         <hr className="border-gray-100 my-4" />
 
@@ -2579,11 +2978,10 @@ export default function SettingsPage() {
                             <Label>Modal Width Class (modal-lg, modal-xl, modal-xxl)</Label>
                             <Input
                                 value={tasksForm.tasksModalWidth}
-                                onChange={e => setTasksForm({ ...tasksForm, tasksModalWidth: e.target.value })}
+                                onChange={(e) => setTasksForm({ ...tasksForm, tasksModalWidth: e.target.value })}
                                 className="mt-1"
                             />
                         </div>
-
 
                         <div className="pt-4 flex justify-end">
                             <Button
@@ -2629,22 +3027,58 @@ export default function SettingsPage() {
                             </TabsList>
 
                             <TabsContent value="general" className="space-y-6">
-
                                 <div className="space-y-6">
                                     {[
                                         { key: "supportUseServices", label: "Use services" },
                                         { key: "supportDisablePublicUrl", label: "Disable Ticket Public URL" },
-                                        { key: "supportStaffLimitToAssignedDepartments", label: "Allow staff to access only ticket that belongs to staff departments" },
-                                        { key: "supportStaffNotificationAssignedOnly", label: "Send staff-related ticket notifications to the ticket assignee only", help: true },
-                                        { key: "supportNotifyOnNewTicket", label: "Receive notification on new ticket opened", help: true },
-                                        { key: "supportNotifyOnCustomerReply", label: "Receive notification when customer reply to a ticket", help: true },
-                                        { key: "supportStaffOpenTicketsAllContacts", label: "Allow staff members to open tickets to all contacts", help: true },
-                                        { key: "supportAutoAssignFirstReplyStaff", label: "Automatically assign the ticket to the first staff that post a reply" },
-                                        { key: "supportAllowNonStaffAccess", label: "Allow access to tickets for non staff members" },
-                                        { key: "supportAllowNonAdminDeleteAttachments", label: "Allow non-admin staff members to delete ticket attachments" },
-                                        { key: "supportAllowNonAdminDeleteTickets", label: "Allow non-admin staff members to delete tickets and replies" },
-                                        { key: "supportAllowCustomerChangeStatus", label: "Allow customer to change ticket status from customers area" },
-                                        { key: "supportCustomerShowContactTicketsOnly", label: "In customers area only show tickets related to the logged in contact (Primary contact not applied)" },
+                                        {
+                                            key: "supportStaffLimitToAssignedDepartments",
+                                            label: "Allow staff to access only ticket that belongs to staff departments",
+                                        },
+                                        {
+                                            key: "supportStaffNotificationAssignedOnly",
+                                            label: "Send staff-related ticket notifications to the ticket assignee only",
+                                            help: true,
+                                        },
+                                        {
+                                            key: "supportNotifyOnNewTicket",
+                                            label: "Receive notification on new ticket opened",
+                                            help: true,
+                                        },
+                                        {
+                                            key: "supportNotifyOnCustomerReply",
+                                            label: "Receive notification when customer reply to a ticket",
+                                            help: true,
+                                        },
+                                        {
+                                            key: "supportStaffOpenTicketsAllContacts",
+                                            label: "Allow staff members to open tickets to all contacts",
+                                            help: true,
+                                        },
+                                        {
+                                            key: "supportAutoAssignFirstReplyStaff",
+                                            label: "Automatically assign the ticket to the first staff that post a reply",
+                                        },
+                                        {
+                                            key: "supportAllowNonStaffAccess",
+                                            label: "Allow access to tickets for non staff members",
+                                        },
+                                        {
+                                            key: "supportAllowNonAdminDeleteAttachments",
+                                            label: "Allow non-admin staff members to delete ticket attachments",
+                                        },
+                                        {
+                                            key: "supportAllowNonAdminDeleteTickets",
+                                            label: "Allow non-admin staff members to delete tickets and replies",
+                                        },
+                                        {
+                                            key: "supportAllowCustomerChangeStatus",
+                                            label: "Allow customer to change ticket status from customers area",
+                                        },
+                                        {
+                                            key: "supportCustomerShowContactTicketsOnly",
+                                            label: "In customers area only show tickets related to the logged in contact (Primary contact not applied)",
+                                        },
                                     ].map((item: any) => (
                                         <div key={item.key}>
                                             <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -2653,16 +3087,22 @@ export default function SettingsPage() {
                                             </Label>
                                             <RadioGroup
                                                 value={supportForm[item.key as keyof typeof supportForm] ? "yes" : "no"}
-                                                onValueChange={(val) => setSupportForm({ ...supportForm, [item.key]: val === "yes" })}
+                                                onValueChange={(val) =>
+                                                    setSupportForm({ ...supportForm, [item.key]: val === "yes" })
+                                                }
                                                 className="flex gap-4"
                                             >
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="yes" id={`supp-${item.key}-yes`} />
-                                                    <Label htmlFor={`supp-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                    <Label htmlFor={`supp-${item.key}-yes`} className="font-normal">
+                                                        Yes
+                                                    </Label>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="no" id={`supp-${item.key}-no`} />
-                                                    <Label htmlFor={`supp-${item.key}-no`} className="font-normal">No</Label>
+                                                    <Label htmlFor={`supp-${item.key}-no`} className="font-normal">
+                                                        No
+                                                    </Label>
                                                 </div>
                                             </RadioGroup>
                                         </div>
@@ -2676,34 +3116,48 @@ export default function SettingsPage() {
                                     </Label>
                                     <RadioGroup
                                         value={supportForm.supportTicketReplyOrder}
-                                        onValueChange={(val) => setSupportForm({ ...supportForm, supportTicketReplyOrder: val })}
+                                        onValueChange={(val) =>
+                                            setSupportForm({ ...supportForm, supportTicketReplyOrder: val })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="asc" id="rep-asc" />
-                                            <Label htmlFor="rep-asc" className="font-normal">Ascending</Label>
+                                            <Label htmlFor="rep-asc" className="font-normal">
+                                                Ascending
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="desc" id="rep-desc" />
-                                            <Label htmlFor="rep-desc" className="font-normal">Descending</Label>
+                                            <Label htmlFor="rep-desc" className="font-normal">
+                                                Descending
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
 
                                 <div>
-                                    <Label className="mb-2 block text-sm font-medium text-gray-700">Enable support menu item badge</Label>
+                                    <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Enable support menu item badge
+                                    </Label>
                                     <RadioGroup
                                         value={supportForm.supportEnableBadge ? "yes" : "no"}
-                                        onValueChange={(val) => setSupportForm({ ...supportForm, supportEnableBadge: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setSupportForm({ ...supportForm, supportEnableBadge: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id="badge-yes" />
-                                            <Label htmlFor="badge-yes" className="font-normal">Yes</Label>
+                                            <Label htmlFor="badge-yes" className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id="badge-no" />
-                                            <Label htmlFor="badge-no" className="font-normal">No</Label>
+                                            <Label htmlFor="badge-no" className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -2712,7 +3166,9 @@ export default function SettingsPage() {
                                     <Label>Default status selected when replying to ticket</Label>
                                     <Select
                                         value={supportForm.supportDefaultReplyStatus}
-                                        onValueChange={(val) => setSupportForm({ ...supportForm, supportDefaultReplyStatus: val })}
+                                        onValueChange={(val) =>
+                                            setSupportForm({ ...supportForm, supportDefaultReplyStatus: val })
+                                        }
                                     >
                                         <SelectTrigger className="mt-1">
                                             <SelectValue placeholder="Select" />
@@ -2731,7 +3187,9 @@ export default function SettingsPage() {
                                     <Input
                                         type="number"
                                         value={supportForm.supportMaxAttachments}
-                                        onChange={e => setSupportForm({ ...supportForm, supportMaxAttachments: e.target.value })}
+                                        onChange={(e) =>
+                                            setSupportForm({ ...supportForm, supportMaxAttachments: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -2740,21 +3198,23 @@ export default function SettingsPage() {
                                     <Label>Allowed attachments file extensions</Label>
                                     <Input
                                         value={supportForm.supportAllowedExtensions}
-                                        onChange={e => setSupportForm({ ...supportForm, supportAllowedExtensions: e.target.value })}
+                                        onChange={(e) =>
+                                            setSupportForm({ ...supportForm, supportAllowedExtensions: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
-
                             </TabsContent>
 
                             <TabsContent value="email_piping">
-                                <div className="text-center py-8 text-gray-500">Email Piping Settings (Coming Soon)</div>
+                                <div className="text-center py-8 text-gray-500">
+                                    Email Piping Settings (Coming Soon)
+                                </div>
                             </TabsContent>
 
                             <TabsContent value="ticket_form">
                                 <div className="text-center py-8 text-gray-500">Ticket Form Settings (Coming Soon)</div>
                             </TabsContent>
-
                         </Tabs>
 
                         <div className="pt-4 flex justify-end">
@@ -2778,13 +3238,12 @@ export default function SettingsPage() {
                     <h2 className="text-2xl font-semibold">Leads</h2>
 
                     <div className="bg-white p-6 rounded-lg border space-y-6">
-
                         <div>
                             <Label>Limit leads kanban rows per status</Label>
                             <Input
                                 type="number"
                                 value={leadsForm.leadsKanbanLimit}
-                                onChange={e => setLeadsForm({ ...leadsForm, leadsKanbanLimit: e.target.value })}
+                                onChange={(e) => setLeadsForm({ ...leadsForm, leadsKanbanLimit: e.target.value })}
                                 className="mt-1"
                             />
                         </div>
@@ -2828,7 +3287,9 @@ export default function SettingsPage() {
                             <Label>Perform validation for duplicate lead on the following fields:</Label>
                             <Select
                                 value={leadsForm.leadsDuplicateValidationFields}
-                                onValueChange={(val) => setLeadsForm({ ...leadsForm, leadsDuplicateValidationFields: val })}
+                                onValueChange={(val) =>
+                                    setLeadsForm({ ...leadsForm, leadsDuplicateValidationFields: val })
+                                }
                             >
                                 <SelectTrigger className="mt-1">
                                     <SelectValue placeholder="Select" />
@@ -2843,8 +3304,15 @@ export default function SettingsPage() {
 
                         <div className="space-y-6">
                             {[
-                                { key: "leadsAutoAssignAdminAfterConvert", label: "Auto assign as admin to customer after convert", help: true },
-                                { key: "leadsAllowNonAdminImport", label: "Allow non-admin staff members to import leads" },
+                                {
+                                    key: "leadsAutoAssignAdminAfterConvert",
+                                    label: "Auto assign as admin to customer after convert",
+                                    help: true,
+                                },
+                                {
+                                    key: "leadsAllowNonAdminImport",
+                                    label: "Allow non-admin staff members to import leads",
+                                },
                             ].map((item: any) => (
                                 <div key={item.key}>
                                     <Label className="mb-2 block text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -2853,16 +3321,22 @@ export default function SettingsPage() {
                                     </Label>
                                     <RadioGroup
                                         value={leadsForm[item.key as keyof typeof leadsForm] ? "yes" : "no"}
-                                        onValueChange={(val) => setLeadsForm({ ...leadsForm, [item.key]: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setLeadsForm({ ...leadsForm, [item.key]: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id={`lead-${item.key}-yes`} />
-                                            <Label htmlFor={`lead-${item.key}-yes`} className="font-normal">Yes</Label>
+                                            <Label htmlFor={`lead-${item.key}-yes`} className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id={`lead-${item.key}-no`} />
-                                            <Label htmlFor={`lead-${item.key}-no`} className="font-normal">No</Label>
+                                            <Label htmlFor={`lead-${item.key}-no`} className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -2870,7 +3344,9 @@ export default function SettingsPage() {
                         </div>
 
                         <div>
-                            <Label className="mb-2 block text-sm font-medium text-gray-700">Default leads kanban sort</Label>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                Default leads kanban sort
+                            </Label>
                             <div className="flex items-center gap-4">
                                 <div className="flex-1">
                                     <Select
@@ -2894,30 +3370,43 @@ export default function SettingsPage() {
                                 >
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="asc" id="l-sort-asc" />
-                                        <Label htmlFor="l-sort-asc" className="font-normal">Ascending</Label>
+                                        <Label htmlFor="l-sort-asc" className="font-normal">
+                                            Ascending
+                                        </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="desc" id="l-sort-desc" />
-                                        <Label htmlFor="l-sort-desc" className="font-normal">Descending</Label>
+                                        <Label htmlFor="l-sort-desc" className="font-normal">
+                                            Descending
+                                        </Label>
                                     </div>
                                 </RadioGroup>
                             </div>
                         </div>
 
                         <div>
-                            <Label className="mb-2 block text-sm font-medium text-gray-700">Do not allow leads to be edited after they are converted to customers (administrators not applied)</Label>
+                            <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                Do not allow leads to be edited after they are converted to customers (administrators
+                                not applied)
+                            </Label>
                             <RadioGroup
                                 value={leadsForm.leadsDisableEditAfterConvert ? "yes" : "no"}
-                                onValueChange={(val) => setLeadsForm({ ...leadsForm, leadsDisableEditAfterConvert: val === "yes" })}
+                                onValueChange={(val) =>
+                                    setLeadsForm({ ...leadsForm, leadsDisableEditAfterConvert: val === "yes" })
+                                }
                                 className="flex gap-4"
                             >
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="yes" id="l-noedit-yes" />
-                                    <Label htmlFor="l-noedit-yes" className="font-normal">Yes</Label>
+                                    <Label htmlFor="l-noedit-yes" className="font-normal">
+                                        Yes
+                                    </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="no" id="l-noedit-no" />
-                                    <Label htmlFor="l-noedit-no" className="font-normal">No</Label>
+                                    <Label htmlFor="l-noedit-no" className="font-normal">
+                                        No
+                                    </Label>
                                 </div>
                             </RadioGroup>
                         </div>
@@ -2926,11 +3415,10 @@ export default function SettingsPage() {
                             <Label>Modal Width Class (modal-lg, modal-xl, modal-xxl)</Label>
                             <Input
                                 value={leadsForm.leadsModalWidth}
-                                onChange={e => setLeadsForm({ ...leadsForm, leadsModalWidth: e.target.value })}
+                                onChange={(e) => setLeadsForm({ ...leadsForm, leadsModalWidth: e.target.value })}
                                 className="mt-1"
                             />
                         </div>
-
 
                         <div className="pt-4 flex justify-end">
                             <Button
@@ -2965,7 +3453,9 @@ export default function SettingsPage() {
                                     <Input
                                         type="number"
                                         value={calendarForm.calendarEventsLimit}
-                                        onChange={e => setCalendarForm({ ...calendarForm, calendarEventsLimit: e.target.value })}
+                                        onChange={(e) =>
+                                            setCalendarForm({ ...calendarForm, calendarEventsLimit: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -2974,7 +3464,9 @@ export default function SettingsPage() {
                                     <Label>Default View</Label>
                                     <Select
                                         value={calendarForm.calendarDefaultView}
-                                        onValueChange={(val) => setCalendarForm({ ...calendarForm, calendarDefaultView: val })}
+                                        onValueChange={(val) =>
+                                            setCalendarForm({ ...calendarForm, calendarDefaultView: val })
+                                        }
                                     >
                                         <SelectTrigger className="mt-1">
                                             <SelectValue placeholder="Select" />
@@ -2993,7 +3485,9 @@ export default function SettingsPage() {
                                     <Label>First Day</Label>
                                     <Select
                                         value={calendarForm.calendarFirstDay}
-                                        onValueChange={(val) => setCalendarForm({ ...calendarForm, calendarFirstDay: val })}
+                                        onValueChange={(val) =>
+                                            setCalendarForm({ ...calendarForm, calendarFirstDay: val })
+                                        }
                                     >
                                         <SelectTrigger className="mt-1">
                                             <SelectValue placeholder="Select" />
@@ -3014,7 +3508,10 @@ export default function SettingsPage() {
                                     <h3 className="text-lg font-medium mb-4">Show on Calendar</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {[
-                                            { key: "calendarShowHideNotifiedReminders", label: "Hide notified reminders from calendar" },
+                                            {
+                                                key: "calendarShowHideNotifiedReminders",
+                                                label: "Hide notified reminders from calendar",
+                                            },
                                             { key: "calendarShowTicketReminders", label: "Ticket Reminders" },
                                             { key: "calendarShowLeadReminders", label: "Lead Reminders" },
                                             { key: "calendarShowInvoices", label: "Invoices" },
@@ -3026,7 +3523,10 @@ export default function SettingsPage() {
                                             { key: "calendarShowContracts", label: "Contracts" },
                                             { key: "calendarShowInvoiceReminders", label: "Invoice Reminders" },
                                             { key: "calendarShowTasks", label: "Tasks" },
-                                            { key: "calendarShowTasksStaffOnly", label: "Show only tasks assigned to the logged in staff member" },
+                                            {
+                                                key: "calendarShowTasksStaffOnly",
+                                                label: "Show only tasks assigned to the logged in staff member",
+                                            },
                                             { key: "calendarShowExpenseReminders", label: "Expense Reminders" },
                                             { key: "calendarShowProjects", label: "Projects" },
                                             { key: "calendarShowTaskReminders", label: "Task Reminders" },
@@ -3037,17 +3537,27 @@ export default function SettingsPage() {
                                                     {item.label}
                                                 </Label>
                                                 <RadioGroup
-                                                    value={calendarForm[item.key as keyof typeof calendarForm] ? "yes" : "no"}
-                                                    onValueChange={(val) => setCalendarForm({ ...calendarForm, [item.key]: val === "yes" })}
+                                                    value={
+                                                        calendarForm[item.key as keyof typeof calendarForm]
+                                                            ? "yes"
+                                                            : "no"
+                                                    }
+                                                    onValueChange={(val) =>
+                                                        setCalendarForm({ ...calendarForm, [item.key]: val === "yes" })
+                                                    }
                                                     className="flex gap-4"
                                                 >
                                                     <div className="flex items-center space-x-2">
                                                         <RadioGroupItem value="yes" id={`cal-${item.key}-yes`} />
-                                                        <Label htmlFor={`cal-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                        <Label htmlFor={`cal-${item.key}-yes`} className="font-normal">
+                                                            Yes
+                                                        </Label>
                                                     </div>
                                                     <div className="flex items-center space-x-2">
                                                         <RadioGroupItem value="no" id={`cal-${item.key}-no`} />
-                                                        <Label htmlFor={`cal-${item.key}-no`} className="font-normal">No</Label>
+                                                        <Label htmlFor={`cal-${item.key}-no`} className="font-normal">
+                                                            No
+                                                        </Label>
                                                     </div>
                                                 </RadioGroup>
                                             </div>
@@ -3070,17 +3580,25 @@ export default function SettingsPage() {
                                         <div className="flex gap-2 mt-1">
                                             <Input
                                                 value={calendarForm[item.key as keyof typeof calendarForm] as string}
-                                                onChange={e => setCalendarForm({ ...calendarForm, [item.key]: e.target.value })}
+                                                onChange={(e) =>
+                                                    setCalendarForm({ ...calendarForm, [item.key]: e.target.value })
+                                                }
                                                 className="flex-1"
                                             />
                                             <div
                                                 className="w-10 h-10 rounded border shrink-0"
-                                                style={{ backgroundColor: calendarForm[item.key as keyof typeof calendarForm] as string }}
+                                                style={{
+                                                    backgroundColor: calendarForm[
+                                                        item.key as keyof typeof calendarForm
+                                                    ] as string,
+                                                }}
                                             />
                                             <Input
                                                 type="color"
                                                 value={calendarForm[item.key as keyof typeof calendarForm] as string}
-                                                onChange={e => setCalendarForm({ ...calendarForm, [item.key]: e.target.value })}
+                                                onChange={(e) =>
+                                                    setCalendarForm({ ...calendarForm, [item.key]: e.target.value })
+                                                }
                                                 className="w-12 p-1 h-10"
                                             />
                                         </div>
@@ -3138,20 +3656,27 @@ export default function SettingsPage() {
 
                                 <div>
                                     <Label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Swap Company/Customer Details (company details to right side, customer details to left side)
+                                        Swap Company/Customer Details (company details to right side, customer details
+                                        to left side)
                                     </Label>
                                     <RadioGroup
                                         value={pdfForm.pdfSwapDetails ? "yes" : "no"}
-                                        onValueChange={(val) => setPdfForm({ ...pdfForm, pdfSwapDetails: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setPdfForm({ ...pdfForm, pdfSwapDetails: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id="pdfSwapDetails-yes" />
-                                            <Label htmlFor="pdfSwapDetails-yes" className="font-normal">Yes</Label>
+                                            <Label htmlFor="pdfSwapDetails-yes" className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id="pdfSwapDetails-no" />
-                                            <Label htmlFor="pdfSwapDetails-no" className="font-normal">No</Label>
+                                            <Label htmlFor="pdfSwapDetails-no" className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -3161,7 +3686,7 @@ export default function SettingsPage() {
                                     <Input
                                         type="number"
                                         value={pdfForm.pdfFontSize}
-                                        onChange={e => setPdfForm({ ...pdfForm, pdfFontSize: e.target.value })}
+                                        onChange={(e) => setPdfForm({ ...pdfForm, pdfFontSize: e.target.value })}
                                         className="mt-1"
                                     />
                                 </div>
@@ -3172,7 +3697,9 @@ export default function SettingsPage() {
                                         <div className="flex gap-2 mt-1">
                                             <Input
                                                 value={pdfForm.pdfTableHeadingColor}
-                                                onChange={e => setPdfForm({ ...pdfForm, pdfTableHeadingColor: e.target.value })}
+                                                onChange={(e) =>
+                                                    setPdfForm({ ...pdfForm, pdfTableHeadingColor: e.target.value })
+                                                }
                                                 className="flex-1"
                                             />
                                             <div
@@ -3182,7 +3709,9 @@ export default function SettingsPage() {
                                             <Input
                                                 type="color"
                                                 value={pdfForm.pdfTableHeadingColor}
-                                                onChange={e => setPdfForm({ ...pdfForm, pdfTableHeadingColor: e.target.value })}
+                                                onChange={(e) =>
+                                                    setPdfForm({ ...pdfForm, pdfTableHeadingColor: e.target.value })
+                                                }
                                                 className="w-12 p-1 h-10"
                                             />
                                         </div>
@@ -3193,7 +3722,9 @@ export default function SettingsPage() {
                                         <div className="flex gap-2 mt-1">
                                             <Input
                                                 value={pdfForm.pdfTableHeadingTextColor}
-                                                onChange={e => setPdfForm({ ...pdfForm, pdfTableHeadingTextColor: e.target.value })}
+                                                onChange={(e) =>
+                                                    setPdfForm({ ...pdfForm, pdfTableHeadingTextColor: e.target.value })
+                                                }
                                                 className="flex-1"
                                             />
                                             <div
@@ -3203,7 +3734,9 @@ export default function SettingsPage() {
                                             <Input
                                                 type="color"
                                                 value={pdfForm.pdfTableHeadingTextColor}
-                                                onChange={e => setPdfForm({ ...pdfForm, pdfTableHeadingTextColor: e.target.value })}
+                                                onChange={(e) =>
+                                                    setPdfForm({ ...pdfForm, pdfTableHeadingTextColor: e.target.value })
+                                                }
                                                 className="w-12 p-1 h-10"
                                             />
                                         </div>
@@ -3214,7 +3747,7 @@ export default function SettingsPage() {
                                     <Label>Custom PDF Company Logo URL</Label>
                                     <Input
                                         value={pdfForm.pdfLogoUrl}
-                                        onChange={e => setPdfForm({ ...pdfForm, pdfLogoUrl: e.target.value })}
+                                        onChange={(e) => setPdfForm({ ...pdfForm, pdfLogoUrl: e.target.value })}
                                         className="mt-1"
                                     />
                                 </div>
@@ -3224,16 +3757,25 @@ export default function SettingsPage() {
                                     <Input
                                         type="number"
                                         value={pdfForm.pdfLogoWidth}
-                                        onChange={e => setPdfForm({ ...pdfForm, pdfLogoWidth: e.target.value })}
+                                        onChange={(e) => setPdfForm({ ...pdfForm, pdfLogoWidth: e.target.value })}
                                         className="mt-1"
                                     />
                                 </div>
 
                                 <div className="space-y-4">
                                     {[
-                                        { key: "pdfShowStatus", label: "Show Invoice/Estimate/Credit Note status on PDF documents" },
-                                        { key: "pdfShowLink", label: "Show Pay Invoice link to PDF (Not applied if invoice status is Cancelled)" },
-                                        { key: "pdfShowPayments", label: "Show invoice payments (transactions) on PDF" },
+                                        {
+                                            key: "pdfShowStatus",
+                                            label: "Show Invoice/Estimate/Credit Note status on PDF documents",
+                                        },
+                                        {
+                                            key: "pdfShowLink",
+                                            label: "Show Pay Invoice link to PDF (Not applied if invoice status is Cancelled)",
+                                        },
+                                        {
+                                            key: "pdfShowPayments",
+                                            label: "Show invoice payments (transactions) on PDF",
+                                        },
                                         { key: "pdfShowPageNumber", label: "Show page number on PDF" },
                                     ].map((item) => (
                                         <div key={item.key}>
@@ -3242,16 +3784,22 @@ export default function SettingsPage() {
                                             </Label>
                                             <RadioGroup
                                                 value={pdfForm[item.key as keyof typeof pdfForm] ? "yes" : "no"}
-                                                onValueChange={(val) => setPdfForm({ ...pdfForm, [item.key]: val === "yes" })}
+                                                onValueChange={(val) =>
+                                                    setPdfForm({ ...pdfForm, [item.key]: val === "yes" })
+                                                }
                                                 className="flex gap-4"
                                             >
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="yes" id={`pdf-${item.key}-yes`} />
-                                                    <Label htmlFor={`pdf-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                    <Label htmlFor={`pdf-${item.key}-yes`} className="font-normal">
+                                                        Yes
+                                                    </Label>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="no" id={`pdf-${item.key}-no`} />
-                                                    <Label htmlFor={`pdf-${item.key}-no`} className="font-normal">No</Label>
+                                                    <Label htmlFor={`pdf-${item.key}-no`} className="font-normal">
+                                                        No
+                                                    </Label>
                                                 </div>
                                             </RadioGroup>
                                         </div>
@@ -3264,7 +3812,10 @@ export default function SettingsPage() {
                                     {[
                                         { key: "pdfShowSignatureInvoice", label: "Show PDF Signature on Invoice" },
                                         { key: "pdfShowSignatureEstimate", label: "Show PDF Signature on Estimate" },
-                                        { key: "pdfShowSignatureCreditNote", label: "Show PDF Signature on Credit Note" },
+                                        {
+                                            key: "pdfShowSignatureCreditNote",
+                                            label: "Show PDF Signature on Credit Note",
+                                        },
                                         { key: "pdfShowSignatureContract", label: "Show PDF Signature on Contract" },
                                         { key: "pdfShowSignatureProposal", label: "Show PDF Signature on Proposal" },
                                     ].map((item) => (
@@ -3274,16 +3825,22 @@ export default function SettingsPage() {
                                             </Label>
                                             <RadioGroup
                                                 value={pdfForm[item.key as keyof typeof pdfForm] ? "yes" : "no"}
-                                                onValueChange={(val) => setPdfForm({ ...pdfForm, [item.key]: val === "yes" })}
+                                                onValueChange={(val) =>
+                                                    setPdfForm({ ...pdfForm, [item.key]: val === "yes" })
+                                                }
                                                 className="flex gap-4"
                                             >
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="yes" id={`pdf-${item.key}-yes`} />
-                                                    <Label htmlFor={`pdf-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                    <Label htmlFor={`pdf-${item.key}-yes`} className="font-normal">
+                                                        Yes
+                                                    </Label>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="no" id={`pdf-${item.key}-no`} />
-                                                    <Label htmlFor={`pdf-${item.key}-no`} className="font-normal">No</Label>
+                                                    <Label htmlFor={`pdf-${item.key}-no`} className="font-normal">
+                                                        No
+                                                    </Label>
                                                 </div>
                                             </RadioGroup>
                                         </div>
@@ -3296,11 +3853,15 @@ export default function SettingsPage() {
                                                 type="text"
                                                 placeholder="Image URL or Path"
                                                 value={pdfForm.pdfSignatureImage}
-                                                onChange={e => setPdfForm({ ...pdfForm, pdfSignatureImage: e.target.value })}
+                                                onChange={(e) =>
+                                                    setPdfForm({ ...pdfForm, pdfSignatureImage: e.target.value })
+                                                }
                                             />
                                             {/* File upload would require more logic, sticking to text input for now as per other image fields */}
                                         </div>
-                                        <p className="text-sm text-gray-500 mt-1">Please enter the URL of the signature image.</p>
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            Please enter the URL of the signature image.
+                                        </p>
                                     </div>
                                 </div>
                             </TabsContent>
@@ -3357,7 +3918,6 @@ export default function SettingsPage() {
                     <h2 className="text-2xl font-semibold">E-Sign</h2>
 
                     <div className="bg-white p-6 rounded-lg border space-y-6">
-
                         <div>
                             <h3 className="text-lg font-medium mb-4">Proposal</h3>
                             <Label className="mb-2 block text-sm font-medium text-gray-700">
@@ -3365,16 +3925,22 @@ export default function SettingsPage() {
                             </Label>
                             <RadioGroup
                                 value={esignForm.esignProposalRequireSignature ? "yes" : "no"}
-                                onValueChange={(val) => setEsignForm({ ...esignForm, esignProposalRequireSignature: val === "yes" })}
+                                onValueChange={(val) =>
+                                    setEsignForm({ ...esignForm, esignProposalRequireSignature: val === "yes" })
+                                }
                                 className="flex gap-4"
                             >
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="yes" id="esignProposalRequireSignature-yes" />
-                                    <Label htmlFor="esignProposalRequireSignature-yes" className="font-normal">Yes</Label>
+                                    <Label htmlFor="esignProposalRequireSignature-yes" className="font-normal">
+                                        Yes
+                                    </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="no" id="esignProposalRequireSignature-no" />
-                                    <Label htmlFor="esignProposalRequireSignature-no" className="font-normal">No</Label>
+                                    <Label htmlFor="esignProposalRequireSignature-no" className="font-normal">
+                                        No
+                                    </Label>
                                 </div>
                             </RadioGroup>
                         </div>
@@ -3386,16 +3952,22 @@ export default function SettingsPage() {
                             </Label>
                             <RadioGroup
                                 value={esignForm.esignEstimateRequireSignature ? "yes" : "no"}
-                                onValueChange={(val) => setEsignForm({ ...esignForm, esignEstimateRequireSignature: val === "yes" })}
+                                onValueChange={(val) =>
+                                    setEsignForm({ ...esignForm, esignEstimateRequireSignature: val === "yes" })
+                                }
                                 className="flex gap-4"
                             >
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="yes" id="esignEstimateRequireSignature-yes" />
-                                    <Label htmlFor="esignEstimateRequireSignature-yes" className="font-normal">Yes</Label>
+                                    <Label htmlFor="esignEstimateRequireSignature-yes" className="font-normal">
+                                        Yes
+                                    </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="no" id="esignEstimateRequireSignature-no" />
-                                    <Label htmlFor="esignEstimateRequireSignature-no" className="font-normal">No</Label>
+                                    <Label htmlFor="esignEstimateRequireSignature-no" className="font-normal">
+                                        No
+                                    </Label>
                                 </div>
                             </RadioGroup>
                         </div>
@@ -3404,7 +3976,7 @@ export default function SettingsPage() {
                             <Label>Legal Bound Text</Label>
                             <Textarea
                                 value={esignForm.esignLegalBoundText}
-                                onChange={e => setEsignForm({ ...esignForm, esignLegalBoundText: e.target.value })}
+                                onChange={(e) => setEsignForm({ ...esignForm, esignLegalBoundText: e.target.value })}
                                 className="mt-1 h-24"
                             />
                         </div>
@@ -3444,16 +4016,22 @@ export default function SettingsPage() {
                                     </Label>
                                     <RadioGroup
                                         value={miscForm.miscRequireLoginForContract ? "yes" : "no"}
-                                        onValueChange={(val) => setMiscForm({ ...miscForm, miscRequireLoginForContract: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setMiscForm({ ...miscForm, miscRequireLoginForContract: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id="miscRequireLoginForContract-yes" />
-                                            <Label htmlFor="miscRequireLoginForContract-yes" className="font-normal">Yes</Label>
+                                            <Label htmlFor="miscRequireLoginForContract-yes" className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id="miscRequireLoginForContract-no" />
-                                            <Label htmlFor="miscRequireLoginForContract-no" className="font-normal">No</Label>
+                                            <Label htmlFor="miscRequireLoginForContract-no" className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -3462,7 +4040,9 @@ export default function SettingsPage() {
                                     <Label>Dropbox APP Key</Label>
                                     <Input
                                         value={miscForm.miscDropboxAppKey}
-                                        onChange={e => setMiscForm({ ...miscForm, miscDropboxAppKey: e.target.value })}
+                                        onChange={(e) =>
+                                            setMiscForm({ ...miscForm, miscDropboxAppKey: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -3472,7 +4052,9 @@ export default function SettingsPage() {
                                     <Input
                                         type="number"
                                         value={miscForm.miscMaxFileSizeMedia}
-                                        onChange={e => setMiscForm({ ...miscForm, miscMaxFileSizeMedia: e.target.value })}
+                                        onChange={(e) =>
+                                            setMiscForm({ ...miscForm, miscMaxFileSizeMedia: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -3485,7 +4067,9 @@ export default function SettingsPage() {
                                     <Input
                                         type="number"
                                         value={miscForm.miscMaxFileUploadsPost}
-                                        onChange={e => setMiscForm({ ...miscForm, miscMaxFileUploadsPost: e.target.value })}
+                                        onChange={(e) =>
+                                            setMiscForm({ ...miscForm, miscMaxFileUploadsPost: e.target.value })
+                                        }
                                     />
                                 </div>
 
@@ -3494,7 +4078,9 @@ export default function SettingsPage() {
                                     <Input
                                         type="number"
                                         value={miscForm.miscLimitTopSearchBarResults}
-                                        onChange={e => setMiscForm({ ...miscForm, miscLimitTopSearchBarResults: e.target.value })}
+                                        onChange={(e) =>
+                                            setMiscForm({ ...miscForm, miscLimitTopSearchBarResults: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -3520,15 +4106,23 @@ export default function SettingsPage() {
                                     <Input
                                         type="number"
                                         value={miscForm.miscDeleteActivityLogOlderThan}
-                                        onChange={e => setMiscForm({ ...miscForm, miscDeleteActivityLogOlderThan: e.target.value })}
+                                        onChange={(e) =>
+                                            setMiscForm({ ...miscForm, miscDeleteActivityLogOlderThan: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
 
                                 {[
-                                    { key: "miscShowSetupMenuHover", label: "Show setup menu item only when hover with mouse on main sidebar area" },
+                                    {
+                                        key: "miscShowSetupMenuHover",
+                                        label: "Show setup menu item only when hover with mouse on main sidebar area",
+                                    },
                                     { key: "miscShowHelpMenu", label: "Show help menu item on setup menu" },
-                                    { key: "miscUseMinified", label: "Use minified files version for css and js (only system files)" },
+                                    {
+                                        key: "miscUseMinified",
+                                        label: "Use minified files version for css and js (only system files)",
+                                    },
                                 ].map((item) => (
                                     <div key={item.key}>
                                         <Label className="mb-2 block text-sm font-medium text-gray-700">
@@ -3536,16 +4130,22 @@ export default function SettingsPage() {
                                         </Label>
                                         <RadioGroup
                                             value={miscForm[item.key as keyof typeof miscForm] ? "yes" : "no"}
-                                            onValueChange={(val) => setMiscForm({ ...miscForm, [item.key]: val === "yes" })}
+                                            onValueChange={(val) =>
+                                                setMiscForm({ ...miscForm, [item.key]: val === "yes" })
+                                            }
                                             className="flex gap-4"
                                         >
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="yes" id={`misc-${item.key}-yes`} />
-                                                <Label htmlFor={`misc-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                <Label htmlFor={`misc-${item.key}-yes`} className="font-normal">
+                                                    Yes
+                                                </Label>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="no" id={`misc-${item.key}-no`} />
-                                                <Label htmlFor={`misc-${item.key}-no`} className="font-normal">No</Label>
+                                                <Label htmlFor={`misc-${item.key}-no`} className="font-normal">
+                                                    No
+                                                </Label>
                                             </div>
                                         </RadioGroup>
                                     </div>
@@ -3562,16 +4162,22 @@ export default function SettingsPage() {
                                     </div>
                                     <RadioGroup
                                         value={miscForm.miscSaveLastTableOrder ? "yes" : "no"}
-                                        onValueChange={(val) => setMiscForm({ ...miscForm, miscSaveLastTableOrder: val === "yes" })}
+                                        onValueChange={(val) =>
+                                            setMiscForm({ ...miscForm, miscSaveLastTableOrder: val === "yes" })
+                                        }
                                         className="flex gap-4"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id="miscSaveLastTableOrder-yes" />
-                                            <Label htmlFor="miscSaveLastTableOrder-yes" className="font-normal">Yes</Label>
+                                            <Label htmlFor="miscSaveLastTableOrder-yes" className="font-normal">
+                                                Yes
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id="miscSaveLastTableOrder-no" />
-                                            <Label htmlFor="miscSaveLastTableOrder-no" className="font-normal">No</Label>
+                                            <Label htmlFor="miscSaveLastTableOrder-no" className="font-normal">
+                                                No
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -3582,20 +4188,28 @@ export default function SettingsPage() {
                                     </Label>
                                     <RadioGroup
                                         value={miscForm.miscShowTableExportButton}
-                                        onValueChange={(val) => setMiscForm({ ...miscForm, miscShowTableExportButton: val })}
+                                        onValueChange={(val) =>
+                                            setMiscForm({ ...miscForm, miscShowTableExportButton: val })
+                                        }
                                         className="space-y-2"
                                     >
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="all" id="export-all" />
-                                            <Label htmlFor="export-all" className="font-normal">To all staff members</Label>
+                                            <Label htmlFor="export-all" className="font-normal">
+                                                To all staff members
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="admin" id="export-admin" />
-                                            <Label htmlFor="export-admin" className="font-normal">Only to administrators</Label>
+                                            <Label htmlFor="export-admin" className="font-normal">
+                                                Only to administrators
+                                            </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="hide" id="export-hide" />
-                                            <Label htmlFor="export-hide" className="font-normal">Hide export button for all staff members</Label>
+                                            <Label htmlFor="export-hide" className="font-normal">
+                                                Hide export button for all staff members
+                                            </Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
@@ -3605,7 +4219,9 @@ export default function SettingsPage() {
                                     <Input
                                         type="number"
                                         value={miscForm.miscTablesPaginationLimit}
-                                        onChange={e => setMiscForm({ ...miscForm, miscTablesPaginationLimit: e.target.value })}
+                                        onChange={(e) =>
+                                            setMiscForm({ ...miscForm, miscTablesPaginationLimit: e.target.value })
+                                        }
                                         className="mt-1"
                                     />
                                 </div>
@@ -3613,13 +4229,34 @@ export default function SettingsPage() {
 
                             <TabsContent value="inline-create" className="space-y-6 mt-6">
                                 {[
-                                    { key: "miscAllowNonAdminCreateLeadStatus", label: "Allow non-admin staff members to create Lead Status in Lead create/edit area?" },
-                                    { key: "miscAllowNonAdminCreateLeadSource", label: "Allow non-admin staff members to create Lead Source in Lead create/edit area?" },
-                                    { key: "miscAllowNonAdminCreateCustomerGroup", label: "Allow non-admin staff members to create Customer Group in Customer create/edit area?" },
-                                    { key: "miscAllowNonAdminCreateService", label: "Allow non-admin staff members to create Service in Ticket create/edit area?" },
-                                    { key: "miscAllowNonAdminSavePredefinedReplies", label: "Allow non-admin staff members to save predefined replies from ticket message" },
-                                    { key: "miscAllowNonAdminCreateContractType", label: "Allow non-admin staff members to create Contract type in Contract create/edit area?" },
-                                    { key: "miscAllowNonAdminCreateExpenseCategory", label: "Allow non-admin staff members to create Expense Category in Expense create/edit area?" },
+                                    {
+                                        key: "miscAllowNonAdminCreateLeadStatus",
+                                        label: "Allow non-admin staff members to create Lead Status in Lead create/edit area?",
+                                    },
+                                    {
+                                        key: "miscAllowNonAdminCreateLeadSource",
+                                        label: "Allow non-admin staff members to create Lead Source in Lead create/edit area?",
+                                    },
+                                    {
+                                        key: "miscAllowNonAdminCreateCustomerGroup",
+                                        label: "Allow non-admin staff members to create Customer Group in Customer create/edit area?",
+                                    },
+                                    {
+                                        key: "miscAllowNonAdminCreateService",
+                                        label: "Allow non-admin staff members to create Service in Ticket create/edit area?",
+                                    },
+                                    {
+                                        key: "miscAllowNonAdminSavePredefinedReplies",
+                                        label: "Allow non-admin staff members to save predefined replies from ticket message",
+                                    },
+                                    {
+                                        key: "miscAllowNonAdminCreateContractType",
+                                        label: "Allow non-admin staff members to create Contract type in Contract create/edit area?",
+                                    },
+                                    {
+                                        key: "miscAllowNonAdminCreateExpenseCategory",
+                                        label: "Allow non-admin staff members to create Expense Category in Expense create/edit area?",
+                                    },
                                 ].map((item) => (
                                     <div key={item.key}>
                                         <Label className="mb-2 block text-sm font-medium text-gray-700">
@@ -3627,16 +4264,22 @@ export default function SettingsPage() {
                                         </Label>
                                         <RadioGroup
                                             value={miscForm[item.key as keyof typeof miscForm] ? "yes" : "no"}
-                                            onValueChange={(val) => setMiscForm({ ...miscForm, [item.key]: val === "yes" })}
+                                            onValueChange={(val) =>
+                                                setMiscForm({ ...miscForm, [item.key]: val === "yes" })
+                                            }
                                             className="flex gap-4"
                                         >
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="yes" id={`misc-${item.key}-yes`} />
-                                                <Label htmlFor={`misc-${item.key}-yes`} className="font-normal">Yes</Label>
+                                                <Label htmlFor={`misc-${item.key}-yes`} className="font-normal">
+                                                    Yes
+                                                </Label>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <RadioGroupItem value="no" id={`misc-${item.key}-no`} />
-                                                <Label htmlFor={`misc-${item.key}-no`} className="font-normal">No</Label>
+                                                <Label htmlFor={`misc-${item.key}-no`} className="font-normal">
+                                                    No
+                                                </Label>
                                             </div>
                                         </RadioGroup>
                                     </div>
@@ -3665,14 +4308,13 @@ export default function SettingsPage() {
                     <h2 className="text-2xl font-semibold">OpenAI</h2>
 
                     <div className="bg-white p-6 rounded-lg border space-y-6">
-
                         <div>
                             <Label>OpenAI API Key</Label>
                             <div className="mt-1">
                                 <Input
                                     type="password"
                                     value={openaiForm.openaiApiKey}
-                                    onChange={e => setOpenaiForm({ ...openaiForm, openaiApiKey: e.target.value })}
+                                    onChange={(e) => setOpenaiForm({ ...openaiForm, openaiApiKey: e.target.value })}
                                     placeholder="sk-..."
                                 />
                             </div>
@@ -3701,7 +4343,7 @@ export default function SettingsPage() {
                             <Input
                                 type="number"
                                 value={openaiForm.openaiMaxTokens}
-                                onChange={e => setOpenaiForm({ ...openaiForm, openaiMaxTokens: e.target.value })}
+                                onChange={(e) => setOpenaiForm({ ...openaiForm, openaiMaxTokens: e.target.value })}
                                 className="mt-1"
                             />
                         </div>
@@ -3710,13 +4352,28 @@ export default function SettingsPage() {
                             <h3 className="text-lg font-medium mb-2">Advanced Features</h3>
                             <div className="flex items-center gap-4">
                                 <Button className="bg-gray-900 text-white hover:bg-gray-800 gap-2">
-                                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.49933 0.25C3.49635 0.25 0.25 3.49593 0.25 7.50024C0.25 11.5046 3.49635 14.75 7.49933 14.75C11.5023 14.75 14.75 11.5046 14.75 7.50024C14.75 3.49593 11.5023 0.25 7.49933 0.25ZM7.49933 1.75C10.674 1.75 13.25 4.32563 13.25 7.50024C13.25 10.6749 10.674 13.25 7.49933 13.25C4.32468 13.25 1.75 10.6749 1.75 7.50024C1.75 4.32563 4.32468 1.75 7.49933 1.75ZM6.82529 10.5002H8.17336V6.00024H6.82529V10.5002ZM6.82529 5.25024H8.17336V3.75024H6.82529V5.25024Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
+                                    <svg
+                                        width="15"
+                                        height="15"
+                                        viewBox="0 0 15 15"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            d="M7.49933 0.25C3.49635 0.25 0.25 3.49593 0.25 7.50024C0.25 11.5046 3.49635 14.75 7.49933 14.75C11.5023 14.75 14.75 11.5046 14.75 7.50024C14.75 3.49593 11.5023 0.25 7.49933 0.25ZM7.49933 1.75C10.674 1.75 13.25 4.32563 13.25 7.50024C13.25 10.6749 10.674 13.25 7.49933 13.25C4.32468 13.25 1.75 10.6749 1.75 7.50024C1.75 4.32563 4.32468 1.75 7.49933 1.75ZM6.82529 10.5002H8.17336V6.00024H6.82529V10.5002ZM6.82529 5.25024H8.17336V3.75024H6.82529V5.25024Z"
+                                            fill="currentColor"
+                                            fillRule="evenodd"
+                                            clipRule="evenodd"
+                                        ></path>
+                                    </svg>
                                     OpenAI Fine-Tuning
                                 </Button>
                             </div>
-                            <p className="mt-2 text-sm text-gray-500">Fine-tune OpenAI models with your knowledge base and predefined replies content for more accurate responses.</p>
+                            <p className="mt-2 text-sm text-gray-500">
+                                Fine-tune OpenAI models with your knowledge base and predefined replies content for more
+                                accurate responses.
+                            </p>
                         </div>
-
 
                         <div className="pt-4 flex justify-end">
                             <Button
@@ -4113,7 +4770,7 @@ export default function SettingsPage() {
 
         return (
             <div className="space-y-6">
-                <h2 className="text-2xl font-semibold capitalize">{activeSection.replace('-', ' ')}</h2>
+                <h2 className="text-2xl font-semibold capitalize">{activeSection.replace("-", " ")}</h2>
                 <p className="text-gray-500">This section is under development.</p>
             </div>
         );
@@ -4128,9 +4785,7 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                     {sidebarSections.map((section) => (
                         <div key={section.title}>
-                            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                                {section.title}
-                            </h3>
+                            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">{section.title}</h3>
                             <div className="space-y-1">
                                 {section.items.map((item) => {
                                     const Icon = item.icon;
@@ -4138,10 +4793,11 @@ export default function SettingsPage() {
                                         <button
                                             key={item.id}
                                             onClick={() => setActiveSection(item.id)}
-                                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${activeSection === item.id
-                                                ? 'bg-gray-100 text-gray-900 font-medium'
-                                                : 'text-gray-600 hover:bg-gray-50'
-                                                }`}
+                                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
+                                                activeSection === item.id
+                                                    ? "bg-gray-100 text-gray-900 font-medium"
+                                                    : "text-gray-600 hover:bg-gray-50"
+                                            }`}
                                         >
                                             <Icon className="h-4 w-4" />
                                             {item.label}
@@ -4156,10 +4812,8 @@ export default function SettingsPage() {
 
             {/* Main Content */}
             <div className="flex-1 p-8">
-                <div className="max-w-4xl">
-                    {renderContent()}
-                </div>
+                <div className="max-w-4xl">{renderContent()}</div>
             </div>
-        </div >
+        </div>
     );
 }

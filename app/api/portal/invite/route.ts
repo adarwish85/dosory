@@ -45,9 +45,9 @@ export async function POST(req: Request) {
                 enabled: true,
                 modules: modules || [],
                 invitedAt: new Date(),
-                // Generate a temporary one-time token if building custom auth, 
+                // Generate a temporary one-time token if building custom auth,
                 // but usually we prompt them to set password via link.
-            }
+            },
         });
 
         // 5. Send Invite Email
@@ -55,7 +55,6 @@ export async function POST(req: Request) {
         await sendPortalInviteEmail(contactData?.email, contactData?.firstName, customerDoc.data()?.slug || customerId);
 
         return NextResponse.json({ success: true });
-
     } catch (error: any) {
         console.error("Portal Invite Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });

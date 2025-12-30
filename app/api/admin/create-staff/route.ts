@@ -36,17 +36,18 @@ export async function POST(request: NextRequest) {
         const quotaCheck = await checkQuota(orgId, "staff");
         if (!quotaCheck.allowed) {
             return NextResponse.json(
-                { error: quotaCheck.error || "Staff limit reached for your current plan. Please upgrade to add more staff." },
+                {
+                    error:
+                        quotaCheck.error ||
+                        "Staff limit reached for your current plan. Please upgrade to add more staff.",
+                },
                 { status: 403 }
             );
         }
 
         // Validate password
         if (!password || password.length < 6) {
-            return NextResponse.json(
-                { error: "Password must be at least 6 characters" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
         }
 
         let userId: string;
@@ -62,54 +63,54 @@ export async function POST(request: NextRequest) {
             userId = userRecord.uid;
         } catch (authError: any) {
             if (authError.code === "auth/email-already-exists") {
-                return NextResponse.json(
-                    { error: "A user with this email already exists" },
-                    { status: 400 }
-                );
+                return NextResponse.json({ error: "A user with this email already exists" }, { status: 400 });
             }
             if (authError.code === "auth/invalid-email") {
-                return NextResponse.json(
-                    { error: "Invalid email format" },
-                    { status: 400 }
-                );
+                return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
             }
             console.error("Firebase Auth error:", authError);
             throw authError;
         }
 
         // Create user document in Firestore (for auth lookup and role)
-        await adminDb.collection("users").doc(userId).set({
-            email,
-            displayName: `${firstName} ${lastName}`,
-            role: isAdmin ? "admin" : "staff",
-            orgId,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+        await adminDb
+            .collection("users")
+            .doc(userId)
+            .set({
+                email,
+                displayName: `${firstName} ${lastName}`,
+                role: isAdmin ? "admin" : "staff",
+                orgId,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
 
         // Use email as the staff document ID (lowercase for consistency)
         const staffDocId = email.toLowerCase();
 
         // Create staff document in Firestore (using email as document ID)
-        await adminDb.collection("staff").doc(staffDocId).set({
-            authUid: userId, // Link to Firebase Auth user
-            firstName,
-            lastName,
-            email,
-            phone: phone || "",
-            hourlyRate: hourlyRate || 0,
-            isAdmin: isAdmin || false,
-            isNotStaff: isNotStaff || false,
-            departmentIds: departmentIds || [],
-            profileImageUrl: profileImageUrl || "",
-            roleId: roleId || "employee",
-            permissions: permissions || [],
-            orgId,
-            status: "active",
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            createdBy: createdBy || null,
-        });
+        await adminDb
+            .collection("staff")
+            .doc(staffDocId)
+            .set({
+                authUid: userId, // Link to Firebase Auth user
+                firstName,
+                lastName,
+                email,
+                phone: phone || "",
+                hourlyRate: hourlyRate || 0,
+                isAdmin: isAdmin || false,
+                isNotStaff: isNotStaff || false,
+                departmentIds: departmentIds || [],
+                profileImageUrl: profileImageUrl || "",
+                roleId: roleId || "employee",
+                permissions: permissions || [],
+                orgId,
+                status: "active",
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                createdBy: createdBy || null,
+            });
 
         // Send welcome email if requested
         let emailSent = false;
@@ -139,18 +140,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             staffId: staffDocId, // Email-based ID for profile URL
-            authUid: userId,     // Firebase Auth UID for reference
+            authUid: userId, // Firebase Auth UID for reference
             emailSent,
             message: emailSent
                 ? "Staff member created and welcome email sent"
                 : "Staff member created (email not sent)",
         });
-
     } catch (error: any) {
         console.error("Error creating staff:", error);
-        return NextResponse.json(
-            { error: error.message || "Failed to create staff member" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: error.message || "Failed to create staff member" }, { status: 500 });
     }
 }

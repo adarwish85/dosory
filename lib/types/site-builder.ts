@@ -7,15 +7,7 @@ import { Timestamp } from "firebase/firestore";
 // Block Type Definitions
 // ============================================
 
-export type BlockType =
-    | "hero"
-    | "features"
-    | "stats"
-    | "testimonial"
-    | "faq"
-    | "cta"
-    | "text"
-    | "pricing";
+export type BlockType = "hero" | "features" | "stats" | "testimonial" | "faq" | "cta" | "text" | "pricing";
 
 // Hero Block
 export interface HeroBlockData {
@@ -121,7 +113,15 @@ export type BlockData =
 export interface Block {
     id: string;
     type: BlockType;
-    data: HeroBlockData | FeaturesBlockData | StatsBlockData | TestimonialBlockData | FaqBlockData | CtaBlockData | TextBlockData | PricingBlockData;
+    data:
+        | HeroBlockData
+        | FeaturesBlockData
+        | StatsBlockData
+        | TestimonialBlockData
+        | FaqBlockData
+        | CtaBlockData
+        | TextBlockData
+        | PricingBlockData;
 }
 
 // ============================================
@@ -130,13 +130,13 @@ export interface Block {
 
 export interface SitePage {
     id: string;
-    slug: string;           // URL path (e.g., "about-us", "" for home)
-    title: string;          // Display title in admin
-    seoTitle?: string;      // <title> tag content
-    seoDescription?: string;// <meta name="description">
+    slug: string; // URL path (e.g., "about-us", "" for home)
+    title: string; // Display title in admin
+    seoTitle?: string; // <title> tag content
+    seoDescription?: string; // <meta name="description">
     isPublished: boolean;
-    isHome?: boolean;       // Is this the home page?
-    sortOrder: number;      // For nav menu ordering
+    isHome?: boolean; // Is this the home page?
+    sortOrder: number; // For nav menu ordering
     blocks: Block[];
     createdAt?: Timestamp;
     updatedAt?: Timestamp;

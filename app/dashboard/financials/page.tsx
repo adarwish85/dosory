@@ -16,9 +16,7 @@ export default function FinancialsPage() {
             <div className="space-y-4">
                 {/* <FinancialOverview /> */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                    <div className="col-span-4">
-                        {/* <RecentTransactions /> */}
-                    </div>
+                    <div className="col-span-4">{/* <RecentTransactions /> */}</div>
                 </div>
             </div>
         </div>

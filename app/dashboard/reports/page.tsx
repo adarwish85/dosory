@@ -6,28 +6,32 @@ import { useState } from "react";
 
 export default function ReportsPage() {
     const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-        "invoices": false,
-        "items": false,
-        "payments": false,
+        invoices: false,
+        items: false,
+        payments: false,
         "credit-notes": false,
-        "proposals": false,
-        "estimates": false,
-        "customers": false,
+        proposals: false,
+        estimates: false,
+        customers: false,
         "total-income": false,
         "payment-modes": false,
-        "total-value": false
+        "total-value": false,
     });
 
     const toggle = (key: string) => {
-        setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
+        setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
     };
 
-    const SectionItem = ({ id, label }: { id: string, label: string }) => (
+    const SectionItem = ({ id, label }: { id: string; label: string }) => (
         <div
             className="flex items-center gap-2 py-2 px-2 hover:bg-gray-50 rounded cursor-pointer text-gray-600 font-medium text-sm transition-colors"
             onClick={() => toggle(id)}
         >
-            {openSections[id] ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
+            {openSections[id] ? (
+                <ChevronDown className="h-4 w-4 text-gray-400" />
+            ) : (
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+            )}
             {label}
         </div>
     );

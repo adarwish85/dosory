@@ -6,8 +6,17 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useLead } from "./lead-context";
 import {
-    LayoutDashboard, User, StickyNote, FileSignature, CheckSquare,
-    Calculator, Paperclip, Bell, ArrowLeft, ChevronLeft, ChevronRight
+    LayoutDashboard,
+    User,
+    StickyNote,
+    FileSignature,
+    CheckSquare,
+    Calculator,
+    Paperclip,
+    Bell,
+    ArrowLeft,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -46,10 +55,12 @@ export function LeadSidebar() {
 
     return (
         <TooltipProvider delayDuration={0}>
-            <div className={cn(
-                "border-r bg-gray-50/50 h-full py-4 flex flex-col transition-all duration-300 relative",
-                collapsed ? "w-16" : "w-64"
-            )}>
+            <div
+                className={cn(
+                    "border-r bg-gray-50/50 h-full py-4 flex flex-col transition-all duration-300 relative",
+                    collapsed ? "w-16" : "w-64"
+                )}
+            >
                 {/* Edge Toggle Button - Fixed Position */}
                 <button
                     onClick={handleToggleCollapse}
@@ -68,7 +79,11 @@ export function LeadSidebar() {
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Link href="/dashboard/leads">
-                                    <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700 w-full">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-gray-500 hover:text-gray-700 w-full"
+                                    >
                                         <ArrowLeft className="h-4 w-4" />
                                     </Button>
                                 </Link>

@@ -31,17 +31,16 @@ export function SetupSidebar({ isOpen, onClose, topOffset }: SetupSidebarProps) 
     ];
 
     return (
-        <aside className={cn(
-            "fixed left-0 z-[60] bottom-0 w-[230px] bg-[#F8F9FB] border-r border-gray-200 shadow-2xl transition-transform duration-300 flex flex-col",
-            topOffset,
-            isOpen ? "translate-x-0" : "-translate-x-full"
-        )}>
+        <aside
+            className={cn(
+                "fixed left-0 z-[60] bottom-0 w-[230px] bg-[#F8F9FB] border-r border-gray-200 shadow-2xl transition-transform duration-300 flex flex-col",
+                topOffset,
+                isOpen ? "translate-x-0" : "-translate-x-full"
+            )}
+        >
             <div className="flex items-center justify-between px-4 py-4 border-b bg-white">
                 <h2 className="font-bold text-lg text-gray-900">Setup</h2>
-                <button
-                    onClick={onClose}
-                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                >
+                <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
                     <X className="h-5 w-5 text-gray-500" />
                 </button>
             </div>
@@ -60,9 +59,7 @@ export function SetupSidebar({ isOpen, onClose, topOffset }: SetupSidebarProps) 
                             )}
                         >
                             <span>{item.label}</span>
-                            {item.hasSub && (
-                                <ChevronLeft className="h-4 w-4 text-gray-400" />
-                            )}
+                            {item.hasSub && <ChevronLeft className="h-4 w-4 text-gray-400" />}
                         </Link>
                     );
                 })}

@@ -7,7 +7,21 @@ import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MoreHorizontal, Plus, FileText, ChevronDown, CheckSquare, Clock, Flag, Folder, MessageSquare, Ticket, Scroll, Loader2, ArrowLeft } from "lucide-react";
+import {
+    MoreHorizontal,
+    Plus,
+    FileText,
+    ChevronDown,
+    CheckSquare,
+    Clock,
+    Flag,
+    Folder,
+    MessageSquare,
+    Ticket,
+    Scroll,
+    Loader2,
+    ArrowLeft,
+} from "lucide-react";
 
 interface Project {
     id: string;
@@ -87,11 +101,19 @@ export default function ProjectDetailPage() {
 
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
-            case "finished": return "text-green-600 bg-green-50 border-green-200";
-            case "in_progress": case "in progress": return "text-blue-600 bg-blue-50 border-blue-200";
-            case "not_started": case "not started": return "text-gray-600 bg-gray-50 border-gray-200";
-            case "on_hold": case "on hold": return "text-orange-600 bg-orange-50 border-orange-200";
-            default: return "text-gray-600 bg-gray-50 border-gray-200";
+            case "finished":
+                return "text-green-600 bg-green-50 border-green-200";
+            case "in_progress":
+            case "in progress":
+                return "text-blue-600 bg-blue-50 border-blue-200";
+            case "not_started":
+            case "not started":
+                return "text-gray-600 bg-gray-50 border-gray-200";
+            case "on_hold":
+            case "on hold":
+                return "text-orange-600 bg-orange-50 border-orange-200";
+            default:
+                return "text-gray-600 bg-gray-50 border-gray-200";
         }
     };
 
@@ -106,7 +128,7 @@ export default function ProjectDetailPage() {
             <div className="flex flex-col gap-4">
                 <Button
                     variant="ghost"
-                    onClick={() => router.push('/dashboard/projects')}
+                    onClick={() => router.push("/dashboard/projects")}
                     className="w-fit gap-2 text-gray-600 hover:text-gray-900 -ml-2"
                 >
                     <ArrowLeft className="h-4 w-4" /> Back to Projects
@@ -121,8 +143,12 @@ export default function ProjectDetailPage() {
                             <ChevronDown className="h-5 w-5 text-gray-400" />
                         </h1>
                         <div className="flex items-center gap-2">
-                            <span className="p-2 bg-gray-100 rounded-full text-gray-400"><UserIcon className="h-4 w-4" /></span>
-                            <Badge variant="outline" className={getStatusColor(project.status)}>{project.status}</Badge>
+                            <span className="p-2 bg-gray-100 rounded-full text-gray-400">
+                                <UserIcon className="h-4 w-4" />
+                            </span>
+                            <Badge variant="outline" className={getStatusColor(project.status)}>
+                                {project.status}
+                            </Badge>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -140,26 +166,57 @@ export default function ProjectDetailPage() {
 
                 {/* Navigation Tabs */}
                 <div className="flex items-center gap-1 border-b overflow-x-auto pb-1">
-                    <Button variant="ghost" size="sm" className="bg-white border rounded-md shadow-sm text-gray-900 font-medium gap-2">
-                        <div className="grid grid-cols-3 gap-0.5 w-3 h-3"><div className="bg-gray-900 rounded-[1px]"></div><div className="bg-gray-900 rounded-[1px]"></div><div className="bg-gray-900 rounded-[1px]"></div><div className="bg-gray-900 rounded-[1px]"></div></div> Overview
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="bg-white border rounded-md shadow-sm text-gray-900 font-medium gap-2"
+                    >
+                        <div className="grid grid-cols-3 gap-0.5 w-3 h-3">
+                            <div className="bg-gray-900 rounded-[1px]"></div>
+                            <div className="bg-gray-900 rounded-[1px]"></div>
+                            <div className="bg-gray-900 rounded-[1px]"></div>
+                            <div className="bg-gray-900 rounded-[1px]"></div>
+                        </div>{" "}
+                        Overview
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50"><CheckSquare className="h-4 w-4" /> Tasks</Button>
-                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50"><Clock className="h-4 w-4" /> Timesheets</Button>
-                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50"><Flag className="h-4 w-4" /> Milestones</Button>
-                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50"><Folder className="h-4 w-4" /> Files</Button>
-                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50"><MessageSquare className="h-4 w-4" /> Discussions</Button>
-                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50"><span className="rotate-90">⎍</span> Gantt</Button>
-                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50"><Ticket className="h-4 w-4" /> Tickets</Button>
-                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50"><Scroll className="h-4 w-4" /> Contracts</Button>
+                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50">
+                        <CheckSquare className="h-4 w-4" /> Tasks
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50">
+                        <Clock className="h-4 w-4" /> Timesheets
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50">
+                        <Flag className="h-4 w-4" /> Milestones
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50">
+                        <Folder className="h-4 w-4" /> Files
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50">
+                        <MessageSquare className="h-4 w-4" /> Discussions
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50">
+                        <span className="rotate-90">⎍</span> Gantt
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50">
+                        <Ticket className="h-4 w-4" /> Tickets
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-gray-600 gap-2 hover:bg-gray-50">
+                        <Scroll className="h-4 w-4" /> Contracts
+                    </Button>
                 </div>
 
                 {/* Progress Bar */}
                 <div>
                     <div className="flex justify-between text-sm mb-1">
-                        <span className="font-bold text-gray-700">Project Progress <span className="font-normal text-gray-500">{progress}%</span></span>
+                        <span className="font-bold text-gray-700">
+                            Project Progress <span className="font-normal text-gray-500">{progress}%</span>
+                        </span>
                     </div>
                     <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                        <div className={`h-full ${progress >= 100 ? 'bg-green-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(progress, 100)}%` }}></div>
+                        <div
+                            className={`h-full ${progress >= 100 ? "bg-green-500" : "bg-blue-500"}`}
+                            style={{ width: `${Math.min(progress, 100)}%` }}
+                        ></div>
                     </div>
                 </div>
             </div>
@@ -169,7 +226,9 @@ export default function ProjectDetailPage() {
                 <div className="bg-white rounded-lg p-6 border shadow-sm space-y-6">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-bold text-lg text-gray-900">Overview</h3>
-                        <Button variant="ghost" className="text-gray-500 text-sm gap-2"><FileText className="h-4 w-4" /> Export Project Data</Button>
+                        <Button variant="ghost" className="text-gray-500 text-sm gap-2">
+                            <FileText className="h-4 w-4" /> Export Project Data
+                        </Button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-y-6 gap-x-4">
@@ -179,7 +238,9 @@ export default function ProjectDetailPage() {
                         </div>
                         <div>
                             <label className="text-xs text-gray-500 font-semibold uppercase">Customer</label>
-                            <p className="text-blue-600 font-medium cursor-pointer hover:underline">{project.customer?.name || "-"}</p>
+                            <p className="text-blue-600 font-medium cursor-pointer hover:underline">
+                                {project.customer?.name || "-"}
+                            </p>
                         </div>
                         <div>
                             <label className="text-xs text-gray-500 font-semibold uppercase">Billing Type</label>
@@ -215,7 +276,9 @@ export default function ProjectDetailPage() {
 
                     {project.description && (
                         <div className="pt-4 border-t">
-                            <label className="text-xs text-gray-500 font-semibold uppercase block mb-2">Description</label>
+                            <label className="text-xs text-gray-500 font-semibold uppercase block mb-2">
+                                Description
+                            </label>
                             <p className="text-sm text-gray-600 leading-relaxed">{project.description}</p>
                         </div>
                     )}
@@ -228,11 +291,18 @@ export default function ProjectDetailPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-white border rounded-lg p-4 shadow-sm">
                             <div className="flex justify-between items-center mb-2">
-                                <span className="text-gray-700 font-bold">{openTasks} / {totalTasks} Open Tasks</span>
+                                <span className="text-gray-700 font-bold">
+                                    {openTasks} / {totalTasks} Open Tasks
+                                </span>
                             </div>
-                            <p className="text-gray-400 text-sm mb-2">{totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%</p>
+                            <p className="text-gray-400 text-sm mb-2">
+                                {totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%
+                            </p>
                             <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-green-500" style={{ width: `${totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0}%` }}></div>
+                                <div
+                                    className="h-full bg-green-500"
+                                    style={{ width: `${totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0}%` }}
+                                ></div>
                             </div>
                         </div>
                         <div className="bg-white border rounded-lg p-4 shadow-sm">
@@ -250,7 +320,9 @@ export default function ProjectDetailPage() {
 
                     {/* Expenses */}
                     <div className="bg-white border rounded-lg p-6 shadow-sm">
-                        <h4 className="flex items-center gap-2 text-gray-600 font-semibold mb-4"><FileText className="h-4 w-4" /> Expenses</h4>
+                        <h4 className="flex items-center gap-2 text-gray-600 font-semibold mb-4">
+                            <FileText className="h-4 w-4" /> Expenses
+                        </h4>
                         <div className="grid grid-cols-3 gap-4 border-t pt-4">
                             <div>
                                 <p className="text-xs text-gray-500 mb-1">Total Expenses</p>
@@ -270,8 +342,12 @@ export default function ProjectDetailPage() {
                     {/* Logged Hours */}
                     <div className="bg-white border rounded-lg p-6 shadow-sm">
                         <div className="flex justify-between items-center mb-6">
-                            <h4 className="flex items-center gap-2 text-gray-600 font-semibold"><span className="rotate-90">⧗</span> Total Logged Hours</h4>
-                            <Button variant="ghost" size="sm" className="text-gray-500 text-xs gap-1">This Week <ChevronDown className="h-3 w-3" /></Button>
+                            <h4 className="flex items-center gap-2 text-gray-600 font-semibold">
+                                <span className="rotate-90">⧗</span> Total Logged Hours
+                            </h4>
+                            <Button variant="ghost" size="sm" className="text-gray-500 text-xs gap-1">
+                                This Week <ChevronDown className="h-3 w-3" />
+                            </Button>
                         </div>
 
                         <div className="text-center py-8 text-gray-500">
@@ -288,7 +364,11 @@ export default function ProjectDetailPage() {
 function UserIcon({ className }: { className?: string }) {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
-            <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clipRule="evenodd" />
+            <path
+                fillRule="evenodd"
+                d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
+                clipRule="evenodd"
+            />
         </svg>
-    )
+    );
 }

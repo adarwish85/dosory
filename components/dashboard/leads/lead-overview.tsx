@@ -51,10 +51,13 @@ export function LeadOverview() {
                         <div className="flex-1">
                             <Progress value={score} className="h-3" />
                             <p className="text-sm text-gray-500 mt-2">
-                                {score >= 80 ? "Hot Lead - Ready for conversion" :
-                                    score >= 60 ? "Warm Lead - Good potential" :
-                                        score >= 40 ? "Developing - Needs nurturing" :
-                                            "Cold Lead - More info needed"}
+                                {score >= 80
+                                    ? "Hot Lead - Ready for conversion"
+                                    : score >= 60
+                                      ? "Warm Lead - Good potential"
+                                      : score >= 40
+                                        ? "Developing - Needs nurturing"
+                                        : "Cold Lead - More info needed"}
                             </p>
                         </div>
                     </div>
@@ -72,7 +75,10 @@ export function LeadOverview() {
                             const isActive = lead.status === status;
                             const isPassed = statusIndex > idx;
                             return (
-                                <div key={status} className={`text-xs font-medium ${isActive ? "text-green-600" : isPassed ? "text-gray-600" : "text-gray-400"}`}>
+                                <div
+                                    key={status}
+                                    className={`text-xs font-medium ${isActive ? "text-green-600" : isPassed ? "text-gray-600" : "text-gray-400"}`}
+                                >
                                     {status.charAt(0).toUpperCase() + status.slice(1)}
                                 </div>
                             );
@@ -85,12 +91,38 @@ export function LeadOverview() {
             <div className="p-6 border rounded-lg">
                 <h3 className="text-lg font-semibold mb-4">Score Breakdown</h3>
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
-                    <div className="flex flex-col gap-1"><span>Email</span><Badge variant={lead.email ? "default" : "secondary"}>{lead.email ? "+15" : "0"}</Badge></div>
-                    <div className="flex flex-col gap-1"><span>Phone</span><Badge variant={lead.phone ? "default" : "secondary"}>{lead.phone ? "+15" : "0"}</Badge></div>
-                    <div className="flex flex-col gap-1"><span>Company</span><Badge variant={lead.company ? "default" : "secondary"}>{lead.company ? "+10" : "0"}</Badge></div>
-                    <div className="flex flex-col gap-1"><span>Value</span><Badge variant={lead.value ? "default" : "secondary"}>{lead.value ? "+15" : "0"}</Badge></div>
-                    <div className="flex flex-col gap-1"><span>Source</span><Badge variant={lead.source ? "default" : "secondary"}>{lead.source ? "+10" : "0"}</Badge></div>
-                    <div className="flex flex-col gap-1"><span>Status</span><Badge variant={["qualified", "proposal", "negotiation"].includes(lead.status || "") ? "default" : "secondary"}>{["qualified", "proposal", "negotiation"].includes(lead.status || "") ? "+10" : "0"}</Badge></div>
+                    <div className="flex flex-col gap-1">
+                        <span>Email</span>
+                        <Badge variant={lead.email ? "default" : "secondary"}>{lead.email ? "+15" : "0"}</Badge>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <span>Phone</span>
+                        <Badge variant={lead.phone ? "default" : "secondary"}>{lead.phone ? "+15" : "0"}</Badge>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <span>Company</span>
+                        <Badge variant={lead.company ? "default" : "secondary"}>{lead.company ? "+10" : "0"}</Badge>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <span>Value</span>
+                        <Badge variant={lead.value ? "default" : "secondary"}>{lead.value ? "+15" : "0"}</Badge>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <span>Source</span>
+                        <Badge variant={lead.source ? "default" : "secondary"}>{lead.source ? "+10" : "0"}</Badge>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <span>Status</span>
+                        <Badge
+                            variant={
+                                ["qualified", "proposal", "negotiation"].includes(lead.status || "")
+                                    ? "default"
+                                    : "secondary"
+                            }
+                        >
+                            {["qualified", "proposal", "negotiation"].includes(lead.status || "") ? "+10" : "0"}
+                        </Badge>
+                    </div>
                 </div>
             </div>
         </div>

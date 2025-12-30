@@ -125,19 +125,27 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
             where("orgId", "==", profile.orgId)
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const contactsData = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as Contact[];
-            console.log("[CustomerProvider] Contacts loaded:", contactsData.length, contactsData.map(c => ({ id: c.id, customerId: c.customerId, orgId: c.orgId })));
-            // Sort client-side by lastName
-            contactsData.sort((a, b) => (a.lastName || "").localeCompare(b.lastName || ""));
-            setContacts(contactsData);
-            setRecordCounts(prev => ({ ...prev, contacts: contactsData.length }));
-        }, (err) => {
-            console.error("Error loading contacts:", err);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const contactsData = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as Contact[];
+                console.log(
+                    "[CustomerProvider] Contacts loaded:",
+                    contactsData.length,
+                    contactsData.map((c) => ({ id: c.id, customerId: c.customerId, orgId: c.orgId }))
+                );
+                // Sort client-side by lastName
+                contactsData.sort((a, b) => (a.lastName || "").localeCompare(b.lastName || ""));
+                setContacts(contactsData);
+                setRecordCounts((prev) => ({ ...prev, contacts: contactsData.length }));
+            },
+            (err) => {
+                console.error("Error loading contacts:", err);
+            }
+        );
 
         return () => unsubscribe();
     }, [customerId, profile?.orgId]);
@@ -182,7 +190,7 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
                 })
             );
 
-            setRecordCounts(prev => ({ ...prev, ...counts }));
+            setRecordCounts((prev) => ({ ...prev, ...counts }));
         };
 
         fetchCounts();

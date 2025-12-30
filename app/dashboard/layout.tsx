@@ -10,13 +10,45 @@ import { signOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import {
-    LayoutDashboard, Users, CreditCard, Settings,
-    FileText, CheckSquare, MessageSquare, BarChart3,
-    Bell, Search, Menu, Building2, Store, Monitor, Wallet,
-    Briefcase, FileSignature, Receipt, Database, LayoutTemplate,
-    FolderKanban, LogOut, Loader2, DollarSign, X,
-    User, Zap, Scroll, LifeBuoy, Target, Book, BarChart,
-    Plus, ChevronDown, Home, Calendar, Clock, PanelRightClose, PanelRightOpen
+    LayoutDashboard,
+    Users,
+    CreditCard,
+    Settings,
+    FileText,
+    CheckSquare,
+    MessageSquare,
+    BarChart3,
+    Bell,
+    Search,
+    Menu,
+    Building2,
+    Store,
+    Monitor,
+    Wallet,
+    Briefcase,
+    FileSignature,
+    Receipt,
+    Database,
+    LayoutTemplate,
+    FolderKanban,
+    LogOut,
+    Loader2,
+    DollarSign,
+    X,
+    User,
+    Zap,
+    Scroll,
+    LifeBuoy,
+    Target,
+    Book,
+    BarChart,
+    Plus,
+    ChevronDown,
+    Home,
+    Calendar,
+    Clock,
+    PanelRightClose,
+    PanelRightOpen,
 } from "lucide-react";
 import { PlatformLogo, usePlatformSettings } from "@/lib/hooks/use-platform-settings";
 import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
@@ -87,9 +119,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (loading || settingsLoading || !profile?.orgId) return;
 
         // Skip subdomain enforcement when superadmin is impersonating
-        const impersonationState = typeof window !== 'undefined'
-            ? JSON.parse(localStorage.getItem('impersonation-storage') || '{"state":{}}').state
-            : {};
+        const impersonationState =
+            typeof window !== "undefined"
+                ? JSON.parse(localStorage.getItem("impersonation-storage") || '{"state":{}}').state
+                : {};
         if (impersonationState?.isImpersonating) {
             console.log("[DashboardLayout] Skipping subdomain redirect - impersonation active");
             return;
@@ -98,9 +131,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         const host = window.location.host;
 
         const isLocal = host.includes("localhost");
-        const rootDomain = isLocal
-            ? "localhost:3000"
-            : (process.env.NEXT_PUBLIC_ROOT_DOMAIN || "dosory.com");
+        const rootDomain = isLocal ? "localhost:3000" : process.env.NEXT_PUBLIC_ROOT_DOMAIN || "dosory.com";
 
         if (!host.endsWith(rootDomain)) {
             // If we are on a completely different domain (e.g. firebaseapp.com), do not enforce redirect
@@ -117,7 +148,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         // Determine expected subdomain: Use custom subdomain if set.
         // If not set, but we are on a custom subdomain (not orgId), trust it and stay there.
         // Otherwise fallback to orgId default.
-        const expectedSubdomain = settings.subdomain ||
+        const expectedSubdomain =
+            settings.subdomain ||
             (currentSubdomain && currentSubdomain !== profile.orgId ? currentSubdomain : profile.orgId);
 
         // If current subdomain doesn't match expected one, redirect
@@ -137,7 +169,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             // Strict check to ensure we are not already on the target host
             if (window.location.host !== targetHost) {
-                console.log(`[DashboardLayout] Redirecting to tenant subdomain: ${expectedSubdomain} from ${currentSubdomain}`);
+                console.log(
+                    `[DashboardLayout] Redirecting to tenant subdomain: ${expectedSubdomain} from ${currentSubdomain}`
+                );
 
                 const currentPath = window.location.pathname;
                 const currentSearch = new URLSearchParams(window.location.search);
@@ -163,13 +197,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }, [user?.uid]);
 
     // Get display name from staff profile or fall back to auth user
-    const displayName = staffProfile?.firstName && staffProfile?.lastName
-        ? `${staffProfile.firstName} ${staffProfile.lastName}`
-        : user?.displayName || "User";
+    const displayName =
+        staffProfile?.firstName && staffProfile?.lastName
+            ? `${staffProfile.firstName} ${staffProfile.lastName}`
+            : user?.displayName || "User";
     const displayEmail = staffProfile?.email || user?.email;
     const displayInitial = staffProfile?.firstName?.charAt(0) || user?.email?.charAt(0).toUpperCase() || "U";
 
-    if (loading || settingsLoading) return <div className="flex h-screen items-center justify-center bg-[#F3F2EF]">Loading...</div>;
+    if (loading || settingsLoading)
+        return <div className="flex h-screen items-center justify-center bg-[#F3F2EF]">Loading...</div>;
 
     if (!user) {
         router.push("/login");
@@ -185,12 +221,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Under Maintenance</h1>
                     <p className="text-gray-600 mb-6">
-                        {settings.platformName} is currently undergoing scheduled maintenance.
-                        Please check back later.
+                        {settings.platformName} is currently undergoing scheduled maintenance. Please check back later.
                     </p>
-                    <Button onClick={() => window.location.reload()}>
-                        Refresh Page
-                    </Button>
+                    <Button onClick={() => window.location.reload()}>Refresh Page</Button>
                 </div>
             </div>
         );
@@ -212,15 +245,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 { href: "/dashboard/customers", label: "Customers", module: "customers" },
                 { href: "/dashboard/sales/estimates", label: "Estimates", module: "invoices" },
                 { href: "/dashboard/contracts", label: "Contracts", module: "contracts" },
-            ]
+            ],
         },
         {
             label: "Marketing",
             icon: Book,
             module: "marketing",
-            children: [
-                { href: "/dashboard/knowledge-base", label: "Knowledge Base", module: "knowledge" },
-            ]
+            children: [{ href: "/dashboard/knowledge-base", label: "Knowledge Base", module: "knowledge" }],
         },
         {
             label: "Operations",
@@ -229,7 +260,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             children: [
                 { href: "/dashboard/projects", label: "Projects", module: "projects" },
                 { href: "/dashboard/tasks", label: "Tasks", module: "tasks" },
-            ]
+            ],
         },
         {
             label: "Accounting",
@@ -240,28 +271,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 { href: "/dashboard/accounting/payments", label: "Payments", module: "invoices" },
                 { href: "/dashboard/accounting/credit-notes", label: "Credit Notes", module: "invoices" },
                 { href: "/dashboard/expenses", label: "Expenses", module: "expenses" },
-            ]
+            ],
         },
         {
             label: "Support",
             icon: LifeBuoy,
             module: "support",
-            children: [
-                { href: "/dashboard/support", label: "Support", module: "support" },
-            ]
+            children: [{ href: "/dashboard/support", label: "Support", module: "support" }],
         },
         {
             label: "Reports",
             icon: BarChart,
             module: "reports",
-            children: [
-                { href: "/dashboard/reports", label: "Reports", module: "reports" },
-            ]
+            children: [{ href: "/dashboard/reports", label: "Reports", module: "reports" }],
         },
     ];
 
     // Filter nav items based on user permissions
-    const filteredNavItems = navItems.filter(item => {
+    const filteredNavItems = navItems.filter((item) => {
         // Home is always visible
         if (item.module === "home") return true;
         // Check permission for this module
@@ -271,15 +298,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Shortcuts moved to RightSidebar component
 
     // Get impersonation state
-    const impersonationState = typeof window !== 'undefined'
-        ? JSON.parse(localStorage.getItem('impersonation-storage') || '{"state":{}}').state
-        : {};
+    const impersonationState =
+        typeof window !== "undefined"
+            ? JSON.parse(localStorage.getItem("impersonation-storage") || '{"state":{}}').state
+            : {};
     const isImpersonating = impersonationState?.isImpersonating;
     const impersonatedOrgName = impersonationState?.impersonatedOrgName;
 
     const handleExitImpersonation = () => {
-        localStorage.removeItem('impersonation-storage');
-        window.location.href = '/bunny/tenants';
+        localStorage.removeItem("impersonation-storage");
+        window.location.href = "/bunny/tenants";
     };
 
     return (
@@ -302,7 +330,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 )}
 
                 {/* Top Header Bar */}
-                <header className={`fixed left-0 right-0 h-14 bg-white border-b border-[#E0E0E0] z-50 shadow-sm ${isImpersonating ? 'top-10' : 'top-0'}`}>
+                <header
+                    className={`fixed left-0 right-0 h-14 bg-white border-b border-[#E0E0E0] z-50 shadow-sm ${isImpersonating ? "top-10" : "top-0"}`}
+                >
                     <div className="h-full px-4 flex items-center justify-between">
                         {/* Left: Tenant Logo */}
                         <div className="flex items-center">
@@ -325,14 +355,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                         {/* Right: Actions & Profile */}
                         <div className="flex items-center gap-2">
-                            <Button size="icon" className="hidden sm:flex bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#1c1e21] rounded-full h-10 w-10">
+                            <Button
+                                size="icon"
+                                className="hidden sm:flex bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#1c1e21] rounded-full h-10 w-10"
+                            >
                                 <Plus className="h-5 w-5" />
                             </Button>
 
                             {/* Messages Icon */}
                             {/* Messages Icon */}
                             <Link href="/dashboard/messages" className="relative">
-                                <Button size="icon" className="hidden sm:flex bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#1c1e21] rounded-full h-10 w-10">
+                                <Button
+                                    size="icon"
+                                    className="hidden sm:flex bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#1c1e21] rounded-full h-10 w-10"
+                                >
                                     <MessageSquare className="h-5 w-5" />
                                 </Button>
                                 {messagesUnreadCount > 0 && (
@@ -344,7 +380,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                             {/* Notifications Icon */}
                             <Link href="/dashboard/notifications" className="relative">
-                                <Button size="icon" className="hidden sm:flex bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#1c1e21] rounded-full h-10 w-10">
+                                <Button
+                                    size="icon"
+                                    className="hidden sm:flex bg-[#E4E6EB] hover:bg-[#D8DADF] text-[#1c1e21] rounded-full h-10 w-10"
+                                >
                                     <Bell className="h-5 w-5" />
                                 </Button>
                                 {notificationUnreadCount > 0 && (
@@ -389,7 +428,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         </div>
                                     </div>
                                     <DropdownMenuItem asChild className="rounded-lg">
-                                        <Link href={`/dashboard/setup/staff/${user?.uid}`} className="cursor-pointer py-3">
+                                        <Link
+                                            href={`/dashboard/setup/staff/${user?.uid}`}
+                                            className="cursor-pointer py-3"
+                                        >
                                             <User className="h-5 w-5 mr-3" />
                                             Profile Settings
                                         </Link>
@@ -401,7 +443,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer rounded-lg py-3">
+                                    <DropdownMenuItem
+                                        onClick={handleLogout}
+                                        className="text-red-600 cursor-pointer rounded-lg py-3"
+                                    >
                                         <LogOut className="h-5 w-5 mr-3" />
                                         Log Out
                                     </DropdownMenuItem>
@@ -414,7 +459,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {/* Main 3-Column Layout */}
                 <div className="pt-14 flex">
                     {/* Left Sidebar - Fixed */}
-                    <aside className={`hidden lg:block w-[240px] fixed left-0 bottom-0 overflow-y-auto px-2 py-3 ${isImpersonating ? 'top-24' : 'top-14'}`}>
+                    <aside
+                        className={`hidden lg:block w-[240px] fixed left-0 bottom-0 overflow-y-auto px-2 py-3 ${isImpersonating ? "top-24" : "top-14"}`}
+                    >
                         <nav className="space-y-0.5">
                             {/* Navigation Items */}
                             {filteredNavItems.map((item) => {
@@ -423,12 +470,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                                 if (item.children) {
                                     const isExpanded = expandedSections.includes(item.label);
-                                    const hasActiveChild = item.children.some(child => pathname === child.href || pathname.startsWith(child.href + '/'));
+                                    const hasActiveChild = item.children.some(
+                                        (child) => pathname === child.href || pathname.startsWith(child.href + "/")
+                                    );
 
                                     const toggleSection = () => {
-                                        setExpandedSections(prev =>
+                                        setExpandedSections((prev) =>
                                             prev.includes(item.label)
-                                                ? prev.filter(s => s !== item.label)
+                                                ? prev.filter((s) => s !== item.label)
                                                 : [...prev, item.label]
                                         );
                                     };
@@ -439,34 +488,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                                 onClick={toggleSection}
                                                 className={cn(
                                                     "flex items-center justify-between w-full p-2 rounded-lg transition-colors",
-                                                    hasActiveChild ? "text-[#0A66C2]" : "text-[#65676B] hover:bg-[#E4E6EB]"
+                                                    hasActiveChild
+                                                        ? "text-[#0A66C2]"
+                                                        : "text-[#65676B] hover:bg-[#E4E6EB]"
                                                 )}
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <div className={cn(
-                                                        "w-8 h-8 rounded-full flex items-center justify-center",
-                                                        hasActiveChild ? "bg-[#0A66C2] text-white" : "bg-[#E4E6EB]"
-                                                    )}>
+                                                    <div
+                                                        className={cn(
+                                                            "w-8 h-8 rounded-full flex items-center justify-center",
+                                                            hasActiveChild ? "bg-[#0A66C2] text-white" : "bg-[#E4E6EB]"
+                                                        )}
+                                                    >
                                                         <Icon className="h-4 w-4" />
                                                     </div>
                                                     <span className="font-medium text-sm">{item.label}</span>
                                                 </div>
-                                                <ChevronDown className={cn(
-                                                    "h-4 w-4 transition-transform duration-200",
-                                                    isExpanded ? "rotate-180" : ""
-                                                )} />
+                                                <ChevronDown
+                                                    className={cn(
+                                                        "h-4 w-4 transition-transform duration-200",
+                                                        isExpanded ? "rotate-180" : ""
+                                                    )}
+                                                />
                                             </button>
-                                            <div className={cn(
-                                                "ml-5 space-y-0.5 overflow-hidden transition-all duration-200",
-                                                isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                                            )}>
+                                            <div
+                                                className={cn(
+                                                    "ml-5 space-y-0.5 overflow-hidden transition-all duration-200",
+                                                    isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                                                )}
+                                            >
                                                 {item.children.map((child) => (
                                                     <Link
                                                         key={child.href}
                                                         href={child.href}
                                                         className={cn(
                                                             "block py-1.5 px-3 rounded-lg text-sm transition-colors",
-                                                            pathname === child.href || pathname.startsWith(child.href + '/')
+                                                            pathname === child.href ||
+                                                                pathname.startsWith(child.href + "/")
                                                                 ? "bg-[#E7F3FF] text-[#0A66C2] font-medium"
                                                                 : "text-[#65676B] hover:bg-[#E4E6EB]"
                                                         )}
@@ -490,10 +548,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                                 : "text-[#1c1e21] hover:bg-[#E4E6EB]"
                                         )}
                                     >
-                                        <div className={cn(
-                                            "w-8 h-8 rounded-full flex items-center justify-center",
-                                            isActive ? "bg-[#0A66C2] text-white" : "bg-[#E4E6EB]"
-                                        )}>
+                                        <div
+                                            className={cn(
+                                                "w-8 h-8 rounded-full flex items-center justify-center",
+                                                isActive ? "bg-[#0A66C2] text-white" : "bg-[#E4E6EB]"
+                                            )}
+                                        >
                                             <Icon className="h-4 w-4" />
                                         </div>
                                         <span className="font-medium text-sm">{item.label}</span>
@@ -515,12 +575,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </aside>
 
                     {/* Center Content - Scrollable */}
-                    <main className={cn(
-                        "flex-1 lg:ml-[240px] min-h-[calc(100vh-56px)] p-3 overflow-hidden transition-all duration-300",
-                        rightSidebarOpen ? "lg:mr-[220px]" : "lg:mr-0"
-                    )}>
+                    <main
+                        className={cn(
+                            "flex-1 lg:ml-[240px] min-h-[calc(100vh-56px)] p-3 overflow-hidden transition-all duration-300",
+                            rightSidebarOpen ? "lg:mr-[220px]" : "lg:mr-0"
+                        )}
+                    >
                         <div className="w-full overflow-x-auto">
-
                             {/* Content Card */}
                             <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] min-w-0">
                                 <div className="p-4 overflow-x-auto">
@@ -549,15 +610,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </main>
 
                     {/* Right Sidebar - Fixed & Collapsible */}
-                    <RightSidebar
-                        isOpen={rightSidebarOpen}
-                        topOffset={isImpersonating ? 'top-24' : 'top-14'}
-                    />
+                    <RightSidebar isOpen={rightSidebarOpen} topOffset={isImpersonating ? "top-24" : "top-14"} />
                 </div>
 
                 {/* Mobile Menu Overlay */}
                 {mobileMenuOpen && (
-                    <div className={`lg:hidden fixed inset-0 bg-white z-40 overflow-y-auto p-4 ${isImpersonating ? 'top-24' : 'top-14'}`}>
+                    <div
+                        className={`lg:hidden fixed inset-0 bg-white z-40 overflow-y-auto p-4 ${isImpersonating ? "top-24" : "top-14"}`}
+                    >
                         <nav className="space-y-1">
                             {filteredNavItems.map((item) => {
                                 const Icon = item.icon;

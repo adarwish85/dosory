@@ -21,7 +21,7 @@ export function SubscriptionPayPalButton({
     planId,
     billingPeriod,
     onSuccess,
-    onError
+    onError,
 }: PayPalButtonProps) {
     const [isPending, setIsPending] = useState(false);
 
@@ -53,7 +53,7 @@ export function SubscriptionPayPalButton({
                                     currency,
                                     description,
                                     planId,
-                                    billingPeriod
+                                    billingPeriod,
                                 }),
                             });
 
@@ -74,7 +74,7 @@ export function SubscriptionPayPalButton({
                                 body: JSON.stringify({
                                     orderId: data.orderID,
                                     planId,
-                                    billingPeriod
+                                    billingPeriod,
                                 }),
                             });
 

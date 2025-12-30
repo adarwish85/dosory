@@ -3,8 +3,15 @@
 import { useAnalytics } from "@/lib/hooks/use-analytics";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    DollarSign, TrendingUp, Users, FileText, Clock,
-    CheckCircle, AlertTriangle, BarChart3, PieChart
+    DollarSign,
+    TrendingUp,
+    Users,
+    FileText,
+    Clock,
+    CheckCircle,
+    AlertTriangle,
+    BarChart3,
+    PieChart,
 } from "lucide-react";
 
 export default function AnalyticsDashboard() {
@@ -27,9 +34,9 @@ export default function AnalyticsDashboard() {
     }
 
     const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(value);
@@ -62,7 +69,8 @@ export default function AnalyticsDashboard() {
                         <div className="mt-4 text-sm text-green-100">
                             <span className="text-white font-medium">
                                 {formatCurrency(salesMetrics?.monthlyRevenue || 0)}
-                            </span> this month
+                            </span>{" "}
+                            this month
                         </div>
                     </CardContent>
                 </Card>
@@ -82,7 +90,8 @@ export default function AnalyticsDashboard() {
                             </div>
                         </div>
                         <div className="mt-4 text-sm text-orange-100">
-                            <span className="text-white font-medium">{salesMetrics?.overdueInvoices || 0}</span> overdue invoices
+                            <span className="text-white font-medium">{salesMetrics?.overdueInvoices || 0}</span> overdue
+                            invoices
                         </div>
                     </CardContent>
                 </Card>
@@ -93,16 +102,15 @@ export default function AnalyticsDashboard() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-blue-100 text-sm">Total Customers</p>
-                                <p className="text-3xl font-bold mt-1">
-                                    {customerMetrics?.totalCustomers || 0}
-                                </p>
+                                <p className="text-3xl font-bold mt-1">{customerMetrics?.totalCustomers || 0}</p>
                             </div>
                             <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                                 <Users className="h-6 w-6" />
                             </div>
                         </div>
                         <div className="mt-4 text-sm text-blue-100">
-                            <span className="text-white font-medium">+{customerMetrics?.newThisMonth || 0}</span> this month
+                            <span className="text-white font-medium">+{customerMetrics?.newThisMonth || 0}</span> this
+                            month
                         </div>
                     </CardContent>
                 </Card>
@@ -122,7 +130,8 @@ export default function AnalyticsDashboard() {
                             </div>
                         </div>
                         <div className="mt-4 text-sm text-purple-100">
-                            <span className="text-white font-medium">{proposalMetrics?.acceptedProposals || 0}</span> of {proposalMetrics?.totalProposals || 0} accepted
+                            <span className="text-white font-medium">{proposalMetrics?.acceptedProposals || 0}</span> of{" "}
+                            {proposalMetrics?.totalProposals || 0} accepted
                         </div>
                     </CardContent>
                 </Card>
@@ -147,7 +156,7 @@ export default function AnalyticsDashboard() {
                                         <div
                                             className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-end pr-3"
                                             style={{
-                                                width: `${Math.max(10, (item.revenue / Math.max(...revenueByMonth.map(r => r.revenue), 1)) * 100)}%`
+                                                width: `${Math.max(10, (item.revenue / Math.max(...revenueByMonth.map((r) => r.revenue), 1)) * 100)}%`,
                                             }}
                                         >
                                             <span className="text-xs text-white font-medium">

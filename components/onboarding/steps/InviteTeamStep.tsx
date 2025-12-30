@@ -5,13 +5,7 @@ import { Users, Mail, ArrowRight, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useWizard } from "../OnboardingWizard";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -28,9 +22,7 @@ export default function InviteTeamStep() {
     const orgId = profile?.orgId;
     const userId = profile?.uid;
 
-    const [members, setMembers] = useState<TeamMember[]>([
-        { email: "", role: "staff" }
-    ]);
+    const [members, setMembers] = useState<TeamMember[]>([{ email: "", role: "staff" }]);
     const [isSaving, setIsSaving] = useState(false);
 
     // Pre-fill with dummy data if selected
@@ -67,7 +59,7 @@ export default function InviteTeamStep() {
             return;
         }
 
-        const validMembers = members.filter(m => m.email && m.email.includes("@"));
+        const validMembers = members.filter((m) => m.email && m.email.includes("@"));
         if (validMembers.length === 0) {
             goNext();
             return;
@@ -105,9 +97,7 @@ export default function InviteTeamStep() {
                     <Users className="h-6 w-6" />
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900">Invite Your Team</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                    Add team members to collaborate with you
-                </p>
+                <p className="text-sm text-gray-500 mt-1">Add team members to collaborate with you</p>
             </div>
 
             {/* Team Members */}
@@ -122,10 +112,7 @@ export default function InviteTeamStep() {
                                 placeholder="colleague@company.com"
                             />
                         </div>
-                        <Select
-                            value={member.role}
-                            onValueChange={(value) => updateMember(index, "role", value)}
-                        >
+                        <Select value={member.role} onValueChange={(value) => updateMember(index, "role", value)}>
                             <SelectTrigger className="w-[120px]">
                                 <SelectValue />
                             </SelectTrigger>
@@ -147,12 +134,7 @@ export default function InviteTeamStep() {
                     </div>
                 ))}
 
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addMember}
-                    className="gap-1 text-gray-600"
-                >
+                <Button variant="outline" size="sm" onClick={addMember} className="gap-1 text-gray-600">
                     <Mail className="h-4 w-4" />
                     Add Another
                 </Button>
@@ -168,11 +150,7 @@ export default function InviteTeamStep() {
                 <Button variant="ghost" onClick={skipStep} className="text-gray-500">
                     Skip for now
                 </Button>
-                <Button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="bg-blue-600 hover:bg-blue-700 gap-2"
-                >
+                <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 gap-2">
                     {isSaving ? (
                         <>
                             <Loader2 className="h-4 w-4 animate-spin" />

@@ -7,7 +7,7 @@ import { useInvoices } from "@/lib/hooks/use-invoices";
 export default function SalesPage() {
     const { invoices, loading } = useInvoices();
 
-    const data = invoices.map(inv => ({
+    const data = invoices.map((inv) => ({
         id: inv.id,
         invoiceId: inv.number,
         customer: inv.customerName || "Unknown",

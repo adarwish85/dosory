@@ -64,9 +64,7 @@ export function AddContactDialog({ customerId, onSuccess }: AddContactDialogProp
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
                         <DialogTitle>Add Contact</DialogTitle>
-                        <DialogDescription>
-                            Add a new contact for this customer.
-                        </DialogDescription>
+                        <DialogDescription>Add a new contact for this customer.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -110,12 +108,7 @@ export function AddContactDialog({ customerId, onSuccess }: AddContactDialogProp
                             <Label htmlFor="phone" className="text-right">
                                 Phone
                             </Label>
-                            <Input
-                                id="phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                className="col-span-3"
-                            />
+                            <Input id="phone" value={formData.phone} onChange={handleChange} className="col-span-3" />
                         </div>
                     </div>
                     <DialogFooter>

@@ -9,16 +9,45 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import {
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-    DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem,
-    DropdownMenuRadioGroup, DropdownMenuRadioItem
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuCheckboxItem,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import {
-    Search, Plus, SquarePen, Trash2, MoreVertical, ChevronDown, LayoutList, Download,
-    ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+    Search,
+    Plus,
+    SquarePen,
+    Trash2,
+    MoreVertical,
+    ChevronDown,
+    LayoutList,
+    Download,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
+    RotateCcw,
+    Loader2,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
 } from "lucide-react";
 import { collection, addDoc, deleteDoc, doc, updateDoc, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -38,7 +67,13 @@ interface Note {
     createdAt?: Timestamp;
 }
 
-interface ColumnDef { key: ColumnKey; label: string; defaultVisible: boolean; sortable?: boolean; width?: number; }
+interface ColumnDef {
+    key: ColumnKey;
+    label: string;
+    defaultVisible: boolean;
+    sortable?: boolean;
+    width?: number;
+}
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
     { key: "description", label: "Description", defaultVisible: true, sortable: true, width: 400 },
@@ -51,25 +86,84 @@ const ROW_DENSITY_STYLES: Record<RowDensity, string> = { compact: "py-1 text-xs"
 // Highlight text component
 function HighlightText({ text, search }: { text: string; search: string }) {
     if (!search.trim() || !text) return <>{text}</>;
-    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
     const parts = text.split(regex);
-    return <>{parts.map((part, i) => regex.test(part) ? <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark> : <span key={i}>{part}</span>)}</>;
+    return (
+        <>
+            {parts.map((part, i) =>
+                regex.test(part) ? (
+                    <mark key={i} className="bg-yellow-200 px-0.5 rounded">
+                        {part}
+                    </mark>
+                ) : (
+                    <span key={i}>{part}</span>
+                )
+            )}
+        </>
+    );
 }
 
 // Pagination component
-function Pagination({ currentPage, totalPages, onPageChange, totalRecords, startRecord, endRecord }: {
-    currentPage: number; totalPages: number; onPageChange: (page: number) => void;
-    totalRecords: number; startRecord: number; endRecord: number;
+function Pagination({
+    currentPage,
+    totalPages,
+    onPageChange,
+    totalRecords,
+    startRecord,
+    endRecord,
+}: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    totalRecords: number;
+    startRecord: number;
+    endRecord: number;
 }) {
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Showing {startRecord} to {endRecord} of {totalRecords}</span>
+            <span>
+                Showing {startRecord} to {endRecord} of {totalRecords}
+            </span>
             <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(1)} disabled={currentPage === 1}><ChevronsLeft className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></Button>
-                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium">{currentPage} / {totalPages}</span>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-4 w-4" /></Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(1)}
+                    disabled={currentPage === 1}
+                >
+                    <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium">
+                    {currentPage} / {totalPages}
+                </span>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                >
+                    <ChevronsRight className="h-4 w-4" />
+                </Button>
             </div>
         </div>
     );
@@ -99,7 +193,11 @@ export default function LeadNotesPage() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(25);
-    const [columnVisibility, setColumnVisibility] = useState<Record<ColumnKey, boolean>>({ description: true, addedFrom: true, dateAdded: true });
+    const [columnVisibility, setColumnVisibility] = useState<Record<ColumnKey, boolean>>({
+        description: true,
+        addedFrom: true,
+        dateAdded: true,
+    });
     const [sortKey, setSortKey] = useState<ColumnKey | null>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>(null);
     const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
@@ -108,13 +206,23 @@ export default function LeadNotesPage() {
 
     // Load notes from Firestore
     useEffect(() => {
-        if (!leadId) { setLoading(false); return; }
-        const notesRef = collection(db, "leads", leadId, "notes");
-        const unsubscribe = onSnapshot(notesRef, (snapshot) => {
-            const notesData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Note[];
-            setNotes(notesData);
+        if (!leadId) {
             setLoading(false);
-        }, (err) => { console.error("Error loading notes:", err); setLoading(false); });
+            return;
+        }
+        const notesRef = collection(db, "leads", leadId, "notes");
+        const unsubscribe = onSnapshot(
+            notesRef,
+            (snapshot) => {
+                const notesData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Note[];
+                setNotes(notesData);
+                setLoading(false);
+            },
+            (err) => {
+                console.error("Error loading notes:", err);
+                setLoading(false);
+            }
+        );
         return () => unsubscribe();
     }, [leadId]);
 
@@ -136,7 +244,9 @@ export default function LeadNotesPage() {
         } catch (error) {
             console.error("Error saving note:", error);
             toast.error("Failed to save note");
-        } finally { setSaving(false); }
+        } finally {
+            setSaving(false);
+        }
     };
 
     const saveEdit = async (id: string) => {
@@ -157,7 +267,7 @@ export default function LeadNotesPage() {
         try {
             const noteRef = doc(db, "leads", leadId, "notes", id);
             await deleteDoc(noteRef);
-            setSelectedIds(prev => prev.filter(i => i !== id));
+            setSelectedIds((prev) => prev.filter((i) => i !== id));
             toast.success("Note deleted");
         } catch (error) {
             console.error("Error deleting note:", error);
@@ -168,7 +278,7 @@ export default function LeadNotesPage() {
     const handleBulkDelete = async () => {
         if (!leadId || selectedIds.length === 0) return;
         try {
-            await Promise.all(selectedIds.map(id => deleteDoc(doc(db, "leads", leadId, "notes", id))));
+            await Promise.all(selectedIds.map((id) => deleteDoc(doc(db, "leads", leadId, "notes", id))));
             setSelectedIds([]);
             toast.success(`Deleted ${selectedIds.length} notes`);
         } catch (error) {
@@ -178,8 +288,11 @@ export default function LeadNotesPage() {
 
     // Export
     const handleExport = () => {
-        const dataToExport = selectedIds.length > 0 ? notes.filter(n => selectedIds.includes(n.id)) : processedNotes;
-        const csv = ["Description,Added From,Date Added", ...dataToExport.map(n => `"${n.description.replace(/"/g, '""')}","${n.addedFrom}","${n.dateAdded}"`)].join("\n");
+        const dataToExport = selectedIds.length > 0 ? notes.filter((n) => selectedIds.includes(n.id)) : processedNotes;
+        const csv = [
+            "Description,Added From,Date Added",
+            ...dataToExport.map((n) => `"${n.description.replace(/"/g, '""')}","${n.addedFrom}","${n.dateAdded}"`),
+        ].join("\n");
         const blob = new Blob([csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -193,7 +306,7 @@ export default function LeadNotesPage() {
     // Sort handler
     const handleSort = (key: ColumnKey) => {
         if (sortKey === key) {
-            setSortDirection(prev => prev === "asc" ? "desc" : prev === "desc" ? null : "asc");
+            setSortDirection((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"));
             if (sortDirection === "desc") setSortKey(null);
         } else {
             setSortKey(key);
@@ -202,23 +315,36 @@ export default function LeadNotesPage() {
     };
 
     // Toggle column
-    const toggleColumn = (key: ColumnKey) => setColumnVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+    const toggleColumn = (key: ColumnKey) => setColumnVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
 
     // Process notes
     const processedNotes = useMemo(() => {
         let result = [...notes];
         if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
-            result = result.filter(n => n.description?.toLowerCase().includes(lowerQuery) || n.addedFrom?.toLowerCase().includes(lowerQuery));
+            result = result.filter(
+                (n) =>
+                    n.description?.toLowerCase().includes(lowerQuery) || n.addedFrom?.toLowerCase().includes(lowerQuery)
+            );
         }
         if (sortKey && sortDirection) {
             result.sort((a, b) => {
                 let aVal: any, bVal: any;
                 switch (sortKey) {
-                    case "description": aVal = a.description?.toLowerCase() || ""; bVal = b.description?.toLowerCase() || ""; break;
-                    case "addedFrom": aVal = a.addedFrom?.toLowerCase() || ""; bVal = b.addedFrom?.toLowerCase() || ""; break;
-                    case "dateAdded": aVal = a.createdAt?.toMillis?.() || 0; bVal = b.createdAt?.toMillis?.() || 0; break;
-                    default: return 0;
+                    case "description":
+                        aVal = a.description?.toLowerCase() || "";
+                        bVal = b.description?.toLowerCase() || "";
+                        break;
+                    case "addedFrom":
+                        aVal = a.addedFrom?.toLowerCase() || "";
+                        bVal = b.addedFrom?.toLowerCase() || "";
+                        break;
+                    case "dateAdded":
+                        aVal = a.createdAt?.toMillis?.() || 0;
+                        bVal = b.createdAt?.toMillis?.() || 0;
+                        break;
+                    default:
+                        return 0;
                 }
                 if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
                 if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
@@ -236,29 +362,61 @@ export default function LeadNotesPage() {
     const endRecord = Math.min(startIndex + recordsPerPage, processedNotes.length);
 
     // Selection handlers
-    const handleSelectAll = () => { setSelectedIds(processedNotes.map(n => n.id)); };
-    const handleClearSelection = () => { setSelectedIds([]); };
-    const handleSelectPage = () => { setSelectedIds(paginatedNotes.map(n => n.id)); };
-    const toggleSelect = (id: string) => { setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
-    const isAllSelected = paginatedNotes.length > 0 && paginatedNotes.every(n => selectedIds.includes(n.id));
-    const isSomeSelected = paginatedNotes.some(n => selectedIds.includes(n.id)) && !isAllSelected;
+    const handleSelectAll = () => {
+        setSelectedIds(processedNotes.map((n) => n.id));
+    };
+    const handleClearSelection = () => {
+        setSelectedIds([]);
+    };
+    const handleSelectPage = () => {
+        setSelectedIds(paginatedNotes.map((n) => n.id));
+    };
+    const toggleSelect = (id: string) => {
+        setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+    };
+    const isAllSelected = paginatedNotes.length > 0 && paginatedNotes.every((n) => selectedIds.includes(n.id));
+    const isSomeSelected = paginatedNotes.some((n) => selectedIds.includes(n.id)) && !isAllSelected;
 
     // Keyboard navigation
-    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-        if (focusedRowIndex === null || paginatedNotes.length === 0) return;
-        switch (e.key) {
-            case "ArrowDown": e.preventDefault(); setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedNotes.length - 1)); break;
-            case "ArrowUp": e.preventDefault(); setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0)); break;
-            case " ": e.preventDefault(); toggleSelect(paginatedNotes[focusedRowIndex].id); break;
-            case "Delete": e.preventDefault(); setDeletingId(paginatedNotes[focusedRowIndex].id); break;
-            case "Enter": e.preventDefault(); setEditingId(paginatedNotes[focusedRowIndex].id); setEditText(paginatedNotes[focusedRowIndex].description); break;
-        }
-    }, [focusedRowIndex, paginatedNotes]);
+    const handleKeyDown = useCallback(
+        (e: KeyboardEvent<HTMLDivElement>) => {
+            if (focusedRowIndex === null || paginatedNotes.length === 0) return;
+            switch (e.key) {
+                case "ArrowDown":
+                    e.preventDefault();
+                    setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedNotes.length - 1));
+                    break;
+                case "ArrowUp":
+                    e.preventDefault();
+                    setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0));
+                    break;
+                case " ":
+                    e.preventDefault();
+                    toggleSelect(paginatedNotes[focusedRowIndex].id);
+                    break;
+                case "Delete":
+                    e.preventDefault();
+                    setDeletingId(paginatedNotes[focusedRowIndex].id);
+                    break;
+                case "Enter":
+                    e.preventDefault();
+                    setEditingId(paginatedNotes[focusedRowIndex].id);
+                    setEditText(paginatedNotes[focusedRowIndex].description);
+                    break;
+            }
+        },
+        [focusedRowIndex, paginatedNotes]
+    );
 
-    const visibleColumns = DEFAULT_COLUMNS.filter(c => columnVisibility[c.key]);
+    const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]);
 
     if (leadLoading || loading) {
-        return <div className="p-8 flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />Loading notes...</div>;
+        return (
+            <div className="p-8 flex items-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Loading notes...
+            </div>
+        );
     }
 
     return (
@@ -266,19 +424,47 @@ export default function LeadNotesPage() {
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Notes</h1>
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={() => setShowNewNote(!showNewNote)}>
-                        <Plus className="mr-2 h-4 w-4" />{showNewNote ? "Cancel" : "New Note"}
+                    <Button
+                        className="bg-gray-900 text-white hover:bg-gray-800"
+                        onClick={() => setShowNewNote(!showNewNote)}
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        {showNewNote ? "Cancel" : "New Note"}
                     </Button>
                 </div>
 
                 {/* New Note Form */}
                 {showNewNote && (
                     <div className="bg-white rounded-lg border p-4 space-y-3">
-                        <Textarea placeholder="Enter note description..." className="min-h-[100px]" value={newNoteText} onChange={(e) => setNewNoteText(e.target.value)} />
+                        <Textarea
+                            placeholder="Enter note description..."
+                            className="min-h-[100px]"
+                            value={newNoteText}
+                            onChange={(e) => setNewNoteText(e.target.value)}
+                        />
                         <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => { setShowNewNote(false); setNewNoteText(""); }}>Cancel</Button>
-                            <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={handleSaveNewNote} disabled={saving || !newNoteText.trim()}>
-                                {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : "Save Note"}
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShowNewNote(false);
+                                    setNewNoteText("");
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                className="bg-gray-900 text-white hover:bg-gray-800"
+                                onClick={handleSaveNewNote}
+                                disabled={saving || !newNoteText.trim()}
+                            >
+                                {saving ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    "Save Note"
+                                )}
                             </Button>
                         </div>
                     </div>
@@ -289,42 +475,91 @@ export default function LeadNotesPage() {
                     {/* Actions Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><MoreVertical className="h-4 w-4 mr-1" />Actions<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                            <Button variant="outline">
+                                <MoreVertical className="h-4 w-4 mr-1" />
+                                Actions
+                                <ChevronDown className="ml-1 h-4 w-4" />
+                            </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            <DropdownMenuItem onClick={handleExport}><Download className="h-4 w-4 mr-2" />Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleExport}>
+                                <Download className="h-4 w-4 mr-2" />
+                                Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            {selectedIds.length > 0 && <DropdownMenuItem onClick={handleBulkDelete} className="text-red-600"><Trash2 className="h-4 w-4 mr-2" />Delete Selected ({selectedIds.length})</DropdownMenuItem>}
+                            {selectedIds.length > 0 && (
+                                <DropdownMenuItem onClick={handleBulkDelete} className="text-red-600">
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Selected ({selectedIds.length})
+                                </DropdownMenuItem>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
 
                     {/* Display Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><LayoutList className="h-4 w-4 mr-1" />Display<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                            <Button variant="outline">
+                                <LayoutList className="h-4 w-4 mr-1" />
+                                Display
+                                <ChevronDown className="ml-1 h-4 w-4" />
+                            </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-48">
                             <DropdownMenuLabel>Density</DropdownMenuLabel>
-                            <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
+                            <DropdownMenuRadioGroup
+                                value={rowDensity}
+                                onValueChange={(v) => setRowDensity(v as RowDensity)}
+                            >
                                 <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuLabel>Columns</DropdownMenuLabel>
-                            {DEFAULT_COLUMNS.map(col => (
-                                <DropdownMenuCheckboxItem key={col.key} checked={columnVisibility[col.key]} onCheckedChange={() => toggleColumn(col.key)}>{col.label}</DropdownMenuCheckboxItem>
+                            {DEFAULT_COLUMNS.map((col) => (
+                                <DropdownMenuCheckboxItem
+                                    key={col.key}
+                                    checked={columnVisibility[col.key]}
+                                    onCheckedChange={() => toggleColumn(col.key)}
+                                >
+                                    {col.label}
+                                </DropdownMenuCheckboxItem>
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
 
                     {/* Refresh */}
-                    <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setSearchQuery(""); setSortKey(null); setSortDirection(null); setSelectedIds([]); }}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Reset filters</TooltipContent></Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                    setSearchQuery("");
+                                    setSortKey(null);
+                                    setSortDirection(null);
+                                    setSelectedIds([]);
+                                }}
+                            >
+                                <RotateCcw className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Reset filters</TooltipContent>
+                    </Tooltip>
 
                     <div className="flex-1" />
 
                     {/* Records Per Page */}
-                    <Select value={String(recordsPerPage)} onValueChange={(v) => { setRecordsPerPage(Number(v)); setCurrentPage(1); }}>
-                        <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
+                    <Select
+                        value={String(recordsPerPage)}
+                        onValueChange={(v) => {
+                            setRecordsPerPage(Number(v));
+                            setCurrentPage(1);
+                        }}
+                    >
+                        <SelectTrigger className="w-[70px]">
+                            <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="10">10</SelectItem>
                             <SelectItem value="25">25</SelectItem>
@@ -336,22 +571,44 @@ export default function LeadNotesPage() {
                     {/* Search */}
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search..." className="pl-9" autoComplete="new-password" name="notes-search-nofill" data-lpignore="true" data-1p-ignore="true" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                        <Input
+                            placeholder="Search..."
+                            className="pl-9"
+                            autoComplete="new-password"
+                            name="notes-search-nofill"
+                            data-lpignore="true"
+                            data-1p-ignore="true"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
                 </div>
 
                 {/* Top Pagination */}
                 {processedNotes.length > 0 && (
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedNotes.length} startRecord={startRecord} endRecord={endRecord} />
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        totalRecords={processedNotes.length}
+                        startRecord={startRecord}
+                        endRecord={endRecord}
+                    />
                 )}
 
                 {/* Selection Banner */}
                 {selectedIds.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
-                        <span className="text-blue-800 text-sm font-medium">{selectedIds.length} note{selectedIds.length > 1 ? "s" : ""} selected</span>
+                        <span className="text-blue-800 text-sm font-medium">
+                            {selectedIds.length} note{selectedIds.length > 1 ? "s" : ""} selected
+                        </span>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={handleSelectAll}>Select All ({processedNotes.length})</Button>
-                            <Button variant="outline" size="sm" onClick={handleClearSelection}>Clear</Button>
+                            <Button variant="outline" size="sm" onClick={handleSelectAll}>
+                                Select All ({processedNotes.length})
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={handleClearSelection}>
+                                Clear
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -362,53 +619,158 @@ export default function LeadNotesPage() {
                         <TableHeader>
                             <TableRow className="bg-gray-50/80">
                                 <TableHead className="w-12 bg-gray-100/50">
-                                    <Checkbox checked={isAllSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={(checked) => { if (checked) handleSelectPage(); else handleClearSelection(); }} />
+                                    <Checkbox
+                                        checked={isAllSelected}
+                                        ref={(el) => {
+                                            if (el) (el as any).indeterminate = isSomeSelected;
+                                        }}
+                                        onCheckedChange={(checked) => {
+                                            if (checked) handleSelectPage();
+                                            else handleClearSelection();
+                                        }}
+                                    />
                                 </TableHead>
-                                {visibleColumns.map(col => (
-                                    <TableHead key={col.key} className="font-semibold text-gray-900 bg-gray-100/50" style={{ minWidth: col.width }}>
+                                {visibleColumns.map((col) => (
+                                    <TableHead
+                                        key={col.key}
+                                        className="font-semibold text-gray-900 bg-gray-100/50"
+                                        style={{ minWidth: col.width }}
+                                    >
                                         {col.sortable ? (
-                                            <Button variant="ghost" className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200" onClick={() => handleSort(col.key)}>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200"
+                                                onClick={() => handleSort(col.key)}
+                                            >
                                                 {col.label}
-                                                {sortKey === col.key ? (sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />) : <ArrowUpDown className="ml-1 h-4 w-4 opacity-40" />}
+                                                {sortKey === col.key ? (
+                                                    sortDirection === "asc" ? (
+                                                        <ArrowUp className="ml-1 h-4 w-4" />
+                                                    ) : (
+                                                        <ArrowDown className="ml-1 h-4 w-4" />
+                                                    )
+                                                ) : (
+                                                    <ArrowUpDown className="ml-1 h-4 w-4 opacity-40" />
+                                                )}
                                             </Button>
-                                        ) : col.label}
+                                        ) : (
+                                            col.label
+                                        )}
                                     </TableHead>
                                 ))}
-                                <TableHead className="w-24 font-semibold text-gray-900 bg-gray-100/50">Actions</TableHead>
+                                <TableHead className="w-24 font-semibold text-gray-900 bg-gray-100/50">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {paginatedNotes.length === 0 ? (
-                                <TableRow><TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-gray-500">{searchQuery ? "No notes match your search." : "No notes found. Add a note to get started."}</TableCell></TableRow>
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={visibleColumns.length + 2}
+                                        className="text-center py-8 text-gray-500"
+                                    >
+                                        {searchQuery
+                                            ? "No notes match your search."
+                                            : "No notes found. Add a note to get started."}
+                                    </TableCell>
+                                </TableRow>
                             ) : (
                                 paginatedNotes.map((note, index) => (
-                                    <TableRow key={note.id} className={`group hover:bg-gray-50 ${focusedRowIndex === index ? "bg-blue-50" : ""} ${selectedIds.includes(note.id) ? "bg-blue-50/50" : ""}`} onClick={() => setFocusedRowIndex(index)}>
+                                    <TableRow
+                                        key={note.id}
+                                        className={`group hover:bg-gray-50 ${focusedRowIndex === index ? "bg-blue-50" : ""} ${selectedIds.includes(note.id) ? "bg-blue-50/50" : ""}`}
+                                        onClick={() => setFocusedRowIndex(index)}
+                                    >
                                         <TableCell className={ROW_DENSITY_STYLES[rowDensity]}>
-                                            <Checkbox checked={selectedIds.includes(note.id)} onCheckedChange={() => toggleSelect(note.id)} onClick={(e) => e.stopPropagation()} />
+                                            <Checkbox
+                                                checked={selectedIds.includes(note.id)}
+                                                onCheckedChange={() => toggleSelect(note.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
                                         </TableCell>
-                                        {visibleColumns.map(col => (
-                                            <TableCell key={col.key} className={`${ROW_DENSITY_STYLES[rowDensity]} max-w-md`}>
-                                                {col.key === "description" && (
-                                                    editingId === note.id ? (
+                                        {visibleColumns.map((col) => (
+                                            <TableCell
+                                                key={col.key}
+                                                className={`${ROW_DENSITY_STYLES[rowDensity]} max-w-md`}
+                                            >
+                                                {col.key === "description" &&
+                                                    (editingId === note.id ? (
                                                         <div className="space-y-2">
-                                                            <Textarea value={editText} onChange={(e) => setEditText(e.target.value)} className="min-h-[80px]" />
+                                                            <Textarea
+                                                                value={editText}
+                                                                onChange={(e) => setEditText(e.target.value)}
+                                                                className="min-h-[80px]"
+                                                            />
                                                             <div className="flex gap-2 justify-end">
-                                                                <Button variant="outline" size="sm" onClick={() => setEditingId(null)}>Cancel</Button>
-                                                                <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white" onClick={() => saveEdit(note.id)}>Save</Button>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => setEditingId(null)}
+                                                                >
+                                                                    Cancel
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    className="bg-gray-900 hover:bg-gray-800 text-white"
+                                                                    onClick={() => saveEdit(note.id)}
+                                                                >
+                                                                    Save
+                                                                </Button>
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="whitespace-pre-wrap text-gray-700 line-clamp-3"><HighlightText text={note.description} search={searchQuery} /></div>
-                                                    )
+                                                        <div className="whitespace-pre-wrap text-gray-700 line-clamp-3">
+                                                            <HighlightText
+                                                                text={note.description}
+                                                                search={searchQuery}
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                {col.key === "addedFrom" && (
+                                                    <span className="text-gray-600">
+                                                        <HighlightText
+                                                            text={note.addedFrom || "-"}
+                                                            search={searchQuery}
+                                                        />
+                                                    </span>
                                                 )}
-                                                {col.key === "addedFrom" && <span className="text-gray-600"><HighlightText text={note.addedFrom || "-"} search={searchQuery} /></span>}
-                                                {col.key === "dateAdded" && <span className="text-gray-600 text-xs">{note.dateAdded}</span>}
+                                                {col.key === "dateAdded" && (
+                                                    <span className="text-gray-600 text-xs">{note.dateAdded}</span>
+                                                )}
                                             </TableCell>
                                         ))}
                                         <TableCell className={`${ROW_DENSITY_STYLES[rowDensity]} overflow-visible`}>
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingId(note.id); setEditText(note.description); }}><SquarePen className="h-4 w-4 text-gray-500" /></Button></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
-                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeletingId(note.id)}><Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7"
+                                                            onClick={() => {
+                                                                setEditingId(note.id);
+                                                                setEditText(note.description);
+                                                            }}
+                                                        >
+                                                            <SquarePen className="h-4 w-4 text-gray-500" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Edit</TooltipContent>
+                                                </Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7"
+                                                            onClick={() => setDeletingId(note.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Delete</TooltipContent>
+                                                </Tooltip>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -420,7 +782,14 @@ export default function LeadNotesPage() {
 
                 {/* Bottom Pagination */}
                 {processedNotes.length > 0 && (
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedNotes.length} startRecord={startRecord} endRecord={endRecord} />
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        totalRecords={processedNotes.length}
+                        startRecord={startRecord}
+                        endRecord={endRecord}
+                    />
                 )}
 
                 {/* Delete Confirmation */}
@@ -428,11 +797,21 @@ export default function LeadNotesPage() {
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Delete Note?</AlertDialogTitle>
-                            <AlertDialogDescription>This action cannot be undone. This will permanently delete this note.</AlertDialogDescription>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this note.
+                            </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => { if (deletingId) deleteNote(deletingId); setDeletingId(null); }}>Delete</AlertDialogAction>
+                            <AlertDialogAction
+                                className="bg-red-600 hover:bg-red-700"
+                                onClick={() => {
+                                    if (deletingId) deleteNote(deletingId);
+                                    setDeletingId(null);
+                                }}
+                            >
+                                Delete
+                            </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>

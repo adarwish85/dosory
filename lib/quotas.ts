@@ -1,6 +1,14 @@
 import { adminDb } from "@/lib/firebase-admin";
 
-export type QuotaResource = "staff" | "invoices" | "estimates" | "clients" | "contacts" | "projects" | "tasks" | "leads";
+export type QuotaResource =
+    | "staff"
+    | "invoices"
+    | "estimates"
+    | "clients"
+    | "contacts"
+    | "projects"
+    | "tasks"
+    | "leads";
 
 /**
  * Checks if an organization has reached its quota for a specific resource.
@@ -34,7 +42,7 @@ export async function checkQuota(orgId: string, resource: QuotaResource) {
         }
 
         if (limit === undefined) {
-            // Config error or resource not strictly limited? 
+            // Config error or resource not strictly limited?
             // Assume blocked to be safe, or unlimited?
             // Going with: if not defined, it's 0 (blocked) unless explicitly -1
             return { allowed: false, limit: 0, current: 0, error: `Quota not defined for ${resource}` };
@@ -57,16 +65,13 @@ export async function checkQuota(orgId: string, resource: QuotaResource) {
             contacts: "contacts",
             projects: "projects",
             tasks: "tasks",
-            leads: "leads"
+            leads: "leads",
         };
 
         const collectionName = collectionMap[resource];
 
         if (collectionName) {
-            const snapshot = await adminDb.collection(collectionName)
-                .where("orgId", "==", orgId)
-                .count()
-                .get();
+            const snapshot = await adminDb.collection(collectionName).where("orgId", "==", orgId).count().get();
             current = snapshot.data().count;
         }
 
@@ -76,7 +81,6 @@ export async function checkQuota(orgId: string, resource: QuotaResource) {
         }
 
         return { allowed: true, limit, current };
-
     } catch (error) {
         console.error("Check Quota Error:", error);
         // Fail open or closed? Closed (secure)

@@ -35,7 +35,7 @@ export default function VaultPage() {
     };
 
     const toggleVisibility = (id: string) => {
-        setVisibleItems(prev => {
+        setVisibleItems((prev) => {
             const next = new Set(prev);
             if (next.has(id)) {
                 next.delete(id);
@@ -76,7 +76,9 @@ export default function VaultPage() {
                                 <SelectItem value="25">25</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="icon">
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
                     </div>
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -92,7 +94,9 @@ export default function VaultPage() {
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Content</TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Visibility</TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Created</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50 text-right">Actions</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50 text-right">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -115,11 +119,17 @@ export default function VaultPage() {
                                             {visibleItems.has(item.id) ? item.content : maskContent(item.content)}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge className={`font-normal ${item.visibility === "shared" ? "bg-blue-50 text-blue-600" : "bg-gray-50 text-gray-600"}`}>
+                                            <Badge
+                                                className={`font-normal ${item.visibility === "shared" ? "bg-blue-50 text-blue-600" : "bg-gray-50 text-gray-600"}`}
+                                            >
                                                 {item.visibility === "shared" ? (
-                                                    <><Users className="h-3 w-3 mr-1" /> Shared</>
+                                                    <>
+                                                        <Users className="h-3 w-3 mr-1" /> Shared
+                                                    </>
                                                 ) : (
-                                                    <><Lock className="h-3 w-3 mr-1" /> Private</>
+                                                    <>
+                                                        <Lock className="h-3 w-3 mr-1" /> Private
+                                                    </>
                                                 )}
                                             </Badge>
                                         </TableCell>

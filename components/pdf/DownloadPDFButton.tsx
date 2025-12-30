@@ -83,7 +83,6 @@ export default function DownloadPDFButton({
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-
         } catch (error) {
             console.error("Error generating PDF:", error);
         } finally {
@@ -92,13 +91,7 @@ export default function DownloadPDFButton({
     };
 
     return (
-        <Button
-            variant={variant}
-            size={size}
-            onClick={handleDownload}
-            disabled={generating}
-            className={className}
-        >
+        <Button variant={variant} size={size} onClick={handleDownload} disabled={generating} className={className}>
             {generating ? (
                 <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -113,4 +106,3 @@ export default function DownloadPDFButton({
         </Button>
     );
 }
-

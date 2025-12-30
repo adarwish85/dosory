@@ -22,7 +22,7 @@ export async function POST(req: Request) {
         const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
             method: "POST",
             headers: {
-                "Authorization": `Basic ${auth}`,
+                Authorization: `Basic ${auth}`,
                 "Content-Type": "application/x-www-form-urlencoded",
             },
             body: "grant_type=client_credentials",
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         const orderResponse = await fetch(`${baseUrl}/v2/checkout/orders`, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -54,7 +54,6 @@ export async function POST(req: Request) {
 
         const order = await orderResponse.json();
         return NextResponse.json(order);
-
     } catch (error: any) {
         console.error("Create Order Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });

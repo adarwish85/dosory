@@ -14,7 +14,7 @@ export async function setContactAuthPassword(email: string, password: string, di
             });
             return { success: true, uid: user.uid, action: "updated" };
         } catch (error: any) {
-            if (error.code === 'auth/user-not-found') {
+            if (error.code === "auth/user-not-found") {
                 // User doesn't exist, create new user
                 const user = await adminAuth.createUser({
                     email: email,

@@ -13,15 +13,38 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-    DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem,
-    DropdownMenuRadioGroup, DropdownMenuRadioItem
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuCheckboxItem,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import {
-    Search, Plus, MoreVertical, ChevronDown, LayoutList, Download,
-    ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, Eye, Pencil,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-    FileSignature, DollarSign, CheckCircle2, RefreshCw
+    Search,
+    Plus,
+    MoreVertical,
+    ChevronDown,
+    LayoutList,
+    Download,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
+    RotateCcw,
+    Loader2,
+    Eye,
+    Pencil,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+    FileSignature,
+    DollarSign,
+    CheckCircle2,
+    RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -31,7 +54,13 @@ type SortDirection = "asc" | "desc" | null;
 type RowDensity = "compact" | "comfortable";
 type ColumnKey = "subject" | "value" | "type" | "startDate" | "endDate" | "status";
 
-interface ColumnDef { key: ColumnKey; label: string; defaultVisible: boolean; sortable?: boolean; width?: number; }
+interface ColumnDef {
+    key: ColumnKey;
+    label: string;
+    defaultVisible: boolean;
+    sortable?: boolean;
+    width?: number;
+}
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
     { key: "subject", label: "Subject", defaultVisible: true, sortable: true, width: 200 },
@@ -47,25 +76,84 @@ const ROW_DENSITY_STYLES: Record<RowDensity, string> = { compact: "py-1 text-xs"
 // Highlight text component
 function HighlightText({ text, search }: { text: string; search: string }) {
     if (!search.trim() || !text) return <>{text}</>;
-    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
     const parts = text.split(regex);
-    return <>{parts.map((part, i) => regex.test(part) ? <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark> : <span key={i}>{part}</span>)}</>;
+    return (
+        <>
+            {parts.map((part, i) =>
+                regex.test(part) ? (
+                    <mark key={i} className="bg-yellow-200 px-0.5 rounded">
+                        {part}
+                    </mark>
+                ) : (
+                    <span key={i}>{part}</span>
+                )
+            )}
+        </>
+    );
 }
 
 // Pagination component
-function Pagination({ currentPage, totalPages, onPageChange, totalRecords, startRecord, endRecord }: {
-    currentPage: number; totalPages: number; onPageChange: (page: number) => void;
-    totalRecords: number; startRecord: number; endRecord: number;
+function Pagination({
+    currentPage,
+    totalPages,
+    onPageChange,
+    totalRecords,
+    startRecord,
+    endRecord,
+}: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    totalRecords: number;
+    startRecord: number;
+    endRecord: number;
 }) {
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Showing {startRecord} to {endRecord} of {totalRecords}</span>
+            <span>
+                Showing {startRecord} to {endRecord} of {totalRecords}
+            </span>
             <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(1)} disabled={currentPage === 1}><ChevronsLeft className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></Button>
-                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium">{currentPage} / {totalPages}</span>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-4 w-4" /></Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(1)}
+                    disabled={currentPage === 1}
+                >
+                    <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium">
+                    {currentPage} / {totalPages}
+                </span>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                >
+                    <ChevronsRight className="h-4 w-4" />
+                </Button>
             </div>
         </div>
     );
@@ -73,7 +161,11 @@ function Pagination({ currentPage, totalPages, onPageChange, totalRecords, start
 
 export default function ContractsPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
-    const { contracts, loading: contractsLoading, contractStats } = useContracts({ customerId: customerId || undefined });
+    const {
+        contracts,
+        loading: contractsLoading,
+        contractStats,
+    } = useContracts({ customerId: customerId || undefined });
     const { formatDate, formatCurrency } = useFormatters();
     const { t } = useTranslation();
     const tableRef = useRef<HTMLDivElement>(null);
@@ -84,7 +176,12 @@ export default function ContractsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(25);
     const [columnVisibility, setColumnVisibility] = useState<Record<ColumnKey, boolean>>({
-        subject: true, value: true, type: true, startDate: true, endDate: true, status: true
+        subject: true,
+        value: true,
+        type: true,
+        startDate: true,
+        endDate: true,
+        status: true,
     });
     const [sortKey, setSortKey] = useState<ColumnKey | null>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -108,12 +205,12 @@ export default function ContractsPage() {
         return styles[status] || "bg-gray-50 text-gray-600 border-gray-100";
     };
 
-    const formatStatus = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    const formatStatus = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
     // Sort handler
     const handleSort = (key: ColumnKey) => {
         if (sortKey === key) {
-            setSortDirection(prev => prev === "asc" ? "desc" : prev === "desc" ? null : "asc");
+            setSortDirection((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"));
             if (sortDirection === "desc") setSortKey(null);
         } else {
             setSortKey(key);
@@ -122,30 +219,50 @@ export default function ContractsPage() {
     };
 
     // Toggle column
-    const toggleColumn = (key: ColumnKey) => setColumnVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+    const toggleColumn = (key: ColumnKey) => setColumnVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
 
     // Process contracts
     const processedContracts = useMemo(() => {
         let result = [...contracts];
         if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
-            result = result.filter(c =>
-                c.subject.toLowerCase().includes(lowerQuery) ||
-                (c.contractType || "").toLowerCase().includes(lowerQuery) ||
-                c.status.toLowerCase().includes(lowerQuery)
+            result = result.filter(
+                (c) =>
+                    c.subject.toLowerCase().includes(lowerQuery) ||
+                    (c.contractType || "").toLowerCase().includes(lowerQuery) ||
+                    c.status.toLowerCase().includes(lowerQuery)
             );
         }
         if (sortKey && sortDirection) {
             result.sort((a, b) => {
                 let aVal: any, bVal: any;
                 switch (sortKey) {
-                    case "subject": aVal = a.subject || ""; bVal = b.subject || ""; break;
-                    case "value": aVal = a.contractValue || 0; bVal = b.contractValue || 0; break;
-                    case "type": aVal = a.contractType || ""; bVal = b.contractType || ""; break;
-                    case "startDate": aVal = a.startDate?.toMillis?.() || 0; bVal = b.startDate?.toMillis?.() || 0; break;
-                    case "endDate": aVal = a.endDate?.toMillis?.() || 0; bVal = b.endDate?.toMillis?.() || 0; break;
-                    case "status": aVal = a.status || ""; bVal = b.status || ""; break;
-                    default: return 0;
+                    case "subject":
+                        aVal = a.subject || "";
+                        bVal = b.subject || "";
+                        break;
+                    case "value":
+                        aVal = a.contractValue || 0;
+                        bVal = b.contractValue || 0;
+                        break;
+                    case "type":
+                        aVal = a.contractType || "";
+                        bVal = b.contractType || "";
+                        break;
+                    case "startDate":
+                        aVal = a.startDate?.toMillis?.() || 0;
+                        bVal = b.startDate?.toMillis?.() || 0;
+                        break;
+                    case "endDate":
+                        aVal = a.endDate?.toMillis?.() || 0;
+                        bVal = b.endDate?.toMillis?.() || 0;
+                        break;
+                    case "status":
+                        aVal = a.status || "";
+                        bVal = b.status || "";
+                        break;
+                    default:
+                        return 0;
                 }
                 if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
                 if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
@@ -163,38 +280,66 @@ export default function ContractsPage() {
     const endRecord = Math.min(startIndex + recordsPerPage, processedContracts.length);
 
     // Selection handlers
-    const handleSelectAll = () => setSelectedIds(processedContracts.map(c => c.id));
+    const handleSelectAll = () => setSelectedIds(processedContracts.map((c) => c.id));
     const handleClearSelection = () => setSelectedIds([]);
-    const handleSelectPage = () => setSelectedIds(paginatedContracts.map(c => c.id));
-    const toggleSelect = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-    const isAllSelected = paginatedContracts.length > 0 && paginatedContracts.every(c => selectedIds.includes(c.id));
-    const isSomeSelected = paginatedContracts.some(c => selectedIds.includes(c.id)) && !isAllSelected;
+    const handleSelectPage = () => setSelectedIds(paginatedContracts.map((c) => c.id));
+    const toggleSelect = (id: string) =>
+        setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+    const isAllSelected = paginatedContracts.length > 0 && paginatedContracts.every((c) => selectedIds.includes(c.id));
+    const isSomeSelected = paginatedContracts.some((c) => selectedIds.includes(c.id)) && !isAllSelected;
 
     // Export
     const handleExport = () => {
-        const dataToExport = selectedIds.length > 0 ? contracts.filter(c => selectedIds.includes(c.id)) : processedContracts;
-        const csv = ["Subject,Type,Value,Start Date,End Date,Status", ...dataToExport.map(c => `"${c.subject}","${c.contractType || ''}","${c.contractValue || 0}","${formatDate(c.startDate)}","${formatDate(c.endDate)}","${c.status}"`)].join("\n");
+        const dataToExport =
+            selectedIds.length > 0 ? contracts.filter((c) => selectedIds.includes(c.id)) : processedContracts;
+        const csv = [
+            "Subject,Type,Value,Start Date,End Date,Status",
+            ...dataToExport.map(
+                (c) =>
+                    `"${c.subject}","${c.contractType || ""}","${c.contractValue || 0}","${formatDate(c.startDate)}","${formatDate(c.endDate)}","${c.status}"`
+            ),
+        ].join("\n");
         const blob = new Blob([csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a"); a.href = url; a.download = "contracts-export.csv"; a.click();
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "contracts-export.csv";
+        a.click();
         URL.revokeObjectURL(url);
         toast.success("Exported successfully");
     };
 
     // Keyboard navigation
-    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-        if (focusedRowIndex === null || paginatedContracts.length === 0) return;
-        switch (e.key) {
-            case "ArrowDown": e.preventDefault(); setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedContracts.length - 1)); break;
-            case "ArrowUp": e.preventDefault(); setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0)); break;
-            case " ": e.preventDefault(); toggleSelect(paginatedContracts[focusedRowIndex].id); break;
-        }
-    }, [focusedRowIndex, paginatedContracts]);
+    const handleKeyDown = useCallback(
+        (e: KeyboardEvent<HTMLDivElement>) => {
+            if (focusedRowIndex === null || paginatedContracts.length === 0) return;
+            switch (e.key) {
+                case "ArrowDown":
+                    e.preventDefault();
+                    setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedContracts.length - 1));
+                    break;
+                case "ArrowUp":
+                    e.preventDefault();
+                    setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0));
+                    break;
+                case " ":
+                    e.preventDefault();
+                    toggleSelect(paginatedContracts[focusedRowIndex].id);
+                    break;
+            }
+        },
+        [focusedRowIndex, paginatedContracts]
+    );
 
-    const visibleColumns = DEFAULT_COLUMNS.filter(c => columnVisibility[c.key]);
+    const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]);
 
     if (customerLoading || contractsLoading) {
-        return <div className="p-8 flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />Loading contracts...</div>;
+        return (
+            <div className="p-8 flex items-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Loading contracts...
+            </div>
+        );
     }
 
     return (
@@ -205,20 +350,37 @@ export default function ContractsPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                         <Link href={`/dashboard/contracts/new?customerId=${customerId}`}>
                             <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                                <Plus className="mr-2 h-4 w-4" />New Contract
+                                <Plus className="mr-2 h-4 w-4" />
+                                New Contract
                             </Button>
                         </Link>
                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="outline" size="icon"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="icon">
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={handleExport}><Download className="h-4 w-4 mr-2" />Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}</DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleExport}>
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                         {selectedIds.length > 0 && (
                             <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-1.5 flex items-center gap-2">
                                 <span className="text-blue-800 text-sm font-medium">{selectedIds.length} selected</span>
-                                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={handleSelectAll}>All ({processedContracts.length})</Button>
-                                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={handleClearSelection}>Clear</Button>
+                                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={handleSelectAll}>
+                                    All ({processedContracts.length})
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 text-xs"
+                                    onClick={handleClearSelection}
+                                >
+                                    Clear
+                                </Button>
                             </div>
                         )}
                     </div>
@@ -226,29 +388,63 @@ export default function ContractsPage() {
                     <div className="flex items-center gap-2 flex-1 w-full max-w-md mx-6">
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                            <Input placeholder="Search contracts..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                            <Input
+                                placeholder="Search contracts..."
+                                className="pl-9"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline"><LayoutList className="h-4 w-4 mr-1" />Display<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                                <Button variant="outline">
+                                    <LayoutList className="h-4 w-4 mr-1" />
+                                    Display
+                                    <ChevronDown className="ml-1 h-4 w-4" />
+                                </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-48">
                                 <DropdownMenuLabel>Row Density</DropdownMenuLabel>
-                                <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
+                                <DropdownMenuRadioGroup
+                                    value={rowDensity}
+                                    onValueChange={(v) => setRowDensity(v as RowDensity)}
+                                >
                                     <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
                                     <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuLabel>Columns</DropdownMenuLabel>
-                                {DEFAULT_COLUMNS.map(col => (
-                                    <DropdownMenuCheckboxItem key={col.key} checked={columnVisibility[col.key]} onCheckedChange={() => toggleColumn(col.key)}>{col.label}</DropdownMenuCheckboxItem>
+                                {DEFAULT_COLUMNS.map((col) => (
+                                    <DropdownMenuCheckboxItem
+                                        key={col.key}
+                                        checked={columnVisibility[col.key]}
+                                        onCheckedChange={() => toggleColumn(col.key)}
+                                    >
+                                        {col.label}
+                                    </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setSearchQuery(""); setSortKey(null); setSortDirection(null); setSelectedIds([]); }}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Reset</TooltipContent></Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => {
+                                        setSearchQuery("");
+                                        setSortKey(null);
+                                        setSortDirection(null);
+                                        setSelectedIds([]);
+                                    }}
+                                >
+                                    <RotateCcw className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Reset</TooltipContent>
+                        </Tooltip>
                     </div>
                 </div>
 
@@ -258,52 +454,129 @@ export default function ContractsPage() {
                         <TableHeader>
                             <TableRow className="bg-gray-50/80">
                                 <TableHead className="w-12 bg-gray-100/50">
-                                    <Checkbox checked={isAllSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={(checked) => { if (checked) handleSelectPage(); else handleClearSelection(); }} />
+                                    <Checkbox
+                                        checked={isAllSelected}
+                                        ref={(el) => {
+                                            if (el) (el as any).indeterminate = isSomeSelected;
+                                        }}
+                                        onCheckedChange={(checked) => {
+                                            if (checked) handleSelectPage();
+                                            else handleClearSelection();
+                                        }}
+                                    />
                                 </TableHead>
-                                {visibleColumns.map(col => (
-                                    <TableHead key={col.key} className="font-semibold text-gray-900 bg-gray-100/50" style={{ minWidth: col.width }}>
+                                {visibleColumns.map((col) => (
+                                    <TableHead
+                                        key={col.key}
+                                        className="font-semibold text-gray-900 bg-gray-100/50"
+                                        style={{ minWidth: col.width }}
+                                    >
                                         {col.sortable ? (
-                                            <Button variant="ghost" className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200" onClick={() => handleSort(col.key)}>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200"
+                                                onClick={() => handleSort(col.key)}
+                                            >
                                                 {col.label}
-                                                {sortKey === col.key ? (sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />) : <ArrowUpDown className="ml-1 h-4 w-4 opacity-40" />}
+                                                {sortKey === col.key ? (
+                                                    sortDirection === "asc" ? (
+                                                        <ArrowUp className="ml-1 h-4 w-4" />
+                                                    ) : (
+                                                        <ArrowDown className="ml-1 h-4 w-4" />
+                                                    )
+                                                ) : (
+                                                    <ArrowUpDown className="ml-1 h-4 w-4 opacity-40" />
+                                                )}
                                             </Button>
-                                        ) : col.label}
+                                        ) : (
+                                            col.label
+                                        )}
                                     </TableHead>
                                 ))}
-                                <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">Actions</TableHead>
+                                <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {paginatedContracts.length === 0 ? (
-                                <TableRow><TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-gray-500">{searchQuery ? "No contracts match your search." : `No contracts found for ${customer?.company || "this customer"}.`}</TableCell></TableRow>
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={visibleColumns.length + 2}
+                                        className="text-center py-8 text-gray-500"
+                                    >
+                                        {searchQuery
+                                            ? "No contracts match your search."
+                                            : `No contracts found for ${customer?.company || "this customer"}.`}
+                                    </TableCell>
+                                </TableRow>
                             ) : (
                                 paginatedContracts.map((contract, index) => (
-                                    <TableRow key={contract.id} className={`group hover:bg-gray-50 ${focusedRowIndex === index ? "bg-blue-50" : ""} ${selectedIds.includes(contract.id) ? "bg-blue-50/50" : ""}`} onClick={() => setFocusedRowIndex(index)}>
+                                    <TableRow
+                                        key={contract.id}
+                                        className={`group hover:bg-gray-50 ${focusedRowIndex === index ? "bg-blue-50" : ""} ${selectedIds.includes(contract.id) ? "bg-blue-50/50" : ""}`}
+                                        onClick={() => setFocusedRowIndex(index)}
+                                    >
                                         <TableCell className={ROW_DENSITY_STYLES[rowDensity]}>
-                                            <Checkbox checked={selectedIds.includes(contract.id)} onCheckedChange={() => toggleSelect(contract.id)} onClick={(e) => e.stopPropagation()} />
+                                            <Checkbox
+                                                checked={selectedIds.includes(contract.id)}
+                                                onCheckedChange={() => toggleSelect(contract.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
                                         </TableCell>
-                                        {visibleColumns.map(col => (
+                                        {visibleColumns.map((col) => (
                                             <TableCell key={col.key} className={ROW_DENSITY_STYLES[rowDensity]}>
                                                 {col.key === "subject" && (
                                                     <span className="font-medium text-blue-600">
                                                         <HighlightText text={contract.subject} search={searchQuery} />
                                                     </span>
                                                 )}
-                                                {col.key === "value" && <span className="font-medium">{formatCurrency(contract.contractValue)}</span>}
-                                                {col.key === "type" && <span className="text-gray-600">{contract.contractType || "-"}</span>}
-                                                {col.key === "startDate" && <span>{formatDate(contract.startDate)}</span>}
+                                                {col.key === "value" && (
+                                                    <span className="font-medium">
+                                                        {formatCurrency(contract.contractValue)}
+                                                    </span>
+                                                )}
+                                                {col.key === "type" && (
+                                                    <span className="text-gray-600">
+                                                        {contract.contractType || "-"}
+                                                    </span>
+                                                )}
+                                                {col.key === "startDate" && (
+                                                    <span>{formatDate(contract.startDate)}</span>
+                                                )}
                                                 {col.key === "endDate" && <span>{formatDate(contract.endDate)}</span>}
                                                 {col.key === "status" && (
                                                     <Badge className={`${getStatusBadge(contract.status)} font-normal`}>
-                                                        <HighlightText text={formatStatus(contract.status)} search={searchQuery} />
+                                                        <HighlightText
+                                                            text={formatStatus(contract.status)}
+                                                            search={searchQuery}
+                                                        />
                                                     </Badge>
                                                 )}
                                             </TableCell>
                                         ))}
                                         <TableCell className={`${ROW_DENSITY_STYLES[rowDensity]} overflow-visible`}>
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/contracts/${contract.id}`}><Button variant="ghost" size="icon" className="h-7 w-7"><Eye className="h-4 w-4 text-gray-500" /></Button></Link></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
-                                                <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/contracts/${contract.id}/edit`}><Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-4 w-4 text-gray-500" /></Button></Link></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Link href={`/dashboard/contracts/${contract.id}`}>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                                                                <Eye className="h-4 w-4 text-gray-500" />
+                                                            </Button>
+                                                        </Link>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>View</TooltipContent>
+                                                </Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Link href={`/dashboard/contracts/${contract.id}/edit`}>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                                                                <Pencil className="h-4 w-4 text-gray-500" />
+                                                            </Button>
+                                                        </Link>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Edit</TooltipContent>
+                                                </Tooltip>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -319,8 +592,16 @@ export default function ContractsPage() {
                         <span className="text-sm text-gray-600 font-medium">Total: {processedContracts.length}</span>
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500">Rows:</span>
-                            <Select value={recordsPerPage.toString()} onValueChange={(v) => { setRecordsPerPage(parseInt(v)); setCurrentPage(1); }}>
-                                <SelectTrigger className="w-[65px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <Select
+                                value={recordsPerPage.toString()}
+                                onValueChange={(v) => {
+                                    setRecordsPerPage(parseInt(v));
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                <SelectTrigger className="w-[65px] h-8 text-xs">
+                                    <SelectValue />
+                                </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="10">10</SelectItem>
                                     <SelectItem value="25">25</SelectItem>
@@ -330,7 +611,14 @@ export default function ContractsPage() {
                             </Select>
                         </div>
                     </div>
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedContracts.length} startRecord={startRecord} endRecord={endRecord} />
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        totalRecords={processedContracts.length}
+                        startRecord={startRecord}
+                        endRecord={endRecord}
+                    />
                 </div>
             </div>
         </TooltipProvider>

@@ -5,21 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
     LifeBuoy,
     Search,
@@ -80,11 +67,7 @@ export default function PlatformTicketsPage() {
 
     const getStatusBadge = (status: TicketStatus) => {
         const config = TICKET_STATUSES.find((s) => s.value === status);
-        return (
-            <Badge className={cn("font-normal", config?.color)}>
-                {config?.label || status}
-            </Badge>
-        );
+        return <Badge className={cn("font-normal", config?.color)}>{config?.label || status}</Badge>;
     };
 
     const getPriorityBadge = (priority: TicketPriority) => {

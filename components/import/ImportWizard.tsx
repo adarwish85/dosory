@@ -1,7 +1,17 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { X, Upload, FileSpreadsheet, CheckCircle, AlertCircle, Download, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import {
+    X,
+    Upload,
+    FileSpreadsheet,
+    CheckCircle,
+    AlertCircle,
+    Download,
+    ArrowRight,
+    ArrowLeft,
+    Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -19,13 +29,7 @@ import {
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ImportWizardProps {
     open: boolean;
@@ -48,36 +52,37 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
     const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
     const [importResult, setImportResult] = useState({ success: 0, failed: 0 });
 
-    const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = e.target.files?.[0];
-        if (!selectedFile) return;
+    const handleFileChange = useCallback(
+        async (e: React.ChangeEvent<HTMLInputElement>) => {
+            const selectedFile = e.target.files?.[0];
+            if (!selectedFile) return;
 
-        try {
-            setFile(selectedFile);
-            const data = await parseCSV(selectedFile);
-            setParsedData(data);
+            try {
+                setFile(selectedFile);
+                const data = await parseCSV(selectedFile);
+                setParsedData(data);
 
-            // Auto-detect mappings
-            const autoMappings = autoDetectMappings(data.headers, moduleConfig);
-            setMappings(autoMappings);
+                // Auto-detect mappings
+                const autoMappings = autoDetectMappings(data.headers, moduleConfig);
+                setMappings(autoMappings);
 
-            setStep("mapping");
-        } catch (error) {
-            console.error("Error parsing file:", error);
-            alert("Failed to parse file. Please ensure it's a valid CSV.");
-        }
-    }, [moduleConfig]);
+                setStep("mapping");
+            } catch (error) {
+                console.error("Error parsing file:", error);
+                alert("Failed to parse file. Please ensure it's a valid CSV.");
+            }
+        },
+        [moduleConfig]
+    );
 
     const handleMappingChange = (sourceColumn: string, targetField: string) => {
-        setMappings(prev => {
-            const existing = prev.findIndex(m => m.targetField === targetField);
+        setMappings((prev) => {
+            const existing = prev.findIndex((m) => m.targetField === targetField);
             if (existing >= 0) {
                 if (sourceColumn === "ignore") {
                     return prev.filter((_, i) => i !== existing);
                 }
-                return prev.map((m, i) =>
-                    i === existing ? { sourceColumn, targetField } : m
-                );
+                return prev.map((m, i) => (i === existing ? { sourceColumn, targetField } : m));
             }
             if (sourceColumn) {
                 return [...prev, { sourceColumn, targetField }];
@@ -94,7 +99,7 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
         parsedData.rows.forEach((row, index) => {
             const transformedRow = transformRow(row, mappings, moduleConfig);
             const rowErrors = validateRow(transformedRow, moduleConfig);
-            rowErrors.forEach(err => {
+            rowErrors.forEach((err) => {
                 allErrors.push({ ...err, row: index + 1 });
             });
         });
@@ -182,12 +187,8 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900">
-                            Import {moduleConfig.name}
-                        </h2>
-                        <p className="text-sm text-gray-500 mt-1">
-                            Upload a CSV file to import records
-                        </p>
+                        <h2 className="text-xl font-bold text-gray-900">Import {moduleConfig.name}</h2>
+                        <p className="text-sm text-gray-500 mt-1">Upload a CSV file to import records</p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={handleClose}>
                         <X className="h-5 w-5" />
@@ -198,14 +199,16 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                 <div className="flex items-center justify-center gap-2 py-4 border-b bg-gray-50">
                     {["upload", "mapping", "preview", "complete"].map((s, i) => (
                         <div key={s} className="flex items-center gap-2">
-                            <div className={cn(
-                                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
-                                step === s || (step === "importing" && s === "preview")
-                                    ? "bg-blue-600 text-white"
-                                    : ["upload", "mapping", "preview", "importing", "complete"].indexOf(step) > i
-                                        ? "bg-green-600 text-white"
-                                        : "bg-gray-200 text-gray-600"
-                            )}>
+                            <div
+                                className={cn(
+                                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                                    step === s || (step === "importing" && s === "preview")
+                                        ? "bg-blue-600 text-white"
+                                        : ["upload", "mapping", "preview", "importing", "complete"].indexOf(step) > i
+                                          ? "bg-green-600 text-white"
+                                          : "bg-gray-200 text-gray-600"
+                                )}
+                            >
                                 {i + 1}
                             </div>
                             {i < 3 && <ArrowRight className="h-4 w-4 text-gray-400" />}
@@ -220,12 +223,8 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                         <div className="space-y-6">
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-500 transition-colors">
                                 <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                    Drop your CSV file here
-                                </h3>
-                                <p className="text-sm text-gray-500 mb-4">
-                                    or click to browse files
-                                </p>
+                                <h3 className="text-lg font-medium text-gray-900 mb-2">Drop your CSV file here</h3>
+                                <p className="text-sm text-gray-500 mb-4">or click to browse files</p>
                                 <input
                                     type="file"
                                     accept=".csv"
@@ -261,14 +260,14 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                         <div className="space-y-4">
                             <div className="bg-blue-50 p-4 rounded-lg">
                                 <p className="text-sm text-blue-800">
-                                    <strong>{parsedData.totalRows}</strong> records found.
-                                    Map your CSV columns to the {moduleConfig.name} fields below.
+                                    <strong>{parsedData.totalRows}</strong> records found. Map your CSV columns to the{" "}
+                                    {moduleConfig.name} fields below.
                                 </p>
                             </div>
 
                             <div className="space-y-3">
-                                {moduleConfig.fields.map(field => {
-                                    const currentMapping = mappings.find(m => m.targetField === field.field);
+                                {moduleConfig.fields.map((field) => {
+                                    const currentMapping = mappings.find((m) => m.targetField === field.field);
                                     return (
                                         <div key={field.field} className="flex items-center gap-4">
                                             <div className="w-1/3">
@@ -288,7 +287,7 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="ignore">-- Skip --</SelectItem>
-                                                        {parsedData.headers.map(header => (
+                                                        {parsedData.headers.map((header) => (
                                                             <SelectItem key={header} value={header}>
                                                                 {header}
                                                             </SelectItem>
@@ -314,11 +313,11 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                                     </div>
                                     <div className="max-h-32 overflow-y-auto text-sm text-yellow-700">
                                         {errors.slice(0, 10).map((err, i) => (
-                                            <div key={i}>Row {err.row}: {err.message}</div>
+                                            <div key={i}>
+                                                Row {err.row}: {err.message}
+                                            </div>
                                         ))}
-                                        {errors.length > 10 && (
-                                            <div>...and {errors.length - 10} more</div>
-                                        )}
+                                        {errors.length > 10 && <div>...and {errors.length - 10} more</div>}
                                     </div>
                                 </div>
                             ) : (
@@ -335,9 +334,15 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                                         <thead className="bg-gray-50 sticky top-0">
                                             <tr>
                                                 <th className="px-4 py-2 text-left text-gray-600">#</th>
-                                                {mappings.map(m => (
-                                                    <th key={m.targetField} className="px-4 py-2 text-left text-gray-600">
-                                                        {moduleConfig.fields.find(f => f.field === m.targetField)?.label}
+                                                {mappings.map((m) => (
+                                                    <th
+                                                        key={m.targetField}
+                                                        className="px-4 py-2 text-left text-gray-600"
+                                                    >
+                                                        {
+                                                            moduleConfig.fields.find((f) => f.field === m.targetField)
+                                                                ?.label
+                                                        }
                                                     </th>
                                                 ))}
                                             </tr>
@@ -348,7 +353,7 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                                                 return (
                                                     <tr key={i} className="border-t">
                                                         <td className="px-4 py-2 text-gray-500">{i + 1}</td>
-                                                        {mappings.map(m => (
+                                                        {mappings.map((m) => (
                                                             <td key={m.targetField} className="px-4 py-2">
                                                                 {transformedRow[m.targetField] || "-"}
                                                             </td>
@@ -372,9 +377,7 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                     {step === "importing" && (
                         <div className="flex flex-col items-center justify-center py-12">
                             <Loader2 className="h-12 w-12 text-blue-600 animate-spin mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                Importing records...
-                            </h3>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">Importing records...</h3>
                             <p className="text-sm text-gray-500 mb-4">
                                 {importProgress.current} of {importProgress.total} records
                             </p>
@@ -391,18 +394,14 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                     {step === "complete" && (
                         <div className="flex flex-col items-center justify-center py-12">
                             <CheckCircle className="h-16 w-16 text-green-600 mb-4" />
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">
-                                Import Complete!
-                            </h3>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Import Complete!</h3>
                             <p className="text-gray-600 mb-4">
                                 Successfully imported <strong>{importResult.success}</strong> records
                                 {importResult.failed > 0 && (
                                     <span className="text-red-600"> ({importResult.failed} failed)</span>
                                 )}
                             </p>
-                            <Button onClick={handleClose}>
-                                Done
-                            </Button>
+                            <Button onClick={handleClose}>Done</Button>
                         </div>
                     )}
                 </div>

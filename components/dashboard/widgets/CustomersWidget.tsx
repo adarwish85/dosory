@@ -23,7 +23,7 @@ export function CustomersWidget({ settings, density }: CustomersWidgetProps) {
         })
         .slice(0, limit);
 
-    const activeCount = customers.filter(c => c.status === "active").length;
+    const activeCount = customers.filter((c) => c.status === "active").length;
 
     if (loading) {
         return <WidgetSkeleton variant="list" />;

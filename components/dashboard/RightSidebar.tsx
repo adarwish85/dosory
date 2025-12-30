@@ -5,9 +5,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-    Calendar, Clock, FolderKanban, CheckSquare, LifeBuoy,
-    Plus, FileText, Users, DollarSign, Briefcase, Zap,
-    FileSignature, Receipt, LayoutTemplate
+    Calendar,
+    Clock,
+    FolderKanban,
+    CheckSquare,
+    LifeBuoy,
+    Plus,
+    FileText,
+    Users,
+    DollarSign,
+    Briefcase,
+    Zap,
+    FileSignature,
+    Receipt,
+    LayoutTemplate,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStickyNotes } from "@/lib/hooks/use-sticky-notes";
@@ -20,7 +31,7 @@ interface RightSidebarProps {
 export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
     const pathname = usePathname();
     const { notes, addNote, toggleNoteOpen } = useStickyNotes();
-    const minimizedNotes = notes.filter(n => !n.isOpen);
+    const minimizedNotes = notes.filter((n) => !n.isOpen);
 
     // Define context-aware actions
     const quickActions = useMemo(() => {
@@ -36,7 +47,7 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
             return [
                 { label: "Add Customer", href: "/dashboard/customers/new", icon: Users },
                 { label: "Import Customers", href: "/dashboard/customers/import", icon: FileText },
-                ...defaults.slice(0, 1) // Keep "New Project" as backup
+                ...defaults.slice(0, 1), // Keep "New Project" as backup
             ];
         }
 
@@ -67,13 +78,17 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
     }, [pathname]);
 
     return (
-        <aside className={cn(
-            `hidden lg:block w-[220px] fixed right-0 bottom-0 overflow-y-auto px-2 py-3 transition-transform duration-300 bg-[#F3F2EF] ${topOffset}`,
-            isOpen ? "translate-x-0" : "translate-x-full"
-        )}>
+        <aside
+            className={cn(
+                `hidden lg:block w-[220px] fixed right-0 bottom-0 overflow-y-auto px-2 py-3 transition-transform duration-300 bg-[#F3F2EF] ${topOffset}`,
+                isOpen ? "translate-x-0" : "translate-x-full"
+            )}
+        >
             {/* Context-Aware Quick Actions */}
             <div className="mb-4">
-                <h3 className="text-[#65676B] font-semibold text-xs mb-2 px-2 uppercase tracking-wider">Quick Actions</h3>
+                <h3 className="text-[#65676B] font-semibold text-xs mb-2 px-2 uppercase tracking-wider">
+                    Quick Actions
+                </h3>
                 <div className="space-y-2">
                     {quickActions.map((action, index) => {
                         const Icon = action.icon;
@@ -94,31 +109,32 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
             {/* Sticky Notes */}
             <div className="mb-4">
                 <div className="flex items-center justify-between px-2 mb-2">
-                    <h3 className="text-[#65676B] font-semibold text-xs uppercase tracking-wider">Sticky Notes ({notes.length})</h3>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 hover:bg-black/5"
-                        onClick={() => addNote()}
-                    >
+                    <h3 className="text-[#65676B] font-semibold text-xs uppercase tracking-wider">
+                        Sticky Notes ({notes.length})
+                    </h3>
+                    <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-black/5" onClick={() => addNote()}>
                         <Plus className="h-3 w-3 text-[#65676B]" />
                     </Button>
                 </div>
                 <div className="flex flex-wrap gap-2 px-2">
-                    {minimizedNotes.map(note => {
-                        const colorClass = {
-                            yellow: "bg-yellow-400",
-                            blue: "bg-blue-400",
-                            green: "bg-green-400",
-                            pink: "bg-pink-400",
-                            purple: "bg-purple-400",
-                            orange: "bg-orange-400",
-                        }[note.color] || "bg-yellow-400";
+                    {minimizedNotes.map((note) => {
+                        const colorClass =
+                            {
+                                yellow: "bg-yellow-400",
+                                blue: "bg-blue-400",
+                                green: "bg-green-400",
+                                pink: "bg-pink-400",
+                                purple: "bg-purple-400",
+                                orange: "bg-orange-400",
+                            }[note.color] || "bg-yellow-400";
 
                         return (
                             <button
                                 key={note.id}
-                                className={cn("w-6 h-6 rounded-full border border-black/10 hover:ring-2 ring-black/20 hover:scale-110 transition-all", colorClass)}
+                                className={cn(
+                                    "w-6 h-6 rounded-full border border-black/10 hover:ring-2 ring-black/20 hover:scale-110 transition-all",
+                                    colorClass
+                                )}
                                 onClick={() => toggleNoteOpen(note.id, true)}
                                 title="Show Note"
                             />

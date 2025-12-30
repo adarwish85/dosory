@@ -25,18 +25,16 @@ export default function RolesPage() {
     const { roles, loading, deleteRole } = useRoles();
     const { staff } = useStaff();
 
-    const filteredRoles = roles.filter(role =>
-        role.name?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredRoles = roles.filter((role) => role.name?.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const getUserCount = (roleId: string) => {
-        return staff.filter(s => s.roleId === roleId).length;
+        return staff.filter((s) => s.roleId === roleId).length;
     };
 
     const getPermissionSummary = (permissions: string[] = []) => {
         if (permissions.length === 0) return "No permissions";
         if (permissions.length <= 3) {
-            return permissions.map(p => p.split("-")[0]).join(", ");
+            return permissions.map((p) => p.split("-")[0]).join(", ");
         }
         return `${permissions.length} permissions`;
     };
@@ -120,9 +118,7 @@ export default function RolesPage() {
                                 {/* Role Header */}
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
-                                        <h3 className="font-semibold text-gray-900 text-lg">
-                                            {role.name}
-                                        </h3>
+                                        <h3 className="font-semibold text-gray-900 text-lg">{role.name}</h3>
                                         {role.description && (
                                             <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                                                 {role.description}
@@ -167,7 +163,9 @@ export default function RolesPage() {
                                 <div className="flex items-center gap-4 text-sm">
                                     <div className="flex items-center gap-1.5 text-gray-600">
                                         <Users className="h-4 w-4" />
-                                        <span>{userCount} user{userCount !== 1 ? "s" : ""}</span>
+                                        <span>
+                                            {userCount} user{userCount !== 1 ? "s" : ""}
+                                        </span>
                                     </div>
                                     <Badge variant="secondary" className="text-xs">
                                         {getPermissionSummary(role.permissions)}

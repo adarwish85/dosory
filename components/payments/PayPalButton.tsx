@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 
-
 // Use existing window.paypal type if available, otherwise define minimal shape
 // This prevents 'Subsequent property declarations must have the same type' error
 
@@ -181,9 +180,7 @@ export default function PayPalButton({
 
     if (error) {
         return (
-            <div className="h-12 bg-red-50 rounded flex items-center justify-center text-red-600 text-sm">
-                {error}
-            </div>
+            <div className="h-12 bg-red-50 rounded flex items-center justify-center text-red-600 text-sm">{error}</div>
         );
     }
 

@@ -68,9 +68,7 @@ export function LeadProfileHeader() {
                         {lead.status}
                     </span>
                 </h1>
-                {lead.company && (
-                    <p className="text-gray-500 mt-1">{lead.company}</p>
-                )}
+                {lead.company && <p className="text-gray-500 mt-1">{lead.company}</p>}
             </div>
 
             <div className="flex items-center gap-2">
@@ -97,7 +95,11 @@ export function LeadProfileHeader() {
 
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" onClick={() => lead.phone && window.open(`tel:${lead.phone}`)}>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => lead.phone && window.open(`tel:${lead.phone}`)}
+                            >
                                 <Phone className="h-4 w-4 text-green-600" />
                             </Button>
                         </TooltipTrigger>
@@ -106,7 +108,11 @@ export function LeadProfileHeader() {
 
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" onClick={() => lead.email && window.open(`mailto:${lead.email}`)}>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => lead.email && window.open(`mailto:${lead.email}`)}
+                            >
                                 <Mail className="h-4 w-4 text-blue-600" />
                             </Button>
                         </TooltipTrigger>
@@ -153,4 +159,3 @@ export function LeadProfileHeader() {
         </div>
     );
 }
-

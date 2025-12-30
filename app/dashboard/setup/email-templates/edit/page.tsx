@@ -152,27 +152,27 @@ function TemplateEditorContent() {
 
     // Define which merge fields to show for each category
     const categoryMergeFieldsMap: Record<string, string[]> = {
-        "Tickets": ["staff", "client", "ticket", "other"],
-        "Estimates": ["staff", "client", "estimate", "other"],
-        "Contracts": ["staff", "client", "contract", "other"],
-        "Invoices": ["staff", "client", "invoice", "other"],
-        "Subscriptions": ["staff", "client", "subscription", "other"],
+        Tickets: ["staff", "client", "ticket", "other"],
+        Estimates: ["staff", "client", "estimate", "other"],
+        Contracts: ["staff", "client", "contract", "other"],
+        Invoices: ["staff", "client", "invoice", "other"],
+        Subscriptions: ["staff", "client", "subscription", "other"],
         "Credit Note": ["staff", "client", "creditNote", "other"],
-        "Tasks": ["staff", "client", "task", "project", "other"],
-        "Customers": ["client", "other"],
-        "Proposals": ["staff", "client", "proposal", "other"],
-        "Projects": ["staff", "client", "project", "other"],
+        Tasks: ["staff", "client", "task", "project", "other"],
+        Customers: ["client", "other"],
+        Proposals: ["staff", "client", "proposal", "other"],
+        Projects: ["staff", "client", "project", "other"],
         "Staff Members": ["staff", "other"],
-        "Leads": ["staff", "lead", "other"],
+        Leads: ["staff", "lead", "other"],
         "Estimate Request": ["staff", "estimateRequest", "other"],
-        "Notifications": ["staff", "task", "other"],
+        Notifications: ["staff", "task", "other"],
     };
 
     // Get the relevant merge fields for the current category
     const relevantFieldKeys = categoryMergeFieldsMap[category] || ["client", "other"];
     const mergeFields: Record<string, Array<{ label: string; value: string }>> = {};
 
-    relevantFieldKeys.forEach(key => {
+    relevantFieldKeys.forEach((key) => {
         if (allMergeFields[key as keyof typeof allMergeFields]) {
             mergeFields[key] = allMergeFields[key as keyof typeof allMergeFields];
         }
@@ -190,28 +190,19 @@ function TemplateEditorContent() {
                             {/* Template Title */}
                             <div className="space-y-2">
                                 <Label className="text-red-500">* Template Title</Label>
-                                <Input
-                                    defaultValue={templateName}
-                                    className="bg-gray-50"
-                                />
+                                <Input defaultValue={templateName} className="bg-gray-50" />
                             </div>
 
                             {/* Subject */}
                             <div className="space-y-2">
                                 <Label>Subject</Label>
-                                <Input
-                                    defaultValue="New Support Ticket Opened"
-                                    placeholder="Subject"
-                                />
+                                <Input defaultValue="New Support Ticket Opened" placeholder="Subject" />
                             </div>
 
                             {/* From Name */}
                             <div className="space-y-2">
                                 <Label className="text-red-500">* From Name</Label>
-                                <Input
-                                    defaultValue="{companyname} | Technical Support"
-                                    placeholder="From Name"
-                                />
+                                <Input defaultValue="{companyname} | Technical Support" placeholder="From Name" />
                             </div>
 
                             {/* Checkboxes */}
@@ -288,15 +279,25 @@ function TemplateEditorContent() {
 
                                     {/* Editor Content */}
                                     <div className="p-4 min-h-[300px] font-mono text-sm leading-relaxed">
-                                        <p>Hi {"{contact_firstname}"} {"{contact_lastname}"}</p>
+                                        <p>
+                                            Hi {"{contact_firstname}"} {"{contact_lastname}"}
+                                        </p>
                                         <br />
                                         <p>New support ticket has been opened.</p>
                                         <br />
-                                        <p><strong>Subject:</strong> {"{ticket_subject}"}</p>
-                                        <p><strong>Department:</strong> {"{ticket_department}"}</p>
-                                        <p><strong>Priority:</strong> {"{ticket_priority}"}</p>
+                                        <p>
+                                            <strong>Subject:</strong> {"{ticket_subject}"}
+                                        </p>
+                                        <p>
+                                            <strong>Department:</strong> {"{ticket_department}"}
+                                        </p>
+                                        <p>
+                                            <strong>Priority:</strong> {"{ticket_priority}"}
+                                        </p>
                                         <br />
-                                        <p><strong>Ticket message:</strong></p>
+                                        <p>
+                                            <strong>Ticket message:</strong>
+                                        </p>
                                         <p>{"{ticket_message}"}</p>
                                     </div>
                                 </div>
@@ -306,9 +307,7 @@ function TemplateEditorContent() {
 
                     {/* Save Button */}
                     <div className="flex justify-end">
-                        <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                            Save
-                        </Button>
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800">Save</Button>
                     </div>
                 </div>
 
@@ -318,8 +317,8 @@ function TemplateEditorContent() {
 
                     {category === "Tickets" && (
                         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-6 text-sm">
-                            If ticket is imported with email piping and the contact does not exists in
-                            the CRM the fields won't be replaced.
+                            If ticket is imported with email piping and the contact does not exists in the CRM the
+                            fields won't be replaced.
                         </div>
                     )}
 
@@ -340,7 +339,7 @@ function TemplateEditorContent() {
                                 lead: "Lead",
                                 creditNote: "Credit Note",
                                 estimateRequest: "Estimate Request",
-                                other: "Other"
+                                other: "Other",
                             };
 
                             return (

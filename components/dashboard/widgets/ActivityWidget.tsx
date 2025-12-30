@@ -48,9 +48,7 @@ export function ActivityWidget({ settings, density }: ActivityWidgetProps) {
                             key={activity.id}
                             className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                         >
-                            <div className={`shrink-0 mt-0.5 text-lg ${meta.color}`}>
-                                {meta.icon}
-                            </div>
+                            <div className={`shrink-0 mt-0.5 text-lg ${meta.color}`}>{meta.icon}</div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm text-gray-700 line-clamp-2">{activity.message}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
@@ -59,9 +57,7 @@ export function ActivityWidget({ settings, density }: ActivityWidgetProps) {
                                             {activity.userName}
                                         </span>
                                     )}
-                                    <span className="text-xs text-gray-400">
-                                        {formatTime(activity.createdAt)}
-                                    </span>
+                                    <span className="text-xs text-gray-400">{formatTime(activity.createdAt)}</span>
                                 </div>
                             </div>
                         </div>

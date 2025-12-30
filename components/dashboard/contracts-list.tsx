@@ -14,7 +14,13 @@ export function ContractsList() {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     Contracts Expiring Soon
                 </CardTitle>
-                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 px-2 text-xs font-medium">View All</Button>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 px-2 text-xs font-medium"
+                >
+                    View All
+                </Button>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col gap-4 p-4">
                 <div className="flex gap-2">
@@ -27,7 +33,9 @@ export function ContractsList() {
                             <SelectItem value="50">50</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Button variant="outline" size="sm" className="h-9">Export</Button>
+                    <Button variant="outline" size="sm" className="h-9">
+                        Export
+                    </Button>
                     <div className="relative flex-1">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input type="search" placeholder="Search..." className="pl-8 h-9 text-xs" />
@@ -56,9 +64,19 @@ export function ContractsList() {
                 <div className="mt-auto flex items-center justify-between text-xs text-muted-foreground pt-2">
                     <div>Showing 1 to 1 of 1 entries</div>
                     <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" disabled>{"<"}</Button>
-                        <Button variant="secondary" size="icon" className="h-7 w-7 text-xs font-medium bg-gray-900 text-white hover:bg-gray-800">1</Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" disabled>{">"}</Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" disabled>
+                            {"<"}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-7 w-7 text-xs font-medium bg-gray-900 text-white hover:bg-gray-800"
+                        >
+                            1
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" disabled>
+                            {">"}
+                        </Button>
                     </div>
                 </div>
             </CardContent>

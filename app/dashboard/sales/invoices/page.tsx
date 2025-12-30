@@ -18,44 +18,53 @@ export default function SalesInvoicesPage() {
 
     // Unpaid typically includes: sent, viewed
     // We treat "Unpaid" widget as strict "Sent + Viewed + Unpaid" (if unpaid exists as explicit status)
-    const unpaidCount = getCount('sent') + getCount('viewed') + getCount('unpaid');
-    const unpaidTotal = (invoices.length || 1);
+    const unpaidCount = getCount("sent") + getCount("viewed") + getCount("unpaid");
+    const unpaidTotal = invoices.length || 1;
     const unpaidPerc = (unpaidCount / unpaidTotal) * 100;
 
-    const paidCount = getCount('paid');
+    const paidCount = getCount("paid");
     const paidPerc = (paidCount / unpaidTotal) * 100;
 
-    const partialCount = getCount('partial');
+    const partialCount = getCount("partial");
     const partialPerc = (partialCount / unpaidTotal) * 100;
 
-    const overdueCount = getCount('overdue');
+    const overdueCount = getCount("overdue");
     const overduePerc = (overdueCount / unpaidTotal) * 100;
 
-    const draftCount = getCount('draft');
+    const draftCount = getCount("draft");
     const draftPerc = (draftCount / unpaidTotal) * 100;
 
     // Financial calculations
     const amounts = invoiceStats?.amountsByStatus || {};
-    const outstandingAmount = (amounts.sent || 0) + (amounts.viewed || 0) + (amounts.partial || 0) + (amounts.overdue || 0) + (amounts.unpaid || 0);
+    const outstandingAmount =
+        (amounts.sent || 0) +
+        (amounts.viewed || 0) +
+        (amounts.partial || 0) +
+        (amounts.overdue || 0) +
+        (amounts.unpaid || 0);
     const pastDueAmount = amounts.overdue || 0;
     const paidAmount = amounts.paid || 0;
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(amount);
+        return new Intl.NumberFormat("en-EG", { style: "currency", currency: "EGP" }).format(amount);
     };
 
     const formatDate = (timestamp: any) => {
         if (!timestamp) return "-";
         try {
             const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
-            return new Intl.DateTimeFormat('en-GB').format(date);
+            return new Intl.DateTimeFormat("en-GB").format(date);
         } catch {
             return "-";
         }
     };
 
     if (loading) {
-        return <div className="flex justify-center p-8"><RefreshCw className="h-6 w-6 animate-spin text-gray-400" /></div>;
+        return (
+            <div className="flex justify-center p-8">
+                <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
+            </div>
+        );
     }
 
     return (
@@ -88,11 +97,31 @@ export default function SalesInvoicesPage() {
                 {/* Stats Cards */}
                 <StatsGroup
                     items={[
-                        { label: `Unpaid (${unpaidPerc.toFixed(2)}%)`, amount: `${unpaidCount} / ${invoices.length}`, color: "red" },
-                        { label: `Paid (${paidPerc.toFixed(2)}%)`, amount: `${paidCount} / ${invoices.length}`, color: "green" },
-                        { label: `Partially Paid (${partialPerc.toFixed(2)}%)`, amount: `${partialCount} / ${invoices.length}`, color: "orange" },
-                        { label: `Overdue (${overduePerc.toFixed(2)}%)`, amount: `${overdueCount} / ${invoices.length}`, color: "orange" },
-                        { label: `Draft (${draftPerc.toFixed(2)}%)`, amount: `${draftCount} / ${invoices.length}`, color: "default" },
+                        {
+                            label: `Unpaid (${unpaidPerc.toFixed(2)}%)`,
+                            amount: `${unpaidCount} / ${invoices.length}`,
+                            color: "red",
+                        },
+                        {
+                            label: `Paid (${paidPerc.toFixed(2)}%)`,
+                            amount: `${paidCount} / ${invoices.length}`,
+                            color: "green",
+                        },
+                        {
+                            label: `Partially Paid (${partialPerc.toFixed(2)}%)`,
+                            amount: `${partialCount} / ${invoices.length}`,
+                            color: "orange",
+                        },
+                        {
+                            label: `Overdue (${overduePerc.toFixed(2)}%)`,
+                            amount: `${overdueCount} / ${invoices.length}`,
+                            color: "orange",
+                        },
+                        {
+                            label: `Draft (${draftPerc.toFixed(2)}%)`,
+                            amount: `${draftCount} / ${invoices.length}`,
+                            color: "default",
+                        },
                     ]}
                 />
             </div>
@@ -105,7 +134,6 @@ export default function SalesInvoicesPage() {
                             <Plus className="mr-2 h-4 w-4" /> Create New Invoice
                         </Button>
                     </a>
-
                 </div>
                 {/* Filters omitted for brevity */}
             </div>
@@ -138,35 +166,74 @@ export default function SalesInvoicesPage() {
                                     <TableRow key={row.id} className="h-16 group">
                                         <TableCell className="min-w-[150px] py-3">
                                             <div className="flex flex-col group">
-                                                <a href={`/dashboard/invoices/${row.id}`} className="text-gray-900 hover:text-blue-600 cursor-pointer text-base font-semibold w-fit">
+                                                <a
+                                                    href={`/dashboard/invoices/${row.id}`}
+                                                    className="text-gray-900 hover:text-blue-600 cursor-pointer text-base font-semibold w-fit"
+                                                >
                                                     {row.number || "INV-???"}
                                                 </a>
 
                                                 {/* Hover Actions Menu */}
                                                 <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity mt-1 h-4">
-                                                    <a href={`/dashboard/invoices/${row.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</a>
+                                                    <a
+                                                        href={`/dashboard/invoices/${row.id}`}
+                                                        className="hover:text-blue-600 hover:underline px-0.5"
+                                                    >
+                                                        View
+                                                    </a>
                                                     <span className="text-gray-300">|</span>
-                                                    <a href={`/dashboard/invoices/${row.id}`} className="hover:text-blue-600 hover:underline px-0.5">Edit</a>
+                                                    <a
+                                                        href={`/dashboard/invoices/${row.id}`}
+                                                        className="hover:text-blue-600 hover:underline px-0.5"
+                                                    >
+                                                        Edit
+                                                    </a>
                                                     <span className="text-gray-300">|</span>
-                                                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (confirm("Delete?")) deleteInvoice(row.id); }} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            if (confirm("Delete?")) deleteInvoice(row.id);
+                                                        }}
+                                                        className="hover:text-red-600 hover:underline px-0.5"
+                                                    >
+                                                        Delete
+                                                    </button>
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-gray-900">{formatCurrency(row.total || 0)}</TableCell>
-                                        <TableCell className="text-gray-900">{formatCurrency(row.taxTotal || 0)}</TableCell>
+                                        <TableCell className="text-gray-900">
+                                            {formatCurrency(row.total || 0)}
+                                        </TableCell>
+                                        <TableCell className="text-gray-900">
+                                            {formatCurrency(row.taxTotal || 0)}
+                                        </TableCell>
                                         <TableCell className="text-gray-500">{formatDate(row.date)}</TableCell>
-                                        <TableCell className="text-gray-900 hover:text-blue-600 cursor-pointer">{row.customerName || "Unknown Customer"}</TableCell>
+                                        <TableCell className="text-gray-900 hover:text-blue-600 cursor-pointer">
+                                            {row.customerName || "Unknown Customer"}
+                                        </TableCell>
                                         <TableCell className="text-gray-900">{formatDate(row.dueDate)}</TableCell>
                                         <TableCell>
-                                            <Badge variant="outline" className={`font-normal capitalize ${row.status === 'paid' ? 'text-green-600 border-green-200 bg-green-50' :
-                                                row.status === 'overdue' ? 'text-orange-600 border-orange-200 bg-orange-50' :
-                                                    'text-gray-600 border-gray-200 bg-gray-50'
-                                                }`}>
+                                            <Badge
+                                                variant="outline"
+                                                className={`font-normal capitalize ${
+                                                    row.status === "paid"
+                                                        ? "text-green-600 border-green-200 bg-green-50"
+                                                        : row.status === "overdue"
+                                                          ? "text-orange-600 border-orange-200 bg-orange-50"
+                                                          : "text-gray-600 border-gray-200 bg-gray-50"
+                                                }`}
+                                            >
                                                 {row.status || "draft"}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <a href={`/dashboard/invoices/${row.id}`} className="text-xs font-medium text-gray-900 hover:underline">View</a>
+                                            <a
+                                                href={`/dashboard/invoices/${row.id}`}
+                                                className="text-xs font-medium text-gray-900 hover:underline"
+                                            >
+                                                View
+                                            </a>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -175,9 +242,7 @@ export default function SalesInvoicesPage() {
                     </Table>
                 </div>
             </div>
-            <div className="text-sm text-gray-500 mt-4">
-                Showing all {invoices.length} invoices found in database
-            </div>
+            <div className="text-sm text-gray-500 mt-4">Showing all {invoices.length} invoices found in database</div>
         </div>
     );
 }

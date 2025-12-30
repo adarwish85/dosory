@@ -1,11 +1,6 @@
 "use client";
 
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -96,7 +91,7 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
     };
 
     const updateField = (field: keyof ProjectFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     const validateStep = (currentStep: number): boolean => {
@@ -111,11 +106,11 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
 
     const nextStep = () => {
         if (validateStep(step)) {
-            setStep(prev => Math.min(prev + 1, totalSteps));
+            setStep((prev) => Math.min(prev + 1, totalSteps));
         }
     };
 
-    const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+    const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
     const handleSave = async () => {
         if (!validateStep(1)) {
@@ -178,8 +173,7 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                         {Array.from({ length: totalSteps }).map((_, i) => (
                             <div
                                 key={i}
-                                className={`h-1 flex-1 rounded-full ${i + 1 <= step ? "bg-gray-900" : "bg-gray-200"
-                                    }`}
+                                className={`h-1 flex-1 rounded-full ${i + 1 <= step ? "bg-gray-900" : "bg-gray-200"}`}
                             />
                         ))}
                     </div>
@@ -211,7 +205,10 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label className="text-red-500">* Billing Type</Label>
-                                    <Select value={formData.billingType} onValueChange={(v) => updateField("billingType", v)}>
+                                    <Select
+                                        value={formData.billingType}
+                                        onValueChange={(v) => updateField("billingType", v)}
+                                    >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
@@ -290,7 +287,10 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <Label>Send contacts notifications</Label>
-                                <Select value={formData.sendNotifications} onValueChange={(v) => updateField("sendNotifications", v)}>
+                                <Select
+                                    value={formData.sendNotifications}
+                                    onValueChange={(v) => updateField("sendNotifications", v)}
+                                >
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
@@ -316,7 +316,9 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                                             checked={formData[item.id as keyof ProjectFormData] as boolean}
                                             onCheckedChange={(c) => updateField(item.id as keyof ProjectFormData, !!c)}
                                         />
-                                        <Label htmlFor={item.id} className="font-normal">{item.label}</Label>
+                                        <Label htmlFor={item.id} className="font-normal">
+                                            {item.label}
+                                        </Label>
                                     </div>
                                 ))}
                             </div>

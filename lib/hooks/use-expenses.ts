@@ -38,14 +38,7 @@ interface UseExpensesOptions {
 }
 
 export function useExpenses(options: UseExpensesOptions = {}) {
-    const {
-        categoryId,
-        customerId,
-        projectId,
-        billable,
-        orderByField = "date",
-        orderDirection = "desc",
-    } = options;
+    const { categoryId, customerId, projectId, billable, orderByField = "date", orderDirection = "desc" } = options;
     const { profile } = useUserProfile();
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [loading, setLoading] = useState(true);
@@ -57,9 +50,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (categoryId) {
             constraints.push(where("categoryId", "==", categoryId));
@@ -107,9 +98,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 
             // Get category name
             const categoryDoc = await getDoc(doc(db, "expenseCategories", data.categoryId));
-            const categoryName = categoryDoc.exists()
-                ? categoryDoc.data().name
-                : "Unknown";
+            const categoryName = categoryDoc.exists() ? categoryDoc.data().name : "Unknown";
 
             // Calculate tax amount
             let taxAmount = 0;
@@ -139,16 +128,13 @@ export function useExpenses(options: UseExpensesOptions = {}) {
         [profile?.orgId, profile?.uid]
     );
 
-    const updateExpense = useCallback(
-        async (id: string, data: Partial<ExpenseFormData>): Promise<void> => {
-            const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
+    const updateExpense = useCallback(async (id: string, data: Partial<ExpenseFormData>): Promise<void> => {
+        const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
 
-            if (data.date) updateData.date = Timestamp.fromDate(data.date);
+        if (data.date) updateData.date = Timestamp.fromDate(data.date);
 
-            await updateDoc(doc(db, "expenses", id), updateData);
-        },
-        []
-    );
+        await updateDoc(doc(db, "expenses", id), updateData);
+    }, []);
 
     const deleteExpense = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "expenses", id));
@@ -238,9 +224,7 @@ export function useSubscriptions(options: UseSubscriptionsOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (status !== "all") {
             constraints.push(where("status", "==", status));
@@ -280,9 +264,7 @@ export function useSubscriptions(options: UseSubscriptionsOptions = {}) {
 
             // Get customer name
             const customerDoc = await getDoc(doc(db, "customers", data.customerId));
-            const customerName = customerDoc.exists()
-                ? customerDoc.data().company
-                : "Unknown Customer";
+            const customerName = customerDoc.exists() ? customerDoc.data().company : "Unknown Customer";
 
             // Calculate total amount
             const amount = data.items.reduce((sum, item) => sum + item.amount, 0);
@@ -309,16 +291,13 @@ export function useSubscriptions(options: UseSubscriptionsOptions = {}) {
         [profile?.orgId, profile?.uid]
     );
 
-    const updateSubscription = useCallback(
-        async (id: string, data: Partial<SubscriptionFormData>): Promise<void> => {
-            const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
+    const updateSubscription = useCallback(async (id: string, data: Partial<SubscriptionFormData>): Promise<void> => {
+        const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
 
-            if (data.startDate) updateData.startDate = Timestamp.fromDate(data.startDate);
+        if (data.startDate) updateData.startDate = Timestamp.fromDate(data.startDate);
 
-            await updateDoc(doc(db, "subscriptions", id), updateData);
-        },
-        []
-    );
+        await updateDoc(doc(db, "subscriptions", id), updateData);
+    }, []);
 
     const cancelSubscription = useCallback(async (id: string): Promise<void> => {
         await updateDoc(doc(db, "subscriptions", id), {
@@ -389,9 +368,7 @@ export function useContracts(options: UseContractsOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (status !== "all") {
             constraints.push(where("status", "==", status));
@@ -431,9 +408,7 @@ export function useContracts(options: UseContractsOptions = {}) {
 
             // Get customer name
             const customerDoc = await getDoc(doc(db, "customers", data.customerId));
-            const customerName = customerDoc.exists()
-                ? customerDoc.data().company
-                : "Unknown Customer";
+            const customerName = customerDoc.exists() ? customerDoc.data().company : "Unknown Customer";
 
             const docRef = await addDoc(collection(db, "contracts"), {
                 ...data,
@@ -452,17 +427,14 @@ export function useContracts(options: UseContractsOptions = {}) {
         [profile?.orgId, profile?.uid]
     );
 
-    const updateContract = useCallback(
-        async (id: string, data: Partial<ContractFormData>): Promise<void> => {
-            const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
+    const updateContract = useCallback(async (id: string, data: Partial<ContractFormData>): Promise<void> => {
+        const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
 
-            if (data.startDate) updateData.startDate = Timestamp.fromDate(data.startDate);
-            if (data.endDate) updateData.endDate = Timestamp.fromDate(data.endDate);
+        if (data.startDate) updateData.startDate = Timestamp.fromDate(data.startDate);
+        if (data.endDate) updateData.endDate = Timestamp.fromDate(data.endDate);
 
-            await updateDoc(doc(db, "contracts", id), updateData);
-        },
-        []
-    );
+        await updateDoc(doc(db, "contracts", id), updateData);
+    }, []);
 
     const deleteContract = useCallback(async (id: string): Promise<void> => {
         await updateDoc(doc(db, "contracts", id), {

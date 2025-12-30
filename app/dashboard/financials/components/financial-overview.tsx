@@ -25,9 +25,7 @@ export function FinancialOverview() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-                    <p className="text-xs text-muted-foreground">
-                        Across all payments
-                    </p>
+                    <p className="text-xs text-muted-foreground">Across all payments</p>
                 </CardContent>
             </Card>
             <Card>
@@ -37,9 +35,7 @@ export function FinancialOverview() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{formatCurrency(totalExpenses)}</div>
-                    <p className="text-xs text-muted-foreground">
-                        Recorded expenses
-                    </p>
+                    <p className="text-xs text-muted-foreground">Recorded expenses</p>
                 </CardContent>
             </Card>
             <Card>
@@ -51,9 +47,7 @@ export function FinancialOverview() {
                     <div className={`text-2xl font-bold ${netProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
                         {formatCurrency(netProfit)}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                        Revenue - Expenses
-                    </p>
+                    <p className="text-xs text-muted-foreground">Revenue - Expenses</p>
                 </CardContent>
             </Card>
             <Card>
@@ -63,9 +57,7 @@ export function FinancialOverview() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{formatCurrency(totalOutstanding)}</div>
-                    <p className="text-xs text-muted-foreground">
-                        Unpaid invoices
-                    </p>
+                    <p className="text-xs text-muted-foreground">Unpaid invoices</p>
                 </CardContent>
             </Card>
         </div>

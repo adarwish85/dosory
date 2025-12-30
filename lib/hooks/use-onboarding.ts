@@ -48,83 +48,92 @@ export function useOnboarding() {
     }, [profile?.uid, profileLoading]);
 
     // Initialize onboarding for new user
-    const initializeOnboarding = useCallback(async (role: OnboardingRole) => {
-        if (!profile?.uid) return;
+    const initializeOnboarding = useCallback(
+        async (role: OnboardingRole) => {
+            if (!profile?.uid) return;
 
-        const initialState: OnboardingState = {
-            ...DEFAULT_ONBOARDING_STATE,
-            role,
-            startedAt: new Date(),
-        };
+            const initialState: OnboardingState = {
+                ...DEFAULT_ONBOARDING_STATE,
+                role,
+                startedAt: new Date(),
+            };
 
-        try {
-            await setDoc(doc(db, "users", profile.uid, "onboarding", "state"), {
-                ...initialState,
-                startedAt: serverTimestamp(),
-            });
-            setState(initialState);
-            trackEvent("onboarding_started", { role });
-        } catch (error) {
-            console.error("Error initializing onboarding:", error);
-        }
-    }, [profile?.uid]);
+            try {
+                await setDoc(doc(db, "users", profile.uid, "onboarding", "state"), {
+                    ...initialState,
+                    startedAt: serverTimestamp(),
+                });
+                setState(initialState);
+                trackEvent("onboarding_started", { role });
+            } catch (error) {
+                console.error("Error initializing onboarding:", error);
+            }
+        },
+        [profile?.uid]
+    );
 
     // Update a specific step
-    const completeStep = useCallback(async (step: keyof OnboardingState["steps"]) => {
-        if (!profile?.uid) return;
+    const completeStep = useCallback(
+        async (step: keyof OnboardingState["steps"]) => {
+            if (!profile?.uid) return;
 
-        const newSteps = { ...state.steps, [step]: true };
-        const allComplete = Object.values(newSteps).every(Boolean);
-        const nextStep = Object.values(newSteps).filter(Boolean).length;
+            const newSteps = { ...state.steps, [step]: true };
+            const allComplete = Object.values(newSteps).every(Boolean);
+            const nextStep = Object.values(newSteps).filter(Boolean).length;
 
-        try {
-            await updateDoc(doc(db, "users", profile.uid, "onboarding", "state"), {
-                [`steps.${step}`]: true,
-                currentStep: nextStep,
-                ...(allComplete && { completed: true, completedAt: serverTimestamp() }),
-            });
+            try {
+                await updateDoc(doc(db, "users", profile.uid, "onboarding", "state"), {
+                    [`steps.${step}`]: true,
+                    currentStep: nextStep,
+                    ...(allComplete && { completed: true, completedAt: serverTimestamp() }),
+                });
 
-            setState(prev => ({
-                ...prev,
-                steps: newSteps,
-                currentStep: nextStep,
-                completed: allComplete,
-                completedAt: allComplete ? new Date() : null,
-            }));
+                setState((prev) => ({
+                    ...prev,
+                    steps: newSteps,
+                    currentStep: nextStep,
+                    completed: allComplete,
+                    completedAt: allComplete ? new Date() : null,
+                }));
 
-            trackEvent("onboarding_step_completed", { step });
-            if (allComplete) {
-                trackEvent("onboarding_completed", {});
+                trackEvent("onboarding_step_completed", { step });
+                if (allComplete) {
+                    trackEvent("onboarding_completed", {});
+                }
+            } catch (error) {
+                console.error("Error completing step:", error);
             }
-        } catch (error) {
-            console.error("Error completing step:", error);
-        }
-    }, [profile?.uid, state.steps]);
+        },
+        [profile?.uid, state.steps]
+    );
 
     // Set use case
-    const setUseCase = useCallback(async (useCase: OnboardingUseCase) => {
-        if (!profile?.uid) return;
+    const setUseCase = useCallback(
+        async (useCase: OnboardingUseCase) => {
+            if (!profile?.uid) return;
 
-        try {
-            await updateDoc(doc(db, "users", profile.uid, "onboarding", "state"), {
-                useCase,
-                "steps.welcome": true,
-                currentStep: 1,
-            });
+            try {
+                await updateDoc(doc(db, "users", profile.uid, "onboarding", "state"), {
+                    useCase,
+                    "steps.welcome": true,
+                    currentStep: 1,
+                });
 
-            setState(prev => ({
-                ...prev,
-                useCase,
-                steps: { ...prev.steps, welcome: true },
-                currentStep: 1,
-            }));
+                setState((prev) => ({
+                    ...prev,
+                    useCase,
+                    steps: { ...prev.steps, welcome: true },
+                    currentStep: 1,
+                }));
 
-            trackEvent("onboarding_usecase_selected", { useCase });
-            setShowWelcome(false);
-        } catch (error) {
-            console.error("Error setting use case:", error);
-        }
-    }, [profile?.uid]);
+                trackEvent("onboarding_usecase_selected", { useCase });
+                setShowWelcome(false);
+            } catch (error) {
+                console.error("Error setting use case:", error);
+            }
+        },
+        [profile?.uid]
+    );
 
     // Skip onboarding
     const skipOnboarding = useCallback(async () => {
@@ -136,7 +145,7 @@ export function useOnboarding() {
                 completed: true,
             });
 
-            setState(prev => ({
+            setState((prev) => ({
                 ...prev,
                 skippedAt: new Date(),
                 completed: true,
@@ -150,21 +159,24 @@ export function useOnboarding() {
     }, [profile?.uid, state.currentStep]);
 
     // Track analytics event
-    const trackEvent = useCallback(async (event: string, metadata: Record<string, any>) => {
-        if (!profile?.uid || !profile?.orgId) return;
+    const trackEvent = useCallback(
+        async (event: string, metadata: Record<string, any>) => {
+            if (!profile?.uid || !profile?.orgId) return;
 
-        try {
-            await addDoc(collection(db, "analytics", "onboarding", "events"), {
-                userId: profile.uid,
-                orgId: profile.orgId,
-                event,
-                metadata,
-                timestamp: serverTimestamp(),
-            });
-        } catch (error) {
-            console.error("Error tracking event:", error);
-        }
-    }, [profile?.uid, profile?.orgId]);
+            try {
+                await addDoc(collection(db, "analytics", "onboarding", "events"), {
+                    userId: profile.uid,
+                    orgId: profile.orgId,
+                    event,
+                    metadata,
+                    timestamp: serverTimestamp(),
+                });
+            } catch (error) {
+                console.error("Error tracking event:", error);
+            }
+        },
+        [profile?.uid, profile?.orgId]
+    );
 
     // Calculate progress
     const progress = Object.values(state.steps).filter(Boolean).length / Object.keys(state.steps).length;

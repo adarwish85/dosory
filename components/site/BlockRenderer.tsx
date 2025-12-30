@@ -6,8 +6,23 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
-    Users, FileText, BarChart3, FolderKanban, Headphones, CreditCard,
-    Zap, Target, TrendingUp, Building2, Shield, Globe, Star, Play, ArrowRight, ChevronDown, Check
+    Users,
+    FileText,
+    BarChart3,
+    FolderKanban,
+    Headphones,
+    CreditCard,
+    Zap,
+    Target,
+    TrendingUp,
+    Building2,
+    Shield,
+    Globe,
+    Star,
+    Play,
+    ArrowRight,
+    ChevronDown,
+    Check,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
@@ -16,8 +31,19 @@ import type { Block, SiteDesign } from "@/lib/types/site-builder";
 
 // Icon mapping
 const iconMap: Record<string, any> = {
-    Users, FileText, BarChart3, FolderKanban, Headphones, CreditCard,
-    Zap, Target, TrendingUp, Building2, Shield, Globe, Star
+    Users,
+    FileText,
+    BarChart3,
+    FolderKanban,
+    Headphones,
+    CreditCard,
+    Zap,
+    Target,
+    TrendingUp,
+    Building2,
+    Shield,
+    Globe,
+    Star,
 };
 
 interface BlockRendererProps {
@@ -55,9 +81,18 @@ export function BlockRenderer({ block, design }: BlockRendererProps) {
 function HeroBlock({ data, design }: { data: any; design: SiteDesign }) {
     return (
         <section className="pt-32 pb-20 relative overflow-hidden">
-            <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, ${design.accentColor}, white, #F3F2EF)` }} />
-            <div className="absolute top-20 right-0 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: `${design.primaryColor}15` }} />
-            <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full blur-3xl" style={{ backgroundColor: `${design.primaryColor}08` }} />
+            <div
+                className="absolute inset-0"
+                style={{ background: `linear-gradient(to bottom right, ${design.accentColor}, white, #F3F2EF)` }}
+            />
+            <div
+                className="absolute top-20 right-0 w-96 h-96 rounded-full blur-3xl"
+                style={{ backgroundColor: `${design.primaryColor}15` }}
+            />
+            <div
+                className="absolute bottom-0 left-0 w-80 h-80 rounded-full blur-3xl"
+                style={{ backgroundColor: `${design.primaryColor}08` }}
+            />
 
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-4xl mx-auto">
@@ -76,7 +111,9 @@ function HeroBlock({ data, design }: { data: any; design: SiteDesign }) {
                         {data.headlineHighlight && (
                             <span
                                 className="bg-clip-text text-transparent"
-                                style={{ backgroundImage: `linear-gradient(to right, ${design.primaryColor}, ${design.secondaryColor})` }}
+                                style={{
+                                    backgroundImage: `linear-gradient(to right, ${design.primaryColor}, ${design.secondaryColor})`,
+                                }}
                             >
                                 {data.headlineHighlight}
                             </span>
@@ -84,15 +121,17 @@ function HeroBlock({ data, design }: { data: any; design: SiteDesign }) {
                     </h1>
 
                     {data.subheadline && (
-                        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-                            {data.subheadline}
-                        </p>
+                        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">{data.subheadline}</p>
                     )}
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
                         {data.ctaPrimaryText && (
                             <Link href={data.ctaPrimaryLink || "/signup"}>
-                                <Button size="lg" className="text-white px-8 h-12 text-base" style={{ backgroundColor: design.primaryColor }}>
+                                <Button
+                                    size="lg"
+                                    className="text-white px-8 h-12 text-base"
+                                    style={{ backgroundColor: design.primaryColor }}
+                                >
                                     {data.ctaPrimaryText}
                                     <ArrowRight className="ml-2 h-5 w-5" />
                                 </Button>
@@ -114,7 +153,9 @@ function HeroBlock({ data, design }: { data: any; design: SiteDesign }) {
                                         <div
                                             key={i}
                                             className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-medium"
-                                            style={{ background: `linear-gradient(to bottom right, ${design.primaryColor}, ${design.secondaryColor})` }}
+                                            style={{
+                                                background: `linear-gradient(to bottom right, ${design.primaryColor}, ${design.secondaryColor})`,
+                                            }}
                                         >
                                             {String.fromCharCode(65 + i)}
                                         </div>
@@ -152,7 +193,9 @@ function FeaturesBlock({ data, design }: { data: any; design: SiteDesign }) {
                         {data.sectionTitle && (
                             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
                                 {data.sectionTitle.split(" ").slice(0, -2).join(" ")}{" "}
-                                <span style={{ color: design.primaryColor }}>{data.sectionTitle.split(" ").slice(-2).join(" ")}</span>
+                                <span style={{ color: design.primaryColor }}>
+                                    {data.sectionTitle.split(" ").slice(-2).join(" ")}
+                                </span>
                             </h2>
                         )}
                         {data.sectionSubtitle && (
@@ -165,7 +208,10 @@ function FeaturesBlock({ data, design }: { data: any; design: SiteDesign }) {
                     {(data.items || []).map((feature: any, i: number) => {
                         const Icon = iconMap[feature.icon] || Zap;
                         return (
-                            <div key={i} className="group p-6 rounded-2xl border border-gray-200 hover:shadow-lg transition-all duration-300">
+                            <div
+                                key={i}
+                                className="group p-6 rounded-2xl border border-gray-200 hover:shadow-lg transition-all duration-300"
+                            >
                                 <div
                                     className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
                                     style={{ backgroundColor: design.accentColor }}
@@ -195,8 +241,10 @@ function StatsBlock({ data, design }: { data: any; design: SiteDesign }) {
         gray: { backgroundColor: "#F3F2EF" },
     };
 
-    const textColor = data.backgroundColor === "white" || data.backgroundColor === "gray" ? "text-gray-900" : "text-white";
-    const subtextColor = data.backgroundColor === "white" || data.backgroundColor === "gray" ? "text-gray-600" : "text-white/80";
+    const textColor =
+        data.backgroundColor === "white" || data.backgroundColor === "gray" ? "text-gray-900" : "text-white";
+    const subtextColor =
+        data.backgroundColor === "white" || data.backgroundColor === "gray" ? "text-gray-600" : "text-white/80";
 
     return (
         <section className="py-24" style={bgStyles[data.backgroundColor || "primary"]}>
@@ -206,7 +254,9 @@ function StatsBlock({ data, design }: { data: any; design: SiteDesign }) {
                         const Icon = iconMap[stat.icon] || TrendingUp;
                         return (
                             <div key={i} className="text-center">
-                                <div className={`w-16 h-16 rounded-2xl ${data.backgroundColor === "white" || data.backgroundColor === "gray" ? "bg-gray-100" : "bg-white/10"} flex items-center justify-center mx-auto mb-4`}>
+                                <div
+                                    className={`w-16 h-16 rounded-2xl ${data.backgroundColor === "white" || data.backgroundColor === "gray" ? "bg-gray-100" : "bg-white/10"} flex items-center justify-center mx-auto mb-4`}
+                                >
                                     <Icon className={`w-8 h-8 ${textColor}`} />
                                 </div>
                                 <div className={`text-4xl font-bold ${textColor} mb-2`}>{stat.value}</div>
@@ -232,9 +282,15 @@ function TestimonialBlock({ data, design }: { data: any; design: SiteDesign }) {
                     <div className="flex items-start gap-4">
                         <div
                             className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0"
-                            style={{ background: `linear-gradient(to bottom right, ${design.primaryColor}, ${design.secondaryColor})` }}
+                            style={{
+                                background: `linear-gradient(to bottom right, ${design.primaryColor}, ${design.secondaryColor})`,
+                            }}
                         >
-                            {(data.author || "").split(" ").map((n: string) => n[0]).join("").toUpperCase()}
+                            {(data.author || "")
+                                .split(" ")
+                                .map((n: string) => n[0])
+                                .join("")
+                                .toUpperCase()}
                         </div>
                         <div>
                             {data.rating && (
@@ -272,9 +328,7 @@ function FaqBlock({ data, design }: { data: any; design: SiteDesign }) {
                         {data.sectionTitle && (
                             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">{data.sectionTitle}</h2>
                         )}
-                        {data.sectionSubtitle && (
-                            <p className="text-xl text-gray-600">{data.sectionSubtitle}</p>
-                        )}
+                        {data.sectionSubtitle && <p className="text-xl text-gray-600">{data.sectionSubtitle}</p>}
                     </div>
                 )}
 
@@ -286,11 +340,11 @@ function FaqBlock({ data, design }: { data: any; design: SiteDesign }) {
                                 className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
                             >
                                 <span className="font-medium text-gray-900">{faq.question}</span>
-                                <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
+                                <ChevronDown
+                                    className={`w-5 h-5 text-gray-500 transition-transform ${openFaq === i ? "rotate-180" : ""}`}
+                                />
                             </button>
-                            {openFaq === i && (
-                                <div className="px-6 pb-6 text-gray-600">{faq.answer}</div>
-                            )}
+                            {openFaq === i && <div className="px-6 pb-6 text-gray-600">{faq.answer}</div>}
                         </div>
                     ))}
                 </div>
@@ -316,9 +370,7 @@ function CtaBlock({ data, design }: { data: any; design: SiteDesign }) {
     return (
         <section className="py-24" style={{ backgroundColor: bgStyles[data.backgroundColor || "gray"] }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                {data.icon && (
-                    <Building2 className={`w-16 h-16 mx-auto mb-6 ${textColor}`} />
-                )}
+                {data.icon && <Building2 className={`w-16 h-16 mx-auto mb-6 ${textColor}`} />}
                 <h2 className={`text-3xl sm:text-4xl font-bold ${textColor} mb-4`}>{data.headline}</h2>
                 {data.subheadline && (
                     <p className={`text-xl ${subtextColor} max-w-2xl mx-auto mb-8`}>{data.subheadline}</p>
@@ -328,7 +380,11 @@ function CtaBlock({ data, design }: { data: any; design: SiteDesign }) {
                         <Button
                             size="lg"
                             className="px-8 h-12"
-                            style={data.backgroundColor === "gray" ? { backgroundColor: design.primaryColor, color: "white" } : { backgroundColor: "white", color: design.primaryColor }}
+                            style={
+                                data.backgroundColor === "gray"
+                                    ? { backgroundColor: design.primaryColor, color: "white" }
+                                    : { backgroundColor: "white", color: design.primaryColor }
+                            }
                         >
                             {data.ctaText}
                             <ArrowRight className="ml-2 h-5 w-5" />
@@ -415,14 +471,23 @@ function PricingBlock({ data, design }: { data: any; design: SiteDesign }) {
     }, []);
 
     if (loading) {
-        return <section className="py-24 bg-[#F3F2EF]"><div className="text-center text-gray-500">Loading plans...</div></section>;
+        return (
+            <section className="py-24 bg-[#F3F2EF]">
+                <div className="text-center text-gray-500">Loading plans...</div>
+            </section>
+        );
     }
 
     if (plans.length === 0) {
         return null;
     }
 
-    const gridClass = plans.length === 1 ? "max-w-md mx-auto" : plans.length === 2 ? "md:grid-cols-2 max-w-3xl mx-auto" : "md:grid-cols-3";
+    const gridClass =
+        plans.length === 1
+            ? "max-w-md mx-auto"
+            : plans.length === 2
+              ? "md:grid-cols-2 max-w-3xl mx-auto"
+              : "md:grid-cols-3";
 
     return (
         <section className="py-24 bg-[#F3F2EF]">
@@ -432,7 +497,9 @@ function PricingBlock({ data, design }: { data: any; design: SiteDesign }) {
                         {data.sectionTitle && (
                             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
                                 {data.sectionTitle.split(" ").slice(0, -1).join(" ")}{" "}
-                                <span style={{ color: design.primaryColor }}>{data.sectionTitle.split(" ").slice(-1)}</span>
+                                <span style={{ color: design.primaryColor }}>
+                                    {data.sectionTitle.split(" ").slice(-1)}
+                                </span>
                             </h2>
                         )}
                         {data.sectionSubtitle && (
@@ -464,7 +531,9 @@ function PricingBlock({ data, design }: { data: any; design: SiteDesign }) {
 
                             <div className="mb-6">
                                 <span className="text-4xl font-bold text-gray-900">${plan.price}</span>
-                                <span className="text-gray-500">/{plan.billingPeriod === "monthly" ? "month" : "year"}</span>
+                                <span className="text-gray-500">
+                                    /{plan.billingPeriod === "monthly" ? "month" : "year"}
+                                </span>
                             </div>
 
                             <ul className="space-y-3 mb-8">
@@ -474,7 +543,10 @@ function PricingBlock({ data, design }: { data: any; design: SiteDesign }) {
                                 </li>
                                 {plan.features.map((feature, i) => (
                                     <li key={i} className="flex items-center gap-2 text-gray-600">
-                                        <Check className="h-5 w-5 flex-shrink-0" style={{ color: design.primaryColor }} />
+                                        <Check
+                                            className="h-5 w-5 flex-shrink-0"
+                                            style={{ color: design.primaryColor }}
+                                        />
                                         {feature}
                                     </li>
                                 ))}

@@ -56,7 +56,7 @@ export function useTenants() {
             // Don't use orderBy in query - documents without createdAt would be excluded
             const snapshot = await getDocs(tenantsRef);
 
-            const tenantsData = snapshot.docs.map(doc => ({
+            const tenantsData = snapshot.docs.map((doc) => ({
                 id: doc.id,
                 ...doc.data(),
                 createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
@@ -109,7 +109,7 @@ export function useAdminStats() {
                 // Count active and trial tenants
                 let activeTenants = 0;
                 let trialTenants = 0;
-                orgsSnapshot.docs.forEach(doc => {
+                orgsSnapshot.docs.forEach((doc) => {
                     const data = doc.data();
                     if (data.status === "active") activeTenants++;
                     if (data.status === "trial") trialTenants++;
@@ -130,13 +130,13 @@ export function useAdminStats() {
                 let monthlyRevenue = 0;
 
                 if (activeSubsSnapshot.size > 0) {
-                    activeSubsSnapshot.docs.forEach(doc => {
+                    activeSubsSnapshot.docs.forEach((doc) => {
                         monthlyRevenue += doc.data().amount || 0;
                     });
                 } else {
                     // Fallback: Estimate based on plan types if no subscription records
                     // Enterprise: $299, Professional: $99, Starter: $29 (Example pricing)
-                    orgsSnapshot.docs.forEach(doc => {
+                    orgsSnapshot.docs.forEach((doc) => {
                         const data = doc.data();
                         if (data.status === "active") {
                             if (data.plan === "enterprise") monthlyRevenue += 299;
@@ -185,7 +185,7 @@ export function usePlatformSubscriptions() {
                 const q = query(subsRef, orderBy("startDate", "desc"));
                 const snapshot = await getDocs(q);
 
-                const subsData = snapshot.docs.map(doc => ({
+                const subsData = snapshot.docs.map((doc) => ({
                     id: doc.id,
                     ...doc.data(),
                     startDate: doc.data().startDate?.toDate?.()?.toISOString() || "",

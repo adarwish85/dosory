@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -38,10 +45,8 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
     // Filter for outstanding invoices when invoices load
     useEffect(() => {
         if (invoices) {
-            const outstanding = invoices.filter(inv =>
-                inv.status !== "paid" &&
-                inv.status !== "cancelled" &&
-                inv.status !== "draft"
+            const outstanding = invoices.filter(
+                (inv) => inv.status !== "paid" && inv.status !== "cancelled" && inv.status !== "draft"
             );
             setOutstandingInvoices(outstanding);
         }
@@ -50,7 +55,7 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
     // When invoice is selected, auto-fill amount
     useEffect(() => {
         if (selectedInvoiceId) {
-            const inv = outstandingInvoices.find(i => i.id === selectedInvoiceId);
+            const inv = outstandingInvoices.find((i) => i.id === selectedInvoiceId);
             if (inv) {
                 setAmount(inv.amountDue.toString());
             }
@@ -92,9 +97,7 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Record Payment</DialogTitle>
-                    <DialogDescription>
-                        Record a payment received from {customerName}.
-                    </DialogDescription>
+                    <DialogDescription>Record a payment received from {customerName}.</DialogDescription>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
@@ -103,11 +106,15 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
                         <Label>Invoice</Label>
                         <Select value={selectedInvoiceId} onValueChange={setSelectedInvoiceId}>
                             <SelectTrigger>
-                                <SelectValue placeholder={loadingInvoices ? "Loading invoices..." : "Select Invoice to Pay"} />
+                                <SelectValue
+                                    placeholder={loadingInvoices ? "Loading invoices..." : "Select Invoice to Pay"}
+                                />
                             </SelectTrigger>
                             <SelectContent>
                                 {outstandingInvoices.length === 0 ? (
-                                    <SelectItem value="none" disabled>No outstanding invoices</SelectItem>
+                                    <SelectItem value="none" disabled>
+                                        No outstanding invoices
+                                    </SelectItem>
                                 ) : (
                                     outstandingInvoices.map((inv) => (
                                         <SelectItem key={inv.id} value={inv.id}>
@@ -147,12 +154,7 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    onSelect={setDate}
-                                    initialFocus
-                                />
+                                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
                             </PopoverContent>
                         </Popover>
                     </div>
@@ -188,7 +190,9 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
                 </div>
 
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
                     <Button onClick={handleSubmit} disabled={submitting || !selectedInvoiceId}>
                         {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Record Payment

@@ -235,10 +235,7 @@ export function useAllPlatformTickets() {
 
     // Fetch all platform tickets
     useEffect(() => {
-        const q = query(
-            collection(db, "platformTickets"),
-            orderBy("createdAt", "desc")
-        );
+        const q = query(collection(db, "platformTickets"), orderBy("createdAt", "desc"));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map((doc) => {
@@ -262,26 +259,20 @@ export function useAllPlatformTickets() {
     }, []);
 
     // Update ticket status
-    const updateStatus = useCallback(
-        async (ticketId: string, status: TicketStatus): Promise<void> => {
-            await updateDoc(doc(db, "platformTickets", ticketId), {
-                status,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateStatus = useCallback(async (ticketId: string, status: TicketStatus): Promise<void> => {
+        await updateDoc(doc(db, "platformTickets", ticketId), {
+            status,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     // Update ticket priority
-    const updatePriority = useCallback(
-        async (ticketId: string, priority: TicketPriority): Promise<void> => {
-            await updateDoc(doc(db, "platformTickets", ticketId), {
-                priority,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updatePriority = useCallback(async (ticketId: string, priority: TicketPriority): Promise<void> => {
+        await updateDoc(doc(db, "platformTickets", ticketId), {
+            priority,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     // Add admin reply to a ticket
     const addAdminReply = useCallback(
@@ -334,7 +325,7 @@ export function useAllPlatformTickets() {
                     link: "/dashboard/setup/help", // Tenant help page
                     orgId: ticket.orgId,
                     userId: ticket.createdBy.uid,
-                    metadata: { ticketId }
+                    metadata: { ticketId },
                 }).catch(console.error);
             }
         },

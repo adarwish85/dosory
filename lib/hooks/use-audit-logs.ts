@@ -34,7 +34,7 @@ export function useAuditLogs() {
             const q = query(logsRef, orderBy("performedAt", "desc"), limit(100));
 
             const snapshot = await getDocs(q);
-            const logsData = snapshot.docs.map(doc => ({
+            const logsData = snapshot.docs.map((doc) => ({
                 id: doc.id,
                 ...doc.data(),
                 performedAt: doc.data().performedAt?.toDate?.()?.toLocaleString() || "Just now",

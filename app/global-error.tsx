@@ -8,13 +8,7 @@ import { Button } from "@/components/ui/button";
  * Global error boundary for the application
  * Catches unhandled errors and provides recovery options
  */
-export default function GlobalError({
-    error,
-    reset,
-}: {
-    error: Error & { digest?: string };
-    reset: () => void;
-}) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
     useEffect(() => {
         // Log error to monitoring service (e.g., Sentry)
         console.error("Global error:", error);
@@ -41,13 +35,9 @@ export default function GlobalError({
                         {/* Error details (only in development) */}
                         {process.env.NODE_ENV === "development" && (
                             <div className="bg-muted rounded-md p-4 text-left">
-                                <p className="text-sm font-mono text-muted-foreground break-all">
-                                    {error.message}
-                                </p>
+                                <p className="text-sm font-mono text-muted-foreground break-all">{error.message}</p>
                                 {error.digest && (
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        Error ID: {error.digest}
-                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-2">Error ID: {error.digest}</p>
                                 )}
                             </div>
                         )}
@@ -58,11 +48,7 @@ export default function GlobalError({
                                 <RefreshCw className="h-4 w-4" />
                                 Try Again
                             </Button>
-                            <Button
-                                onClick={() => (window.location.href = "/")}
-                                variant="outline"
-                                className="gap-2"
-                            >
+                            <Button onClick={() => (window.location.href = "/")} variant="outline" className="gap-2">
                                 <Home className="h-4 w-4" />
                                 Go Home
                             </Button>

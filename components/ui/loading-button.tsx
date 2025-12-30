@@ -6,9 +6,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { type VariantProps } from "class-variance-authority";
 
-export interface LoadingButtonProps
-    extends React.ComponentProps<"button">,
-    VariantProps<typeof buttonVariants> {
+export interface LoadingButtonProps extends React.ComponentProps<"button">, VariantProps<typeof buttonVariants> {
     /** Whether the button is in a loading state */
     loading?: boolean;
     /** Text to show while loading (optional, defaults to children) */
@@ -22,15 +20,15 @@ export interface LoadingButtonProps
 /**
  * Button component with built-in loading state
  * Automatically shows spinner and disables during async operations
- * 
+ *
  * @example
  * ```tsx
  * <LoadingButton loading={isSubmitting} onClick={handleSubmit}>
  *   Save Changes
  * </LoadingButton>
- * 
- * <LoadingButton 
- *   loading={isSubmitting} 
+ *
+ * <LoadingButton
+ *   loading={isSubmitting}
  *   loadingText="Saving..."
  *   icon={<Save className="h-4 w-4" />}
  * >
@@ -50,19 +48,13 @@ const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonProps>(
                 {...props}
             >
                 {/* Spinner overlay when loading */}
-                {loading && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 
                 {/* Icon when not loading */}
-                {!loading && icon && (
-                    <span className="mr-2">{icon}</span>
-                )}
+                {!loading && icon && <span className="mr-2">{icon}</span>}
 
                 {/* Button text */}
-                <span className={cn(loading && "opacity-80")}>
-                    {loading && loadingText ? loadingText : children}
-                </span>
+                <span className={cn(loading && "opacity-80")}>{loading && loadingText ? loadingText : children}</span>
             </Button>
         );
     }
@@ -71,4 +63,3 @@ const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonProps>(
 LoadingButton.displayName = "LoadingButton";
 
 export { LoadingButton };
-

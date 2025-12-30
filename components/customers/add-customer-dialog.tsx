@@ -96,12 +96,7 @@ export function AddCustomerDialog({ onSuccess }: { onSuccess?: () => void }) {
                             <Label htmlFor="phone" className="text-right">
                                 Phone
                             </Label>
-                            <Input
-                                id="phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                className="col-span-3"
-                            />
+                            <Input id="phone" value={formData.phone} onChange={handleChange} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="address" className="text-right">

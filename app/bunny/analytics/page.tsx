@@ -3,8 +3,19 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    TrendingUp, TrendingDown, Users, Building2, CreditCard, DollarSign,
-    Activity, ArrowUpRight, ArrowDownRight, Calendar, BarChart3, PieChart, Clock
+    TrendingUp,
+    TrendingDown,
+    Users,
+    Building2,
+    CreditCard,
+    DollarSign,
+    Activity,
+    ArrowUpRight,
+    ArrowDownRight,
+    Calendar,
+    BarChart3,
+    PieChart,
+    Clock,
 } from "lucide-react";
 import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -41,11 +52,11 @@ export default function AnalyticsPage() {
         try {
             // Fetch tenants
             const tenantsSnap = await getDocs(collection(db, "organizations"));
-            const tenants = tenantsSnap.docs.map(d => d.data());
+            const tenants = tenantsSnap.docs.map((d) => d.data());
 
-            const activeTenants = tenants.filter(t => t.status === "active").length;
-            const trialTenants = tenants.filter(t => t.status === "trial").length;
-            const suspendedTenants = tenants.filter(t => t.status === "suspended").length;
+            const activeTenants = tenants.filter((t) => t.status === "active").length;
+            const trialTenants = tenants.filter((t) => t.status === "trial").length;
+            const suspendedTenants = tenants.filter((t) => t.status === "suspended").length;
 
             // Fetch users
             const usersSnap = await getDocs(collection(db, "users"));
@@ -55,7 +66,7 @@ export default function AnalyticsPage() {
             startOfMonth.setDate(1);
             startOfMonth.setHours(0, 0, 0, 0);
 
-            const newTenantsThisMonth = tenants.filter(t => {
+            const newTenantsThisMonth = tenants.filter((t) => {
                 if (t.createdAt?.toDate) {
                     return t.createdAt.toDate() >= startOfMonth;
                 }
@@ -63,9 +74,8 @@ export default function AnalyticsPage() {
             }).length;
 
             // Calculate conversion rate (trial to active)
-            const conversionRate = trialTenants > 0
-                ? Math.round((activeTenants / (activeTenants + trialTenants)) * 100)
-                : 0;
+            const conversionRate =
+                trialTenants > 0 ? Math.round((activeTenants / (activeTenants + trialTenants)) * 100) : 0;
 
             setData({
                 totalTenants: tenants.length,
@@ -74,10 +84,10 @@ export default function AnalyticsPage() {
                 suspendedTenants,
                 totalUsers: usersSnap.docs.length,
                 monthlyRevenue: tenants.reduce((acc, t) => {
-                    if (t.status === 'active') {
-                        if (t.plan === 'enterprise') return acc + 299;
-                        if (t.plan === 'professional') return acc + 99;
-                        if (t.plan === 'starter') return acc + 29;
+                    if (t.status === "active") {
+                        if (t.plan === "enterprise") return acc + 299;
+                        if (t.plan === "professional") return acc + 99;
+                        if (t.plan === "starter") return acc + 29;
                     }
                     return acc;
                 }, 0),
@@ -143,7 +153,10 @@ export default function AnalyticsPage() {
                 {statCards.map((card) => {
                     const Icon = card.icon;
                     return (
-                        <Card key={card.title} className="shadow-sm border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                        <Card
+                            key={card.title}
+                            className="shadow-sm border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow"
+                        >
                             <CardContent className="p-6">
                                 <div className="flex items-start justify-between">
                                     <div>
@@ -152,8 +165,14 @@ export default function AnalyticsPage() {
                                             {loading ? <span className="text-gray-300">...</span> : card.value}
                                         </p>
                                         <div className="flex items-center gap-1 mt-2">
-                                            <span className={`flex items-center text-xs font-medium ${card.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                                                {card.trend === "up" ? <ArrowUpRight className="h-3 w-3 mr-0.5" /> : <ArrowDownRight className="h-3 w-3 mr-0.5" />}
+                                            <span
+                                                className={`flex items-center text-xs font-medium ${card.trend === "up" ? "text-green-600" : "text-red-600"}`}
+                                            >
+                                                {card.trend === "up" ? (
+                                                    <ArrowUpRight className="h-3 w-3 mr-0.5" />
+                                                ) : (
+                                                    <ArrowDownRight className="h-3 w-3 mr-0.5" />
+                                                )}
                                                 {card.change}
                                             </span>
                                             <span className="text-xs text-gray-400">vs last month</span>
@@ -184,9 +203,20 @@ export default function AnalyticsPage() {
                             <div className="relative pt-2 pb-6 flex justify-center">
                                 {/* Simple CSS Pie Chart representation (placeholder for real chart) */}
                                 <div className="flex gap-1 h-4 w-full rounded-full overflow-hidden bg-gray-100">
-                                    <div className="bg-green-500 h-full" style={{ width: `${(data.activeTenants / (data.totalTenants || 1)) * 100}%` }}></div>
-                                    <div className="bg-amber-500 h-full" style={{ width: `${(data.trialTenants / (data.totalTenants || 1)) * 100}%` }}></div>
-                                    <div className="bg-red-500 h-full" style={{ width: `${(data.suspendedTenants / (data.totalTenants || 1)) * 100}%` }}></div>
+                                    <div
+                                        className="bg-green-500 h-full"
+                                        style={{ width: `${(data.activeTenants / (data.totalTenants || 1)) * 100}%` }}
+                                    ></div>
+                                    <div
+                                        className="bg-amber-500 h-full"
+                                        style={{ width: `${(data.trialTenants / (data.totalTenants || 1)) * 100}%` }}
+                                    ></div>
+                                    <div
+                                        className="bg-red-500 h-full"
+                                        style={{
+                                            width: `${(data.suspendedTenants / (data.totalTenants || 1)) * 100}%`,
+                                        }}
+                                    ></div>
                                 </div>
                             </div>
 
@@ -196,21 +226,27 @@ export default function AnalyticsPage() {
                                         <div className="w-2.5 h-2.5 rounded-full bg-green-500 ring-4 ring-green-50" />
                                         <span className="text-gray-600 font-medium">Active</span>
                                     </div>
-                                    <span className="font-semibold text-gray-900 bg-gray-50 px-2.5 py-0.5 rounded-md">{loading ? "..." : data.activeTenants}</span>
+                                    <span className="font-semibold text-gray-900 bg-gray-50 px-2.5 py-0.5 rounded-md">
+                                        {loading ? "..." : data.activeTenants}
+                                    </span>
                                 </div>
                                 <div className="flex items-center justify-between group">
                                     <div className="flex items-center gap-2.5">
                                         <div className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-amber-50" />
                                         <span className="text-gray-600 font-medium">Trial</span>
                                     </div>
-                                    <span className="font-semibold text-gray-900 bg-gray-50 px-2.5 py-0.5 rounded-md">{loading ? "..." : data.trialTenants}</span>
+                                    <span className="font-semibold text-gray-900 bg-gray-50 px-2.5 py-0.5 rounded-md">
+                                        {loading ? "..." : data.trialTenants}
+                                    </span>
                                 </div>
                                 <div className="flex items-center justify-between group">
                                     <div className="flex items-center gap-2.5">
                                         <div className="w-2.5 h-2.5 rounded-full bg-red-500 ring-4 ring-red-50" />
                                         <span className="text-gray-600 font-medium">Suspended</span>
                                     </div>
-                                    <span className="font-semibold text-gray-900 bg-gray-50 px-2.5 py-0.5 rounded-md">{loading ? "..." : data.suspendedTenants}</span>
+                                    <span className="font-semibold text-gray-900 bg-gray-50 px-2.5 py-0.5 rounded-md">
+                                        {loading ? "..." : data.suspendedTenants}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -229,16 +265,24 @@ export default function AnalyticsPage() {
                         <div className="space-y-5">
                             <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg border border-gray-100">
                                 <span className="text-gray-600 text-sm font-medium">New Tenants (This Month)</span>
-                                <span className="font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">{loading ? "..." : data.newTenantsThisMonth}</span>
+                                <span className="font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">
+                                    {loading ? "..." : data.newTenantsThisMonth}
+                                </span>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg border border-gray-100">
                                 <span className="text-gray-600 text-sm font-medium">Trial Conversion Rate</span>
-                                <span className="font-bold text-gray-900">{loading ? "..." : `${data.conversionRate}%`}</span>
+                                <span className="font-bold text-gray-900">
+                                    {loading ? "..." : `${data.conversionRate}%`}
+                                </span>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg border border-gray-100">
                                 <span className="text-gray-600 text-sm font-medium">Avg Users per Tenant</span>
                                 <span className="font-bold text-gray-900">
-                                    {loading ? "..." : data.totalTenants > 0 ? Math.round(data.totalUsers / data.totalTenants) : 0}
+                                    {loading
+                                        ? "..."
+                                        : data.totalTenants > 0
+                                          ? Math.round(data.totalUsers / data.totalTenants)
+                                          : 0}
                                 </span>
                             </div>
                         </div>
@@ -256,20 +300,31 @@ export default function AnalyticsPage() {
                     <CardContent className="pt-6">
                         <div className="space-y-5">
                             <div className="flex flex-col gap-1 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl">
-                                <span className="text-blue-600 text-xs font-semibold uppercase tracking-wider">Monthly Recurring Revenue</span>
-                                <span className="text-2xl font-bold text-blue-900 mt-1">${loading ? "..." : data.monthlyRevenue.toLocaleString()}</span>
+                                <span className="text-blue-600 text-xs font-semibold uppercase tracking-wider">
+                                    Monthly Recurring Revenue
+                                </span>
+                                <span className="text-2xl font-bold text-blue-900 mt-1">
+                                    ${loading ? "..." : data.monthlyRevenue.toLocaleString()}
+                                </span>
                             </div>
 
                             <div className="space-y-3 pt-1">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-500">ARR Estimate</span>
-                                    <span className="font-medium text-gray-900">${loading ? "..." : (data.monthlyRevenue * 12).toLocaleString()}</span>
+                                    <span className="font-medium text-gray-900">
+                                        ${loading ? "..." : (data.monthlyRevenue * 12).toLocaleString()}
+                                    </span>
                                 </div>
                                 <div className="w-full h-px bg-gray-100"></div>
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-500">Avg Revenue / Tenant</span>
                                     <span className="font-medium text-gray-900">
-                                        ${loading ? "..." : data.activeTenants > 0 ? Math.round(data.monthlyRevenue / data.activeTenants) : 0}
+                                        $
+                                        {loading
+                                            ? "..."
+                                            : data.activeTenants > 0
+                                              ? Math.round(data.monthlyRevenue / data.activeTenants)
+                                              : 0}
                                     </span>
                                 </div>
                             </div>

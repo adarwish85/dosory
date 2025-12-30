@@ -162,7 +162,10 @@ export default function CompanyProfileStep() {
                                     className="max-h-32 max-w-full mx-auto rounded-lg"
                                 />
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); handleRemoveLogo(); }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRemoveLogo();
+                                    }}
                                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                                 >
                                     <X className="h-3 w-3" />
@@ -188,11 +191,7 @@ export default function CompanyProfileStep() {
 
             {/* Action Button */}
             <div className="flex justify-end pt-4">
-                <Button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="bg-blue-600 hover:bg-blue-700 gap-2"
-                >
+                <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 gap-2">
                     {isSaving ? (
                         <>
                             <Loader2 className="h-4 w-4 animate-spin" />

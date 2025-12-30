@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useEmailTemplates, useToggleTemplate, TEMPLATE_CATEGORIES, EmailTemplate } from "@/lib/hooks/use-email-templates";
+import {
+    useEmailTemplates,
+    useToggleTemplate,
+    TEMPLATE_CATEGORIES,
+    EmailTemplate,
+} from "@/lib/hooks/use-email-templates";
 import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,21 +31,25 @@ export default function EmailTemplatesPage() {
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
     // Filter templates
-    const filteredTemplates = templates.filter(template => {
-        const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const filteredTemplates = templates.filter((template) => {
+        const matchesSearch =
+            template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             template.description.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesCategory = selectedCategory === "all" || template.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
     // Group by category for display
-    const groupedByCategory = filteredTemplates.reduce((acc, template) => {
-        if (!acc[template.category]) {
-            acc[template.category] = [];
-        }
-        acc[template.category].push(template);
-        return acc;
-    }, {} as Record<string, EmailTemplate[]>);
+    const groupedByCategory = filteredTemplates.reduce(
+        (acc, template) => {
+            if (!acc[template.category]) {
+                acc[template.category] = [];
+            }
+            acc[template.category].push(template);
+            return acc;
+        },
+        {} as Record<string, EmailTemplate[]>
+    );
 
     const handleToggle = async (template: EmailTemplate) => {
         if (user?.uid) {
@@ -69,11 +78,7 @@ export default function EmailTemplatesPage() {
     }
 
     if (error) {
-        return (
-            <div className="p-8 text-center text-red-600">
-                Error loading templates: {error}
-            </div>
-        );
+        return <div className="p-8 text-center text-red-600">Error loading templates: {error}</div>;
     }
 
     return (
@@ -166,12 +171,18 @@ export default function EmailTemplatesPage() {
                                                         {template.name}
                                                     </h4>
                                                     {!template.isDefault && (
-                                                        <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200"
+                                                        >
                                                             Modified
                                                         </Badge>
                                                     )}
                                                     {!template.enabled && (
-                                                        <Badge variant="outline" className="text-xs bg-gray-50 text-gray-500">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="text-xs bg-gray-50 text-gray-500"
+                                                        >
                                                             Disabled
                                                         </Badge>
                                                     )}
@@ -182,7 +193,10 @@ export default function EmailTemplatesPage() {
                                                 {template.updatedAt && (
                                                     <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                                                         <Clock className="h-3 w-3" />
-                                                        Updated {formatDistanceToNow(template.updatedAt.toDate(), { addSuffix: true })}
+                                                        Updated{" "}
+                                                        {formatDistanceToNow(template.updatedAt.toDate(), {
+                                                            addSuffix: true,
+                                                        })}
                                                     </p>
                                                 )}
                                             </div>
@@ -211,7 +225,9 @@ export default function EmailTemplatesPage() {
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem asChild>
-                                                        <Link href={`/bunny/email-templates/${template.id}?preview=true`}>
+                                                        <Link
+                                                            href={`/bunny/email-templates/${template.id}?preview=true`}
+                                                        >
                                                             <Eye className="h-4 w-4 mr-2" />
                                                             Preview
                                                         </Link>

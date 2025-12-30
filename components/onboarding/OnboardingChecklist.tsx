@@ -25,15 +25,15 @@ export default function OnboardingChecklist() {
         const handleMouseMove = (e: MouseEvent | TouchEvent) => {
             if (!isDragging) return;
 
-            const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
-            const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+            const clientX = "touches" in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+            const clientY = "touches" in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
 
             const deltaX = dragStart.x - clientX;
             const deltaY = dragStart.y - clientY;
 
-            setPosition(prev => ({
+            setPosition((prev) => ({
                 x: Math.max(24, prev.x + deltaX),
-                y: Math.max(24, prev.y + deltaY)
+                y: Math.max(24, prev.y + deltaY),
             }));
 
             setDragStart({ x: clientX, y: clientY });
@@ -44,16 +44,16 @@ export default function OnboardingChecklist() {
         };
 
         if (isDragging) {
-            window.addEventListener('mousemove', handleMouseMove);
-            window.addEventListener('mouseup', handleMouseUp);
-            window.addEventListener('touchmove', handleMouseMove);
-            window.addEventListener('touchend', handleMouseUp);
+            window.addEventListener("mousemove", handleMouseMove);
+            window.addEventListener("mouseup", handleMouseUp);
+            window.addEventListener("touchmove", handleMouseMove);
+            window.addEventListener("touchend", handleMouseUp);
         }
         return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
-            window.removeEventListener('touchmove', handleMouseMove);
-            window.removeEventListener('touchend', handleMouseUp);
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
+            window.removeEventListener("touchmove", handleMouseMove);
+            window.removeEventListener("touchend", handleMouseUp);
         };
     }, [isDragging, dragStart]);
 
@@ -62,8 +62,8 @@ export default function OnboardingChecklist() {
         if (isOpen) return;
 
         setIsDragging(true);
-        const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+        const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+        const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
         setDragStart({ x: clientX, y: clientY });
     };
 
@@ -77,11 +77,11 @@ export default function OnboardingChecklist() {
         return (
             <div
                 style={{
-                    position: 'fixed',
+                    position: "fixed",
                     bottom: position.y,
                     right: position.x,
-                    touchAction: 'none',
-                    zIndex: 50
+                    touchAction: "none",
+                    zIndex: 50,
                 }}
             >
                 <Button
@@ -112,7 +112,7 @@ export default function OnboardingChecklist() {
             className="fixed z-50 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden animate-in slide-in-from-bottom-5 fade-in-0 duration-200"
             style={{
                 bottom: position.y + 20, // Open above the button position
-                right: position.x
+                right: position.x,
             }}
         >
             {/* Header */}
@@ -148,7 +148,9 @@ export default function OnboardingChecklist() {
                             style={{ width: `${progress * 100}%` }}
                         />
                     </div>
-                    <span className="text-sm font-medium">{completedCount}/{steps.length}</span>
+                    <span className="text-sm font-medium">
+                        {completedCount}/{steps.length}
+                    </span>
                 </div>
             </div>
 
@@ -168,30 +170,27 @@ export default function OnboardingChecklist() {
                                 isComplete
                                     ? "bg-green-50 text-green-700"
                                     : isCurrent
-                                        ? "bg-blue-50 text-blue-700"
-                                        : "hover:bg-gray-50 text-gray-600"
+                                      ? "bg-blue-50 text-blue-700"
+                                      : "hover:bg-gray-50 text-gray-600"
                             )}
                         >
                             {isComplete ? (
                                 <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
                             ) : (
-                                <Circle className={cn(
-                                    "h-5 w-5 flex-shrink-0",
-                                    isCurrent ? "text-blue-500" : "text-gray-300"
-                                )} />
+                                <Circle
+                                    className={cn(
+                                        "h-5 w-5 flex-shrink-0",
+                                        isCurrent ? "text-blue-500" : "text-gray-300"
+                                    )}
+                                />
                             )}
                             <div className="flex-1 min-w-0">
-                                <p className={cn(
-                                    "text-sm font-medium",
-                                    isComplete && "line-through opacity-70"
-                                )}>
+                                <p className={cn("text-sm font-medium", isComplete && "line-through opacity-70")}>
                                     {step.label}
                                 </p>
                                 <p className="text-xs opacity-70 truncate">{step.description}</p>
                             </div>
-                            {!isComplete && (
-                                <ChevronRight className="h-4 w-4 opacity-50 flex-shrink-0" />
-                            )}
+                            {!isComplete && <ChevronRight className="h-4 w-4 opacity-50 flex-shrink-0" />}
                         </Link>
                     );
                 })}
@@ -199,12 +198,7 @@ export default function OnboardingChecklist() {
 
             {/* Footer */}
             <div className="p-3 border-t bg-gray-50">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-gray-500 text-xs"
-                    onClick={skipOnboarding}
-                >
+                <Button variant="ghost" size="sm" className="w-full text-gray-500 text-xs" onClick={skipOnboarding}>
                     Dismiss Guide
                 </Button>
             </div>

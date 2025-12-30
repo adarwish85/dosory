@@ -1,7 +1,7 @@
 "use client";
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -39,8 +39,10 @@ const DEFAULT_NOTE: Partial<StickyNote> = {
     isOpen: true,
 };
 
-const generateId = () => typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
-
+const generateId = () =>
+    typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2) + Date.now().toString(36);
 
 export const useStickyNotes = create<StickyNotesState>()(
     persist(
@@ -52,37 +54,31 @@ export const useStickyNotes = create<StickyNotesState>()(
                 const newNote: StickyNote = {
                     id: generateId(),
                     ...DEFAULT_NOTE,
-                    position: { x: 100 + (get().notes.length * 20), y: 100 + (get().notes.length * 20) }, // Cascade positions
+                    position: { x: 100 + get().notes.length * 20, y: 100 + get().notes.length * 20 }, // Cascade positions
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
                 } as StickyNote;
 
-                set(state => ({ notes: [...state.notes, newNote] }));
+                set((state) => ({ notes: [...state.notes, newNote] }));
             },
 
             updateNote: (id, updates) => {
-                set(state => ({
-                    notes: state.notes.map(note =>
-                        note.id === id
-                            ? { ...note, ...updates, updatedAt: Date.now() }
-                            : note
-                    )
+                set((state) => ({
+                    notes: state.notes.map((note) =>
+                        note.id === id ? { ...note, ...updates, updatedAt: Date.now() } : note
+                    ),
                 }));
             },
 
             deleteNote: (id) => {
-                set(state => ({
-                    notes: state.notes.filter(note => note.id !== id)
+                set((state) => ({
+                    notes: state.notes.filter((note) => note.id !== id),
                 }));
             },
 
             toggleNoteOpen: (id, isOpen) => {
-                set(state => ({
-                    notes: state.notes.map(note =>
-                        note.id === id
-                            ? { ...note, isOpen }
-                            : note
-                    )
+                set((state) => ({
+                    notes: state.notes.map((note) => (note.id === id ? { ...note, isOpen } : note)),
                 }));
             },
 
@@ -107,17 +103,21 @@ export const useStickyNotes = create<StickyNotesState>()(
                 if (!userId) return;
                 try {
                     const docRef = doc(db, "users", userId, "settings", "stickyNotes");
-                    await setDoc(docRef, {
-                        notes: get().notes,
-                        updatedAt: Date.now()
-                    }, { merge: true });
+                    await setDoc(
+                        docRef,
+                        {
+                            notes: get().notes,
+                            updatedAt: Date.now(),
+                        },
+                        { merge: true }
+                    );
                 } catch (error) {
                     console.error("Failed to sync sticky notes", error);
                 }
-            }
+            },
         }),
         {
-            name: 'sticky-notes-storage',
+            name: "sticky-notes-storage",
             partialize: (state) => ({ notes: state.notes }),
         }
     )

@@ -38,7 +38,10 @@ function OverviewColumn({ title, icon, items }: OverviewColumnProps) {
                         </div>
                         <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                             <div
-                                className={cn("h-full rounded-full", item.color?.replace("text-", "bg-") || "bg-primary")}
+                                className={cn(
+                                    "h-full rounded-full",
+                                    item.color?.replace("text-", "bg-") || "bg-primary"
+                                )}
                                 style={{ width: `${item.percentage}%` }}
                             />
                         </div>
@@ -49,17 +52,21 @@ function OverviewColumn({ title, icon, items }: OverviewColumnProps) {
     );
 }
 
-export function FinanceOverviewWidget({ invoiceStats, estimateStats, proposalStats }: {
-    invoiceStats?: any,
-    estimateStats?: any,
-    proposalStats?: any
+export function FinanceOverviewWidget({
+    invoiceStats,
+    estimateStats,
+    proposalStats,
+}: {
+    invoiceStats?: any;
+    estimateStats?: any;
+    proposalStats?: any;
 }) {
-    const getPerc = (val: number, total: number) => total > 0 ? (val / total) * 100 : 0;
+    const getPerc = (val: number, total: number) => (total > 0 ? (val / total) * 100 : 0);
 
     // Corrected Mapping
     // Draft: draft
-    // Not Sent: sent but not viewed? Or just 'sent' + 'viewed' as "Sent"? 
-    // The previous code had "Not Sent" = sent + viewed. That's weird. 
+    // Not Sent: sent but not viewed? Or just 'sent' + 'viewed' as "Sent"?
+    // The previous code had "Not Sent" = sent + viewed. That's weird.
     // Let's assume standard flow: Draft -> Sent -> Viewed -> Partial -> Paid
     // "Not Sent" should be 0 if we follow standard logic, or maybe "Created" but not sent? usually that's Draft.
     // Let's stick to the labels but ensure counts are correct.
@@ -68,39 +75,120 @@ export function FinanceOverviewWidget({ invoiceStats, estimateStats, proposalSta
     const totalInvoices = invoiceStats?.total || 1;
 
     const invoiceItems = [
-        { label: "Draft", count: invoiceStats?.draft || 0, percentage: getPerc(invoiceStats?.draft || 0, totalInvoices), color: "text-gray-500" },
-        { label: "Sent", count: (invoiceStats?.sent || 0) + (invoiceStats?.viewed || 0), percentage: getPerc((invoiceStats?.sent || 0) + (invoiceStats?.viewed || 0), totalInvoices), color: "text-blue-600" },
+        {
+            label: "Draft",
+            count: invoiceStats?.draft || 0,
+            percentage: getPerc(invoiceStats?.draft || 0, totalInvoices),
+            color: "text-gray-500",
+        },
+        {
+            label: "Sent",
+            count: (invoiceStats?.sent || 0) + (invoiceStats?.viewed || 0),
+            percentage: getPerc((invoiceStats?.sent || 0) + (invoiceStats?.viewed || 0), totalInvoices),
+            color: "text-blue-600",
+        },
         { label: "Unpaid", count: 0, percentage: 0, color: "text-red-500" }, // 'Unpaid' usually means Sent/Viewed but 0 payment. But we count those as Sent/Viewed. Let's keep 0 for now or map 'viewed' here?
-        { label: "Partially Paid", count: invoiceStats?.partial || 0, percentage: getPerc(invoiceStats?.partial || 0, totalInvoices), color: "text-orange-500" },
-        { label: "Overdue", count: invoiceStats?.overdue || 0, percentage: getPerc(invoiceStats?.overdue || 0, totalInvoices), color: "text-amber-600" },
-        { label: "Paid", count: invoiceStats?.paid || 0, percentage: getPerc(invoiceStats?.paid || 0, totalInvoices), color: "text-green-500" },
-        { label: "Cancelled", count: invoiceStats?.cancelled || 0, percentage: getPerc(invoiceStats?.cancelled || 0, totalInvoices), color: "text-gray-400" } // Added Cancelled
+        {
+            label: "Partially Paid",
+            count: invoiceStats?.partial || 0,
+            percentage: getPerc(invoiceStats?.partial || 0, totalInvoices),
+            color: "text-orange-500",
+        },
+        {
+            label: "Overdue",
+            count: invoiceStats?.overdue || 0,
+            percentage: getPerc(invoiceStats?.overdue || 0, totalInvoices),
+            color: "text-amber-600",
+        },
+        {
+            label: "Paid",
+            count: invoiceStats?.paid || 0,
+            percentage: getPerc(invoiceStats?.paid || 0, totalInvoices),
+            color: "text-green-500",
+        },
+        {
+            label: "Cancelled",
+            count: invoiceStats?.cancelled || 0,
+            percentage: getPerc(invoiceStats?.cancelled || 0, totalInvoices),
+            color: "text-gray-400",
+        }, // Added Cancelled
     ];
 
     const estimateItems = [
-        { label: "Draft", count: estimateStats?.draft || 0, percentage: getPerc(estimateStats?.draft || 0, estimateStats?.total || 1), color: "text-gray-500" },
-        { label: "Sent", count: estimateStats?.sent || 0, percentage: getPerc(estimateStats?.sent || 0, estimateStats?.total || 1), color: "text-blue-500" },
-        { label: "Expired", count: estimateStats?.expired || 0, percentage: getPerc(estimateStats?.expired || 0, estimateStats?.total || 1), color: "text-amber-600" },
-        { label: "Declined", count: estimateStats?.declined || 0, percentage: getPerc(estimateStats?.declined || 0, estimateStats?.total || 1), color: "text-red-500" },
-        { label: "Accepted", count: estimateStats?.accepted || 0, percentage: getPerc(estimateStats?.accepted || 0, estimateStats?.total || 1), color: "text-green-500" }
+        {
+            label: "Draft",
+            count: estimateStats?.draft || 0,
+            percentage: getPerc(estimateStats?.draft || 0, estimateStats?.total || 1),
+            color: "text-gray-500",
+        },
+        {
+            label: "Sent",
+            count: estimateStats?.sent || 0,
+            percentage: getPerc(estimateStats?.sent || 0, estimateStats?.total || 1),
+            color: "text-blue-500",
+        },
+        {
+            label: "Expired",
+            count: estimateStats?.expired || 0,
+            percentage: getPerc(estimateStats?.expired || 0, estimateStats?.total || 1),
+            color: "text-amber-600",
+        },
+        {
+            label: "Declined",
+            count: estimateStats?.declined || 0,
+            percentage: getPerc(estimateStats?.declined || 0, estimateStats?.total || 1),
+            color: "text-red-500",
+        },
+        {
+            label: "Accepted",
+            count: estimateStats?.accepted || 0,
+            percentage: getPerc(estimateStats?.accepted || 0, estimateStats?.total || 1),
+            color: "text-green-500",
+        },
     ];
 
     const proposalItems = [
-        { label: "Draft", count: proposalStats?.draft || 0, percentage: getPerc(proposalStats?.draft || 0, proposalStats?.total || 1), color: "text-gray-500" },
-        { label: "Sent", count: proposalStats?.open || 0, percentage: getPerc(proposalStats?.open || 0, proposalStats?.total || 1), color: "text-blue-600" },
-        { label: "Revised", count: proposalStats?.revised || 0, percentage: getPerc(proposalStats?.revised || 0, proposalStats?.total || 1), color: "text-blue-400" },
-        { label: "Declined", count: proposalStats?.declined || 0, percentage: getPerc(proposalStats?.declined || 0, proposalStats?.total || 1), color: "text-red-500" },
-        { label: "Accepted", count: proposalStats?.accepted || 0, percentage: getPerc(proposalStats?.accepted || 0, proposalStats?.total || 1), color: "text-green-500" }
+        {
+            label: "Draft",
+            count: proposalStats?.draft || 0,
+            percentage: getPerc(proposalStats?.draft || 0, proposalStats?.total || 1),
+            color: "text-gray-500",
+        },
+        {
+            label: "Sent",
+            count: proposalStats?.open || 0,
+            percentage: getPerc(proposalStats?.open || 0, proposalStats?.total || 1),
+            color: "text-blue-600",
+        },
+        {
+            label: "Revised",
+            count: proposalStats?.revised || 0,
+            percentage: getPerc(proposalStats?.revised || 0, proposalStats?.total || 1),
+            color: "text-blue-400",
+        },
+        {
+            label: "Declined",
+            count: proposalStats?.declined || 0,
+            percentage: getPerc(proposalStats?.declined || 0, proposalStats?.total || 1),
+            color: "text-red-500",
+        },
+        {
+            label: "Accepted",
+            count: proposalStats?.accepted || 0,
+            percentage: getPerc(proposalStats?.accepted || 0, proposalStats?.total || 1),
+            color: "text-green-500",
+        },
     ];
 
     // Calculate Amounts
     const amounts = invoiceStats?.amountsByStatus || {};
-    const outstandingAmount = (amounts.sent || 0) + (amounts.viewed || 0) + (amounts.partial || 0) + (amounts.overdue || 0); // Everything not paid/draft/cancelled
+    const outstandingAmount =
+        (amounts.sent || 0) + (amounts.viewed || 0) + (amounts.partial || 0) + (amounts.overdue || 0); // Everything not paid/draft/cancelled
     const pastDueAmount = amounts.overdue || 0;
     const paidAmount = amounts.paid || 0;
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(amount);
+        return new Intl.NumberFormat("en-EG", { style: "currency", currency: "EGP" }).format(amount);
     };
 
     return (

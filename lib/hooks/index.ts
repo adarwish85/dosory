@@ -13,19 +13,10 @@ export { useInvoices, useInvoice } from "./use-invoices";
 export { useProjects, useProject, useTasks, useTask } from "./use-projects";
 
 // Expenses & Contracts
-export {
-    useExpenses,
-    useExpenseCategories,
-    useContracts,
-} from "./use-expenses";
+export { useExpenses, useExpenseCategories, useContracts } from "./use-expenses";
 
 // Support & Knowledge Base
-export {
-    useTickets,
-    useTicketReplies,
-    useDepartments,
-    useKnowledgeBase,
-} from "./use-support";
+export { useTickets, useTicketReplies, useDepartments, useKnowledgeBase } from "./use-support";
 
 // Staff, Roles & Settings
 export {

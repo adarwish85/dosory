@@ -55,13 +55,7 @@ export interface Contact extends BaseEntity {
     };
 }
 
-export type ContactPermission =
-    | "invoices"
-    | "estimates"
-    | "contracts"
-    | "proposals"
-    | "support"
-    | "projects";
+export type ContactPermission = "invoices" | "estimates" | "contracts" | "proposals" | "support" | "projects";
 
 export interface Address {
     street?: string;
@@ -99,15 +93,7 @@ export interface Lead extends BaseEntity {
     leadScore?: number; // 0-100 score based on criteria
 }
 
-export type LeadStatus =
-    | "new"
-    | "contacted"
-    | "qualified"
-    | "proposal"
-    | "negotiation"
-    | "won"
-    | "lost"
-    | "junk";
+export type LeadStatus = "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "won" | "lost" | "junk";
 
 // ============================================
 // Invoice
@@ -139,14 +125,7 @@ export interface Invoice extends BaseEntity {
     paidAt?: Timestamp;
 }
 
-export type InvoiceStatus =
-    | "draft"
-    | "sent"
-    | "viewed"
-    | "partial"
-    | "paid"
-    | "overdue"
-    | "cancelled";
+export type InvoiceStatus = "draft" | "sent" | "viewed" | "partial" | "paid" | "overdue" | "cancelled";
 
 export interface LineItem {
     id: string;
@@ -198,13 +177,7 @@ export interface Estimate extends BaseEntity {
     convertedToInvoiceId?: string;
 }
 
-export type EstimateStatus =
-    | "draft"
-    | "sent"
-    | "viewed"
-    | "accepted"
-    | "declined"
-    | "expired";
+export type EstimateStatus = "draft" | "sent" | "viewed" | "accepted" | "declined" | "expired";
 
 // ============================================
 // Proposal
@@ -234,13 +207,7 @@ export interface Proposal extends BaseEntity {
     convertedToInvoiceId?: string;
 }
 
-export type ProposalStatus =
-    | "draft"
-    | "sent"
-    | "open"
-    | "revised"
-    | "declined"
-    | "accepted";
+export type ProposalStatus = "draft" | "sent" | "open" | "revised" | "declined" | "accepted";
 
 // ============================================
 // Credit Note
@@ -320,12 +287,7 @@ export interface Project extends BaseEntity {
     progress: number;
 }
 
-export type ProjectStatus =
-    | "not_started"
-    | "in_progress"
-    | "on_hold"
-    | "cancelled"
-    | "finished";
+export type ProjectStatus = "not_started" | "in_progress" | "on_hold" | "cancelled" | "finished";
 
 export type ProjectBillingType = "fixed" | "hourly" | "task_hours";
 
@@ -356,12 +318,7 @@ export interface Task extends BaseEntity {
     relatedTo?: TaskRelation;
 }
 
-export type TaskStatus =
-    | "not_started"
-    | "in_progress"
-    | "testing"
-    | "awaiting_feedback"
-    | "completed";
+export type TaskStatus = "not_started" | "in_progress" | "testing" | "awaiting_feedback" | "completed";
 
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
@@ -429,12 +386,7 @@ export interface Subscription extends BaseEntity {
 
 export type BillingCycle = "monthly" | "quarterly" | "semi_annual" | "annual";
 
-export type SubscriptionStatus =
-    | "active"
-    | "past_due"
-    | "cancelled"
-    | "paused"
-    | "future";
+export type SubscriptionStatus = "active" | "past_due" | "cancelled" | "paused" | "future";
 
 // ============================================
 // Contract
@@ -479,12 +431,7 @@ export interface Ticket extends BaseEntity {
 
 export type TicketPriority = "low" | "medium" | "high";
 
-export type TicketStatus =
-    | "open"
-    | "in_progress"
-    | "answered"
-    | "on_hold"
-    | "closed";
+export type TicketStatus = "open" | "in_progress" | "answered" | "on_hold" | "closed";
 
 export interface TicketReply extends BaseEntity {
     ticketId: string;

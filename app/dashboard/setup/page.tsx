@@ -41,9 +41,7 @@ export default function SetupPage() {
 
                 <TabsContent value="company" className="mt-4">
                     <Card>
-                        <CardContent className="p-6 text-muted-foreground">
-                            Company settings content...
-                        </CardContent>
+                        <CardContent className="p-6 text-muted-foreground">Company settings content...</CardContent>
                     </Card>
                 </TabsContent>
             </Tabs>

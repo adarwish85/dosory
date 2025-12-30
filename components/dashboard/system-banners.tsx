@@ -19,57 +19,66 @@ export function SystemBanners() {
 
     useEffect(() => {
         // Only fetch active banners - query without orderBy to avoid index requirement
-        const q = query(
-            collection(db, "system_banners"),
-            where("active", "==", true)
-        );
+        const q = query(collection(db, "system_banners"), where("active", "==", true));
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Banner[];
-            // Sort client-side by createdAt descending
-            data.sort((a: any, b: any) => {
-                const aTime = a.createdAt?.toMillis?.() || 0;
-                const bTime = b.createdAt?.toMillis?.() || 0;
-                return bTime - aTime;
-            });
-            setBanners(data);
-        }, (error) => {
-            // Silently handle permission errors - banners are optional
-            console.warn("SystemBanners: Could not load system banners:", error.message);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Banner[];
+                // Sort client-side by createdAt descending
+                data.sort((a: any, b: any) => {
+                    const aTime = a.createdAt?.toMillis?.() || 0;
+                    const bTime = b.createdAt?.toMillis?.() || 0;
+                    return bTime - aTime;
+                });
+                setBanners(data);
+            },
+            (error) => {
+                // Silently handle permission errors - banners are optional
+                console.warn("SystemBanners: Could not load system banners:", error.message);
+            }
+        );
 
         return () => unsubscribe();
     }, []);
 
     const handleDismiss = (id: string) => {
-        setDismissed(prev => new Set(prev).add(id));
+        setDismissed((prev) => new Set(prev).add(id));
     };
 
     const getBannerStyles = (type: string) => {
         switch (type) {
-            case "warning": return "bg-orange-50 border-orange-100 text-orange-800";
-            case "error": return "bg-red-50 border-red-100 text-red-800";
-            case "success": return "bg-green-50 border-green-100 text-green-800";
-            default: return "bg-blue-50 border-blue-100 text-blue-800";
+            case "warning":
+                return "bg-orange-50 border-orange-100 text-orange-800";
+            case "error":
+                return "bg-red-50 border-red-100 text-red-800";
+            case "success":
+                return "bg-green-50 border-green-100 text-green-800";
+            default:
+                return "bg-blue-50 border-blue-100 text-blue-800";
         }
     };
 
     const getIcon = (type: string) => {
         switch (type) {
-            case "warning": return <AlertTriangle className="h-4 w-4" />;
-            case "error": return <AlertCircle className="h-4 w-4" />;
-            case "success": return <CheckCircle className="h-4 w-4" />;
-            default: return <Info className="h-4 w-4" />;
+            case "warning":
+                return <AlertTriangle className="h-4 w-4" />;
+            case "error":
+                return <AlertCircle className="h-4 w-4" />;
+            case "success":
+                return <CheckCircle className="h-4 w-4" />;
+            default:
+                return <Info className="h-4 w-4" />;
         }
     };
 
-    const visibleBanners = banners.filter(b => !dismissed.has(b.id));
+    const visibleBanners = banners.filter((b) => !dismissed.has(b.id));
 
     if (visibleBanners.length === 0) return null;
 
     return (
         <div className="flex flex-col gap-2 mb-4">
-            {visibleBanners.map(banner => (
+            {visibleBanners.map((banner) => (
                 <div
                     key={banner.id}
                     className={cn(

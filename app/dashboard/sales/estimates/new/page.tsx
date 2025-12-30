@@ -10,13 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Trash } from "lucide-react";
@@ -46,18 +40,13 @@ export default function CreateEstimatePage() {
     const [date, setDate] = useState<Date | undefined>(new Date());
     const [expiryDate, setExpiryDate] = useState<Date | undefined>(new Date());
     const [subject, setSubject] = useState("");
-    const [items, setItems] = useState<LineItem[]>([
-        { id: "1", description: "Service", quantity: 1, rate: 100 },
-    ]);
+    const [items, setItems] = useState<LineItem[]>([{ id: "1", description: "Service", quantity: 1, rate: 100 }]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         async function fetchClients() {
             if (!profile?.orgId) return;
-            const q = query(
-                collection(db, "customers"),
-                where("orgId", "==", profile.orgId)
-            );
+            const q = query(collection(db, "customers"), where("orgId", "==", profile.orgId));
             const querySnapshot = await getDocs(q);
             const clientList: Client[] = [];
             querySnapshot.forEach((doc) => {
@@ -70,18 +59,11 @@ export default function CreateEstimatePage() {
     }, [profile?.orgId]);
 
     const handleItemChange = (id: string, field: keyof LineItem, value: any) => {
-        setItems((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, [field]: value } : item
-            )
-        );
+        setItems((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
     };
 
     const addItem = () => {
-        setItems([
-            ...items,
-            { id: Date.now().toString(), description: "", quantity: 1, rate: 0 },
-        ]);
+        setItems([...items, { id: Date.now().toString(), description: "", quantity: 1, rate: 0 }]);
     };
 
     const removeItem = (id: string) => {
@@ -98,7 +80,7 @@ export default function CreateEstimatePage() {
 
         setLoading(true);
         try {
-            const client = clients.find(c => c.id === selectedClient);
+            const client = clients.find((c) => c.id === selectedClient);
             await addDoc(collection(db, "estimates"), {
                 orgId: profile.orgId,
                 customerId: selectedClient,
@@ -176,12 +158,7 @@ export default function CreateEstimatePage() {
                                             </Button>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-auto p-0">
-                                            <Calendar
-                                                mode="single"
-                                                selected={date}
-                                                onSelect={setDate}
-                                                initialFocus
-                                            />
+                                            <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
                                         </PopoverContent>
                                     </Popover>
                                 </div>
@@ -216,7 +193,9 @@ export default function CreateEstimatePage() {
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                 <Label className="text-lg">Items</Label>
-                                <Button type="button" variant="outline" size="sm" onClick={addItem}>Add Item</Button>
+                                <Button type="button" variant="outline" size="sm" onClick={addItem}>
+                                    Add Item
+                                </Button>
                             </div>
 
                             {items.map((item) => (
@@ -235,7 +214,9 @@ export default function CreateEstimatePage() {
                                             type="number"
                                             min="1"
                                             value={item.quantity}
-                                            onChange={(e) => handleItemChange(item.id, "quantity", parseFloat(e.target.value))}
+                                            onChange={(e) =>
+                                                handleItemChange(item.id, "quantity", parseFloat(e.target.value))
+                                            }
                                         />
                                     </div>
                                     <div className="col-span-3 space-y-2">
@@ -244,11 +225,18 @@ export default function CreateEstimatePage() {
                                             type="number"
                                             min="0"
                                             value={item.rate}
-                                            onChange={(e) => handleItemChange(item.id, "rate", parseFloat(e.target.value))}
+                                            onChange={(e) =>
+                                                handleItemChange(item.id, "rate", parseFloat(e.target.value))
+                                            }
                                         />
                                     </div>
                                     <div className="col-span-1">
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(item.id)}>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => removeItem(item.id)}
+                                        >
                                             <Trash className="h-4 w-4 text-red-500" />
                                         </Button>
                                     </div>
@@ -259,13 +247,21 @@ export default function CreateEstimatePage() {
                         <div className="flex justify-end pt-4 border-t">
                             <div className="text-right">
                                 <p className="text-sm text-muted-foreground">Total Amount</p>
-                                <p className="text-2xl font-bold">{new Intl.NumberFormat("en-US", { style: "currency", currency }).format(calculateTotal())}</p>
+                                <p className="text-2xl font-bold">
+                                    {new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
+                                        calculateTotal()
+                                    )}
+                                </p>
                             </div>
                         </div>
                     </CardContent>
                     <div className="flex justify-end p-6">
-                        <Button type="button" variant="outline" className="mr-2" onClick={() => router.back()}>Cancel</Button>
-                        <Button type="submit" disabled={loading}>{loading ? "Creating..." : "Create Estimate"}</Button>
+                        <Button type="button" variant="outline" className="mr-2" onClick={() => router.back()}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={loading}>
+                            {loading ? "Creating..." : "Create Estimate"}
+                        </Button>
                     </div>
                 </Card>
             </form>

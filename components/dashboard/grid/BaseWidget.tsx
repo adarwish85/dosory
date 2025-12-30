@@ -67,17 +67,16 @@ export function BaseWidget({
     const isGradient = style === "gradient";
 
     return (
-        <Card className={cn(
-            "h-full overflow-hidden flex flex-col transition-all duration-200 ease-out",
-            "hover:shadow-lg hover:-translate-y-0.5",
-            editMode && "ring-2 ring-blue-500/20 cursor-move",
-            styleClasses.card
-        )}>
+        <Card
+            className={cn(
+                "h-full overflow-hidden flex flex-col transition-all duration-200 ease-out",
+                "hover:shadow-lg hover:-translate-y-0.5",
+                editMode && "ring-2 ring-blue-500/20 cursor-move",
+                styleClasses.card
+            )}
+        >
             {/* Widget Header */}
-            <CardHeader className={cn(
-                "flex flex-row items-center justify-between py-1 px-3",
-                styleClasses.header
-            )}>
+            <CardHeader className={cn("flex flex-row items-center justify-between py-1 px-3", styleClasses.header)}>
                 <div className="flex items-center gap-2">
                     {editMode && (
                         <div className="widget-drag-handle cursor-move">
@@ -85,10 +84,7 @@ export function BaseWidget({
                         </div>
                     )}
                     {icon && <span className="text-lg">{icon}</span>}
-                    <h3 className={cn(
-                        "font-semibold text-sm",
-                        isGradient ? "text-white" : "text-gray-900"
-                    )}>
+                    <h3 className={cn("font-semibold text-sm", isGradient ? "text-white" : "text-gray-900")}>
                         {title}
                     </h3>
                 </div>
@@ -102,7 +98,9 @@ export function BaseWidget({
                                 size="icon"
                                 className={cn(
                                     "h-7 w-7",
-                                    isGradient ? "text-white/70 hover:text-white hover:bg-white/10" : "text-gray-400 hover:text-gray-600"
+                                    isGradient
+                                        ? "text-white/70 hover:text-white hover:bg-white/10"
+                                        : "text-gray-400 hover:text-gray-600"
                                 )}
                             >
                                 <Settings className="h-3.5 w-3.5" />
@@ -140,7 +138,9 @@ export function BaseWidget({
                             size="icon"
                             className={cn(
                                 "h-7 w-7",
-                                isGradient ? "text-white/70 hover:text-white hover:bg-white/10" : "text-gray-400 hover:text-red-500"
+                                isGradient
+                                    ? "text-white/70 hover:text-white hover:bg-white/10"
+                                    : "text-gray-400 hover:text-red-500"
                             )}
                             onClick={onRemove}
                         >
@@ -151,9 +151,7 @@ export function BaseWidget({
             </CardHeader>
 
             {/* Widget Content */}
-            <CardContent className={cn("flex-1 overflow-auto", DENSITY_PADDING[density])}>
-                {children}
-            </CardContent>
+            <CardContent className={cn("flex-1 overflow-auto", DENSITY_PADDING[density])}>{children}</CardContent>
         </Card>
     );
 }

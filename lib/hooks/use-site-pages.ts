@@ -130,21 +130,27 @@ export function usePage(pageId: string | null) {
         return () => unsubscribe();
     }, [pageId]);
 
-    const updateBlocks = useCallback(async (blocks: Block[]) => {
-        if (!pageId) return;
-        await updateDoc(doc(db, PAGES_COLLECTION, pageId), {
-            blocks,
-            updatedAt: serverTimestamp(),
-        });
-    }, [pageId]);
+    const updateBlocks = useCallback(
+        async (blocks: Block[]) => {
+            if (!pageId) return;
+            await updateDoc(doc(db, PAGES_COLLECTION, pageId), {
+                blocks,
+                updatedAt: serverTimestamp(),
+            });
+        },
+        [pageId]
+    );
 
-    const updatePageData = useCallback(async (data: Partial<SitePage>) => {
-        if (!pageId) return;
-        await updateDoc(doc(db, PAGES_COLLECTION, pageId), {
-            ...data,
-            updatedAt: serverTimestamp(),
-        });
-    }, [pageId]);
+    const updatePageData = useCallback(
+        async (data: Partial<SitePage>) => {
+            if (!pageId) return;
+            await updateDoc(doc(db, PAGES_COLLECTION, pageId), {
+                ...data,
+                updatedAt: serverTimestamp(),
+            });
+        },
+        [pageId]
+    );
 
     return { page, loading, error, updateBlocks, updatePageData };
 }
@@ -222,10 +228,13 @@ export function useSiteDesign() {
         return () => unsubscribe();
     }, []);
 
-    const updateDesign = useCallback(async (data: Partial<SiteDesign>) => {
-        const { setDoc } = await import("firebase/firestore");
-        await setDoc(doc(db, DESIGN_DOC), { ...design, ...data }, { merge: true });
-    }, [design]);
+    const updateDesign = useCallback(
+        async (data: Partial<SiteDesign>) => {
+            const { setDoc } = await import("firebase/firestore");
+            await setDoc(doc(db, DESIGN_DOC), { ...design, ...data }, { merge: true });
+        },
+        [design]
+    );
 
     return { design, loading, updateDesign };
 }
@@ -343,7 +352,8 @@ export async function migrateOldLandingConfig(): Promise<string | null> {
                         badge: "✨ Welcome",
                         headline: "Build Your Business",
                         headlineHighlight: "with Dosory",
-                        subheadline: "The all-in-one CRM and ERP platform for modern businesses. Manage customers, invoices, projects, and more.",
+                        subheadline:
+                            "The all-in-one CRM and ERP platform for modern businesses. Manage customers, invoices, projects, and more.",
                         ctaPrimaryText: "Get Started Free",
                         ctaPrimaryLink: "/signup",
                         ctaSecondaryText: "Learn More",
@@ -358,9 +368,21 @@ export async function migrateOldLandingConfig(): Promise<string | null> {
                         sectionTitle: "Everything You Need",
                         sectionSubtitle: "Powerful features to grow your business",
                         items: [
-                            { icon: "Users", title: "Customer Management", description: "Track leads and customers in one place." },
-                            { icon: "FileText", title: "Invoicing", description: "Create and send professional invoices." },
-                            { icon: "CheckSquare", title: "Tasks & Projects", description: "Organize work with tasks and projects." },
+                            {
+                                icon: "Users",
+                                title: "Customer Management",
+                                description: "Track leads and customers in one place.",
+                            },
+                            {
+                                icon: "FileText",
+                                title: "Invoicing",
+                                description: "Create and send professional invoices.",
+                            },
+                            {
+                                icon: "CheckSquare",
+                                title: "Tasks & Projects",
+                                description: "Organize work with tasks and projects.",
+                            },
                         ],
                         columns: 3,
                     },

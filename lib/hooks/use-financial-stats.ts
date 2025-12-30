@@ -29,7 +29,7 @@ export function useFinancialStats() {
         stats: {
             ...invoiceStats,
             paymentCount: payments.length,
-            expenseCount: expenses.length
-        }
+            expenseCount: expenses.length,
+        },
     };
 }

@@ -9,13 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
@@ -44,10 +38,7 @@ export default function CreateProjectPage() {
     useEffect(() => {
         async function fetchClients() {
             if (!profile?.orgId) return;
-            const q = query(
-                collection(db, "customers"),
-                where("orgId", "==", profile.orgId)
-            );
+            const q = query(collection(db, "customers"), where("orgId", "==", profile.orgId));
             const querySnapshot = await getDocs(q);
             const clientList: Client[] = [];
             querySnapshot.forEach((doc) => {
@@ -65,7 +56,7 @@ export default function CreateProjectPage() {
 
         setLoading(true);
         try {
-            const client = clients.find(c => c.id === formData.clientId);
+            const client = clients.find((c) => c.id === formData.clientId);
             await addDoc(collection(db, "projects"), {
                 ...formData,
                 orgId: profile.orgId,
@@ -106,7 +97,10 @@ export default function CreateProjectPage() {
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label>Client</Label>
-                                <Select onValueChange={(value) => setFormData({ ...formData, clientId: value })} value={formData.clientId}>
+                                <Select
+                                    onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+                                    value={formData.clientId}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a client" />
                                     </SelectTrigger>
@@ -157,8 +151,12 @@ export default function CreateProjectPage() {
                         </div>
                     </CardContent>
                     <div className="flex justify-end p-6">
-                        <Button type="button" variant="outline" className="mr-2" onClick={() => router.back()}>Cancel</Button>
-                        <Button type="submit" disabled={loading}>{loading ? "Creating..." : "Create Project"}</Button>
+                        <Button type="button" variant="outline" className="mr-2" onClick={() => router.back()}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={loading}>
+                            {loading ? "Creating..." : "Create Project"}
+                        </Button>
                     </div>
                 </Card>
             </form>

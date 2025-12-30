@@ -22,10 +22,7 @@ export function DataTableShell({ columns, data, searchPlaceholder = "Search..." 
                 <div className="flex items-center justify-between p-4 border-b">
                     <div className="relative w-72">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder={searchPlaceholder}
-                            className="pl-8"
-                        />
+                        <Input placeholder={searchPlaceholder} className="pl-8" />
                     </div>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm">
@@ -51,7 +48,10 @@ export function DataTableShell({ columns, data, searchPlaceholder = "Search..." 
                     <TableBody>
                         {data.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={columns.length + 1} className="h-24 text-center text-muted-foreground">
+                                <TableCell
+                                    colSpan={columns.length + 1}
+                                    className="h-24 text-center text-muted-foreground"
+                                >
                                     No results found.
                                 </TableCell>
                             </TableRow>
@@ -62,7 +62,9 @@ export function DataTableShell({ columns, data, searchPlaceholder = "Search..." 
                                         <TableCell key={col.key}>{row[col.key]}</TableCell>
                                     ))}
                                     <TableCell>
-                                        <Button variant="ghost" size="sm">...</Button>
+                                        <Button variant="ghost" size="sm">
+                                            ...
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -75,8 +77,12 @@ export function DataTableShell({ columns, data, searchPlaceholder = "Search..." 
                         Showing {data.length > 0 ? 1 : 0} to {Math.min(data.length, 10)} of {data.length} entries
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" disabled>Previous</Button>
-                        <Button variant="outline" size="sm" disabled>Next</Button>
+                        <Button variant="outline" size="sm" disabled>
+                            Previous
+                        </Button>
+                        <Button variant="outline" size="sm" disabled>
+                            Next
+                        </Button>
                     </div>
                 </div>
             </CardContent>

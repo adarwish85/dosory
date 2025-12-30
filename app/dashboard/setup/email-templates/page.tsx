@@ -15,7 +15,7 @@ export default function EmailTemplatesPage() {
                 "Ticket Reply (Sent to Staff)",
                 "Auto Close Ticket",
                 "New Ticket Assigned (Sent to Staff)",
-            ]
+            ],
         },
         {
             title: "Estimates",
@@ -26,7 +26,7 @@ export default function EmailTemplatesPage() {
                 "Estimate Accepted (Sent to Staff)",
                 "Thank You Email (Sent to Customer After Accept)",
                 "Estimate Expiration Reminder",
-            ]
+            ],
         },
         {
             title: "Contracts",
@@ -38,7 +38,7 @@ export default function EmailTemplatesPage() {
                 "Contract Expiration Reminder (Sent to Staff)",
                 "Contract Signed (Sent to Staff)",
                 "Contract Sign Reminder (Sent to Customer)",
-            ]
+            ],
         },
         {
             title: "Invoices",
@@ -50,7 +50,7 @@ export default function EmailTemplatesPage() {
                 "Invoice Payment Recorded (Sent to Staff)",
                 "Invoice Due Notice",
                 "Invoices Payments Recorded in Batch (Sent to Customer)",
-            ]
+            ],
         },
         {
             title: "Subscriptions",
@@ -61,13 +61,11 @@ export default function EmailTemplatesPage() {
                 "Subscription Payment Succeeded (Sent to customer primary contact)",
                 "Customer Subscribed to a Subscription (Sent to administrators and subscription creator)",
                 "Credit Card Authorization Required - SCA",
-            ]
+            ],
         },
         {
             title: "Credit Note",
-            templates: [
-                "Send Credit Note To Email",
-            ]
+            templates: ["Send Credit Note To Email"],
         },
         {
             title: "Tasks",
@@ -81,7 +79,7 @@ export default function EmailTemplatesPage() {
                 "New Comment on Task (Sent to Customer Contacts)",
                 "Task Status Changed (Sent to Staff)",
                 "Task Status Changed (Sent to Customer Contacts)",
-            ]
+            ],
         },
         {
             title: "Customers",
@@ -95,7 +93,7 @@ export default function EmailTemplatesPage() {
                 "Customer Registration Confirmed",
                 "Email Verification (Sent to Contact After Registration)",
                 "New Customer Profile File(s) Uploaded (Sent to Staff)",
-            ]
+            ],
         },
         {
             title: "Proposals",
@@ -104,7 +102,7 @@ export default function EmailTemplatesPage() {
                 "Send Proposal to Customer",
                 "Customer Action - Declined (Sent to Staff)",
                 "Thank You Email (Sent to Customer After Accept)",
-            ]
+            ],
         },
         {
             title: "Projects",
@@ -118,7 +116,7 @@ export default function EmailTemplatesPage() {
                 "Staff Added as Project Member",
                 "New Project Created (Sent to Customer Contacts)",
                 "Project Marked as Finished (Sent to Customer Contacts)",
-            ]
+            ],
         },
         {
             title: "Staff Members",
@@ -129,14 +127,11 @@ export default function EmailTemplatesPage() {
                 "Two Factor Authentication",
                 "Staff Reminder Email",
                 "Event Notification (Calendar)",
-            ]
+            ],
         },
         {
             title: "Leads",
-            templates: [
-                "New Lead Assigned to Staff Member",
-                "Web-to-lead form submitted - Sent to lead",
-            ]
+            templates: ["New Lead Assigned to Staff Member", "Web-to-lead form submitted - Sent to lead"],
         },
         {
             title: "Estimate Request",
@@ -144,13 +139,11 @@ export default function EmailTemplatesPage() {
                 "Estimate Request Submitted (Sent to Staff)",
                 "Estimate Request Assigned (Sent to Staff)",
                 "Estimate Request Received (Sent to User)",
-            ]
+            ],
         },
         {
             title: "Notifications",
-            templates: [
-                "Non-billed tasks reminder (sent to selected staff members)",
-            ]
+            templates: ["Non-billed tasks reminder (sent to selected staff members)"],
         },
     ];
 
@@ -183,9 +176,7 @@ export default function EmailTemplatesPage() {
                                             </Link>
                                         </div>
                                     </div>
-                                    <button className="text-blue-600 hover:underline text-sm">
-                                        Disable
-                                    </button>
+                                    <button className="text-blue-600 hover:underline text-sm">Disable</button>
                                 </div>
                             ))}
                         </div>

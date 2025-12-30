@@ -5,13 +5,7 @@ import { X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useCustomers } from "@/lib/hooks/use-customers";
 import { ContactDialog } from "./contacts/contact-dialog";
@@ -25,20 +19,8 @@ interface AddCustomerPanelProps {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { customerFormSchema, type CustomerFormData } from "@/lib/schemas";
-import {
-    CURRENCIES,
-    LANGUAGES,
-    COUNTRIES,
-    CUSTOMER_GROUPS
-} from "@/lib/constants";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
+import { CURRENCIES, LANGUAGES, COUNTRIES, CUSTOMER_GROUPS } from "@/lib/constants";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustomerPanelProps) {
     const { createCustomer, loading } = useCustomers();
@@ -72,7 +54,7 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
                 state: "",
                 zipCode: "",
                 country: "",
-            }
+            },
         },
     });
 
@@ -484,11 +466,7 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
 
                 {/* Footer */}
                 <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50">
-                    <Button
-                        variant="outline"
-                        onClick={() => handleSaveClick(true)}
-                        disabled={loading}
-                    >
+                    <Button variant="outline" onClick={() => handleSaveClick(true)} disabled={loading}>
                         Save and create contact
                     </Button>
                     <Button

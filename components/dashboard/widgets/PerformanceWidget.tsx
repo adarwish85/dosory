@@ -37,10 +37,7 @@ export function PerformanceWidget({ settings, density }: PerformanceWidgetProps)
                     const rankColor = RANK_ICONS[index]?.color;
 
                     return (
-                        <div
-                            key={user.id}
-                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50"
-                        >
+                        <div key={user.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
                             {/* Rank */}
                             <div className="w-6 flex items-center justify-center">
                                 {RankIcon ? (

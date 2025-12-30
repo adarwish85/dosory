@@ -27,7 +27,7 @@ interface EmailTemplate {
 }
 
 // Cache for templates to avoid repeated Firestore reads
-let templatesCache: Map<string, EmailTemplate> = new Map();
+const templatesCache: Map<string, EmailTemplate> = new Map();
 let brandingCache: EmailBranding | null = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -35,7 +35,7 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 // Fetch branding settings
 async function getBranding(): Promise<EmailBranding> {
     const now = Date.now();
-    if (brandingCache && (now - cacheTimestamp) < CACHE_TTL) {
+    if (brandingCache && now - cacheTimestamp < CACHE_TTL) {
         return brandingCache;
     }
 
@@ -45,7 +45,7 @@ async function getBranding(): Promise<EmailBranding> {
     brandingCache = {
         logoUrl: settings?.emailBranding?.logoUrl || "",
         primaryColor: settings?.emailBranding?.primaryColor || "#1a1a1a",
-        footerText: settings?.emailBranding?.footerText || "© 2024 Dosory. All rights reserved."
+        footerText: settings?.emailBranding?.footerText || "© 2024 Dosory. All rights reserved.",
     };
     cacheTimestamp = now;
 
@@ -57,7 +57,7 @@ async function getTemplate(templateId: string): Promise<EmailTemplate | null> {
     const now = Date.now();
     const cached = templatesCache.get(templateId);
 
-    if (cached && (now - cacheTimestamp) < CACHE_TTL) {
+    if (cached && now - cacheTimestamp < CACHE_TTL) {
         return cached;
     }
 
@@ -85,7 +85,7 @@ async function getTemplate(templateId: string): Promise<EmailTemplate | null> {
 function replaceVariables(content: string, variables: Record<string, string>): string {
     let result = content;
     for (const [key, value] of Object.entries(variables)) {
-        result = result.replace(new RegExp(`{{${key}}}`, 'g'), value || '');
+        result = result.replace(new RegExp(`{{${key}}}`, "g"), value || "");
     }
     return result;
 }
@@ -93,9 +93,9 @@ function replaceVariables(content: string, variables: Record<string, string>): s
 // Apply branding to HTML content
 function applyBranding(html: string, branding: EmailBranding): string {
     return html
-        .replace(/{{logoUrl}}/g, branding.logoUrl || '')
-        .replace(/{{footerText}}/g, branding.footerText || '')
-        .replace(/{{primaryColor}}/g, branding.primaryColor || '#1a1a1a');
+        .replace(/{{logoUrl}}/g, branding.logoUrl || "")
+        .replace(/{{footerText}}/g, branding.footerText || "")
+        .replace(/{{primaryColor}}/g, branding.primaryColor || "#1a1a1a");
 }
 
 // Core email sending function
@@ -121,13 +121,13 @@ export async function sendEmail(to: string, subject: string, html: string) {
             pass: password,
         },
         tls: {
-            rejectUnauthorized: false
-        }
+            rejectUnauthorized: false,
+        },
     });
 
     try {
         await transporter.sendMail({
-            from: `"${fromName || 'Platform Support'}" <${fromEmail}>`,
+            from: `"${fromName || "Platform Support"}" <${fromEmail}>`,
             to,
             subject,
             html,
@@ -164,7 +164,7 @@ export async function sendTemplatedEmail(
     const branding = await getBranding();
 
     // Replace variables and apply branding
-    let subject = replaceVariables(template.subject, variables);
+    const subject = replaceVariables(template.subject, variables);
     let html = replaceVariables(template.htmlContent, variables);
     html = applyBranding(html, branding);
 
@@ -179,7 +179,7 @@ export async function sendPasswordResetEmail(to: string, resetLink: string, user
     const sent = await sendTemplatedEmail("password_reset", to, {
         userName: userName || "User",
         resetLink,
-        expiryTime: "24 hours"
+        expiryTime: "24 hours",
     });
 
     // Fallback to hardcoded if template fails
@@ -210,7 +210,7 @@ export async function sendWelcomeTenantEmail(
         orgName,
         resetLink,
         loginUrl: loginUrl || process.env.NEXT_PUBLIC_APP_URL || "",
-        platformName: "Dosory"
+        platformName: "Dosory",
     });
 
     if (!sent) {
@@ -230,7 +230,7 @@ export async function sendWelcomeStaffEmail(
         firstName,
         orgName: "Your Organization",
         portalUrl,
-        resetLink: resetPasswordLink
+        resetLink: resetPasswordLink,
     });
 
     if (!sent) {
@@ -249,15 +249,11 @@ export async function sendWelcomeStaffEmail(
     return sent;
 }
 
-export async function sendJoinRequestApprovedEmail(
-    to: string,
-    orgName: string,
-    portalUrl: string
-): Promise<boolean> {
+export async function sendJoinRequestApprovedEmail(to: string, orgName: string, portalUrl: string): Promise<boolean> {
     const sent = await sendTemplatedEmail("join_request_approved", to, {
         userName: "User",
         orgName,
-        portalUrl
+        portalUrl,
     });
 
     if (!sent) {
@@ -274,13 +270,10 @@ export async function sendJoinRequestApprovedEmail(
     return sent;
 }
 
-export async function sendJoinRequestRejectedEmail(
-    to: string,
-    orgName: string
-): Promise<boolean> {
+export async function sendJoinRequestRejectedEmail(to: string, orgName: string): Promise<boolean> {
     const sent = await sendTemplatedEmail("join_request_rejected", to, {
         userName: "User",
-        orgName
+        orgName,
     });
 
     if (!sent) {
@@ -302,16 +295,20 @@ export async function sendPortalInviteEmail(email: string | undefined, name: str
     const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/portal/${customerSlug}/login`;
 
     // No template for this yet, use direct send
-    await sendEmail(email, "Invitation to Client Portal", `
+    await sendEmail(
+        email,
+        "Invitation to Client Portal",
+        `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2>Welcome to the Client Portal</h2>
-            <p>Hi ${name || 'there'},</p>
+            <p>Hi ${name || "there"},</p>
             <p>You have been invited to access the client portal.</p>
             <div style="text-align: center; margin: 30px 0;">
                 <a href="${portalUrl}" style="background-color: #1a1a1a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold;">Access Portal</a>
             </div>
         </div>
-    `);
+    `
+    );
     return true;
 }
 
@@ -334,7 +331,7 @@ export async function sendInvoiceCreatedEmail(
         amount,
         dueDate,
         viewLink,
-        orgName
+        orgName,
     });
 }
 
@@ -351,7 +348,7 @@ export async function sendInvoiceReminderEmail(
         invoiceNumber,
         amount,
         dueDate,
-        payLink
+        payLink,
     });
 }
 
@@ -368,7 +365,7 @@ export async function sendInvoiceOverdueEmail(
         invoiceNumber,
         amount,
         daysOverdue,
-        payLink
+        payLink,
     });
 }
 
@@ -387,7 +384,7 @@ export async function sendTicketCreatedEmail(
         customerName,
         ticketId,
         subject,
-        viewLink
+        viewLink,
     });
 }
 
@@ -404,7 +401,7 @@ export async function sendTicketReplyEmail(
         ticketId,
         agentName,
         replyPreview,
-        viewLink
+        viewLink,
     });
 }
 
@@ -419,7 +416,7 @@ export async function sendTicketClosedEmail(
         customerName,
         ticketId,
         subject,
-        feedbackLink
+        feedbackLink,
     });
 }
 
@@ -438,7 +435,7 @@ export async function sendProjectAssignedEmail(
         userName,
         projectName,
         deadline,
-        viewLink
+        viewLink,
     });
 }
 
@@ -455,7 +452,7 @@ export async function sendTaskAssignedEmail(
         taskName,
         projectName,
         dueDate,
-        viewLink
+        viewLink,
     });
 }
 
@@ -470,7 +467,7 @@ export async function sendTaskDueReminderEmail(
         userName,
         taskName,
         dueDate,
-        viewLink
+        viewLink,
     });
 }
 

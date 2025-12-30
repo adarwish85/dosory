@@ -34,9 +34,10 @@ export default function SalesEstimatesPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const { estimates, loading, estimateStats, deleteEstimate } = useEstimates();
 
-    const filteredEstimates = estimates.filter(est =>
-        est.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        est.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredEstimates = estimates.filter(
+        (est) =>
+            est.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            est.customerName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const formatDate = (timestamp: { toDate: () => Date } | null | undefined) => {
@@ -72,7 +73,7 @@ export default function SalesEstimatesPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {(["draft", "sent", "accepted", "declined", "expired"] as EstimateStatus[]).map(status => {
+                {(["draft", "sent", "accepted", "declined", "expired"] as EstimateStatus[]).map((status) => {
                     const colors = statusColors[status];
                     const count = estimateStats[status] || 0;
                     const percent = estimateStats.total > 0 ? ((count / estimateStats.total) * 100).toFixed(1) : "0.0";
@@ -97,8 +98,12 @@ export default function SalesEstimatesPage() {
                         </Button>
                     </Link>
                     <div className="flex items-center border rounded-md bg-white">
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-r-none border-r"><LayoutGrid className="h-4 w-4 text-gray-500" /></Button>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-l-none bg-gray-100"><List className="h-4 w-4 text-gray-900" /></Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-r-none border-r">
+                            <LayoutGrid className="h-4 w-4 text-gray-500" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-l-none bg-gray-100">
+                            <List className="h-4 w-4 text-gray-900" />
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -116,7 +121,9 @@ export default function SalesEstimatesPage() {
                             </SelectContent>
                         </Select>
                         <Button variant="outline">Export</Button>
-                        <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="icon">
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
                     </div>
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -145,7 +152,9 @@ export default function SalesEstimatesPage() {
                             {filteredEstimates.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                                        {searchQuery ? "No estimates match your search." : "No estimates found. Create your first one!"}
+                                        {searchQuery
+                                            ? "No estimates match your search."
+                                            : "No estimates found. Create your first one!"}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -155,25 +164,53 @@ export default function SalesEstimatesPage() {
                                         <TableRow key={est.id} className="group">
                                             <TableCell className="min-w-[150px] py-3">
                                                 <div className="flex flex-col gap-0.5">
-                                                    <Link href={`/dashboard/sales/estimates/${est.id}`} className="font-medium text-blue-600 hover:underline block truncate w-fit">
+                                                    <Link
+                                                        href={`/dashboard/sales/estimates/${est.id}`}
+                                                        className="font-medium text-blue-600 hover:underline block truncate w-fit"
+                                                    >
                                                         {est.number}
                                                     </Link>
                                                     <span className="text-xs text-gray-400">View Details</span>
                                                     <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
-                                                        <Link href={`/dashboard/sales/estimates/${est.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
+                                                        <Link
+                                                            href={`/dashboard/sales/estimates/${est.id}`}
+                                                            className="hover:text-blue-600 hover:underline px-0.5"
+                                                        >
+                                                            View
+                                                        </Link>
                                                         <span className="text-gray-300">|</span>
-                                                        <Link href={`/dashboard/sales/estimates/${est.id}/edit`} className="hover:text-blue-600 hover:underline px-0.5">Edit</Link>
+                                                        <Link
+                                                            href={`/dashboard/sales/estimates/${est.id}/edit`}
+                                                            className="hover:text-blue-600 hover:underline px-0.5"
+                                                        >
+                                                            Edit
+                                                        </Link>
                                                         <span className="text-gray-300">|</span>
-                                                        <button onClick={async (e) => { e.stopPropagation(); if (confirm("Delete this estimate?")) await deleteEstimate(est.id); }} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                if (confirm("Delete this estimate?"))
+                                                                    await deleteEstimate(est.id);
+                                                            }}
+                                                            className="hover:text-red-600 hover:underline px-0.5"
+                                                        >
+                                                            Delete
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="font-medium">{formatCurrency(est.total || 0, est.currency)}</TableCell>
+                                            <TableCell className="font-medium">
+                                                {formatCurrency(est.total || 0, est.currency)}
+                                            </TableCell>
                                             <TableCell className="text-gray-700">{est.customerName || "-"}</TableCell>
                                             <TableCell className="text-gray-500">{formatDate(est.date)}</TableCell>
-                                            <TableCell className="text-gray-500">{formatDate(est.expiryDate)}</TableCell>
+                                            <TableCell className="text-gray-500">
+                                                {formatDate(est.expiryDate)}
+                                            </TableCell>
                                             <TableCell>
-                                                <Badge className={`${colors.bg} ${colors.text} ${colors.border} border`}>
+                                                <Badge
+                                                    className={`${colors.bg} ${colors.text} ${colors.border} border`}
+                                                >
                                                     {statusLabels[est.status]}
                                                 </Badge>
                                             </TableCell>

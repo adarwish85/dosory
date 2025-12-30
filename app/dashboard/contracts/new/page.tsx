@@ -10,13 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
@@ -44,10 +38,7 @@ export default function CreateContractPage() {
     useEffect(() => {
         async function fetchClients() {
             if (!profile?.orgId) return;
-            const q = query(
-                collection(db, "customers"),
-                where("orgId", "==", profile.orgId)
-            );
+            const q = query(collection(db, "customers"), where("orgId", "==", profile.orgId));
             const querySnapshot = await getDocs(q);
             const clientList: Client[] = [];
             querySnapshot.forEach((doc) => {
@@ -65,7 +56,7 @@ export default function CreateContractPage() {
 
         setLoading(true);
         try {
-            const client = clients.find(c => c.id === selectedClient);
+            const client = clients.find((c) => c.id === selectedClient);
             await addDoc(collection(db, "contracts"), {
                 orgId: profile.orgId,
                 customerId: selectedClient,
@@ -176,12 +167,7 @@ export default function CreateContractPage() {
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                            mode="single"
-                                            selected={endDate}
-                                            onSelect={setEndDate}
-                                            initialFocus
-                                        />
+                                        <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
                                     </PopoverContent>
                                 </Popover>
                             </div>
@@ -196,11 +182,14 @@ export default function CreateContractPage() {
                                 className="h-32"
                             />
                         </div>
-
                     </CardContent>
                     <div className="flex justify-end p-6">
-                        <Button type="button" variant="outline" className="mr-2" onClick={() => router.back()}>Cancel</Button>
-                        <Button type="submit" disabled={loading}>{loading ? "Creating..." : "Create Contract"}</Button>
+                        <Button type="button" variant="outline" className="mr-2" onClick={() => router.back()}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={loading}>
+                            {loading ? "Creating..." : "Create Contract"}
+                        </Button>
                     </div>
                 </Card>
             </form>

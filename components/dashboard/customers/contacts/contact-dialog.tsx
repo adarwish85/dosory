@@ -79,7 +79,7 @@ export function ContactDialog({
     open: controlledOpen,
     onOpenChange: controlledOnOpenChange,
     onSuccess,
-    initialStep = 1
+    initialStep = 1,
 }: {
     children?: React.ReactNode;
     customerId?: string;
@@ -105,7 +105,7 @@ export function ContactDialog({
         // Handle array of strings from DB
         if (Array.isArray(contact.permissions)) {
             // Reset all to false first, since the array only contains enabled permissions
-            Object.keys(initialPermissions).forEach(key => {
+            Object.keys(initialPermissions).forEach((key) => {
                 (initialPermissions as any)[key] = false;
             });
             // Enable only the ones present in the array
@@ -114,7 +114,7 @@ export function ContactDialog({
                     (initialPermissions as any)[perm] = true;
                 }
             });
-        } else if (contact.permissions && typeof contact.permissions === 'object') {
+        } else if (contact.permissions && typeof contact.permissions === "object") {
             // Handle legacy object format if needed
             initialPermissions = { ...initialPermissions, ...contact.permissions };
         }
@@ -191,7 +191,14 @@ export function ContactDialog({
             // Convert permissions object to array of enabled permissions
             const permissionsArray = Object.entries(formData.permissions)
                 .filter(([_, enabled]) => enabled)
-                .map(([key]) => key) as ("invoices" | "estimates" | "contracts" | "proposals" | "support" | "projects")[];
+                .map(([key]) => key) as (
+                | "invoices"
+                | "estimates"
+                | "contracts"
+                | "proposals"
+                | "support"
+                | "projects"
+            )[];
 
             const contactData = {
                 firstName: formData.firstName,
@@ -218,9 +225,17 @@ export function ContactDialog({
 
             // Handle Password Setting (only if portal access is enabled)
             if (formData.portalAccess && formData.password) {
-                const result = await setContactAuthPassword(formData.email, formData.password, `${formData.firstName} ${formData.lastName}`);
+                const result = await setContactAuthPassword(
+                    formData.email,
+                    formData.password,
+                    `${formData.firstName} ${formData.lastName}`
+                );
                 if (result.success) {
-                    toast.success(result.action === "created" ? "Auth user created with password" : "Password updated successfully");
+                    toast.success(
+                        result.action === "created"
+                            ? "Auth user created with password"
+                            : "Password updated successfully"
+                    );
                 } else {
                     toast.error(`Failed to set password: ${result.error}`);
                 }
@@ -237,16 +252,16 @@ export function ContactDialog({
     }, [formData, customerId, isEditing, contact?.id, createContact, updateContact, onSuccess]);
 
     const updatePermission = (key: keyof ContactFormData["permissions"], value: boolean) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            permissions: { ...prev.permissions, [key]: value }
+            permissions: { ...prev.permissions, [key]: value },
         }));
     };
 
     const updateNotification = (key: keyof ContactFormData["notifications"], value: boolean) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            notifications: { ...prev.notifications, [key]: value }
+            notifications: { ...prev.notifications, [key]: value },
         }));
     };
 
@@ -256,7 +271,7 @@ export function ContactDialog({
         for (let i = 0; i < 12; i++) {
             pass += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        setFormData(prev => ({ ...prev, password: pass }));
+        setFormData((prev) => ({ ...prev, password: pass }));
         setShowPassword(true);
     };
 
@@ -279,10 +294,11 @@ export function ContactDialog({
 
     // Display name for header
     const displayName = isEditing
-        ? `${formData.firstName || contact?.firstName || ""} ${formData.lastName || contact?.lastName || ""}`.trim() || "Edit Contact"
+        ? `${formData.firstName || contact?.firstName || ""} ${formData.lastName || contact?.lastName || ""}`.trim() ||
+          "Edit Contact"
         : formData.firstName
-            ? `${formData.firstName} ${formData.lastName}`.trim()
-            : "New Contact";
+          ? `${formData.firstName} ${formData.lastName}`.trim()
+          : "New Contact";
 
     return (
         <Sheet open={isOpen} onOpenChange={handleOpenChange}>
@@ -298,9 +314,7 @@ export function ContactDialog({
                 <SheetHeader className="p-6 pb-4 border-b bg-white">
                     <div className="flex justify-between items-start">
                         <div>
-                            <SheetTitle className="text-xl font-bold">
-                                {displayName}
-                            </SheetTitle>
+                            <SheetTitle className="text-xl font-bold">{displayName}</SheetTitle>
                             {customerName && <p className="text-sm text-muted-foreground mt-1">{customerName}</p>}
                         </div>
                         <span className="text-xs font-normal text-muted-foreground bg-gray-100 px-2 py-1 rounded-full">
@@ -317,14 +331,18 @@ export function ContactDialog({
                             <div className="space-y-2">
                                 <Label>Profile image</Label>
                                 <div className="flex w-full items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm">
-                                    <Button variant="secondary" size="sm" className="h-6 text-xs">Choose File</Button>
+                                    <Button variant="secondary" size="sm" className="h-6 text-xs">
+                                        Choose File
+                                    </Button>
                                     <span className="text-muted-foreground">No file chosen</span>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="fname" className="text-red-500 font-semibold">* <span className="text-gray-700">First Name</span></Label>
+                                    <Label htmlFor="fname" className="text-red-500 font-semibold">
+                                        * <span className="text-gray-700">First Name</span>
+                                    </Label>
                                     <Input
                                         id="fname"
                                         value={formData.firstName}
@@ -332,7 +350,9 @@ export function ContactDialog({
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="lname" className="text-red-500 font-semibold">* <span className="text-gray-700">Last Name</span></Label>
+                                    <Label htmlFor="lname" className="text-red-500 font-semibold">
+                                        * <span className="text-gray-700">Last Name</span>
+                                    </Label>
                                     <Input
                                         id="lname"
                                         value={formData.lastName}
@@ -350,7 +370,9 @@ export function ContactDialog({
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="email" className="text-red-500 font-semibold">* <span className="text-gray-700">Email</span></Label>
+                                <Label htmlFor="email" className="text-red-500 font-semibold">
+                                    * <span className="text-gray-700">Email</span>
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -388,9 +410,13 @@ export function ContactDialog({
                                     <Checkbox
                                         id="primary"
                                         checked={formData.isPrimary}
-                                        onCheckedChange={(checked) => setFormData({ ...formData, isPrimary: !!checked })}
+                                        onCheckedChange={(checked) =>
+                                            setFormData({ ...formData, isPrimary: !!checked })
+                                        }
                                     />
-                                    <label htmlFor="primary" className="text-sm font-medium leading-none">Primary Contact</label>
+                                    <label htmlFor="primary" className="text-sm font-medium leading-none">
+                                        Primary Contact
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -408,22 +434,39 @@ export function ContactDialog({
                                 <div className="flex items-center justify-between p-4 border rounded-md bg-blue-50/50">
                                     <div>
                                         <span className="font-medium text-gray-900">Enable Portal Access</span>
-                                        <p className="text-xs text-gray-500 mt-0.5">Allow this contact to log in to the client portal</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                            Allow this contact to log in to the client portal
+                                        </p>
                                     </div>
                                     <Switch
                                         className="data-[state=checked]:bg-blue-600"
                                         checked={formData.portalAccess}
-                                        onCheckedChange={(checked) => setFormData({ ...formData, portalAccess: checked })}
+                                        onCheckedChange={(checked) =>
+                                            setFormData({ ...formData, portalAccess: checked })
+                                        }
                                     />
                                 </div>
                             </div>
 
                             {/* Permissions (using Checkboxes) */}
                             <div className="space-y-3">
-                                <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">Module Permissions</h3>
-                                <p className="text-sm text-gray-500">Select which modules this contact can access in the portal</p>
+                                <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">
+                                    Module Permissions
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                    Select which modules this contact can access in the portal
+                                </p>
                                 <div className="grid grid-cols-2 gap-3">
-                                    {(["invoices", "estimates", "contracts", "proposals", "support", "projects"] as const).map(perm => (
+                                    {(
+                                        [
+                                            "invoices",
+                                            "estimates",
+                                            "contracts",
+                                            "proposals",
+                                            "support",
+                                            "projects",
+                                        ] as const
+                                    ).map((perm) => (
                                         <div key={perm} className="flex items-center space-x-2">
                                             <Checkbox
                                                 id={`perm-${perm}`}
@@ -433,7 +476,7 @@ export function ContactDialog({
                                             />
                                             <label
                                                 htmlFor={`perm-${perm}`}
-                                                className={`text-sm font-medium capitalize ${!formData.portalAccess ? 'text-gray-400' : 'text-gray-700'}`}
+                                                className={`text-sm font-medium capitalize ${!formData.portalAccess ? "text-gray-400" : "text-gray-700"}`}
                                             >
                                                 {perm}
                                             </label>
@@ -445,7 +488,9 @@ export function ContactDialog({
                             {/* Password Section (only shown if portal access enabled) */}
                             {formData.portalAccess && (
                                 <div className="space-y-3 border-t pt-4">
-                                    <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">Portal Password</h3>
+                                    <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">
+                                        Portal Password
+                                    </h3>
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between">
                                             <Label>Password</Label>
@@ -464,7 +509,9 @@ export function ContactDialog({
                                                 <Input
                                                     type={showPassword ? "text" : "password"}
                                                     value={formData.password}
-                                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                    onChange={(e) =>
+                                                        setFormData({ ...formData, password: e.target.value })
+                                                    }
                                                     placeholder="Set password manually"
                                                 />
                                                 <button
@@ -472,7 +519,11 @@ export function ContactDialog({
                                                     onClick={() => setShowPassword(!showPassword)}
                                                     className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
                                                 >
-                                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                    {showPassword ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
                                                 </button>
                                             </div>
                                         </div>
@@ -506,18 +557,25 @@ export function ContactDialog({
                     {step === 3 && (
                         <div className="space-y-4">
                             <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">Email Notifications</h3>
-                            <p className="text-sm text-gray-500">Select which email notifications this contact should receive</p>
+                            <p className="text-sm text-gray-500">
+                                Select which email notifications this contact should receive
+                            </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {([
-                                    { key: "invoice", label: "Invoice" },
-                                    { key: "estimate", label: "Estimate" },
-                                    { key: "creditNote", label: "Credit Note" },
-                                    { key: "project", label: "Project" },
-                                    { key: "tickets", label: "Tickets" },
-                                    { key: "contract", label: "Contract" },
-                                    { key: "task", label: "Task" }
-                                ] as const).map(({ key, label }) => (
-                                    <div key={key} className="flex items-center justify-between p-3 border rounded-md bg-gray-50/50">
+                                {(
+                                    [
+                                        { key: "invoice", label: "Invoice" },
+                                        { key: "estimate", label: "Estimate" },
+                                        { key: "creditNote", label: "Credit Note" },
+                                        { key: "project", label: "Project" },
+                                        { key: "tickets", label: "Tickets" },
+                                        { key: "contract", label: "Contract" },
+                                        { key: "task", label: "Task" },
+                                    ] as const
+                                ).map(({ key, label }) => (
+                                    <div
+                                        key={key}
+                                        className="flex items-center justify-between p-3 border rounded-md bg-gray-50/50"
+                                    >
                                         <span className="text-sm font-medium text-gray-700">{label}</span>
                                         <Switch
                                             className="data-[state=checked]:bg-blue-600"
@@ -533,13 +591,19 @@ export function ContactDialog({
 
                 <SheetFooter className="p-6 border-t bg-white flex justify-between sm:justify-between items-center w-full">
                     {step > 1 ? (
-                        <Button variant="outline" onClick={prevStep} disabled={saving}>Previous</Button>
+                        <Button variant="outline" onClick={prevStep} disabled={saving}>
+                            Previous
+                        </Button>
                     ) : (
-                        <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={saving}>Close</Button>
+                        <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={saving}>
+                            Close
+                        </Button>
                     )}
 
                     {step < totalSteps ? (
-                        <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={nextStep}>Next</Button>
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={nextStep}>
+                            Next
+                        </Button>
                     ) : (
                         <Button
                             className="bg-gray-900 text-white hover:bg-gray-800"

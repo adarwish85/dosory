@@ -21,13 +21,7 @@ import {
     DialogFooter,
     DialogDescription,
 } from "@/components/ui/dialog";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -50,7 +44,7 @@ export default function KnowledgeBasePage() {
         deleteArticle,
         createGroup,
         updateGroup,
-        deleteGroup
+        deleteGroup,
     } = useKnowledgeBase();
 
     // Article Dialog State
@@ -77,12 +71,12 @@ export default function KnowledgeBasePage() {
     // Categories Management Dialog
     const [manageCategoriesOpen, setManageCategoriesOpen] = useState(false);
 
-    const filteredArticles = articles.filter(article =>
+    const filteredArticles = articles.filter((article) =>
         article.subject?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const getGroupName = (groupId: string) => {
-        const group = groups.find(g => g.id === groupId);
+        const group = groups.find((g) => g.id === groupId);
         return group?.name || "-";
     };
 
@@ -182,7 +176,12 @@ export default function KnowledgeBasePage() {
     };
 
     const handleDeleteCategory = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this category? Articles in this category will become uncategorized.")) return;
+        if (
+            !confirm(
+                "Are you sure you want to delete this category? Articles in this category will become uncategorized."
+            )
+        )
+            return;
         try {
             await deleteGroup(id);
             toast.success("Category deleted");
@@ -206,19 +205,21 @@ export default function KnowledgeBasePage() {
                 <div className="flex items-center gap-1">
                     <button
                         onClick={() => setActiveTab("articles")}
-                        className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === "articles"
-                            ? "border-gray-900 text-gray-900"
-                            : "border-transparent text-gray-500 hover:text-gray-700"
-                            }`}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                            activeTab === "articles"
+                                ? "border-gray-900 text-gray-900"
+                                : "border-transparent text-gray-500 hover:text-gray-700"
+                        }`}
                     >
                         Articles ({articles.length})
                     </button>
                     <button
                         onClick={() => setActiveTab("categories")}
-                        className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${activeTab === "categories"
-                            ? "border-gray-900 text-gray-900"
-                            : "border-transparent text-gray-500 hover:text-gray-700"
-                            }`}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                            activeTab === "categories"
+                                ? "border-gray-900 text-gray-900"
+                                : "border-transparent text-gray-500 hover:text-gray-700"
+                        }`}
                     >
                         Categories ({groups.length})
                     </button>
@@ -232,19 +233,27 @@ export default function KnowledgeBasePage() {
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-2 flex-wrap">
                             <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={handleNewArticle}>
-                                <Plus className="mr-2 h-4 w-4" />New Article
+                                <Plus className="mr-2 h-4 w-4" />
+                                New Article
                             </Button>
                         </div>
 
                         <div className="flex items-center gap-2 flex-1 w-full max-w-md mx-6">
                             <div className="relative flex-1">
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                                <Input placeholder="Search articles..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                                <Input
+                                    placeholder="Search articles..."
+                                    className="pl-9"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" /></Button>
+                            <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
+                                <RefreshCw className="h-4 w-4" />
+                            </Button>
                         </div>
                     </div>
 
@@ -264,7 +273,9 @@ export default function KnowledgeBasePage() {
                                 {filteredArticles.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                                            {searchQuery ? "No articles match your search." : "No articles found. Create your first one!"}
+                                            {searchQuery
+                                                ? "No articles match your search."
+                                                : "No articles found. Create your first one!"}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -272,19 +283,39 @@ export default function KnowledgeBasePage() {
                                         <TableRow key={article.id} className="group hover:bg-gray-50">
                                             <TableCell className="font-medium">
                                                 <div className="flex flex-col gap-0.5">
-                                                    <Link href={`/dashboard/knowledge-base/${article.id}`} className="text-blue-600 hover:underline w-fit">
+                                                    <Link
+                                                        href={`/dashboard/knowledge-base/${article.id}`}
+                                                        className="text-blue-600 hover:underline w-fit"
+                                                    >
                                                         {article.subject}
                                                     </Link>
                                                     <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
-                                                        <Link href={`/dashboard/knowledge-base/${article.id}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
+                                                        <Link
+                                                            href={`/dashboard/knowledge-base/${article.id}`}
+                                                            className="hover:text-blue-600 hover:underline px-0.5"
+                                                        >
+                                                            View
+                                                        </Link>
                                                         <span className="text-gray-300">|</span>
-                                                        <button onClick={() => handleEditArticle(article)} className="hover:text-blue-600 hover:underline px-0.5">Edit</button>
+                                                        <button
+                                                            onClick={() => handleEditArticle(article)}
+                                                            className="hover:text-blue-600 hover:underline px-0.5"
+                                                        >
+                                                            Edit
+                                                        </button>
                                                         <span className="text-gray-300">|</span>
-                                                        <button onClick={() => handleDeleteArticle(article.id)} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                        <button
+                                                            onClick={() => handleDeleteArticle(article.id)}
+                                                            className="hover:text-red-600 hover:underline px-0.5"
+                                                        >
+                                                            Delete
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-gray-500">{getGroupName(article.groupId)}</TableCell>
+                                            <TableCell className="text-gray-500">
+                                                {getGroupName(article.groupId)}
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1 text-gray-500">
                                                     <Eye className="h-4 w-4" />
@@ -292,11 +323,19 @@ export default function KnowledgeBasePage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge className={article.isActive ? "bg-green-100 text-green-600 border-0" : "bg-gray-100 text-gray-600 border-0"}>
+                                                <Badge
+                                                    className={
+                                                        article.isActive
+                                                            ? "bg-green-100 text-green-600 border-0"
+                                                            : "bg-gray-100 text-gray-600 border-0"
+                                                    }
+                                                >
                                                     {article.isActive ? "Active" : "Draft"}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-gray-500">{formatDate(article.createdAt)}</TableCell>
+                                            <TableCell className="text-gray-500">
+                                                {formatDate(article.createdAt)}
+                                            </TableCell>
                                         </TableRow>
                                     ))
                                 )}
@@ -316,9 +355,12 @@ export default function KnowledgeBasePage() {
                     {/* Header Toolbar */}
                     <div className="flex items-center justify-between gap-4">
                         <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={handleNewCategory}>
-                            <Plus className="mr-2 h-4 w-4" />New Category
+                            <Plus className="mr-2 h-4 w-4" />
+                            New Category
                         </Button>
-                        <Button variant="outline" size="icon" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
                     </div>
 
                     {/* Categories Table */}
@@ -341,31 +383,47 @@ export default function KnowledgeBasePage() {
                                     </TableRow>
                                 ) : (
                                     groups.map((group) => {
-                                        const articleCount = articles.filter(a => a.groupId === group.id).length;
+                                        const articleCount = articles.filter((a) => a.groupId === group.id).length;
                                         return (
                                             <TableRow key={group.id} className="group hover:bg-gray-50">
                                                 <TableCell className="font-medium">
                                                     <div className="flex flex-col gap-0.5">
                                                         <span className="text-gray-900">{group.name}</span>
                                                         <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
-                                                            <button onClick={() => handleEditCategory(group)} className="hover:text-blue-600 hover:underline px-0.5">Edit</button>
+                                                            <button
+                                                                onClick={() => handleEditCategory(group)}
+                                                                className="hover:text-blue-600 hover:underline px-0.5"
+                                                            >
+                                                                Edit
+                                                            </button>
                                                             <span className="text-gray-300">|</span>
-                                                            <button onClick={() => handleDeleteCategory(group.id)} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                            <button
+                                                                onClick={() => handleDeleteCategory(group.id)}
+                                                                className="hover:text-red-600 hover:underline px-0.5"
+                                                            >
+                                                                Delete
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-gray-500 max-w-xs truncate">{group.description || "-"}</TableCell>
+                                                <TableCell className="text-gray-500 max-w-xs truncate">
+                                                    {group.description || "-"}
+                                                </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
                                                         <div
                                                             className="w-5 h-5 rounded border"
                                                             style={{ backgroundColor: group.color || "#3b82f6" }}
                                                         />
-                                                        <span className="text-gray-500 text-sm">{group.color || "#3b82f6"}</span>
+                                                        <span className="text-gray-500 text-sm">
+                                                            {group.color || "#3b82f6"}
+                                                        </span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge className="bg-blue-100 text-blue-600 border-0">{articleCount}</Badge>
+                                                    <Badge className="bg-blue-100 text-blue-600 border-0">
+                                                        {articleCount}
+                                                    </Badge>
                                                 </TableCell>
                                             </TableRow>
                                         );
@@ -387,7 +445,9 @@ export default function KnowledgeBasePage() {
                     <DialogHeader>
                         <DialogTitle>{editingArticle ? "Edit Article" : "New Article"}</DialogTitle>
                         <DialogDescription>
-                            {editingArticle ? "Update the article details below." : "Create a new knowledge base article."}
+                            {editingArticle
+                                ? "Update the article details below."
+                                : "Create a new knowledge base article."}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -403,13 +463,18 @@ export default function KnowledgeBasePage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Category *</Label>
-                                <Select value={articleForm.groupId} onValueChange={(v) => setArticleForm({ ...articleForm, groupId: v })}>
+                                <Select
+                                    value={articleForm.groupId}
+                                    onValueChange={(v) => setArticleForm({ ...articleForm, groupId: v })}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select category" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {groups.map((g) => (
-                                            <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                                            <SelectItem key={g.id} value={g.id}>
+                                                {g.name}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -455,8 +520,13 @@ export default function KnowledgeBasePage() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setArticleDialogOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSaveArticle} disabled={!articleForm.subject || !articleForm.groupId || !articleForm.content}>
+                        <Button variant="outline" onClick={() => setArticleDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSaveArticle}
+                            disabled={!articleForm.subject || !articleForm.groupId || !articleForm.content}
+                        >
                             {editingArticle ? "Save Changes" : "Create Article"}
                         </Button>
                     </DialogFooter>
@@ -469,7 +539,9 @@ export default function KnowledgeBasePage() {
                     <DialogHeader>
                         <DialogTitle>{editingCategory ? "Edit Category" : "New Category"}</DialogTitle>
                         <DialogDescription>
-                            {editingCategory ? "Update the category details." : "Create a new category to organize articles."}
+                            {editingCategory
+                                ? "Update the category details."
+                                : "Create a new category to organize articles."}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -511,7 +583,9 @@ export default function KnowledgeBasePage() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setCategoryDialogOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setCategoryDialogOpen(false)}>
+                            Cancel
+                        </Button>
                         <Button onClick={handleSaveCategory} disabled={!categoryForm.name}>
                             {editingCategory ? "Save Changes" : "Create Category"}
                         </Button>

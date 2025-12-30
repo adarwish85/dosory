@@ -20,10 +20,11 @@ const translations: Record<SupportedLocale, TranslationDictionary> = {
 };
 
 // Locale metadata
-export const LOCALE_METADATA: Record<SupportedLocale, { name: string; nativeName: string; direction: "ltr" | "rtl" }> = {
-    en: { name: "English", nativeName: "English", direction: "ltr" },
-    ar: { name: "Arabic", nativeName: "العربية", direction: "rtl" },
-};
+export const LOCALE_METADATA: Record<SupportedLocale, { name: string; nativeName: string; direction: "ltr" | "rtl" }> =
+    {
+        en: { name: "English", nativeName: "English", direction: "ltr" },
+        ar: { name: "Arabic", nativeName: "العربية", direction: "rtl" },
+    };
 
 /**
  * Get a nested value from an object using dot notation
@@ -58,7 +59,7 @@ function interpolate(str: string, params?: Record<string, string | number>): str
 /**
  * Hook to access translations based on organization settings.
  * Uses the `defaultLanguage` from org settings.
- * 
+ *
  * @example
  * const { t, locale, dir } = useTranslation();
  * return <h1>{t("invoices.title")}</h1>;
@@ -81,29 +82,29 @@ export function useTranslation() {
     }, [locale]);
 
     // Translation function
-    const t = useCallback((
-        key: string,
-        params?: Record<string, string | number>
-    ): string => {
-        // Get translation from current locale
-        const translation = getNestedValue(translations[locale] as unknown as Record<string, unknown>, key);
+    const t = useCallback(
+        (key: string, params?: Record<string, string | number>): string => {
+            // Get translation from current locale
+            const translation = getNestedValue(translations[locale] as unknown as Record<string, unknown>, key);
 
-        if (translation) {
-            return interpolate(translation, params);
-        }
-
-        // Fallback to English if not found in current locale
-        if (locale !== "en") {
-            const fallback = getNestedValue(translations.en as unknown as Record<string, unknown>, key);
-            if (fallback) {
-                return interpolate(fallback, params);
+            if (translation) {
+                return interpolate(translation, params);
             }
-        }
 
-        // Return key if no translation found
-        console.warn(`Translation not found for key: ${key}`);
-        return key;
-    }, [locale]);
+            // Fallback to English if not found in current locale
+            if (locale !== "en") {
+                const fallback = getNestedValue(translations.en as unknown as Record<string, unknown>, key);
+                if (fallback) {
+                    return interpolate(fallback, params);
+                }
+            }
+
+            // Return key if no translation found
+            console.warn(`Translation not found for key: ${key}`);
+            return key;
+        },
+        [locale]
+    );
 
     return {
         t,

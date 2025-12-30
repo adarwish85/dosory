@@ -112,9 +112,7 @@ export function usePayments(options: UsePaymentsOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (customerId) {
             constraints.push(where("customerId", "==", customerId));
@@ -128,42 +126,46 @@ export function usePayments(options: UsePaymentsOptions = {}) {
 
         const q = query(collection(db, "payments"), ...constraints);
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as Payment[];
-            setPayments(data);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching payments:", error);
-            setLoading(false);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as Payment[];
+                setPayments(data);
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error fetching payments:", error);
+                setLoading(false);
+            }
+        );
 
         return () => unsubscribe();
     }, [profile?.orgId, customerId, invoiceId]);
 
-    const createPayment = useCallback(async (data: Omit<Payment, "id" | "orgId" | "createdAt">) => {
-        if (!profile?.orgId) throw new Error("No organization");
+    const createPayment = useCallback(
+        async (data: Omit<Payment, "id" | "orgId" | "createdAt">) => {
+            if (!profile?.orgId) throw new Error("No organization");
 
-        const docRef = await addDoc(collection(db, "payments"), {
-            ...data,
-            orgId: profile.orgId,
-            createdAt: serverTimestamp(),
-        });
+            const docRef = await addDoc(collection(db, "payments"), {
+                ...data,
+                orgId: profile.orgId,
+                createdAt: serverTimestamp(),
+            });
 
-        if (logActivity) {
-            await logActivity(
-                "payment_received",
-                `Received payment of ${data.amount}`,
-                docRef.id,
-                "payment",
-                { amount: data.amount, customerId: data.customerId }
-            );
-        }
+            if (logActivity) {
+                await logActivity("payment_received", `Received payment of ${data.amount}`, docRef.id, "payment", {
+                    amount: data.amount,
+                    customerId: data.customerId,
+                });
+            }
 
-        return docRef;
-    }, [profile?.orgId, logActivity]);
+            return docRef;
+        },
+        [profile?.orgId, logActivity]
+    );
 
     return { payments, loading, createPayment };
 }
@@ -189,9 +191,7 @@ export function useCreditNotes(options: UseCreditNotesOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (customerId) {
             constraints.push(where("customerId", "==", customerId));
@@ -205,17 +205,21 @@ export function useCreditNotes(options: UseCreditNotesOptions = {}) {
 
         const q = query(collection(db, "credit_notes"), ...constraints);
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as CreditNote[];
-            setCreditNotes(data);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching credit notes:", error);
-            setLoading(false);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as CreditNote[];
+                setCreditNotes(data);
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error fetching credit notes:", error);
+                setLoading(false);
+            }
+        );
 
         return () => unsubscribe();
     }, [profile?.orgId, customerId, status]);
@@ -243,9 +247,7 @@ export function useReminders(options: UseRemindersOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (customerId) {
             constraints.push(where("customerId", "==", customerId));
@@ -255,31 +257,38 @@ export function useReminders(options: UseRemindersOptions = {}) {
 
         const q = query(collection(db, "reminders"), ...constraints);
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as Reminder[];
-            setReminders(data);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching reminders:", error);
-            setLoading(false);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as Reminder[];
+                setReminders(data);
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error fetching reminders:", error);
+                setLoading(false);
+            }
+        );
 
         return () => unsubscribe();
     }, [profile?.orgId, customerId]);
 
-    const createReminder = useCallback(async (data: Omit<Reminder, "id" | "orgId" | "createdAt" | "isNotified">) => {
-        if (!profile?.orgId) throw new Error("No organization");
+    const createReminder = useCallback(
+        async (data: Omit<Reminder, "id" | "orgId" | "createdAt" | "isNotified">) => {
+            if (!profile?.orgId) throw new Error("No organization");
 
-        return await addDoc(collection(db, "reminders"), {
-            ...data,
-            orgId: profile.orgId,
-            isNotified: false,
-            createdAt: serverTimestamp(),
-        });
-    }, [profile?.orgId]);
+            return await addDoc(collection(db, "reminders"), {
+                ...data,
+                orgId: profile.orgId,
+                isNotified: false,
+                createdAt: serverTimestamp(),
+            });
+        },
+        [profile?.orgId]
+    );
 
     const deleteReminder = useCallback(async (id: string) => {
         await deleteDoc(doc(db, "reminders", id));
@@ -308,9 +317,7 @@ export function useCustomerFiles(options: UseCustomerFilesOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (customerId) {
             constraints.push(where("customerId", "==", customerId));
@@ -320,17 +327,21 @@ export function useCustomerFiles(options: UseCustomerFilesOptions = {}) {
 
         const q = query(collection(db, "customer_files"), ...constraints);
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as CustomerFile[];
-            setFiles(data);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching files:", error);
-            setLoading(false);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as CustomerFile[];
+                setFiles(data);
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error fetching files:", error);
+                setLoading(false);
+            }
+        );
 
         return () => unsubscribe();
     }, [profile?.orgId, customerId]);
@@ -362,9 +373,7 @@ export function useVault(options: UseVaultOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (customerId) {
             constraints.push(where("customerId", "==", customerId));
@@ -374,30 +383,37 @@ export function useVault(options: UseVaultOptions = {}) {
 
         const q = query(collection(db, "vault"), ...constraints);
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as VaultItem[];
-            setVaultItems(data);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching vault items:", error);
-            setLoading(false);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as VaultItem[];
+                setVaultItems(data);
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error fetching vault items:", error);
+                setLoading(false);
+            }
+        );
 
         return () => unsubscribe();
     }, [profile?.orgId, customerId]);
 
-    const createVaultItem = useCallback(async (data: Omit<VaultItem, "id" | "orgId" | "createdAt">) => {
-        if (!profile?.orgId) throw new Error("No organization");
+    const createVaultItem = useCallback(
+        async (data: Omit<VaultItem, "id" | "orgId" | "createdAt">) => {
+            if (!profile?.orgId) throw new Error("No organization");
 
-        return await addDoc(collection(db, "vault"), {
-            ...data,
-            orgId: profile.orgId,
-            createdAt: serverTimestamp(),
-        });
-    }, [profile?.orgId]);
+            return await addDoc(collection(db, "vault"), {
+                ...data,
+                orgId: profile.orgId,
+                createdAt: serverTimestamp(),
+            });
+        },
+        [profile?.orgId]
+    );
 
     const deleteVaultItem = useCallback(async (id: string) => {
         await deleteDoc(doc(db, "vault", id));

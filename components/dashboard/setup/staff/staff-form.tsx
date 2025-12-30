@@ -107,7 +107,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
             await uploadBytes(fileRef, file);
             const downloadURL = await getDownloadURL(fileRef);
 
-            setFormData(prev => ({ ...prev, image: downloadURL }));
+            setFormData((prev) => ({ ...prev, image: downloadURL }));
             toast.success("Photo uploaded successfully");
         } catch (error) {
             console.error("Error uploading photo:", error);
@@ -128,11 +128,11 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                     // Ignore errors if file doesn't exist
                 });
             }
-            setFormData(prev => ({ ...prev, image: "" }));
+            setFormData((prev) => ({ ...prev, image: "" }));
             toast.success("Photo removed");
         } catch (error) {
             console.error("Error removing photo:", error);
-            setFormData(prev => ({ ...prev, image: "" }));
+            setFormData((prev) => ({ ...prev, image: "" }));
         }
     };
 
@@ -195,15 +195,15 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
     };
 
     const updateField = (field: keyof StaffFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     const toggleDepartment = (dept: string) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             departments: prev.departments.includes(dept)
-                ? prev.departments.filter(d => d !== dept)
-                : [...prev.departments, dept]
+                ? prev.departments.filter((d) => d !== dept)
+                : [...prev.departments, dept],
         }));
     };
 
@@ -237,7 +237,9 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                                         checked={formData.isAdmin}
                                         onCheckedChange={(checked) => updateField("isAdmin", !!checked)}
                                     />
-                                    <Label htmlFor="admin" className="font-normal text-gray-600">Administrator</Label>
+                                    <Label htmlFor="admin" className="font-normal text-gray-600">
+                                        Administrator
+                                    </Label>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Checkbox
@@ -245,7 +247,9 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                                         checked={formData.isNotStaff}
                                         onCheckedChange={(checked) => updateField("isNotStaff", !!checked)}
                                     />
-                                    <Label htmlFor="not-staff" className="font-normal text-gray-600">Not Staff Member</Label>
+                                    <Label htmlFor="not-staff" className="font-normal text-gray-600">
+                                        Not Staff Member
+                                    </Label>
                                 </div>
                             </div>
 
@@ -332,10 +336,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
 
                             <div className="space-y-2">
                                 <Label>Phone</Label>
-                                <Input
-                                    value={formData.phone}
-                                    onChange={(e) => updateField("phone", e.target.value)}
-                                />
+                                <Input value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} />
                             </div>
 
                             <div className="space-y-2">
@@ -387,10 +388,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
 
                             <div className="space-y-2">
                                 <Label className="flex items-center gap-2">Skype</Label>
-                                <Input
-                                    value={formData.skype}
-                                    onChange={(e) => updateField("skype", e.target.value)}
-                                />
+                                <Input value={formData.skype} onChange={(e) => updateField("skype", e.target.value)} />
                             </div>
 
                             <div className="space-y-2">
@@ -427,18 +425,22 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                                 <div className="flex items-center gap-2">
                                     <Checkbox
                                         id="dept-tech"
-                                        checked={formData.departments.includes('tech')}
-                                        onCheckedChange={() => toggleDepartment('tech')}
+                                        checked={formData.departments.includes("tech")}
+                                        onCheckedChange={() => toggleDepartment("tech")}
                                     />
-                                    <Label htmlFor="dept-tech" className="font-normal text-gray-700">Technical Support</Label>
+                                    <Label htmlFor="dept-tech" className="font-normal text-gray-700">
+                                        Technical Support
+                                    </Label>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Checkbox
                                         id="dept-dev"
-                                        checked={formData.departments.includes('dev')}
-                                        onCheckedChange={() => toggleDepartment('dev')}
+                                        checked={formData.departments.includes("dev")}
+                                        onCheckedChange={() => toggleDepartment("dev")}
                                     />
-                                    <Label htmlFor="dept-dev" className="font-normal text-gray-700">Development</Label>
+                                    <Label htmlFor="dept-dev" className="font-normal text-gray-700">
+                                        Development
+                                    </Label>
                                 </div>
                             </div>
                         </div>
@@ -446,7 +448,9 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                         {mode === "create" && (
                             <div className="flex items-center gap-2 pt-2">
                                 <Checkbox id="welcome-email" defaultChecked />
-                                <Label htmlFor="welcome-email" className="font-medium text-gray-900">Send welcome email</Label>
+                                <Label htmlFor="welcome-email" className="font-medium text-gray-900">
+                                    Send welcome email
+                                </Label>
                             </div>
                         )}
 
@@ -454,7 +458,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                             <Label className="text-red-500">* Password</Label>
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
-                                    <Input type={passwordVisible ? "text" : "password"} required={mode === 'create'} />
+                                    <Input type={passwordVisible ? "text" : "password"} required={mode === "create"} />
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -469,7 +473,11 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                                     <RefreshCw className="h-4 w-4" />
                                 </Button>
                             </div>
-                            {mode === "edit" && <p className="text-xs text-gray-500">Note: if you populate this field, password will be changed on this member.</p>}
+                            {mode === "edit" && (
+                                <p className="text-xs text-gray-500">
+                                    Note: if you populate this field, password will be changed on this member.
+                                </p>
+                            )}
                         </div>
                     </div>
                 </TabsContent>
@@ -501,31 +509,41 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                        <PermissionRow label="Bulk PDF Export" options={[
-                                            { label: "View(Global)", id: "bulk-view" }
-                                        ]} />
-                                        <PermissionRow label="Contracts" options={[
-                                            { label: "View (Own)", id: "contracts-view-own" },
-                                            { label: "View(Global)", id: "contracts-view-global" },
-                                            { label: "Create", id: "contracts-create" },
-                                            { label: "Edit", id: "contracts-edit" },
-                                            { label: "Delete", id: "contracts-delete" },
-                                            { label: "View All Templates", id: "contracts-templates" },
-                                        ]} />
-                                        <PermissionRow label="Credit Notes" options={[
-                                            { label: "View (Own)", id: "cn-view-own" },
-                                            { label: "View(Global)", id: "cn-view-global" },
-                                            { label: "Create", id: "cn-create" },
-                                            { label: "Edit", id: "cn-edit" },
-                                            { label: "Delete", id: "cn-delete" },
-                                        ]} />
-                                        <PermissionRow label="Customers" options={[
-                                            { label: "View (Own)", id: "customers-view-own", help: true },
-                                            { label: "View(Global)", id: "customers-view-global" },
-                                            { label: "Create", id: "customers-create" },
-                                            { label: "Edit", id: "customers-edit" },
-                                            { label: "Delete", id: "customers-delete" },
-                                        ]} />
+                                        <PermissionRow
+                                            label="Bulk PDF Export"
+                                            options={[{ label: "View(Global)", id: "bulk-view" }]}
+                                        />
+                                        <PermissionRow
+                                            label="Contracts"
+                                            options={[
+                                                { label: "View (Own)", id: "contracts-view-own" },
+                                                { label: "View(Global)", id: "contracts-view-global" },
+                                                { label: "Create", id: "contracts-create" },
+                                                { label: "Edit", id: "contracts-edit" },
+                                                { label: "Delete", id: "contracts-delete" },
+                                                { label: "View All Templates", id: "contracts-templates" },
+                                            ]}
+                                        />
+                                        <PermissionRow
+                                            label="Credit Notes"
+                                            options={[
+                                                { label: "View (Own)", id: "cn-view-own" },
+                                                { label: "View(Global)", id: "cn-view-global" },
+                                                { label: "Create", id: "cn-create" },
+                                                { label: "Edit", id: "cn-edit" },
+                                                { label: "Delete", id: "cn-delete" },
+                                            ]}
+                                        />
+                                        <PermissionRow
+                                            label="Customers"
+                                            options={[
+                                                { label: "View (Own)", id: "customers-view-own", help: true },
+                                                { label: "View(Global)", id: "customers-view-global" },
+                                                { label: "Create", id: "customers-create" },
+                                                { label: "Edit", id: "customers-edit" },
+                                                { label: "Delete", id: "customers-delete" },
+                                            ]}
+                                        />
                                     </tbody>
                                 </table>
                             </div>
@@ -534,7 +552,11 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                 </TabsContent>
 
                 <div className="flex justify-end gap-2 pt-6">
-                    {onCancel && <Button variant="outline" onClick={onCancel}>Close</Button>}
+                    {onCancel && (
+                        <Button variant="outline" onClick={onCancel}>
+                            Close
+                        </Button>
+                    )}
                     <Button
                         className="bg-gray-900 text-white hover:bg-gray-800"
                         onClick={handleSave}
@@ -549,7 +571,13 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
     );
 }
 
-function PermissionRow({ label, options }: { label: string, options: { label: string, id: string, help?: boolean }[] }) {
+function PermissionRow({
+    label,
+    options,
+}: {
+    label: string;
+    options: { label: string; id: string; help?: boolean }[];
+}) {
     return (
         <tr className="hover:bg-gray-50/50">
             <td className="px-4 py-3 font-medium text-gray-900 border-r align-top bg-white">{label}</td>
@@ -558,7 +586,10 @@ function PermissionRow({ label, options }: { label: string, options: { label: st
                     {options.map((opt) => (
                         <div key={opt.id} className="flex items-center gap-2">
                             <Checkbox id={opt.id} className="h-4 w-4" />
-                            <Label htmlFor={opt.id} className="font-normal text-gray-700 cursor-pointer flex items-center gap-1">
+                            <Label
+                                htmlFor={opt.id}
+                                className="font-normal text-gray-700 cursor-pointer flex items-center gap-1"
+                            >
                                 {opt.label}
                                 {opt.help && <HelpCircle className="h-3 w-3 text-gray-400" />}
                             </Label>

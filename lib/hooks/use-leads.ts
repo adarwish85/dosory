@@ -87,7 +87,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
             c.push(where("name_lower", ">=", lowerQuery));
-            c.push(where("name_lower", "<=", lowerQuery + '\uf8ff'));
+            c.push(where("name_lower", "<=", lowerQuery + "\uf8ff"));
         }
 
         return c;
@@ -112,7 +112,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 try {
                     const aggSnap = await getAggregateFromServer(globalQ, {
                         totalCount: count(),
-                        totalValue: sum("value")
+                        totalValue: sum("value"),
                     });
                     globalTotal = aggSnap.data().totalCount;
                     globalValue = aggSnap.data().totalValue;
@@ -122,7 +122,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
                     try {
                         const countSnap = await getCountFromServer(globalQ);
                         globalTotal = countSnap.data().count;
-                    } catch (ignore) { }
+                    } catch (ignore) {}
                 }
 
                 if (!isMounted) return;
@@ -133,10 +133,10 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 const filterCountSnap = await getCountFromServer(filterQ);
 
                 if (isMounted) {
-                    setLeadStats(prev => ({
+                    setLeadStats((prev) => ({
                         ...prev,
                         total: globalTotal,
-                        totalValue: globalValue
+                        totalValue: globalValue,
                     }));
                     setTotalRecords(filterCountSnap.data().count);
                 }
@@ -146,12 +146,17 @@ export function useLeads(options: UseLeadsOptions = {}) {
         };
 
         fetchStatsAndCount();
-        return () => { isMounted = false; };
+        return () => {
+            isMounted = false;
+        };
     }, [profile?.orgId, getBaseConstraints]);
 
     // Effect: Fetch Paginated Data
     useEffect(() => {
-        if (!profile?.orgId) { setLoading(false); return; }
+        if (!profile?.orgId) {
+            setLoading(false);
+            return;
+        }
 
         setLoading(true);
 
@@ -164,7 +169,9 @@ export function useLeads(options: UseLeadsOptions = {}) {
             if (prevCursor) {
                 constraints.push(startAfter(prevCursor));
             } else {
-                console.warn("Missing cursor for page " + page + ", loading from scratch (might be inaccurate deep in list).");
+                console.warn(
+                    "Missing cursor for page " + page + ", loading from scratch (might be inaccurate deep in list)."
+                );
                 // Fallback: If we don't have cursor (e.g. reload or jump), we can't efficiently jump to page X in Firestore.
                 // ideally handling "Invalid Cursor" by resetting to Page 1 in UI.
             }
@@ -174,22 +181,26 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
         const q = query(collection(db, "leads"), ...constraints);
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Lead[];
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Lead[];
 
-            // Update Cursor for the NEXT page
-            if (snapshot.docs.length > 0) {
-                const lastDoc = snapshot.docs[snapshot.docs.length - 1];
-                setCursors(prev => ({ ...prev, [page]: lastDoc }));
+                // Update Cursor for the NEXT page
+                if (snapshot.docs.length > 0) {
+                    const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+                    setCursors((prev) => ({ ...prev, [page]: lastDoc }));
+                }
+
+                setLeads(data);
+                setLoading(false);
+            },
+            (err) => {
+                console.error("Error fetching leads:", err);
+                setError(err);
+                setLoading(false);
             }
-
-            setLeads(data);
-            setLoading(false);
-        }, (err) => {
-            console.error("Error fetching leads:", err);
-            setError(err);
-            setLoading(false);
-        });
+        );
 
         return () => unsubscribe();
     }, [profile?.orgId, getBaseConstraints, orderByField, orderDirection, pageSize, page]);
@@ -199,7 +210,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
     // but the one-off getCountFromServer remains stale.
     useEffect(() => {
         const currentCount = leads.length;
-        const currentTotalOnPage = ((page - 1) * pageSize) + currentCount;
+        const currentTotalOnPage = (page - 1) * pageSize + currentCount;
 
         // If we received fewer items than the limit, we know the exact total corresponds to this end of list
         if (currentCount < pageSize) {
@@ -227,9 +238,13 @@ export function useLeads(options: UseLeadsOptions = {}) {
             });
 
             // Optimistic Update
-            setLeads(prev => [{ id: docRef.id, ...data, name_lower: data.name.toLowerCase() } as Lead, ...prev]);
-            setTotalRecords(prev => prev + 1);
-            setLeadStats(prev => ({ ...prev, total: prev.total + 1, totalValue: prev.totalValue + (data.value || 0) }));
+            setLeads((prev) => [{ id: docRef.id, ...data, name_lower: data.name.toLowerCase() } as Lead, ...prev]);
+            setTotalRecords((prev) => prev + 1);
+            setLeadStats((prev) => ({
+                ...prev,
+                total: prev.total + 1,
+                totalValue: prev.totalValue + (data.value || 0),
+            }));
 
             // Notify assignee
             if (data.assignedTo && data.assignedTo !== profile.uid) {
@@ -240,7 +255,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
                     link: "/dashboard/leads",
                     orgId: profile.orgId,
                     userId: data.assignedTo,
-                    metadata: { leadId: docRef.id }
+                    metadata: { leadId: docRef.id },
                 }).catch(console.error);
             }
 
@@ -258,8 +273,8 @@ export function useLeads(options: UseLeadsOptions = {}) {
             if (data.assignedTo !== undefined) {
                 // Optimization: We could rely on UI passing correct data, but safely we should check old doc?
                 // For now, let's assume if data.assignedTo is passed and not null, we notify if it's not me.
-                // Ideally we check if it CHANGED. 
-                // Let's fetch the doc to be safe, though it adds latency. 
+                // Ideally we check if it CHANGED.
+                // Let's fetch the doc to be safe, though it adds latency.
                 // It's an important action, so safety > micro-perf.
                 const oldDoc = await getDoc(doc(db, "leads", id));
                 if (oldDoc.exists()) {
@@ -286,46 +301,60 @@ export function useLeads(options: UseLeadsOptions = {}) {
                     link: `/dashboard/leads?id=${id}`, // Open drawer or just list
                     orgId: profile.orgId,
                     userId: data.assignedTo,
-                    metadata: { leadId: id }
+                    metadata: { leadId: id },
                 }).catch(console.error);
             }
         },
         [profile?.orgId, profile?.uid]
     );
 
-    const deleteLead = useCallback(async (id: string): Promise<void> => {
-        // Optimistic Update
-        const leadToDelete = leads.find(l => l.id === id);
-        const value = leadToDelete?.value || 0;
+    const deleteLead = useCallback(
+        async (id: string): Promise<void> => {
+            // Optimistic Update
+            const leadToDelete = leads.find((l) => l.id === id);
+            const value = leadToDelete?.value || 0;
 
-        setLeads(prev => prev.filter(l => l.id !== id));
-        setTotalRecords(prev => Math.max(0, prev - 1));
-        setLeadStats(prev => ({ ...prev, total: Math.max(0, prev.total - 1), totalValue: Math.max(0, prev.totalValue - value) }));
+            setLeads((prev) => prev.filter((l) => l.id !== id));
+            setTotalRecords((prev) => Math.max(0, prev - 1));
+            setLeadStats((prev) => ({
+                ...prev,
+                total: Math.max(0, prev.total - 1),
+                totalValue: Math.max(0, prev.totalValue - value),
+            }));
 
-        await deleteDoc(doc(db, "leads", id));
-    }, [leads]);
+            await deleteDoc(doc(db, "leads", id));
+        },
+        [leads]
+    );
 
-    const bulkDeleteLeads = useCallback(async (ids: string[]): Promise<void> => {
-        if (!ids.length) return;
+    const bulkDeleteLeads = useCallback(
+        async (ids: string[]): Promise<void> => {
+            if (!ids.length) return;
 
-        // Optimistic Update
-        const leadsToDelete = leads.filter(l => ids.includes(l.id));
-        const totalVal = leadsToDelete.reduce((sum, l) => sum + (l.value || 0), 0);
+            // Optimistic Update
+            const leadsToDelete = leads.filter((l) => ids.includes(l.id));
+            const totalVal = leadsToDelete.reduce((sum, l) => sum + (l.value || 0), 0);
 
-        setLeads(prev => prev.filter(l => !ids.includes(l.id)));
-        setTotalRecords(prev => Math.max(0, prev - ids.length));
-        setLeadStats(prev => ({ ...prev, total: Math.max(0, prev.total - ids.length), totalValue: Math.max(0, prev.totalValue - totalVal) }));
+            setLeads((prev) => prev.filter((l) => !ids.includes(l.id)));
+            setTotalRecords((prev) => Math.max(0, prev - ids.length));
+            setLeadStats((prev) => ({
+                ...prev,
+                total: Math.max(0, prev.total - ids.length),
+                totalValue: Math.max(0, prev.totalValue - totalVal),
+            }));
 
-        const batchSize = 500;
-        for (let i = 0; i < ids.length; i += batchSize) {
-            const batch = writeBatch(db);
-            const chunk = ids.slice(i, i + batchSize);
-            chunk.forEach(id => {
-                batch.delete(doc(db, "leads", id));
-            });
-            await batch.commit();
-        }
-    }, [leads]);
+            const batchSize = 500;
+            for (let i = 0; i < ids.length; i += batchSize) {
+                const batch = writeBatch(db);
+                const chunk = ids.slice(i, i + batchSize);
+                chunk.forEach((id) => {
+                    batch.delete(doc(db, "leads", id));
+                });
+                await batch.commit();
+            }
+        },
+        [leads]
+    );
 
     // Bulk Delete All Matches (Server-Side)
     const bulkDeleteAllMatches = useCallback(async () => {
@@ -340,7 +369,10 @@ export function useLeads(options: UseLeadsOptions = {}) {
             const snapshot = await getDocs(q);
 
             const totalToDelete = snapshot.size;
-            if (totalToDelete === 0) { setLoading(false); return; }
+            if (totalToDelete === 0) {
+                setLoading(false);
+                return;
+            }
 
             const batchSize = 500;
             const chunks = [];
@@ -363,7 +395,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
             // Fetch fresh stats after full deletion
             setLeads([]);
             setTotalRecords(0);
-            setLeadStats(prev => ({ ...prev, total: Math.max(0, prev.total - totalToDelete) }));
+            setLeadStats((prev) => ({ ...prev, total: Math.max(0, prev.total - totalToDelete) }));
             setLoading(false);
         } catch (err) {
             console.error("Error deleting all matches:", err);
@@ -423,7 +455,11 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 updatedAt: serverTimestamp(),
                 createdBy: profile.uid,
             };
-            console.log("[convertToCustomer] Creating contact with data:", { ...contactData, customerId: customerRef.id, orgId: profile.orgId });
+            console.log("[convertToCustomer] Creating contact with data:", {
+                ...contactData,
+                customerId: customerRef.id,
+                orgId: profile.orgId,
+            });
             const contactRef = await addDoc(collection(db, "contacts"), contactData);
             console.log("[convertToCustomer] Contact created with ID:", contactRef.id);
 
@@ -432,8 +468,12 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 const q = query(collection(db, coll), where(field, "==", leadId), where("orgId", "==", profile.orgId));
                 const snap = await getDocs(q);
                 const batch = writeBatch(db);
-                snap.docs.forEach(d => {
-                    const update: any = { customerId: customerRef.id, transferredFromLeadId: leadId, updatedAt: serverTimestamp() };
+                snap.docs.forEach((d) => {
+                    const update: any = {
+                        customerId: customerRef.id,
+                        transferredFromLeadId: leadId,
+                        updatedAt: serverTimestamp(),
+                    };
                     if (coll === "tasks") update.relatedTo = { type: "customer", id: customerRef.id };
                     else update.customerName = finalCompany;
                     batch.update(doc(db, coll, d.id), update);
@@ -444,31 +484,57 @@ export function useLeads(options: UseLeadsOptions = {}) {
             await Promise.all([
                 transferRelated("proposals", "leadId"),
                 transferRelated("estimates", "leadId"),
-                transferRelated("tasks", "relatedTo.id") // Note: Logic slightly different for tasks, handled inside helper if robust, but simplified here for brevity or keeping original logic.
+                transferRelated("tasks", "relatedTo.id"), // Note: Logic slightly different for tasks, handled inside helper if robust, but simplified here for brevity or keeping original logic.
             ]);
 
             // Re-implementing specific Task logic from original file to ensure correctness as generic helper might miss deep fields.
             // Actually, let's stick to the original logic for safety.
 
             // Transfer proposals
-            const proposalsQuery = query(collection(db, "proposals"), where("leadId", "==", leadId), where("orgId", "==", profile.orgId));
+            const proposalsQuery = query(
+                collection(db, "proposals"),
+                where("leadId", "==", leadId),
+                where("orgId", "==", profile.orgId)
+            );
             const proposalsSnap = await getDocs(proposalsQuery);
             for (const propDoc of proposalsSnap.docs) {
-                await updateDoc(doc(db, "proposals", propDoc.id), { customerId: customerRef.id, customerName: finalCompany, transferredFromLeadId: leadId, updatedAt: serverTimestamp() });
+                await updateDoc(doc(db, "proposals", propDoc.id), {
+                    customerId: customerRef.id,
+                    customerName: finalCompany,
+                    transferredFromLeadId: leadId,
+                    updatedAt: serverTimestamp(),
+                });
             }
 
             // Transfer estimates
-            const estimatesQuery = query(collection(db, "estimates"), where("leadId", "==", leadId), where("orgId", "==", profile.orgId));
+            const estimatesQuery = query(
+                collection(db, "estimates"),
+                where("leadId", "==", leadId),
+                where("orgId", "==", profile.orgId)
+            );
             const estimatesSnap = await getDocs(estimatesQuery);
             for (const estDoc of estimatesSnap.docs) {
-                await updateDoc(doc(db, "estimates", estDoc.id), { customerId: customerRef.id, customerName: finalCompany, transferredFromLeadId: leadId, updatedAt: serverTimestamp() });
+                await updateDoc(doc(db, "estimates", estDoc.id), {
+                    customerId: customerRef.id,
+                    customerName: finalCompany,
+                    transferredFromLeadId: leadId,
+                    updatedAt: serverTimestamp(),
+                });
             }
 
             // Transfer tasks
-            const tasksQuery = query(collection(db, "tasks"), where("relatedTo.id", "==", leadId), where("orgId", "==", profile.orgId));
+            const tasksQuery = query(
+                collection(db, "tasks"),
+                where("relatedTo.id", "==", leadId),
+                where("orgId", "==", profile.orgId)
+            );
             const tasksSnap = await getDocs(tasksQuery);
             for (const taskDoc of tasksSnap.docs) {
-                await updateDoc(doc(db, "tasks", taskDoc.id), { relatedTo: { type: "customer", id: customerRef.id }, transferredFromLeadId: leadId, updatedAt: serverTimestamp() });
+                await updateDoc(doc(db, "tasks", taskDoc.id), {
+                    relatedTo: { type: "customer", id: customerRef.id },
+                    transferredFromLeadId: leadId,
+                    updatedAt: serverTimestamp(),
+                });
             }
 
             // Transfer lead notes (from subcollection to root-level notes collection)
@@ -494,7 +560,11 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
             // Transfer lead reminders (from leadReminders collection to reminders collection)
             console.log("[convertToCustomer] Transferring lead reminders...");
-            const leadRemindersQuery = query(collection(db, "leadReminders"), where("leadId", "==", leadId), where("orgId", "==", profile.orgId));
+            const leadRemindersQuery = query(
+                collection(db, "leadReminders"),
+                where("leadId", "==", leadId),
+                where("orgId", "==", profile.orgId)
+            );
             const leadRemindersSnap = await getDocs(leadRemindersQuery);
             for (const reminderDoc of leadRemindersSnap.docs) {
                 const reminderData = reminderDoc.data();
@@ -513,7 +583,11 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
             // Transfer lead files (from leadFiles collection to customerFiles collection)
             console.log("[convertToCustomer] Transferring lead files...");
-            const leadFilesQuery = query(collection(db, "leadFiles"), where("leadId", "==", leadId), where("orgId", "==", profile.orgId));
+            const leadFilesQuery = query(
+                collection(db, "leadFiles"),
+                where("leadId", "==", leadId),
+                where("orgId", "==", profile.orgId)
+            );
             const leadFilesSnap = await getDocs(leadFilesQuery);
             for (const fileDoc of leadFilesSnap.docs) {
                 const fileData = fileDoc.data();

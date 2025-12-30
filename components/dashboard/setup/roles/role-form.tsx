@@ -1,24 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Pen, Loader2, ShieldCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
@@ -216,11 +204,23 @@ const ROLE_TEMPLATES: { name: string; description: string; permissions: string[]
         name: "Sales Manager",
         description: "Full access to leads, customers, invoices, and estimates",
         permissions: [
-            "leads-view-global", "leads-delete",
-            "customers-view-own", "customers-view-global", "customers-create", "customers-edit",
-            "invoices-view-own", "invoices-view-global", "invoices-create", "invoices-edit",
-            "estimates-view-own", "estimates-view-global", "estimates-create", "estimates-edit",
-            "contracts-view-own", "contracts-view-global", "contracts-create",
+            "leads-view-global",
+            "leads-delete",
+            "customers-view-own",
+            "customers-view-global",
+            "customers-create",
+            "customers-edit",
+            "invoices-view-own",
+            "invoices-view-global",
+            "invoices-create",
+            "invoices-edit",
+            "estimates-view-own",
+            "estimates-view-global",
+            "estimates-create",
+            "estimates-edit",
+            "contracts-view-own",
+            "contracts-view-global",
+            "contracts-create",
             "reports-view-global",
         ],
     },
@@ -228,10 +228,24 @@ const ROLE_TEMPLATES: { name: string; description: string; permissions: string[]
         name: "Accountant",
         description: "Full access to financial modules",
         permissions: [
-            "invoices-view-own", "invoices-view-global", "invoices-create", "invoices-edit", "invoices-delete",
-            "expenses-view-own", "expenses-view-global", "expenses-create", "expenses-edit", "expenses-delete",
-            "credit-notes-view-own", "credit-notes-view-global", "credit-notes-create", "credit-notes-edit",
-            "payments-view-own", "payments-view-global", "payments-create", "payments-edit",
+            "invoices-view-own",
+            "invoices-view-global",
+            "invoices-create",
+            "invoices-edit",
+            "invoices-delete",
+            "expenses-view-own",
+            "expenses-view-global",
+            "expenses-create",
+            "expenses-edit",
+            "expenses-delete",
+            "credit-notes-view-own",
+            "credit-notes-view-global",
+            "credit-notes-create",
+            "credit-notes-edit",
+            "payments-view-own",
+            "payments-view-global",
+            "payments-create",
+            "payments-edit",
             "customers-view-global",
             "reports-view-global",
         ],
@@ -240,8 +254,11 @@ const ROLE_TEMPLATES: { name: string; description: string; permissions: string[]
         name: "Support Agent",
         description: "Handle support tickets and view customers",
         permissions: [
-            "customers-view-own", "customers-view-global",
-            "tasks-view-own", "tasks-create", "tasks-edit",
+            "customers-view-own",
+            "customers-view-global",
+            "tasks-view-own",
+            "tasks-create",
+            "tasks-edit",
             "knowledge-base-view-global",
         ],
     },
@@ -249,13 +266,24 @@ const ROLE_TEMPLATES: { name: string; description: string; permissions: string[]
         name: "Project Manager",
         description: "Manage projects, tasks, and team assignments",
         permissions: [
-            "projects-view-own", "projects-view-global", "projects-create", "projects-edit",
-            "projects-create-timesheets", "projects-edit-milestones", "projects-delete-milestones",
-            "tasks-view-own", "tasks-view-global", "tasks-create", "tasks-edit", "tasks-delete",
-            "tasks-edit-timesheets-global", "tasks-edit-own-timesheets",
+            "projects-view-own",
+            "projects-view-global",
+            "projects-create",
+            "projects-edit",
+            "projects-create-timesheets",
+            "projects-edit-milestones",
+            "projects-delete-milestones",
+            "tasks-view-own",
+            "tasks-view-global",
+            "tasks-create",
+            "tasks-edit",
+            "tasks-delete",
+            "tasks-edit-timesheets-global",
+            "tasks-edit-own-timesheets",
             "staff-view-global",
             "customers-view-global",
-            "reports-view-global", "reports-view-timesheets-report",
+            "reports-view-global",
+            "reports-view-timesheets-report",
         ],
     },
 ];
@@ -284,9 +312,9 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
             setDescription(role.description || "");
             setPermissions(role.permissions || []);
             // Expand modules that have permissions
-            const modulesWithPerms = PERMISSION_MODULES
-                .filter(m => m.actions.some(a => (role.permissions || []).includes(`${m.id}-${a.id}`)))
-                .map(m => m.id);
+            const modulesWithPerms = PERMISSION_MODULES.filter((m) =>
+                m.actions.some((a) => (role.permissions || []).includes(`${m.id}-${a.id}`))
+            ).map((m) => m.id);
             setExpandedModules(modulesWithPerms);
         } else if (open && !role) {
             setRoleName("");
@@ -310,48 +338,44 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
 
     // Toggle module expansion
     const toggleExpanded = (moduleId: string) => {
-        setExpandedModules(prev =>
-            prev.includes(moduleId)
-                ? prev.filter(id => id !== moduleId)
-                : [...prev, moduleId]
+        setExpandedModules((prev) =>
+            prev.includes(moduleId) ? prev.filter((id) => id !== moduleId) : [...prev, moduleId]
         );
     };
 
     // Toggle a single permission
     const togglePermission = (permId: string) => {
-        setPermissions(prev =>
-            prev.includes(permId) ? prev.filter(p => p !== permId) : [...prev, permId]
-        );
+        setPermissions((prev) => (prev.includes(permId) ? prev.filter((p) => p !== permId) : [...prev, permId]));
     };
 
     // Toggle all actions for a module
     const toggleModule = (moduleId: string, actions: { id: string }[]) => {
-        const modulePerms = actions.map(a => `${moduleId}-${a.id}`);
-        const allSelected = modulePerms.every(p => permissions.includes(p));
+        const modulePerms = actions.map((a) => `${moduleId}-${a.id}`);
+        const allSelected = modulePerms.every((p) => permissions.includes(p));
 
         if (allSelected) {
-            setPermissions(prev => prev.filter(p => !modulePerms.includes(p)));
+            setPermissions((prev) => prev.filter((p) => !modulePerms.includes(p)));
         } else {
-            setPermissions(prev => [...new Set([...prev, ...modulePerms])]);
+            setPermissions((prev) => [...new Set([...prev, ...modulePerms])]);
         }
     };
 
     // Check if all actions for a module are selected
     const isModuleFullySelected = (moduleId: string, actions: { id: string }[]) => {
-        return actions.every(a => permissions.includes(`${moduleId}-${a.id}`));
+        return actions.every((a) => permissions.includes(`${moduleId}-${a.id}`));
     };
 
     // Check selection count for module
     const getModuleSelectionCount = (moduleId: string, actions: { id: string }[]) => {
-        return actions.filter(a => permissions.includes(`${moduleId}-${a.id}`)).length;
+        return actions.filter((a) => permissions.includes(`${moduleId}-${a.id}`)).length;
     };
 
     // Select All / Deselect All
     const allPermissions = useMemo(() => {
-        return PERMISSION_MODULES.flatMap(m => m.actions.map(a => `${m.id}-${a.id}`));
+        return PERMISSION_MODULES.flatMap((m) => m.actions.map((a) => `${m.id}-${a.id}`));
     }, []);
 
-    const isAllSelected = allPermissions.every(p => permissions.includes(p));
+    const isAllSelected = allPermissions.every((p) => permissions.includes(p));
 
     const toggleAll = () => {
         if (isAllSelected) {
@@ -363,15 +387,15 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
 
     // Apply a template
     const applyTemplate = (templateName: string) => {
-        const template = ROLE_TEMPLATES.find(t => t.name === templateName);
+        const template = ROLE_TEMPLATES.find((t) => t.name === templateName);
         if (template) {
             setRoleName(template.name);
             setDescription(template.description);
             setPermissions(template.permissions);
             // Expand modules with permissions
-            const modulesWithPerms = PERMISSION_MODULES
-                .filter(m => m.actions.some(a => template.permissions.includes(`${m.id}-${a.id}`)))
-                .map(m => m.id);
+            const modulesWithPerms = PERMISSION_MODULES.filter((m) =>
+                m.actions.some((a) => template.permissions.includes(`${m.id}-${a.id}`))
+            ).map((m) => m.id);
             setExpandedModules(modulesWithPerms);
             toast.success(`Applied "${template.name}" template`);
         }
@@ -420,9 +444,7 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
 
     return (
         <Sheet open={open} onOpenChange={handleOpenChange}>
-            <SheetTrigger asChild>
-                {trigger || defaultTrigger}
-            </SheetTrigger>
+            <SheetTrigger asChild>{trigger || defaultTrigger}</SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-2xl bg-white p-0 flex flex-col">
                 <SheetHeader className="px-6 py-4 border-b flex-shrink-0">
                     <div className="flex items-center justify-between">
@@ -447,7 +469,7 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                                         <SelectValue placeholder="Select a template (optional)" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {ROLE_TEMPLATES.map(t => (
+                                        {ROLE_TEMPLATES.map((t) => (
                                             <SelectItem key={t.name} value={t.name}>
                                                 {t.name}
                                             </SelectItem>
@@ -484,15 +506,8 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                         <div className="flex items-center justify-between">
                             <h3 className="font-semibold text-gray-900">Permissions</h3>
                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-500">
-                                    {permissions.length} selected
-                                </span>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={toggleAll}
-                                    className="text-xs"
-                                >
+                                <span className="text-sm text-gray-500">{permissions.length} selected</span>
+                                <Button variant="outline" size="sm" onClick={toggleAll} className="text-xs">
                                     {isAllSelected ? "Deselect All" : "Select All"}
                                 </Button>
                             </div>
@@ -521,9 +536,7 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                                                     onClick={(e) => e.stopPropagation()}
                                                     onCheckedChange={() => toggleModule(module.id, module.actions)}
                                                 />
-                                                <span className="font-medium text-gray-800">
-                                                    {module.label}
-                                                </span>
+                                                <span className="font-medium text-gray-800">{module.label}</span>
                                                 {selectionCount > 0 && !isFullySelected && (
                                                     <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                                                         {selectionCount}/{module.actions.length}
@@ -580,11 +593,7 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                     <Button variant="outline" onClick={() => handleOpenChange(false)}>
                         Cancel
                     </Button>
-                    <Button
-                        onClick={handleSave}
-                        className="bg-gray-900 text-white hover:bg-gray-800"
-                        disabled={saving}
-                    >
+                    <Button onClick={handleSave} className="bg-gray-900 text-white hover:bg-gray-800" disabled={saving}>
                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {isEditing ? "Save Changes" : "Create Role"}
                     </Button>

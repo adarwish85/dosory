@@ -21,11 +21,7 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 export function OnboardingProvider({ children }: { children: ReactNode }) {
     const onboarding = useOnboarding();
 
-    return (
-        <OnboardingContext.Provider value={onboarding}>
-            {children}
-        </OnboardingContext.Provider>
-    );
+    return <OnboardingContext.Provider value={onboarding}>{children}</OnboardingContext.Provider>;
 }
 
 export function useOnboardingContext() {

@@ -59,7 +59,7 @@ export function PlatformSettingsProvider({ children }: { children: React.ReactNo
             doc(db, "platform", "settings"),
             (docSnap) => {
                 if (docSnap.exists()) {
-                    setSettings({ ...defaultSettings, ...docSnap.data() as PlatformSettings });
+                    setSettings({ ...defaultSettings, ...(docSnap.data() as PlatformSettings) });
                 }
                 setLoading(false);
             },
@@ -93,14 +93,14 @@ function FaviconUpdater() {
         const linkTags = document.querySelectorAll("link[rel*='icon']");
 
         if (linkTags.length > 0) {
-            linkTags.forEach(link => {
+            linkTags.forEach((link) => {
                 (link as HTMLLinkElement).href = faviconUrl;
             });
         } else {
             // Create new link if none exists
-            const link = document.createElement('link');
-            link.type = 'image/x-icon';
-            link.rel = 'icon';
+            const link = document.createElement("link");
+            link.type = "image/x-icon";
+            link.rel = "icon";
             link.href = faviconUrl;
             document.head.appendChild(link);
         }
@@ -119,7 +119,7 @@ export function PlatformLogo({
     textClassName = "",
     showText = true,
     size = "default",
-    variant = "dark" // "light" means for dark background (so use light logo)
+    variant = "dark", // "light" means for dark background (so use light logo)
 }: {
     className?: string;
     textClassName?: string;
@@ -137,7 +137,10 @@ export function PlatformLogo({
 
     if (loading) {
         return (
-            <div className={`animate-pulse bg-gray-200 rounded ${sizeClasses[size]} ${className}`} style={{ minWidth: "80px" }} />
+            <div
+                className={`animate-pulse bg-gray-200 rounded ${sizeClasses[size]} ${className}`}
+                style={{ minWidth: "80px" }}
+            />
         );
     }
 
@@ -164,11 +167,7 @@ export function PlatformLogo({
             >
                 {settings.platformName?.charAt(0) || "D"}
             </div>
-            {showText && (
-                <span className={`font-semibold ${textClassName}`}>
-                    {settings.platformName || "Dosory"}
-                </span>
-            )}
+            {showText && <span className={`font-semibold ${textClassName}`}>{settings.platformName || "Dosory"}</span>}
         </div>
     );
 }

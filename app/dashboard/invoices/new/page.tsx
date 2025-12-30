@@ -9,13 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Settings, Plus, ChevronDown } from "lucide-react";
@@ -24,7 +18,12 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useInvoices } from "@/lib/hooks/use-invoices";
 import type { InvoiceFormData } from "@/lib/schemas";
@@ -113,13 +112,13 @@ export default function CreateInvoicePage() {
             const qClients = query(collection(db, "customers"), where("orgId", "==", profile.orgId));
             const clientsSnap = await getDocs(qClients);
             const clientList: Client[] = [];
-            clientsSnap.forEach((doc) => clientList.push({ id: doc.id, company: doc.data().company, ...doc.data() } as Client));
+            clientsSnap.forEach((doc) =>
+                clientList.push({ id: doc.id, company: doc.data().company, ...doc.data() } as Client)
+            );
             setClients(clientList);
 
             // Fetch Staff (Assuming 'staff' collection exists, using profile as fallback)
-            setStaff([
-                { id: profile.uid, name: `${profile.firstName} ${profile.lastName}` }
-            ]);
+            setStaff([{ id: profile.uid, name: `${profile.firstName} ${profile.lastName}` }]);
         }
         fetchData();
     }, [profile?.orgId, profile?.uid, profile?.firstName, profile?.lastName]);
@@ -130,10 +129,13 @@ export default function CreateInvoicePage() {
         if (selectedClient && profile?.orgId) {
             const fetchProjects = async () => {
                 try {
-                    const qProjects = query(collection(db, "projects"), where("orgId", "==", profile.orgId), where("customerId", "==", selectedClient));
+                    const qProjects = query(
+                        collection(db, "projects"),
+                        where("orgId", "==", profile.orgId),
+                        where("customerId", "==", selectedClient)
+                    );
                     const projectSnap = await getDocs(qProjects);
                     const projectList: Project[] = [];
-                    // @ts-ignore
                     projectSnap.forEach((doc) => projectList.push({ id: doc.id, name: doc.data().name } as Project));
                     setProjects(projectList);
                 } catch (e) {
@@ -145,7 +147,6 @@ export default function CreateInvoicePage() {
             setProjects([]);
         }
     }, [selectedClient, profile?.orgId]);
-
 
     // Handlers
     const handleItemChange = (id: string, field: keyof LineItem, value: any) => {
@@ -163,10 +164,7 @@ export default function CreateInvoicePage() {
     };
 
     const addItem = () => {
-        setItems([
-            ...items,
-            { id: Date.now().toString(), description: "", quantity: 1, rate: 0, amount: 0 },
-        ]);
+        setItems([...items, { id: Date.now().toString(), description: "", quantity: 1, rate: 0, amount: 0 }]);
     };
 
     const removeItem = (id: string) => {
@@ -207,7 +205,7 @@ export default function CreateInvoicePage() {
         setLoading(true);
         try {
             // Map items to schema format
-            const lineItems = items.map(item => ({
+            const lineItems = items.map((item) => ({
                 id: item.id,
                 description: item.description,
                 longDescription: item.longDescription,
@@ -215,7 +213,7 @@ export default function CreateInvoicePage() {
                 rate: item.rate,
                 amount: item.amount,
                 taxRate: item.tax ? parseFloat(String(item.tax)) : 0,
-                unit: "qty"
+                unit: "qty",
             }));
 
             // Construct payload matching InvoiceFormData
@@ -226,13 +224,19 @@ export default function CreateInvoicePage() {
                 dueDate: dueDate,
                 currency,
                 items: lineItems,
-                discount: discountType !== "No discount" ? {
-                    type: discountKind,
-                    value: discountValue
-                } : undefined,
+                discount:
+                    discountType !== "No discount"
+                        ? {
+                            type: discountKind,
+                            value: discountValue,
+                        }
+                        : undefined,
                 notes: clientNote,
                 terms: termsConditions,
-                tags: tags.split(",").map(t => t.trim()).filter(Boolean),
+                tags: tags
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter(Boolean),
             };
 
             const invoiceId = await createInvoice(invoiceData);
@@ -253,16 +257,14 @@ export default function CreateInvoicePage() {
         }
     };
 
-    const clientDetails = clients.find(c => c.id === selectedClient);
+    const clientDetails = clients.find((c) => c.id === selectedClient);
 
     return (
         <div className="p-8 max-w-[1400px] mx-auto space-y-6 pb-20">
             <Card className="border-none shadow-sm bg-white">
                 <CardContent className="p-6 space-y-8">
-
                     {/* Top Section: Two Columns */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-
                         {/* LEFT COLUMN */}
                         <div className="space-y-6">
                             {/* Customer */}
@@ -303,7 +305,9 @@ export default function CreateInvoicePage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <div className="flex items-center gap-2 mb-2 text-blue-600 cursor-pointer hover:underline text-sm font-medium">
-                                        <span className="h-4 w-4 border border-blue-600 rounded flex items-center justify-center text-[10px]">✎</span>
+                                        <span className="h-4 w-4 border border-blue-600 rounded flex items-center justify-center text-[10px]">
+                                            ✎
+                                        </span>
                                         Bill To
                                     </div>
                                     <div className="text-sm text-gray-600 whitespace-pre-wrap min-h-[80px]">
@@ -311,9 +315,7 @@ export default function CreateInvoicePage() {
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="flex items-center gap-2 mb-2 text-sm font-medium">
-                                        Ship to
-                                    </div>
+                                    <div className="flex items-center gap-2 mb-2 text-sm font-medium">Ship to</div>
                                     <div className="text-sm text-gray-600 whitespace-pre-wrap min-h-[80px]">
                                         {clientDetails?.shippingAddress || "No shipping address"}
                                     </div>
@@ -325,7 +327,9 @@ export default function CreateInvoicePage() {
                                 <div className="space-y-2">
                                     <Label className="text-red-500 font-medium">* Invoice Number</Label>
                                     <div className="flex items-center gap-2">
-                                        <div className="bg-gray-100 border border-gray-200 px-3 py-2 rounded-md text-sm text-gray-500">INV-</div>
+                                        <div className="bg-gray-100 border border-gray-200 px-3 py-2 rounded-md text-sm text-gray-500">
+                                            INV-
+                                        </div>
                                         <Input disabled placeholder="Auto-generated" className="bg-gray-50" />
                                         <Settings className="h-4 w-4 text-gray-400 cursor-pointer" />
                                     </div>
@@ -336,47 +340,89 @@ export default function CreateInvoicePage() {
                                         <Label className="text-red-500 font-medium">* Invoice Date</Label>
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal border-gray-200", !date && "text-muted-foreground")}>
+                                                <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-full justify-start text-left font-normal border-gray-200",
+                                                        !date && "text-muted-foreground"
+                                                    )}
+                                                >
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                                     {date ? format(date, "dd/MM/yyyy") : <span>Pick a date</span>}
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={setDate} initialFocus /></PopoverContent>
+                                            <PopoverContent className="w-auto p-0">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={date}
+                                                    onSelect={setDate}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
                                         </Popover>
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Due Date</Label>
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal border-gray-200", !dueDate && "text-muted-foreground")}>
+                                                <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-full justify-start text-left font-normal border-gray-200",
+                                                        !dueDate && "text-muted-foreground"
+                                                    )}
+                                                >
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                                     {dueDate ? format(dueDate, "dd/MM/yyyy") : <span>Pick a date</span>}
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus /></PopoverContent>
+                                            <PopoverContent className="w-auto p-0">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={dueDate}
+                                                    onSelect={setDueDate}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
                                         </Popover>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="flex items-center space-x-2">
-                                <Checkbox id="preventOverdue" checked={preventOverdueReminders} onCheckedChange={(c) => setPreventOverdueReminders(c === true)} />
-                                <Label htmlFor="preventOverdue" className="text-gray-600 font-normal">Prevent sending overdue reminders for this invoice</Label>
+                                <Checkbox
+                                    id="preventOverdue"
+                                    checked={preventOverdueReminders}
+                                    onCheckedChange={(c) => setPreventOverdueReminders(c === true)}
+                                />
+                                <Label htmlFor="preventOverdue" className="text-gray-600 font-normal">
+                                    Prevent sending overdue reminders for this invoice
+                                </Label>
                             </div>
                         </div>
-
 
                         {/* RIGHT COLUMN */}
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <Label className="flex items-center gap-2"><span className="h-4 w-4 rotate-45">🏷️</span> Tags</Label>
-                                <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tag" className="border-gray-200" />
+                                <Label className="flex items-center gap-2">
+                                    <span className="h-4 w-4 rotate-45">🏷️</span> Tags
+                                </Label>
+                                <Input
+                                    value={tags}
+                                    onChange={(e) => setTags(e.target.value)}
+                                    placeholder="Tag"
+                                    className="border-gray-200"
+                                />
                             </div>
 
                             <div className="space-y-2">
                                 <Label>Allowed payment modes for this invoice</Label>
                                 <div className="relative">
-                                    <Input value={paymentModes} onChange={(e) => setPaymentModes(e.target.value)} className="border-gray-200 pr-8" />
+                                    <Input
+                                        value={paymentModes}
+                                        onChange={(e) => setPaymentModes(e.target.value)}
+                                        className="border-gray-200 pr-8"
+                                    />
                                     <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
                                 </div>
                             </div>
@@ -402,7 +448,9 @@ export default function CreateInvoicePage() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             {staff.map((s) => (
-                                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                                <SelectItem key={s.id} value={s.id}>
+                                                    {s.name}
+                                                </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -463,7 +511,9 @@ export default function CreateInvoicePage() {
                                         <SelectItem value="add_item">Add Item</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <Button size="sm" variant="outline" className="h-9 w-9 p-0" onClick={addItem}><Plus className="h-4 w-4" /></Button>
+                                <Button size="sm" variant="outline" className="h-9 w-9 p-0" onClick={addItem}>
+                                    <Plus className="h-4 w-4" />
+                                </Button>
 
                                 <Select defaultValue="bill_tasks">
                                     <SelectTrigger className="w-[140px] border-gray-200 h-9 bg-gray-50">
@@ -477,18 +527,29 @@ export default function CreateInvoicePage() {
 
                             <div className="flex items-center gap-3">
                                 <span className="text-sm font-medium">Show quantity as:</span>
-                                <RadioGroup defaultValue="qty" value={qtyType} onValueChange={(v: any) => setQtyType(v)} className="flex items-center gap-4">
+                                <RadioGroup
+                                    defaultValue="qty"
+                                    value={qtyType}
+                                    onValueChange={(v: any) => setQtyType(v)}
+                                    className="flex items-center gap-4"
+                                >
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="qty" id="qty" />
-                                        <Label htmlFor="qty" className="font-normal text-gray-600">Qty</Label>
+                                        <Label htmlFor="qty" className="font-normal text-gray-600">
+                                            Qty
+                                        </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="hours" id="hours" />
-                                        <Label htmlFor="hours" className="font-normal text-gray-600">Hours</Label>
+                                        <Label htmlFor="hours" className="font-normal text-gray-600">
+                                            Hours
+                                        </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="qty_hours" id="qty_hours" />
-                                        <Label htmlFor="qty_hours" className="font-normal text-gray-600">Qty/Hours</Label>
+                                        <Label htmlFor="qty_hours" className="font-normal text-gray-600">
+                                            Qty/Hours
+                                        </Label>
                                     </div>
                                 </RadioGroup>
                             </div>
@@ -501,13 +562,18 @@ export default function CreateInvoicePage() {
                             <div className="col-span-12 md:col-span-2">Rate</div>
                             <div className="col-span-12 md:col-span-1">Tax</div>
                             <div className="col-span-12 md:col-span-1 text-right">Amount</div>
-                            <div className="col-span-12 md:col-span-1 text-center"><Settings className="h-4 w-4 mx-auto" /></div>
+                            <div className="col-span-12 md:col-span-1 text-center">
+                                <Settings className="h-4 w-4 mx-auto" />
+                            </div>
                         </div>
 
                         {/* Items List */}
                         <div className="space-y-0 divide-y divide-gray-100">
                             {items.map((item) => (
-                                <div key={item.id} className="grid grid-cols-12 gap-4 py-4 px-2 items-start group hover:bg-gray-50/50 transition-colors">
+                                <div
+                                    key={item.id}
+                                    className="grid grid-cols-12 gap-4 py-4 px-2 items-start group hover:bg-gray-50/50 transition-colors"
+                                >
                                     <div className="col-span-12 md:col-span-5 space-y-2">
                                         <Input
                                             placeholder="Description"
@@ -519,7 +585,9 @@ export default function CreateInvoicePage() {
                                             placeholder="Long description"
                                             className="border-gray-200 min-h-[60px] resize-none text-sm"
                                             value={item.longDescription}
-                                            onChange={(e) => handleItemChange(item.id, "longDescription", e.target.value)}
+                                            onChange={(e) =>
+                                                handleItemChange(item.id, "longDescription", e.target.value)
+                                            }
                                         />
                                     </div>
                                     <div className="col-span-12 md:col-span-2 space-y-1">
@@ -528,7 +596,13 @@ export default function CreateInvoicePage() {
                                                 type="number"
                                                 className="border-gray-200 h-9"
                                                 value={item.quantity}
-                                                onChange={(e) => handleItemChange(item.id, "quantity", parseFloat(e.target.value) || 0)}
+                                                onChange={(e) =>
+                                                    handleItemChange(
+                                                        item.id,
+                                                        "quantity",
+                                                        parseFloat(e.target.value) || 0
+                                                    )
+                                                }
                                             />
                                             <span className="text-xs text-gray-400">Unit</span>
                                         </div>
@@ -538,11 +612,16 @@ export default function CreateInvoicePage() {
                                             type="number"
                                             className="border-gray-200 h-9"
                                             value={item.rate}
-                                            onChange={(e) => handleItemChange(item.id, "rate", parseFloat(e.target.value) || 0)}
+                                            onChange={(e) =>
+                                                handleItemChange(item.id, "rate", parseFloat(e.target.value) || 0)
+                                            }
                                         />
                                     </div>
                                     <div className="col-span-12 md:col-span-1">
-                                        <Select defaultValue="0" onValueChange={(val) => handleItemChange(item.id, "tax", val)}>
+                                        <Select
+                                            defaultValue="0"
+                                            onValueChange={(val) => handleItemChange(item.id, "tax", val)}
+                                        >
                                             <SelectTrigger className="border-gray-200 h-9">
                                                 <SelectValue placeholder="Tax" />
                                             </SelectTrigger>
@@ -556,7 +635,12 @@ export default function CreateInvoicePage() {
                                         {(item.quantity * item.rate).toFixed(2)}
                                     </div>
                                     <div className="col-span-12 md:col-span-1 flex justify-center pt-2">
-                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-red-500" onClick={() => removeItem(item.id)}>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 text-gray-400 hover:text-red-500"
+                                            onClick={() => removeItem(item.id)}
+                                        >
                                             <span className="h-4 w-4 flex items-center justify-center">x</span>
                                         </Button>
                                     </div>
@@ -564,7 +648,6 @@ export default function CreateInvoicePage() {
                             ))}
                         </div>
                     </div>
-
 
                     {/* FOOTER TOTALS SECTION */}
                     <div className="flex flex-col md:flex-row gap-8 pt-8 border-t border-gray-100">
@@ -592,7 +675,9 @@ export default function CreateInvoicePage() {
                         <div className="w-full md:w-[400px] space-y-4">
                             <div className="flex justify-between text-sm py-2 border-b border-gray-50">
                                 <span className="font-semibold text-gray-700">Sub Total :</span>
-                                <span className="text-gray-700">{currency} {calculateSubTotal().toFixed(2)}</span>
+                                <span className="text-gray-700">
+                                    {currency} {calculateSubTotal().toFixed(2)}
+                                </span>
                             </div>
 
                             <div className="flex items-center justify-between gap-4 py-2 border-b border-gray-50">
@@ -614,7 +699,9 @@ export default function CreateInvoicePage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <span className="text-gray-700 text-sm">-{currency} {calculateDiscountAmount(calculateSubTotal()).toFixed(2)}</span>
+                                <span className="text-gray-700 text-sm">
+                                    -{currency} {calculateDiscountAmount(calculateSubTotal()).toFixed(2)}
+                                </span>
                             </div>
 
                             <div className="flex items-center justify-between gap-4 py-2 border-b border-gray-50">
@@ -627,22 +714,27 @@ export default function CreateInvoicePage() {
                                         onChange={(e) => setAdjustment(parseFloat(e.target.value) || 0)}
                                     />
                                 </div>
-                                <span className="text-gray-700 text-sm">{currency} {adjustment.toFixed(2)}</span>
+                                <span className="text-gray-700 text-sm">
+                                    {currency} {adjustment.toFixed(2)}
+                                </span>
                             </div>
 
                             <div className="flex justify-between text-base py-2">
                                 <span className="font-bold text-gray-800">Total :</span>
-                                <span className="font-bold text-gray-800">{currency} {calculateTotal().toFixed(2)}</span>
+                                <span className="font-bold text-gray-800">
+                                    {currency} {calculateTotal().toFixed(2)}
+                                </span>
                             </div>
                         </div>
                     </div>
-
                 </CardContent>
             </Card>
 
             {/* Sticky/Fixed Bottom Action Bar */}
             <div className="fixed bottom-0 left-0 lg:left-64 right-0 bg-white border-t border-gray-200 p-4 flex justify-end gap-2 z-10 shadow-lg">
-                <Button variant="outline" className="border-gray-200" onClick={() => handleSubmit("draft")}>Save as Draft</Button>
+                <Button variant="outline" className="border-gray-200" onClick={() => handleSubmit("draft")}>
+                    Save as Draft
+                </Button>
 
                 <div className="flex">
                     <Button
@@ -659,8 +751,12 @@ export default function CreateInvoicePage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleSubmit("send")}>Save & Send</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleSubmit("send_later")}>Save & Send Later</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleSubmit("record_payment")}>Save & Record Payment</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSubmit("send_later")}>
+                                Save & Send Later
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSubmit("record_payment")}>
+                                Save & Record Payment
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>

@@ -11,14 +11,24 @@ interface StatCardProps {
     className?: string;
 }
 
-export function StatCard({ title, current, total, icon, progress, progressColor = "bg-blue-600", className }: StatCardProps) {
+export function StatCard({
+    title,
+    current,
+    total,
+    icon,
+    progress,
+    progressColor = "bg-blue-600",
+    className,
+}: StatCardProps) {
     return (
         <Card className={cn("overflow-hidden border border-gray-100 shadow-sm rounded-xl py-0 gap-0", className)}>
             <CardContent className="px-4 py-4">
                 <div className="flex items-center justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2 min-w-0">
                         {icon && <div className="text-gray-500 shrink-0 h-5 w-5">{icon}</div>}
-                        <h3 className="text-sm font-semibold text-gray-700 truncate" title={title}>{title}</h3>
+                        <h3 className="text-sm font-semibold text-gray-700 truncate" title={title}>
+                            {title}
+                        </h3>
                     </div>
                     <div className="flex items-baseline gap-1 shrink-0">
                         <span className="text-sm font-bold text-gray-900">{current}</span>

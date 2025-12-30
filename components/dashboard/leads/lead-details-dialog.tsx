@@ -8,7 +8,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, FileText, CheckSquare, Paperclip, Bell, StickyNote, Activity, Printer, X, Pencil, Plus, Loader2, Trash2, Calendar, Clock, Upload, Phone, Mail, CalendarPlus, Zap, CheckCircle, XCircle, TrendingUp, ArrowRight, AlertTriangle, ExternalLink } from "lucide-react";
+import {
+    User,
+    FileText,
+    CheckSquare,
+    Paperclip,
+    Bell,
+    StickyNote,
+    Activity,
+    Printer,
+    X,
+    Pencil,
+    Plus,
+    Loader2,
+    Trash2,
+    Calendar,
+    Clock,
+    Upload,
+    Phone,
+    Mail,
+    CalendarPlus,
+    Zap,
+    CheckCircle,
+    XCircle,
+    TrendingUp,
+    ArrowRight,
+    AlertTriangle,
+    ExternalLink,
+} from "lucide-react";
 import type { Lead, Task as TaskType } from "@/lib/types";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,7 +52,19 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, where, onSnapshot, orderBy, Timestamp } from "firebase/firestore";
+import {
+    collection,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    doc,
+    serverTimestamp,
+    query,
+    where,
+    onSnapshot,
+    orderBy,
+    Timestamp,
+} from "firebase/firestore";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 
 interface LeadDetailsSheetProps {
@@ -61,7 +100,10 @@ const STATUS_PIPELINE = [
 ] as const;
 
 // Calculate lead score with breakdown
-function calculateLeadScoreWithBreakdown(lead: Lead): { score: number; breakdown: { label: string; earned: boolean; points: number }[] } {
+function calculateLeadScoreWithBreakdown(lead: Lead): {
+    score: number;
+    breakdown: { label: string; earned: boolean; points: number }[];
+} {
     const breakdown: { label: string; earned: boolean; points: number }[] = [];
     let score = 0;
 
@@ -86,7 +128,16 @@ function calculateLeadScoreWithBreakdown(lead: Lead): { score: number; breakdown
     if (hasValue) score += 15;
 
     // Status progression (+20 max)
-    const statusScores: Record<string, number> = { new: 5, contacted: 10, qualified: 15, proposal: 18, negotiation: 20, won: 20, lost: 0, junk: 0 };
+    const statusScores: Record<string, number> = {
+        new: 5,
+        contacted: 10,
+        qualified: 15,
+        proposal: 18,
+        negotiation: 20,
+        won: 20,
+        lost: 0,
+        junk: 0,
+    };
     const statusPoints = statusScores[lead.status] || 0;
     breakdown.push({ label: `Status: ${lead.status}`, earned: statusPoints > 0, points: statusPoints });
     score += statusPoints;
@@ -155,7 +206,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     const { staff } = useStaff();
 
     // Filter tasks related to this lead
-    const relatedTasks = tasks.filter(t => t.relatedTo?.type === "lead" && t.relatedTo?.id === lead?.id);
+    const relatedTasks = tasks.filter((t) => t.relatedTo?.type === "lead" && t.relatedTo?.id === lead?.id);
 
     // Fetch notes for this lead
     useEffect(() => {
@@ -169,7 +220,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
         );
 
         const unsubscribe = onSnapshot(notesQuery, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LeadNote[];
+            const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as LeadNote[];
             // Sort client-side by createdAt descending
             data.sort((a, b) => {
                 const aTime = a.createdAt?.toMillis?.() || 0;
@@ -194,7 +245,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
         );
 
         const unsubscribe = onSnapshot(remindersQuery, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LeadReminder[];
+            const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as LeadReminder[];
             // Sort client-side by date ascending
             data.sort((a, b) => {
                 const aTime = a.date?.toMillis?.() || 0;
@@ -357,29 +408,74 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                         <div className="px-6 py-2 border-b bg-gray-50/50 shrink-0">
                             <TabsList className="bg-transparent p-0 h-auto gap-4 justify-start w-full overflow-x-auto no-scrollbar">
-                                <TabsTrigger value="profile" className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none">
+                                <TabsTrigger
+                                    value="profile"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
                                     <User className="h-4 w-4" /> Profile
                                 </TabsTrigger>
-                                <TabsTrigger value="proposals" className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none">
+                                <TabsTrigger
+                                    value="proposals"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
                                     <FileText className="h-4 w-4" /> Proposals
-                                    <Badge variant="secondary" className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]">{proposals.length}</Badge>
+                                    <Badge
+                                        variant="secondary"
+                                        className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
+                                    >
+                                        {proposals.length}
+                                    </Badge>
                                 </TabsTrigger>
-                                <TabsTrigger value="tasks" className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none">
+                                <TabsTrigger
+                                    value="tasks"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
                                     <CheckSquare className="h-4 w-4" /> Tasks
-                                    <Badge variant="secondary" className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]">{relatedTasks.length}</Badge>
+                                    <Badge
+                                        variant="secondary"
+                                        className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
+                                    >
+                                        {relatedTasks.length}
+                                    </Badge>
                                 </TabsTrigger>
-                                <TabsTrigger value="attachments" className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none">
+                                <TabsTrigger
+                                    value="attachments"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
                                     <Paperclip className="h-4 w-4" /> Attachments
                                 </TabsTrigger>
-                                <TabsTrigger value="reminders" className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none">
+                                <TabsTrigger
+                                    value="reminders"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
                                     <Bell className="h-4 w-4" /> Reminders
-                                    {reminders.length > 0 && <Badge variant="secondary" className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]">{reminders.length}</Badge>}
+                                    {reminders.length > 0 && (
+                                        <Badge
+                                            variant="secondary"
+                                            className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
+                                        >
+                                            {reminders.length}
+                                        </Badge>
+                                    )}
                                 </TabsTrigger>
-                                <TabsTrigger value="notes" className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none">
+                                <TabsTrigger
+                                    value="notes"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
                                     <StickyNote className="h-4 w-4" /> Notes
-                                    {notes.length > 0 && <Badge variant="secondary" className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]">{notes.length}</Badge>}
+                                    {notes.length > 0 && (
+                                        <Badge
+                                            variant="secondary"
+                                            className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
+                                        >
+                                            {notes.length}
+                                        </Badge>
+                                    )}
                                 </TabsTrigger>
-                                <TabsTrigger value="activity" className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none">
+                                <TabsTrigger
+                                    value="activity"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
                                     <Activity className="h-4 w-4" /> Activity
                                 </TabsTrigger>
                             </TabsList>
@@ -394,28 +490,68 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         {/* Lead Score Card */}
                                         {(() => {
                                             const { score, breakdown } = calculateLeadScoreWithBreakdown(lead);
-                                            const scoreColor = score >= 70 ? "text-green-600" : score >= 40 ? "text-yellow-600" : "text-red-500";
-                                            const bgColor = score >= 70 ? "from-green-50 to-green-100 border-green-200" : score >= 40 ? "from-yellow-50 to-yellow-100 border-yellow-200" : "from-red-50 to-red-100 border-red-200";
+                                            const scoreColor =
+                                                score >= 70
+                                                    ? "text-green-600"
+                                                    : score >= 40
+                                                      ? "text-yellow-600"
+                                                      : "text-red-500";
+                                            const bgColor =
+                                                score >= 70
+                                                    ? "from-green-50 to-green-100 border-green-200"
+                                                    : score >= 40
+                                                      ? "from-yellow-50 to-yellow-100 border-yellow-200"
+                                                      : "from-red-50 to-red-100 border-red-200";
                                             return (
-                                                <div className={`p-3 bg-gradient-to-br ${bgColor} border rounded-lg shadow-sm lg:col-span-1`}>
+                                                <div
+                                                    className={`p-3 bg-gradient-to-br ${bgColor} border rounded-lg shadow-sm lg:col-span-1`}
+                                                >
                                                     <div className="flex items-center justify-between mb-2">
                                                         <div className="flex items-center gap-2">
                                                             <Zap className={`h-5 w-5 ${scoreColor}`} />
                                                             <h3 className="font-semibold text-gray-900">Lead Score</h3>
                                                         </div>
-                                                        <span className={`text-3xl font-bold ${scoreColor}`}>{score}</span>
+                                                        <span className={`text-3xl font-bold ${scoreColor}`}>
+                                                            {score}
+                                                        </span>
                                                     </div>
                                                     <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
-                                                        <div className={`h-1.5 rounded-full ${score >= 70 ? "bg-green-500" : score >= 40 ? "bg-yellow-500" : "bg-red-400"}`} style={{ width: `${score}%` }} />
+                                                        <div
+                                                            className={`h-1.5 rounded-full ${score >= 70 ? "bg-green-500" : score >= 40 ? "bg-yellow-500" : "bg-red-400"}`}
+                                                            style={{ width: `${score}%` }}
+                                                        />
                                                     </div>
                                                     <div className="space-y-1">
                                                         {breakdown.slice(0, 5).map((item, i) => (
-                                                            <div key={i} className="flex items-center justify-between text-xs">
+                                                            <div
+                                                                key={i}
+                                                                className="flex items-center justify-between text-xs"
+                                                            >
                                                                 <span className="flex items-center gap-1">
-                                                                    {item.earned ? <CheckCircle className="h-3 w-3 text-green-500" /> : <XCircle className="h-3 w-3 text-gray-300" />}
-                                                                    <span className={item.earned ? "text-gray-700" : "text-gray-400"}>{item.label}</span>
+                                                                    {item.earned ? (
+                                                                        <CheckCircle className="h-3 w-3 text-green-500" />
+                                                                    ) : (
+                                                                        <XCircle className="h-3 w-3 text-gray-300" />
+                                                                    )}
+                                                                    <span
+                                                                        className={
+                                                                            item.earned
+                                                                                ? "text-gray-700"
+                                                                                : "text-gray-400"
+                                                                        }
+                                                                    >
+                                                                        {item.label}
+                                                                    </span>
                                                                 </span>
-                                                                <span className={item.earned ? "text-green-600 font-medium" : "text-gray-400"}>+{item.points}</span>
+                                                                <span
+                                                                    className={
+                                                                        item.earned
+                                                                            ? "text-green-600 font-medium"
+                                                                            : "text-gray-400"
+                                                                    }
+                                                                >
+                                                                    +{item.points}
+                                                                </span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -431,24 +567,42 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             </div>
                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                 {lead.phone && (
-                                                    <a href={`tel:${lead.phone}`} className="flex flex-col items-center gap-1 p-3 rounded-lg bg-green-50 hover:bg-green-100 border border-green-200 transition-colors">
+                                                    <a
+                                                        href={`tel:${lead.phone}`}
+                                                        className="flex flex-col items-center gap-1 p-3 rounded-lg bg-green-50 hover:bg-green-100 border border-green-200 transition-colors"
+                                                    >
                                                         <Phone className="h-5 w-5 text-green-600" />
                                                         <span className="text-xs font-medium text-green-700">Call</span>
                                                     </a>
                                                 )}
                                                 {lead.email && (
-                                                    <a href={`mailto:${lead.email}`} className="flex flex-col items-center gap-1 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors">
+                                                    <a
+                                                        href={`mailto:${lead.email}`}
+                                                        className="flex flex-col items-center gap-1 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
+                                                    >
                                                         <Mail className="h-5 w-5 text-blue-600" />
                                                         <span className="text-xs font-medium text-blue-700">Email</span>
                                                     </a>
                                                 )}
-                                                <button onClick={() => setShowTaskDialog(true)} className="flex flex-col items-center gap-1 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors">
+                                                <button
+                                                    onClick={() => setShowTaskDialog(true)}
+                                                    className="flex flex-col items-center gap-1 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors"
+                                                >
                                                     <CalendarPlus className="h-5 w-5 text-purple-600" />
-                                                    <span className="text-xs font-medium text-purple-700">Schedule</span>
+                                                    <span className="text-xs font-medium text-purple-700">
+                                                        Schedule
+                                                    </span>
                                                 </button>
-                                                <button onClick={() => { setActiveTab("notes"); }} className="flex flex-col items-center gap-1 p-3 rounded-lg bg-orange-50 hover:bg-orange-100 border border-orange-200 transition-colors">
+                                                <button
+                                                    onClick={() => {
+                                                        setActiveTab("notes");
+                                                    }}
+                                                    className="flex flex-col items-center gap-1 p-3 rounded-lg bg-orange-50 hover:bg-orange-100 border border-orange-200 transition-colors"
+                                                >
                                                     <StickyNote className="h-5 w-5 text-orange-600" />
-                                                    <span className="text-xs font-medium text-orange-700">Add Note</span>
+                                                    <span className="text-xs font-medium text-orange-700">
+                                                        Add Note
+                                                    </span>
                                                 </button>
                                             </div>
                                         </div>
@@ -461,30 +615,50 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 <ArrowRight className="h-5 w-5 text-blue-600" />
                                                 <h3 className="font-semibold text-gray-900">Conversion Pipeline</h3>
                                             </div>
-                                            <Button size="sm" variant="outline" onClick={() => setShowConvertWizard(true)}>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => setShowConvertWizard(true)}
+                                            >
                                                 <User className="mr-1 h-4 w-4" /> Convert to Customer
                                             </Button>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             {STATUS_PIPELINE.map((stage, i) => {
                                                 const isActive = lead.status === stage.key;
-                                                const isPast = STATUS_PIPELINE.findIndex(s => s.key === lead.status) > i;
+                                                const isPast =
+                                                    STATUS_PIPELINE.findIndex((s) => s.key === lead.status) > i;
                                                 return (
                                                     <div key={stage.key} className="flex-1 flex flex-col items-center">
-                                                        <div className={`w-full h-2 rounded-full ${isPast || isActive ? stage.color : "bg-gray-200"}`} />
-                                                        <span className={`text-[10px] mt-1 ${isActive ? "font-bold text-gray-900" : isPast ? "text-gray-600" : "text-gray-400"}`}>{stage.label}</span>
+                                                        <div
+                                                            className={`w-full h-2 rounded-full ${isPast || isActive ? stage.color : "bg-gray-200"}`}
+                                                        />
+                                                        <span
+                                                            className={`text-[10px] mt-1 ${isActive ? "font-bold text-gray-900" : isPast ? "text-gray-600" : "text-gray-400"}`}
+                                                        >
+                                                            {stage.label}
+                                                        </span>
                                                     </div>
                                                 );
                                             })}
                                         </div>
                                         {lead.status === "new" && (
-                                            <p className="mt-3 text-sm text-blue-600 flex items-center gap-1"><AlertTriangle className="h-4 w-4" /> Suggested action: <strong>Make first contact</strong></p>
+                                            <p className="mt-3 text-sm text-blue-600 flex items-center gap-1">
+                                                <AlertTriangle className="h-4 w-4" /> Suggested action:{" "}
+                                                <strong>Make first contact</strong>
+                                            </p>
                                         )}
                                         {lead.status === "contacted" && (
-                                            <p className="mt-3 text-sm text-purple-600 flex items-center gap-1"><AlertTriangle className="h-4 w-4" /> Suggested action: <strong>Qualify this lead</strong></p>
+                                            <p className="mt-3 text-sm text-purple-600 flex items-center gap-1">
+                                                <AlertTriangle className="h-4 w-4" /> Suggested action:{" "}
+                                                <strong>Qualify this lead</strong>
+                                            </p>
                                         )}
                                         {lead.status === "qualified" && (
-                                            <p className="mt-3 text-sm text-yellow-600 flex items-center gap-1"><AlertTriangle className="h-4 w-4" /> Suggested action: <strong>Send a proposal</strong></p>
+                                            <p className="mt-3 text-sm text-yellow-600 flex items-center gap-1">
+                                                <AlertTriangle className="h-4 w-4" /> Suggested action:{" "}
+                                                <strong>Send a proposal</strong>
+                                            </p>
                                         )}
                                     </div>
 
@@ -494,36 +668,75 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         <div className="p-3 bg-white border rounded-lg shadow-sm">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <CheckSquare className="h-4 w-4 text-green-600" />
-                                                <h3 className="text-sm font-semibold text-gray-900">Data Completeness</h3>
+                                                <h3 className="text-sm font-semibold text-gray-900">
+                                                    Data Completeness
+                                                </h3>
                                             </div>
                                             {(() => {
-                                                const complete = COMPLETENESS_FIELDS.filter(f => {
-                                                    if (f.key === "address") return lead.address?.street || lead.address?.city;
+                                                const complete = COMPLETENESS_FIELDS.filter((f) => {
+                                                    if (f.key === "address")
+                                                        return lead.address?.street || lead.address?.city;
                                                     return !!(lead as any)[f.key];
                                                 }).length;
-                                                const percent = Math.round((complete / COMPLETENESS_FIELDS.length) * 100);
+                                                const percent = Math.round(
+                                                    (complete / COMPLETENESS_FIELDS.length) * 100
+                                                );
                                                 return (
                                                     <>
                                                         <div className="flex items-center justify-between text-sm mb-2">
-                                                            <span className="text-gray-600">{complete}/{COMPLETENESS_FIELDS.length} fields</span>
-                                                            <span className={percent === 100 ? "text-green-600 font-medium" : "text-yellow-600 font-medium"}>{percent}%</span>
+                                                            <span className="text-gray-600">
+                                                                {complete}/{COMPLETENESS_FIELDS.length} fields
+                                                            </span>
+                                                            <span
+                                                                className={
+                                                                    percent === 100
+                                                                        ? "text-green-600 font-medium"
+                                                                        : "text-yellow-600 font-medium"
+                                                                }
+                                                            >
+                                                                {percent}%
+                                                            </span>
                                                         </div>
                                                         <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                                                            <div className={`h-2 rounded-full ${percent === 100 ? "bg-green-500" : percent >= 50 ? "bg-yellow-500" : "bg-red-400"}`} style={{ width: `${percent}%` }} />
+                                                            <div
+                                                                className={`h-2 rounded-full ${percent === 100 ? "bg-green-500" : percent >= 50 ? "bg-yellow-500" : "bg-red-400"}`}
+                                                                style={{ width: `${percent}%` }}
+                                                            />
                                                         </div>
                                                         <div className="space-y-1">
-                                                            {COMPLETENESS_FIELDS.map(field => {
-                                                                const hasValue = field.key === "address"
-                                                                    ? (lead.address?.street || lead.address?.city)
-                                                                    : !!(lead as any)[field.key];
+                                                            {COMPLETENESS_FIELDS.map((field) => {
+                                                                const hasValue =
+                                                                    field.key === "address"
+                                                                        ? lead.address?.street || lead.address?.city
+                                                                        : !!(lead as any)[field.key];
                                                                 return (
-                                                                    <div key={field.key} className="flex items-center justify-between text-xs">
+                                                                    <div
+                                                                        key={field.key}
+                                                                        className="flex items-center justify-between text-xs"
+                                                                    >
                                                                         <span className="flex items-center gap-1">
-                                                                            {hasValue ? <CheckCircle className="h-3 w-3 text-green-500" /> : <XCircle className="h-3 w-3 text-red-400" />}
-                                                                            <span className={hasValue ? "text-gray-700" : "text-red-500"}>{field.label}</span>
+                                                                            {hasValue ? (
+                                                                                <CheckCircle className="h-3 w-3 text-green-500" />
+                                                                            ) : (
+                                                                                <XCircle className="h-3 w-3 text-red-400" />
+                                                                            )}
+                                                                            <span
+                                                                                className={
+                                                                                    hasValue
+                                                                                        ? "text-gray-700"
+                                                                                        : "text-red-500"
+                                                                                }
+                                                                            >
+                                                                                {field.label}
+                                                                            </span>
                                                                         </span>
                                                                         {!hasValue && (
-                                                                            <button onClick={() => onEdit(lead)} className="text-blue-600 hover:underline text-[10px]">Add</button>
+                                                                            <button
+                                                                                onClick={() => onEdit(lead)}
+                                                                                className="text-blue-600 hover:underline text-[10px]"
+                                                                            >
+                                                                                Add
+                                                                            </button>
                                                                         )}
                                                                     </div>
                                                                 );
@@ -541,23 +754,55 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 <h3 className="font-semibold text-gray-900">Related Items</h3>
                                             </div>
                                             <div className="space-y-3">
-                                                <button onClick={() => setActiveTab("proposals")} className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                                                    <span className="flex items-center gap-2 text-sm"><FileText className="h-4 w-4 text-blue-500" /> Proposals</span>
+                                                <button
+                                                    onClick={() => setActiveTab("proposals")}
+                                                    className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <span className="flex items-center gap-2 text-sm">
+                                                        <FileText className="h-4 w-4 text-blue-500" /> Proposals
+                                                    </span>
                                                     <Badge variant="secondary">{proposals.length}</Badge>
                                                 </button>
-                                                <button onClick={() => setActiveTab("tasks")} className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                                                    <span className="flex items-center gap-2 text-sm"><CheckSquare className="h-4 w-4 text-green-500" /> Tasks</span>
+                                                <button
+                                                    onClick={() => setActiveTab("tasks")}
+                                                    className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <span className="flex items-center gap-2 text-sm">
+                                                        <CheckSquare className="h-4 w-4 text-green-500" /> Tasks
+                                                    </span>
                                                     <div className="flex items-center gap-1">
-                                                        <Badge variant="outline" className="text-orange-600">{relatedTasks.filter(t => t.status !== "completed").length} open</Badge>
-                                                        <Badge variant="secondary">{relatedTasks.filter(t => t.status === "completed").length} done</Badge>
+                                                        <Badge variant="outline" className="text-orange-600">
+                                                            {
+                                                                relatedTasks.filter((t) => t.status !== "completed")
+                                                                    .length
+                                                            }{" "}
+                                                            open
+                                                        </Badge>
+                                                        <Badge variant="secondary">
+                                                            {
+                                                                relatedTasks.filter((t) => t.status === "completed")
+                                                                    .length
+                                                            }{" "}
+                                                            done
+                                                        </Badge>
                                                     </div>
                                                 </button>
-                                                <button onClick={() => setActiveTab("reminders")} className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                                                    <span className="flex items-center gap-2 text-sm"><Bell className="h-4 w-4 text-yellow-500" /> Reminders</span>
+                                                <button
+                                                    onClick={() => setActiveTab("reminders")}
+                                                    className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <span className="flex items-center gap-2 text-sm">
+                                                        <Bell className="h-4 w-4 text-yellow-500" /> Reminders
+                                                    </span>
                                                     <Badge variant="secondary">{reminders.length}</Badge>
                                                 </button>
-                                                <button onClick={() => setActiveTab("notes")} className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                                                    <span className="flex items-center gap-2 text-sm"><StickyNote className="h-4 w-4 text-orange-500" /> Notes</span>
+                                                <button
+                                                    onClick={() => setActiveTab("notes")}
+                                                    className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <span className="flex items-center gap-2 text-sm">
+                                                        <StickyNote className="h-4 w-4 text-orange-500" /> Notes
+                                                    </span>
                                                     <Badge variant="secondary">{notes.length}</Badge>
                                                 </button>
                                             </div>
@@ -569,45 +814,99 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         <div className="p-4 bg-white border rounded-lg shadow-sm">
                                             <div className="flex items-center gap-2 pb-2 border-b mb-3">
                                                 <User className="h-4 w-4 text-gray-500" />
-                                                <h3 className="text-sm font-semibold text-gray-900">Lead Information</h3>
+                                                <h3 className="text-sm font-semibold text-gray-900">
+                                                    Lead Information
+                                                </h3>
                                             </div>
                                             <div className="grid grid-cols-[100px_1fr] gap-y-2 text-sm">
                                                 <div className="text-gray-500">Email</div>
-                                                <div className="font-medium text-blue-600">{lead.email ? <a href={`mailto:${lead.email}`}>{lead.email}</a> : "-"}</div>
+                                                <div className="font-medium text-blue-600">
+                                                    {lead.email ? (
+                                                        <a href={`mailto:${lead.email}`}>{lead.email}</a>
+                                                    ) : (
+                                                        "-"
+                                                    )}
+                                                </div>
                                                 <div className="text-gray-500">Phone</div>
-                                                <div className="font-medium">{lead.phone ? <a href={`tel:${lead.phone}`} className="text-blue-600">{lead.phone}</a> : "-"}</div>
+                                                <div className="font-medium">
+                                                    {lead.phone ? (
+                                                        <a href={`tel:${lead.phone}`} className="text-blue-600">
+                                                            {lead.phone}
+                                                        </a>
+                                                    ) : (
+                                                        "-"
+                                                    )}
+                                                </div>
                                                 <div className="text-gray-500">Website</div>
-                                                <div className="font-medium">{lead.website ? <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="text-blue-600 flex items-center gap-1">{lead.website} <ExternalLink className="h-3 w-3" /></a> : "-"}</div>
+                                                <div className="font-medium">
+                                                    {lead.website ? (
+                                                        <a
+                                                            href={
+                                                                lead.website.startsWith("http")
+                                                                    ? lead.website
+                                                                    : `https://${lead.website}`
+                                                            }
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="text-blue-600 flex items-center gap-1"
+                                                        >
+                                                            {lead.website} <ExternalLink className="h-3 w-3" />
+                                                        </a>
+                                                    ) : (
+                                                        "-"
+                                                    )}
+                                                </div>
                                                 <div className="text-gray-500">Value</div>
-                                                <div className="font-medium">{lead.value ? `$${lead.value.toLocaleString()}` : "-"}</div>
+                                                <div className="font-medium">
+                                                    {lead.value ? `$${lead.value.toLocaleString()}` : "-"}
+                                                </div>
                                                 <div className="text-gray-500">Address</div>
-                                                <div className="font-medium text-gray-900">{[lead.address?.street, lead.address?.city, lead.address?.country].filter(Boolean).join(", ") || "-"}</div>
+                                                <div className="font-medium text-gray-900">
+                                                    {[lead.address?.street, lead.address?.city, lead.address?.country]
+                                                        .filter(Boolean)
+                                                        .join(", ") || "-"}
+                                                </div>
                                             </div>
                                         </div>
 
                                         <div className="p-4 bg-white border rounded-lg shadow-sm">
                                             <div className="flex items-center gap-2 pb-2 border-b mb-3">
                                                 <Activity className="h-4 w-4 text-gray-500" />
-                                                <h3 className="text-sm font-semibold text-gray-900">System Information</h3>
+                                                <h3 className="text-sm font-semibold text-gray-900">
+                                                    System Information
+                                                </h3>
                                             </div>
                                             <div className="grid grid-cols-[100px_1fr] gap-y-2 text-sm">
                                                 <div className="text-gray-500">Status</div>
-                                                <div><Badge variant="secondary" className="capitalize">{lead.status}</Badge></div>
+                                                <div>
+                                                    <Badge variant="secondary" className="capitalize">
+                                                        {lead.status}
+                                                    </Badge>
+                                                </div>
                                                 <div className="text-gray-500">Source</div>
                                                 <div className="font-medium">{lead.source || "-"}</div>
                                                 <div className="text-gray-500">Created</div>
-                                                <div className="font-medium">{lead.createdAt ? format(lead.createdAt.toDate(), "MMM d, yyyy") : "-"}</div>
+                                                <div className="font-medium">
+                                                    {lead.createdAt
+                                                        ? format(lead.createdAt.toDate(), "MMM d, yyyy")
+                                                        : "-"}
+                                                </div>
                                                 <div className="text-gray-500">Assigned To</div>
                                                 <div className="flex items-center gap-2">
                                                     {lead.assignedTo ? (
                                                         <>
                                                             <Avatar className="h-5 w-5">
                                                                 <AvatarFallback className="text-[10px]">
-                                                                    {staff.find(s => s.id === lead.assignedTo)?.firstName?.charAt(0) || "?"}
+                                                                    {staff
+                                                                        .find((s) => s.id === lead.assignedTo)
+                                                                        ?.firstName?.charAt(0) || "?"}
                                                                 </AvatarFallback>
                                                             </Avatar>
                                                             <span className="font-medium">
-                                                                {staff.find(s => s.id === lead.assignedTo)?.firstName || "Unknown"} {staff.find(s => s.id === lead.assignedTo)?.lastName || ""}
+                                                                {staff.find((s) => s.id === lead.assignedTo)
+                                                                    ?.firstName || "Unknown"}{" "}
+                                                                {staff.find((s) => s.id === lead.assignedTo)
+                                                                    ?.lastName || ""}
                                                             </span>
                                                         </>
                                                     ) : (
@@ -622,7 +921,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     {lead.description && (
                                         <div className="p-4 bg-white border rounded-lg shadow-sm">
                                             <h3 className="text-sm font-semibold text-gray-900 mb-2">Description</h3>
-                                            <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700 whitespace-pre-wrap">{lead.description}</div>
+                                            <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700 whitespace-pre-wrap">
+                                                {lead.description}
+                                            </div>
                                         </div>
                                     )}
                                 </TabsContent>
@@ -631,7 +932,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                 <TabsContent value="proposals" className="m-0">
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="text-lg font-semibold">Proposals</h3>
-                                        <Button size="sm"><Plus className="h-4 w-4 mr-1" /> New Proposal</Button>
+                                        <Button size="sm">
+                                            <Plus className="h-4 w-4 mr-1" /> New Proposal
+                                        </Button>
                                     </div>
                                     {proposals.length === 0 ? (
                                         <div className="text-center py-12 border-2 border-dashed rounded-lg bg-gray-50">
@@ -640,17 +943,27 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
-                                            {proposals.map(prop => (
-                                                <div key={prop.id} className="p-3 border rounded-md bg-white hover:shadow-sm transition-shadow flex justify-between items-center">
+                                            {proposals.map((prop) => (
+                                                <div
+                                                    key={prop.id}
+                                                    className="p-3 border rounded-md bg-white hover:shadow-sm transition-shadow flex justify-between items-center"
+                                                >
                                                     <div className="flex flex-col">
                                                         <span className="font-medium text-sm">{prop.number}</span>
-                                                        <span className="text-xs text-gray-500">{format(prop.date.toDate(), "MMM d, yyyy")}</span>
+                                                        <span className="text-xs text-gray-500">
+                                                            {format(prop.date.toDate(), "MMM d, yyyy")}
+                                                        </span>
                                                     </div>
                                                     <div className="flex items-center gap-3">
                                                         <span className="font-bold text-sm">
-                                                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: prop.currency }).format(prop.total)}
+                                                            {new Intl.NumberFormat("en-US", {
+                                                                style: "currency",
+                                                                currency: prop.currency,
+                                                            }).format(prop.total)}
                                                         </span>
-                                                        <Badge variant="outline" className="capitalize text-xs">{prop.status}</Badge>
+                                                        <Badge variant="outline" className="capitalize text-xs">
+                                                            {prop.status}
+                                                        </Badge>
                                                     </div>
                                                 </div>
                                             ))}
@@ -673,14 +986,29 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
-                                            {relatedTasks.map(task => (
-                                                <div key={task.id} className="p-3 border rounded-md bg-white flex items-start gap-3">
-                                                    <div className={`mt-0.5 w-4 h-4 rounded-full border-2 ${task.status === "completed" ? "bg-green-500 border-green-500" : "border-gray-300"}`} />
+                                            {relatedTasks.map((task) => (
+                                                <div
+                                                    key={task.id}
+                                                    className="p-3 border rounded-md bg-white flex items-start gap-3"
+                                                >
+                                                    <div
+                                                        className={`mt-0.5 w-4 h-4 rounded-full border-2 ${task.status === "completed" ? "bg-green-500 border-green-500" : "border-gray-300"}`}
+                                                    />
                                                     <div className="flex-1">
-                                                        <h4 className={`text-sm font-medium ${task.status === "completed" ? "line-through text-gray-500" : "text-gray-900"}`}>{task.name}</h4>
+                                                        <h4
+                                                            className={`text-sm font-medium ${task.status === "completed" ? "line-through text-gray-500" : "text-gray-900"}`}
+                                                        >
+                                                            {task.name}
+                                                        </h4>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <Badge variant="secondary" className="text-[10px] h-5 px-1">{task.priority}</Badge>
-                                                            {task.dueDate && <span className="text-xs text-red-500">Due {format(task.dueDate.toDate(), "MMM d")}</span>}
+                                                            <Badge variant="secondary" className="text-[10px] h-5 px-1">
+                                                                {task.priority}
+                                                            </Badge>
+                                                            {task.dueDate && (
+                                                                <span className="text-xs text-red-500">
+                                                                    Due {format(task.dueDate.toDate(), "MMM d")}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -713,7 +1041,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     onClick={handleSaveNote}
                                                     disabled={savingNote || !noteText.trim()}
                                                 >
-                                                    {savingNote ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Note"}
+                                                    {savingNote ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        "Save Note"
+                                                    )}
                                                 </Button>
                                             </div>
                                         </div>
@@ -722,11 +1054,16 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             <p className="text-center text-gray-400 text-sm py-4">No past notes.</p>
                                         ) : (
                                             <div className="space-y-3">
-                                                {notes.map(note => (
+                                                {notes.map((note) => (
                                                     <div key={note.id} className="p-4 bg-white rounded-md border group">
                                                         <div className="flex justify-between items-start mb-2">
                                                             <span className="text-xs text-gray-400">
-                                                                {note.createdAt ? format(note.createdAt.toDate(), "MMM d, yyyy @ h:mm a") : "Just now"}
+                                                                {note.createdAt
+                                                                    ? format(
+                                                                          note.createdAt.toDate(),
+                                                                          "MMM d, yyyy @ h:mm a"
+                                                                      )
+                                                                    : "Just now"}
                                                             </span>
                                                             <Button
                                                                 variant="ghost"
@@ -737,7 +1074,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                 <Trash2 className="h-3 w-3" />
                                                             </Button>
                                                         </div>
-                                                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
+                                                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                                            {note.content}
+                                                        </p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -757,7 +1096,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             onChange={handleFileUpload}
                                             multiple
                                         />
-                                        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
                                             <Upload className="h-4 w-4 mr-2" /> Upload File
                                         </Button>
                                         <p className="text-xs text-gray-400 mt-2">Firebase Storage setup required</p>
@@ -779,17 +1122,27 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
-                                            {reminders.map(reminder => (
-                                                <div key={reminder.id} className="p-4 bg-white rounded-md border flex items-start justify-between group">
+                                            {reminders.map((reminder) => (
+                                                <div
+                                                    key={reminder.id}
+                                                    className="p-4 bg-white rounded-md border flex items-start justify-between group"
+                                                >
                                                     <div className="flex items-start gap-3">
                                                         <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
                                                             <Bell className="h-4 w-4 text-blue-600" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-medium text-sm">{reminder.description}</p>
+                                                            <p className="font-medium text-sm">
+                                                                {reminder.description}
+                                                            </p>
                                                             <p className="text-xs text-gray-500 mt-1">
                                                                 <Calendar className="h-3 w-3 inline mr-1" />
-                                                                {reminder.date ? format(reminder.date.toDate(), "MMM d, yyyy @ h:mm a") : "No date"}
+                                                                {reminder.date
+                                                                    ? format(
+                                                                          reminder.date.toDate(),
+                                                                          "MMM d, yyyy @ h:mm a"
+                                                                      )
+                                                                    : "No date"}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -822,8 +1175,17 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         <Plus className="h-4 w-4 text-green-600" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-medium text-gray-900">Lead Created</p>
-                                                        <p className="text-xs text-gray-500">{lead.createdAt ? format(lead.createdAt.toDate(), "MMM d, yyyy @ h:mm a") : "Unknown date"}</p>
+                                                        <p className="text-sm font-medium text-gray-900">
+                                                            Lead Created
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {lead.createdAt
+                                                                ? format(
+                                                                      lead.createdAt.toDate(),
+                                                                      "MMM d, yyyy @ h:mm a"
+                                                                  )
+                                                                : "Unknown date"}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -837,9 +1199,20 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <StickyNote className="h-4 w-4 text-blue-600" />
                                                         </div>
                                                         <div className="flex-1">
-                                                            <p className="text-sm font-medium text-gray-900">Note Added</p>
-                                                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{note.content}</p>
-                                                            <p className="text-xs text-gray-500 mt-1">{note.createdAt ? format(note.createdAt.toDate(), "MMM d, yyyy @ h:mm a") : ""}</p>
+                                                            <p className="text-sm font-medium text-gray-900">
+                                                                Note Added
+                                                            </p>
+                                                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                                                {note.content}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                {note.createdAt
+                                                                    ? format(
+                                                                          note.createdAt.toDate(),
+                                                                          "MMM d, yyyy @ h:mm a"
+                                                                      )
+                                                                    : ""}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -854,9 +1227,21 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <Bell className="h-4 w-4 text-amber-600" />
                                                         </div>
                                                         <div className="flex-1">
-                                                            <p className="text-sm font-medium text-gray-900">Reminder Set</p>
-                                                            <p className="text-sm text-gray-600 mt-1">{reminder.description}</p>
-                                                            <p className="text-xs text-gray-500 mt-1">For: {reminder.date ? format(reminder.date.toDate(), "MMM d, yyyy @ h:mm a") : ""}</p>
+                                                            <p className="text-sm font-medium text-gray-900">
+                                                                Reminder Set
+                                                            </p>
+                                                            <p className="text-sm text-gray-600 mt-1">
+                                                                {reminder.description}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                For:{" "}
+                                                                {reminder.date
+                                                                    ? format(
+                                                                          reminder.date.toDate(),
+                                                                          "MMM d, yyyy @ h:mm a"
+                                                                      )
+                                                                    : ""}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -871,12 +1256,28 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <CheckSquare className="h-4 w-4 text-purple-600" />
                                                         </div>
                                                         <div className="flex-1">
-                                                            <p className="text-sm font-medium text-gray-900">Task Created: {task.name}</p>
+                                                            <p className="text-sm font-medium text-gray-900">
+                                                                Task Created: {task.name}
+                                                            </p>
                                                             <div className="flex items-center gap-2 mt-1">
-                                                                <Badge variant="secondary" className="text-xs capitalize">{task.status.replace(/_/g, ' ')}</Badge>
-                                                                <Badge variant="outline" className="text-xs capitalize">{task.priority}</Badge>
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    className="text-xs capitalize"
+                                                                >
+                                                                    {task.status.replace(/_/g, " ")}
+                                                                </Badge>
+                                                                <Badge variant="outline" className="text-xs capitalize">
+                                                                    {task.priority}
+                                                                </Badge>
                                                             </div>
-                                                            <p className="text-xs text-gray-500 mt-1">{task.createdAt ? format(task.createdAt.toDate(), "MMM d, yyyy @ h:mm a") : ""}</p>
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                {task.createdAt
+                                                                    ? format(
+                                                                          task.createdAt.toDate(),
+                                                                          "MMM d, yyyy @ h:mm a"
+                                                                      )
+                                                                    : ""}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -891,8 +1292,15 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <Clock className="h-4 w-4 text-indigo-600" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-medium text-gray-900">Last Contacted</p>
-                                                            <p className="text-xs text-gray-500">{format(lead.lastContactedAt.toDate(), "MMM d, yyyy @ h:mm a")}</p>
+                                                            <p className="text-sm font-medium text-gray-900">
+                                                                Last Contacted
+                                                            </p>
+                                                            <p className="text-xs text-gray-500">
+                                                                {format(
+                                                                    lead.lastContactedAt.toDate(),
+                                                                    "MMM d, yyyy @ h:mm a"
+                                                                )}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -906,19 +1314,37 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         <Activity className="h-4 w-4 text-gray-600" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm text-gray-900">Current Status: <Badge variant="secondary" className="capitalize ml-1">{lead.status}</Badge></p>
-                                                        <p className="text-xs text-gray-500">Updated: {lead.updatedAt ? format(lead.updatedAt.toDate(), "MMM d, yyyy @ h:mm a") : "Unknown"}</p>
+                                                        <p className="text-sm text-gray-900">
+                                                            Current Status:{" "}
+                                                            <Badge variant="secondary" className="capitalize ml-1">
+                                                                {lead.status}
+                                                            </Badge>
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            Updated:{" "}
+                                                            {lead.updatedAt
+                                                                ? format(
+                                                                      lead.updatedAt.toDate(),
+                                                                      "MMM d, yyyy @ h:mm a"
+                                                                  )
+                                                                : "Unknown"}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Empty state */}
-                                            {notes.length === 0 && reminders.length === 0 && relatedTasks.length === 0 && (
-                                                <div className="relative">
-                                                    <div className="absolute -left-[21px] top-1 h-3 w-3 bg-gray-300 rounded-full border-2 border-white ring-1 ring-gray-200"></div>
-                                                    <p className="text-sm text-gray-500 italic">No additional activity recorded yet. Add notes, reminders, or tasks to see them here.</p>
-                                                </div>
-                                            )}
+                                            {notes.length === 0 &&
+                                                reminders.length === 0 &&
+                                                relatedTasks.length === 0 && (
+                                                    <div className="relative">
+                                                        <div className="absolute -left-[21px] top-1 h-3 w-3 bg-gray-300 rounded-full border-2 border-white ring-1 ring-gray-200"></div>
+                                                        <p className="text-sm text-gray-500 italic">
+                                                            No additional activity recorded yet. Add notes, reminders,
+                                                            or tasks to see them here.
+                                                        </p>
+                                                    </div>
+                                                )}
                                         </div>
                                     </div>
                                 </TabsContent>
@@ -955,10 +1381,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Due Date</Label>
-                                <DatePicker
-                                    date={taskDueDate}
-                                    setDate={setTaskDueDate}
-                                />
+                                <DatePicker date={taskDueDate} setDate={setTaskDueDate} />
                             </div>
                             <div className="space-y-2">
                                 <Label>Priority</Label>
@@ -977,7 +1400,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowTaskDialog(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setShowTaskDialog(false)}>
+                            Cancel
+                        </Button>
                         <Button onClick={handleSaveTask} disabled={savingTask || !taskName.trim()}>
                             {savingTask ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                             Create Task
@@ -1004,10 +1429,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Date & Time *</Label>
-                                <DateTimePicker
-                                    date={reminderDate}
-                                    setDate={setReminderDate}
-                                />
+                                <DateTimePicker date={reminderDate} setDate={setReminderDate} />
                             </div>
                             <div className="space-y-2">
                                 <Label>Notify Before</Label>
@@ -1027,8 +1449,13 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowReminderDialog(false)}>Cancel</Button>
-                        <Button onClick={handleSaveReminder} disabled={savingReminder || !reminderDesc.trim() || !reminderDate}>
+                        <Button variant="outline" onClick={() => setShowReminderDialog(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSaveReminder}
+                            disabled={savingReminder || !reminderDesc.trim() || !reminderDate}
+                        >
                             {savingReminder ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                             Set Reminder
                         </Button>

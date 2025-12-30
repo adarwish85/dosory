@@ -66,7 +66,9 @@ export default function SignupPage() {
                         <CardDescription>New account registration is currently disabled.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-gray-500">Please contact support for assistance or if you have an invitation.</p>
+                        <p className="text-sm text-gray-500">
+                            Please contact support for assistance or if you have an invitation.
+                        </p>
                     </CardContent>
                     <CardFooter className="flex justify-center">
                         <Link href="/login" className="text-blue-500 hover:underline">
@@ -151,7 +153,7 @@ export default function SignupPage() {
                 ownerId: user.uid,
                 status: settings.requireEmailVerification ? "pending_verification" : "active",
                 plan: "trial",
-                trialEndsAt: new Date(Date.now() + (settings.defaultTrialDays * 24 * 60 * 60 * 1000)).toISOString()
+                trialEndsAt: new Date(Date.now() + settings.defaultTrialDays * 24 * 60 * 60 * 1000).toISOString(),
             });
 
             // 3. Create User Profile
@@ -178,7 +180,7 @@ export default function SignupPage() {
                 permissions: [],
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                createdBy: user.uid
+                createdBy: user.uid,
             });
 
             // 5. Send Welcome Email (fire-and-forget)
@@ -188,17 +190,17 @@ export default function SignupPage() {
             const rootDomain = isLocal ? "localhost:3000" : "dosory.com";
             const loginUrl = `${protocol}//${subdomain}.${rootDomain}/dashboard`;
 
-            fetch('/api/email/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            fetch("/api/email/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    type: 'welcome',
+                    type: "welcome",
                     to: user.email,
                     userName: orgName.split(" ")[0] || "there",
                     orgName: orgName,
                     loginUrl,
                 }),
-            }).catch(err => console.warn('Welcome email failed:', err));
+            }).catch((err) => console.warn("Welcome email failed:", err));
 
             // Redirect to subdomain
             window.location.href = loginUrl;
@@ -299,7 +301,9 @@ export default function SignupPage() {
                             </div>
                             <div>
                                 <h3 className="font-semibold text-gray-900">Join Existing Organization</h3>
-                                <p className="text-sm text-gray-500">Request to join a company that's already using the platform</p>
+                                <p className="text-sm text-gray-500">
+                                    Request to join a company that's already using the platform
+                                </p>
                             </div>
                         </button>
                     </CardContent>
@@ -362,9 +366,7 @@ export default function SignupPage() {
                                         <Loader2 className="h-3 w-3 animate-spin" /> Checking availability...
                                     </p>
                                 )}
-                                {subdomainError && (
-                                    <p className="text-sm text-red-500">{subdomainError}</p>
-                                )}
+                                {subdomainError && <p className="text-sm text-red-500">{subdomainError}</p>}
                                 {subdomainAvailable === true && !subdomainError && (
                                     <p className="text-sm text-green-600 flex items-center gap-1">
                                         <CheckCircle2 className="h-3 w-3" /> Available!
@@ -448,7 +450,9 @@ export default function SignupPage() {
                                         .dosory.com
                                     </span>
                                 </div>
-                                <p className="text-xs text-gray-500">Ask your administrator for the organization subdomain</p>
+                                <p className="text-xs text-gray-500">
+                                    Ask your administrator for the organization subdomain
+                                </p>
                             </div>
 
                             <div className="space-y-2">
@@ -514,12 +518,10 @@ export default function SignupPage() {
                     </CardHeader>
                     <CardContent className="text-center">
                         <p className="text-sm text-gray-500 mb-4">
-                            You'll be able to access the platform once your request is approved.
-                            The admin will assign your role and permissions.
+                            You'll be able to access the platform once your request is approved. The admin will assign
+                            your role and permissions.
                         </p>
-                        <p className="text-sm text-gray-600">
-                            Check your email for updates.
-                        </p>
+                        <p className="text-sm text-gray-600">Check your email for updates.</p>
                     </CardContent>
                     <CardFooter className="flex justify-center">
                         <Button

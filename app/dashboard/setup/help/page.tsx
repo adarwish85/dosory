@@ -5,22 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
     HelpCircle,
     Plus,
@@ -127,11 +116,7 @@ export default function HelpPage() {
 
     const getStatusBadge = (status: PlatformTicket["status"]) => {
         const config = TICKET_STATUSES.find((s) => s.value === status);
-        return (
-            <Badge className={cn("font-normal", config?.color)}>
-                {config?.label || status}
-            </Badge>
-        );
+        return <Badge className={cn("font-normal", config?.color)}>{config?.label || status}</Badge>;
     };
 
     const getPriorityBadge = (priority: PlatformTicket["priority"]) => {
@@ -275,11 +260,7 @@ export default function HelpPage() {
                                 <p className="text-xs text-gray-500">Max 5 files. Supported: Images, PDF, DOC, TXT</p>
                             </div>
 
-                            <Button
-                                type="submit"
-                                className="bg-blue-600 hover:bg-blue-700"
-                                disabled={submitting}
-                            >
+                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={submitting}>
                                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Submit Ticket
                             </Button>
@@ -293,9 +274,7 @@ export default function HelpPage() {
                         <div className="bg-white rounded-lg border p-10 text-center">
                             <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                             <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets yet</h3>
-                            <p className="text-gray-500 mb-4">
-                                You haven't submitted any support tickets.
-                            </p>
+                            <p className="text-gray-500 mb-4">You haven't submitted any support tickets.</p>
                             <Button onClick={() => setActiveTab("submit")}>
                                 <Plus className="mr-2 h-4 w-4" />
                                 Submit Ticket
@@ -318,9 +297,7 @@ export default function HelpPage() {
                                                     {TICKET_CATEGORIES.find((c) => c.value === ticket.category)?.label}
                                                 </Badge>
                                             </div>
-                                            <h3 className="font-medium text-gray-900 truncate">
-                                                {ticket.subject}
-                                            </h3>
+                                            <h3 className="font-medium text-gray-900 truncate">{ticket.subject}</h3>
                                             <p className="text-sm text-gray-500 line-clamp-1 mt-1">
                                                 {ticket.description}
                                             </p>
@@ -364,9 +341,7 @@ export default function HelpPage() {
                                     {selectedTicket && getStatusBadge(selectedTicket.status)}
                                     {selectedTicket && getPriorityBadge(selectedTicket.priority)}
                                 </div>
-                                <DialogTitle className="text-lg">
-                                    {selectedTicket?.subject}
-                                </DialogTitle>
+                                <DialogTitle className="text-lg">{selectedTicket?.subject}</DialogTitle>
                             </div>
                         </div>
                     </DialogHeader>
@@ -383,7 +358,8 @@ export default function HelpPage() {
                                 <div>
                                     <div className="font-medium text-sm">{selectedTicket?.createdBy.name}</div>
                                     <div className="text-xs text-gray-500">
-                                        {selectedTicket && formatDistanceToNow(selectedTicket.createdAt, { addSuffix: true })}
+                                        {selectedTicket &&
+                                            formatDistanceToNow(selectedTicket.createdAt, { addSuffix: true })}
                                     </div>
                                 </div>
                             </div>

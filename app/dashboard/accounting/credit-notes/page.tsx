@@ -22,7 +22,9 @@ export default function CreditNotesPage() {
                     </Button>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" className="h-9 w-9 text-gray-400">«</Button>
+                    <Button variant="outline" size="icon" className="h-9 w-9 text-gray-400">
+                        «
+                    </Button>
                     <Button variant="outline" className="text-gray-600">
                         <Filter className="mr-2 h-4 w-4" /> Filters
                     </Button>
@@ -41,7 +43,9 @@ export default function CreditNotesPage() {
                             </SelectContent>
                         </Select>
                         <Button variant="outline">Export</Button>
-                        <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="icon">
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
                     </div>
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -53,14 +57,22 @@ export default function CreditNotesPage() {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Credit Note #</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Credit Note Date</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">
+                                    Credit Note #
+                                </TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">
+                                    Credit Note Date
+                                </TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Customer</TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Status</TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Project</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Reference #</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">
+                                    Reference #
+                                </TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Amount</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Remaining Amount</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">
+                                    Remaining Amount
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

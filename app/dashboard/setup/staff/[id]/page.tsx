@@ -35,7 +35,7 @@ export default function EditStaffPage() {
             try {
                 // First try direct document lookup (email-based ID)
                 const docRef = doc(db, "staff", staffId);
-                let docSnap = await getDoc(docRef);
+                const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
                     const data = { id: docSnap.id, ...docSnap.data() } as StaffMember;

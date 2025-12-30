@@ -14,20 +14,20 @@ export async function POST(req: Request) {
         // Fetch tenants based on audience
         let query = adminDb.collection("organizations");
 
-        if (targetAudience !== 'all') {
-            // @ts-ignore
-            query = query.where('status', '==', targetAudience);
+        if (targetAudience !== "all") {
+            // @ts-expect-error
+            query = query.where("status", "==", targetAudience);
         }
 
         const snapshot = await query.get();
-        const tenants = snapshot.docs.map(doc => doc.data());
+        const tenants = snapshot.docs.map((doc) => doc.data());
 
         let sentCount = 0;
         const promises = [];
 
         // Collect all unique emails
         const emails = new Set<string>();
-        tenants.forEach(t => {
+        tenants.forEach((t) => {
             if (t.email) emails.add(t.email);
         });
 
@@ -35,10 +35,10 @@ export async function POST(req: Request) {
         for (const email of Array.from(emails)) {
             promises.push(
                 sendEmail(email, subject, html)
-                    .then(success => {
+                    .then((success) => {
                         if (success) sentCount++;
                     })
-                    .catch(err => console.error(`Failed to send to ${email}`, err))
+                    .catch((err) => console.error(`Failed to send to ${email}`, err))
             );
         }
 

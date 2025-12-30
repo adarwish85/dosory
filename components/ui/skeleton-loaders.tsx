@@ -1,7 +1,13 @@
 import { memo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const TableSkeleton = memo(function TableSkeleton({ rows = 10, columns = 5 }: { rows?: number; columns?: number }) {
+export const TableSkeleton = memo(function TableSkeleton({
+    rows = 10,
+    columns = 5,
+}: {
+    rows?: number;
+    columns?: number;
+}) {
     return (
         <div className="w-full space-y-3">
             {Array.from({ length: rows }).map((_, rowIndex) => (
@@ -104,4 +110,3 @@ export const FormSkeleton = memo(function FormSkeleton({ fields = 4 }: { fields?
         </div>
     );
 });
-

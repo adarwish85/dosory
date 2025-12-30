@@ -53,7 +53,6 @@ function getStatusTransitionError(currentStatus: InvoiceStatus, newStatus: Invoi
     return `Cannot transition invoice from '${currentStatus}' to '${newStatus}'. Allowed transitions: ${ALLOWED_STATUS_TRANSITIONS[currentStatus].join(", ") || "none"}`;
 }
 
-
 // ============================================
 // Helper: Generate Invoice Number (Atomic)
 // ============================================
@@ -95,7 +94,7 @@ async function generateInvoiceNumber(
                 }
             }
 
-            // The next number should be at least (current + 1), but can jump ahead 
+            // The next number should be at least (current + 1), but can jump ahead
             // if configuredNextNumber is higher (e.g. user manually set it to 50)
             const nextNumber = Math.max(currentCounter + 1, configuredNextNumber);
 
@@ -109,7 +108,7 @@ async function generateInvoiceNumber(
 
         return {
             number: result,
-            formatted: `${prefix}${paddedNumber}`
+            formatted: `${prefix}${paddedNumber}`,
         };
     } catch (error) {
         console.error("Error generating invoice number:", error);
@@ -117,7 +116,7 @@ async function generateInvoiceNumber(
         const fallbackNum = Date.now();
         return {
             number: fallbackNum,
-            formatted: `${prefix}${fallbackNum}`
+            formatted: `${prefix}${fallbackNum}`,
         };
     }
 }
@@ -131,9 +130,7 @@ function calculateInvoiceTotals(items: LineItem[], discount?: { type: "percentag
 
     let discountAmount = 0;
     if (discount) {
-        discountAmount = discount.type === "percentage"
-            ? subtotal * (discount.value / 100)
-            : discount.value;
+        discountAmount = discount.type === "percentage" ? subtotal * (discount.value / 100) : discount.value;
     }
 
     const taxableAmount = subtotal - discountAmount;
@@ -219,9 +216,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
 
         console.log("useInvoices: Building query with orgId:", profile.orgId);
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (status !== "all" && status) {
             constraints.push(where("status", "==", status));
@@ -258,7 +253,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
                 // Update cursor
                 if (snapshot.docs.length > 0) {
                     const lastDoc = snapshot.docs[snapshot.docs.length - 1];
-                    setCursors(prev => ({ ...prev, [page]: lastDoc }));
+                    setCursors((prev) => ({ ...prev, [page]: lastDoc }));
                 }
 
                 setInvoices(data);
@@ -285,9 +280,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
 
             // Get customer name
             const customerDoc = await getDoc(doc(db, "customers", data.customerId));
-            const customerName = customerDoc.exists()
-                ? customerDoc.data().company
-                : "Unknown Customer";
+            const customerName = customerDoc.exists() ? customerDoc.data().company : "Unknown Customer";
 
             // Generate invoice number using org settings
             const invoiceNumberResult = await generateInvoiceNumber(profile.orgId, {
@@ -319,7 +312,13 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
             });
 
             if (logActivity) {
-                await logActivity("invoice_created", `Created invoice ${invoiceNumberResult.formatted}`, docRef.id, "invoice", { amount: total });
+                await logActivity(
+                    "invoice_created",
+                    `Created invoice ${invoiceNumberResult.formatted}`,
+                    docRef.id,
+                    "invoice",
+                    { amount: total }
+                );
             }
 
             return docRef.id;
@@ -327,173 +326,188 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         [profile?.orgId, profile?.uid, logActivity]
     );
 
-    const updateInvoice = useCallback(
-        async (id: string, data: Partial<InvoiceFormData>): Promise<void> => {
-            const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
+    const updateInvoice = useCallback(async (id: string, data: Partial<InvoiceFormData>): Promise<void> => {
+        const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
 
-            // Recalculate totals if items changed
-            if (data.items) {
-                const { subtotal, taxTotal, total } = calculateInvoiceTotals(data.items, data.discount);
-                updateData.subtotal = subtotal;
-                updateData.taxTotal = taxTotal;
-                updateData.total = total;
-            }
-
-            // Convert dates to Timestamps
-            if (data.date) updateData.date = Timestamp.fromDate(data.date);
-            if (data.dueDate) updateData.dueDate = Timestamp.fromDate(data.dueDate);
-
-            await updateDoc(doc(db, "invoices", id), updateData);
-        },
-        []
-    );
-
-    const deleteInvoice = useCallback(async (id: string): Promise<void> => {
-        await deleteDoc(doc(db, "invoices", id));
-        if (logActivity) {
-            await logActivity("invoice_deleted", "Deleted invoice", id, "invoice");
-        }
-    }, [logActivity]);
-
-    // FIX BLE-001: Status transition with validation
-    const updateStatus = useCallback(async (id: string, newStatus: InvoiceStatus): Promise<void> => {
-        const invoiceDoc = await getDoc(doc(db, "invoices", id));
-        if (!invoiceDoc.exists()) throw new Error("Invoice not found");
-
-        const invoice = invoiceDoc.data() as Invoice;
-
-        if (!validateStatusTransition(invoice.status, newStatus)) {
-            throw new Error(getStatusTransitionError(invoice.status, newStatus));
+        // Recalculate totals if items changed
+        if (data.items) {
+            const { subtotal, taxTotal, total } = calculateInvoiceTotals(data.items, data.discount);
+            updateData.subtotal = subtotal;
+            updateData.taxTotal = taxTotal;
+            updateData.total = total;
         }
 
-        const updateData: Record<string, unknown> = {
-            status: newStatus,
-            updatedAt: serverTimestamp(),
-        };
-
-        // Add timestamps for specific statuses
-        if (newStatus === "sent") updateData.sentAt = serverTimestamp();
-        if (newStatus === "paid") updateData.paidAt = serverTimestamp();
-        if (newStatus === "viewed") updateData.viewedAt = serverTimestamp();
+        // Convert dates to Timestamps
+        if (data.date) updateData.date = Timestamp.fromDate(data.date);
+        if (data.dueDate) updateData.dueDate = Timestamp.fromDate(data.dueDate);
 
         await updateDoc(doc(db, "invoices", id), updateData);
+    }, []);
 
-        if (logActivity && newStatus === "sent") {
-            await logActivity("invoice_sent", `Sent invoice ${invoice.number}`, id, "invoice");
-        }
+    const deleteInvoice = useCallback(
+        async (id: string): Promise<void> => {
+            await deleteDoc(doc(db, "invoices", id));
+            if (logActivity) {
+                await logActivity("invoice_deleted", "Deleted invoice", id, "invoice");
+            }
+        },
+        [logActivity]
+    );
 
-        // Notify creator if paid
-        if (newStatus === "paid" && invoice.createdBy && invoice.createdBy !== profile?.uid) {
-            createNotification({
-                type: "invoice.paid",
-                title: "Invoice Paid",
-                message: `Invoice #${invoice.numberFormatted || invoice.number} has been marked as paid.`,
-                link: `/dashboard/sales/invoices/${id}`,
-                orgId: invoice.orgId,
-                userId: invoice.createdBy,
-                metadata: { invoiceId: id }
-            }).catch(console.error);
-        }
-    }, [logActivity, profile?.orgId, profile?.uid]);
+    // FIX BLE-001: Status transition with validation
+    const updateStatus = useCallback(
+        async (id: string, newStatus: InvoiceStatus): Promise<void> => {
+            const invoiceDoc = await getDoc(doc(db, "invoices", id));
+            if (!invoiceDoc.exists()) throw new Error("Invoice not found");
+
+            const invoice = invoiceDoc.data() as Invoice;
+
+            if (!validateStatusTransition(invoice.status, newStatus)) {
+                throw new Error(getStatusTransitionError(invoice.status, newStatus));
+            }
+
+            const updateData: Record<string, unknown> = {
+                status: newStatus,
+                updatedAt: serverTimestamp(),
+            };
+
+            // Add timestamps for specific statuses
+            if (newStatus === "sent") updateData.sentAt = serverTimestamp();
+            if (newStatus === "paid") updateData.paidAt = serverTimestamp();
+            if (newStatus === "viewed") updateData.viewedAt = serverTimestamp();
+
+            await updateDoc(doc(db, "invoices", id), updateData);
+
+            if (logActivity && newStatus === "sent") {
+                await logActivity("invoice_sent", `Sent invoice ${invoice.number}`, id, "invoice");
+            }
+
+            // Notify creator if paid
+            if (newStatus === "paid" && invoice.createdBy && invoice.createdBy !== profile?.uid) {
+                createNotification({
+                    type: "invoice.paid",
+                    title: "Invoice Paid",
+                    message: `Invoice #${invoice.numberFormatted || invoice.number} has been marked as paid.`,
+                    link: `/dashboard/sales/invoices/${id}`,
+                    orgId: invoice.orgId,
+                    userId: invoice.createdBy,
+                    metadata: { invoiceId: id },
+                }).catch(console.error);
+            }
+        },
+        [logActivity, profile?.orgId, profile?.uid]
+    );
 
     // FIX INV-002: Payment with overpayment validation
-    const recordPayment = useCallback(async (
-        invoiceId: string,
-        amount: number,
-        paymentMode: string,
-        paymentDate?: Date,
-        note?: string
-    ): Promise<string> => {
-        if (!profile?.orgId) throw new Error("No organization");
+    const recordPayment = useCallback(
+        async (
+            invoiceId: string,
+            amount: number,
+            paymentMode: string,
+            paymentDate?: Date,
+            note?: string
+        ): Promise<string> => {
+            if (!profile?.orgId) throw new Error("No organization");
 
-        const invoiceDoc = await getDoc(doc(db, "invoices", invoiceId));
-        if (!invoiceDoc.exists()) throw new Error("Invoice not found");
+            const invoiceDoc = await getDoc(doc(db, "invoices", invoiceId));
+            if (!invoiceDoc.exists()) throw new Error("Invoice not found");
 
-        const invoice = invoiceDoc.data() as Invoice;
+            const invoice = invoiceDoc.data() as Invoice;
 
-        // Validate: no overpayment
-        if (amount > invoice.amountDue) {
-            throw new Error(`Payment amount (${amount}) exceeds balance due (${invoice.amountDue})`);
-        }
+            // Validate: no overpayment
+            if (amount > invoice.amountDue) {
+                throw new Error(`Payment amount (${amount}) exceeds balance due (${invoice.amountDue})`);
+            }
 
-        if (amount <= 0) {
-            throw new Error("Payment amount must be greater than zero");
-        }
+            if (amount <= 0) {
+                throw new Error("Payment amount must be greater than zero");
+            }
 
-        // Use transaction for atomic update
-        const paymentId = await runTransaction(db, async (transaction) => {
-            const newAmountPaid = invoice.amountPaid + amount;
-            const newAmountDue = invoice.total - newAmountPaid;
-            const newStatus: InvoiceStatus = newAmountDue <= 0 ? "paid" : "partial";
+            // Use transaction for atomic update
+            const paymentId = await runTransaction(db, async (transaction) => {
+                const newAmountPaid = invoice.amountPaid + amount;
+                const newAmountDue = invoice.total - newAmountPaid;
+                const newStatus: InvoiceStatus = newAmountDue <= 0 ? "paid" : "partial";
 
-            // Create payment record
-            const paymentRef = doc(collection(db, "payments"));
-            transaction.set(paymentRef, {
-                invoiceId,
-                invoiceNumber: invoice.number,
-                customerId: invoice.customerId,
-                customerName: invoice.customerName,
-                amount,
-                paymentMode,
-                date: paymentDate ? Timestamp.fromDate(paymentDate) : serverTimestamp(),
-                note: note || "",
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                createdBy: profile.uid,
+                // Create payment record
+                const paymentRef = doc(collection(db, "payments"));
+                transaction.set(paymentRef, {
+                    invoiceId,
+                    invoiceNumber: invoice.number,
+                    customerId: invoice.customerId,
+                    customerName: invoice.customerName,
+                    amount,
+                    paymentMode,
+                    date: paymentDate ? Timestamp.fromDate(paymentDate) : serverTimestamp(),
+                    note: note || "",
+                    orgId: profile.orgId,
+                    createdAt: serverTimestamp(),
+                    createdBy: profile.uid,
+                });
+
+                // Update invoice
+                transaction.update(doc(db, "invoices", invoiceId), {
+                    amountPaid: newAmountPaid,
+                    amountDue: newAmountDue,
+                    status: newStatus,
+                    ...(newStatus === "paid" && { paidAt: serverTimestamp() }),
+                    updatedAt: serverTimestamp(),
+                });
+
+                return paymentRef.id;
             });
 
-            // Update invoice
-            transaction.update(doc(db, "invoices", invoiceId), {
-                amountPaid: newAmountPaid,
-                amountDue: newAmountDue,
-                status: newStatus,
-                ...(newStatus === "paid" && { paidAt: serverTimestamp() }),
-                updatedAt: serverTimestamp(),
-            });
+            if (logActivity) {
+                await logActivity("invoice_paid", `Received payment of ${amount}`, invoiceId, "invoice", {
+                    amount,
+                    paymentMode,
+                });
+            }
 
-            return paymentRef.id;
-        });
+            // Notify creator if fully paid
+            // Note: newStatus is calculated inside transaction but not returned.
+            // We know logical check: newAmountDue <= 0
+            const newPaid = invoice.amountPaid + amount;
+            const newDue = invoice.total - newPaid;
+            const isPaidNow = newDue <= 0;
 
-        if (logActivity) {
-            await logActivity("invoice_paid", `Received payment of ${amount}`, invoiceId, "invoice", { amount, paymentMode });
-        }
+            if (isPaidNow && invoice.createdBy && invoice.createdBy !== profile?.uid) {
+                createNotification({
+                    type: "invoice.paid",
+                    title: "Invoice Paid",
+                    message: `Invoice #${invoice.numberFormatted || invoice.number} has been fully paid via ${paymentMode}.`,
+                    link: `/dashboard/sales/invoices/${invoiceId}`,
+                    orgId: invoice.orgId,
+                    userId: invoice.createdBy,
+                    metadata: { invoiceId },
+                }).catch(console.error);
+            }
 
-        // Notify creator if fully paid
-        // Note: newStatus is calculated inside transaction but not returned. 
-        // We know logical check: newAmountDue <= 0
-        const newPaid = invoice.amountPaid + amount;
-        const newDue = invoice.total - newPaid;
-        const isPaidNow = newDue <= 0;
-
-        if (isPaidNow && invoice.createdBy && invoice.createdBy !== profile?.uid) {
-            createNotification({
-                type: "invoice.paid",
-                title: "Invoice Paid",
-                message: `Invoice #${invoice.numberFormatted || invoice.number} has been fully paid via ${paymentMode}.`,
-                link: `/dashboard/sales/invoices/${invoiceId}`,
-                orgId: invoice.orgId,
-                userId: invoice.createdBy,
-                metadata: { invoiceId }
-            }).catch(console.error);
-        }
-
-        return paymentId;
-    }, [profile?.orgId, profile?.uid, logActivity]);
+            return paymentId;
+        },
+        [profile?.orgId, profile?.uid, logActivity]
+    );
 
     // Convenience functions using updateStatus
-    const markAsSent = useCallback(async (id: string): Promise<void> => {
-        await updateStatus(id, "sent");
-    }, [updateStatus]);
+    const markAsSent = useCallback(
+        async (id: string): Promise<void> => {
+            await updateStatus(id, "sent");
+        },
+        [updateStatus]
+    );
 
-    const markAsPaid = useCallback(async (id: string): Promise<void> => {
-        const invoiceDoc = await getDoc(doc(db, "invoices", id));
-        if (!invoiceDoc.exists()) throw new Error("Invoice not found");
+    const markAsPaid = useCallback(
+        async (id: string): Promise<void> => {
+            const invoiceDoc = await getDoc(doc(db, "invoices", id));
+            if (!invoiceDoc.exists()) throw new Error("Invoice not found");
 
-        const invoice = invoiceDoc.data() as Invoice;
+            const invoice = invoiceDoc.data() as Invoice;
 
-        // Record full payment
-        await recordPayment(id, invoice.amountDue, "manual");
-    }, [recordPayment]);
+            // Record full payment
+            await recordPayment(id, invoice.amountDue, "manual");
+        },
+        [recordPayment]
+    );
 
     // Calculate invoice stats
     interface InvoiceStats {
@@ -507,7 +521,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
 
     const invoiceStats = invoices.reduce(
         (acc, inv) => {
-            acc[inv.status] = (acc[inv.status] as number || 0) + 1;
+            acc[inv.status] = ((acc[inv.status] as number) || 0) + 1;
             acc.total++;
             acc.totalAmount += inv.total;
             acc.totalPaid += inv.amountPaid;
@@ -518,16 +532,19 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
     );
 
     // Calculate amounts by status for dashboard
-    const amountsByStatus = invoices.reduce((acc, inv) => {
-        const amount = inv.total || 0;
-        acc[inv.status] = (acc[inv.status] || 0) + amount;
-        return acc;
-    }, {} as Record<string, number>);
+    const amountsByStatus = invoices.reduce(
+        (acc, inv) => {
+            const amount = inv.total || 0;
+            acc[inv.status] = (acc[inv.status] || 0) + amount;
+            return acc;
+        },
+        {} as Record<string, number>
+    );
 
     // Merge stats
     const extendedStats: InvoiceStats = {
         ...invoiceStats,
-        amountsByStatus
+        amountsByStatus,
     };
 
     return {

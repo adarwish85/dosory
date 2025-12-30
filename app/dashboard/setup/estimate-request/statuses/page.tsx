@@ -55,7 +55,9 @@ export default function StatusesPage() {
                                     <div className="col-span-2 text-gray-700">{status.id}</div>
                                     <div className="col-span-9">
                                         <div className="font-medium text-gray-900">{status.name}</div>
-                                        <div className="text-xs text-gray-500">Total Request: {status.totalRequest}</div>
+                                        <div className="text-xs text-gray-500">
+                                            Total Request: {status.totalRequest}
+                                        </div>
                                     </div>
                                     <div className="col-span-1 flex items-center justify-end gap-2 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Pen className="h-4 w-4 cursor-pointer hover:text-blue-600" />
@@ -66,11 +68,19 @@ export default function StatusesPage() {
                     </div>
                     <div className="px-6 py-4 border-t bg-gray-50 rounded-b-md">
                         <div className="text-xs text-gray-500 flex justify-end items-center gap-4">
-                            <span>Showing 1 to {statuses.length} of {statuses.length} entries</span>
+                            <span>
+                                Showing 1 to {statuses.length} of {statuses.length} entries
+                            </span>
                             <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="sm" disabled className="text-xs">Previous</Button>
-                                <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">1</div>
-                                <Button variant="ghost" size="sm" disabled className="text-xs">Next</Button>
+                                <Button variant="ghost" size="sm" disabled className="text-xs">
+                                    Previous
+                                </Button>
+                                <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">
+                                    1
+                                </div>
+                                <Button variant="ghost" size="sm" disabled className="text-xs">
+                                    Next
+                                </Button>
                             </div>
                         </div>
                     </div>

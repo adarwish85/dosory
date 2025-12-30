@@ -20,15 +20,15 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
-import { useConversations, useChatMessages, Conversation, getOrCreateConversation, ChatParticipant } from "@/lib/hooks/use-chat";
-import { useStaff, useRoles } from "@/lib/hooks";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
+    useConversations,
+    useChatMessages,
+    Conversation,
+    getOrCreateConversation,
+    ChatParticipant,
+} from "@/lib/hooks/use-chat";
+import { useStaff, useRoles } from "@/lib/hooks";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function MessagesPage() {
     const { profile } = useUserProfile();
@@ -53,7 +53,7 @@ export default function MessagesPage() {
     // Helper to get the "other" participant details
     const getOtherParticipant = (convo: Conversation) => {
         if (!profile) return null;
-        const otherUid = convo.participants.find(uid => uid !== profile.uid);
+        const otherUid = convo.participants.find((uid) => uid !== profile.uid);
         if (!otherUid) return null;
         return convo.participantDetails[otherUid];
     };
@@ -87,7 +87,7 @@ export default function MessagesPage() {
             name: `${profile.firstName} ${profile.lastName}`,
             email: profile.email,
             photoURL: profile.photoURL || undefined,
-            role: profile.role || "Staff"
+            role: profile.role || "Staff",
         };
 
         const otherUserParticipant: ChatParticipant = {
@@ -95,7 +95,7 @@ export default function MessagesPage() {
             name: `${otherUser.firstName} ${otherUser.lastName}`,
             email: otherUser.email,
             photoURL: otherUser.image || undefined,
-            role: otherUser.isAdmin ? "Administrator" : roles.find(r => r.id === otherUser.roleId)?.name || "Staff"
+            role: otherUser.isAdmin ? "Administrator" : roles.find((r) => r.id === otherUser.roleId)?.name || "Staff",
         };
 
         try {
@@ -112,9 +112,8 @@ export default function MessagesPage() {
     };
 
     // Filter staff for new chat
-    const filteredStaff = staff.filter(s =>
-        s.id !== profile?.uid &&
-        (`${s.firstName} ${s.lastName}`).toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredStaff = staff.filter(
+        (s) => s.id !== profile?.uid && `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Date formatting helper
@@ -180,7 +179,10 @@ export default function MessagesPage() {
                                                             {person.firstName} {person.lastName}
                                                         </div>
                                                         <div className="text-xs text-gray-500">
-                                                            {person.isAdmin ? "Administrator" : roles.find(r => r.id === person.roleId)?.name || "Staff"}
+                                                            {person.isAdmin
+                                                                ? "Administrator"
+                                                                : roles.find((r) => r.id === person.roleId)?.name ||
+                                                                  "Staff"}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -214,15 +216,12 @@ export default function MessagesPage() {
                     ) : conversations.length === 0 ? (
                         <div className="p-8 text-center text-gray-500">
                             <p>No conversations yet.</p>
-                            <Button
-                                variant="outline"
-                                className="mt-4"
-                                onClick={() => setNewChatOpen(true)}
-                            >
+                            <Button variant="outline" className="mt-4" onClick={() => setNewChatOpen(true)}>
                                 Start a conversation
                             </Button>
                         </div>
-                    ) : conversations.length > 0 && (
+                    ) : (
+                        conversations.length > 0 &&
                         conversations.map((convo) => {
                             const other = getOtherParticipant(convo);
                             if (!other) return null;
@@ -235,9 +234,7 @@ export default function MessagesPage() {
                                     onClick={() => setSelectedId(convo.id)}
                                     className={cn(
                                         "flex gap-3 p-3 cursor-pointer border-l-[6px] transition-colors hover:bg-gray-50",
-                                        isSelected
-                                            ? "border-[#01754F] bg-[#EDF3F8]"
-                                            : "border-transparent"
+                                        isSelected ? "border-[#01754F] bg-[#EDF3F8]" : "border-transparent"
                                     )}
                                 >
                                     <Avatar className="h-12 w-12 flex-shrink-0">
@@ -246,7 +243,14 @@ export default function MessagesPage() {
                                     </Avatar>
                                     <div className="flex-1 min-w-0 flex flex-col justify-center">
                                         <div className="flex justify-between items-baseline">
-                                            <span className={cn("text-[15px] truncate", unreadCount > 0 ? "font-bold text-gray-900" : "font-semibold text-gray-900")}>
+                                            <span
+                                                className={cn(
+                                                    "text-[15px] truncate",
+                                                    unreadCount > 0
+                                                        ? "font-bold text-gray-900"
+                                                        : "font-semibold text-gray-900"
+                                                )}
+                                            >
                                                 {other.name}
                                             </span>
                                             {convo.updatedAt && (
@@ -256,7 +260,12 @@ export default function MessagesPage() {
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center mt-0.5">
-                                            <p className={cn("text-sm truncate max-w-[200px]", unreadCount > 0 ? "font-semibold text-gray-900" : "text-gray-600")}>
+                                            <p
+                                                className={cn(
+                                                    "text-sm truncate max-w-[200px]",
+                                                    unreadCount > 0 ? "font-semibold text-gray-900" : "text-gray-600"
+                                                )}
+                                            >
                                                 {convo.lastMessage?.senderId === profile?.uid && "You: "}
                                                 {convo.lastMessage?.content || "No messages yet"}
                                             </p>
@@ -307,7 +316,9 @@ export default function MessagesPage() {
                             <div className="font-semibold text-sm text-gray-900 flex items-center gap-2">
                                 {otherParticipant.name} <span className="font-normal text-gray-500 text-xs">• 1st</span>
                             </div>
-                            <div className="text-xs text-gray-600 line-clamp-1">{otherParticipant.role || "Staff Member"}</div>
+                            <div className="text-xs text-gray-600 line-clamp-1">
+                                {otherParticipant.role || "Staff Member"}
+                            </div>
                         </div>
                     </div>
 
@@ -320,7 +331,9 @@ export default function MessagesPage() {
                                 <AvatarFallback>{otherParticipant.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="font-bold text-lg text-gray-900">{otherParticipant.name}</div>
-                            <div className="text-sm text-gray-600 text-center max-w-sm">{otherParticipant.role || "Staff Member"}</div>
+                            <div className="text-sm text-gray-600 text-center max-w-sm">
+                                {otherParticipant.role || "Staff Member"}
+                            </div>
                         </div>
 
                         {messagesLoading && messages.length === 0 ? (
@@ -356,14 +369,23 @@ export default function MessagesPage() {
                                                         <AvatarImage src={otherParticipant.photoURL} />
                                                     )}
                                                     <AvatarFallback>
-                                                        {msg.senderId === profile?.uid ? "ME" : otherParticipant.name.charAt(0)}
+                                                        {msg.senderId === profile?.uid
+                                                            ? "ME"
+                                                            : otherParticipant.name.charAt(0)}
                                                     </AvatarFallback>
                                                 </Avatar>
 
-                                                <div className={cn("flex flex-col", msg.senderId === profile?.uid ? "items-end" : "items-start")}>
+                                                <div
+                                                    className={cn(
+                                                        "flex flex-col",
+                                                        msg.senderId === profile?.uid ? "items-end" : "items-start"
+                                                    )}
+                                                >
                                                     <div className="flex items-baseline gap-2 mb-1">
                                                         <span className="font-bold text-sm text-gray-900">
-                                                            {msg.senderId === profile?.uid ? "You" : otherParticipant.name}
+                                                            {msg.senderId === profile?.uid
+                                                                ? "You"
+                                                                : otherParticipant.name}
                                                         </span>
                                                         <span className="text-xs text-gray-500">
                                                             {format(msg.timestamp, "h:mm a")}
@@ -402,7 +424,9 @@ export default function MessagesPage() {
                                     <Paperclip className="h-5 w-5" />
                                 </Button>
                                 <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-gray-100 rounded-full">
-                                    <span className="font-bold border border-gray-600 rounded px-0.5 text-[10px]">GIF</span>
+                                    <span className="font-bold border border-gray-600 rounded px-0.5 text-[10px]">
+                                        GIF
+                                    </span>
                                 </Button>
                                 <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-gray-100 rounded-full">
                                     <Smile className="h-5 w-5" />
@@ -417,7 +441,11 @@ export default function MessagesPage() {
                                 >
                                     Send
                                 </Button>
-                                <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-gray-100 rounded-full text-gray-600">
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 hover:bg-gray-100 rounded-full text-gray-600"
+                                >
                                     <MoreHorizontal className="h-5 w-5" />
                                 </Button>
                             </div>
@@ -429,10 +457,7 @@ export default function MessagesPage() {
                     <div className="text-center text-gray-500">
                         {conversations.length > 0 ? "Select a message to start reading" : "No selected conversation"}
                         <div className="mt-4">
-                            <Button
-                                variant="outline"
-                                onClick={() => setNewChatOpen(true)}
-                            >
+                            <Button variant="outline" onClick={() => setNewChatOpen(true)}>
                                 Start a conversation
                             </Button>
                         </div>

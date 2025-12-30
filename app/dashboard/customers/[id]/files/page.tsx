@@ -10,15 +10,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-    DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem,
-    DropdownMenuRadioGroup, DropdownMenuRadioItem
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuCheckboxItem,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import {
-    Search, Upload, MoreVertical, ChevronDown, LayoutList, Download,
-    ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, FileText, FileImage, FileVideo, File, Trash2,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-    Files, HardDrive, RefreshCw
+    Search,
+    Upload,
+    MoreVertical,
+    ChevronDown,
+    LayoutList,
+    Download,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
+    RotateCcw,
+    Loader2,
+    FileText,
+    FileImage,
+    FileVideo,
+    File,
+    Trash2,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+    Files,
+    HardDrive,
+    RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -28,7 +53,13 @@ type SortDirection = "asc" | "desc" | null;
 type RowDensity = "compact" | "comfortable";
 type ColumnKey = "name" | "size" | "type" | "createdAt";
 
-interface ColumnDef { key: ColumnKey; label: string; defaultVisible: boolean; sortable?: boolean; width?: number; }
+interface ColumnDef {
+    key: ColumnKey;
+    label: string;
+    defaultVisible: boolean;
+    sortable?: boolean;
+    width?: number;
+}
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
     { key: "name", label: "Name", defaultVisible: true, sortable: true, width: 250 },
@@ -42,25 +73,84 @@ const ROW_DENSITY_STYLES: Record<RowDensity, string> = { compact: "py-1 text-xs"
 // Highlight text component
 function HighlightText({ text, search }: { text: string; search: string }) {
     if (!search.trim() || !text) return <>{text}</>;
-    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
     const parts = text.split(regex);
-    return <>{parts.map((part, i) => regex.test(part) ? <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark> : <span key={i}>{part}</span>)}</>;
+    return (
+        <>
+            {parts.map((part, i) =>
+                regex.test(part) ? (
+                    <mark key={i} className="bg-yellow-200 px-0.5 rounded">
+                        {part}
+                    </mark>
+                ) : (
+                    <span key={i}>{part}</span>
+                )
+            )}
+        </>
+    );
 }
 
 // Pagination component
-function Pagination({ currentPage, totalPages, onPageChange, totalRecords, startRecord, endRecord }: {
-    currentPage: number; totalPages: number; onPageChange: (page: number) => void;
-    totalRecords: number; startRecord: number; endRecord: number;
+function Pagination({
+    currentPage,
+    totalPages,
+    onPageChange,
+    totalRecords,
+    startRecord,
+    endRecord,
+}: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    totalRecords: number;
+    startRecord: number;
+    endRecord: number;
 }) {
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Showing {startRecord} to {endRecord} of {totalRecords}</span>
+            <span>
+                Showing {startRecord} to {endRecord} of {totalRecords}
+            </span>
             <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(1)} disabled={currentPage === 1}><ChevronsLeft className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></Button>
-                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium">{currentPage} / {totalPages}</span>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-4 w-4" /></Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(1)}
+                    disabled={currentPage === 1}
+                >
+                    <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium">
+                    {currentPage} / {totalPages}
+                </span>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                >
+                    <ChevronsRight className="h-4 w-4" />
+                </Button>
             </div>
         </div>
     );
@@ -77,7 +167,10 @@ export default function FilesPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(25);
     const [columnVisibility, setColumnVisibility] = useState<Record<ColumnKey, boolean>>({
-        name: true, size: true, type: true, createdAt: true
+        name: true,
+        size: true,
+        type: true,
+        createdAt: true,
     });
     const [sortKey, setSortKey] = useState<ColumnKey | null>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -90,7 +183,9 @@ export default function FilesPage() {
         try {
             const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
             return format(date, "dd/MM/yyyy HH:mm");
-        } catch { return "-"; }
+        } catch {
+            return "-";
+        }
     };
 
     const formatFileSize = (bytes: number) => {
@@ -111,7 +206,7 @@ export default function FilesPage() {
     // Sort handler
     const handleSort = (key: ColumnKey) => {
         if (sortKey === key) {
-            setSortDirection(prev => prev === "asc" ? "desc" : prev === "desc" ? null : "asc");
+            setSortDirection((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"));
             if (sortDirection === "desc") setSortKey(null);
         } else {
             setSortKey(key);
@@ -120,27 +215,39 @@ export default function FilesPage() {
     };
 
     // Toggle column
-    const toggleColumn = (key: ColumnKey) => setColumnVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+    const toggleColumn = (key: ColumnKey) => setColumnVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
 
     // Process files
     const processedFiles = useMemo(() => {
         let result = [...files];
         if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
-            result = result.filter(f =>
-                f.name.toLowerCase().includes(lowerQuery) ||
-                f.type.toLowerCase().includes(lowerQuery)
+            result = result.filter(
+                (f) => f.name.toLowerCase().includes(lowerQuery) || f.type.toLowerCase().includes(lowerQuery)
             );
         }
         if (sortKey && sortDirection) {
             result.sort((a, b) => {
                 let aVal: any, bVal: any;
                 switch (sortKey) {
-                    case "name": aVal = a.name || ""; bVal = b.name || ""; break;
-                    case "size": aVal = a.size || 0; bVal = b.size || 0; break;
-                    case "type": aVal = a.type || ""; bVal = b.type || ""; break;
-                    case "createdAt": aVal = a.createdAt?.toMillis?.() || 0; bVal = b.createdAt?.toMillis?.() || 0; break;
-                    default: return 0;
+                    case "name":
+                        aVal = a.name || "";
+                        bVal = b.name || "";
+                        break;
+                    case "size":
+                        aVal = a.size || 0;
+                        bVal = b.size || 0;
+                        break;
+                    case "type":
+                        aVal = a.type || "";
+                        bVal = b.type || "";
+                        break;
+                    case "createdAt":
+                        aVal = a.createdAt?.toMillis?.() || 0;
+                        bVal = b.createdAt?.toMillis?.() || 0;
+                        break;
+                    default:
+                        return 0;
                 }
                 if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
                 if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
@@ -165,38 +272,62 @@ export default function FilesPage() {
     const endRecord = Math.min(startIndex + recordsPerPage, processedFiles.length);
 
     // Selection handlers
-    const handleSelectAll = () => setSelectedIds(processedFiles.map(f => f.id));
+    const handleSelectAll = () => setSelectedIds(processedFiles.map((f) => f.id));
     const handleClearSelection = () => setSelectedIds([]);
-    const handleSelectPage = () => setSelectedIds(paginatedFiles.map(f => f.id));
-    const toggleSelect = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-    const isAllSelected = paginatedFiles.length > 0 && paginatedFiles.every(f => selectedIds.includes(f.id));
-    const isSomeSelected = paginatedFiles.some(f => selectedIds.includes(f.id)) && !isAllSelected;
+    const handleSelectPage = () => setSelectedIds(paginatedFiles.map((f) => f.id));
+    const toggleSelect = (id: string) =>
+        setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+    const isAllSelected = paginatedFiles.length > 0 && paginatedFiles.every((f) => selectedIds.includes(f.id));
+    const isSomeSelected = paginatedFiles.some((f) => selectedIds.includes(f.id)) && !isAllSelected;
 
     // Export
     const handleExport = () => {
-        const dataToExport = selectedIds.length > 0 ? files.filter(f => selectedIds.includes(f.id)) : processedFiles;
-        const csv = ["Name,Size,Type,Uploaded At,URL", ...dataToExport.map(f => `"${f.name}","${f.size}","${f.type}","${formatDate(f.createdAt)}","${f.url}"`)].join("\n");
+        const dataToExport = selectedIds.length > 0 ? files.filter((f) => selectedIds.includes(f.id)) : processedFiles;
+        const csv = [
+            "Name,Size,Type,Uploaded At,URL",
+            ...dataToExport.map((f) => `"${f.name}","${f.size}","${f.type}","${formatDate(f.createdAt)}","${f.url}"`),
+        ].join("\n");
         const blob = new Blob([csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a"); a.href = url; a.download = "files-export.csv"; a.click();
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "files-export.csv";
+        a.click();
         URL.revokeObjectURL(url);
         toast.success("Exported successfully");
     };
 
     // Keyboard navigation
-    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-        if (focusedRowIndex === null || paginatedFiles.length === 0) return;
-        switch (e.key) {
-            case "ArrowDown": e.preventDefault(); setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedFiles.length - 1)); break;
-            case "ArrowUp": e.preventDefault(); setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0)); break;
-            case " ": e.preventDefault(); toggleSelect(paginatedFiles[focusedRowIndex].id); break;
-        }
-    }, [focusedRowIndex, paginatedFiles]);
+    const handleKeyDown = useCallback(
+        (e: KeyboardEvent<HTMLDivElement>) => {
+            if (focusedRowIndex === null || paginatedFiles.length === 0) return;
+            switch (e.key) {
+                case "ArrowDown":
+                    e.preventDefault();
+                    setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedFiles.length - 1));
+                    break;
+                case "ArrowUp":
+                    e.preventDefault();
+                    setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0));
+                    break;
+                case " ":
+                    e.preventDefault();
+                    toggleSelect(paginatedFiles[focusedRowIndex].id);
+                    break;
+            }
+        },
+        [focusedRowIndex, paginatedFiles]
+    );
 
-    const visibleColumns = DEFAULT_COLUMNS.filter(c => columnVisibility[c.key]);
+    const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]);
 
     if (customerLoading || filesLoading) {
-        return <div className="p-8 flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />Loading files...</div>;
+        return (
+            <div className="p-8 flex items-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Loading files...
+            </div>
+        );
     }
 
     return (
@@ -205,7 +336,8 @@ export default function FilesPage() {
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Files</h1>
                     <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                        <Upload className="mr-2 h-4 w-4" />Upload File
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload File
                     </Button>
                 </div>
 
@@ -232,40 +364,84 @@ export default function FilesPage() {
                     {/* Actions Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><MoreVertical className="h-4 w-4 mr-1" />Actions<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                            <Button variant="outline">
+                                <MoreVertical className="h-4 w-4 mr-1" />
+                                Actions
+                                <ChevronDown className="ml-1 h-4 w-4" />
+                            </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            <DropdownMenuItem onClick={handleExport}><Download className="h-4 w-4 mr-2" />Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleExport}>
+                                <Download className="h-4 w-4 mr-2" />
+                                Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
 
                     {/* Display Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><LayoutList className="h-4 w-4 mr-1" />Display<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                            <Button variant="outline">
+                                <LayoutList className="h-4 w-4 mr-1" />
+                                Display
+                                <ChevronDown className="ml-1 h-4 w-4" />
+                            </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-48">
                             <DropdownMenuLabel>Row Density</DropdownMenuLabel>
-                            <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
+                            <DropdownMenuRadioGroup
+                                value={rowDensity}
+                                onValueChange={(v) => setRowDensity(v as RowDensity)}
+                            >
                                 <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuLabel>Columns</DropdownMenuLabel>
-                            {DEFAULT_COLUMNS.map(col => (
-                                <DropdownMenuCheckboxItem key={col.key} checked={columnVisibility[col.key]} onCheckedChange={() => toggleColumn(col.key)}>{col.label}</DropdownMenuCheckboxItem>
+                            {DEFAULT_COLUMNS.map((col) => (
+                                <DropdownMenuCheckboxItem
+                                    key={col.key}
+                                    checked={columnVisibility[col.key]}
+                                    onCheckedChange={() => toggleColumn(col.key)}
+                                >
+                                    {col.label}
+                                </DropdownMenuCheckboxItem>
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
 
                     {/* Reset */}
-                    <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setSearchQuery(""); setSortKey(null); setSortDirection(null); setSelectedIds([]); }}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Reset filters</TooltipContent></Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                    setSearchQuery("");
+                                    setSortKey(null);
+                                    setSortDirection(null);
+                                    setSelectedIds([]);
+                                }}
+                            >
+                                <RotateCcw className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Reset filters</TooltipContent>
+                    </Tooltip>
 
                     <div className="flex-1" />
 
                     {/* Records Per Page */}
-                    <Select value={String(recordsPerPage)} onValueChange={(v) => { setRecordsPerPage(Number(v)); setCurrentPage(1); }}>
-                        <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
+                    <Select
+                        value={String(recordsPerPage)}
+                        onValueChange={(v) => {
+                            setRecordsPerPage(Number(v));
+                            setCurrentPage(1);
+                        }}
+                    >
+                        <SelectTrigger className="w-[70px]">
+                            <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="10">10</SelectItem>
                             <SelectItem value="25">25</SelectItem>
@@ -277,22 +453,44 @@ export default function FilesPage() {
                     {/* Search */}
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search files..." className="pl-9" autoComplete="new-password" name="files-search-nofill" data-lpignore="true" data-1p-ignore="true" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                        <Input
+                            placeholder="Search files..."
+                            className="pl-9"
+                            autoComplete="new-password"
+                            name="files-search-nofill"
+                            data-lpignore="true"
+                            data-1p-ignore="true"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
                 </div>
 
                 {/* Top Pagination */}
                 {processedFiles.length > 0 && (
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedFiles.length} startRecord={startRecord} endRecord={endRecord} />
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        totalRecords={processedFiles.length}
+                        startRecord={startRecord}
+                        endRecord={endRecord}
+                    />
                 )}
 
                 {/* Selection Banner */}
                 {selectedIds.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
-                        <span className="text-blue-800 text-sm font-medium">{selectedIds.length} file{selectedIds.length > 1 ? "s" : ""} selected</span>
+                        <span className="text-blue-800 text-sm font-medium">
+                            {selectedIds.length} file{selectedIds.length > 1 ? "s" : ""} selected
+                        </span>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={handleSelectAll}>Select All ({processedFiles.length})</Button>
-                            <Button variant="outline" size="sm" onClick={handleClearSelection}>Clear</Button>
+                            <Button variant="outline" size="sm" onClick={handleSelectAll}>
+                                Select All ({processedFiles.length})
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={handleClearSelection}>
+                                Clear
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -303,49 +501,125 @@ export default function FilesPage() {
                         <TableHeader>
                             <TableRow className="bg-gray-50/80">
                                 <TableHead className="w-12 bg-gray-100/50">
-                                    <Checkbox checked={isAllSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={(checked) => { if (checked) handleSelectPage(); else handleClearSelection(); }} />
+                                    <Checkbox
+                                        checked={isAllSelected}
+                                        ref={(el) => {
+                                            if (el) (el as any).indeterminate = isSomeSelected;
+                                        }}
+                                        onCheckedChange={(checked) => {
+                                            if (checked) handleSelectPage();
+                                            else handleClearSelection();
+                                        }}
+                                    />
                                 </TableHead>
-                                {visibleColumns.map(col => (
-                                    <TableHead key={col.key} className="font-semibold text-gray-900 bg-gray-100/50" style={{ minWidth: col.width }}>
+                                {visibleColumns.map((col) => (
+                                    <TableHead
+                                        key={col.key}
+                                        className="font-semibold text-gray-900 bg-gray-100/50"
+                                        style={{ minWidth: col.width }}
+                                    >
                                         {col.sortable ? (
-                                            <Button variant="ghost" className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200" onClick={() => handleSort(col.key)}>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200"
+                                                onClick={() => handleSort(col.key)}
+                                            >
                                                 {col.label}
-                                                {sortKey === col.key ? (sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />) : <ArrowUpDown className="ml-1 h-4 w-4 opacity-40" />}
+                                                {sortKey === col.key ? (
+                                                    sortDirection === "asc" ? (
+                                                        <ArrowUp className="ml-1 h-4 w-4" />
+                                                    ) : (
+                                                        <ArrowDown className="ml-1 h-4 w-4" />
+                                                    )
+                                                ) : (
+                                                    <ArrowUpDown className="ml-1 h-4 w-4 opacity-40" />
+                                                )}
                                             </Button>
-                                        ) : col.label}
+                                        ) : (
+                                            col.label
+                                        )}
                                     </TableHead>
                                 ))}
-                                <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">Actions</TableHead>
+                                <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {paginatedFiles.length === 0 ? (
-                                <TableRow><TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-gray-500">{searchQuery ? "No files match your search." : `No files found for ${customer?.company || "this customer"}.`}</TableCell></TableRow>
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={visibleColumns.length + 2}
+                                        className="text-center py-8 text-gray-500"
+                                    >
+                                        {searchQuery
+                                            ? "No files match your search."
+                                            : `No files found for ${customer?.company || "this customer"}.`}
+                                    </TableCell>
+                                </TableRow>
                             ) : (
                                 paginatedFiles.map((file, index) => (
-                                    <TableRow key={file.id} className={`group hover:bg-gray-50 ${focusedRowIndex === index ? "bg-blue-50" : ""} ${selectedIds.includes(file.id) ? "bg-blue-50/50" : ""}`} onClick={() => setFocusedRowIndex(index)}>
+                                    <TableRow
+                                        key={file.id}
+                                        className={`group hover:bg-gray-50 ${focusedRowIndex === index ? "bg-blue-50" : ""} ${selectedIds.includes(file.id) ? "bg-blue-50/50" : ""}`}
+                                        onClick={() => setFocusedRowIndex(index)}
+                                    >
                                         <TableCell className={ROW_DENSITY_STYLES[rowDensity]}>
-                                            <Checkbox checked={selectedIds.includes(file.id)} onCheckedChange={() => toggleSelect(file.id)} onClick={(e) => e.stopPropagation()} />
+                                            <Checkbox
+                                                checked={selectedIds.includes(file.id)}
+                                                onCheckedChange={() => toggleSelect(file.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
                                         </TableCell>
-                                        {visibleColumns.map(col => (
+                                        {visibleColumns.map((col) => (
                                             <TableCell key={col.key} className={ROW_DENSITY_STYLES[rowDensity]}>
                                                 {col.key === "name" && (
                                                     <div className="flex items-center gap-2">
                                                         {getFileIcon(file.type)}
-                                                        <a href={file.url} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline">
+                                                        <a
+                                                            href={file.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="font-medium text-blue-600 hover:underline"
+                                                        >
                                                             <HighlightText text={file.name} search={searchQuery} />
                                                         </a>
                                                     </div>
                                                 )}
-                                                {col.key === "size" && <span className="text-gray-500">{formatFileSize(file.size)}</span>}
-                                                {col.key === "type" && <span className="text-gray-500">{file.type}</span>}
+                                                {col.key === "size" && (
+                                                    <span className="text-gray-500">{formatFileSize(file.size)}</span>
+                                                )}
+                                                {col.key === "type" && (
+                                                    <span className="text-gray-500">{file.type}</span>
+                                                )}
                                                 {col.key === "createdAt" && <span>{formatDate(file.createdAt)}</span>}
                                             </TableCell>
                                         ))}
                                         <TableCell className={`${ROW_DENSITY_STYLES[rowDensity]} overflow-visible`}>
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Tooltip><TooltipTrigger asChild><a href={file.url} download><Button variant="ghost" size="icon" className="h-7 w-7"><Download className="h-4 w-4 text-gray-500" /></Button></a></TooltipTrigger><TooltipContent>Download</TooltipContent></Tooltip>
-                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteFile(file.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button></TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <a href={file.url} download>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                                                                <Download className="h-4 w-4 text-gray-500" />
+                                                            </Button>
+                                                        </a>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Download</TooltipContent>
+                                                </Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7"
+                                                            onClick={() => deleteFile(file.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-red-500" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Delete</TooltipContent>
+                                                </Tooltip>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -357,7 +631,14 @@ export default function FilesPage() {
 
                 {/* Bottom Pagination */}
                 {processedFiles.length > 0 && (
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedFiles.length} startRecord={startRecord} endRecord={endRecord} />
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        totalRecords={processedFiles.length}
+                        startRecord={startRecord}
+                        endRecord={endRecord}
+                    />
                 )}
             </div>
         </TooltipProvider>

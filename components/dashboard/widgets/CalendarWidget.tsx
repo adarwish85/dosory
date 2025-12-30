@@ -13,7 +13,7 @@ import {
     addMonths,
     subMonths,
     startOfWeek,
-    endOfWeek
+    endOfWeek,
 } from "date-fns";
 import type { WidgetSettings, DataDensity } from "@/lib/hooks/use-dashboard-layout";
 
@@ -46,9 +46,7 @@ export function CalendarWidget({ settings, density }: CalendarWidgetProps) {
                 >
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-sm font-semibold text-gray-900">
-                    {format(currentMonth, "MMMM yyyy")}
-                </span>
+                <span className="text-sm font-semibold text-gray-900">{format(currentMonth, "MMMM yyyy")}</span>
                 <Button
                     variant="ghost"
                     size="icon"

@@ -67,10 +67,7 @@ export default function OnboardingTooltip({
             {visible && (
                 <div
                     ref={tooltipRef}
-                    className={cn(
-                        "absolute z-50 animate-in fade-in-0 zoom-in-95",
-                        positionClasses[position]
-                    )}
+                    className={cn("absolute z-50 animate-in fade-in-0 zoom-in-95", positionClasses[position])}
                 >
                     <div className="bg-blue-600 text-white px-4 py-3 rounded-lg shadow-xl max-w-xs">
                         <div className="flex items-start gap-2">
@@ -78,20 +75,12 @@ export default function OnboardingTooltip({
                             <div className="flex-1">
                                 <p className="text-sm">{content}</p>
                             </div>
-                            <button
-                                onClick={handleDismiss}
-                                className="p-1 hover:bg-white/20 rounded"
-                            >
+                            <button onClick={handleDismiss} className="p-1 hover:bg-white/20 rounded">
                                 <X className="h-3 w-3" />
                             </button>
                         </div>
                     </div>
-                    <div
-                        className={cn(
-                            "absolute w-0 h-0 border-[6px]",
-                            arrowClasses[position]
-                        )}
-                    />
+                    <div className={cn("absolute w-0 h-0 border-[6px]", arrowClasses[position])} />
                 </div>
             )}
         </div>

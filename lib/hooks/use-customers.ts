@@ -90,9 +90,7 @@ export function useCustomers(options: UseCustomersOptions = {}) {
 
         setLoading(true);
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (status !== "all") {
             constraints.push(where("status", "==", status));
@@ -120,7 +118,7 @@ export function useCustomers(options: UseCustomersOptions = {}) {
                 // Update cursor for next page
                 if (snapshot.docs.length > 0) {
                     const lastDoc = snapshot.docs[snapshot.docs.length - 1];
-                    setCursors(prev => ({ ...prev, [page]: lastDoc }));
+                    setCursors((prev) => ({ ...prev, [page]: lastDoc }));
                 }
 
                 setCustomers(data);
@@ -166,15 +164,12 @@ export function useCustomers(options: UseCustomersOptions = {}) {
         [profile?.orgId, profile?.uid, logActivity]
     );
 
-    const updateCustomer = useCallback(
-        async (id: string, data: Partial<CustomerFormData>): Promise<void> => {
-            await updateDoc(doc(db, "customers", id), {
-                ...data,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateCustomer = useCallback(async (id: string, data: Partial<CustomerFormData>): Promise<void> => {
+        await updateDoc(doc(db, "customers", id), {
+            ...data,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     const deleteCustomer = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "customers", id));
@@ -251,9 +246,7 @@ export function useContacts(options: UseContactsOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (customerId) {
             constraints.push(where("customerId", "==", customerId));
@@ -304,15 +297,12 @@ export function useContacts(options: UseContactsOptions = {}) {
         [profile?.orgId, profile?.uid]
     );
 
-    const updateContact = useCallback(
-        async (id: string, data: Partial<ContactFormData>): Promise<void> => {
-            await updateDoc(doc(db, "contacts", id), {
-                ...data,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateContact = useCallback(async (id: string, data: Partial<ContactFormData>): Promise<void> => {
+        await updateDoc(doc(db, "contacts", id), {
+            ...data,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     const deleteContact = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "contacts", id));

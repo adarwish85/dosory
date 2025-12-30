@@ -23,7 +23,6 @@ export default function StatementPage() {
 
             {/* Statement Container (The Paper) */}
             <div className="rounded-md border bg-white shadow-sm">
-
                 {/* Control Bar */}
                 <div className="p-4 border-b flex items-center justify-between bg-gray-50/30">
                     <Select defaultValue="month">
@@ -52,7 +51,6 @@ export default function StatementPage() {
 
                 {/* Statement Content */}
                 <div className="p-8 space-y-8">
-
                     {/* Header */}
                     <div className="flex justify-between items-start">
                         <div className="invisible" /> {/* Spacer for alignment if logo needed later */}
@@ -69,8 +67,14 @@ export default function StatementPage() {
                         <div className="space-y-1">
                             <h3 className="text-sm font-semibold text-gray-900">To:</h3>
                             <p className="text-sm font-bold text-gray-900">{customerName}</p>
-                            {customer?.address?.street && <p className="text-sm text-gray-600">{customer.address.street}</p>}
-                            {customer?.address?.city && <p className="text-sm text-gray-600">{customer.address.city}, {customer.address.state}</p>}
+                            {customer?.address?.street && (
+                                <p className="text-sm text-gray-600">{customer.address.street}</p>
+                            )}
+                            {customer?.address?.city && (
+                                <p className="text-sm text-gray-600">
+                                    {customer.address.city}, {customer.address.state}
+                                </p>
+                            )}
                         </div>
                         <div className="text-right space-y-1">
                             <h3 className="text-xl font-bold text-gray-900">Account Summary</h3>
@@ -135,7 +139,6 @@ export default function StatementPage() {
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

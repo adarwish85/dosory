@@ -121,23 +121,16 @@ export function parseCSV(file: File): Promise<ParsedData> {
 }
 
 // Auto-detect column mappings based on header names
-export function autoDetectMappings(
-    headers: string[],
-    moduleConfig: ModuleConfig
-): ColumnMapping[] {
+export function autoDetectMappings(headers: string[], moduleConfig: ModuleConfig): ColumnMapping[] {
     const mappings: ColumnMapping[] = [];
 
     for (const field of moduleConfig.fields) {
         // Try exact match first
-        let matchedHeader = headers.find(
-            (h) => h.toLowerCase() === field.field.toLowerCase()
-        );
+        let matchedHeader = headers.find((h) => h.toLowerCase() === field.field.toLowerCase());
 
         // Try label match
         if (!matchedHeader) {
-            matchedHeader = headers.find(
-                (h) => h.toLowerCase() === field.label.toLowerCase()
-            );
+            matchedHeader = headers.find((h) => h.toLowerCase() === field.label.toLowerCase());
         }
 
         // Try partial match
@@ -161,10 +154,7 @@ export function autoDetectMappings(
 }
 
 // Validate a single row of data
-export function validateRow(
-    row: Record<string, any>,
-    moduleConfig: ModuleConfig
-): ValidationError[] {
+export function validateRow(row: Record<string, any>, moduleConfig: ModuleConfig): ValidationError[] {
     const errors: ValidationError[] = [];
 
     for (const field of moduleConfig.fields) {
@@ -219,7 +209,7 @@ export function transformRow(
 
     for (const mapping of mappings) {
         const field = moduleConfig.fields.find((f) => f.field === mapping.targetField);
-        let value = sourceRow[mapping.sourceColumn];
+        const value = sourceRow[mapping.sourceColumn];
 
         if (field && value !== undefined && value !== null) {
             // Apply type transformations
@@ -229,9 +219,7 @@ export function transformRow(
                     break;
                 case "boolean":
                     result[mapping.targetField] =
-                        value.toLowerCase() === "true" ||
-                        value.toLowerCase() === "yes" ||
-                        value === "1";
+                        value.toLowerCase() === "true" || value.toLowerCase() === "yes" || value === "1";
                     break;
                 default:
                     result[mapping.targetField] = value.trim();

@@ -8,30 +8,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
-    ArrowLeft, Save, Loader2, Plus, Trash2, GripVertical, Eye,
-    ChevronUp, ChevronDown, Settings, ExternalLink,
-    Layout, Type, BarChart3, MessageSquare, HelpCircle, Megaphone, DollarSign, Zap
+    ArrowLeft,
+    Save,
+    Loader2,
+    Plus,
+    Trash2,
+    GripVertical,
+    Eye,
+    ChevronUp,
+    ChevronDown,
+    Settings,
+    ExternalLink,
+    Layout,
+    Type,
+    BarChart3,
+    MessageSquare,
+    HelpCircle,
+    Megaphone,
+    DollarSign,
+    Zap,
 } from "lucide-react";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-} from "@/components/ui/sheet";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePage, useSiteDesign } from "@/lib/hooks/use-site-pages";
 import type { Block, BlockType, SitePage } from "@/lib/types/site-builder";
 import { createBlock, defaultBlockData } from "@/lib/types/site-builder";
@@ -50,8 +49,18 @@ const blockTypes: { type: BlockType; label: string; icon: React.ElementType; des
 
 // Icon options for feature/stat blocks
 const iconOptions = [
-    "Users", "FileText", "BarChart3", "FolderKanban", "Headphones",
-    "CreditCard", "Zap", "Target", "TrendingUp", "Building2", "Shield", "Globe"
+    "Users",
+    "FileText",
+    "BarChart3",
+    "FolderKanban",
+    "Headphones",
+    "CreditCard",
+    "Zap",
+    "Target",
+    "TrendingUp",
+    "Building2",
+    "Shield",
+    "Globe",
 ];
 
 interface PageProps {
@@ -179,27 +188,21 @@ export default function BlockEditorPage({ params }: PageProps) {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        {hasChanges && (
-                            <span className="text-sm text-orange-600">Unsaved changes</span>
-                        )}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(`/${page.slug}`, "_blank")}
-                        >
+                        {hasChanges && <span className="text-sm text-orange-600">Unsaved changes</span>}
+                        <Button variant="outline" size="sm" onClick={() => window.open(`/${page.slug}`, "_blank")}>
                             <Eye className="h-4 w-4 mr-1" />
                             Preview
                         </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowSettingsSheet(true)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => setShowSettingsSheet(true)}>
                             <Settings className="h-4 w-4 mr-1" />
                             Settings
                         </Button>
                         <Button size="sm" onClick={handleSave} disabled={saving || !hasChanges}>
-                            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+                            {saving ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            ) : (
+                                <Save className="h-4 w-4 mr-1" />
+                            )}
                             Save
                         </Button>
                     </div>
@@ -231,10 +234,11 @@ export default function BlockEditorPage({ params }: PageProps) {
                                 return (
                                     <div
                                         key={block.id}
-                                        className={`group flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${selectedBlockId === block.id
+                                        className={`group flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
+                                            selectedBlockId === block.id
                                                 ? "bg-blue-50 border-blue-200"
                                                 : "bg-white border-gray-200 hover:border-gray-300"
-                                            }`}
+                                        }`}
                                         onClick={() => setSelectedBlockId(block.id)}
                                     >
                                         <GripVertical className="h-4 w-4 text-gray-400 flex-shrink-0" />
@@ -244,21 +248,30 @@ export default function BlockEditorPage({ params }: PageProps) {
                                         </span>
                                         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); handleMoveBlock(block.id, "up"); }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleMoveBlock(block.id, "up");
+                                                }}
                                                 disabled={index === 0}
                                                 className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
                                             >
                                                 <ChevronUp className="h-3 w-3" />
                                             </button>
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); handleMoveBlock(block.id, "down"); }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleMoveBlock(block.id, "down");
+                                                }}
                                                 disabled={index === blocks.length - 1}
                                                 className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
                                             >
                                                 <ChevronDown className="h-3 w-3" />
                                             </button>
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); handleRemoveBlock(block.id); }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRemoveBlock(block.id);
+                                                }}
                                                 className="p-1 text-red-400 hover:text-red-600"
                                             >
                                                 <Trash2 className="h-3 w-3" />
@@ -285,7 +298,11 @@ export default function BlockEditorPage({ params }: PageProps) {
                                 <Layout className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                                 <p>Select a block to edit</p>
                                 {blocks.length === 0 && (
-                                    <Button variant="outline" className="mt-4" onClick={() => setShowAddBlockDialog(true)}>
+                                    <Button
+                                        variant="outline"
+                                        className="mt-4"
+                                        onClick={() => setShowAddBlockDialog(true)}
+                                    >
                                         <Plus className="h-4 w-4 mr-2" />
                                         Add Block
                                     </Button>
@@ -447,40 +464,77 @@ function HeroEditor({ data, onUpdate }: { data: any; onUpdate: (d: any) => void 
             <h3 className="font-semibold text-gray-900 text-lg">Hero Section</h3>
             <div>
                 <Label>Badge Text</Label>
-                <Input value={data.badge || ""} onChange={(e) => onUpdate({ ...data, badge: e.target.value })} className="mt-1.5" placeholder="e.g., #1 Rated CRM" />
+                <Input
+                    value={data.badge || ""}
+                    onChange={(e) => onUpdate({ ...data, badge: e.target.value })}
+                    className="mt-1.5"
+                    placeholder="e.g., #1 Rated CRM"
+                />
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label>Headline</Label>
-                    <Input value={data.headline || ""} onChange={(e) => onUpdate({ ...data, headline: e.target.value })} className="mt-1.5" />
+                    <Input
+                        value={data.headline || ""}
+                        onChange={(e) => onUpdate({ ...data, headline: e.target.value })}
+                        className="mt-1.5"
+                    />
                 </div>
                 <div>
                     <Label>Headline Highlight</Label>
-                    <Input value={data.headlineHighlight || ""} onChange={(e) => onUpdate({ ...data, headlineHighlight: e.target.value })} className="mt-1.5" placeholder="Colored text" />
+                    <Input
+                        value={data.headlineHighlight || ""}
+                        onChange={(e) => onUpdate({ ...data, headlineHighlight: e.target.value })}
+                        className="mt-1.5"
+                        placeholder="Colored text"
+                    />
                 </div>
             </div>
             <div>
                 <Label>Subheadline</Label>
-                <Textarea value={data.subheadline || ""} onChange={(e) => onUpdate({ ...data, subheadline: e.target.value })} className="mt-1.5" rows={3} />
+                <Textarea
+                    value={data.subheadline || ""}
+                    onChange={(e) => onUpdate({ ...data, subheadline: e.target.value })}
+                    className="mt-1.5"
+                    rows={3}
+                />
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label>Primary CTA Text</Label>
-                    <Input value={data.ctaPrimaryText || ""} onChange={(e) => onUpdate({ ...data, ctaPrimaryText: e.target.value })} className="mt-1.5" />
+                    <Input
+                        value={data.ctaPrimaryText || ""}
+                        onChange={(e) => onUpdate({ ...data, ctaPrimaryText: e.target.value })}
+                        className="mt-1.5"
+                    />
                 </div>
                 <div>
                     <Label>Primary CTA Link</Label>
-                    <Input value={data.ctaPrimaryLink || ""} onChange={(e) => onUpdate({ ...data, ctaPrimaryLink: e.target.value })} className="mt-1.5" placeholder="/signup" />
+                    <Input
+                        value={data.ctaPrimaryLink || ""}
+                        onChange={(e) => onUpdate({ ...data, ctaPrimaryLink: e.target.value })}
+                        className="mt-1.5"
+                        placeholder="/signup"
+                    />
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label>Secondary CTA Text</Label>
-                    <Input value={data.ctaSecondaryText || ""} onChange={(e) => onUpdate({ ...data, ctaSecondaryText: e.target.value })} className="mt-1.5" />
+                    <Input
+                        value={data.ctaSecondaryText || ""}
+                        onChange={(e) => onUpdate({ ...data, ctaSecondaryText: e.target.value })}
+                        className="mt-1.5"
+                    />
                 </div>
                 <div>
                     <Label>Secondary CTA Link</Label>
-                    <Input value={data.ctaSecondaryLink || ""} onChange={(e) => onUpdate({ ...data, ctaSecondaryLink: e.target.value })} className="mt-1.5" placeholder="#features" />
+                    <Input
+                        value={data.ctaSecondaryLink || ""}
+                        onChange={(e) => onUpdate({ ...data, ctaSecondaryLink: e.target.value })}
+                        className="mt-1.5"
+                        placeholder="#features"
+                    />
                 </div>
             </div>
         </div>
@@ -505,12 +559,21 @@ function FeaturesEditor({ data, onUpdate }: { data: any; onUpdate: (d: any) => v
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label>Section Title</Label>
-                    <Input value={data.sectionTitle || ""} onChange={(e) => onUpdate({ ...data, sectionTitle: e.target.value })} className="mt-1.5" />
+                    <Input
+                        value={data.sectionTitle || ""}
+                        onChange={(e) => onUpdate({ ...data, sectionTitle: e.target.value })}
+                        className="mt-1.5"
+                    />
                 </div>
                 <div>
                     <Label>Columns</Label>
-                    <Select value={String(data.columns || 3)} onValueChange={(v) => onUpdate({ ...data, columns: Number(v) })}>
-                        <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                    <Select
+                        value={String(data.columns || 3)}
+                        onValueChange={(v) => onUpdate({ ...data, columns: Number(v) })}
+                    >
+                        <SelectTrigger className="mt-1.5">
+                            <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="2">2 Columns</SelectItem>
                             <SelectItem value="3">3 Columns</SelectItem>
@@ -521,26 +584,51 @@ function FeaturesEditor({ data, onUpdate }: { data: any; onUpdate: (d: any) => v
             </div>
             <div>
                 <Label>Section Subtitle</Label>
-                <Input value={data.sectionSubtitle || ""} onChange={(e) => onUpdate({ ...data, sectionSubtitle: e.target.value })} className="mt-1.5" />
+                <Input
+                    value={data.sectionSubtitle || ""}
+                    onChange={(e) => onUpdate({ ...data, sectionSubtitle: e.target.value })}
+                    className="mt-1.5"
+                />
             </div>
             <div className="flex items-center justify-between">
                 <Label>Feature Items</Label>
-                <Button size="sm" variant="outline" onClick={addItem}><Plus className="h-3 w-3 mr-1" />Add</Button>
+                <Button size="sm" variant="outline" onClick={addItem}>
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add
+                </Button>
             </div>
             <div className="space-y-3">
                 {items.map((item: any, i: number) => (
                     <div key={i} className="p-3 bg-gray-50 rounded-lg border space-y-2">
                         <div className="flex items-center justify-between">
                             <span className="text-xs text-gray-500">Feature {i + 1}</span>
-                            <button onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></button>
+                            <button onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600">
+                                <Trash2 className="h-3 w-3" />
+                            </button>
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                             <Select value={item.icon || "Zap"} onValueChange={(v) => updateItem(i, "icon", v)}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>{iconOptions.map((ic) => <SelectItem key={ic} value={ic}>{ic}</SelectItem>)}</SelectContent>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {iconOptions.map((ic) => (
+                                        <SelectItem key={ic} value={ic}>
+                                            {ic}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
                             </Select>
-                            <Input value={item.title || ""} onChange={(e) => updateItem(i, "title", e.target.value)} placeholder="Title" />
-                            <Input value={item.description || ""} onChange={(e) => updateItem(i, "description", e.target.value)} placeholder="Description" />
+                            <Input
+                                value={item.title || ""}
+                                onChange={(e) => updateItem(i, "title", e.target.value)}
+                                placeholder="Title"
+                            />
+                            <Input
+                                value={item.description || ""}
+                                onChange={(e) => updateItem(i, "description", e.target.value)}
+                                placeholder="Description"
+                            />
                         </div>
                     </div>
                 ))}
@@ -566,8 +654,13 @@ function StatsEditor({ data, onUpdate }: { data: any; onUpdate: (d: any) => void
             <h3 className="font-semibold text-gray-900 text-lg">Stats Section</h3>
             <div>
                 <Label>Background</Label>
-                <Select value={data.backgroundColor || "primary"} onValueChange={(v) => onUpdate({ ...data, backgroundColor: v })}>
-                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                <Select
+                    value={data.backgroundColor || "primary"}
+                    onValueChange={(v) => onUpdate({ ...data, backgroundColor: v })}
+                >
+                    <SelectTrigger className="mt-1.5">
+                        <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="primary">Primary Color</SelectItem>
                         <SelectItem value="secondary">Secondary Color</SelectItem>
@@ -578,20 +671,41 @@ function StatsEditor({ data, onUpdate }: { data: any; onUpdate: (d: any) => void
             </div>
             <div className="flex items-center justify-between">
                 <Label>Stat Items</Label>
-                <Button size="sm" variant="outline" onClick={addItem}><Plus className="h-3 w-3 mr-1" />Add</Button>
+                <Button size="sm" variant="outline" onClick={addItem}>
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add
+                </Button>
             </div>
             <div className="grid grid-cols-2 gap-3">
                 {items.map((item: any, i: number) => (
                     <div key={i} className="p-3 bg-gray-50 rounded-lg border space-y-2">
                         <div className="flex items-center justify-between">
                             <span className="text-xs text-gray-500">Stat {i + 1}</span>
-                            <button onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></button>
+                            <button onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600">
+                                <Trash2 className="h-3 w-3" />
+                            </button>
                         </div>
-                        <Input value={item.value || ""} onChange={(e) => updateItem(i, "value", e.target.value)} placeholder="10K+" />
-                        <Input value={item.label || ""} onChange={(e) => updateItem(i, "label", e.target.value)} placeholder="Active Users" />
+                        <Input
+                            value={item.value || ""}
+                            onChange={(e) => updateItem(i, "value", e.target.value)}
+                            placeholder="10K+"
+                        />
+                        <Input
+                            value={item.label || ""}
+                            onChange={(e) => updateItem(i, "label", e.target.value)}
+                            placeholder="Active Users"
+                        />
                         <Select value={item.icon || "TrendingUp"} onValueChange={(v) => updateItem(i, "icon", v)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>{iconOptions.map((ic) => <SelectItem key={ic} value={ic}>{ic}</SelectItem>)}</SelectContent>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {iconOptions.map((ic) => (
+                                    <SelectItem key={ic} value={ic}>
+                                        {ic}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
                         </Select>
                     </div>
                 ))}
@@ -607,24 +721,47 @@ function TestimonialEditor({ data, onUpdate }: { data: any; onUpdate: (d: any) =
             <h3 className="font-semibold text-gray-900 text-lg">Testimonial</h3>
             <div>
                 <Label>Quote</Label>
-                <Textarea value={data.quote || ""} onChange={(e) => onUpdate({ ...data, quote: e.target.value })} className="mt-1.5" rows={4} />
+                <Textarea
+                    value={data.quote || ""}
+                    onChange={(e) => onUpdate({ ...data, quote: e.target.value })}
+                    className="mt-1.5"
+                    rows={4}
+                />
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label>Author Name</Label>
-                    <Input value={data.author || ""} onChange={(e) => onUpdate({ ...data, author: e.target.value })} className="mt-1.5" />
+                    <Input
+                        value={data.author || ""}
+                        onChange={(e) => onUpdate({ ...data, author: e.target.value })}
+                        className="mt-1.5"
+                    />
                 </div>
                 <div>
                     <Label>Author Role</Label>
-                    <Input value={data.role || ""} onChange={(e) => onUpdate({ ...data, role: e.target.value })} className="mt-1.5" placeholder="CEO, Company" />
+                    <Input
+                        value={data.role || ""}
+                        onChange={(e) => onUpdate({ ...data, role: e.target.value })}
+                        className="mt-1.5"
+                        placeholder="CEO, Company"
+                    />
                 </div>
             </div>
             <div>
                 <Label>Rating (1-5)</Label>
-                <Select value={String(data.rating || 5)} onValueChange={(v) => onUpdate({ ...data, rating: Number(v) })}>
-                    <SelectTrigger className="mt-1.5 w-24"><SelectValue /></SelectTrigger>
+                <Select
+                    value={String(data.rating || 5)}
+                    onValueChange={(v) => onUpdate({ ...data, rating: Number(v) })}
+                >
+                    <SelectTrigger className="mt-1.5 w-24">
+                        <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
-                        {[1, 2, 3, 4, 5].map((n) => <SelectItem key={n} value={String(n)}>{n} Star{n > 1 ? "s" : ""}</SelectItem>)}
+                        {[1, 2, 3, 4, 5].map((n) => (
+                            <SelectItem key={n} value={String(n)}>
+                                {n} Star{n > 1 ? "s" : ""}
+                            </SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
             </div>
@@ -650,26 +787,48 @@ function FaqEditor({ data, onUpdate }: { data: any; onUpdate: (d: any) => void }
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label>Section Title</Label>
-                    <Input value={data.sectionTitle || ""} onChange={(e) => onUpdate({ ...data, sectionTitle: e.target.value })} className="mt-1.5" />
+                    <Input
+                        value={data.sectionTitle || ""}
+                        onChange={(e) => onUpdate({ ...data, sectionTitle: e.target.value })}
+                        className="mt-1.5"
+                    />
                 </div>
                 <div>
                     <Label>Section Subtitle</Label>
-                    <Input value={data.sectionSubtitle || ""} onChange={(e) => onUpdate({ ...data, sectionSubtitle: e.target.value })} className="mt-1.5" />
+                    <Input
+                        value={data.sectionSubtitle || ""}
+                        onChange={(e) => onUpdate({ ...data, sectionSubtitle: e.target.value })}
+                        className="mt-1.5"
+                    />
                 </div>
             </div>
             <div className="flex items-center justify-between">
                 <Label>FAQ Items</Label>
-                <Button size="sm" variant="outline" onClick={addItem}><Plus className="h-3 w-3 mr-1" />Add</Button>
+                <Button size="sm" variant="outline" onClick={addItem}>
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add
+                </Button>
             </div>
             <div className="space-y-3">
                 {items.map((item: any, i: number) => (
                     <div key={i} className="p-3 bg-gray-50 rounded-lg border space-y-2">
                         <div className="flex items-center justify-between">
                             <span className="text-xs text-gray-500">FAQ {i + 1}</span>
-                            <button onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></button>
+                            <button onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600">
+                                <Trash2 className="h-3 w-3" />
+                            </button>
                         </div>
-                        <Input value={item.question || ""} onChange={(e) => updateItem(i, "question", e.target.value)} placeholder="Question" />
-                        <Textarea value={item.answer || ""} onChange={(e) => updateItem(i, "answer", e.target.value)} placeholder="Answer" rows={2} />
+                        <Input
+                            value={item.question || ""}
+                            onChange={(e) => updateItem(i, "question", e.target.value)}
+                            placeholder="Question"
+                        />
+                        <Textarea
+                            value={item.answer || ""}
+                            onChange={(e) => updateItem(i, "answer", e.target.value)}
+                            placeholder="Answer"
+                            rows={2}
+                        />
                     </div>
                 ))}
             </div>
@@ -684,26 +843,49 @@ function CtaEditor({ data, onUpdate }: { data: any; onUpdate: (d: any) => void }
             <h3 className="font-semibold text-gray-900 text-lg">Call to Action</h3>
             <div>
                 <Label>Headline</Label>
-                <Input value={data.headline || ""} onChange={(e) => onUpdate({ ...data, headline: e.target.value })} className="mt-1.5" />
+                <Input
+                    value={data.headline || ""}
+                    onChange={(e) => onUpdate({ ...data, headline: e.target.value })}
+                    className="mt-1.5"
+                />
             </div>
             <div>
                 <Label>Subheadline</Label>
-                <Textarea value={data.subheadline || ""} onChange={(e) => onUpdate({ ...data, subheadline: e.target.value })} className="mt-1.5" rows={2} />
+                <Textarea
+                    value={data.subheadline || ""}
+                    onChange={(e) => onUpdate({ ...data, subheadline: e.target.value })}
+                    className="mt-1.5"
+                    rows={2}
+                />
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label>CTA Button Text</Label>
-                    <Input value={data.ctaText || ""} onChange={(e) => onUpdate({ ...data, ctaText: e.target.value })} className="mt-1.5" />
+                    <Input
+                        value={data.ctaText || ""}
+                        onChange={(e) => onUpdate({ ...data, ctaText: e.target.value })}
+                        className="mt-1.5"
+                    />
                 </div>
                 <div>
                     <Label>CTA Button Link</Label>
-                    <Input value={data.ctaLink || ""} onChange={(e) => onUpdate({ ...data, ctaLink: e.target.value })} className="mt-1.5" placeholder="/signup" />
+                    <Input
+                        value={data.ctaLink || ""}
+                        onChange={(e) => onUpdate({ ...data, ctaLink: e.target.value })}
+                        className="mt-1.5"
+                        placeholder="/signup"
+                    />
                 </div>
             </div>
             <div>
                 <Label>Background</Label>
-                <Select value={data.backgroundColor || "gray"} onValueChange={(v) => onUpdate({ ...data, backgroundColor: v })}>
-                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                <Select
+                    value={data.backgroundColor || "gray"}
+                    onValueChange={(v) => onUpdate({ ...data, backgroundColor: v })}
+                >
+                    <SelectTrigger className="mt-1.5">
+                        <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="primary">Primary Color</SelectItem>
                         <SelectItem value="secondary">Secondary Color</SelectItem>
@@ -722,13 +904,21 @@ function TextEditor({ data, onUpdate }: { data: any; onUpdate: (d: any) => void 
             <h3 className="font-semibold text-gray-900 text-lg">Text Block</h3>
             <div>
                 <Label>Content</Label>
-                <Textarea value={data.content || ""} onChange={(e) => onUpdate({ ...data, content: e.target.value })} className="mt-1.5 font-mono text-sm" rows={10} placeholder="Markdown or HTML content..." />
+                <Textarea
+                    value={data.content || ""}
+                    onChange={(e) => onUpdate({ ...data, content: e.target.value })}
+                    className="mt-1.5 font-mono text-sm"
+                    rows={10}
+                    placeholder="Markdown or HTML content..."
+                />
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label>Alignment</Label>
                     <Select value={data.alignment || "left"} onValueChange={(v) => onUpdate({ ...data, alignment: v })}>
-                        <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="mt-1.5">
+                            <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="left">Left</SelectItem>
                             <SelectItem value="center">Center</SelectItem>
@@ -739,7 +929,9 @@ function TextEditor({ data, onUpdate }: { data: any; onUpdate: (d: any) => void 
                 <div>
                     <Label>Max Width</Label>
                     <Select value={data.maxWidth || "lg"} onValueChange={(v) => onUpdate({ ...data, maxWidth: v })}>
-                        <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="mt-1.5">
+                            <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="sm">Small</SelectItem>
                             <SelectItem value="md">Medium</SelectItem>
@@ -758,17 +950,30 @@ function PricingEditor({ data, onUpdate }: { data: any; onUpdate: (d: any) => vo
     return (
         <div className="space-y-4 max-w-2xl">
             <h3 className="font-semibold text-gray-900 text-lg">Pricing Section</h3>
-            <p className="text-sm text-gray-500">This block automatically pulls pricing plans from your subscription settings.</p>
+            <p className="text-sm text-gray-500">
+                This block automatically pulls pricing plans from your subscription settings.
+            </p>
             <div>
                 <Label>Section Title</Label>
-                <Input value={data.sectionTitle || ""} onChange={(e) => onUpdate({ ...data, sectionTitle: e.target.value })} className="mt-1.5" />
+                <Input
+                    value={data.sectionTitle || ""}
+                    onChange={(e) => onUpdate({ ...data, sectionTitle: e.target.value })}
+                    className="mt-1.5"
+                />
             </div>
             <div>
                 <Label>Section Subtitle</Label>
-                <Input value={data.sectionSubtitle || ""} onChange={(e) => onUpdate({ ...data, sectionSubtitle: e.target.value })} className="mt-1.5" />
+                <Input
+                    value={data.sectionSubtitle || ""}
+                    onChange={(e) => onUpdate({ ...data, sectionSubtitle: e.target.value })}
+                    className="mt-1.5"
+                />
             </div>
             <div className="flex items-center gap-3">
-                <Switch checked={data.showAnnualToggle || false} onCheckedChange={(v) => onUpdate({ ...data, showAnnualToggle: v })} />
+                <Switch
+                    checked={data.showAnnualToggle || false}
+                    onCheckedChange={(v) => onUpdate({ ...data, showAnnualToggle: v })}
+                />
                 <Label>Show Monthly/Annual Toggle</Label>
             </div>
         </div>

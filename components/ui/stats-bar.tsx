@@ -18,44 +18,44 @@ const VARIANT_STYLES: Record<StatVariant, { bg: string; icon: string; label: str
         bg: "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200",
         icon: "text-blue-600",
         label: "text-blue-600",
-        value: "text-blue-900"
+        value: "text-blue-900",
     },
     green: {
         bg: "bg-gradient-to-br from-green-50 to-green-100 border-green-200",
         icon: "text-green-600",
         label: "text-green-600",
-        value: "text-green-900"
+        value: "text-green-900",
     },
     yellow: {
         bg: "bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200",
         icon: "text-yellow-600",
         label: "text-yellow-600",
-        value: "text-yellow-900"
+        value: "text-yellow-900",
     },
     purple: {
         bg: "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200",
         icon: "text-purple-600",
         label: "text-purple-600",
-        value: "text-purple-900"
+        value: "text-purple-900",
     },
     orange: {
         bg: "bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200",
         icon: "text-orange-600",
         label: "text-orange-600",
-        value: "text-orange-900"
+        value: "text-orange-900",
     },
     red: {
         bg: "bg-gradient-to-br from-red-50 to-red-100 border-red-200",
         icon: "text-red-600",
         label: "text-red-600",
-        value: "text-red-900"
+        value: "text-red-900",
     },
     gray: {
         bg: "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200",
         icon: "text-gray-600",
         label: "text-gray-600",
-        value: "text-gray-900"
-    }
+        value: "text-gray-900",
+    },
 };
 
 export function StatCard({ icon: Icon, label, value, variant = "blue" }: StatCardProps) {
@@ -80,11 +80,7 @@ export function StatsBar({ children, columns = 4 }: StatsBarProps) {
     const gridCols = {
         2: "grid-cols-2",
         3: "grid-cols-3",
-        4: "grid-cols-2 md:grid-cols-4"
+        4: "grid-cols-2 md:grid-cols-4",
     };
-    return (
-        <div className={`grid ${gridCols[columns]} gap-3`}>
-            {children}
-        </div>
-    );
+    return <div className={`grid ${gridCols[columns]} gap-3`}>{children}</div>;
 }

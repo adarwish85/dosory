@@ -43,7 +43,7 @@ export function StaffList() {
     // Deduplicate staff by email to handle potential duplicate records
     const uniqueStaff = useMemo(() => {
         const seen = new Set();
-        return staff.filter(s => {
+        return staff.filter((s) => {
             if (!s.email) return true; // Keep entries without email
             const email = s.email.toLowerCase();
             if (seen.has(email)) return false;
@@ -52,14 +52,15 @@ export function StaffList() {
         });
     }, [staff]);
 
-    const filteredStaff = uniqueStaff.filter(s =>
-        s.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredStaff = uniqueStaff.filter(
+        (s) =>
+            s.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const getRoleName = (roleId: string) => {
-        const role = roles.find(r => r.id === roleId);
+        const role = roles.find((r) => r.id === roleId);
         return role?.name || "-";
     };
 
@@ -90,16 +91,14 @@ export function StaffList() {
         if (selectedIds.size === filteredStaff.length) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(filteredStaff.map(s => s.id)));
+            setSelectedIds(new Set(filteredStaff.map((s) => s.id)));
         }
     };
 
     const handleBulkActivate = async () => {
         setBulkActionLoading(true);
         try {
-            await Promise.all(
-                Array.from(selectedIds).map(id => updateStaff(id, { status: "active" }))
-            );
+            await Promise.all(Array.from(selectedIds).map((id) => updateStaff(id, { status: "active" })));
             toast.success(`${selectedIds.size} staff members activated`);
             setSelectedIds(new Set());
         } catch (error) {
@@ -112,9 +111,7 @@ export function StaffList() {
     const handleBulkDeactivate = async () => {
         setBulkActionLoading(true);
         try {
-            await Promise.all(
-                Array.from(selectedIds).map(id => updateStaff(id, { status: "inactive" }))
-            );
+            await Promise.all(Array.from(selectedIds).map((id) => updateStaff(id, { status: "inactive" })));
             toast.success(`${selectedIds.size} staff members deactivated`);
             setSelectedIds(new Set());
         } catch (error) {
@@ -127,9 +124,7 @@ export function StaffList() {
     const handleBulkDelete = async () => {
         setBulkActionLoading(true);
         try {
-            await Promise.all(
-                Array.from(selectedIds).map(id => deleteStaff(id))
-            );
+            await Promise.all(Array.from(selectedIds).map((id) => deleteStaff(id)));
             toast.success(`${selectedIds.size} staff members deleted`);
             setSelectedIds(new Set());
         } catch (error) {
@@ -158,8 +153,16 @@ export function StaffList() {
                     {selectedIds.size > 0 && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" disabled={bulkActionLoading} className="border-blue-200 bg-blue-50 text-blue-700">
-                                    {bulkActionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Badge className="mr-2 bg-blue-600">{selectedIds.size}</Badge>}
+                                <Button
+                                    variant="outline"
+                                    disabled={bulkActionLoading}
+                                    className="border-blue-200 bg-blue-50 text-blue-700"
+                                >
+                                    {bulkActionLoading ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Badge className="mr-2 bg-blue-600">{selectedIds.size}</Badge>
+                                    )}
                                     Bulk Actions
                                     <ChevronDown className="ml-2 h-4 w-4" />
                                 </Button>
@@ -173,10 +176,7 @@ export function StaffList() {
                                     <UserX className="mr-2 h-4 w-4 text-orange-600" />
                                     Deactivate Selected
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={() => setDeleteDialogOpen(true)}
-                                    className="text-red-600"
-                                >
+                                <DropdownMenuItem onClick={() => setDeleteDialogOpen(true)} className="text-red-600">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Delete Selected
                                 </DropdownMenuItem>
@@ -209,7 +209,9 @@ export function StaffList() {
                         </SelectContent>
                     </Select>
                     <Button variant="outline">Export</Button>
-                    <Button variant="outline" size="icon"><RefreshCw className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="icon">
+                        <RefreshCw className="h-4 w-4" />
+                    </Button>
                 </div>
             </div>
 
@@ -255,13 +257,30 @@ export function StaffList() {
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col gap-0.5">
-                                                <Link href={`/dashboard/setup/staff/${encodeURIComponent(member.id)}`} className="font-semibold text-gray-900 hover:text-blue-600 block line-clamp-1">
+                                                <Link
+                                                    href={`/dashboard/setup/staff/${encodeURIComponent(member.id)}`}
+                                                    className="font-semibold text-gray-900 hover:text-blue-600 block line-clamp-1"
+                                                >
                                                     {member.firstName} {member.lastName}
                                                 </Link>
                                                 <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4">
-                                                    <Link href={`/dashboard/setup/staff/${encodeURIComponent(member.id)}`} className="hover:text-blue-600 hover:underline px-0.5">View</Link>
+                                                    <Link
+                                                        href={`/dashboard/setup/staff/${encodeURIComponent(member.id)}`}
+                                                        className="hover:text-blue-600 hover:underline px-0.5"
+                                                    >
+                                                        View
+                                                    </Link>
                                                     <span className="text-gray-300">|</span>
-                                                    <button onClick={async (e) => { e.stopPropagation(); if (confirm("Delete staff member?")) await deleteStaff(member.id); }} className="hover:text-red-600 hover:underline px-0.5">Delete</button>
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            if (confirm("Delete staff member?"))
+                                                                await deleteStaff(member.id);
+                                                        }}
+                                                        className="hover:text-red-600 hover:underline px-0.5"
+                                                    >
+                                                        Delete
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -269,7 +288,9 @@ export function StaffList() {
                                     <TableCell className="text-gray-700">{member.email}</TableCell>
                                     <TableCell className="text-gray-700">
                                         {member.isAdmin ? (
-                                            <Badge className="bg-purple-100 text-purple-700 border-0 hover:bg-purple-200">Administrator</Badge>
+                                            <Badge className="bg-purple-100 text-purple-700 border-0 hover:bg-purple-200">
+                                                Administrator
+                                            </Badge>
                                         ) : (
                                             getRoleName(member.roleId)
                                         )}
@@ -298,10 +319,7 @@ export function StaffList() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleBulkDelete}
-                            className="bg-red-600 hover:bg-red-700"
-                        >
+                        <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
                             {bulkActionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Delete
                         </AlertDialogAction>

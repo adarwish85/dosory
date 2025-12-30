@@ -57,9 +57,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (status !== "all") {
             constraints.push(where("status", "==", status));
@@ -124,40 +122,31 @@ export function useTickets(options: UseTicketsOptions = {}) {
         [profile?.orgId, profile?.uid]
     );
 
-    const updateTicket = useCallback(
-        async (id: string, data: Partial<TicketFormData>): Promise<void> => {
-            await updateDoc(doc(db, "support_tickets", id), {
-                ...data,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateTicket = useCallback(async (id: string, data: Partial<TicketFormData>): Promise<void> => {
+        await updateDoc(doc(db, "support_tickets", id), {
+            ...data,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     const deleteTicket = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "support_tickets", id));
     }, []);
 
-    const updateTicketStatus = useCallback(
-        async (id: string, newStatus: TicketStatus): Promise<void> => {
-            await updateDoc(doc(db, "support_tickets", id), {
-                status: newStatus,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateTicketStatus = useCallback(async (id: string, newStatus: TicketStatus): Promise<void> => {
+        await updateDoc(doc(db, "support_tickets", id), {
+            status: newStatus,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
-    const assignTicket = useCallback(
-        async (id: string, staffId: string): Promise<void> => {
-            await updateDoc(doc(db, "support_tickets", id), {
-                assignedTo: staffId,
-                status: "in_progress",
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const assignTicket = useCallback(async (id: string, staffId: string): Promise<void> => {
+        await updateDoc(doc(db, "support_tickets", id), {
+            assignedTo: staffId,
+            status: "in_progress",
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     // Calculate ticket stats
     const ticketStats = tickets.reduce(
@@ -198,10 +187,7 @@ export function useTicketReplies(ticketId: string | null) {
             return;
         }
 
-        const q = query(
-            collection(db, "support_tickets", ticketId, "messages"),
-            orderBy("createdAt", "asc")
-        );
+        const q = query(collection(db, "support_tickets", ticketId, "messages"), orderBy("createdAt", "asc"));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map((doc) => ({
@@ -261,11 +247,7 @@ export function useDepartments() {
             return;
         }
 
-        const q = query(
-            collection(db, "departments"),
-            where("orgId", "==", profile.orgId),
-            orderBy("name", "asc")
-        );
+        const q = query(collection(db, "departments"), where("orgId", "==", profile.orgId), orderBy("name", "asc"));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map((doc) => ({
@@ -318,29 +300,27 @@ export function useKnowledgeBase() {
         }
 
         // Fetch groups - Client-side sort to avoid index requirement
-        const groupsQuery = query(
-            collection(db, "knowledgeGroups"),
-            where("orgId", "==", profile.orgId)
-        );
+        const groupsQuery = query(collection(db, "knowledgeGroups"), where("orgId", "==", profile.orgId));
 
-        const unsubGroups = onSnapshot(groupsQuery, (snapshot) => {
-            const data = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as KnowledgeGroup[];
-            // Sort by order
-            data.sort((a, b) => (a.order || 0) - (b.order || 0));
-            setGroups(data);
-        }, (err) => {
-            console.error("Error fetching knowledge groups:", err);
-            // Don't set global error to avoid blocking other UI, but log it
-        });
+        const unsubGroups = onSnapshot(
+            groupsQuery,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as KnowledgeGroup[];
+                // Sort by order
+                data.sort((a, b) => (a.order || 0) - (b.order || 0));
+                setGroups(data);
+            },
+            (err) => {
+                console.error("Error fetching knowledge groups:", err);
+                // Don't set global error to avoid blocking other UI, but log it
+            }
+        );
 
         // Fetch articles - Client-side sort to avoid index requirement
-        const articlesQuery = query(
-            collection(db, "knowledgeArticles"),
-            where("orgId", "==", profile.orgId)
-        );
+        const articlesQuery = query(collection(db, "knowledgeArticles"), where("orgId", "==", profile.orgId));
 
         const unsubArticles = onSnapshot(
             articlesQuery,
@@ -385,9 +365,10 @@ export function useKnowledgeBase() {
                 .replace(/(^-|-$)/g, "");
 
             // Get max order
-            const maxOrder = articles.length > 0
-                ? Math.max(...articles.filter(a => a.groupId === data.groupId).map(a => a.order))
-                : 0;
+            const maxOrder =
+                articles.length > 0
+                    ? Math.max(...articles.filter((a) => a.groupId === data.groupId).map((a) => a.order))
+                    : 0;
 
             const docRef = await addDoc(collection(db, "knowledgeArticles"), {
                 ...data,
@@ -407,15 +388,12 @@ export function useKnowledgeBase() {
         [profile?.orgId, profile?.uid, articles]
     );
 
-    const updateArticle = useCallback(
-        async (id: string, data: Partial<KnowledgeArticle>): Promise<void> => {
-            await updateDoc(doc(db, "knowledgeArticles", id), {
-                ...data,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateArticle = useCallback(async (id: string, data: Partial<KnowledgeArticle>): Promise<void> => {
+        await updateDoc(doc(db, "knowledgeArticles", id), {
+            ...data,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     const deleteArticle = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "knowledgeArticles", id));
@@ -436,7 +414,7 @@ export function useKnowledgeBase() {
                 .replace(/[^a-z0-9]+/g, "-")
                 .replace(/(^-|-$)/g, "");
 
-            const maxOrder = groups.length > 0 ? Math.max(...groups.map(g => g.order)) : 0;
+            const maxOrder = groups.length > 0 ? Math.max(...groups.map((g) => g.order)) : 0;
 
             const docRef = await addDoc(collection(db, "knowledgeGroups"), {
                 ...data,
@@ -453,15 +431,12 @@ export function useKnowledgeBase() {
         [profile?.orgId, groups]
     );
 
-    const updateGroup = useCallback(
-        async (id: string, data: Partial<KnowledgeGroup>): Promise<void> => {
-            await updateDoc(doc(db, "knowledgeGroups", id), {
-                ...data,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateGroup = useCallback(async (id: string, data: Partial<KnowledgeGroup>): Promise<void> => {
+        await updateDoc(doc(db, "knowledgeGroups", id), {
+            ...data,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     const deleteGroup = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "knowledgeGroups", id));

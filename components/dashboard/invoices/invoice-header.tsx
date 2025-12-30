@@ -10,12 +10,10 @@ interface InvoiceHeaderProps {
 
 export function InvoiceHeader({ invoices }: InvoiceHeaderProps) {
     // Calculate summaries
-    const paidAmount = invoices
-        .filter(inv => inv.status === "paid")
-        .reduce((sum, inv) => sum + inv.total, 0);
+    const paidAmount = invoices.filter((inv) => inv.status === "paid").reduce((sum, inv) => sum + inv.total, 0);
 
-    // For partial payments, we should count the paid portion towards "Paid" stats generically? 
-    // The design says "Paid Invoices EGP...", usually implies fully paid or total collected. 
+    // For partial payments, we should count the paid portion towards "Paid" stats generically?
+    // The design says "Paid Invoices EGP...", usually implies fully paid or total collected.
     // Let's assume Total Collected for now to be accurate to cash flow, or just sum of Paid status.
     // Given the label "Paid Invoices", it likely means sum of Full Paid invoices.
     // However, "Outstanding" usually means Amount Due.
@@ -27,7 +25,7 @@ export function InvoiceHeader({ invoices }: InvoiceHeaderProps) {
 
     // Past Due: Sum of `amountDue` for overdue invoices
     const pastDueAmount = invoices
-        .filter(inv => inv.status === "overdue")
+        .filter((inv) => inv.status === "overdue")
         .reduce((sum, inv) => sum + (inv.amountDue || 0), 0);
 
     // Outstanding: Sum of `amountDue` across ALL invoices (including sent, partial, overdue)
@@ -45,7 +43,10 @@ export function InvoiceHeader({ invoices }: InvoiceHeaderProps) {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-                    <Link href="#" className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1">
+                    <Link
+                        href="#"
+                        className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1"
+                    >
                         Recurring Invoices <ArrowRight className="h-3 w-3" />
                     </Link>
                 </div>

@@ -22,9 +22,7 @@ export default function CreateInvoiceStep() {
     const orgId = profile?.orgId;
     const userId = profile?.uid;
 
-    const [lineItems, setLineItems] = useState<LineItem[]>([
-        { description: "", quantity: 1, unitPrice: 0 }
-    ]);
+    const [lineItems, setLineItems] = useState<LineItem[]>([{ description: "", quantity: 1, unitPrice: 0 }]);
     const [isSaving, setIsSaving] = useState(false);
 
     // Pre-fill with dummy data if selected
@@ -54,7 +52,7 @@ export default function CreateInvoiceStep() {
     };
 
     const calculateTotal = () => {
-        return lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+        return lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
     };
 
     const handleSave = async () => {
@@ -81,7 +79,7 @@ export default function CreateInvoiceStep() {
                 customerId: createdCustomerId || null,
                 orgId,
                 status: "draft",
-                lineItems: lineItems.map(item => ({
+                lineItems: lineItems.map((item) => ({
                     ...item,
                     total: item.quantity * item.unitPrice,
                 })),
@@ -112,9 +110,7 @@ export default function CreateInvoiceStep() {
                     <Receipt className="h-6 w-6" />
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900">Create Your First Invoice</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                    Add line items to your invoice
-                </p>
+                <p className="text-sm text-gray-500 mt-1">Add line items to your invoice</p>
             </div>
 
             {/* Line Items */}
@@ -162,12 +158,7 @@ export default function CreateInvoiceStep() {
                     </div>
                 ))}
 
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addLineItem}
-                    className="gap-1 text-gray-600"
-                >
+                <Button variant="outline" size="sm" onClick={addLineItem} className="gap-1 text-gray-600">
                     <Plus className="h-4 w-4" />
                     Add Line Item
                 </Button>
@@ -177,7 +168,7 @@ export default function CreateInvoiceStep() {
             <div className="flex justify-end items-center gap-4 pt-4 border-t">
                 <span className="text-sm text-gray-500">Total:</span>
                 <span className="text-2xl font-bold text-gray-900">
-                    ${calculateTotal().toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    ${calculateTotal().toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </span>
             </div>
 
@@ -185,7 +176,7 @@ export default function CreateInvoiceStep() {
             <div className="flex justify-end pt-4">
                 <Button
                     onClick={handleSave}
-                    disabled={isSaving || lineItems.every(i => !i.description)}
+                    disabled={isSaving || lineItems.every((i) => !i.description)}
                     className="bg-blue-600 hover:bg-blue-700 gap-2"
                 >
                     {isSaving ? (

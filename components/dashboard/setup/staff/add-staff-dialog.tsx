@@ -1,13 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -73,24 +67,24 @@ export function AddStaffDialog() {
     };
 
     const updateField = (field: keyof StaffFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     const toggleDepartment = (dept: string) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             departments: prev.departments.includes(dept)
-                ? prev.departments.filter(d => d !== dept)
-                : [...prev.departments, dept]
+                ? prev.departments.filter((d) => d !== dept)
+                : [...prev.departments, dept],
         }));
     };
 
     const togglePermission = (perm: string) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             permissions: prev.permissions.includes(perm)
-                ? prev.permissions.filter(p => p !== perm)
-                : [...prev.permissions, perm]
+                ? prev.permissions.filter((p) => p !== perm)
+                : [...prev.permissions, perm],
         }));
     };
 
@@ -147,11 +141,11 @@ export function AddStaffDialog() {
 
     const nextStep = () => {
         if (validateStep(step)) {
-            setStep(prev => Math.min(prev + 1, totalSteps));
+            setStep((prev) => Math.min(prev + 1, totalSteps));
         }
     };
 
-    const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+    const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
     const handleSave = async () => {
         if (!validateStep(1)) {
@@ -226,14 +220,15 @@ export function AddStaffDialog() {
                 {/* Step Indicator */}
                 <div className="px-6 py-3 border-b bg-gray-50 flex-shrink-0">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Step {step} of {totalSteps}</span>
+                        <span className="text-sm font-medium text-gray-700">
+                            Step {step} of {totalSteps}
+                        </span>
                     </div>
                     <div className="flex gap-1">
                         {Array.from({ length: totalSteps }).map((_, i) => (
                             <div
                                 key={i}
-                                className={`h-1 flex-1 rounded-full ${i + 1 <= step ? "bg-gray-900" : "bg-gray-200"
-                                    }`}
+                                className={`h-1 flex-1 rounded-full ${i + 1 <= step ? "bg-gray-900" : "bg-gray-200"}`}
                             />
                         ))}
                     </div>
@@ -289,7 +284,9 @@ export function AddStaffDialog() {
                                             checked={formData.isAdmin}
                                             onCheckedChange={(checked) => updateField("isAdmin", !!checked)}
                                         />
-                                        <Label htmlFor="admin" className="font-normal text-gray-600 text-xs">Administrator</Label>
+                                        <Label htmlFor="admin" className="font-normal text-gray-600 text-xs">
+                                            Administrator
+                                        </Label>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <Checkbox
@@ -297,7 +294,9 @@ export function AddStaffDialog() {
                                             checked={formData.isNotStaff}
                                             onCheckedChange={(checked) => updateField("isNotStaff", !!checked)}
                                         />
-                                        <Label htmlFor="not-staff" className="font-normal text-gray-600 text-xs">Not Staff Member</Label>
+                                        <Label htmlFor="not-staff" className="font-normal text-gray-600 text-xs">
+                                            Not Staff Member
+                                        </Label>
                                     </div>
                                 </div>
                             </div>
@@ -371,14 +370,17 @@ export function AddStaffDialog() {
                                                 <Eye className="h-3.5 w-3.5" />
                                             </Button>
                                         </div>
-                                        <Button variant="outline" size="icon" className="shrink-0 h-8 w-8" title="Generate">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="shrink-0 h-8 w-8"
+                                            title="Generate"
+                                        >
                                             <RefreshCw className="h-3.5 w-3.5" />
                                         </Button>
                                     </div>
                                 </div>
                             </div>
-
-
                         </div>
                     )}
 
@@ -386,10 +388,7 @@ export function AddStaffDialog() {
                         <div className="space-y-3">
                             <div className="space-y-0.5">
                                 <Label className="text-xs">Role</Label>
-                                <Select
-                                    value={formData.roleId}
-                                    onValueChange={(value) => updateField("roleId", value)}
-                                >
+                                <Select value={formData.roleId} onValueChange={(value) => updateField("roleId", value)}>
                                     <SelectTrigger className="h-8 text-sm">
                                         <SelectValue placeholder="Select role" />
                                     </SelectTrigger>
@@ -429,7 +428,10 @@ export function AddStaffDialog() {
                                                 onCheckedChange={() => togglePermission(perm.id)}
                                                 className="h-3.5 w-3.5"
                                             />
-                                            <Label htmlFor={perm.id} className="font-normal text-gray-700 text-xs cursor-pointer">
+                                            <Label
+                                                htmlFor={perm.id}
+                                                className="font-normal text-gray-700 text-xs cursor-pointer"
+                                            >
                                                 {perm.label}
                                             </Label>
                                         </div>

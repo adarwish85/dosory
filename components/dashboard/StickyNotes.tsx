@@ -31,7 +31,7 @@ export function StickyNoteCard({ note, onUpdate, onDelete, onMinimize }: StickyN
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         dragOffset.current = {
             x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+            y: e.clientY - rect.top,
         };
     };
 
@@ -49,8 +49,8 @@ export function StickyNoteCard({ note, onUpdate, onDelete, onMinimize }: StickyN
             onUpdate(note.id, {
                 position: {
                     x: Math.max(0, Math.min(newX, maxX)),
-                    y: Math.max(0, Math.min(newY, maxY))
-                }
+                    y: Math.max(0, Math.min(newY, maxY)),
+                },
             });
         };
 
@@ -59,13 +59,13 @@ export function StickyNoteCard({ note, onUpdate, onDelete, onMinimize }: StickyN
         };
 
         if (isDragging) {
-            window.addEventListener('mousemove', handleMouseMove);
-            window.addEventListener('mouseup', handleMouseUp);
+            window.addEventListener("mousemove", handleMouseMove);
+            window.addEventListener("mouseup", handleMouseUp);
         }
 
         return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
         };
     }, [isDragging, note.id, onUpdate]);
 
@@ -78,7 +78,7 @@ export function StickyNoteCard({ note, onUpdate, onDelete, onMinimize }: StickyN
             style={{
                 left: note.position.x,
                 top: note.position.y,
-                cursor: isDragging ? 'grabbing' : 'auto'
+                cursor: isDragging ? "grabbing" : "auto",
             }}
         >
             {/* Header / Drag Handle */}
@@ -93,7 +93,7 @@ export function StickyNoteCard({ note, onUpdate, onDelete, onMinimize }: StickyN
                             key={c}
                             className={cn(
                                 "w-3 h-3 rounded-full border border-black/10 hover:scale-125 transition-transform",
-                                COLORS[c].split(' ')[0], // Get bg color class
+                                COLORS[c].split(" ")[0], // Get bg color class
                                 note.color === c && "ring-1 ring-black/30"
                             )}
                             onClick={() => onUpdate(note.id, { color: c })}
@@ -136,13 +136,13 @@ export function StickyNoteCard({ note, onUpdate, onDelete, onMinimize }: StickyN
 
 export function StickyNotesBoard() {
     const { notes, updateNote, deleteNote, toggleNoteOpen } = useStickyNotes();
-    const openNotes = notes.filter(n => n.isOpen);
+    const openNotes = notes.filter((n) => n.isOpen);
 
     if (openNotes.length === 0) return null;
 
     return (
         <>
-            {openNotes.map(note => (
+            {openNotes.map((note) => (
                 <StickyNoteCard
                     key={note.id}
                     note={note}

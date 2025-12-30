@@ -1,13 +1,6 @@
 "use client";
 
-import {
-    Document,
-    Page,
-    Text,
-    View,
-    StyleSheet,
-    Image,
-} from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 
 // PDF Settings interface from org settings
 export interface PDFSettings {
@@ -242,7 +235,7 @@ export default function InvoicePDF({
     orgName = "Dosory",
     orgAddress,
     orgEmail,
-    pdfSettings = DEFAULT_PDF_SETTINGS
+    pdfSettings = DEFAULT_PDF_SETTINGS,
 }: InvoicePDFProps) {
     // Merge with defaults
     const settings = { ...DEFAULT_PDF_SETTINGS, ...pdfSettings };
@@ -270,13 +263,13 @@ export default function InvoicePDF({
                         <Text style={styles.invoiceTitle}>INVOICE</Text>
                         <Text style={styles.invoiceNumber}>#{invoice.number}</Text>
                         {settings.showStatus && (
-                            <View style={[
-                                styles.statusBadge,
-                                invoice.status === "paid" ? styles.paidBadge : styles.pendingBadge
-                            ]}>
-                                <Text style={{ fontSize: 9, fontWeight: "bold" }}>
-                                    {invoice.status.toUpperCase()}
-                                </Text>
+                            <View
+                                style={[
+                                    styles.statusBadge,
+                                    invoice.status === "paid" ? styles.paidBadge : styles.pendingBadge,
+                                ]}
+                            >
+                                <Text style={{ fontSize: 9, fontWeight: "bold" }}>{invoice.status.toUpperCase()}</Text>
                             </View>
                         )}
                     </View>
@@ -351,7 +344,9 @@ export default function InvoicePDF({
                                     -{formatCurrency(invoice.amountPaid)}
                                 </Text>
                             </View>
-                            <View style={[styles.totalsRow, { borderTopWidth: 1, borderTopColor: "#ddd", paddingTop: 8 }]}>
+                            <View
+                                style={[styles.totalsRow, { borderTopWidth: 1, borderTopColor: "#ddd", paddingTop: 8 }]}
+                            >
                                 <Text style={[styles.totalsLabel, { fontWeight: "bold" }]}>Balance Due</Text>
                                 <Text style={[styles.totalsValue, { fontWeight: "bold" }]}>
                                     {formatCurrency(invoice.amountDue)}
@@ -376,12 +371,13 @@ export default function InvoicePDF({
 
                 {/* Page Number */}
                 {settings.showPageNumber && (
-                    <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
-                        `Page ${pageNumber} of ${totalPages}`
-                    )} fixed />
+                    <Text
+                        style={styles.pageNumber}
+                        render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
+                        fixed
+                    />
                 )}
             </Page>
         </Document>
     );
 }
-

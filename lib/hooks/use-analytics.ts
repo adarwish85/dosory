@@ -79,14 +79,14 @@ export function useAnalytics() {
 
                 const monthlyData: Record<string, { revenue: number; count: number }> = {};
 
-                invoicesSnap.docs.forEach(doc => {
+                invoicesSnap.docs.forEach((doc) => {
                     const inv = doc.data();
                     const total = inv.total || 0;
                     const amountPaid = inv.amountPaid || 0;
                     const createdAt = inv.createdAt?.toDate?.() || new Date();
 
                     totalRevenue += amountPaid;
-                    outstandingAmount += (total - amountPaid);
+                    outstandingAmount += total - amountPaid;
 
                     if (inv.status === "paid") paidCount++;
                     else if (inv.status === "overdue") overdueCount++;
@@ -97,7 +97,7 @@ export function useAnalytics() {
                     }
 
                     // Group by month
-                    const monthKey = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`;
+                    const monthKey = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, "0")}`;
                     if (!monthlyData[monthKey]) {
                         monthlyData[monthKey] = { revenue: 0, count: 0 };
                     }
@@ -121,11 +121,13 @@ export function useAnalytics() {
 
                 // Format monthly data for chart
                 const sortedMonths = Object.keys(monthlyData).sort().slice(-6);
-                setRevenueByMonth(sortedMonths.map(month => ({
-                    month: new Date(month + "-01").toLocaleDateString('en', { month: 'short' }),
-                    revenue: monthlyData[month].revenue,
-                    invoiceCount: monthlyData[month].count,
-                })));
+                setRevenueByMonth(
+                    sortedMonths.map((month) => ({
+                        month: new Date(month + "-01").toLocaleDateString("en", { month: "short" }),
+                        revenue: monthlyData[month].revenue,
+                        invoiceCount: monthlyData[month].count,
+                    }))
+                );
 
                 // Fetch Customers (limit to recent 200)
                 const customersRef = collection(db, "customers");
@@ -138,7 +140,7 @@ export function useAnalytics() {
                 const customersSnap = await getDocs(customersQuery);
 
                 let newThisMonth = 0;
-                customersSnap.docs.forEach(doc => {
+                customersSnap.docs.forEach((doc) => {
                     const cust = doc.data();
                     const createdAt = cust.createdAt?.toDate?.() || new Date(0);
                     if (createdAt >= startOfMonth) newThisMonth++;
@@ -161,8 +163,11 @@ export function useAnalytics() {
                 );
                 const proposalsSnap = await getDocs(proposalsQuery);
 
-                let accepted = 0, pending = 0, declined = 0, proposalValue = 0;
-                proposalsSnap.docs.forEach(doc => {
+                let accepted = 0,
+                    pending = 0,
+                    declined = 0,
+                    proposalValue = 0;
+                proposalsSnap.docs.forEach((doc) => {
                     const prop = doc.data();
                     proposalValue += prop.total || 0;
                     if (prop.status === "accepted") accepted++;
@@ -178,7 +183,6 @@ export function useAnalytics() {
                     acceptanceRate: proposalsSnap.size > 0 ? (accepted / proposalsSnap.size) * 100 : 0,
                     totalValue: proposalValue,
                 });
-
             } catch (error) {
                 console.error("Error fetching analytics:", error);
             } finally {

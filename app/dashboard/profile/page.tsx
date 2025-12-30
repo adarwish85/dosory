@@ -146,8 +146,7 @@ export default function ProfilePage() {
                             <AvatarImage src={photoURL || undefined} />
                             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-3xl">
                                 {formData.displayName?.charAt(0)?.toUpperCase() ||
-                                    formData.email?.charAt(0)?.toUpperCase() ||
-                                    <User className="h-12 w-12" />}
+                                    formData.email?.charAt(0)?.toUpperCase() || <User className="h-12 w-12" />}
                             </AvatarFallback>
                         </Avatar>
 
@@ -160,11 +159,7 @@ export default function ProfilePage() {
                                 "disabled:opacity-50 disabled:cursor-not-allowed"
                             )}
                         >
-                            {uploading ? (
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                            ) : (
-                                <Camera className="h-5 w-5" />
-                            )}
+                            {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
                         </button>
 
                         <input
@@ -175,9 +170,7 @@ export default function ProfilePage() {
                             className="hidden"
                         />
                     </div>
-                    <p className="mt-3 text-sm text-gray-500">
-                        Click the camera icon to upload a profile picture
-                    </p>
+                    <p className="mt-3 text-sm text-gray-500">Click the camera icon to upload a profile picture</p>
                 </div>
 
                 {/* Profile Form */}
@@ -188,7 +181,7 @@ export default function ProfilePage() {
                             <Input
                                 id="displayName"
                                 value={formData.displayName}
-                                onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, displayName: e.target.value }))}
                                 placeholder="Your full name"
                                 className="mt-1.5"
                             />
@@ -196,12 +189,7 @@ export default function ProfilePage() {
 
                         <div>
                             <Label htmlFor="email">Email Address</Label>
-                            <Input
-                                id="email"
-                                value={formData.email}
-                                disabled
-                                className="mt-1.5 bg-gray-50"
-                            />
+                            <Input id="email" value={formData.email} disabled className="mt-1.5 bg-gray-50" />
                             <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
                         </div>
                     </div>
@@ -212,7 +200,7 @@ export default function ProfilePage() {
                             <Input
                                 id="phone"
                                 value={formData.phone}
-                                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                                 placeholder="+1 (555) 000-0000"
                                 className="mt-1.5"
                             />
@@ -223,7 +211,7 @@ export default function ProfilePage() {
                             <Input
                                 id="jobTitle"
                                 value={formData.jobTitle}
-                                onChange={(e) => setFormData(prev => ({ ...prev, jobTitle: e.target.value }))}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, jobTitle: e.target.value }))}
                                 placeholder="e.g. Sales Manager"
                                 className="mt-1.5"
                             />
@@ -233,11 +221,7 @@ export default function ProfilePage() {
 
                 {/* Save Button */}
                 <div className="flex justify-end pt-4 border-t">
-                    <Button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="bg-blue-600 hover:bg-blue-700"
-                    >
+                    <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                         {saving ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

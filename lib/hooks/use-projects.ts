@@ -59,9 +59,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (status !== "all") {
             constraints.push(where("status", "==", status));
@@ -102,9 +100,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
 
             // Get customer name
             const customerDoc = await getDoc(doc(db, "customers", data.customerId));
-            const customerName = customerDoc.exists()
-                ? customerDoc.data().company
-                : "Unknown Customer";
+            const customerName = customerDoc.exists() ? customerDoc.data().company : "Unknown Customer";
 
             const docRef = await addDoc(collection(db, "projects"), {
                 ...data,
@@ -127,17 +123,14 @@ export function useProjects(options: UseProjectsOptions = {}) {
         [profile?.orgId, profile?.uid, logActivity]
     );
 
-    const updateProject = useCallback(
-        async (id: string, data: Partial<ProjectFormData>): Promise<void> => {
-            const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
+    const updateProject = useCallback(async (id: string, data: Partial<ProjectFormData>): Promise<void> => {
+        const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
 
-            if (data.startDate) updateData.startDate = Timestamp.fromDate(data.startDate);
-            if (data.deadline) updateData.deadline = Timestamp.fromDate(data.deadline);
+        if (data.startDate) updateData.startDate = Timestamp.fromDate(data.startDate);
+        if (data.deadline) updateData.deadline = Timestamp.fromDate(data.deadline);
 
-            await updateDoc(doc(db, "projects", id), updateData);
-        },
-        []
-    );
+        await updateDoc(doc(db, "projects", id), updateData);
+    }, []);
 
     const deleteProject = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "projects", id));
@@ -161,29 +154,32 @@ export function useProjects(options: UseProjectsOptions = {}) {
     }, []);
 
     // FIX BLE-005: Update status with auto-progress sync
-    const updateStatus = useCallback(async (id: string, newStatus: ProjectStatus): Promise<void> => {
-        const updateData: Record<string, unknown> = {
-            status: newStatus,
-            updatedAt: serverTimestamp(),
-        };
+    const updateStatus = useCallback(
+        async (id: string, newStatus: ProjectStatus): Promise<void> => {
+            const updateData: Record<string, unknown> = {
+                status: newStatus,
+                updatedAt: serverTimestamp(),
+            };
 
-        // If marking as finished, set progress to 100%
-        if (newStatus === "finished") {
-            updateData.progress = 100;
-            updateData.finishedAt = serverTimestamp();
-        }
+            // If marking as finished, set progress to 100%
+            if (newStatus === "finished") {
+                updateData.progress = 100;
+                updateData.finishedAt = serverTimestamp();
+            }
 
-        // If marking as cancelled, record cancellation time
-        if (newStatus === "cancelled") {
-            updateData.cancelledAt = serverTimestamp();
-        }
+            // If marking as cancelled, record cancellation time
+            if (newStatus === "cancelled") {
+                updateData.cancelledAt = serverTimestamp();
+            }
 
-        await updateDoc(doc(db, "projects", id), updateData);
+            await updateDoc(doc(db, "projects", id), updateData);
 
-        if (logActivity) {
-            await logActivity("project_status_changed", `Project status changed to ${newStatus}`, id, "project");
-        }
-    }, [logActivity]);
+            if (logActivity) {
+                await logActivity("project_status_changed", `Project status changed to ${newStatus}`, id, "project");
+            }
+        },
+        [logActivity]
+    );
 
     // Calculate project stats by status
     const projectStats = projects.reduce(
@@ -283,9 +279,7 @@ export function useTasks(options: UseTasksOptions = {}) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (status !== "all") {
             constraints.push(where("status", "==", status));
@@ -345,8 +339,8 @@ export function useTasks(options: UseTasksOptions = {}) {
             // Create notifications for assignees
             if (data.assignees && data.assignees.length > 0) {
                 const assigneesToNotify = data.assignees
-                    .filter(userId => userId !== profile.uid) // Don't notify self
-                    .map(userId => ({ userId, orgId: profile.orgId }));
+                    .filter((userId) => userId !== profile.uid) // Don't notify self
+                    .map((userId) => ({ userId, orgId: profile.orgId }));
 
                 if (assigneesToNotify.length > 0) {
                     createBulkNotifications(assigneesToNotify, {
@@ -354,7 +348,7 @@ export function useTasks(options: UseTasksOptions = {}) {
                         title: "New Task Assigned",
                         message: `You have been assigned to task: ${data.name}`,
                         link: "/dashboard/tasks",
-                        metadata: { taskId: docRef.id }
+                        metadata: { taskId: docRef.id },
                     }).catch(console.error);
                 }
             }
@@ -364,17 +358,14 @@ export function useTasks(options: UseTasksOptions = {}) {
         [profile?.orgId, profile?.uid]
     );
 
-    const updateTask = useCallback(
-        async (id: string, data: Partial<TaskFormData>): Promise<void> => {
-            const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
+    const updateTask = useCallback(async (id: string, data: Partial<TaskFormData>): Promise<void> => {
+        const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
 
-            if (data.startDate) updateData.startDate = Timestamp.fromDate(data.startDate);
-            if (data.dueDate) updateData.dueDate = Timestamp.fromDate(data.dueDate);
+        if (data.startDate) updateData.startDate = Timestamp.fromDate(data.startDate);
+        if (data.dueDate) updateData.dueDate = Timestamp.fromDate(data.dueDate);
 
-            await updateDoc(doc(db, "tasks", id), updateData);
-        },
-        []
-    );
+        await updateDoc(doc(db, "tasks", id), updateData);
+    }, []);
 
     const deleteTask = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "tasks", id));

@@ -4,9 +4,18 @@ import { useAdminStats } from "@/lib/hooks/use-admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-    Building2, Users, CreditCard, DollarSign,
-    MoreHorizontal, ArrowUp, ArrowDown, Activity,
-    CheckCircle2, AlertTriangle, Clock, ExternalLink
+    Building2,
+    Users,
+    CreditCard,
+    DollarSign,
+    MoreHorizontal,
+    ArrowUp,
+    ArrowDown,
+    Activity,
+    CheckCircle2,
+    AlertTriangle,
+    Clock,
+    ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -54,10 +63,42 @@ export default function AdminDashboard() {
     ];
 
     const recentTenants = [
-        { name: "Acme Corp", plan: "Enterprise", revenue: "$24,000/yr", status: "Active", joined: "Oct 24, 2023", logo: "A", color: "bg-blue-100 text-blue-700" },
-        { name: "Globex Inc", plan: "Trial", revenue: "-", status: "Trial", joined: "Oct 22, 2023", logo: "G", color: "bg-orange-100 text-orange-700" },
-        { name: "Stark Ind", plan: "Pro Plan", revenue: "$4,800/yr", status: "Active", joined: "Oct 20, 2023", logo: "S", color: "bg-purple-100 text-purple-700" },
-        { name: "Oscorp", plan: "Expired", revenue: "$0", status: "Churned", joined: "Sep 15, 2023", logo: "O", color: "bg-red-100 text-red-700" },
+        {
+            name: "Acme Corp",
+            plan: "Enterprise",
+            revenue: "$24,000/yr",
+            status: "Active",
+            joined: "Oct 24, 2023",
+            logo: "A",
+            color: "bg-blue-100 text-blue-700",
+        },
+        {
+            name: "Globex Inc",
+            plan: "Trial",
+            revenue: "-",
+            status: "Trial",
+            joined: "Oct 22, 2023",
+            logo: "G",
+            color: "bg-orange-100 text-orange-700",
+        },
+        {
+            name: "Stark Ind",
+            plan: "Pro Plan",
+            revenue: "$4,800/yr",
+            status: "Active",
+            joined: "Oct 20, 2023",
+            logo: "S",
+            color: "bg-purple-100 text-purple-700",
+        },
+        {
+            name: "Oscorp",
+            plan: "Expired",
+            revenue: "$0",
+            status: "Churned",
+            joined: "Sep 15, 2023",
+            logo: "O",
+            color: "bg-red-100 text-red-700",
+        },
     ];
 
     return (
@@ -69,9 +110,15 @@ export default function AdminDashboard() {
                     <p className="text-gray-500">Track growth metrics and manage tenant subscriptions.</p>
                 </div>
                 <div className="flex items-center bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
-                    <button className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">Last 7 Days</button>
-                    <button className="px-3 py-1.5 text-sm font-medium bg-gray-100 text-gray-900 rounded-md shadow-sm">Last 30 Days</button>
-                    <button className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">Custom</button>
+                    <button className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">
+                        Last 7 Days
+                    </button>
+                    <button className="px-3 py-1.5 text-sm font-medium bg-gray-100 text-gray-900 rounded-md shadow-sm">
+                        Last 30 Days
+                    </button>
+                    <button className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">
+                        Custom
+                    </button>
                 </div>
             </div>
 
@@ -87,11 +134,19 @@ export default function AdminDashboard() {
                                         <Icon className={cn("h-5 w-5", card.iconColor)} />
                                     </div>
                                     {card.change && (
-                                        <div className={cn(
-                                            "flex items-center text-xs font-medium px-2 py-1 rounded-full",
-                                            card.trend === "up" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-                                        )}>
-                                            {card.trend === "up" ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
+                                        <div
+                                            className={cn(
+                                                "flex items-center text-xs font-medium px-2 py-1 rounded-full",
+                                                card.trend === "up"
+                                                    ? "bg-green-50 text-green-700"
+                                                    : "bg-red-50 text-red-700"
+                                            )}
+                                        >
+                                            {card.trend === "up" ? (
+                                                <ArrowUp className="h-3 w-3 mr-1" />
+                                            ) : (
+                                                <ArrowDown className="h-3 w-3 mr-1" />
+                                            )}
                                             {card.change}
                                         </div>
                                     )}
@@ -131,7 +186,10 @@ export default function AdminDashboard() {
                                 {["MAY", "JUN", "JUL", "AUG", "SEP", "OCT"].map((month, i) => {
                                     const heights = ["40%", "55%", "45%", "65%", "80%", "95%"];
                                     return (
-                                        <div key={month} className="flex flex-col items-center gap-2 flex-1 group cursor-pointer">
+                                        <div
+                                            key={month}
+                                            className="flex flex-col items-center gap-2 flex-1 group cursor-pointer"
+                                        >
                                             <div
                                                 className="w-full max-w-[40px] bg-blue-100 hover:bg-blue-600 rounded-t-sm transition-all relative group-hover:shadow-lg"
                                                 style={{ height: heights[i] }}
@@ -154,8 +212,12 @@ export default function AdminDashboard() {
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-base font-bold text-gray-900">Recent Tenant Activity</CardTitle>
                             <div className="flex gap-2">
-                                <Button variant="outline" size="sm" className="h-8 text-xs">Filter</Button>
-                                <Button variant="outline" size="sm" className="h-8 text-xs">Export</Button>
+                                <Button variant="outline" size="sm" className="h-8 text-xs">
+                                    Filter
+                                </Button>
+                                <Button variant="outline" size="sm" className="h-8 text-xs">
+                                    Export
+                                </Button>
                             </div>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -163,11 +225,21 @@ export default function AdminDashboard() {
                                 <table className="w-full">
                                     <thead className="bg-gray-50 border-b border-gray-100">
                                         <tr>
-                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">Company</th>
-                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">Plan Status</th>
-                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">Revenue</th>
-                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">Joined</th>
-                                            <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">Action</th>
+                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">
+                                                Company
+                                            </th>
+                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">
+                                                Plan Status
+                                            </th>
+                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">
+                                                Revenue
+                                            </th>
+                                            <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">
+                                                Joined
+                                            </th>
+                                            <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider py-3 px-6">
+                                                Action
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
@@ -175,33 +247,46 @@ export default function AdminDashboard() {
                                             <tr key={i} className="hover:bg-gray-50/50 transition-colors">
                                                 <td className="py-4 px-6">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg", tenant.color)}>
+                                                        <div
+                                                            className={cn(
+                                                                "w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg",
+                                                                tenant.color
+                                                            )}
+                                                        >
                                                             {tenant.logo}
                                                         </div>
                                                         <div>
-                                                            <p className="font-semibold text-gray-900 text-sm">{tenant.name}</p>
+                                                            <p className="font-semibold text-gray-900 text-sm">
+                                                                {tenant.name}
+                                                            </p>
                                                             <p className="text-xs text-gray-500">tech.com</p>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <span className={cn(
-                                                        "px-2.5 py-1 rounded-full text-xs font-medium border",
-                                                        tenant.status === "Active" ? "bg-green-50 text-green-700 border-green-100" :
-                                                            tenant.status === "Trial" ? "bg-orange-50 text-orange-700 border-orange-100" :
-                                                                "bg-gray-100 text-gray-700 border-gray-200"
-                                                    )}>
+                                                    <span
+                                                        className={cn(
+                                                            "px-2.5 py-1 rounded-full text-xs font-medium border",
+                                                            tenant.status === "Active"
+                                                                ? "bg-green-50 text-green-700 border-green-100"
+                                                                : tenant.status === "Trial"
+                                                                  ? "bg-orange-50 text-orange-700 border-orange-100"
+                                                                  : "bg-gray-100 text-gray-700 border-gray-200"
+                                                        )}
+                                                    >
                                                         {tenant.plan}
                                                     </span>
                                                 </td>
                                                 <td className="py-4 px-6 text-sm text-gray-600 font-medium">
                                                     {tenant.revenue}
                                                 </td>
-                                                <td className="py-4 px-6 text-sm text-gray-500">
-                                                    {tenant.joined}
-                                                </td>
+                                                <td className="py-4 px-6 text-sm text-gray-500">{tenant.joined}</td>
                                                 <td className="py-4 px-6 text-right">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-blue-600">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-gray-400 hover:text-blue-600"
+                                                    >
                                                         <ExternalLink className="h-4 w-4" />
                                                     </Button>
                                                 </td>
@@ -211,7 +296,10 @@ export default function AdminDashboard() {
                                 </table>
                             </div>
                             <div className="p-4 border-t border-gray-100 text-center">
-                                <Link href="/bunny/tenants" className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1">
+                                <Link
+                                    href="/bunny/tenants"
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1"
+                                >
                                     View all tenants <ExternalLink className="h-3 w-3" />
                                 </Link>
                             </div>
@@ -236,7 +324,7 @@ export default function AdminDashboard() {
                                             #0ea5e9 0% 55%, 
                                             #eab308 55% 75%, 
                                             #e5e7eb 75% 100%
-                                        )`
+                                        )`,
                                     }}
                                 >
                                     <div className="w-32 h-32 bg-white rounded-full absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center justify-center shadow-inner">
@@ -283,8 +371,12 @@ export default function AdminDashboard() {
                                     <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-sm font-semibold text-red-900">License Expiry Risk</p>
-                                        <p className="text-xs text-red-700 mt-1">3 Enterprise licenses expiring in &lt; 48 hours.</p>
-                                        <button className="text-xs font-medium text-red-800 hover:underline mt-2">View details</button>
+                                        <p className="text-xs text-red-700 mt-1">
+                                            3 Enterprise licenses expiring in &lt; 48 hours.
+                                        </p>
+                                        <button className="text-xs font-medium text-red-800 hover:underline mt-2">
+                                            View details
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -293,8 +385,12 @@ export default function AdminDashboard() {
                                     <Users className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-sm font-semibold text-blue-900">New Support Tickets</p>
-                                        <p className="text-xs text-blue-700 mt-1">5 high-priority tickets from Enterprise clients.</p>
-                                        <button className="text-xs font-medium text-blue-800 hover:underline mt-2">Open Helpdesk</button>
+                                        <p className="text-xs text-blue-700 mt-1">
+                                            5 high-priority tickets from Enterprise clients.
+                                        </p>
+                                        <button className="text-xs font-medium text-blue-800 hover:underline mt-2">
+                                            Open Helpdesk
+                                        </button>
                                     </div>
                                 </div>
                             </div>

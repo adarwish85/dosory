@@ -6,10 +6,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PayPalButton from "@/components/payments/PayPalButton";
-import {
-    FileText, Calendar, Building2, CheckCircle,
-    AlertTriangle, DollarSign, Mail
-} from "lucide-react";
+import { FileText, Calendar, Building2, CheckCircle, AlertTriangle, DollarSign, Mail } from "lucide-react";
 
 interface Invoice {
     id: string;
@@ -101,7 +98,9 @@ export default function InvoicePaymentPage() {
                     <CardContent className="p-8 text-center">
                         <AlertTriangle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
                         <h1 className="text-xl font-bold mb-2">Invoice Not Found</h1>
-                        <p className="text-gray-600">{error || "This invoice may have been removed or the link is invalid."}</p>
+                        <p className="text-gray-600">
+                            {error || "This invoice may have been removed or the link is invalid."}
+                        </p>
                     </CardContent>
                 </Card>
             </div>
@@ -119,7 +118,9 @@ export default function InvoicePaymentPage() {
                         <CheckCircle className="h-6 w-6 text-green-600" />
                         <div>
                             <p className="font-medium text-green-800">Payment Successful!</p>
-                            <p className="text-sm text-green-700">Thank you for your payment. A receipt has been sent to your email.</p>
+                            <p className="text-sm text-green-700">
+                                Thank you for your payment. A receipt has been sent to your email.
+                            </p>
                         </div>
                     </div>
                 )}
@@ -137,10 +138,11 @@ export default function InvoicePaymentPage() {
                                     {invoice.currency} {invoice.total.toFixed(2)}
                                 </CardTitle>
                             </div>
-                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${isPaid
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-yellow-100 text-yellow-800"
-                                }`}>
+                            <div
+                                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                    isPaid ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                                }`}
+                            >
                                 {isPaid ? "Paid" : invoice.status === "partial" ? "Partially Paid" : "Due"}
                             </div>
                         </div>

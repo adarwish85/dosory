@@ -120,199 +120,231 @@ export function useDashboardLayout() {
 
         const docRef = doc(db, "organizations", orgId, "userSettings", userId);
 
-        const unsubscribe = onSnapshot(docRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const data = snapshot.data();
-                if (data.dashboardLayout) {
-                    setConfig({
-                        ...DEFAULT_CONFIG,
-                        ...data.dashboardLayout,
-                        updatedAt: data.dashboardLayout.updatedAt?.toDate?.() || new Date(),
-                    });
+        const unsubscribe = onSnapshot(
+            docRef,
+            (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    if (data.dashboardLayout) {
+                        setConfig({
+                            ...DEFAULT_CONFIG,
+                            ...data.dashboardLayout,
+                            updatedAt: data.dashboardLayout.updatedAt?.toDate?.() || new Date(),
+                        });
+                    }
                 }
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error loading dashboard layout:", error);
+                setLoading(false);
             }
-            setLoading(false);
-        }, (error) => {
-            console.error("Error loading dashboard layout:", error);
-            setLoading(false);
-        });
+        );
 
         return () => unsubscribe();
     }, [orgId, userId]);
 
     // Save layout to Firestore
-    const saveLayout = useCallback(async (newLayout: LayoutItem[]) => {
-        if (!orgId || !userId) return;
+    const saveLayout = useCallback(
+        async (newLayout: LayoutItem[]) => {
+            if (!orgId || !userId) return;
 
-        setSaving(true);
-        try {
-            const docRef = doc(db, "organizations", orgId, "userSettings", userId);
-            await setDoc(docRef, {
-                dashboardLayout: {
-                    ...config,
-                    layout: newLayout,
-                    updatedAt: new Date(),
-                },
-            }, { merge: true });
+            setSaving(true);
+            try {
+                const docRef = doc(db, "organizations", orgId, "userSettings", userId);
+                await setDoc(
+                    docRef,
+                    {
+                        dashboardLayout: {
+                            ...config,
+                            layout: newLayout,
+                            updatedAt: new Date(),
+                        },
+                    },
+                    { merge: true }
+                );
 
-            setConfig(prev => ({ ...prev, layout: newLayout, updatedAt: new Date() }));
-        } catch (error) {
-            console.error("Error saving layout:", error);
-        } finally {
-            setSaving(false);
-        }
-    }, [orgId, userId, config]);
+                setConfig((prev) => ({ ...prev, layout: newLayout, updatedAt: new Date() }));
+            } catch (error) {
+                console.error("Error saving layout:", error);
+            } finally {
+                setSaving(false);
+            }
+        },
+        [orgId, userId, config]
+    );
 
     // Apply a preset
-    const applyPreset = useCallback(async (preset: LayoutPreset) => {
-        if (!orgId || !userId) return;
+    const applyPreset = useCallback(
+        async (preset: LayoutPreset) => {
+            if (!orgId || !userId) return;
 
-        const presetLayout = PRESET_LAYOUTS[preset];
-        const enabledWidgetIds = new Set(presetLayout.map(l => l.i));
+            const presetLayout = PRESET_LAYOUTS[preset];
+            const enabledWidgetIds = new Set(presetLayout.map((l) => l.i));
 
-        const newWidgets = DEFAULT_WIDGETS.map(w => ({
-            ...w,
-            enabled: enabledWidgetIds.has(w.id),
-        }));
+            const newWidgets = DEFAULT_WIDGETS.map((w) => ({
+                ...w,
+                enabled: enabledWidgetIds.has(w.id),
+            }));
 
-        setSaving(true);
-        try {
-            const docRef = doc(db, "organizations", orgId, "userSettings", userId);
-            await setDoc(docRef, {
-                dashboardLayout: {
+            setSaving(true);
+            try {
+                const docRef = doc(db, "organizations", orgId, "userSettings", userId);
+                await setDoc(
+                    docRef,
+                    {
+                        dashboardLayout: {
+                            preset,
+                            layout: presetLayout,
+                            widgets: newWidgets,
+                            dataDensity: config.dataDensity,
+                            widgetStyle: config.widgetStyle,
+                            updatedAt: new Date(),
+                        },
+                    },
+                    { merge: true }
+                );
+
+                setConfig((prev) => ({
+                    ...prev,
                     preset,
                     layout: presetLayout,
                     widgets: newWidgets,
-                    dataDensity: config.dataDensity,
-                    widgetStyle: config.widgetStyle,
                     updatedAt: new Date(),
-                },
-            }, { merge: true });
-
-            setConfig(prev => ({
-                ...prev,
-                preset,
-                layout: presetLayout,
-                widgets: newWidgets,
-                updatedAt: new Date(),
-            }));
-        } catch (error) {
-            console.error("Error applying preset:", error);
-        } finally {
-            setSaving(false);
-        }
-    }, [orgId, userId, config.dataDensity, config.widgetStyle]);
+                }));
+            } catch (error) {
+                console.error("Error applying preset:", error);
+            } finally {
+                setSaving(false);
+            }
+        },
+        [orgId, userId, config.dataDensity, config.widgetStyle]
+    );
 
     // Toggle widget visibility
-    const toggleWidget = useCallback(async (widgetId: WidgetId, enabled: boolean) => {
-        if (!orgId || !userId) return;
+    const toggleWidget = useCallback(
+        async (widgetId: WidgetId, enabled: boolean) => {
+            if (!orgId || !userId) return;
 
-        const newWidgets = config.widgets.map(w =>
-            w.id === widgetId ? { ...w, enabled } : w
-        );
+            const newWidgets = config.widgets.map((w) => (w.id === widgetId ? { ...w, enabled } : w));
 
-        let newLayout = config.layout;
-        if (enabled) {
-            // Add widget to layout if not present
-            if (!config.layout.find(l => l.i === widgetId)) {
-                newLayout = [
-                    ...config.layout,
-                    { i: widgetId, x: 0, y: Infinity, w: 4, h: 3 },
-                ];
+            let newLayout = config.layout;
+            if (enabled) {
+                // Add widget to layout if not present
+                if (!config.layout.find((l) => l.i === widgetId)) {
+                    newLayout = [...config.layout, { i: widgetId, x: 0, y: Infinity, w: 4, h: 3 }];
+                }
+            } else {
+                // Remove widget from layout
+                newLayout = config.layout.filter((l) => l.i !== widgetId);
             }
-        } else {
-            // Remove widget from layout
-            newLayout = config.layout.filter(l => l.i !== widgetId);
-        }
 
-        setSaving(true);
-        try {
-            const docRef = doc(db, "organizations", orgId, "userSettings", userId);
-            await setDoc(docRef, {
-                dashboardLayout: {
-                    ...config,
+            setSaving(true);
+            try {
+                const docRef = doc(db, "organizations", orgId, "userSettings", userId);
+                await setDoc(
+                    docRef,
+                    {
+                        dashboardLayout: {
+                            ...config,
+                            layout: newLayout,
+                            widgets: newWidgets,
+                            updatedAt: new Date(),
+                        },
+                    },
+                    { merge: true }
+                );
+
+                setConfig((prev) => ({
+                    ...prev,
                     layout: newLayout,
                     widgets: newWidgets,
                     updatedAt: new Date(),
-                },
-            }, { merge: true });
-
-            setConfig(prev => ({
-                ...prev,
-                layout: newLayout,
-                widgets: newWidgets,
-                updatedAt: new Date(),
-            }));
-        } catch (error) {
-            console.error("Error toggling widget:", error);
-        } finally {
-            setSaving(false);
-        }
-    }, [orgId, userId, config]);
+                }));
+            } catch (error) {
+                console.error("Error toggling widget:", error);
+            } finally {
+                setSaving(false);
+            }
+        },
+        [orgId, userId, config]
+    );
 
     // Update widget settings
-    const updateWidgetSettings = useCallback(async (widgetId: WidgetId, settings: Partial<WidgetSettings>) => {
-        if (!orgId || !userId) return;
+    const updateWidgetSettings = useCallback(
+        async (widgetId: WidgetId, settings: Partial<WidgetSettings>) => {
+            if (!orgId || !userId) return;
 
-        const newWidgets = config.widgets.map(w =>
-            w.id === widgetId ? { ...w, settings: { ...w.settings, ...settings } } : w
-        );
+            const newWidgets = config.widgets.map((w) =>
+                w.id === widgetId ? { ...w, settings: { ...w.settings, ...settings } } : w
+            );
 
-        setSaving(true);
-        try {
-            const docRef = doc(db, "organizations", orgId, "userSettings", userId);
-            await setDoc(docRef, {
-                dashboardLayout: {
-                    ...config,
+            setSaving(true);
+            try {
+                const docRef = doc(db, "organizations", orgId, "userSettings", userId);
+                await setDoc(
+                    docRef,
+                    {
+                        dashboardLayout: {
+                            ...config,
+                            widgets: newWidgets,
+                            updatedAt: new Date(),
+                        },
+                    },
+                    { merge: true }
+                );
+
+                setConfig((prev) => ({
+                    ...prev,
                     widgets: newWidgets,
                     updatedAt: new Date(),
-                },
-            }, { merge: true });
-
-            setConfig(prev => ({
-                ...prev,
-                widgets: newWidgets,
-                updatedAt: new Date(),
-            }));
-        } catch (error) {
-            console.error("Error updating widget settings:", error);
-        } finally {
-            setSaving(false);
-        }
-    }, [orgId, userId, config]);
+                }));
+            } catch (error) {
+                console.error("Error updating widget settings:", error);
+            } finally {
+                setSaving(false);
+            }
+        },
+        [orgId, userId, config]
+    );
 
     // Update global settings
-    const updateGlobalSettings = useCallback(async (updates: { dataDensity?: DataDensity; widgetStyle?: WidgetStyle }) => {
-        if (!orgId || !userId) return;
+    const updateGlobalSettings = useCallback(
+        async (updates: { dataDensity?: DataDensity; widgetStyle?: WidgetStyle }) => {
+            if (!orgId || !userId) return;
 
-        setSaving(true);
-        try {
-            const docRef = doc(db, "organizations", orgId, "userSettings", userId);
-            await setDoc(docRef, {
-                dashboardLayout: {
-                    ...config,
+            setSaving(true);
+            try {
+                const docRef = doc(db, "organizations", orgId, "userSettings", userId);
+                await setDoc(
+                    docRef,
+                    {
+                        dashboardLayout: {
+                            ...config,
+                            ...updates,
+                            updatedAt: new Date(),
+                        },
+                    },
+                    { merge: true }
+                );
+
+                setConfig((prev) => ({
+                    ...prev,
                     ...updates,
                     updatedAt: new Date(),
-                },
-            }, { merge: true });
-
-            setConfig(prev => ({
-                ...prev,
-                ...updates,
-                updatedAt: new Date(),
-            }));
-        } catch (error) {
-            console.error("Error updating global settings:", error);
-        } finally {
-            setSaving(false);
-        }
-    }, [orgId, userId, config]);
+                }));
+            } catch (error) {
+                console.error("Error updating global settings:", error);
+            } finally {
+                setSaving(false);
+            }
+        },
+        [orgId, userId, config]
+    );
 
     // Get enabled widgets with their layout
-    const enabledWidgets = config.widgets.filter(w => w.enabled);
-    const enabledLayout = config.layout.filter(l =>
-        enabledWidgets.some(w => w.id === l.i)
-    );
+    const enabledWidgets = config.widgets.filter((w) => w.enabled);
+    const enabledLayout = config.layout.filter((l) => enabledWidgets.some((w) => w.id === l.i));
 
     return {
         config,

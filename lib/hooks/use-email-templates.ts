@@ -2,9 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-    collection, doc, getDocs, getDoc, setDoc, updateDoc,
-    addDoc, serverTimestamp, query, orderBy, Timestamp,
-    onSnapshot
+    collection,
+    doc,
+    getDocs,
+    getDoc,
+    setDoc,
+    updateDoc,
+    addDoc,
+    serverTimestamp,
+    query,
+    orderBy,
+    Timestamp,
+    onSnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -62,27 +71,31 @@ export function useEmailTemplates() {
     useEffect(() => {
         const templatesRef = collection(db, "platform", "emailTemplates", "templates");
 
-        const unsubscribe = onSnapshot(templatesRef, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as EmailTemplate[];
+        const unsubscribe = onSnapshot(
+            templatesRef,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as EmailTemplate[];
 
-            // Sort by category then name
-            data.sort((a, b) => {
-                if (a.category !== b.category) {
-                    return a.category.localeCompare(b.category);
-                }
-                return a.name.localeCompare(b.name);
-            });
+                // Sort by category then name
+                data.sort((a, b) => {
+                    if (a.category !== b.category) {
+                        return a.category.localeCompare(b.category);
+                    }
+                    return a.name.localeCompare(b.name);
+                });
 
-            setTemplates(data);
-            setLoading(false);
-        }, (err) => {
-            console.error("Error fetching templates:", err);
-            setError(err.message);
-            setLoading(false);
-        });
+                setTemplates(data);
+                setLoading(false);
+            },
+            (err) => {
+                console.error("Error fetching templates:", err);
+                setError(err.message);
+                setLoading(false);
+            }
+        );
 
         return () => unsubscribe();
     }, []);
@@ -131,9 +144,9 @@ export function useEmailTemplate(templateId: string) {
         const q = query(versionsRef, orderBy("version", "desc"));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({
+            const data = snapshot.docs.map((doc) => ({
                 id: doc.id,
-                ...doc.data()
+                ...doc.data(),
             })) as TemplateVersion[];
             setVersions(data);
         });
@@ -142,19 +155,94 @@ export function useEmailTemplate(templateId: string) {
     }, [templateId]);
 
     // Update template
-    const updateTemplate = useCallback(async (
-        updates: Partial<EmailTemplate>,
-        userId: string,
-        changeNote?: string
-    ) => {
-        if (!templateId || !template) return false;
+    const updateTemplate = useCallback(
+        async (updates: Partial<EmailTemplate>, userId: string, changeNote?: string) => {
+            if (!templateId || !template) return false;
 
-        setSaving(true);
-        try {
-            const docRef = doc(db, "platform", "emailTemplates", "templates", templateId);
+            setSaving(true);
+            try {
+                const docRef = doc(db, "platform", "emailTemplates", "templates", templateId);
 
-            // Save current version to history if content changed
-            if (updates.htmlContent || updates.subject) {
+                // Save current version to history if content changed
+                if (updates.htmlContent || updates.subject) {
+                    const versionsRef = collection(
+                        db,
+                        "platform",
+                        "emailTemplates",
+                        "templates",
+                        templateId,
+                        "versions"
+                    );
+                    await addDoc(versionsRef, {
+                        version: template.version,
+                        subject: template.subject,
+                        htmlContent: template.htmlContent,
+                        createdAt: serverTimestamp(),
+                        createdBy: userId,
+                        changeNote: changeNote || "Updated template",
+                    });
+                }
+
+                // Update template
+                await updateDoc(docRef, {
+                    ...updates,
+                    version: (template.version || 0) + 1,
+                    updatedAt: serverTimestamp(),
+                    updatedBy: userId,
+                    isDefault: false,
+                });
+
+                // Update local state
+                setTemplate((prev) => (prev ? { ...prev, ...updates, version: (prev.version || 0) + 1 } : null));
+
+                return true;
+            } catch (err: any) {
+                console.error("Error updating template:", err);
+                setError(err.message);
+                return false;
+            } finally {
+                setSaving(false);
+            }
+        },
+        [templateId, template]
+    );
+
+    // Toggle enabled
+    const toggleEnabled = useCallback(
+        async (userId: string) => {
+            if (!templateId || !template) return false;
+
+            setSaving(true);
+            try {
+                const docRef = doc(db, "platform", "emailTemplates", "templates", templateId);
+                await updateDoc(docRef, {
+                    enabled: !template.enabled,
+                    updatedAt: serverTimestamp(),
+                    updatedBy: userId,
+                });
+                setTemplate((prev) => (prev ? { ...prev, enabled: !prev.enabled } : null));
+                return true;
+            } catch (err: any) {
+                console.error("Error toggling template:", err);
+                setError(err.message);
+                return false;
+            } finally {
+                setSaving(false);
+            }
+        },
+        [templateId, template]
+    );
+
+    // Reset to default
+    const resetToDefault = useCallback(
+        async (userId: string) => {
+            if (!templateId || !template) return false;
+
+            setSaving(true);
+            try {
+                const docRef = doc(db, "platform", "emailTemplates", "templates", templateId);
+
+                // Save current version first
                 const versionsRef = collection(db, "platform", "emailTemplates", "templates", templateId, "versions");
                 await addDoc(versionsRef, {
                     version: template.version,
@@ -162,111 +250,59 @@ export function useEmailTemplate(templateId: string) {
                     htmlContent: template.htmlContent,
                     createdAt: serverTimestamp(),
                     createdBy: userId,
-                    changeNote: changeNote || "Updated template"
+                    changeNote: "Before reset to default",
                 });
+
+                // Reset to default
+                await updateDoc(docRef, {
+                    subject: template.defaultSubject,
+                    htmlContent: template.defaultHtmlContent,
+                    version: (template.version || 0) + 1,
+                    updatedAt: serverTimestamp(),
+                    updatedBy: userId,
+                    isDefault: true,
+                });
+
+                setTemplate((prev) =>
+                    prev
+                        ? {
+                              ...prev,
+                              subject: prev.defaultSubject,
+                              htmlContent: prev.defaultHtmlContent,
+                              isDefault: true,
+                              version: (prev.version || 0) + 1,
+                          }
+                        : null
+                );
+
+                return true;
+            } catch (err: any) {
+                console.error("Error resetting template:", err);
+                setError(err.message);
+                return false;
+            } finally {
+                setSaving(false);
             }
-
-            // Update template
-            await updateDoc(docRef, {
-                ...updates,
-                version: (template.version || 0) + 1,
-                updatedAt: serverTimestamp(),
-                updatedBy: userId,
-                isDefault: false
-            });
-
-            // Update local state
-            setTemplate(prev => prev ? { ...prev, ...updates, version: (prev.version || 0) + 1 } : null);
-
-            return true;
-        } catch (err: any) {
-            console.error("Error updating template:", err);
-            setError(err.message);
-            return false;
-        } finally {
-            setSaving(false);
-        }
-    }, [templateId, template]);
-
-    // Toggle enabled
-    const toggleEnabled = useCallback(async (userId: string) => {
-        if (!templateId || !template) return false;
-
-        setSaving(true);
-        try {
-            const docRef = doc(db, "platform", "emailTemplates", "templates", templateId);
-            await updateDoc(docRef, {
-                enabled: !template.enabled,
-                updatedAt: serverTimestamp(),
-                updatedBy: userId
-            });
-            setTemplate(prev => prev ? { ...prev, enabled: !prev.enabled } : null);
-            return true;
-        } catch (err: any) {
-            console.error("Error toggling template:", err);
-            setError(err.message);
-            return false;
-        } finally {
-            setSaving(false);
-        }
-    }, [templateId, template]);
-
-    // Reset to default
-    const resetToDefault = useCallback(async (userId: string) => {
-        if (!templateId || !template) return false;
-
-        setSaving(true);
-        try {
-            const docRef = doc(db, "platform", "emailTemplates", "templates", templateId);
-
-            // Save current version first
-            const versionsRef = collection(db, "platform", "emailTemplates", "templates", templateId, "versions");
-            await addDoc(versionsRef, {
-                version: template.version,
-                subject: template.subject,
-                htmlContent: template.htmlContent,
-                createdAt: serverTimestamp(),
-                createdBy: userId,
-                changeNote: "Before reset to default"
-            });
-
-            // Reset to default
-            await updateDoc(docRef, {
-                subject: template.defaultSubject,
-                htmlContent: template.defaultHtmlContent,
-                version: (template.version || 0) + 1,
-                updatedAt: serverTimestamp(),
-                updatedBy: userId,
-                isDefault: true
-            });
-
-            setTemplate(prev => prev ? {
-                ...prev,
-                subject: prev.defaultSubject,
-                htmlContent: prev.defaultHtmlContent,
-                isDefault: true,
-                version: (prev.version || 0) + 1
-            } : null);
-
-            return true;
-        } catch (err: any) {
-            console.error("Error resetting template:", err);
-            setError(err.message);
-            return false;
-        } finally {
-            setSaving(false);
-        }
-    }, [templateId, template]);
+        },
+        [templateId, template]
+    );
 
     // Restore version
-    const restoreVersion = useCallback(async (version: TemplateVersion, userId: string) => {
-        if (!templateId || !template) return false;
+    const restoreVersion = useCallback(
+        async (version: TemplateVersion, userId: string) => {
+            if (!templateId || !template) return false;
 
-        return await updateTemplate({
-            subject: version.subject,
-            htmlContent: version.htmlContent
-        }, userId, `Restored from version ${version.version}`);
-    }, [templateId, template, updateTemplate]);
+            return await updateTemplate(
+                {
+                    subject: version.subject,
+                    htmlContent: version.htmlContent,
+                },
+                userId,
+                `Restored from version ${version.version}`
+            );
+        },
+        [templateId, template, updateTemplate]
+    );
 
     return {
         template,
@@ -277,7 +313,7 @@ export function useEmailTemplate(templateId: string) {
         updateTemplate,
         toggleEnabled,
         resetToDefault,
-        restoreVersion
+        restoreVersion,
     };
 }
 
@@ -292,7 +328,7 @@ export function useToggleTemplate() {
             await updateDoc(docRef, {
                 enabled: !currentEnabled,
                 updatedAt: serverTimestamp(),
-                updatedBy: userId
+                updatedBy: userId,
             });
             return true;
         } catch (err) {
@@ -310,19 +346,19 @@ export function useToggleTemplate() {
 export function htmlToPlainText(html: string): string {
     // Remove HTML tags and decode entities
     return html
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<\/p>/gi, '\n\n')
-        .replace(/<\/div>/gi, '\n')
-        .replace(/<\/h[1-6]>/gi, '\n\n')
-        .replace(/<li>/gi, '• ')
-        .replace(/<\/li>/gi, '\n')
-        .replace(/<[^>]+>/g, '')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/p>/gi, "\n\n")
+        .replace(/<\/div>/gi, "\n")
+        .replace(/<\/h[1-6]>/gi, "\n\n")
+        .replace(/<li>/gi, "• ")
+        .replace(/<\/li>/gi, "\n")
+        .replace(/<[^>]+>/g, "")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
         .replace(/&quot;/g, '"')
-        .replace(/\n{3,}/g, '\n\n')
+        .replace(/\n{3,}/g, "\n\n")
         .trim();
 }
 
@@ -330,7 +366,7 @@ export function htmlToPlainText(html: string): string {
 export function replaceVariables(content: string, values: Record<string, string>): string {
     let result = content;
     for (const [key, value] of Object.entries(values)) {
-        result = result.replace(new RegExp(`{{${key}}}`, 'g'), value);
+        result = result.replace(new RegExp(`{{${key}}}`, "g"), value);
     }
     return result;
 }

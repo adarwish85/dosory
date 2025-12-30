@@ -21,16 +21,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
-import type {
-    Staff,
-    Role,
-    Tax,
-    Currency,
-    PaymentMode,
-    CustomField,
-    EmailTemplate,
-    Organization,
-} from "@/lib/types";
+import type { Staff, Role, Tax, Currency, PaymentMode, CustomField, EmailTemplate, Organization } from "@/lib/types";
 import type { StaffFormData, RoleFormData } from "@/lib/schemas";
 
 // ============================================
@@ -59,9 +50,7 @@ export function useStaff(options: UseStaffOptions = {}) {
 
         console.log("useStaff: Fetching staff for orgId:", profile.orgId);
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (status !== "all") {
             constraints.push(where("status", "==", status));
@@ -116,15 +105,12 @@ export function useStaff(options: UseStaffOptions = {}) {
         [profile?.orgId, profile?.uid]
     );
 
-    const updateStaff = useCallback(
-        async (id: string, data: Partial<StaffFormData>): Promise<void> => {
-            await updateDoc(doc(db, "staff", id), {
-                ...data,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateStaff = useCallback(async (id: string, data: Partial<StaffFormData>): Promise<void> => {
+        await updateDoc(doc(db, "staff", id), {
+            ...data,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     const deleteStaff = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "staff", id));
@@ -155,11 +141,7 @@ export function useRoles() {
             return;
         }
 
-        const q = query(
-            collection(db, "roles"),
-            where("orgId", "==", profile.orgId),
-            orderBy("name", "asc")
-        );
+        const q = query(collection(db, "roles"), where("orgId", "==", profile.orgId), orderBy("name", "asc"));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map((doc) => ({
@@ -189,15 +171,12 @@ export function useRoles() {
         [profile?.orgId]
     );
 
-    const updateRole = useCallback(
-        async (id: string, data: Partial<RoleFormData>): Promise<void> => {
-            await updateDoc(doc(db, "roles", id), {
-                ...data,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateRole = useCallback(async (id: string, data: Partial<RoleFormData>): Promise<void> => {
+        await updateDoc(doc(db, "roles", id), {
+            ...data,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     const deleteRole = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "roles", id));
@@ -221,11 +200,7 @@ export function useTaxes() {
             return;
         }
 
-        const q = query(
-            collection(db, "taxes"),
-            where("orgId", "==", profile.orgId),
-            orderBy("name", "asc")
-        );
+        const q = query(collection(db, "taxes"), where("orgId", "==", profile.orgId), orderBy("name", "asc"));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map((doc) => ({
@@ -257,15 +232,12 @@ export function useTaxes() {
         [profile?.orgId]
     );
 
-    const updateTax = useCallback(
-        async (id: string, data: Partial<Tax>): Promise<void> => {
-            await updateDoc(doc(db, "taxes", id), {
-                ...data,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateTax = useCallback(async (id: string, data: Partial<Tax>): Promise<void> => {
+        await updateDoc(doc(db, "taxes", id), {
+            ...data,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     const deleteTax = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "taxes", id));
@@ -289,11 +261,7 @@ export function useCurrencies() {
             return;
         }
 
-        const q = query(
-            collection(db, "currencies"),
-            where("orgId", "==", profile.orgId),
-            orderBy("code", "asc")
-        );
+        const q = query(collection(db, "currencies"), where("orgId", "==", profile.orgId), orderBy("code", "asc"));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map((doc) => ({
@@ -341,11 +309,7 @@ export function usePaymentModes() {
             return;
         }
 
-        const q = query(
-            collection(db, "paymentModes"),
-            where("orgId", "==", profile.orgId),
-            orderBy("name", "asc")
-        );
+        const q = query(collection(db, "paymentModes"), where("orgId", "==", profile.orgId), orderBy("name", "asc"));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map((doc) => ({
@@ -396,9 +360,7 @@ export function useCustomFields(fieldTo?: string) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (fieldTo) {
             constraints.push(where("fieldTo", "==", fieldTo));
@@ -421,7 +383,9 @@ export function useCustomFields(fieldTo?: string) {
     }, [profile?.orgId, fieldTo]);
 
     const createCustomField = useCallback(
-        async (data: Omit<CustomField, "id" | "orgId" | "createdAt" | "updatedAt" | "slug" | "order">): Promise<string> => {
+        async (
+            data: Omit<CustomField, "id" | "orgId" | "createdAt" | "updatedAt" | "slug" | "order">
+        ): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
 
             const slug = data.name
@@ -429,9 +393,10 @@ export function useCustomFields(fieldTo?: string) {
                 .replace(/[^a-z0-9]+/g, "_")
                 .replace(/(^_|_$)/g, "");
 
-            const maxOrder = customFields.length > 0
-                ? Math.max(...customFields.filter(f => f.fieldTo === data.fieldTo).map(f => f.order))
-                : 0;
+            const maxOrder =
+                customFields.length > 0
+                    ? Math.max(...customFields.filter((f) => f.fieldTo === data.fieldTo).map((f) => f.order))
+                    : 0;
 
             const docRef = await addDoc(collection(db, "customFields"), {
                 ...data,
@@ -447,15 +412,12 @@ export function useCustomFields(fieldTo?: string) {
         [profile?.orgId, customFields]
     );
 
-    const updateCustomField = useCallback(
-        async (id: string, data: Partial<CustomField>): Promise<void> => {
-            await updateDoc(doc(db, "customFields", id), {
-                ...data,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateCustomField = useCallback(async (id: string, data: Partial<CustomField>): Promise<void> => {
+        await updateDoc(doc(db, "customFields", id), {
+            ...data,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     const deleteCustomField = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "customFields", id));
@@ -479,9 +441,7 @@ export function useEmailTemplates(type?: string) {
             return;
         }
 
-        const constraints: QueryConstraint[] = [
-            where("orgId", "==", profile.orgId),
-        ];
+        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (type) {
             constraints.push(where("type", "==", type));
@@ -525,15 +485,12 @@ export function useEmailTemplates(type?: string) {
         [profile?.orgId]
     );
 
-    const updateTemplate = useCallback(
-        async (id: string, data: Partial<EmailTemplate>): Promise<void> => {
-            await updateDoc(doc(db, "emailTemplates", id), {
-                ...data,
-                updatedAt: serverTimestamp(),
-            });
-        },
-        []
-    );
+    const updateTemplate = useCallback(async (id: string, data: Partial<EmailTemplate>): Promise<void> => {
+        await updateDoc(doc(db, "emailTemplates", id), {
+            ...data,
+            updatedAt: serverTimestamp(),
+        });
+    }, []);
 
     const deleteTemplate = useCallback(async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "emailTemplates", id));
@@ -557,17 +514,14 @@ export function useOrganization() {
             return;
         }
 
-        const unsubscribe = onSnapshot(
-            doc(db, "organizations", profile.orgId),
-            (snapshot) => {
-                if (snapshot.exists()) {
-                    setOrganization({ id: snapshot.id, ...snapshot.data() } as Organization);
-                } else {
-                    setOrganization(null);
-                }
-                setLoading(false);
+        const unsubscribe = onSnapshot(doc(db, "organizations", profile.orgId), (snapshot) => {
+            if (snapshot.exists()) {
+                setOrganization({ id: snapshot.id, ...snapshot.data() } as Organization);
+            } else {
+                setOrganization(null);
             }
-        );
+            setLoading(false);
+        });
 
         return () => unsubscribe();
     }, [profile?.orgId]);

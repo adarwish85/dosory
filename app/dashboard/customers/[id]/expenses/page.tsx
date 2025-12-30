@@ -13,15 +13,38 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-    DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem,
-    DropdownMenuRadioGroup, DropdownMenuRadioItem
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuCheckboxItem,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import {
-    Search, Plus, MoreVertical, ChevronDown, LayoutList, Download,
-    ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Loader2, Eye, Pencil,
-    ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-    Receipt, CircleDollarSign, CircleOff, RefreshCw
+    Search,
+    Plus,
+    MoreVertical,
+    ChevronDown,
+    LayoutList,
+    Download,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown,
+    RotateCcw,
+    Loader2,
+    Eye,
+    Pencil,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+    Receipt,
+    CircleDollarSign,
+    CircleOff,
+    RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -31,7 +54,13 @@ type SortDirection = "asc" | "desc" | null;
 type RowDensity = "compact" | "comfortable";
 type ColumnKey = "name" | "category" | "amount" | "date" | "billable";
 
-interface ColumnDef { key: ColumnKey; label: string; defaultVisible: boolean; sortable?: boolean; width?: number; }
+interface ColumnDef {
+    key: ColumnKey;
+    label: string;
+    defaultVisible: boolean;
+    sortable?: boolean;
+    width?: number;
+}
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
     { key: "name", label: "Name", defaultVisible: true, sortable: true, width: 200 },
@@ -46,25 +75,84 @@ const ROW_DENSITY_STYLES: Record<RowDensity, string> = { compact: "py-1 text-xs"
 // Highlight text component
 function HighlightText({ text, search }: { text: string; search: string }) {
     if (!search.trim() || !text) return <>{text}</>;
-    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
     const parts = text.split(regex);
-    return <>{parts.map((part, i) => regex.test(part) ? <mark key={i} className="bg-yellow-200 px-0.5 rounded">{part}</mark> : <span key={i}>{part}</span>)}</>;
+    return (
+        <>
+            {parts.map((part, i) =>
+                regex.test(part) ? (
+                    <mark key={i} className="bg-yellow-200 px-0.5 rounded">
+                        {part}
+                    </mark>
+                ) : (
+                    <span key={i}>{part}</span>
+                )
+            )}
+        </>
+    );
 }
 
 // Pagination component
-function Pagination({ currentPage, totalPages, onPageChange, totalRecords, startRecord, endRecord }: {
-    currentPage: number; totalPages: number; onPageChange: (page: number) => void;
-    totalRecords: number; startRecord: number; endRecord: number;
+function Pagination({
+    currentPage,
+    totalPages,
+    onPageChange,
+    totalRecords,
+    startRecord,
+    endRecord,
+}: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    totalRecords: number;
+    startRecord: number;
+    endRecord: number;
 }) {
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Showing {startRecord} to {endRecord} of {totalRecords}</span>
+            <span>
+                Showing {startRecord} to {endRecord} of {totalRecords}
+            </span>
             <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(1)} disabled={currentPage === 1}><ChevronsLeft className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></Button>
-                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium">{currentPage} / {totalPages}</span>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-4 w-4" /></Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(1)}
+                    disabled={currentPage === 1}
+                >
+                    <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="px-3 py-1 bg-gray-100 rounded text-sm font-medium">
+                    {currentPage} / {totalPages}
+                </span>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onPageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                >
+                    <ChevronsRight className="h-4 w-4" />
+                </Button>
             </div>
         </div>
     );
@@ -83,7 +171,11 @@ export default function ExpensesPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(25);
     const [columnVisibility, setColumnVisibility] = useState<Record<ColumnKey, boolean>>({
-        name: true, category: true, amount: true, date: true, billable: true
+        name: true,
+        category: true,
+        amount: true,
+        date: true,
+        billable: true,
     });
     const [sortKey, setSortKey] = useState<ColumnKey | null>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -97,15 +189,13 @@ export default function ExpensesPage() {
     };
 
     const getBillableBadge = (billable: boolean) => {
-        return billable
-            ? "bg-green-50 text-green-600 border-green-100"
-            : "bg-gray-50 text-gray-500 border-gray-100";
+        return billable ? "bg-green-50 text-green-600 border-green-100" : "bg-gray-50 text-gray-500 border-gray-100";
     };
 
     // Sort handler
     const handleSort = (key: ColumnKey) => {
         if (sortKey === key) {
-            setSortDirection(prev => prev === "asc" ? "desc" : prev === "desc" ? null : "asc");
+            setSortDirection((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"));
             if (sortDirection === "desc") setSortKey(null);
         } else {
             setSortKey(key);
@@ -114,28 +204,45 @@ export default function ExpensesPage() {
     };
 
     // Toggle column
-    const toggleColumn = (key: ColumnKey) => setColumnVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+    const toggleColumn = (key: ColumnKey) => setColumnVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
 
     // Process expenses
     const processedExpenses = useMemo(() => {
         let result = [...expenses];
         if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
-            result = result.filter(exp =>
-                (exp.categoryName || "").toLowerCase().includes(lowerQuery) ||
-                (exp.note || "").toLowerCase().includes(lowerQuery)
+            result = result.filter(
+                (exp) =>
+                    (exp.categoryName || "").toLowerCase().includes(lowerQuery) ||
+                    (exp.note || "").toLowerCase().includes(lowerQuery)
             );
         }
         if (sortKey && sortDirection) {
             result.sort((a, b) => {
                 let aVal: any, bVal: any;
                 switch (sortKey) {
-                    case "name": aVal = a.categoryName || a.note || ""; bVal = b.categoryName || b.note || ""; break;
-                    case "category": aVal = a.categoryName || ""; bVal = b.categoryName || ""; break;
-                    case "amount": aVal = a.amount || 0; bVal = b.amount || 0; break;
-                    case "date": aVal = a.date?.toMillis?.() || 0; bVal = b.date?.toMillis?.() || 0; break;
-                    case "billable": aVal = a.billable ? 1 : 0; bVal = b.billable ? 1 : 0; break;
-                    default: return 0;
+                    case "name":
+                        aVal = a.categoryName || a.note || "";
+                        bVal = b.categoryName || b.note || "";
+                        break;
+                    case "category":
+                        aVal = a.categoryName || "";
+                        bVal = b.categoryName || "";
+                        break;
+                    case "amount":
+                        aVal = a.amount || 0;
+                        bVal = b.amount || 0;
+                        break;
+                    case "date":
+                        aVal = a.date?.toMillis?.() || 0;
+                        bVal = b.date?.toMillis?.() || 0;
+                        break;
+                    case "billable":
+                        aVal = a.billable ? 1 : 0;
+                        bVal = b.billable ? 1 : 0;
+                        break;
+                    default:
+                        return 0;
                 }
                 if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
                 if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
@@ -153,38 +260,67 @@ export default function ExpensesPage() {
     const endRecord = Math.min(startIndex + recordsPerPage, processedExpenses.length);
 
     // Selection handlers
-    const handleSelectAll = () => setSelectedIds(processedExpenses.map(exp => exp.id));
+    const handleSelectAll = () => setSelectedIds(processedExpenses.map((exp) => exp.id));
     const handleClearSelection = () => setSelectedIds([]);
-    const handleSelectPage = () => setSelectedIds(paginatedExpenses.map(exp => exp.id));
-    const toggleSelect = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-    const isAllSelected = paginatedExpenses.length > 0 && paginatedExpenses.every(exp => selectedIds.includes(exp.id));
-    const isSomeSelected = paginatedExpenses.some(exp => selectedIds.includes(exp.id)) && !isAllSelected;
+    const handleSelectPage = () => setSelectedIds(paginatedExpenses.map((exp) => exp.id));
+    const toggleSelect = (id: string) =>
+        setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+    const isAllSelected =
+        paginatedExpenses.length > 0 && paginatedExpenses.every((exp) => selectedIds.includes(exp.id));
+    const isSomeSelected = paginatedExpenses.some((exp) => selectedIds.includes(exp.id)) && !isAllSelected;
 
     // Export
     const handleExport = () => {
-        const dataToExport = selectedIds.length > 0 ? expenses.filter(exp => selectedIds.includes(exp.id)) : processedExpenses;
-        const csv = ["Category,Amount,Date,Billable", ...dataToExport.map(exp => `"${exp.categoryName}","${exp.amount}","${formatDate(exp.date)}","${exp.billable ? 'Yes' : 'No'}"`)].join("\n");
+        const dataToExport =
+            selectedIds.length > 0 ? expenses.filter((exp) => selectedIds.includes(exp.id)) : processedExpenses;
+        const csv = [
+            "Category,Amount,Date,Billable",
+            ...dataToExport.map(
+                (exp) =>
+                    `"${exp.categoryName}","${exp.amount}","${formatDate(exp.date)}","${exp.billable ? "Yes" : "No"}"`
+            ),
+        ].join("\n");
         const blob = new Blob([csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a"); a.href = url; a.download = "expenses-export.csv"; a.click();
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "expenses-export.csv";
+        a.click();
         URL.revokeObjectURL(url);
         toast.success("Exported successfully");
     };
 
     // Keyboard navigation
-    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-        if (focusedRowIndex === null || paginatedExpenses.length === 0) return;
-        switch (e.key) {
-            case "ArrowDown": e.preventDefault(); setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedExpenses.length - 1)); break;
-            case "ArrowUp": e.preventDefault(); setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0)); break;
-            case " ": e.preventDefault(); toggleSelect(paginatedExpenses[focusedRowIndex].id); break;
-        }
-    }, [focusedRowIndex, paginatedExpenses]);
+    const handleKeyDown = useCallback(
+        (e: KeyboardEvent<HTMLDivElement>) => {
+            if (focusedRowIndex === null || paginatedExpenses.length === 0) return;
+            switch (e.key) {
+                case "ArrowDown":
+                    e.preventDefault();
+                    setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedExpenses.length - 1));
+                    break;
+                case "ArrowUp":
+                    e.preventDefault();
+                    setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0));
+                    break;
+                case " ":
+                    e.preventDefault();
+                    toggleSelect(paginatedExpenses[focusedRowIndex].id);
+                    break;
+            }
+        },
+        [focusedRowIndex, paginatedExpenses]
+    );
 
-    const visibleColumns = DEFAULT_COLUMNS.filter(c => columnVisibility[c.key]);
+    const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]);
 
     if (customerLoading || expensesLoading) {
-        return <div className="p-8 flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />Loading expenses...</div>;
+        return (
+            <div className="p-8 flex items-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Loading expenses...
+            </div>
+        );
     }
 
     return (
@@ -194,7 +330,8 @@ export default function ExpensesPage() {
                     <h1 className="text-2xl font-bold">Expenses</h1>
                     <Link href={`/dashboard/expenses/new?customerId=${customerId}`}>
                         <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                            <Plus className="mr-2 h-4 w-4" />New Expense
+                            <Plus className="mr-2 h-4 w-4" />
+                            New Expense
                         </Button>
                     </Link>
                 </div>
@@ -206,7 +343,9 @@ export default function ExpensesPage() {
                             <Receipt className="h-4 w-4" />
                             <span className="text-xs font-medium uppercase">Total</span>
                         </div>
-                        <div className="text-2xl font-bold text-blue-900">{formatExpenseCurrency(expenseStats.total)}</div>
+                        <div className="text-2xl font-bold text-blue-900">
+                            {formatExpenseCurrency(expenseStats.total)}
+                        </div>
                         <div className="text-xs text-blue-500 mt-1">{expenseStats.count} records</div>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
@@ -214,14 +353,18 @@ export default function ExpensesPage() {
                             <CircleDollarSign className="h-4 w-4" />
                             <span className="text-xs font-medium uppercase">Billable</span>
                         </div>
-                        <div className="text-2xl font-bold text-green-900">{formatExpenseCurrency(expenseStats.billable)}</div>
+                        <div className="text-2xl font-bold text-green-900">
+                            {formatExpenseCurrency(expenseStats.billable)}
+                        </div>
                     </div>
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-gray-600 mb-1">
                             <CircleOff className="h-4 w-4" />
                             <span className="text-xs font-medium uppercase">Non-Billable</span>
                         </div>
-                        <div className="text-2xl font-bold text-gray-900">{formatExpenseCurrency(expenseStats.nonBillable)}</div>
+                        <div className="text-2xl font-bold text-gray-900">
+                            {formatExpenseCurrency(expenseStats.nonBillable)}
+                        </div>
                     </div>
                 </div>
 
@@ -230,40 +373,84 @@ export default function ExpensesPage() {
                     {/* Actions Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><MoreVertical className="h-4 w-4 mr-1" />Actions<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                            <Button variant="outline">
+                                <MoreVertical className="h-4 w-4 mr-1" />
+                                Actions
+                                <ChevronDown className="ml-1 h-4 w-4" />
+                            </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            <DropdownMenuItem onClick={handleExport}><Download className="h-4 w-4 mr-2" />Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleExport}>
+                                <Download className="h-4 w-4 mr-2" />
+                                Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
 
                     {/* Display Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline"><LayoutList className="h-4 w-4 mr-1" />Display<ChevronDown className="ml-1 h-4 w-4" /></Button>
+                            <Button variant="outline">
+                                <LayoutList className="h-4 w-4 mr-1" />
+                                Display
+                                <ChevronDown className="ml-1 h-4 w-4" />
+                            </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-48">
                             <DropdownMenuLabel>Row Density</DropdownMenuLabel>
-                            <DropdownMenuRadioGroup value={rowDensity} onValueChange={(v) => setRowDensity(v as RowDensity)}>
+                            <DropdownMenuRadioGroup
+                                value={rowDensity}
+                                onValueChange={(v) => setRowDensity(v as RowDensity)}
+                            >
                                 <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuLabel>Columns</DropdownMenuLabel>
-                            {DEFAULT_COLUMNS.map(col => (
-                                <DropdownMenuCheckboxItem key={col.key} checked={columnVisibility[col.key]} onCheckedChange={() => toggleColumn(col.key)}>{col.label}</DropdownMenuCheckboxItem>
+                            {DEFAULT_COLUMNS.map((col) => (
+                                <DropdownMenuCheckboxItem
+                                    key={col.key}
+                                    checked={columnVisibility[col.key]}
+                                    onCheckedChange={() => toggleColumn(col.key)}
+                                >
+                                    {col.label}
+                                </DropdownMenuCheckboxItem>
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
 
                     {/* Reset */}
-                    <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={() => { setSearchQuery(""); setSortKey(null); setSortDirection(null); setSelectedIds([]); }}><RotateCcw className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Reset filters</TooltipContent></Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                    setSearchQuery("");
+                                    setSortKey(null);
+                                    setSortDirection(null);
+                                    setSelectedIds([]);
+                                }}
+                            >
+                                <RotateCcw className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Reset filters</TooltipContent>
+                    </Tooltip>
 
                     <div className="flex-1" />
 
                     {/* Records Per Page */}
-                    <Select value={String(recordsPerPage)} onValueChange={(v) => { setRecordsPerPage(Number(v)); setCurrentPage(1); }}>
-                        <SelectTrigger className="w-[70px]"><SelectValue /></SelectTrigger>
+                    <Select
+                        value={String(recordsPerPage)}
+                        onValueChange={(v) => {
+                            setRecordsPerPage(Number(v));
+                            setCurrentPage(1);
+                        }}
+                    >
+                        <SelectTrigger className="w-[70px]">
+                            <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="10">10</SelectItem>
                             <SelectItem value="25">25</SelectItem>
@@ -275,22 +462,44 @@ export default function ExpensesPage() {
                     {/* Search */}
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search..." className="pl-9" autoComplete="new-password" name="expenses-search-nofill" data-lpignore="true" data-1p-ignore="true" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                        <Input
+                            placeholder="Search..."
+                            className="pl-9"
+                            autoComplete="new-password"
+                            name="expenses-search-nofill"
+                            data-lpignore="true"
+                            data-1p-ignore="true"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
                 </div>
 
                 {/* Top Pagination */}
                 {processedExpenses.length > 0 && (
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedExpenses.length} startRecord={startRecord} endRecord={endRecord} />
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        totalRecords={processedExpenses.length}
+                        startRecord={startRecord}
+                        endRecord={endRecord}
+                    />
                 )}
 
                 {/* Selection Banner */}
                 {selectedIds.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
-                        <span className="text-blue-800 text-sm font-medium">{selectedIds.length} expense{selectedIds.length > 1 ? "s" : ""} selected</span>
+                        <span className="text-blue-800 text-sm font-medium">
+                            {selectedIds.length} expense{selectedIds.length > 1 ? "s" : ""} selected
+                        </span>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={handleSelectAll}>Select All ({processedExpenses.length})</Button>
-                            <Button variant="outline" size="sm" onClick={handleClearSelection}>Clear</Button>
+                            <Button variant="outline" size="sm" onClick={handleSelectAll}>
+                                Select All ({processedExpenses.length})
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={handleClearSelection}>
+                                Clear
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -301,42 +510,99 @@ export default function ExpensesPage() {
                         <TableHeader>
                             <TableRow className="bg-gray-50/80">
                                 <TableHead className="w-12 bg-gray-100/50">
-                                    <Checkbox checked={isAllSelected} ref={(el) => { if (el) (el as any).indeterminate = isSomeSelected; }} onCheckedChange={(checked) => { if (checked) handleSelectPage(); else handleClearSelection(); }} />
+                                    <Checkbox
+                                        checked={isAllSelected}
+                                        ref={(el) => {
+                                            if (el) (el as any).indeterminate = isSomeSelected;
+                                        }}
+                                        onCheckedChange={(checked) => {
+                                            if (checked) handleSelectPage();
+                                            else handleClearSelection();
+                                        }}
+                                    />
                                 </TableHead>
-                                {visibleColumns.map(col => (
-                                    <TableHead key={col.key} className="font-semibold text-gray-900 bg-gray-100/50" style={{ minWidth: col.width }}>
+                                {visibleColumns.map((col) => (
+                                    <TableHead
+                                        key={col.key}
+                                        className="font-semibold text-gray-900 bg-gray-100/50"
+                                        style={{ minWidth: col.width }}
+                                    >
                                         {col.sortable ? (
-                                            <Button variant="ghost" className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200" onClick={() => handleSort(col.key)}>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200"
+                                                onClick={() => handleSort(col.key)}
+                                            >
                                                 {col.label}
-                                                {sortKey === col.key ? (sortDirection === "asc" ? <ArrowUp className="ml-1 h-4 w-4" /> : <ArrowDown className="ml-1 h-4 w-4" />) : <ArrowUpDown className="ml-1 h-4 w-4 opacity-40" />}
+                                                {sortKey === col.key ? (
+                                                    sortDirection === "asc" ? (
+                                                        <ArrowUp className="ml-1 h-4 w-4" />
+                                                    ) : (
+                                                        <ArrowDown className="ml-1 h-4 w-4" />
+                                                    )
+                                                ) : (
+                                                    <ArrowUpDown className="ml-1 h-4 w-4 opacity-40" />
+                                                )}
                                             </Button>
-                                        ) : col.label}
+                                        ) : (
+                                            col.label
+                                        )}
                                     </TableHead>
                                 ))}
-                                <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">Actions</TableHead>
+                                <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {paginatedExpenses.length === 0 ? (
-                                <TableRow><TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-gray-500">{searchQuery ? "No expenses match your search." : `No expenses found for ${customer?.company || "this customer"}.`}</TableCell></TableRow>
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={visibleColumns.length + 2}
+                                        className="text-center py-8 text-gray-500"
+                                    >
+                                        {searchQuery
+                                            ? "No expenses match your search."
+                                            : `No expenses found for ${customer?.company || "this customer"}.`}
+                                    </TableCell>
+                                </TableRow>
                             ) : (
                                 paginatedExpenses.map((expense, index) => (
-                                    <TableRow key={expense.id} className={`group hover:bg-gray-50 ${focusedRowIndex === index ? "bg-blue-50" : ""} ${selectedIds.includes(expense.id) ? "bg-blue-50/50" : ""}`} onClick={() => setFocusedRowIndex(index)}>
+                                    <TableRow
+                                        key={expense.id}
+                                        className={`group hover:bg-gray-50 ${focusedRowIndex === index ? "bg-blue-50" : ""} ${selectedIds.includes(expense.id) ? "bg-blue-50/50" : ""}`}
+                                        onClick={() => setFocusedRowIndex(index)}
+                                    >
                                         <TableCell className={ROW_DENSITY_STYLES[rowDensity]}>
-                                            <Checkbox checked={selectedIds.includes(expense.id)} onCheckedChange={() => toggleSelect(expense.id)} onClick={(e) => e.stopPropagation()} />
+                                            <Checkbox
+                                                checked={selectedIds.includes(expense.id)}
+                                                onCheckedChange={() => toggleSelect(expense.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
                                         </TableCell>
-                                        {visibleColumns.map(col => (
+                                        {visibleColumns.map((col) => (
                                             <TableCell key={col.key} className={ROW_DENSITY_STYLES[rowDensity]}>
                                                 {col.key === "name" && (
                                                     <span className="font-medium text-gray-900">
-                                                        <HighlightText text={expense.categoryName || expense.note || "-"} search={searchQuery} />
+                                                        <HighlightText
+                                                            text={expense.categoryName || expense.note || "-"}
+                                                            search={searchQuery}
+                                                        />
                                                     </span>
                                                 )}
-                                                {col.key === "category" && <span className="text-gray-600">{expense.categoryName}</span>}
-                                                {col.key === "amount" && <span className="font-medium">{formatExpenseCurrency(expense.amount)}</span>}
+                                                {col.key === "category" && (
+                                                    <span className="text-gray-600">{expense.categoryName}</span>
+                                                )}
+                                                {col.key === "amount" && (
+                                                    <span className="font-medium">
+                                                        {formatExpenseCurrency(expense.amount)}
+                                                    </span>
+                                                )}
                                                 {col.key === "date" && <span>{formatDate(expense.date)}</span>}
                                                 {col.key === "billable" && (
-                                                    <Badge className={`${getBillableBadge(expense.billable)} font-normal`}>
+                                                    <Badge
+                                                        className={`${getBillableBadge(expense.billable)} font-normal`}
+                                                    >
                                                         {expense.billable ? "Yes" : "No"}
                                                     </Badge>
                                                 )}
@@ -344,8 +610,26 @@ export default function ExpensesPage() {
                                         ))}
                                         <TableCell className={`${ROW_DENSITY_STYLES[rowDensity]} overflow-visible`}>
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/expenses/${expense.id}`}><Button variant="ghost" size="icon" className="h-7 w-7"><Eye className="h-4 w-4 text-gray-500" /></Button></Link></TooltipTrigger><TooltipContent>View</TooltipContent></Tooltip>
-                                                <Tooltip><TooltipTrigger asChild><Link href={`/dashboard/expenses/${expense.id}/edit`}><Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-4 w-4 text-gray-500" /></Button></Link></TooltipTrigger><TooltipContent>Edit</TooltipContent></Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Link href={`/dashboard/expenses/${expense.id}`}>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                                                                <Eye className="h-4 w-4 text-gray-500" />
+                                                            </Button>
+                                                        </Link>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>View</TooltipContent>
+                                                </Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Link href={`/dashboard/expenses/${expense.id}/edit`}>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                                                                <Pencil className="h-4 w-4 text-gray-500" />
+                                                            </Button>
+                                                        </Link>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Edit</TooltipContent>
+                                                </Tooltip>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -357,7 +641,14 @@ export default function ExpensesPage() {
 
                 {/* Bottom Pagination */}
                 {processedExpenses.length > 0 && (
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} totalRecords={processedExpenses.length} startRecord={startRecord} endRecord={endRecord} />
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        totalRecords={processedExpenses.length}
+                        startRecord={startRecord}
+                        endRecord={endRecord}
+                    />
                 )}
             </div>
         </TooltipProvider>

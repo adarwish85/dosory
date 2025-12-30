@@ -7,7 +7,14 @@ import { Plus, Mail, Shield } from "lucide-react";
 import { doc, getDoc, collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Contact, Subscription } from "@/lib/types";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useCustomer } from "./customer-context";
 
@@ -35,7 +42,9 @@ export function CustomerAdmins() {
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h3 className="text-lg font-medium text-gray-900">Contacts & Portal Access</h3>
-                    <p className="text-sm text-gray-500">Manage customer contacts and grant access to the Client Portal.</p>
+                    <p className="text-sm text-gray-500">
+                        Manage customer contacts and grant access to the Client Portal.
+                    </p>
                 </div>
                 <Button variant="outline">
                     <Plus className="mr-2 h-4 w-4" /> Add Contact
@@ -48,20 +57,28 @@ export function CustomerAdmins() {
                 </div>
             ) : (
                 <div className="grid gap-4">
-                    {contacts.map(contact => {
+                    {contacts.map((contact) => {
                         const hasPortal = contact.portalAccess?.enabled;
                         const canInvite = subscription?.capabilities?.clientPortal ?? true; // Default true for now if undefined
 
                         return (
-                            <div key={contact.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+                            <div
+                                key={contact.id}
+                                className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+                            >
                                 <div className="flex items-center gap-4">
                                     <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-medium">
-                                        {contact.firstName?.[0]}{contact.lastName?.[0]}
+                                        {contact.firstName?.[0]}
+                                        {contact.lastName?.[0]}
                                     </div>
                                     <div>
                                         <p className="font-medium text-gray-900 flex items-center gap-2">
                                             {contact.firstName} {contact.lastName}
-                                            {contact.isPrimary && <Badge variant="secondary" className="text-xs">Primary</Badge>}
+                                            {contact.isPrimary && (
+                                                <Badge variant="secondary" className="text-xs">
+                                                    Primary
+                                                </Badge>
+                                            )}
                                         </p>
                                         <p className="text-sm text-gray-500">{contact.email}</p>
                                     </div>
@@ -101,12 +118,14 @@ export function CustomerAdmins() {
                                         )}
                                         {/* Manage Button */}
                                         {hasPortal && (
-                                            <Button size="sm" variant="ghost" >Manage</Button>
+                                            <Button size="sm" variant="ghost">
+                                                Manage
+                                            </Button>
                                         )}
                                     </div>
                                 </div>
                             </div>
-                        )
+                        );
                     })}
                 </div>
             )}
@@ -129,10 +148,17 @@ export function CustomerAdmins() {
                         <div>
                             <label className="text-sm font-medium mb-2 block">Allowed Modules</label>
                             <div className="space-y-2 border rounded-md p-3 max-h-[200px] overflow-y-auto">
-                                {['invoices', 'projects', 'tickets', 'contracts', 'proposals'].map(mod => (
+                                {["invoices", "projects", "tickets", "contracts", "proposals"].map((mod) => (
                                     <div key={mod} className="flex items-center space-x-2">
-                                        <input type="checkbox" id={`mod-${mod}`} className="rounded border-gray-300 text-purple-600" defaultChecked />
-                                        <label htmlFor={`mod-${mod}`} className="text-sm capitalize">{mod}</label>
+                                        <input
+                                            type="checkbox"
+                                            id={`mod-${mod}`}
+                                            className="rounded border-gray-300 text-purple-600"
+                                            defaultChecked
+                                        />
+                                        <label htmlFor={`mod-${mod}`} className="text-sm capitalize">
+                                            {mod}
+                                        </label>
                                     </div>
                                 ))}
                             </div>
@@ -140,11 +166,16 @@ export function CustomerAdmins() {
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>Cancel</Button>
-                        <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => {
-                            alert("Invite simulated.");
-                            setInviteDialogOpen(false);
-                        }}>
+                        <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            className="bg-purple-600 hover:bg-purple-700"
+                            onClick={() => {
+                                alert("Invite simulated.");
+                                setInviteDialogOpen(false);
+                            }}
+                        >
                             <Mail className="mr-2 h-4 w-4" /> Send Invite
                         </Button>
                     </DialogFooter>

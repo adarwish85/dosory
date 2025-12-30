@@ -8,10 +8,7 @@ export async function POST(request: NextRequest) {
         const { requestId, reviewerId } = body;
 
         if (!requestId || !reviewerId) {
-            return NextResponse.json(
-                { error: "Request ID and Reviewer ID are required" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Request ID and Reviewer ID are required" }, { status: 400 });
         }
 
         // Get the request document
@@ -19,10 +16,7 @@ export async function POST(request: NextRequest) {
         const requestSnap = await requestRef.get();
 
         if (!requestSnap.exists) {
-            return NextResponse.json(
-                { error: "Request not found" },
-                { status: 404 }
-            );
+            return NextResponse.json({ error: "Request not found" }, { status: 404 });
         }
 
         const requestData = requestSnap.data();
@@ -33,7 +27,7 @@ export async function POST(request: NextRequest) {
         await requestRef.update({
             status: "rejected",
             reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
-            reviewedBy: reviewerId
+            reviewedBy: reviewerId,
         });
 
         // Send Email
@@ -52,14 +46,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             emailSent,
-            message: "Request rejected successfully"
+            message: "Request rejected successfully",
         });
-
     } catch (error: any) {
         console.error("Error rejecting request:", error);
-        return NextResponse.json(
-            { error: error.message || "Failed to reject request" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: error.message || "Failed to reject request" }, { status: 500 });
     }
 }

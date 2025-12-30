@@ -19,10 +19,10 @@ export default function UtilitiesPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            Create a full backup of your system data.
-                        </p>
-                        <Button variant="outline" className="w-full">Run Backup</Button>
+                        <p className="text-sm text-muted-foreground mb-4">Create a full backup of your system data.</p>
+                        <Button variant="outline" className="w-full">
+                            Run Backup
+                        </Button>
                     </CardContent>
                 </Card>
 
@@ -34,10 +34,10 @@ export default function UtilitiesPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            View system health and logs.
-                        </p>
-                        <Button variant="outline" className="w-full">View Logs</Button>
+                        <p className="text-sm text-muted-foreground mb-4">View system health and logs.</p>
+                        <Button variant="outline" className="w-full">
+                            View Logs
+                        </Button>
                     </CardContent>
                 </Card>
 
@@ -52,7 +52,9 @@ export default function UtilitiesPage() {
                         <p className="text-sm text-muted-foreground mb-4">
                             Scan for potential security vulnerabilities.
                         </p>
-                        <Button variant="outline" className="w-full">Run Scan</Button>
+                        <Button variant="outline" className="w-full">
+                            Run Scan
+                        </Button>
                     </CardContent>
                 </Card>
             </div>

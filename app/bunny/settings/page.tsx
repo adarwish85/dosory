@@ -7,8 +7,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-    Settings, Globe, Mail, Bell, Shield, Database,
-    Save, Loader2, Check, Palette, CreditCard, Upload, X, Image as ImageIcon
+    Settings,
+    Globe,
+    Mail,
+    Bell,
+    Shield,
+    Database,
+    Save,
+    Loader2,
+    Check,
+    Palette,
+    CreditCard,
+    Upload,
+    X,
+    Image as ImageIcon,
 } from "lucide-react";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
@@ -90,7 +102,7 @@ export default function SettingsPage() {
             const docRef = doc(db, "platform", "settings");
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-                setSettings({ ...defaultSettings, ...docSnap.data() as PlatformSettings });
+                setSettings({ ...defaultSettings, ...(docSnap.data() as PlatformSettings) });
             }
         } catch (error) {
             console.error("Error loading settings:", error);
@@ -116,16 +128,20 @@ export default function SettingsPage() {
         }
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'logoUrl' | 'logoLightUrl' | 'faviconUrl') => {
+    const handleImageUpload = async (
+        e: React.ChangeEvent<HTMLInputElement>,
+        field: "logoUrl" | "logoLightUrl" | "faviconUrl"
+    ) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         // Validate file type
-        const validTypes = field === 'faviconUrl'
-            ? ["image/x-icon", "image/png", "image/vnd.microsoft.icon", "image/jpeg"]
-            : ["image/"];
+        const validTypes =
+            field === "faviconUrl"
+                ? ["image/x-icon", "image/png", "image/vnd.microsoft.icon", "image/jpeg"]
+                : ["image/"];
 
-        if (field !== 'faviconUrl' && !file.type.startsWith("image/")) {
+        if (field !== "faviconUrl" && !file.type.startsWith("image/")) {
             alert("Please select an image file");
             return;
         }
@@ -136,10 +152,10 @@ export default function SettingsPage() {
             return;
         }
 
-        setUploading(prev => ({ ...prev, [field]: true }));
+        setUploading((prev) => ({ ...prev, [field]: true }));
         try {
             // Create storage reference
-            const ext = file.name.split('.').pop();
+            const ext = file.name.split(".").pop();
             const storageRef = ref(storage, `platform/${field}-${Date.now()}.${ext}`);
 
             // Upload file
@@ -159,17 +175,17 @@ export default function SettingsPage() {
             });
         } catch (error) {
             console.error(`Error uploading ${field}:`, error);
-            alert(`Failed to upload ${field === 'faviconUrl' ? 'favicon' : 'logo'}`);
+            alert(`Failed to upload ${field === "faviconUrl" ? "favicon" : "logo"}`);
         } finally {
-            setUploading(prev => ({ ...prev, [field]: false }));
+            setUploading((prev) => ({ ...prev, [field]: false }));
             // Clear input
-            if (field === 'logoUrl' && logoInputRef.current) logoInputRef.current.value = "";
-            if (field === 'logoLightUrl' && lightLogoInputRef.current) lightLogoInputRef.current.value = "";
-            if (field === 'faviconUrl' && faviconInputRef.current) faviconInputRef.current.value = "";
+            if (field === "logoUrl" && logoInputRef.current) logoInputRef.current.value = "";
+            if (field === "logoLightUrl" && lightLogoInputRef.current) lightLogoInputRef.current.value = "";
+            if (field === "faviconUrl" && faviconInputRef.current) faviconInputRef.current.value = "";
         }
     };
 
-    const handleRemoveImage = async (field: 'logoUrl' | 'logoLightUrl' | 'faviconUrl') => {
+    const handleRemoveImage = async (field: "logoUrl" | "logoLightUrl" | "faviconUrl") => {
         const url = settings[field];
         if (!url) return;
 
@@ -193,7 +209,6 @@ export default function SettingsPage() {
                 ...newSettings,
                 updatedAt: serverTimestamp(),
             });
-
         } catch (error) {
             console.error(`Error removing ${field}:`, error);
         }
@@ -210,7 +225,7 @@ export default function SettingsPage() {
                         <Label className="text-gray-700 font-medium">Platform Name</Label>
                         <Input
                             value={settings.platformName}
-                            onChange={(e) => setSettings(s => ({ ...s, platformName: e.target.value }))}
+                            onChange={(e) => setSettings((s) => ({ ...s, platformName: e.target.value }))}
                             className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                         />
                     </div>
@@ -218,7 +233,7 @@ export default function SettingsPage() {
                         <Label className="text-gray-700 font-medium">Website URL</Label>
                         <Input
                             value={settings.websiteUrl}
-                            onChange={(e) => setSettings(s => ({ ...s, websiteUrl: e.target.value }))}
+                            onChange={(e) => setSettings((s) => ({ ...s, websiteUrl: e.target.value }))}
                             className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                         />
                     </div>
@@ -227,7 +242,7 @@ export default function SettingsPage() {
                         <Input
                             type="email"
                             value={settings.supportEmail}
-                            onChange={(e) => setSettings(s => ({ ...s, supportEmail: e.target.value }))}
+                            onChange={(e) => setSettings((s) => ({ ...s, supportEmail: e.target.value }))}
                             className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                         />
                     </div>
@@ -247,7 +262,7 @@ export default function SettingsPage() {
                         </div>
                         <Switch
                             checked={settings.maintenanceMode}
-                            onCheckedChange={(checked) => setSettings(s => ({ ...s, maintenanceMode: checked }))}
+                            onCheckedChange={(checked) => setSettings((s) => ({ ...s, maintenanceMode: checked }))}
                         />
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
@@ -257,7 +272,7 @@ export default function SettingsPage() {
                         </div>
                         <Switch
                             checked={settings.allowSignups}
-                            onCheckedChange={(checked) => setSettings(s => ({ ...s, allowSignups: checked }))}
+                            onCheckedChange={(checked) => setSettings((s) => ({ ...s, allowSignups: checked }))}
                         />
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
@@ -267,7 +282,9 @@ export default function SettingsPage() {
                         </div>
                         <Switch
                             checked={settings.requireEmailVerification}
-                            onCheckedChange={(checked) => setSettings(s => ({ ...s, requireEmailVerification: checked }))}
+                            onCheckedChange={(checked) =>
+                                setSettings((s) => ({ ...s, requireEmailVerification: checked }))
+                            }
                         />
                     </div>
                 </div>
@@ -284,7 +301,9 @@ export default function SettingsPage() {
                         <Input
                             type="number"
                             value={settings.defaultTrialDays}
-                            onChange={(e) => setSettings(s => ({ ...s, defaultTrialDays: parseInt(e.target.value) || 14 }))}
+                            onChange={(e) =>
+                                setSettings((s) => ({ ...s, defaultTrialDays: parseInt(e.target.value) || 14 }))
+                            }
                             className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                         />
                     </div>
@@ -293,7 +312,9 @@ export default function SettingsPage() {
                         <Input
                             type="number"
                             value={settings.maxUsersPerTenant}
-                            onChange={(e) => setSettings(s => ({ ...s, maxUsersPerTenant: parseInt(e.target.value) || 50 }))}
+                            onChange={(e) =>
+                                setSettings((s) => ({ ...s, maxUsersPerTenant: parseInt(e.target.value) || 50 }))
+                            }
                             className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                         />
                     </div>
@@ -311,7 +332,12 @@ export default function SettingsPage() {
                             <Label className="text-gray-700 font-medium">SMTP Host</Label>
                             <Input
                                 value={settings.smtpSettings.host}
-                                onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, host: e.target.value } }))}
+                                onChange={(e) =>
+                                    setSettings((s) => ({
+                                        ...s,
+                                        smtpSettings: { ...s.smtpSettings, host: e.target.value },
+                                    }))
+                                }
                                 className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                                 placeholder="smtp.example.com"
                             />
@@ -321,7 +347,12 @@ export default function SettingsPage() {
                             <Input
                                 type="number"
                                 value={settings.smtpSettings.port}
-                                onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, port: parseInt(e.target.value) || 587 } }))}
+                                onChange={(e) =>
+                                    setSettings((s) => ({
+                                        ...s,
+                                        smtpSettings: { ...s.smtpSettings, port: parseInt(e.target.value) || 587 },
+                                    }))
+                                }
                                 className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                                 placeholder="587"
                             />
@@ -332,7 +363,12 @@ export default function SettingsPage() {
                             <Label className="text-gray-700 font-medium">Username</Label>
                             <Input
                                 value={settings.smtpSettings.username}
-                                onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, username: e.target.value } }))}
+                                onChange={(e) =>
+                                    setSettings((s) => ({
+                                        ...s,
+                                        smtpSettings: { ...s.smtpSettings, username: e.target.value },
+                                    }))
+                                }
                                 className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                             />
                         </div>
@@ -341,7 +377,12 @@ export default function SettingsPage() {
                             <Input
                                 type="password"
                                 value={settings.smtpSettings.password}
-                                onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, password: e.target.value } }))}
+                                onChange={(e) =>
+                                    setSettings((s) => ({
+                                        ...s,
+                                        smtpSettings: { ...s.smtpSettings, password: e.target.value },
+                                    }))
+                                }
                                 className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                             />
                         </div>
@@ -350,7 +391,12 @@ export default function SettingsPage() {
                         <Label className="text-gray-700 font-medium">Encryption</Label>
                         <Input
                             value={settings.smtpSettings.encryption}
-                            onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, encryption: e.target.value as any } }))}
+                            onChange={(e) =>
+                                setSettings((s) => ({
+                                    ...s,
+                                    smtpSettings: { ...s.smtpSettings, encryption: e.target.value as any },
+                                }))
+                            }
                             className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                             placeholder="ssl, tls, or none"
                         />
@@ -360,7 +406,12 @@ export default function SettingsPage() {
                             <Label className="text-gray-700 font-medium">From Name</Label>
                             <Input
                                 value={settings.smtpSettings.fromName}
-                                onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, fromName: e.target.value } }))}
+                                onChange={(e) =>
+                                    setSettings((s) => ({
+                                        ...s,
+                                        smtpSettings: { ...s.smtpSettings, fromName: e.target.value },
+                                    }))
+                                }
                                 className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                             />
                         </div>
@@ -368,7 +419,12 @@ export default function SettingsPage() {
                             <Label className="text-gray-700 font-medium">From Email</Label>
                             <Input
                                 value={settings.smtpSettings.fromEmail}
-                                onChange={(e) => setSettings(s => ({ ...s, smtpSettings: { ...s.smtpSettings, fromEmail: e.target.value } }))}
+                                onChange={(e) =>
+                                    setSettings((s) => ({
+                                        ...s,
+                                        smtpSettings: { ...s.smtpSettings, fromEmail: e.target.value },
+                                    }))
+                                }
                                 className="mt-1.5 bg-white border-gray-200 focus:ring-blue-500"
                             />
                         </div>
@@ -389,7 +445,7 @@ export default function SettingsPage() {
                         </div>
                         <Switch
                             checked={settings.emailNotifications}
-                            onCheckedChange={(checked) => setSettings(s => ({ ...s, emailNotifications: checked }))}
+                            onCheckedChange={(checked) => setSettings((s) => ({ ...s, emailNotifications: checked }))}
                         />
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
@@ -399,7 +455,7 @@ export default function SettingsPage() {
                         </div>
                         <Switch
                             checked={settings.slackNotifications}
-                            onCheckedChange={(checked) => setSettings(s => ({ ...s, slackNotifications: checked }))}
+                            onCheckedChange={(checked) => setSettings((s) => ({ ...s, slackNotifications: checked }))}
                         />
                     </div>
                 </div>
@@ -418,7 +474,7 @@ export default function SettingsPage() {
                         </div>
                         <Switch
                             checked={settings.customBranding}
-                            onCheckedChange={(checked) => setSettings(s => ({ ...s, customBranding: checked }))}
+                            onCheckedChange={(checked) => setSettings((s) => ({ ...s, customBranding: checked }))}
                         />
                     </div>
 
@@ -442,7 +498,7 @@ export default function SettingsPage() {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handleRemoveImage('logoUrl')}
+                                        onClick={() => handleRemoveImage("logoUrl")}
                                         className="rounded-lg border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors"
                                     >
                                         <X className="h-4 w-4 mr-1" /> Remove
@@ -454,7 +510,7 @@ export default function SettingsPage() {
                                         ref={logoInputRef}
                                         type="file"
                                         accept="image/*"
-                                        onChange={(e) => handleImageUpload(e, 'logoUrl')}
+                                        onChange={(e) => handleImageUpload(e, "logoUrl")}
                                         className="hidden"
                                         id="logo-upload"
                                     />
@@ -462,7 +518,7 @@ export default function SettingsPage() {
                                         htmlFor="logo-upload"
                                         className="cursor-pointer flex flex-col items-center gap-2"
                                     >
-                                        {uploading['logoUrl'] ? (
+                                        {uploading["logoUrl"] ? (
                                             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                                         ) : (
                                             <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600">
@@ -471,7 +527,7 @@ export default function SettingsPage() {
                                         )}
                                         <div>
                                             <p className="text-sm font-medium text-gray-900">
-                                                {uploading['logoUrl'] ? "Uploading..." : "Click to upload logo"}
+                                                {uploading["logoUrl"] ? "Uploading..." : "Click to upload logo"}
                                             </p>
                                             <p className="text-xs text-gray-500">PNG, JPG up to 2MB</p>
                                         </div>
@@ -483,7 +539,9 @@ export default function SettingsPage() {
 
                     {/* Light Logo Upload Section */}
                     <div>
-                        <Label className="text-gray-700 font-medium">Platform Logo (Light - for dark backgrounds)</Label>
+                        <Label className="text-gray-700 font-medium">
+                            Platform Logo (Light - for dark backgrounds)
+                        </Label>
                         <div className="mt-2 p-4 rounded-xl border-2 border-dashed border-gray-200 bg-gray-900 hover:bg-gray-800 transition-colors">
                             {settings.logoLightUrl ? (
                                 <div className="flex items-center gap-4">
@@ -501,7 +559,7 @@ export default function SettingsPage() {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handleRemoveImage('logoLightUrl')}
+                                        onClick={() => handleRemoveImage("logoLightUrl")}
                                         className="rounded-lg border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700 hover:border-gray-500 transition-colors"
                                     >
                                         <X className="h-4 w-4 mr-1" /> Remove
@@ -513,7 +571,7 @@ export default function SettingsPage() {
                                         ref={lightLogoInputRef}
                                         type="file"
                                         accept="image/*"
-                                        onChange={(e) => handleImageUpload(e, 'logoLightUrl')}
+                                        onChange={(e) => handleImageUpload(e, "logoLightUrl")}
                                         className="hidden"
                                         id="light-logo-upload"
                                     />
@@ -521,7 +579,7 @@ export default function SettingsPage() {
                                         htmlFor="light-logo-upload"
                                         className="cursor-pointer flex flex-col items-center gap-2"
                                     >
-                                        {uploading['logoLightUrl'] ? (
+                                        {uploading["logoLightUrl"] ? (
                                             <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
                                         ) : (
                                             <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gray-800 text-gray-400">
@@ -530,7 +588,9 @@ export default function SettingsPage() {
                                         )}
                                         <div>
                                             <p className="text-sm font-medium text-white">
-                                                {uploading['logoLightUrl'] ? "Uploading..." : "Click to upload light logo"}
+                                                {uploading["logoLightUrl"]
+                                                    ? "Uploading..."
+                                                    : "Click to upload light logo"}
                                             </p>
                                             <p className="text-xs text-gray-400">PNG, JPG up to 2MB</p>
                                         </div>
@@ -539,7 +599,6 @@ export default function SettingsPage() {
                             )}
                         </div>
                     </div>
-
 
                     {/* Favicon Upload Section */}
                     <div>
@@ -561,7 +620,7 @@ export default function SettingsPage() {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handleRemoveImage('faviconUrl')}
+                                        onClick={() => handleRemoveImage("faviconUrl")}
                                         className="rounded-lg border-gray-200 text-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors"
                                     >
                                         <X className="h-4 w-4 mr-1" /> Remove
@@ -573,7 +632,7 @@ export default function SettingsPage() {
                                         ref={faviconInputRef}
                                         type="file"
                                         accept="image/x-icon,image/png,image/jpeg"
-                                        onChange={(e) => handleImageUpload(e, 'faviconUrl')}
+                                        onChange={(e) => handleImageUpload(e, "faviconUrl")}
                                         className="hidden"
                                         id="favicon-upload"
                                     />
@@ -581,7 +640,7 @@ export default function SettingsPage() {
                                         htmlFor="favicon-upload"
                                         className="cursor-pointer flex flex-col items-center gap-2"
                                     >
-                                        {uploading['faviconUrl'] ? (
+                                        {uploading["faviconUrl"] ? (
                                             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                                         ) : (
                                             <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600">
@@ -590,7 +649,7 @@ export default function SettingsPage() {
                                         )}
                                         <div>
                                             <p className="text-sm font-medium text-gray-900">
-                                                {uploading['faviconUrl'] ? "Uploading..." : "Click to upload favicon"}
+                                                {uploading["faviconUrl"] ? "Uploading..." : "Click to upload favicon"}
                                             </p>
                                             <p className="text-xs text-gray-500">ICO, PNG up to 2MB</p>
                                         </div>
@@ -606,12 +665,12 @@ export default function SettingsPage() {
                             <input
                                 type="color"
                                 value={settings.primaryColor}
-                                onChange={(e) => setSettings(s => ({ ...s, primaryColor: e.target.value }))}
+                                onChange={(e) => setSettings((s) => ({ ...s, primaryColor: e.target.value }))}
                                 className="w-10 h-10 rounded-lg border-0 cursor-pointer"
                             />
                             <Input
                                 value={settings.primaryColor}
-                                onChange={(e) => setSettings(s => ({ ...s, primaryColor: e.target.value }))}
+                                onChange={(e) => setSettings((s) => ({ ...s, primaryColor: e.target.value }))}
                                 className="flex-1 bg-white border-gray-200 focus:ring-blue-500"
                             />
                         </div>
@@ -643,11 +702,17 @@ export default function SettingsPage() {
                     className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px] shadow-sm"
                 >
                     {saving ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                        </>
                     ) : saved ? (
-                        <><Check className="mr-2 h-4 w-4" /> Saved!</>
+                        <>
+                            <Check className="mr-2 h-4 w-4" /> Saved!
+                        </>
                     ) : (
-                        <><Save className="mr-2 h-4 w-4" /> Save Changes</>
+                        <>
+                            <Save className="mr-2 h-4 w-4" /> Save Changes
+                        </>
                     )}
                 </Button>
             </div>
@@ -657,7 +722,10 @@ export default function SettingsPage() {
                 {settingSections.map((section) => {
                     const Icon = section.icon;
                     return (
-                        <Card key={section.title} className="shadow-sm border-gray-200 rounded-xl bg-white overflow-hidden">
+                        <Card
+                            key={section.title}
+                            className="shadow-sm border-gray-200 rounded-xl bg-white overflow-hidden"
+                        >
                             <CardHeader className="border-b border-gray-100 pb-4 bg-gray-50/30">
                                 <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
                                     <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
@@ -667,9 +735,7 @@ export default function SettingsPage() {
                                 </CardTitle>
                                 <CardDescription className="text-gray-500 ml-11">{section.description}</CardDescription>
                             </CardHeader>
-                            <CardContent className="p-6">
-                                {section.fields}
-                            </CardContent>
+                            <CardContent className="p-6">{section.fields}</CardContent>
                         </Card>
                     );
                 })}

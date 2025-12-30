@@ -37,7 +37,7 @@ export async function POST(req: Request) {
         // 1. Get Access Token
         const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
             method: "POST",
-            headers: { "Authorization": `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
+            headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
             body: "grant_type=client_credentials",
         });
         const { access_token } = await tokenResponse.json();
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
         const captureResponse = await fetch(`${baseUrl}/v2/checkout/orders/${orderId}/capture`, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${access_token}`,
+                Authorization: `Bearer ${access_token}`,
                 "Content-Type": "application/json",
             },
         });
@@ -57,7 +57,12 @@ export async function POST(req: Request) {
             // 3. Activate Subscription in Firestore
 
             // Get Plan Details
-            const planDoc = await adminDb.collection("platform").doc("subscriptionPlans").collection("plans").doc(planId).get();
+            const planDoc = await adminDb
+                .collection("platform")
+                .doc("subscriptionPlans")
+                .collection("plans")
+                .doc(planId)
+                .get();
             const planData = planDoc.data();
 
             if (!planData) {
@@ -68,7 +73,7 @@ export async function POST(req: Request) {
             // Create Subscription Record
             const startDate = new Date();
             const endDate = new Date();
-            if (billingPeriod === 'monthly') {
+            if (billingPeriod === "monthly") {
                 endDate.setMonth(endDate.getMonth() + 1);
             } else {
                 endDate.setFullYear(endDate.getFullYear() + 1);
@@ -100,7 +105,6 @@ export async function POST(req: Request) {
         } else {
             return NextResponse.json({ error: "Payment not completed", details: captureData }, { status: 400 });
         }
-
     } catch (error: any) {
         console.error("Capture Order Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });

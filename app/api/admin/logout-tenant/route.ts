@@ -30,14 +30,13 @@ export async function POST(req: Request) {
         });
 
         const results = await Promise.all(logoutPromises);
-        const successCount = results.filter(r => r).length;
+        const successCount = results.filter((r) => r).length;
 
         return NextResponse.json({
             success: true,
             count: successCount,
-            total: usersSnapshot.size
+            total: usersSnapshot.size,
         });
-
     } catch (error) {
         console.error("Error forcing logout:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

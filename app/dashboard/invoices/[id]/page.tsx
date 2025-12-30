@@ -7,14 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -42,7 +35,7 @@ import {
     ArrowLeft,
     User,
     Eye,
-    Loader2
+    Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -84,7 +77,7 @@ interface Invoice {
 const formatDate = (date: Timestamp | string | Date | undefined): string => {
     if (!date) return "-";
     try {
-        if (date instanceof Timestamp || (date && typeof date === 'object' && 'toDate' in date)) {
+        if (date instanceof Timestamp || (date && typeof date === "object" && "toDate" in date)) {
             return format((date as Timestamp).toDate(), "dd/MM/yyyy");
         }
         if (date instanceof Date) {
@@ -132,9 +125,9 @@ export default function InvoiceDetailsPage() {
         try {
             await updateDoc(doc(db, "invoices", id), {
                 status: newStatus,
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
             });
-            setInvoice(prev => prev ? { ...prev, status: newStatus } : null);
+            setInvoice((prev) => (prev ? { ...prev, status: newStatus } : null));
             toast.success(`Invoice marked as ${newStatus}`);
         } catch (error) {
             console.error("Error updating status:", error);
@@ -191,7 +184,12 @@ export default function InvoiceDetailsPage() {
         router.push(`/dashboard/sales/credit-notes/new?invoiceId=${id}`);
     };
 
-    if (loading) return <div className="p-8 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+    if (loading)
+        return (
+            <div className="p-8 flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+        );
     if (!invoice) return <div className="p-8 flex items-center justify-center">Invoice not found</div>;
 
     // Derived or Default Data placeholders
@@ -203,17 +201,21 @@ export default function InvoiceDetailsPage() {
     const shipToAddress = invoice.shipToAddress || ["53 EL-MANIAL ST", "Cairo, Cairo", "EG 11341"];
 
     // Calculate totals if missing
-    const subTotal = invoice.subTotal || invoice.items.reduce((acc, item) => acc + (item.quantity * item.rate), 0);
+    const subTotal = invoice.subTotal || invoice.items.reduce((acc, item) => acc + item.quantity * item.rate, 0);
     const taxRate = invoice.taxRate || 0.14; // 14% VAT default
     const tax = invoice.tax || subTotal * taxRate;
     const total = invoice.total || subTotal + tax;
 
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
-            case "paid": return "bg-green-100 text-green-700 hover:bg-green-100/80";
-            case "overdue": return "bg-red-100 text-red-700 hover:bg-red-100/80";
-            case "draft": return "bg-gray-100 text-gray-700 hover:bg-gray-100/80";
-            default: return "bg-red-50 text-red-600 hover:bg-red-50/80 border-red-100"; // Unpaid default style
+            case "paid":
+                return "bg-green-100 text-green-700 hover:bg-green-100/80";
+            case "overdue":
+                return "bg-red-100 text-red-700 hover:bg-red-100/80";
+            case "draft":
+                return "bg-gray-100 text-gray-700 hover:bg-gray-100/80";
+            default:
+                return "bg-red-50 text-red-600 hover:bg-red-50/80 border-red-100"; // Unpaid default style
         }
     };
 
@@ -225,12 +227,18 @@ export default function InvoiceDetailsPage() {
                     <div className="flex items-center gap-3">
                         <Button
                             variant="ghost"
-                            onClick={() => router.push('/dashboard/sales/invoices')}
+                            onClick={() => router.push("/dashboard/sales/invoices")}
                             className="gap-2 text-gray-600 hover:text-gray-900"
                         >
                             <ArrowLeft className="h-4 w-4" /> Back to Invoices
                         </Button>
-                        <Badge variant="outline" className={cn("px-3 py-1 text-sm font-medium border rounded pointer-events-none capitalize", getStatusColor(invoice.status))}>
+                        <Badge
+                            variant="outline"
+                            className={cn(
+                                "px-3 py-1 text-sm font-medium border rounded pointer-events-none capitalize",
+                                getStatusColor(invoice.status)
+                            )}
+                        >
                             {invoice.status}
                         </Badge>
                     </div>
@@ -248,10 +256,18 @@ export default function InvoiceDetailsPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem><Eye className="mr-2 h-4 w-4" /> View PDF</DropdownMenuItem>
-                                <DropdownMenuItem><ExternalLink className="mr-2 h-4 w-4" /> View in New Tab</DropdownMenuItem>
-                                <DropdownMenuItem><Download className="mr-2 h-4 w-4" /> Download</DropdownMenuItem>
-                                <DropdownMenuItem><Printer className="mr-2 h-4 w-4" /> Print</DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <Eye className="mr-2 h-4 w-4" /> View PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <ExternalLink className="mr-2 h-4 w-4" /> View in New Tab
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <Download className="mr-2 h-4 w-4" /> Download
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <Printer className="mr-2 h-4 w-4" /> Print
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
 
@@ -277,20 +293,32 @@ export default function InvoiceDetailsPage() {
                                     <File className="mr-2 h-4 w-4" /> Attach File
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={handleCopyInvoice} disabled={actionLoading === "copy"}>
-                                    <Copy className="mr-2 h-4 w-4" /> {actionLoading === "copy" ? "Copying..." : "Copy Invoice"}
+                                    <Copy className="mr-2 h-4 w-4" />{" "}
+                                    {actionLoading === "copy" ? "Copying..." : "Copy Invoice"}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleUpdateStatus("sent")} disabled={actionLoading === "sent"}>
+                                <DropdownMenuItem
+                                    onClick={() => handleUpdateStatus("sent")}
+                                    disabled={actionLoading === "sent"}
+                                >
                                     <Send className="mr-2 h-4 w-4" /> Mark as Sent
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleUpdateStatus("cancelled")} disabled={actionLoading === "cancelled"}>
+                                <DropdownMenuItem
+                                    onClick={() => handleUpdateStatus("cancelled")}
+                                    disabled={actionLoading === "cancelled"}
+                                >
                                     <Ban className="mr-2 h-4 w-4" /> Mark as Cancelled
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => toast.info("Reminder pause coming soon")}>
                                     <Clock className="mr-2 h-4 w-4" /> Pause Overdue Reminders
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleDelete} disabled={actionLoading === "delete"} className="text-red-600">
-                                    <Trash2 className="mr-2 h-4 w-4" /> {actionLoading === "delete" ? "Deleting..." : "Delete"}
+                                <DropdownMenuItem
+                                    onClick={handleDelete}
+                                    disabled={actionLoading === "delete"}
+                                    className="text-red-600"
+                                >
+                                    <Trash2 className="mr-2 h-4 w-4" />{" "}
+                                    {actionLoading === "delete" ? "Deleting..." : "Delete"}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -303,10 +331,12 @@ export default function InvoiceDetailsPage() {
 
                 {/* Main Paper Invoice Card */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 md:p-12 min-h-[800px] text-gray-900">
-
                     {/* Project Relation Banner */}
                     <div className="mb-10 text-gray-700">
-                        This invoice is related to project: <Link href="#" className="text-blue-600 hover:underline font-medium">{projectName}</Link>
+                        This invoice is related to project:{" "}
+                        <Link href="#" className="text-blue-600 hover:underline font-medium">
+                            {projectName}
+                        </Link>
                     </div>
 
                     {/* Header Grid */}
@@ -317,7 +347,9 @@ export default function InvoiceDetailsPage() {
 
                             <div className="space-y-1 text-sm text-gray-800">
                                 <p className="font-bold">{senderName}</p>
-                                {senderAddress.map((line, i) => <p key={i}>{line}</p>)}
+                                {senderAddress.map((line, i) => (
+                                    <p key={i}>{line}</p>
+                                ))}
                             </div>
                         </div>
 
@@ -328,7 +360,9 @@ export default function InvoiceDetailsPage() {
                                 <p className="text-sm font-bold text-gray-900 mb-1">Bill To</p>
                                 <p className="text-blue-600 font-medium mb-1">{billToName}</p>
                                 <div className="text-sm text-gray-500 space-y-0.5">
-                                    {billToAddress.map((line, i) => <p key={i}>{line}</p>)}
+                                    {billToAddress.map((line, i) => (
+                                        <p key={i}>{line}</p>
+                                    ))}
                                 </div>
                             </div>
 
@@ -336,7 +370,9 @@ export default function InvoiceDetailsPage() {
                             <div>
                                 <p className="text-sm font-bold text-gray-900 mb-1">Ship to</p>
                                 <div className="text-sm text-gray-500 space-y-0.5">
-                                    {shipToAddress.map((line, i) => <p key={i}>{line}</p>)}
+                                    {shipToAddress.map((line, i) => (
+                                        <p key={i}>{line}</p>
+                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -370,27 +406,41 @@ export default function InvoiceDetailsPage() {
                                     <TableHead className="text-right font-bold text-gray-900 w-[80px]">Qty</TableHead>
                                     <TableHead className="text-right font-bold text-gray-900 w-[120px]">Rate</TableHead>
                                     <TableHead className="text-center font-bold text-gray-900 w-[100px]">Tax</TableHead>
-                                    <TableHead className="text-right font-bold text-gray-900 w-[120px]">Amount</TableHead>
+                                    <TableHead className="text-right font-bold text-gray-900 w-[120px]">
+                                        Amount
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {invoice.items && invoice.items.map((item, index) => (
-                                    <TableRow key={item.id} className="border-b border-gray-50">
-                                        <TableCell className="text-gray-500 align-top py-4">{index + 1}</TableCell>
-                                        <TableCell className="align-top py-4">
-                                            <p className="font-medium text-gray-800">{item.description}</p>
-                                            <p className="text-sm text-gray-500 mt-1">Performance Optimization (export.EGIC.com.eg) Medium Website (50 - 200 pages)</p>
-                                            <p className="text-sm text-gray-500">Quarterly maintenance fees</p>
-                                        </TableCell>
-                                        <TableCell className="text-right text-gray-700 align-top py-4">{item.quantity}</TableCell>
-                                        <TableCell className="text-right text-gray-700 align-top py-4">{item.rate.toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
-                                        <TableCell className="text-center text-gray-500 text-sm align-top py-4">
-                                            <div>VAT</div>
-                                            <div>{(taxRate * 100).toFixed(2)}%</div>
-                                        </TableCell>
-                                        <TableCell className="text-right text-gray-700 align-top py-4">{(item.quantity * item.rate).toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
-                                    </TableRow>
-                                ))}
+                                {invoice.items &&
+                                    invoice.items.map((item, index) => (
+                                        <TableRow key={item.id} className="border-b border-gray-50">
+                                            <TableCell className="text-gray-500 align-top py-4">{index + 1}</TableCell>
+                                            <TableCell className="align-top py-4">
+                                                <p className="font-medium text-gray-800">{item.description}</p>
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    Performance Optimization (export.EGIC.com.eg) Medium Website (50 -
+                                                    200 pages)
+                                                </p>
+                                                <p className="text-sm text-gray-500">Quarterly maintenance fees</p>
+                                            </TableCell>
+                                            <TableCell className="text-right text-gray-700 align-top py-4">
+                                                {item.quantity}
+                                            </TableCell>
+                                            <TableCell className="text-right text-gray-700 align-top py-4">
+                                                {item.rate.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                            </TableCell>
+                                            <TableCell className="text-center text-gray-500 text-sm align-top py-4">
+                                                <div>VAT</div>
+                                                <div>{(taxRate * 100).toFixed(2)}%</div>
+                                            </TableCell>
+                                            <TableCell className="text-right text-gray-700 align-top py-4">
+                                                {(item.quantity * item.rate).toLocaleString("en-US", {
+                                                    minimumFractionDigits: 2,
+                                                })}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
                             </TableBody>
                         </Table>
                     </div>
@@ -400,19 +450,27 @@ export default function InvoiceDetailsPage() {
                         <div className="w-72 space-y-3">
                             <div className="flex justify-between text-sm py-2 border-b border-gray-100">
                                 <span className="font-medium text-gray-700">Sub Total</span>
-                                <span className="text-gray-600">EGP{subTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-gray-600">
+                                    EGP{subTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                </span>
                             </div>
                             <div className="flex justify-between text-sm py-2 border-b border-gray-100">
                                 <span className="font-medium text-gray-700">VAT ({(taxRate * 100).toFixed(2)}%)</span>
-                                <span className="text-gray-600">EGP{tax.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-gray-600">
+                                    EGP{tax.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                </span>
                             </div>
                             <div className="flex justify-between text-sm py-2 border-b border-gray-100">
                                 <span className="font-medium text-gray-700">Total</span>
-                                <span className="text-gray-600">EGP{total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-gray-600">
+                                    EGP{total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                </span>
                             </div>
                             <div className="flex justify-between text-base py-2 font-bold">
                                 <span className="text-red-500">Amount Due</span>
-                                <span className="text-red-500">EGP{total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-red-500">
+                                    EGP{total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -423,7 +481,6 @@ export default function InvoiceDetailsPage() {
                             <p className="text-gray-500">Thank you for doing business with WasilaDev</p>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

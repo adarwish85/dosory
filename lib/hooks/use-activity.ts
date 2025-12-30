@@ -77,23 +77,23 @@ export function useActivity(options: UseActivityOptions = {}) {
         }
 
         const activitiesRef = collection(db, "organizations", orgId, "activities");
-        const q = query(
-            activitiesRef,
-            orderBy("createdAt", "desc"),
-            limit(fetchLimit)
-        );
+        const q = query(activitiesRef, orderBy("createdAt", "desc"), limit(fetchLimit));
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const items: Activity[] = [];
-            snapshot.forEach((doc) => {
-                items.push({ id: doc.id, ...doc.data() } as Activity);
-            });
-            setActivities(items);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error loading activities:", error);
-            setLoading(false);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const items: Activity[] = [];
+                snapshot.forEach((doc) => {
+                    items.push({ id: doc.id, ...doc.data() } as Activity);
+                });
+                setActivities(items);
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error loading activities:", error);
+                setLoading(false);
+            }
+        );
 
         return () => unsubscribe();
     }, [orgId, fetchLimit]);

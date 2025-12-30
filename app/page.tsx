@@ -95,18 +95,43 @@ export default function Home() {
                         </Link>
 
                         <nav className="hidden md:flex items-center gap-8">
-                            <Link href="#features" className="text-sm font-medium text-gray-600 hover:opacity-80 transition-colors">Features</Link>
-                            <Link href="#pricing" className="text-sm font-medium text-gray-600 hover:opacity-80 transition-colors">Pricing</Link>
-                            <Link href="#testimonials" className="text-sm font-medium text-gray-600 hover:opacity-80 transition-colors">Testimonials</Link>
-                            <Link href="#faq" className="text-sm font-medium text-gray-600 hover:opacity-80 transition-colors">FAQ</Link>
+                            <Link
+                                href="#features"
+                                className="text-sm font-medium text-gray-600 hover:opacity-80 transition-colors"
+                            >
+                                Features
+                            </Link>
+                            <Link
+                                href="#pricing"
+                                className="text-sm font-medium text-gray-600 hover:opacity-80 transition-colors"
+                            >
+                                Pricing
+                            </Link>
+                            <Link
+                                href="#testimonials"
+                                className="text-sm font-medium text-gray-600 hover:opacity-80 transition-colors"
+                            >
+                                Testimonials
+                            </Link>
+                            <Link
+                                href="#faq"
+                                className="text-sm font-medium text-gray-600 hover:opacity-80 transition-colors"
+                            >
+                                FAQ
+                            </Link>
                         </nav>
 
                         <div className="flex items-center gap-3">
                             <Link href="/login">
-                                <Button variant="ghost" className="text-gray-700">Sign In</Button>
+                                <Button variant="ghost" className="text-gray-700">
+                                    Sign In
+                                </Button>
                             </Link>
                             <Link href="/signup">
-                                <Button style={{ backgroundColor: design.primaryColor }} className="text-white hover:opacity-90">
+                                <Button
+                                    style={{ backgroundColor: design.primaryColor }}
+                                    className="text-white hover:opacity-90"
+                                >
                                     Get Started
                                 </Button>
                             </Link>
@@ -145,7 +170,10 @@ export default function Home() {
                                 <ul className="space-y-3">
                                     {col.links.map((link, j) => (
                                         <li key={j}>
-                                            <Link href="#" className="text-gray-400 hover:text-white text-sm transition-colors">
+                                            <Link
+                                                href="#"
+                                                className="text-gray-400 hover:text-white text-sm transition-colors"
+                                            >
                                                 {link}
                                             </Link>
                                         </li>
@@ -160,8 +188,12 @@ export default function Home() {
                             © {new Date().getFullYear()} Dosory. All rights reserved.
                         </p>
                         <div className="flex items-center gap-6">
-                            <Link href="#" className="text-gray-400 hover:text-white text-sm">Privacy Policy</Link>
-                            <Link href="#" className="text-gray-400 hover:text-white text-sm">Terms of Service</Link>
+                            <Link href="#" className="text-gray-400 hover:text-white text-sm">
+                                Privacy Policy
+                            </Link>
+                            <Link href="#" className="text-gray-400 hover:text-white text-sm">
+                                Terms of Service
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -182,10 +214,15 @@ function LegacyFallback({ design }: { design: SiteDesign }) {
                         </Link>
                         <div className="flex items-center gap-3">
                             <Link href="/login">
-                                <Button variant="ghost" className="text-gray-700">Sign In</Button>
+                                <Button variant="ghost" className="text-gray-700">
+                                    Sign In
+                                </Button>
                             </Link>
                             <Link href="/signup">
-                                <Button style={{ backgroundColor: design.primaryColor }} className="text-white hover:opacity-90">
+                                <Button
+                                    style={{ backgroundColor: design.primaryColor }}
+                                    className="text-white hover:opacity-90"
+                                >
                                     Get Started
                                 </Button>
                             </Link>
@@ -200,7 +237,9 @@ function LegacyFallback({ design }: { design: SiteDesign }) {
                         Welcome to{" "}
                         <span
                             className="bg-clip-text text-transparent"
-                            style={{ backgroundImage: `linear-gradient(to right, ${design.primaryColor}, ${design.secondaryColor})` }}
+                            style={{
+                                backgroundImage: `linear-gradient(to right, ${design.primaryColor}, ${design.secondaryColor})`,
+                            }}
                         >
                             Dosory
                         </span>
@@ -221,7 +260,8 @@ function LegacyFallback({ design }: { design: SiteDesign }) {
                         </Link>
                     </div>
                     <p className="mt-12 text-sm text-gray-500">
-                        To customize this page, go to Super Admin → Site Builder and import your existing configuration or create a new home page.
+                        To customize this page, go to Super Admin → Site Builder and import your existing configuration
+                        or create a new home page.
                     </p>
                 </div>
             </main>

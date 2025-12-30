@@ -62,13 +62,13 @@ export default function OnboardingWizard() {
 
     const goNext = () => {
         if (currentStep < totalSteps - 1) {
-            setCurrentStep(prev => prev + 1);
+            setCurrentStep((prev) => prev + 1);
         }
     };
 
     const goPrev = () => {
         if (currentStep > 0) {
-            setCurrentStep(prev => prev - 1);
+            setCurrentStep((prev) => prev - 1);
         }
     };
 
@@ -99,20 +99,22 @@ export default function OnboardingWizard() {
     const CurrentStepComponent = STEPS[currentStep].component;
 
     return (
-        <WizardContext.Provider value={{
-            currentStep,
-            totalSteps,
-            useDummyData,
-            setUseDummyData,
-            goNext,
-            goPrev,
-            skipStep,
-            completeWizard,
-            createdCustomerId,
-            setCreatedCustomerId,
-            createdInvoiceId,
-            setCreatedInvoiceId,
-        }}>
+        <WizardContext.Provider
+            value={{
+                currentStep,
+                totalSteps,
+                useDummyData,
+                setUseDummyData,
+                goNext,
+                goPrev,
+                skipStep,
+                completeWizard,
+                createdCustomerId,
+                setCreatedCustomerId,
+                createdInvoiceId,
+                setCreatedInvoiceId,
+            }}
+        >
             <div className="fixed inset-0 z-[100] flex items-center justify-center">
                 {/* Backdrop */}
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
@@ -133,9 +135,7 @@ export default function OnboardingWizard() {
                             <span className="text-sm text-gray-500">
                                 Step {currentStep + 1} of {totalSteps}
                             </span>
-                            <span className="text-sm font-medium text-gray-900">
-                                {STEPS[currentStep].title}
-                            </span>
+                            <span className="text-sm font-medium text-gray-900">{STEPS[currentStep].title}</span>
                         </div>
                         <button
                             onClick={handleClose}
@@ -153,12 +153,7 @@ export default function OnboardingWizard() {
                     {/* Footer Navigation */}
                     {currentStep < totalSteps - 1 && (
                         <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50">
-                            <Button
-                                variant="ghost"
-                                onClick={goPrev}
-                                disabled={currentStep === 0}
-                                className="gap-2"
-                            >
+                            <Button variant="ghost" onClick={goPrev} disabled={currentStep === 0} className="gap-2">
                                 <ChevronLeft className="h-4 w-4" />
                                 Previous
                             </Button>
@@ -173,8 +168,8 @@ export default function OnboardingWizard() {
                                             idx === currentStep
                                                 ? "bg-blue-600"
                                                 : idx < currentStep
-                                                    ? "bg-blue-300"
-                                                    : "bg-gray-300"
+                                                  ? "bg-blue-300"
+                                                  : "bg-gray-300"
                                         )}
                                     />
                                 ))}

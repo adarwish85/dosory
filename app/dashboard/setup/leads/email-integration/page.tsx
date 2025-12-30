@@ -23,7 +23,9 @@ export default function EmailIntegrationPage() {
                     {/* Active Toggle */}
                     <div className="flex items-center space-x-2">
                         <Checkbox id="active" defaultChecked />
-                        <Label htmlFor="active" className="font-medium">Active</Label>
+                        <Label htmlFor="active" className="font-medium">
+                            Active
+                        </Label>
                     </div>
 
                     {/* Two Column Layout */}
@@ -50,21 +52,32 @@ export default function EmailIntegrationPage() {
                                 <RadioGroup defaultValue="ssl" className="flex gap-4">
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="tls" id="tls" />
-                                        <Label htmlFor="tls" className="font-normal">TLS</Label>
+                                        <Label htmlFor="tls" className="font-normal">
+                                            TLS
+                                        </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="ssl" id="ssl" />
-                                        <Label htmlFor="ssl" className="font-normal">SSL</Label>
+                                        <Label htmlFor="ssl" className="font-normal">
+                                            SSL
+                                        </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="none" id="none" />
-                                        <Label htmlFor="none" className="font-normal">No Encryption</Label>
+                                        <Label htmlFor="none" className="font-normal">
+                                            No Encryption
+                                        </Label>
                                     </div>
                                 </RadioGroup>
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Folder <Link href="#" className="text-blue-600 hover:underline">Retrieve Folders</Link></Label>
+                                <Label className="text-red-500">
+                                    * Folder{" "}
+                                    <Link href="#" className="text-blue-600 hover:underline">
+                                        Retrieve Folders
+                                    </Link>
+                                </Label>
                                 <Select defaultValue="inbox">
                                     <SelectTrigger>
                                         <SelectValue />
@@ -91,7 +104,8 @@ export default function EmailIntegrationPage() {
                                 <div className="flex items-start space-x-2">
                                     <Checkbox id="create-task" defaultChecked />
                                     <Label htmlFor="create-task" className="font-normal leading-tight">
-                                        Create task if email sender is already customer and assign to responsible staff member.
+                                        Create task if email sender is already customer and assign to responsible staff
+                                        member.
                                     </Label>
                                 </div>
 
@@ -126,7 +140,9 @@ export default function EmailIntegrationPage() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <Button variant="outline" size="icon">+</Button>
+                                    <Button variant="outline" size="icon">
+                                        +
+                                    </Button>
                                 </div>
                             </div>
 
@@ -143,7 +159,9 @@ export default function EmailIntegrationPage() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <Button variant="outline" size="icon">+</Button>
+                                    <Button variant="outline" size="icon">
+                                        +
+                                    </Button>
                                 </div>
                             </div>
 
@@ -181,15 +199,21 @@ export default function EmailIntegrationPage() {
                                 <RadioGroup defaultValue="responsible" className="space-y-2">
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="roles" id="roles" />
-                                        <Label htmlFor="roles" className="font-normal">Staff members with roles</Label>
+                                        <Label htmlFor="roles" className="font-normal">
+                                            Staff members with roles
+                                        </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="responsible" id="responsible" />
-                                        <Label htmlFor="responsible" className="font-normal">Responsible person</Label>
+                                        <Label htmlFor="responsible" className="font-normal">
+                                            Responsible person
+                                        </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="specific" id="specific" />
-                                        <Label htmlFor="specific" className="font-normal">Specific Staff Members</Label>
+                                        <Label htmlFor="specific" className="font-normal">
+                                            Specific Staff Members
+                                        </Label>
                                     </div>
                                 </RadioGroup>
                             </div>

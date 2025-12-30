@@ -7,46 +7,43 @@ import { Toaster } from "sonner";
 
 // Optimized font loading with display swap for better LCP
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
+    variable: "--font-geist-mono",
+    subsets: ["latin"],
+    display: "swap",
+    preload: true,
 });
 
 const urbanist = Urbanist({
-  variable: "--font-urbanist",
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
-  weight: ["400", "500", "600", "700"],
+    variable: "--font-urbanist",
+    subsets: ["latin"],
+    display: "swap",
+    preload: true,
+    weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "Dosory",
-  description: "All-in-one CRM and ERP platform",
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
-  },
+    title: "Dosory",
+    description: "All-in-one CRM and ERP platform",
+    icons: {
+        icon: "/favicon.ico",
+        shortcut: "/favicon.ico",
+        apple: "/favicon.ico",
+    },
 };
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en">
-      <body
-        className={`${urbanist.variable} ${geistMono.variable} antialiased font-sans`}
-      >
-        <PlatformSettingsProvider>
-          <AuthProvider>{children}</AuthProvider>
-          <Toaster richColors position="top-right" />
-        </PlatformSettingsProvider>
-      </body>
-    </html>
-  );
+    return (
+        <html lang="en">
+            <body className={`${urbanist.variable} ${geistMono.variable} antialiased font-sans`}>
+                <PlatformSettingsProvider>
+                    <AuthProvider>{children}</AuthProvider>
+                    <Toaster richColors position="top-right" />
+                </PlatformSettingsProvider>
+            </body>
+        </html>
+    );
 }
-

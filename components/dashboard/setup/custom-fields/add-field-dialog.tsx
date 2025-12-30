@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -65,7 +59,7 @@ export function AddFieldDialog() {
     };
 
     const updateField = (field: keyof FieldFormData, value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     const validateStep = (currentStep: number): boolean => {
@@ -88,11 +82,11 @@ export function AddFieldDialog() {
 
     const nextStep = () => {
         if (validateStep(step)) {
-            setStep(prev => Math.min(prev + 1, totalSteps));
+            setStep((prev) => Math.min(prev + 1, totalSteps));
         }
     };
 
-    const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+    const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
     const handleSave = async () => {
         if (!validateStep(1)) {
@@ -140,7 +134,9 @@ export function AddFieldDialog() {
                 <SheetHeader className="px-6 py-4 border-b flex-shrink-0">
                     <div className="flex items-center justify-between">
                         <SheetTitle>Add New Custom Field</SheetTitle>
-                        <span className="text-sm text-gray-500">Step {step} of {totalSteps}</span>
+                        <span className="text-sm text-gray-500">
+                            Step {step} of {totalSteps}
+                        </span>
                     </div>
                 </SheetHeader>
 
@@ -242,7 +238,9 @@ export function AddFieldDialog() {
                                             checked={formData.disabled}
                                             onCheckedChange={(c) => updateField("disabled", !!c)}
                                         />
-                                        <Label htmlFor="disabled" className="font-normal">Disabled</Label>
+                                        <Label htmlFor="disabled" className="font-normal">
+                                            Disabled
+                                        </Label>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Checkbox
@@ -250,7 +248,9 @@ export function AddFieldDialog() {
                                             checked={formData.adminOnly}
                                             onCheckedChange={(c) => updateField("adminOnly", !!c)}
                                         />
-                                        <Label htmlFor="adminOnly" className="font-normal">Restrict to administrators only</Label>
+                                        <Label htmlFor="adminOnly" className="font-normal">
+                                            Restrict to administrators only
+                                        </Label>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Checkbox
@@ -258,7 +258,9 @@ export function AddFieldDialog() {
                                             checked={formData.required}
                                             onCheckedChange={(c) => updateField("required", !!c)}
                                         />
-                                        <Label htmlFor="required" className="font-normal">Required</Label>
+                                        <Label htmlFor="required" className="font-normal">
+                                            Required
+                                        </Label>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Checkbox
@@ -266,7 +268,9 @@ export function AddFieldDialog() {
                                             checked={formData.showOnTable}
                                             onCheckedChange={(c) => updateField("showOnTable", !!c)}
                                         />
-                                        <Label htmlFor="showOnTable" className="font-normal">Show on table</Label>
+                                        <Label htmlFor="showOnTable" className="font-normal">
+                                            Show on table
+                                        </Label>
                                     </div>
                                 </div>
                             </div>

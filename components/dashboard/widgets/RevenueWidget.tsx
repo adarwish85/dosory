@@ -29,7 +29,8 @@ export function RevenueWidget({ settings, density }: RevenueWidgetProps) {
 
     const amounts = invoiceStats?.amountsByStatus || {};
     const paidAmount = amounts.paid || 0;
-    const outstandingAmount = (amounts.sent || 0) + (amounts.viewed || 0) + (amounts.partial || 0) + (amounts.overdue || 0);
+    const outstandingAmount =
+        (amounts.sent || 0) + (amounts.viewed || 0) + (amounts.partial || 0) + (amounts.overdue || 0);
     const totalRevenue = paidAmount + outstandingAmount;
 
     // Generate chart data based on actual revenue
@@ -40,9 +41,9 @@ export function RevenueWidget({ settings, density }: RevenueWidgetProps) {
     const isPositive = trend >= 0;
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         }).format(amount);
@@ -68,8 +69,13 @@ export function RevenueWidget({ settings, density }: RevenueWidgetProps) {
                     ) : (
                         <TrendingDown className="h-4 w-4 text-red-500" />
                     )}
-                    <span className={isPositive ? "text-green-600 text-sm font-medium" : "text-red-600 text-sm font-medium"}>
-                        {isPositive ? "+" : ""}{trend}%
+                    <span
+                        className={
+                            isPositive ? "text-green-600 text-sm font-medium" : "text-red-600 text-sm font-medium"
+                        }
+                    >
+                        {isPositive ? "+" : ""}
+                        {trend}%
                     </span>
                     <span className="text-gray-500 text-xs">vs last {settings.dateRange || "month"}</span>
                 </div>
@@ -90,21 +96,21 @@ export function RevenueWidget({ settings, density }: RevenueWidgetProps) {
                                 dataKey="month"
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fontSize: 10, fill: '#9ca3af' }}
+                                tick={{ fontSize: 10, fill: "#9ca3af" }}
                             />
                             <YAxis
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fontSize: 10, fill: '#9ca3af' }}
+                                tick={{ fontSize: 10, fill: "#9ca3af" }}
                                 tickFormatter={formatChartValue}
                             />
                             <Tooltip
                                 formatter={((value: number) => [formatCurrency(value), "Revenue"]) as any}
                                 contentStyle={{
-                                    backgroundColor: 'white',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '8px',
-                                    fontSize: '12px'
+                                    backgroundColor: "white",
+                                    border: "1px solid #e5e7eb",
+                                    borderRadius: "8px",
+                                    fontSize: "12px",
                                 }}
                             />
                             <Area

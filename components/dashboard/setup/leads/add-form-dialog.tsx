@@ -1,13 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -77,7 +71,7 @@ export function AddFormDialog() {
     };
 
     const updateField = (field: keyof FormData, value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     const validateStep = (currentStep: number): boolean => {
@@ -92,11 +86,11 @@ export function AddFormDialog() {
 
     const nextStep = () => {
         if (validateStep(step)) {
-            setStep(prev => Math.min(prev + 1, totalSteps));
+            setStep((prev) => Math.min(prev + 1, totalSteps));
         }
     };
 
-    const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+    const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
     const handleSave = async () => {
         if (!validateStep(1)) {
@@ -149,8 +143,7 @@ export function AddFormDialog() {
                         {Array.from({ length: totalSteps }).map((_, i) => (
                             <div
                                 key={i}
-                                className={`h-1 flex-1 rounded-full ${i + 1 <= step ? "bg-gray-900" : "bg-gray-200"
-                                    }`}
+                                className={`h-1 flex-1 rounded-full ${i + 1 <= step ? "bg-gray-900" : "bg-gray-200"}`}
                             />
                         ))}
                     </div>
@@ -252,11 +245,15 @@ export function AddFormDialog() {
                                 >
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="message" id="message" />
-                                        <Label htmlFor="message" className="font-normal">Show thank you message</Label>
+                                        <Label htmlFor="message" className="font-normal">
+                                            Show thank you message
+                                        </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="redirect" id="redirect" />
-                                        <Label htmlFor="redirect" className="font-normal">Redirect to URL</Label>
+                                        <Label htmlFor="redirect" className="font-normal">
+                                            Redirect to URL
+                                        </Label>
                                     </div>
                                 </RadioGroup>
                             </div>
@@ -275,7 +272,9 @@ export function AddFormDialog() {
                                         checked={formData.autoMarkPublic}
                                         onCheckedChange={(c) => updateField("autoMarkPublic", !!c)}
                                     />
-                                    <Label htmlFor="autoPublic" className="font-normal">Auto mark as public</Label>
+                                    <Label htmlFor="autoPublic" className="font-normal">
+                                        Auto mark as public
+                                    </Label>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Checkbox
@@ -283,7 +282,9 @@ export function AddFormDialog() {
                                         checked={formData.allowDuplicate}
                                         onCheckedChange={(c) => updateField("allowDuplicate", !!c)}
                                     />
-                                    <Label htmlFor="allowDuplicate" className="font-normal">Allow duplicate leads</Label>
+                                    <Label htmlFor="allowDuplicate" className="font-normal">
+                                        Allow duplicate leads
+                                    </Label>
                                 </div>
                             </div>
                         </div>
@@ -297,7 +298,9 @@ export function AddFormDialog() {
                                     checked={formData.notifyOnImport}
                                     onCheckedChange={(c) => updateField("notifyOnImport", !!c)}
                                 />
-                                <Label htmlFor="notifyImport" className="font-normal">Notify when lead imported</Label>
+                                <Label htmlFor="notifyImport" className="font-normal">
+                                    Notify when lead imported
+                                </Label>
                             </div>
                             <div className="space-y-3 pt-4 border-t">
                                 <Label>Who to notify</Label>
@@ -307,15 +310,21 @@ export function AddFormDialog() {
                                 >
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="specific" id="specific" />
-                                        <Label htmlFor="specific" className="font-normal">Specific staff members</Label>
+                                        <Label htmlFor="specific" className="font-normal">
+                                            Specific staff members
+                                        </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="roles" id="roles" />
-                                        <Label htmlFor="roles" className="font-normal">Staff with specific roles</Label>
+                                        <Label htmlFor="roles" className="font-normal">
+                                            Staff with specific roles
+                                        </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="responsible" id="responsible" />
-                                        <Label htmlFor="responsible" className="font-normal">Responsible person</Label>
+                                        <Label htmlFor="responsible" className="font-normal">
+                                            Responsible person
+                                        </Label>
                                     </div>
                                 </RadioGroup>
                             </div>

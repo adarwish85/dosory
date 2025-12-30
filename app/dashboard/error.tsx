@@ -9,13 +9,7 @@ import { useRouter } from "next/navigation";
  * Dashboard error boundary
  * Catches errors in dashboard routes and provides contextual recovery
  */
-export default function DashboardError({
-    error,
-    reset,
-}: {
-    error: Error & { digest?: string };
-    reset: () => void;
-}) {
+export default function DashboardError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
     const router = useRouter();
 
     useEffect(() => {
@@ -42,9 +36,7 @@ export default function DashboardError({
                 {/* Error details (only in development) */}
                 {process.env.NODE_ENV === "development" && (
                     <div className="bg-muted rounded-md p-3 text-left">
-                        <p className="text-xs font-mono text-muted-foreground break-all">
-                            {error.message}
-                        </p>
+                        <p className="text-xs font-mono text-muted-foreground break-all">{error.message}</p>
                     </div>
                 )}
 
@@ -54,12 +46,7 @@ export default function DashboardError({
                         <RefreshCw className="h-4 w-4" />
                         Retry
                     </Button>
-                    <Button
-                        onClick={() => router.push("/dashboard")}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                    >
+                    <Button onClick={() => router.push("/dashboard")} variant="outline" size="sm" className="gap-2">
                         <ArrowLeft className="h-4 w-4" />
                         Back to Dashboard
                     </Button>

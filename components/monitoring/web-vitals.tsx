@@ -47,12 +47,12 @@ export function WebVitalsReporter() {
 
 // Performance budget thresholds (in ms)
 export const PERFORMANCE_BUDGETS = {
-    LCP: 2500,   // Largest Contentful Paint: < 2.5s
-    FID: 100,    // First Input Delay: < 100ms
-    CLS: 0.1,    // Cumulative Layout Shift: < 0.1
-    TTFB: 800,   // Time to First Byte: < 800ms
-    FCP: 1800,   // First Contentful Paint: < 1.8s
-    INP: 200,    // Interaction to Next Paint: < 200ms
+    LCP: 2500, // Largest Contentful Paint: < 2.5s
+    FID: 100, // First Input Delay: < 100ms
+    CLS: 0.1, // Cumulative Layout Shift: < 0.1
+    TTFB: 800, // Time to First Byte: < 800ms
+    FCP: 1800, // First Contentful Paint: < 1.8s
+    INP: 200, // Interaction to Next Paint: < 200ms
 };
 
 // Simple hook to detect slow performance

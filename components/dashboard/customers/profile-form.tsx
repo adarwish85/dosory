@@ -46,7 +46,11 @@ export function CustomerProfileForm() {
                     setValue("zipCode", data.address?.zipCode || "");
                     setValue("country", data.address?.country || "");
                 }
-            } catch (error) { console.error(error); } finally { setLoading(false); }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
         }
         loadCustomer();
     }, [customerId, setValue]);
@@ -105,7 +109,9 @@ export function CustomerProfileForm() {
 
                 <div className="space-y-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="company" className="text-red-500 font-semibold">* <span className="text-gray-700">Company</span></Label>
+                        <Label htmlFor="company" className="text-red-500 font-semibold">
+                            * <span className="text-gray-700">Company</span>
+                        </Label>
                         <Input id="company" {...register("company", { required: true })} />
                     </div>
 
@@ -127,7 +133,10 @@ export function CustomerProfileForm() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label>Currency</Label>
-                            <Select defaultValue={customer.currency || "usd"} onValueChange={(val) => setValue("currency", val)}>
+                            <Select
+                                defaultValue={customer.currency || "usd"}
+                                onValueChange={(val) => setValue("currency", val)}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="System Default" />
                                 </SelectTrigger>
@@ -139,7 +148,10 @@ export function CustomerProfileForm() {
                         </div>
                         <div className="grid gap-2">
                             <Label>Default Language</Label>
-                            <Select defaultValue={customer.defaultLanguage || "default"} onValueChange={(val) => setValue("defaultLanguage", val)}>
+                            <Select
+                                defaultValue={customer.defaultLanguage || "default"}
+                                onValueChange={(val) => setValue("defaultLanguage", val)}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="System Default" />
                                 </SelectTrigger>

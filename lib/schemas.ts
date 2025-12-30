@@ -45,18 +45,7 @@ export const contactFormSchema = z.object({
     position: z.string().optional(),
     isPrimary: z.boolean().default(false),
     portalAccess: z.boolean().default(false),
-    permissions: z
-        .array(
-            z.enum([
-                "invoices",
-                "estimates",
-                "contracts",
-                "proposals",
-                "support",
-                "projects",
-            ])
-        )
-        .optional(),
+    permissions: z.array(z.enum(["invoices", "estimates", "contracts", "proposals", "support", "projects"])).optional(),
     status: entityStatusSchema.default("active"),
 });
 
@@ -119,15 +108,7 @@ export const discountSchema = z.object({
 // Invoice Schema
 // ============================================
 
-export const invoiceStatusSchema = z.enum([
-    "draft",
-    "sent",
-    "viewed",
-    "partial",
-    "paid",
-    "overdue",
-    "cancelled",
-]);
+export const invoiceStatusSchema = z.enum(["draft", "sent", "viewed", "partial", "paid", "overdue", "cancelled"]);
 
 export const invoiceFormSchema = z.object({
     customerId: z.string().min(1, "Customer is required"),
@@ -146,14 +127,7 @@ export const invoiceFormSchema = z.object({
 // Estimate Schema
 // ============================================
 
-export const estimateStatusSchema = z.enum([
-    "draft",
-    "sent",
-    "viewed",
-    "accepted",
-    "declined",
-    "expired",
-]);
+export const estimateStatusSchema = z.enum(["draft", "sent", "viewed", "accepted", "declined", "expired"]);
 
 export const estimateFormSchema = z.object({
     customerId: z.string().min(1, "Customer is required"),
@@ -171,14 +145,7 @@ export const estimateFormSchema = z.object({
 // Proposal Schema
 // ============================================
 
-export const proposalStatusSchema = z.enum([
-    "draft",
-    "sent",
-    "open",
-    "revised",
-    "declined",
-    "accepted",
-]);
+export const proposalStatusSchema = z.enum(["draft", "sent", "open", "revised", "declined", "accepted"]);
 
 export const proposalFormSchema = z.object({
     subject: z.string().min(1, "Subject is required"),
@@ -239,13 +206,7 @@ export const productFormSchema = z.object({
 // Project Schema
 // ============================================
 
-export const projectStatusSchema = z.enum([
-    "not_started",
-    "in_progress",
-    "on_hold",
-    "cancelled",
-    "finished",
-]);
+export const projectStatusSchema = z.enum(["not_started", "in_progress", "on_hold", "cancelled", "finished"]);
 
 export const projectBillingTypeSchema = z.enum(["fixed", "hourly", "task_hours"]);
 
@@ -272,13 +233,7 @@ export const projectFormSchema = z.object({
 // Task Schema
 // ============================================
 
-export const taskStatusSchema = z.enum([
-    "not_started",
-    "in_progress",
-    "testing",
-    "awaiting_feedback",
-    "completed",
-]);
+export const taskStatusSchema = z.enum(["not_started", "in_progress", "testing", "awaiting_feedback", "completed"]);
 
 export const taskPrioritySchema = z.enum(["low", "medium", "high", "urgent"]);
 
@@ -326,20 +281,9 @@ export const expenseCategoryFormSchema = z.object({
 // Subscription Schema
 // ============================================
 
-export const billingCycleSchema = z.enum([
-    "monthly",
-    "quarterly",
-    "semi_annual",
-    "annual",
-]);
+export const billingCycleSchema = z.enum(["monthly", "quarterly", "semi_annual", "annual"]);
 
-export const subscriptionStatusSchema = z.enum([
-    "active",
-    "past_due",
-    "cancelled",
-    "paused",
-    "future",
-]);
+export const subscriptionStatusSchema = z.enum(["active", "past_due", "cancelled", "paused", "future"]);
 
 export const subscriptionFormSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -355,13 +299,7 @@ export const subscriptionFormSchema = z.object({
 // Contract Schema
 // ============================================
 
-export const contractStatusSchema = z.enum([
-    "draft",
-    "sent",
-    "signed",
-    "expired",
-    "trash",
-]);
+export const contractStatusSchema = z.enum(["draft", "sent", "signed", "expired", "trash"]);
 
 export const contractFormSchema = z.object({
     subject: z.string().min(1, "Subject is required"),
@@ -380,13 +318,7 @@ export const contractFormSchema = z.object({
 
 export const ticketPrioritySchema = z.enum(["low", "medium", "high"]);
 
-export const ticketStatusSchema = z.enum([
-    "open",
-    "in_progress",
-    "answered",
-    "on_hold",
-    "closed",
-]);
+export const ticketStatusSchema = z.enum(["open", "in_progress", "answered", "on_hold", "closed"]);
 
 export const ticketFormSchema = z.object({
     subject: z.string().min(1, "Subject is required"),
@@ -521,17 +453,7 @@ export const customFieldFormSchema = z.object({
 
 export const emailTemplateFormSchema = z.object({
     name: z.string().min(1, "Template name is required"),
-    type: z.enum([
-        "invoice",
-        "estimate",
-        "proposal",
-        "contract",
-        "ticket",
-        "lead",
-        "project",
-        "task",
-        "custom",
-    ]),
+    type: z.enum(["invoice", "estimate", "proposal", "contract", "ticket", "lead", "project", "task", "custom"]),
     subject: z.string().min(1, "Subject is required"),
     content: z.string().min(1, "Content is required"),
     isActive: z.boolean().default(true),

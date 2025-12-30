@@ -24,7 +24,9 @@ export default function NewLeadPage() {
     const { staff } = useStaff();
     const { createLead, leads } = useLeads();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [duplicateWarning, setDuplicateWarning] = useState<{ type: "email" | "phone"; duplicates: Lead[] } | null>(null);
+    const [duplicateWarning, setDuplicateWarning] = useState<{ type: "email" | "phone"; duplicates: Lead[] } | null>(
+        null
+    );
 
     const form = useForm({
         resolver: zodResolver(leadFormSchema),
@@ -66,8 +68,8 @@ export default function NewLeadPage() {
         if (!leads.length) return;
 
         if (watchedEmail) {
-            const emailDuplicates = leads.filter(l =>
-                l.email && l.email.toLowerCase() === watchedEmail.toLowerCase()
+            const emailDuplicates = leads.filter(
+                (l) => l.email && l.email.toLowerCase() === watchedEmail.toLowerCase()
             );
             if (emailDuplicates.length > 0) {
                 setDuplicateWarning({ type: "email", duplicates: emailDuplicates });
@@ -76,8 +78,8 @@ export default function NewLeadPage() {
         }
 
         if (watchedPhone) {
-            const phoneDuplicates = leads.filter(l =>
-                l.phone && l.phone.replace(/\D/g, '') === watchedPhone.replace(/\D/g, '')
+            const phoneDuplicates = leads.filter(
+                (l) => l.phone && l.phone.replace(/\D/g, "") === watchedPhone.replace(/\D/g, "")
             );
             if (phoneDuplicates.length > 0) {
                 setDuplicateWarning({ type: "phone", duplicates: phoneDuplicates });
@@ -124,7 +126,8 @@ export default function NewLeadPage() {
                                 <AlertTriangle className="h-4 w-4" />
                                 <AlertTitle>Potential Duplicate Found!</AlertTitle>
                                 <AlertDescription>
-                                    A lead with this {duplicateWarning.type} already exists: {duplicateWarning.duplicates.map((d, i) => (
+                                    A lead with this {duplicateWarning.type} already exists:{" "}
+                                    {duplicateWarning.duplicates.map((d, i) => (
                                         <span key={d.id}>
                                             {i > 0 && ", "}
                                             <strong>{d.name}</strong>
@@ -284,7 +287,11 @@ export default function NewLeadPage() {
                                                     placeholder="0.00"
                                                     {...field}
                                                     value={field.value ?? ""}
-                                                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                                                    onChange={(e) =>
+                                                        field.onChange(
+                                                            e.target.value ? parseFloat(e.target.value) : undefined
+                                                        )
+                                                    }
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -416,10 +423,7 @@ export default function NewLeadPage() {
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                                         <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
+                                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
                                             <FormLabel>Public Lead</FormLabel>

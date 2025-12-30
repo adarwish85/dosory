@@ -4,14 +4,7 @@ import { useAuditLogs } from "@/lib/hooks/use-audit-logs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Shield, RefreshCw, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -20,10 +13,11 @@ export default function AuditLogsPage() {
     const { logs, loading, refetch } = useAuditLogs();
     const [searchQuery, setSearchQuery] = useState("");
 
-    const filteredLogs = logs.filter(log =>
-        log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.performedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.targetName?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredLogs = logs.filter(
+        (log) =>
+            log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            log.performedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            log.targetName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const getActionColor = (action: string) => {
@@ -39,7 +33,9 @@ export default function AuditLogsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
-                    <p className="text-gray-500">Track all sensitive administrative actions for security and compliance.</p>
+                    <p className="text-gray-500">
+                        Track all sensitive administrative actions for security and compliance.
+                    </p>
                 </div>
                 <Button variant="outline" onClick={refetch} className="gap-2">
                     <RefreshCw className="h-4 w-4" />
@@ -99,15 +95,25 @@ export default function AuditLogsPage() {
                                             {log.performedBy}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant="outline" className={`font-mono text-xs font-normal border ${getActionColor(log.action)}`}>
+                                            <Badge
+                                                variant="outline"
+                                                className={`font-mono text-xs font-normal border ${getActionColor(log.action)}`}
+                                            >
                                                 {log.action}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-sm text-gray-600">
                                             {log.targetName}
-                                            {log.targetId && <span className="text-xs text-gray-400 block font-mono">{log.targetId.substring(0, 8)}...</span>}
+                                            {log.targetId && (
+                                                <span className="text-xs text-gray-400 block font-mono">
+                                                    {log.targetId.substring(0, 8)}...
+                                                </span>
+                                            )}
                                         </TableCell>
-                                        <TableCell className="text-xs text-gray-500 max-w-xs truncate" title={JSON.stringify(log.details, null, 2)}>
+                                        <TableCell
+                                            className="text-xs text-gray-500 max-w-xs truncate"
+                                            title={JSON.stringify(log.details, null, 2)}
+                                        >
                                             {JSON.stringify(log.details)}
                                         </TableCell>
                                     </TableRow>

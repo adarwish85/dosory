@@ -28,7 +28,7 @@ export default function SetupSuperAdminPage() {
         try {
             const userRef = doc(db, "users", user.uid);
             await updateDoc(userRef, {
-                role: "superadmin"
+                role: "superadmin",
             });
             setDone(true);
 
@@ -79,15 +79,9 @@ export default function SetupSuperAdminPage() {
                             <p className="text-gray-600 text-center">
                                 Click the button below to set your account as Super Admin.
                             </p>
-                            <p className="text-sm text-gray-500 text-center">
-                                Current user: {user.email}
-                            </p>
+                            <p className="text-sm text-gray-500 text-center">Current user: {user.email}</p>
 
-                            {error && (
-                                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
-                                    {error}
-                                </div>
-                            )}
+                            {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
 
                             <Button
                                 className="w-full bg-purple-600 hover:bg-purple-700"

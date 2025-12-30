@@ -42,16 +42,12 @@ export default function WelcomeModal() {
                     {step === "welcome" ? (
                         <>
                             <h1 className="text-2xl font-bold mb-2">Welcome to Dosory! 🎉</h1>
-                            <p className="text-blue-100">
-                                Let&apos;s get your workspace set up in just a few steps.
-                            </p>
+                            <p className="text-blue-100">Let&apos;s get your workspace set up in just a few steps.</p>
                         </>
                     ) : (
                         <>
                             <h1 className="text-2xl font-bold mb-2">What will you use most?</h1>
-                            <p className="text-blue-100">
-                                We&apos;ll personalize your experience based on your needs.
-                            </p>
+                            <p className="text-blue-100">We&apos;ll personalize your experience based on your needs.</p>
                         </>
                     )}
                 </div>
@@ -61,21 +57,27 @@ export default function WelcomeModal() {
                     {step === "welcome" ? (
                         <div className="space-y-4">
                             <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                                <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                                <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
+                                    1
+                                </div>
                                 <div>
                                     <h3 className="font-medium text-gray-900">Choose your path</h3>
                                     <p className="text-sm text-gray-500">Tell us what you'll use most</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                                <div className="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                                <div className="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center text-sm font-bold">
+                                    2
+                                </div>
                                 <div>
                                     <h3 className="font-medium text-gray-900">Set up your profile</h3>
                                     <p className="text-sm text-gray-500">Add your company details</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                                <div className="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                                <div className="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center text-sm font-bold">
+                                    3
+                                </div>
                                 <div>
                                     <h3 className="font-medium text-gray-900">Add your first record</h3>
                                     <p className="text-sm text-gray-500">Get started with real data</p>
