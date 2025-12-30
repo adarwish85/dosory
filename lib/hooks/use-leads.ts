@@ -122,7 +122,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
                     try {
                         const countSnap = await getCountFromServer(globalQ);
                         globalTotal = countSnap.data().count;
-                    } catch (ignore) {}
+                    } catch (ignore) { }
                 }
 
                 if (!isMounted) return;
@@ -611,6 +611,42 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 await deleteDoc(doc(db, "leadFiles", fileDoc.id));
             }
             console.log(`[convertToCustomer] Transferred ${leadFilesSnap.docs.length} files`);
+
+            // Transfer generic reminders (new relatedTo structure)
+            console.log("[convertToCustomer] Transferring generic reminders...");
+            const genericRemindersQuery = query(
+                collection(db, "reminders"),
+                where("relatedTo.id", "==", leadId),
+                where("relatedTo.type", "==", "lead"),
+                where("orgId", "==", profile.orgId)
+            );
+            const genericRemindersSnap = await getDocs(genericRemindersQuery);
+            for (const reminderDoc of genericRemindersSnap.docs) {
+                await updateDoc(doc(db, "reminders", reminderDoc.id), {
+                    relatedTo: { type: "customer", id: customerRef.id },
+                    transferredFromLeadId: leadId,
+                    updatedAt: serverTimestamp(),
+                });
+            }
+            console.log(`[convertToCustomer] Transferred ${genericRemindersSnap.docs.length} generic reminders`);
+
+            // Transfer generic files (new relatedTo structure)
+            console.log("[convertToCustomer] Transferring generic files...");
+            const genericFilesQuery = query(
+                collection(db, "files"),
+                where("relatedTo.id", "==", leadId),
+                where("relatedTo.type", "==", "lead"),
+                where("orgId", "==", profile.orgId)
+            );
+            const genericFilesSnap = await getDocs(genericFilesQuery);
+            for (const fileDoc of genericFilesSnap.docs) {
+                await updateDoc(doc(db, "files", fileDoc.id), {
+                    relatedTo: { type: "customer", id: customerRef.id },
+                    transferredFromLeadId: leadId,
+                    updatedAt: serverTimestamp(),
+                });
+            }
+            console.log(`[convertToCustomer] Transferred ${genericFilesSnap.docs.length} generic files`);
 
             console.log("[convertToCustomer] Conversion complete, deleting lead...");
             await deleteDoc(doc(db, "leads", leadId));
