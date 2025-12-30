@@ -285,8 +285,10 @@ export default function TicketPage() {
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-gray-500">
                                     <span>
-                                        Posted:{" "}
-                                        {new Date(message.createdAt?.toDate?.() || message.createdAt).toLocaleString()}
+                                        Posted: {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                        {new Date(
+                                            (message.createdAt as any)?.toDate?.() || message.createdAt
+                                        ).toLocaleString()}
                                     </span>
                                     <Printer className="h-3 w-3 cursor-pointer" />
                                     <Edit2 className="h-3 w-3 cursor-pointer" />
