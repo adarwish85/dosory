@@ -14,7 +14,7 @@ import {
     Italic,
     Underline,
     Link,
-    Image,
+    Image as ImageIcon,
     MoreHorizontal,
     AlignLeft,
     AlignCenter,
@@ -40,13 +40,13 @@ interface Ticket {
         name: string;
     };
     assignee?: string;
-    createdAt?: any;
-    lastReply?: any;
+    createdAt?: { toDate?: () => Date } | Date;
+    lastReply?: { toDate?: () => Date } | Date;
     messages?: Array<{
         sender: string;
         senderType: string;
         content: string;
-        createdAt: any;
+        createdAt: { toDate?: () => Date } | Date;
     }>;
 }
 
@@ -200,7 +200,7 @@ export default function TicketPage() {
                             <AlignCenter className="w-4 h-4 cursor-pointer" />
                             <AlignRight className="w-4 h-4 cursor-pointer" />
                             <div className="h-4 w-px bg-gray-300 mx-2"></div>
-                            <Image className="w-4 h-4 cursor-pointer" />
+                            <ImageIcon className="w-4 h-4 cursor-pointer" />
                             <Link className="w-4 h-4 cursor-pointer" />
                             <MoreHorizontal className="w-4 h-4 cursor-pointer ml-auto" />
                         </div>

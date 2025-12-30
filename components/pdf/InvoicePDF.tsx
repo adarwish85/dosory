@@ -252,6 +252,7 @@ export default function InvoicePDF({
                 <View style={styles.header}>
                     <View>
                         {settings.logoUrl ? (
+                            // eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image component doesn't support alt prop
                             <Image src={settings.logoUrl} style={styles.logoImage} />
                         ) : (
                             <Text style={styles.logo}>{orgName}</Text>

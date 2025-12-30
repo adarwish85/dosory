@@ -37,8 +37,7 @@ import {
 } from "@/lib/stores/dashboard-store";
 import { BaseWidget } from "./BaseWidget";
 
-// Import all widgets
-import { RevenueWidget } from "../widgets/RevenueWidget";
+// Import lightweight widgets directly
 import { TasksWidget } from "../widgets/TasksWidget";
 import { ActivityWidget } from "../widgets/ActivityWidget";
 import { PipelineWidget } from "../widgets/PipelineWidget";
@@ -46,6 +45,16 @@ import { QuickActionsWidget } from "../widgets/QuickActionsWidget";
 import { CalendarWidget } from "../widgets/CalendarWidget";
 import { CustomersWidget } from "../widgets/CustomersWidget";
 import { PerformanceWidget } from "../widgets/PerformanceWidget";
+
+// Dynamic import for heavy chart widgets (reduces initial bundle by ~40KB)
+const RevenueWidget = dynamic(() => import("../widgets/RevenueWidget").then((mod) => mod.RevenueWidget), {
+    ssr: false,
+    loading: () => (
+        <div className="flex items-center justify-center h-full">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+    ),
+});
 
 // Dynamic import GridWrapper to avoid SSR issues with react-grid-layout
 const GridWrapper = dynamic(() => import("./GridWrapper").then((mod) => mod.GridWrapper), {
@@ -70,7 +79,7 @@ const WIDGET_CATALOG: Record<WidgetId, { title: string; description: string; ico
 };
 
 // Widget component mapping
-const WIDGET_COMPONENTS: Record<WidgetId, React.ComponentType<any>> = {
+const WIDGET_COMPONENTS: Record<WidgetId, React.ComponentType<{ settings: WidgetSettings; density: DataDensity }>> = {
     revenue: RevenueWidget,
     tasks: TasksWidget,
     activity: ActivityWidget,
@@ -222,7 +231,7 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                             (profile?.displayName?.includes(" ") ? profile.displayName.split(" ")[0] : "there")}
                         ! 👋
                     </h1>
-                    <p className="text-sm text-gray-500">Here's what's happening with your business today.</p>
+                    <p className="text-sm text-gray-500">Here&apos;s what&apos;s happening with your business today.</p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -411,7 +420,9 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                 <div className="border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
                     <div className="text-4xl mb-4">📊</div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">No widgets added yet</h3>
-                    <p className="text-gray-500 mb-4">Click "Edit" and then "Add Widget" to customize your dashboard</p>
+                    <p className="text-gray-500 mb-4">
+                        Click &quot;Edit&quot; and then &quot;Add Widget&quot; to customize your dashboard
+                    </p>
                     <Button
                         onClick={() => {
                             setEditMode(true);

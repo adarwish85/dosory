@@ -9,7 +9,7 @@ import {
     Italic,
     Underline,
     Link,
-    Image,
+    Image as ImageIcon,
     MoreHorizontal,
     AlignLeft,
     AlignCenter,
@@ -102,7 +102,7 @@ export default function NewArticlePage() {
                             <AlignCenter className="w-4 h-4 cursor-pointer" />
                             <AlignRight className="w-4 h-4 cursor-pointer" />
                             <div className="h-4 w-px bg-gray-300 mx-2"></div>
-                            <Image className="w-4 h-4 cursor-pointer" />
+                            <ImageIcon className="w-4 h-4 cursor-pointer" />
                             <Link className="w-4 h-4 cursor-pointer" />
                             <MoreHorizontal className="w-4 h-4 cursor-pointer ml-auto" />
                         </div>
