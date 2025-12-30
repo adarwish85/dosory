@@ -64,6 +64,14 @@ export const leadStatusSchema = z.enum([
     "junk",
 ]);
 
+export const dealSchema = z.object({
+    subject: z.string().min(1, "Subject is required"),
+    value: z.number().min(0, "Value must be non-negative"),
+    description: z.string().optional(),
+    expectedCloseDate: z.date().optional(),
+    products: z.array(lineItemSchema).optional(),
+});
+
 export const leadFormSchema = z.object({
     name: z.string().min(1, "Name is required"),
     company: z.string().optional(),
@@ -81,6 +89,7 @@ export const leadFormSchema = z.object({
     defaultLanguage: z.string().optional(),
     isPublic: z.boolean().default(false),
     lastContactedAt: z.date().optional(),
+    deal: dealSchema.optional(),
 });
 
 // ============================================

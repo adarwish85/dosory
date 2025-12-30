@@ -91,6 +91,15 @@ export interface Lead extends BaseEntity {
     isPublic?: boolean;
     isStarred?: boolean;
     leadScore?: number; // 0-100 score based on criteria
+    deal?: Deal;
+}
+
+export interface Deal {
+    subject: string;
+    value: number;
+    description?: string;
+    expectedCloseDate?: Timestamp;
+    products?: LineItem[];
 }
 
 export type LeadStatus = "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "won" | "lost" | "junk";
