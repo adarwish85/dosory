@@ -31,10 +31,11 @@ import type { EstimateFormData, ProposalFormData } from "@/lib/schemas";
 interface UseEstimatesOptions {
     status?: EstimateStatus | "all";
     customerId?: string;
+    leadId?: string;
 }
 
 export function useEstimates(options: UseEstimatesOptions = {}) {
-    const { status = "all", customerId } = options;
+    const { status = "all", customerId, leadId } = options;
     const { profile } = useUserProfile();
     const [estimates, setEstimates] = useState<Estimate[]>([]);
     const [loading, setLoading] = useState(true);
@@ -54,6 +55,10 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
 
         if (customerId) {
             constraints.push(where("customerId", "==", customerId));
+        }
+
+        if (leadId) {
+            constraints.push(where("leadId", "==", leadId));
         }
 
         constraints.push(orderBy("createdAt", "desc"));
@@ -78,7 +83,7 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, customerId]);
+    }, [profile?.orgId, status, customerId, leadId]);
 
     // Calculate totals helper
     const calculateTotals = (
@@ -327,6 +332,7 @@ export function useProposals(options: UseProposalsOptions = {}) {
         return () => unsubscribe();
     }, [profile?.orgId, status, customerId, leadId]);
 
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     const createProposal = useCallback(
         async (data: ProposalFormData): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
@@ -355,6 +361,7 @@ export function useProposals(options: UseProposalsOptions = {}) {
 
             return docRef.id;
         },
+
         [profile?.orgId, profile?.uid]
     );
 

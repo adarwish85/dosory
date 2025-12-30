@@ -344,6 +344,13 @@ service cloud.firestore {
       allow update, delete: if canModifyByOrg();
     }
 
+    // Generic Files (used by new lead files implementation)
+    match /files/{fileId} {
+      allow read: if canReadByOrg();
+      allow create: if canCreateByOrg();
+      allow update, delete: if canModifyByOrg();
+    }
+
     // Credit Notes
     match /creditNotes/{creditNoteId} {
       allow read: if canReadByOrg();

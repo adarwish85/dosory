@@ -159,6 +159,7 @@ export interface Estimate extends BaseEntity {
     number: string;
     customerId: string;
     customerName: string;
+    leadId?: string;
     date: Timestamp;
     expiryDate: Timestamp;
     status: EstimateStatus;
@@ -316,11 +317,27 @@ export interface Task extends BaseEntity {
     billable: boolean;
     hourlyRate?: number;
     relatedTo?: TaskRelation;
+    repeat?: TaskRepeat;
+    checklist?: TaskChecklistItem[];
 }
 
 export type TaskStatus = "not_started" | "in_progress" | "testing" | "awaiting_feedback" | "completed";
 
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
+
+export interface TaskChecklistItem {
+    id: string;
+    text: string;
+    completed: boolean;
+    assignee?: string;
+}
+
+export interface TaskRepeat {
+    frequency: "daily" | "weekly" | "monthly" | "yearly" | "custom";
+    interval?: number; // e.g. every 2 weeks
+    endDate?: Timestamp;
+    days?: number[]; // Pending on frequency (e.g. days of week)
+}
 
 export interface TaskRelation {
     type: "customer" | "lead" | "invoice" | "estimate" | "proposal" | "contract";
@@ -380,7 +397,7 @@ export interface Subscription extends BaseEntity {
         clientPortal: boolean;
         customDomain?: boolean;
         subdomain?: boolean;
-        [key: string]: any;
+        [key: string]: boolean | string | number | undefined;
     };
 }
 
@@ -736,4 +753,32 @@ export interface Notification extends BaseEntity {
     message: string;
     link?: string;
     read: boolean;
+}
+
+// ============================================
+// Reminders
+// ============================================
+
+export interface Reminder extends BaseEntity {
+    date: Timestamp;
+    assignedTo: string;
+    description: string;
+    sendEmail: boolean;
+    relatedTo?: TaskRelation; // Reusing TaskRelation { type, id }
+    isRead?: boolean; // For when the reminder triggers
+    createdBy: string;
+}
+
+// ============================================
+// Files
+// ============================================
+
+export interface FileDoc extends BaseEntity {
+    name: string;
+    size: number;
+    type: string; // mime type
+    url: string;
+    path: string; // storage path
+    relatedTo?: TaskRelation; // { type, id }
+    uploadedBy: string;
 }

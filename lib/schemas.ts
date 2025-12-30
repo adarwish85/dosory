@@ -131,6 +131,7 @@ export const estimateStatusSchema = z.enum(["draft", "sent", "viewed", "accepted
 
 export const estimateFormSchema = z.object({
     customerId: z.string().min(1, "Customer is required"),
+    leadId: z.string().optional(),
     date: z.date(),
     expiryDate: z.date(),
     currency: z.string().min(1, "Currency is required"),
@@ -252,6 +253,22 @@ export const taskFormSchema = z.object({
     isPublic: z.boolean().default(false),
     billable: z.boolean().default(false),
     hourlyRate: z.number().optional(),
+    relatedTo: z.object({
+        type: z.enum(["customer", "lead", "invoice", "estimate", "proposal", "contract"]),
+        id: z.string(),
+    }).optional(),
+    repeat: z.object({
+        frequency: z.enum(["daily", "weekly", "monthly", "yearly", "custom"]),
+        interval: z.number().optional(),
+        endDate: z.any().optional(), // Timestamp or Date
+        days: z.array(z.number()).optional(),
+    }).optional(),
+    checklist: z.array(z.object({
+        id: z.string(),
+        text: z.string(),
+        completed: z.boolean(),
+        assignee: z.string().optional(),
+    })).optional(),
 });
 
 // ============================================
@@ -505,6 +522,21 @@ export const organizationSettingsFormSchema = z.object({
 });
 
 // ============================================
+// Reminder Schema
+// ============================================
+
+export const reminderFormSchema = z.object({
+    date: z.date(),
+    assignedTo: z.string().min(1, "Assignee is required"),
+    description: z.string().optional(),
+    sendEmail: z.boolean().default(false),
+    relatedTo: z.object({
+        type: z.enum(["customer", "lead", "invoice", "estimate", "proposal", "contract"]),
+        id: z.string(),
+    }).optional(),
+});
+
+// ============================================
 // Type Exports (inferred from schemas)
 // ============================================
 
@@ -526,3 +558,4 @@ export type TicketFormData = z.infer<typeof ticketFormSchema>;
 export type TicketReplyFormData = z.infer<typeof ticketReplyFormSchema>;
 export type StaffFormData = z.infer<typeof staffFormSchema>;
 export type RoleFormData = z.infer<typeof roleFormSchema>;
+export type ReminderFormData = z.infer<typeof reminderFormSchema>;

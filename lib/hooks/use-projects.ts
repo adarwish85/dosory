@@ -255,6 +255,7 @@ interface UseTasksOptions {
     orderByField?: "name" | "createdAt" | "dueDate" | "priority";
     orderDirection?: "asc" | "desc";
     limit?: number;
+    relatedTo?: { type: string; id: string };
 }
 
 export function useTasks(options: UseTasksOptions = {}) {
@@ -266,6 +267,7 @@ export function useTasks(options: UseTasksOptions = {}) {
         orderByField = "createdAt",
         orderDirection = "desc",
         limit: queryLimit = 100,
+        relatedTo,
     } = options;
     const { profile } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
@@ -291,6 +293,13 @@ export function useTasks(options: UseTasksOptions = {}) {
 
         if (customerId) {
             constraints.push(where("customerId", "==", customerId));
+        }
+
+        if (relatedTo) {
+            constraints.push(where("relatedTo.id", "==", relatedTo.id));
+            if (relatedTo.type) {
+                constraints.push(where("relatedTo.type", "==", relatedTo.type));
+            }
         }
 
         if (assignee) {
@@ -320,7 +329,7 @@ export function useTasks(options: UseTasksOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, projectId, customerId, assignee, orderByField, orderDirection, queryLimit]);
+    }, [profile?.orgId, status, projectId, customerId, assignee, orderByField, orderDirection, queryLimit, relatedTo?.id, relatedTo?.type]);
 
     const createTask = useCallback(
         async (data: TaskFormData): Promise<string> => {

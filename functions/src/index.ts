@@ -14,3 +14,9 @@ export {
 
 // Export onboarding functions
 export { sendOnboardingEmails, onUserCreated } from "./onboardingEmails";
+
+// Export task automation
+export { onTaskUpdate } from "./tasks";
+
+// Export reminder automation
+export { checkReminders } from "./reminders";
