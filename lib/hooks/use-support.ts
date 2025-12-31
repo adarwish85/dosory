@@ -42,10 +42,11 @@ interface UseTicketsOptions {
     departmentId?: string;
     assignedTo?: string;
     customerId?: string;
+    projectId?: string;
 }
 
 export function useTickets(options: UseTicketsOptions = {}) {
-    const { status = "all", priority, departmentId, assignedTo, customerId } = options;
+    const { status = "all", priority, departmentId, assignedTo, customerId, projectId } = options;
     const { profile } = useUserProfile();
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
@@ -79,6 +80,10 @@ export function useTickets(options: UseTicketsOptions = {}) {
             constraints.push(where("customerId", "==", customerId));
         }
 
+        if (projectId) {
+            constraints.push(where("projectId", "==", projectId));
+        }
+
         constraints.push(orderBy("createdAt", "desc"));
 
         const q = query(collection(db, "support_tickets"), ...constraints);
@@ -101,7 +106,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, priority, departmentId, assignedTo, customerId]);
+    }, [profile?.orgId, status, priority, departmentId, assignedTo, customerId, projectId]);
 
     const createTicket = useCallback(
         async (data: TicketFormData): Promise<string> => {
