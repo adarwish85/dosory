@@ -48,13 +48,13 @@ export function LeadSidebar() {
     const menuItems = [
         { icon: LayoutDashboard, label: "Overview", href: `/dashboard/leads/${leadId}` },
         { icon: User, label: "Profile", href: `/dashboard/leads/${leadId}/profile` },
-        { icon: StickyNote, label: "Notes", href: `/dashboard/leads/${leadId}/notes` },
-        { icon: Calculator, label: "Estimates", href: `/dashboard/leads/${leadId}/estimates` },
-        { icon: Briefcase, label: "Deal", href: `/dashboard/leads/${leadId}/deal` },
-        { icon: CheckSquare, label: "Tasks", href: `/dashboard/leads/${leadId}/tasks` },
-        { icon: Paperclip, label: "Files", href: `/dashboard/leads/${leadId}/files` },
-        { icon: Bell, label: "Reminders", href: `/dashboard/leads/${leadId}/reminders` },
         { icon: Phone, label: "Activities", href: `/dashboard/leads/${leadId}/activities` },
+        { icon: Briefcase, label: "Deal", href: `/dashboard/leads/${leadId}/deal` },
+        { icon: Calculator, label: "Estimates", href: `/dashboard/leads/${leadId}/estimates` },
+        { icon: CheckSquare, label: "Tasks", href: `/dashboard/leads/${leadId}/tasks` },
+        { icon: Bell, label: "Reminders", href: `/dashboard/leads/${leadId}/reminders` },
+        { icon: Paperclip, label: "Files", href: `/dashboard/leads/${leadId}/files` },
+        { icon: StickyNote, label: "Notes", href: `/dashboard/leads/${leadId}/notes` },
     ];
 
     return (
