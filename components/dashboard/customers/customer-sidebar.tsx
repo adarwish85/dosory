@@ -63,12 +63,17 @@ export function CustomerSidebar() {
             badge: recordCounts.contacts || undefined,
         },
         {
-            icon: StickyNote,
-            label: "Notes",
-            href: `/dashboard/customers/${customerId}/notes`,
-            badge: recordCounts.notes || undefined,
+            icon: Phone,
+            label: "Activities",
+            href: `/dashboard/customers/${customerId}/activities`,
+            badge: recordCounts.activities || undefined,
         },
-        { icon: FileText, label: "Statement", href: `/dashboard/customers/${customerId}/statement` },
+        {
+            icon: Calculator,
+            label: "Estimates",
+            href: `/dashboard/customers/${customerId}/estimates`,
+            badge: recordCounts.estimates || undefined,
+        },
         {
             icon: Receipt,
             label: "Invoices",
@@ -88,17 +93,12 @@ export function CustomerSidebar() {
             badge: recordCounts.creditNotes || undefined,
         },
         {
-            icon: Calculator,
-            label: "Estimates",
-            href: `/dashboard/customers/${customerId}/estimates`,
-            badge: recordCounts.estimates || undefined,
-        },
-        {
             icon: Receipt,
             label: "Expenses",
             href: `/dashboard/customers/${customerId}/expenses`,
             badge: recordCounts.expenses || undefined,
         },
+        { icon: FileText, label: "Statement", href: `/dashboard/customers/${customerId}/statement` },
         {
             icon: FileSignature,
             label: "Contracts",
@@ -129,7 +129,6 @@ export function CustomerSidebar() {
             href: `/dashboard/customers/${customerId}/files`,
             badge: recordCounts.files || undefined,
         },
-        { icon: Lock, label: "Vault", href: `/dashboard/customers/${customerId}/vault` },
         {
             icon: Bell,
             label: "Reminders",
@@ -137,12 +136,12 @@ export function CustomerSidebar() {
             badge: recordCounts.reminders || undefined,
         },
         {
-            icon: Phone,
-            label: "Activities",
-            href: `/dashboard/customers/${customerId}/activities`,
-            badge: recordCounts.activities || undefined,
+            icon: StickyNote,
+            label: "Notes",
+            href: `/dashboard/customers/${customerId}/notes`,
+            badge: recordCounts.notes || undefined,
         },
-        { icon: MapPin, label: "Map", href: `/dashboard/customers/${customerId}/map` },
+        { icon: Lock, label: "Vault", href: `/dashboard/customers/${customerId}/vault` },
     ];
 
     return (
