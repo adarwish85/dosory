@@ -85,6 +85,24 @@ export const leadStatusSchema = z.enum([
     "junk",
 ]);
 
+// ============================================
+// Activity Schema
+// ============================================
+
+export const activityTypeSchema = z.enum(["meeting", "call", "follow_up", "email"]);
+export const activityOutcomeSchema = z.enum(["completed", "pending", "cancelled"]);
+
+export const activityFormSchema = z.object({
+    type: activityTypeSchema,
+    subject: z.string().min(1, "Subject is required"),
+    dateTime: z.date(),
+    duration: z.number().min(0).optional(),
+    notes: z.string().optional(),
+    outcome: activityOutcomeSchema,
+});
+
+export type ActivityFormData = z.infer<typeof activityFormSchema>;
+
 export const dealSchema = z.object({
     subject: z.string().min(1, "Subject is required"),
     value: z.number().min(0, "Value must be non-negative"),

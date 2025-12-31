@@ -17,7 +17,6 @@ import {
     StickyNote,
     Activity,
     Printer,
-    X,
     Pencil,
     Plus,
     Loader2,
@@ -70,6 +69,7 @@ import {
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { EditDealDialog } from "./edit-deal-dialog";
 import { CreateEstimateDialog } from "@/components/dashboard/sales/create-estimate-dialog";
+import { ActivitiesTable } from "@/components/dashboard/activities/activities-table";
 
 interface LeadDetailsSheetProps {
     open: boolean;
@@ -497,6 +497,12 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
                                     <Activity className="h-4 w-4" /> Activity
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="activities"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
+                                    <Phone className="h-4 w-4" /> Activities
                                 </TabsTrigger>
                             </TabsList>
                         </div>
@@ -1482,6 +1488,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         </div>
                                     </div>
                                 </TabsContent>
+
+                                {/* Activities (Logged) Tab */}
+                                <TabsContent value="activities" className="m-0">
+                                    <ActivitiesTable relatedToType="lead" relatedToId={lead.id} />
+                                </TabsContent>
                             </div>
                         </ScrollArea>
                     </Tabs>
@@ -1518,7 +1529,10 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                             </div>
                             <div className="space-y-2">
                                 <Label>Priority</Label>
-                                <Select value={taskPriority} onValueChange={(v) => setTaskPriority(v)}>
+                                <Select
+                                    value={taskPriority}
+                                    onValueChange={(v) => setTaskPriority(v as "low" | "medium" | "high" | "urgent")}
+                                >
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>

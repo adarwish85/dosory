@@ -21,12 +21,11 @@ import {
     Lock,
     Bell,
     MapPin,
-    Globe,
     ArrowLeft,
     ChevronLeft,
     ChevronRight,
     LayoutDashboard,
-    Shield,
+    Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -35,13 +34,14 @@ const CUSTOMER_SIDEBAR_KEY = "customer_sidebar_collapsed";
 
 export function CustomerSidebar() {
     const pathname = usePathname();
-    const { customer, contacts, loading, customerId, recordCounts } = useCustomer();
+    const { customerId, recordCounts } = useCustomer();
     const [collapsed, setCollapsed] = useState(true); // Default collapsed
 
     // Load preference from localStorage on mount
     useEffect(() => {
         const saved = localStorage.getItem(CUSTOMER_SIDEBAR_KEY);
         if (saved !== null) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCollapsed(saved === "true");
         }
     }, []);
@@ -135,6 +135,11 @@ export function CustomerSidebar() {
             label: "Reminders",
             href: `/dashboard/customers/${customerId}/reminders`,
             badge: recordCounts.reminders || undefined,
+        },
+        {
+            icon: Phone,
+            label: "Activities",
+            href: `/dashboard/customers/${customerId}/activities`,
         },
         { icon: MapPin, label: "Map", href: `/dashboard/customers/${customerId}/map` },
     ];

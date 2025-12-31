@@ -105,6 +105,26 @@ export interface Deal {
 export type LeadStatus = "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "won" | "lost" | "junk";
 
 // ============================================
+// Activity (for Leads & Customers)
+// ============================================
+
+export type ActivityType = "meeting" | "call" | "follow_up" | "email";
+export type ActivityOutcome = "completed" | "pending" | "cancelled";
+
+export interface Activity extends BaseEntity {
+    type: ActivityType;
+    subject: string;
+    dateTime: Timestamp;
+    duration?: number; // minutes
+    notes?: string;
+    outcome: ActivityOutcome;
+    relatedTo: {
+        type: "lead" | "customer";
+        id: string;
+    };
+}
+
+// ============================================
 // Invoice
 // ============================================
 

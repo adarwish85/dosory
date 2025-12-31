@@ -130,7 +130,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
                     try {
                         const countSnap = await getCountFromServer(globalQ);
                         globalTotal = countSnap.data().count;
-                    } catch { }
+                    } catch {}
                 }
 
                 if (!isMounted) return;
@@ -424,7 +424,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 createContact = true,
                 createProjectFromDeal = false,
                 createInvoiceFromEstimate = false,
-                selectedEstimateId
+                selectedEstimateId,
             } = options;
 
             // Get lead data
@@ -528,9 +528,9 @@ export function useLeads(options: UseLeadsOptions = {}) {
                         createdBy: profile.uid,
                         convertedFromEstimateId: selectedEstimateId,
                         // Generate number? Ideally handled by backend trigger or manually client side if counters exist.
-                        // For now we omit number and let user fill/system fill? 
-                        // Existing logic usually generates number. createProposal does. 
-                        // We should generate number if possible. 
+                        // For now we omit number and let user fill/system fill?
+                        // Existing logic usually generates number. createProposal does.
+                        // We should generate number if possible.
                         // Simple random for now or timestamp to match existing patterns if any.
                         number: `INV-${Date.now().toString().slice(-6)}`,
                     };
@@ -622,6 +622,22 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 });
             }
 
+            // Transfer activities
+            const activitiesQuery = query(
+                collection(db, "activities"),
+                where("relatedTo.id", "==", leadId),
+                where("relatedTo.type", "==", "lead"),
+                where("orgId", "==", profile.orgId)
+            );
+            const activitiesSnap = await getDocs(activitiesQuery);
+            for (const activityDoc of activitiesSnap.docs) {
+                await updateDoc(doc(db, "activities", activityDoc.id), {
+                    relatedTo: { type: "customer", id: customerRef.id },
+                    transferredFromLeadId: leadId,
+                    updatedAt: serverTimestamp(),
+                });
+            }
+
             // Transfer generic files
             const genericFilesQuery = query(
                 collection(db, "files"),
@@ -638,7 +654,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 });
             }
 
-            // Transfer logic for legacy collections omitted for brevity/cleaned up in previous step? 
+            // Transfer logic for legacy collections omitted for brevity/cleaned up in previous step?
             // I should have kept them or ensured I don't delete them if I'm replacing the whole function block.
             // The StartLine/EndLine replacement covers the WHOLE function.
             // I need to make sure I include EVERYTHING I want.
