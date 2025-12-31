@@ -9,7 +9,6 @@ import {
     LayoutDashboard,
     User,
     StickyNote,
-    FileSignature,
     CheckSquare,
     Calculator,
     Paperclip,
@@ -17,6 +16,7 @@ import {
     ArrowLeft,
     ChevronLeft,
     ChevronRight,
+    Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -25,13 +25,14 @@ const LEAD_SIDEBAR_KEY = "lead_sidebar_collapsed";
 
 export function LeadSidebar() {
     const pathname = usePathname();
-    const { lead, loading, leadId } = useLead();
+    const { leadId } = useLead();
     const [collapsed, setCollapsed] = useState(true); // Default collapsed
 
     // Load preference from localStorage on mount
     useEffect(() => {
         const saved = localStorage.getItem(LEAD_SIDEBAR_KEY);
         if (saved !== null) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCollapsed(saved === "true");
         }
     }, []);
@@ -51,6 +52,7 @@ export function LeadSidebar() {
         { icon: CheckSquare, label: "Tasks", href: `/dashboard/leads/${leadId}/tasks` },
         { icon: Paperclip, label: "Files", href: `/dashboard/leads/${leadId}/files` },
         { icon: Bell, label: "Reminders", href: `/dashboard/leads/${leadId}/reminders` },
+        { icon: Phone, label: "Activities", href: `/dashboard/leads/${leadId}/activities` },
     ];
 
     return (
