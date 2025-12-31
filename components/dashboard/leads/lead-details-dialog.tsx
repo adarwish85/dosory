@@ -118,7 +118,7 @@ const COMPLETENESS_FIELDS: { key: keyof Lead | "address"; label: string }[] = [
 ];
 
 export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsSheetProps) {
-    const [activeTab, setActiveTab] = useState("profile");
+    const [activeTab, setActiveTab] = useState("overview");
     const [showConvertWizard, setShowConvertWizard] = useState(false);
     const [showCreateEstimate, setShowCreateEstimate] = useState(false);
 
@@ -359,10 +359,28 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                         <div className="px-6 py-2 border-b bg-gray-50/50 shrink-0">
                             <TabsList className="bg-transparent p-0 h-auto gap-4 justify-start w-full overflow-x-auto no-scrollbar">
                                 <TabsTrigger
+                                    value="overview"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
+                                    <TrendingUp className="h-4 w-4" /> Overview
+                                </TabsTrigger>
+                                <TabsTrigger
                                     value="profile"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
                                     <User className="h-4 w-4" /> Profile
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="activities"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
+                                    <Phone className="h-4 w-4" /> Activities
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="deal"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
+                                    <DollarSign className="h-4 w-4" /> Deal
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="estimates"
@@ -401,12 +419,6 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     </Badge>
                                 </TabsTrigger>
                                 <TabsTrigger
-                                    value="attachments"
-                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
-                                >
-                                    <Paperclip className="h-4 w-4" /> Attachments
-                                </TabsTrigger>
-                                <TabsTrigger
                                     value="reminders"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
@@ -419,6 +431,12 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             {reminders.length}
                                         </Badge>
                                     )}
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="attachments"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
+                                    <Paperclip className="h-4 w-4" /> Files
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="notes"
@@ -434,25 +452,13 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         </Badge>
                                     )}
                                 </TabsTrigger>
-                                <TabsTrigger
-                                    value="activity"
-                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
-                                >
-                                    <Activity className="h-4 w-4" /> Activity
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="activities"
-                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
-                                >
-                                    <Phone className="h-4 w-4" /> Activities
-                                </TabsTrigger>
                             </TabsList>
                         </div>
 
                         <ScrollArea className="flex-1 bg-gray-50/30">
                             <div className="p-6">
-                                {/* Profile Tab - Compact layout for single-screen view */}
-                                <TabsContent value="profile" className="m-0 space-y-3">
+                                {/* Overview Tab */}
+                                <TabsContent value="overview" className="m-0 space-y-3">
                                     {/* Top Row: Lead Score + Quick Actions */}
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                                         {/* Lead Score Card */}
@@ -630,64 +636,6 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         )}
                                     </div>
 
-                                    {/* Deal Details Section */}
-                                    <div className="p-4 bg-white border rounded-lg shadow-sm">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <div className="flex items-center gap-2">
-                                                <Briefcase className="h-5 w-5 text-indigo-600" />
-                                                <h3 className="font-semibold text-gray-900">Deal Details</h3>
-                                            </div>
-                                            <EditDealDialog
-                                                lead={lead}
-                                                trigger={
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                                    >
-                                                        {lead.deal ? "Edit" : "Add Details"}
-                                                    </Button>
-                                                }
-                                            />
-                                        </div>
-                                        {lead.deal ? (
-                                            <div className="space-y-3">
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div className="p-2 bg-gray-50 rounded border">
-                                                        <div className="text-xs text-gray-500">Value</div>
-                                                        <div className="font-medium flex items-center">
-                                                            <DollarSign className="h-3 w-3 mr-1 text-green-600" />
-                                                            {lead.deal.value?.toLocaleString() || "0"}
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-2 bg-gray-50 rounded border">
-                                                        <div className="text-xs text-gray-500">Close Date</div>
-                                                        <div className="font-medium flex items-center">
-                                                            <CalendarIcon className="h-3 w-3 mr-1 text-gray-400" />
-                                                            {lead.deal.expectedCloseDate
-                                                                ? format(
-                                                                      lead.deal.expectedCloseDate instanceof Timestamp
-                                                                          ? lead.deal.expectedCloseDate.toDate()
-                                                                          : lead.deal.expectedCloseDate,
-                                                                      "MMM d, yyyy"
-                                                                  )
-                                                                : "-"}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {lead.deal.description && (
-                                                    <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded border line-clamp-2">
-                                                        {lead.deal.description}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-4 bg-gray-50 rounded border border-dashed">
-                                                <p className="text-xs text-gray-500">No deal details added.</p>
-                                            </div>
-                                        )}
-                                    </div>
-
                                     {/* Data Completeness & Related Items */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {/* Data Completeness */}
@@ -836,8 +784,10 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             </div>
                                         </div>
                                     </div>
+                                </TabsContent>
 
-                                    {/* Lead Info & System Info */}
+                                {/* Profile Tab */}
+                                <TabsContent value="profile" className="m-0 space-y-3">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <div className="p-4 bg-white border rounded-lg shadow-sm">
                                             <div className="flex items-center gap-2 pb-2 border-b mb-3">
@@ -956,6 +906,65 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     )}
                                 </TabsContent>
 
+                                {/* Deal Tab */}
+                                <TabsContent value="deal" className="m-0">
+                                    <div className="p-4 bg-white border rounded-lg shadow-sm">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <Briefcase className="h-5 w-5 text-indigo-600" />
+                                                <h3 className="font-semibold text-gray-900">Deal Details</h3>
+                                            </div>
+                                            <EditDealDialog
+                                                lead={lead}
+                                                trigger={
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                    >
+                                                        {lead.deal ? "Edit" : "Add Details"}
+                                                    </Button>
+                                                }
+                                            />
+                                        </div>
+                                        {lead.deal ? (
+                                            <div className="space-y-3">
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="p-2 bg-gray-50 rounded border">
+                                                        <div className="text-xs text-gray-500">Value</div>
+                                                        <div className="font-medium flex items-center">
+                                                            <DollarSign className="h-3 w-3 mr-1 text-green-600" />
+                                                            {lead.deal.value?.toLocaleString() || "0"}
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-2 bg-gray-50 rounded border">
+                                                        <div className="text-xs text-gray-500">Close Date</div>
+                                                        <div className="font-medium flex items-center">
+                                                            <CalendarIcon className="h-3 w-3 mr-1 text-gray-400" />
+                                                            {lead.deal.expectedCloseDate
+                                                                ? format(
+                                                                      lead.deal.expectedCloseDate instanceof Timestamp
+                                                                          ? lead.deal.expectedCloseDate.toDate()
+                                                                          : lead.deal.expectedCloseDate,
+                                                                      "MMM d, yyyy"
+                                                                  )
+                                                                : "-"}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {lead.deal.description && (
+                                                    <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded border line-clamp-2">
+                                                        {lead.deal.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-4 bg-gray-50 rounded border border-dashed">
+                                                <p className="text-xs text-gray-500">No deal details added.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </TabsContent>
                                 <TabsContent value="estimates" className="m-0">
                                     <div className="flex justify-end mb-4">
                                         <Button onClick={() => setShowCreateEstimate(true)} size="sm">
