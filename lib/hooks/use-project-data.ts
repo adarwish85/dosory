@@ -243,7 +243,9 @@ export function useProjectDiscussions(projectId: string | undefined) {
                 ...data,
                 projectId,
                 createdBy: profile.uid,
+                createdByName: profile.displayName || profile.email,
                 participants: [profile.uid, ...(data.participants || [])],
+                comments: [],
                 lastReply: serverTimestamp(),
                 orgId: profile.orgId,
                 createdAt: serverTimestamp(),
@@ -253,7 +255,33 @@ export function useProjectDiscussions(projectId: string | undefined) {
         [profile, projectId]
     );
 
-    return { discussions, loading, createDiscussion };
+    const addComment = useCallback(
+        async (discussionId: string, content: string) => {
+            if (!profile?.orgId) throw new Error("No organization");
+
+            const discussion = discussions.find(d => d.id === discussionId);
+            if (!discussion) throw new Error("Discussion not found");
+
+            const newComment = {
+                id: `comment_${Date.now()}`,
+                content,
+                authorId: profile.uid,
+                authorName: profile.displayName || profile.email || "User",
+                createdAt: new Date().toISOString(),
+            };
+
+            const existingComments = discussion.comments || [];
+
+            await updateDoc(doc(db, "project_discussions", discussionId), {
+                comments: [...existingComments, newComment],
+                lastReply: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+        },
+        [profile, discussions]
+    );
+
+    return { discussions, loading, createDiscussion, addComment };
 }
 
 // ============================================

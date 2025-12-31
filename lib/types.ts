@@ -897,7 +897,17 @@ export interface ProjectDiscussion extends BaseEntity {
     description: string;
     lastReply?: Timestamp;
     createdBy: string;
+    createdByName?: string;
     participants: string[];
+    comments?: DiscussionCommentData[];
+}
+
+export interface DiscussionCommentData {
+    id: string;
+    content: string;
+    authorId: string;
+    authorName: string;
+    createdAt: string;
 }
 
 export interface DiscussionComment extends BaseEntity {
@@ -906,3 +916,4 @@ export interface DiscussionComment extends BaseEntity {
     userId: string;
     attachments?: string[];
 }
+
