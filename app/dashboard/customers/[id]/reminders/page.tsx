@@ -157,6 +157,10 @@ function Pagination({
     );
 }
 
+import { CreateReminderDialog } from "@/components/dashboard/customers/reminders/create-reminder-dialog";
+
+// ... existing imports
+
 export default function RemindersPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const {
@@ -167,6 +171,7 @@ export default function RemindersPage() {
     const tableRef = useRef<HTMLDivElement>(null);
 
     // UI State
+    const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -356,7 +361,7 @@ export default function RemindersPage() {
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Reminders</h1>
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={() => setShowCreateDialog(true)}>
                         <Plus className="mr-2 h-4 w-4" />
                         Set Reminder
                     </Button>
@@ -668,6 +673,9 @@ export default function RemindersPage() {
                         </TableBody>
                     </Table>
                 </div>
+
+                {/* Dialogs */}
+                <CreateReminderDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
 
                 {/* Bottom Pagination */}
                 {processedReminders.length > 0 && (

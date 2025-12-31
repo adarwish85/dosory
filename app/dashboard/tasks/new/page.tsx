@@ -1,126 +1,231 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { taskFormSchema, type TaskFormData } from "@/lib/schemas";
+import { useTasks, useProjects } from "@/lib/hooks/use-projects";
+import { useCustomers } from "@/lib/hooks/use-customers";
+import { useStaff } from "@/lib/hooks/use-staff";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
+import { Calendar as CalendarIcon, Loader2, ChevronLeft, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface Client {
-    id: string;
-    company: string;
-}
+import { toast } from "sonner";
+import Link from "next/link";
+import { useMemo } from "react";
 
 export default function CreateTaskPage() {
-    const { profile } = useUserProfile();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [clients, setClients] = useState<Client[]>([]);
-    const [formData, setFormData] = useState({
-        name: "",
-        clientId: searchParams.get("customerId") || "",
-        status: "not_started",
-        priority: "medium",
-        description: "",
+    const customerIdParam = searchParams.get("customerId");
+    const projectIdParam = searchParams.get("projectId");
+
+    const { createTask } = useTasks();
+    const { customers, loading: customersLoading } = useCustomers({ status: "active", pageSize: 1000 });
+    const { projects, loading: projectsLoading } = useProjects({ status: "in_progress", customerId: customerIdParam || undefined });
+    // Assuming useStaff exists and returns a list of staff
+    const { staff, loading: staffLoading } = useStaff();
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const form = useForm<TaskFormData>({
+        resolver: zodResolver(taskFormSchema),
+        defaultValues: {
+            name: "",
+            customerId: customerIdParam || "",
+            projectId: projectIdParam || "",
+            status: "not_started",
+            priority: "medium",
+            assignees: [], // TODO: Handle multi-select
+            tags: [],
+            isPublic: false,
+            billable: false,
+        },
     });
-    const [startDate, setStartDate] = useState<Date | undefined>(new Date());
-    const [dueDate, setDueDate] = useState<Date | undefined>();
-    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        async function fetchClients() {
-            if (!profile?.orgId) return;
-            const q = query(collection(db, "customers"), where("orgId", "==", profile.orgId));
-            const querySnapshot = await getDocs(q);
-            const clientList: Client[] = [];
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                clientList.push({ id: doc.id, company: data.company } as Client);
-            });
-            setClients(clientList);
-        }
-        fetchClients();
-    }, [profile?.orgId]);
+    const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
+    const customerId = watch("customerId");
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!profile?.orgId) return;
+    // Filter projects based on selected customer
+    const filteredProjects = useMemo(() => {
+        if (!customerId) return projects;
+        return projects.filter(p => p.customerId === customerId);
+    }, [projects, customerId]);
 
-        setLoading(true);
+    const onSubmit = async (data: TaskFormData) => {
+        setIsSubmitting(true);
         try {
-            const client = clients.find((c) => c.id === formData.clientId);
-            await addDoc(collection(db, "tasks"), {
-                ...formData,
-                orgId: profile.orgId,
-                clientName: client?.company || "",
-                startDate: startDate ? format(startDate, "yyyy-MM-dd") : "",
-                dueDate: dueDate ? format(dueDate, "yyyy-MM-dd") : "",
-                createdAt: new Date().toISOString(),
-            });
-            router.push("/dashboard/tasks");
+            await createTask(data);
+            toast.success("Task created successfully");
+
+            if (customerIdParam) {
+                router.push(`/dashboard/customers/${customerIdParam}/tasks`);
+            } else if (projectIdParam) {
+                router.push(`/dashboard/projects/${projectIdParam}`);
+            } else {
+                router.push(`/dashboard/tasks`);
+            }
         } catch (error) {
             console.error("Error creating task:", error);
+            toast.error("Failed to create task");
         } finally {
-            setLoading(false);
+            setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="p-8 max-w-2xl mx-auto space-y-8">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Create Task</h2>
+        <div className="max-w-3xl mx-auto py-8 px-4">
+            <div className="mb-6 flex items-center gap-2 text-gray-500 text-sm">
+                <Link
+                    href={customerIdParam ? `/dashboard/customers/${customerIdParam}/tasks` : "/dashboard/tasks"}
+                    className="flex items-center hover:text-gray-900 transition-colors"
+                >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Back to Tasks
+                </Link>
             </div>
 
-            <form onSubmit={handleSubmit}>
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900">New Task</h1>
+                <p className="text-gray-500 mt-1">Create and assign a new task.</p>
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Task Details</CardTitle>
+                        <CardTitle>Task Information</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Task Name</Label>
+                    <CardContent className="grid gap-6">
+                        {/* Name */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Task Name <span className="text-red-500">*</span></Label>
                             <Input
                                 id="name"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                required
+                                placeholder="e.g. Update Homepage Hero"
+                                {...register("name")}
+                                className={cn(errors.name && "border-red-500")}
                             />
+                            {errors.name && <p className="text-red-500 text-xs">{errors.name.message}</p>}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label>Client</Label>
+                        {/* Customer & Project */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid gap-2">
+                                <Label htmlFor="customerId">Customer</Label>
                                 <Select
-                                    value={formData.clientId}
-                                    onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+                                    value={watch("customerId")}
+                                    onValueChange={(val) => {
+                                        setValue("customerId", val);
+                                        // Reset project if customer changes and project doesn't belong to new customer
+                                        // Currently we just clear it for safety
+                                        setValue("projectId", "");
+                                    }}
+                                    disabled={!!customerIdParam}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a client" />
+                                        <SelectValue placeholder="Select Customer" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {clients.map((client) => (
-                                            <SelectItem key={client.id} value={client.id}>
-                                                {client.company}
-                                            </SelectItem>
+                                        {customers.map((c) => (
+                                            <SelectItem key={c.id} value={c.id}>{c.company || c.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-2">
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="projectId">Project</Label>
+                                <Select
+                                    value={watch("projectId")}
+                                    onValueChange={(val) => setValue("projectId", val)}
+                                    disabled={!!projectIdParam}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Project (Optional)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">No Project</SelectItem>
+                                        {filteredProjects.map((p) => (
+                                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* Description */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                                id="description"
+                                placeholder="Task details..."
+                                className="min-h-[100px]"
+                                {...register("description")}
+                            />
+                        </div>
+
+                        {/* Assignees - Simplified as Single Select for MVP, schema supports array */}
+                        <div className="grid gap-2">
+                            <Label>Assigned To</Label>
+                            <Select
+                                onValueChange={(val) => setValue("assignees", [val])}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Staff Member" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {staff?.map((s) => (
+                                        <SelectItem key={s.id} value={s.id}>
+                                            {s.firstName} {s.lastName}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Dates & Priority */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid gap-2">
+                                <Label>Due Date</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal",
+                                                !watch("dueDate") && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {watch("dueDate") ? format(watch("dueDate")!, "PPP") : <span>Pick a date</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={watch("dueDate") || undefined}
+                                            onSelect={(date) => setValue("dueDate", date)}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            <div className="grid gap-2">
                                 <Label>Priority</Label>
                                 <Select
-                                    value={formData.priority}
-                                    onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                                    value={watch("priority")}
+                                    onValueChange={(val: any) => setValue("priority", val)}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
@@ -133,74 +238,57 @@ export default function CreateTaskPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label>Start Date</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                                "w-full justify-start text-left font-normal",
-                                                !startDate && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                            mode="single"
-                                            selected={startDate}
-                                            onSelect={setStartDate}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Due Date</Label>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                                "w-full justify-start text-left font-normal",
-                                                !dueDate && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus />
-                                    </PopoverContent>
-                                </Popover>
+                            <div className="grid gap-2">
+                                <Label>Status</Label>
+                                <Select
+                                    value={watch("status")}
+                                    onValueChange={(val: any) => setValue("status", val)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="not_started">Not Started</SelectItem>
+                                        <SelectItem value="in_progress">In Progress</SelectItem>
+                                        <SelectItem value="testing">Testing</SelectItem>
+                                        <SelectItem value="awaiting_feedback">Awaiting Feedback</SelectItem>
+                                        <SelectItem value="completed">Completed</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="description">Description</Label>
-                            <Input
-                                id="description"
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="h-20"
-                            />
+                        <div className="flex items-center gap-4 pt-2">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="isPublic"
+                                    checked={watch("isPublic")}
+                                    onCheckedChange={(checked) => setValue("isPublic", !!checked)}
+                                />
+                                <Label htmlFor="isPublic">Visible to Customer</Label>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="billable"
+                                    checked={watch("billable")}
+                                    onCheckedChange={(checked) => setValue("billable", !!checked)}
+                                />
+                                <Label htmlFor="billable">Billable</Label>
+                            </div>
                         </div>
+
                     </CardContent>
-                    <div className="flex justify-end p-6">
-                        <Button type="button" variant="outline" className="mr-2" onClick={() => router.back()}>
+                    <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
+                        <Button type="button" variant="ghost" className="mr-2" onClick={() => router.back()}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? "Creating..." : "Create Task"}
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Create Task
                         </Button>
-                    </div>
+                    </CardFooter>
                 </Card>
             </form>
         </div>

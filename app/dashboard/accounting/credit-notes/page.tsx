@@ -7,7 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, Filter, RefreshCw, FileText } from "lucide-react";
 import Link from "next/link";
 
+import { useCreditNotes } from "@/lib/hooks/use-customer-data";
+
 export default function CreditNotesPage() {
+    const { creditNotes, loading } = useCreditNotes();
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -61,26 +65,45 @@ export default function CreditNotesPage() {
                                     Credit Note #
                                 </TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">
-                                    Credit Note Date
+                                    Date
                                 </TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Customer</TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Status</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Project</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">
-                                    Reference #
-                                </TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Amount</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">
-                                    Remaining Amount
-                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow>
-                                <TableCell colSpan={8} className="text-center py-4 text-gray-500 text-left pl-4">
-                                    No entries found
-                                </TableCell>
-                            </TableRow>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center py-4">
+                                        Loading...
+                                    </TableCell>
+                                </TableRow>
+                            ) : creditNotes.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center py-4 text-gray-500">
+                                        No credit notes found
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                creditNotes.map((note) => (
+                                    <TableRow key={note.id}>
+                                        <TableCell className="font-medium">
+                                            <Link href={`/dashboard/accounting/credit-notes/${note.id}`} className="hover:underline">
+                                                {note.number || "DRAFT"}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>{note.date ? new Date(note.date.seconds * 1000).toLocaleDateString() : "N/A"}</TableCell>
+                                        <TableCell>{note.customerName || "Unknown"}</TableCell>
+                                        <TableCell>
+                                            <span className="capitalize px-2 py-1 rounded-full text-xs bg-gray-100">
+                                                {note.status}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>{note.total?.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </div>

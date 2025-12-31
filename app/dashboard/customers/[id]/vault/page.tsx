@@ -11,10 +11,15 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useState } from "react";
 
+import { CreateVaultItemDialog } from "@/components/dashboard/customers/vault/create-vault-item-dialog";
+
+// ... existing imports
+
 export default function VaultPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { vaultItems, loading: vaultLoading, deleteVaultItem } = useVault({ customerId: customerId || undefined });
     const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
+    const [showCreateDialog, setShowCreateDialog] = useState(false);
 
     if (customerLoading || vaultLoading) {
         return (
@@ -52,6 +57,8 @@ export default function VaultPage() {
 
     return (
         <div className="space-y-6">
+            <CreateVaultItemDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
+
             <div className="flex items-center gap-2">
                 <Lock className="h-5 w-5 text-gray-700" />
                 <h2 className="text-xl font-bold text-gray-900">Vault</h2>
@@ -61,7 +68,7 @@ export default function VaultPage() {
                 Store sensitive customer information securely. All vault entries are encrypted.
             </p>
 
-            <Button className="bg-gray-900 text-white hover:bg-gray-800">
+            <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={() => setShowCreateDialog(true)}>
                 <Plus className="mr-2 h-4 w-4" /> Add Entry
             </Button>
 

@@ -1,94 +1,106 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { expenseFormSchema, type ExpenseFormData } from "@/lib/schemas";
+import { useExpenses, useExpenseCategories } from "@/lib/hooks/use-expenses";
+import { useCustomers } from "@/lib/hooks/use-customers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-
-interface Client {
-    id: string;
-    company: string;
-}
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon, Loader2, ChevronLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import Link from "next/link";
 
 export default function CreateExpensePage() {
-    const { profile } = useUserProfile();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [clients, setClients] = useState<Client[]>([]);
-    const [formData, setFormData] = useState({
-        categoryName: "General",
-        clientId: searchParams.get("customerId") || "",
-        amount: 0,
-        note: "",
-        billable: false,
+    const customerIdParam = searchParams.get("customerId");
+
+    const { createExpense } = useExpenses();
+    const { categories, loading: categoriesLoading } = useExpenseCategories();
+    const { customers, loading: customersLoading } = useCustomers({ status: "active", pageSize: 1000 });
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const form = useForm<ExpenseFormData>({
+        resolver: zodResolver(expenseFormSchema),
+        defaultValues: {
+            categoryId: "",
+            customerId: customerIdParam || "",
+            amount: 0,
+            currency: "USD", // TODO: Get from settings
+            date: new Date(),
+            billable: false,
+            note: "",
+        },
     });
-    const [date, setDate] = useState<Date | undefined>(new Date());
-    const [loading, setLoading] = useState(false);
+
+    const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
+    const date = watch("date");
 
     useEffect(() => {
-        async function fetchClients() {
-            if (!profile?.orgId) return;
-            const q = query(collection(db, "customers"), where("orgId", "==", profile.orgId));
-            const querySnapshot = await getDocs(q);
-            const clientList: Client[] = [];
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                clientList.push({ id: doc.id, company: data.company } as Client);
-            });
-            setClients(clientList);
+        if (customerIdParam) {
+            setValue("customerId", customerIdParam);
         }
-        fetchClients();
-    }, [profile?.orgId]);
+    }, [customerIdParam, setValue]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!profile?.orgId) return;
-
-        setLoading(true);
+    const onSubmit = async (data: ExpenseFormData) => {
+        setIsSubmitting(true);
         try {
-            const client = clients.find((c) => c.id === formData.clientId);
-            await addDoc(collection(db, "expenses"), {
-                ...formData,
-                orgId: profile.orgId,
-                clientName: client?.company || "",
-                date: date ? format(date, "yyyy-MM-dd") : "",
-                createdAt: new Date().toISOString(),
-            });
-            router.push("/dashboard/expenses");
+            await createExpense(data);
+            toast.success("Expense recorded successfully");
+
+            if (customerIdParam) {
+                router.push(`/dashboard/customers/${customerIdParam}/expenses`);
+            } else {
+                router.push("/dashboard/expenses");
+            }
         } catch (error) {
             console.error("Error creating expense:", error);
+            toast.error("Failed to record expense");
         } finally {
-            setLoading(false);
+            setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="p-8 max-w-2xl mx-auto space-y-8">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Record Expense</h2>
+        <div className="max-w-2xl mx-auto py-8 px-4">
+            <div className="mb-6 flex items-center gap-2 text-gray-500 text-sm">
+                <Link
+                    href={customerIdParam ? `/dashboard/customers/${customerIdParam}/expenses` : "/dashboard/expenses"}
+                    className="flex items-center hover:text-gray-900 transition-colors"
+                >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Back to Expenses
+                </Link>
             </div>
 
-            <form onSubmit={handleSubmit}>
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900">Record Expense</h1>
+                <p className="text-gray-500 mt-1">Track a new business expense.</p>
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
                     <CardHeader>
                         <CardTitle>Expense Details</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label>Date</Label>
+                    <CardContent className="grid gap-6">
+                        {/* Date & Category */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid gap-2">
+                                <Label>Date <span className="text-red-500">*</span></Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -102,91 +114,123 @@ export default function CreateExpensePage() {
                                             {date ? format(date, "PPP") : <span>Pick a date</span>}
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={date}
+                                            onSelect={(date) => setValue("date", date as Date)}
+                                            initialFocus
+                                        />
                                     </PopoverContent>
                                 </Popover>
+                                {errors.date && <p className="text-red-500 text-xs">{errors.date.message}</p>}
                             </div>
-                            <div className="space-y-2">
-                                <Label>Category</Label>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="categoryId">Category <span className="text-red-500">*</span></Label>
                                 <Select
-                                    value={formData.categoryName}
-                                    onValueChange={(value) => setFormData({ ...formData, categoryName: value })}
+                                    value={watch("categoryId")}
+                                    onValueChange={(val) => setValue("categoryId", val, { shouldValidate: true })}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className={cn(errors.categoryId && "border-red-500")}>
                                         <SelectValue placeholder="Select Category" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="General">General</SelectItem>
-                                        <SelectItem value="Travel">Travel</SelectItem>
-                                        <SelectItem value="Meals">Meals</SelectItem>
-                                        <SelectItem value="Supplies">Supplies</SelectItem>
-                                        <SelectItem value="Software">Software</SelectItem>
+                                        {categoriesLoading ? (
+                                            <div className="p-2 text-xs text-center">Loading...</div>
+                                        ) : (
+                                            categories.map((c) => (
+                                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                            ))
+                                        )}
                                     </SelectContent>
                                 </Select>
+                                {errors.categoryId && <p className="text-red-500 text-xs">{errors.categoryId.message}</p>}
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label>Amount</Label>
+                        {/* Amount & Currency */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid gap-2">
+                                <Label htmlFor="amount">Amount <span className="text-red-500">*</span></Label>
                                 <Input
                                     type="number"
                                     min="0"
                                     step="0.01"
-                                    value={formData.amount}
-                                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
-                                    required
+                                    {...register("amount", { valueAsNumber: true })}
+                                    className={cn(errors.amount && "border-red-500")}
                                 />
+                                {errors.amount && <p className="text-red-500 text-xs">{errors.amount.message}</p>}
                             </div>
-                            <div className="space-y-2">
-                                <Label>Client (Optional)</Label>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="currency">Currency <span className="text-red-500">*</span></Label>
                                 <Select
-                                    value={formData.clientId}
-                                    onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+                                    value={watch("currency")}
+                                    onValueChange={(val) => setValue("currency", val)}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a client" />
+                                        <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {clients.map((client) => (
-                                            <SelectItem key={client.id} value={client.id}>
-                                                {client.company}
-                                            </SelectItem>
-                                        ))}
+                                        <SelectItem value="USD">USD ($)</SelectItem>
+                                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                                        <SelectItem value="GBP">GBP (£)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label>Note</Label>
-                            <Input
-                                value={formData.note}
-                                onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                        {/* Customer */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="customerId">Customer (Optional)</Label>
+                            <Select
+                                value={watch("customerId")}
+                                onValueChange={(val) => setValue("customerId", val === "none" ? undefined : val)}
+                                disabled={!!customerIdParam}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Customer" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {customers.map((c) => (
+                                        <SelectItem key={c.id} value={c.id}>{c.company || c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Note */}
+                        <div className="grid gap-2">
+                            <Label htmlFor="note">Note</Label>
+                            <Textarea
+                                id="note"
                                 placeholder="Expense details..."
+                                className="min-h-[80px]"
+                                {...register("note")}
                             />
                         </div>
 
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 pt-2">
                             <Checkbox
                                 id="billable"
-                                checked={formData.billable}
-                                onCheckedChange={(checked) =>
-                                    setFormData({ ...formData, billable: checked as boolean })
-                                }
+                                checked={watch("billable")}
+                                onCheckedChange={(checked) => setValue("billable", !!checked)}
                             />
                             <Label htmlFor="billable">Billable to Customer</Label>
                         </div>
+
                     </CardContent>
-                    <div className="flex justify-end p-6">
-                        <Button type="button" variant="outline" className="mr-2" onClick={() => router.back()}>
+                    <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
+                        <Button type="button" variant="ghost" className="mr-2" onClick={() => router.back()}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? "Saving..." : "Save Expense"}
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Expense
                         </Button>
-                    </div>
+                    </CardFooter>
                 </Card>
             </form>
         </div>

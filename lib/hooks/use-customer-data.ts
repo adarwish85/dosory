@@ -224,7 +224,22 @@ export function useCreditNotes(options: UseCreditNotesOptions = {}) {
         return () => unsubscribe();
     }, [profile?.orgId, customerId, status]);
 
-    return { creditNotes, loading };
+    const createCreditNote = useCallback(
+        async (data: any) => {
+            if (!profile?.orgId) throw new Error("No organization");
+
+            const docRef = await addDoc(collection(db, "credit_notes"), {
+                ...data,
+                orgId: profile.orgId,
+                createdAt: serverTimestamp(),
+                status: "open",
+            });
+            return docRef;
+        },
+        [profile]
+    );
+
+    return { creditNotes, loading, createCreditNote };
 }
 
 // ============================================
@@ -346,11 +361,39 @@ export function useCustomerFiles(options: UseCustomerFilesOptions = {}) {
         return () => unsubscribe();
     }, [profile?.orgId, customerId]);
 
+    const uploadFile = useCallback(
+        async (file: File, customerId: string) => {
+            if (!profile?.orgId) throw new Error("No organization");
+
+            // 1. Upload to Storage
+            const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
+            const { storage } = await import("@/lib/firebase");
+            const storageRef = ref(storage, `organizations/${profile.orgId}/customers/${customerId}/files/${file.name}`);
+
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+
+            // 2. Create Firestore Record
+            await addDoc(collection(db, "customer_files"), {
+                name: file.name,
+                url,
+                size: file.size,
+                type: file.type,
+                customerId,
+                uploadedBy: profile.email,
+                orgId: profile.orgId,
+                createdAt: serverTimestamp(),
+            });
+        },
+        [profile]
+    );
+
     const deleteFile = useCallback(async (id: string) => {
+        // Note: Ideally also delete from storage, but for now just Firestore
         await deleteDoc(doc(db, "customer_files", id));
     }, []);
 
-    return { files, loading, deleteFile };
+    return { files, loading, deleteFile, uploadFile };
 }
 
 // ============================================
@@ -412,7 +455,7 @@ export function useVault(options: UseVaultOptions = {}) {
                 createdAt: serverTimestamp(),
             });
         },
-        [profile?.orgId]
+        [profile]
     );
 
     const deleteVaultItem = useCallback(async (id: string) => {

@@ -156,12 +156,17 @@ function Pagination({
     );
 }
 
+import { UploadFileDialog } from "@/components/dashboard/customers/files/upload-file-dialog";
+
+// ... existing imports
+
 export default function FilesPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { files, loading: filesLoading, deleteFile } = useCustomerFiles({ customerId: customerId || undefined });
     const tableRef = useRef<HTMLDivElement>(null);
 
     // UI State
+    const [showUploadDialog, setShowUploadDialog] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -335,7 +340,7 @@ export default function FilesPage() {
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Files</h1>
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={() => setShowUploadDialog(true)}>
                         <Upload className="mr-2 h-4 w-4" />
                         Upload File
                     </Button>
@@ -628,6 +633,9 @@ export default function FilesPage() {
                         </TableBody>
                     </Table>
                 </div>
+
+                {/* Dialogs */}
+                <UploadFileDialog open={showUploadDialog} onOpenChange={setShowUploadDialog} />
 
                 {/* Bottom Pagination */}
                 {processedFiles.length > 0 && (
