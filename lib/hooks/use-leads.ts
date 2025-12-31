@@ -520,27 +520,25 @@ export function useLeads(options: UseLeadsOptions = {}) {
                         taxTotal: estData.taxTotal,
                         total: estData.total,
                         items: estData.items,
-                        notes: estData.notes,
-                        terms: estData.terms,
+                        amountPaid: 0,
+                        amountDue: estData.total,
+                        notes: estData.notes || "",
+                        terms: estData.terms || "",
                         orgId: profile.orgId,
                         createdAt: serverTimestamp(),
                         updatedAt: serverTimestamp(),
                         createdBy: profile.uid,
-                        convertedFromEstimateId: selectedEstimateId,
-                        // Generate number? Ideally handled by backend trigger or manually client side if counters exist.
-                        // For now we omit number and let user fill/system fill?
-                        // Existing logic usually generates number. createProposal does.
-                        // We should generate number if possible.
-                        // Simple random for now or timestamp to match existing patterns if any.
+                        fromEstimateId: selectedEstimateId, // Standardize field name
+                        fromEstimateNumber: estData.number,
                         number: `INV-${Date.now().toString().slice(-6)}`,
                     };
-                    await addDoc(collection(db, "invoices"), invoiceData);
+                    const invRef = await addDoc(collection(db, "invoices"), invoiceData);
 
-                    // Mark estimate as converted?
+                    // Mark estimate as converted and link to invoice
                     await updateDoc(doc(db, "estimates", selectedEstimateId), {
-                        status: "accepted", // Assume accepted if converting
-                        convertedToInvoiceId: "pending", // We don't have ID yet easily if awaiting? We do.
-                        // Actually we didn't capture invoice ref.
+                        status: "accepted",
+                        convertedToInvoiceId: invRef.id, // Link correctly
+                        updatedAt: serverTimestamp(),
                     });
                 }
             }
@@ -573,22 +571,6 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 transferRelated("tasks", "relatedTo.id"), // Note: this logic is slightly flawed for generic tasks logic in helper but acceptable for now or needs fix
             ]);
 
-            // Fix Tasks loop manually like before to be safe
-            // Transfer tasks
-            const tasksQuery = query(
-                collection(db, "tasks"),
-                where("relatedTo.id", "==", leadId),
-                where("orgId", "==", profile.orgId)
-            );
-            const tasksSnap = await getDocs(tasksQuery);
-            for (const taskDoc of tasksSnap.docs) {
-                await updateDoc(doc(db, "tasks", taskDoc.id), {
-                    relatedTo: { type: "customer", id: customerRef.id },
-                    transferredFromLeadId: leadId,
-                    updatedAt: serverTimestamp(),
-                });
-            }
-
             // Transfer lead notes
             const leadNotesRef = collection(db, "leads", leadId, "notes");
             const leadNotesSnap = await getDocs(leadNotesRef);
@@ -610,7 +592,6 @@ export function useLeads(options: UseLeadsOptions = {}) {
             const genericRemindersQuery = query(
                 collection(db, "reminders"),
                 where("relatedTo.id", "==", leadId),
-                where("relatedTo.type", "==", "lead"),
                 where("orgId", "==", profile.orgId)
             );
             const genericRemindersSnap = await getDocs(genericRemindersQuery);
@@ -626,7 +607,6 @@ export function useLeads(options: UseLeadsOptions = {}) {
             const activitiesQuery = query(
                 collection(db, "activities"),
                 where("relatedTo.id", "==", leadId),
-                where("relatedTo.type", "==", "lead"),
                 where("orgId", "==", profile.orgId)
             );
             const activitiesSnap = await getDocs(activitiesQuery);
@@ -642,7 +622,6 @@ export function useLeads(options: UseLeadsOptions = {}) {
             const genericFilesQuery = query(
                 collection(db, "files"),
                 where("relatedTo.id", "==", leadId),
-                where("relatedTo.type", "==", "lead"),
                 where("orgId", "==", profile.orgId)
             );
             const genericFilesSnap = await getDocs(genericFilesQuery);
