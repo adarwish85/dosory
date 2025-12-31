@@ -36,6 +36,7 @@ export function StaffList() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [singleDeleteId, setSingleDeleteId] = useState<string | null>(null);
     const [bulkActionLoading, setBulkActionLoading] = useState(false);
     const { staff, loading, updateStaff, deleteStaff } = useStaff();
     const { roles } = useRoles();
@@ -101,7 +102,7 @@ export function StaffList() {
             await Promise.all(Array.from(selectedIds).map((id) => updateStaff(id, { status: "active" })));
             toast.success(`${selectedIds.size} staff members activated`);
             setSelectedIds(new Set());
-        } catch (error) {
+        } catch {
             toast.error("Failed to activate some staff members");
         } finally {
             setBulkActionLoading(false);
@@ -114,7 +115,7 @@ export function StaffList() {
             await Promise.all(Array.from(selectedIds).map((id) => updateStaff(id, { status: "inactive" })));
             toast.success(`${selectedIds.size} staff members deactivated`);
             setSelectedIds(new Set());
-        } catch (error) {
+        } catch {
             toast.error("Failed to deactivate some staff members");
         } finally {
             setBulkActionLoading(false);
@@ -127,7 +128,7 @@ export function StaffList() {
             await Promise.all(Array.from(selectedIds).map((id) => deleteStaff(id)));
             toast.success(`${selectedIds.size} staff members deleted`);
             setSelectedIds(new Set());
-        } catch (error) {
+        } catch {
             toast.error("Failed to delete some staff members");
         } finally {
             setBulkActionLoading(false);
@@ -274,8 +275,7 @@ export function StaffList() {
                                                     <button
                                                         onClick={async (e) => {
                                                             e.stopPropagation();
-                                                            if (confirm("Delete staff member?"))
-                                                                await deleteStaff(member.id);
+                                                            setSingleDeleteId(member.id);
                                                         }}
                                                         className="hover:text-red-600 hover:underline px-0.5"
                                                     >
@@ -321,6 +321,32 @@ export function StaffList() {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
                             {bulkActionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!singleDeleteId} onOpenChange={(open) => !open && setSingleDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete staff member?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the staff member account.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={async () => {
+                                if (singleDeleteId) {
+                                    await deleteStaff(singleDeleteId);
+                                    setSingleDeleteId(null);
+                                    toast.success("Staff member deleted");
+                                }
+                            }}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
                             Delete
                         </AlertDialogAction>
                     </AlertDialogFooter>

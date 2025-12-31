@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { useCustomers } from "@/lib/hooks";
 import { CUSTOMER_GROUPS } from "@/lib/constants";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import Link from "next/link";
 import {
     DropdownMenu,
@@ -46,8 +46,20 @@ import {
     DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface CustomersTableProps {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     customers: any[];
     loading: boolean;
 }
@@ -100,9 +112,9 @@ function HighlightText({ text, search }: { text: string; search: string }) {
 }
 
 // Quick Stats Bar
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function QuickStatsBar({ customers }: { customers: any[] }) {
     const activeCount = customers.filter((c) => c.status === "active").length;
-    const totalValue = customers.reduce((sum, c) => sum + (c.value || 0), 0);
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
@@ -260,6 +272,8 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
     });
     const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [showBulkDelete, setShowBulkDelete] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
 
     const { updateCustomer, deleteCustomer } = useCustomers({ status: "all" });
@@ -293,21 +307,37 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
         [updateCustomer]
     );
 
-    const handleDelete = useCallback(
-        async (id: string) => {
-            if (window.confirm("Delete this customer?")) await deleteCustomer(id);
-        },
-        [deleteCustomer]
-    );
+    const handleDelete = useCallback((id: string) => {
+        setDeleteId(id);
+    }, []);
 
-    const handleBulkDelete = useCallback(async () => {
+    const handleConfirmDelete = async () => {
+        if (!deleteId) return;
+        try {
+            await deleteCustomer(deleteId);
+            setDeleteId(null);
+            toast.success("Customer deleted");
+        } catch {
+            toast.error("Failed to delete customer");
+        }
+    };
+
+    const handleBulkDelete = useCallback(() => {
         if (selectedCustomers.length === 0) return;
-        if (window.confirm(`Delete ${selectedCustomers.length} customers?`)) {
+        setShowBulkDelete(true);
+    }, [selectedCustomers]);
+
+    const handleConfirmBulkDelete = async () => {
+        try {
             for (const id of selectedCustomers) await deleteCustomer(id);
             setSelectedCustomers([]);
             setSelectionMode("none");
+            setShowBulkDelete(false);
+            toast.success("Customers deleted");
+        } catch {
+            toast.error("Failed to delete some customers");
         }
-    }, [selectedCustomers, deleteCustomer]);
+    };
 
     const handleSelectAllOnPage = useCallback(() => {
         setSelectedCustomers(currentPageIds);
@@ -393,6 +423,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
     );
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCurrentPage(1);
     }, [searchQuery]);
 
@@ -540,6 +571,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                                     <Checkbox
                                         checked={isAllPageSelected}
                                         ref={(el) => {
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                             if (el) (el as any).indeterminate = isSomeSelected;
                                         }}
                                         onCheckedChange={(c) => (c ? handleSelectAllOnPage() : handleClearSelection())}
@@ -723,6 +755,41 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                 </div>
                 <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Space Select • Click to view</div>
             </div>
+
+            <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this customer?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the customer and all associated
+                            data.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={showBulkDelete} onOpenChange={setShowBulkDelete}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete {selectedCustomers.length} customers?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. Selected customers will be permanently deleted.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmBulkDelete} className="bg-red-600 hover:bg-red-700">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </TooltipProvider>
     );
 }

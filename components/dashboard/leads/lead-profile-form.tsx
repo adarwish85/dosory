@@ -12,6 +12,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useLead } from "./lead-context";
 import { LEAD_STATUSES, LEAD_SOURCES } from "@/lib/constants";
+import { toast } from "sonner";
 
 // World Countries
 const COUNTRIES = [
@@ -158,6 +159,7 @@ export function LeadProfileForm() {
         }
     }, [lead, setValue]);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onSave = async (data: any) => {
         if (!leadId) return;
 
@@ -189,10 +191,10 @@ export function LeadProfileForm() {
                 updatedAt: new Date(),
             });
             refreshLead();
-            alert("Lead updated successfully!");
+            toast.success("Lead updated successfully!");
         } catch (error) {
             console.error("Error updating lead:", error);
-            alert("Failed to update lead");
+            toast.error("Failed to update lead");
         }
     };
 
@@ -278,16 +280,10 @@ export function LeadProfileForm() {
                     </div>
                 </div>
 
-                {/* Row 5: Lead Value, Tags */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-1.5">
-                        <Label className="text-sm">Lead Value (EGP)</Label>
-                        <Input type="number" {...register("value")} />
-                    </div>
-                    <div className="grid gap-1.5">
-                        <Label className="text-sm">Tags</Label>
-                        <Input placeholder="Comma-separated" {...register("tags")} />
-                    </div>
+                {/* Row 5: Tags (Full Width) */}
+                <div className="grid gap-1.5">
+                    <Label className="text-sm">Tags</Label>
+                    <Input placeholder="Comma-separated" {...register("tags")} />
                 </div>
 
                 {/* Row 6: Country, City */}
