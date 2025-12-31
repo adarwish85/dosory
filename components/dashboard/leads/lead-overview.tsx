@@ -4,14 +4,11 @@ import { useLead } from "./lead-context";
 import { Target, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { EditDealDialog } from "./edit-deal-dialog";
-import { format } from "date-fns";
-import { Timestamp } from "firebase/firestore";
-import { Briefcase, Calendar as CalendarIcon, DollarSign, GripVertical } from "lucide-react";
+import type { Lead } from "@/lib/types";
 
 // Score calculation
-function calculateLeadScore(lead: any): number {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function calculateLeadScore(lead: Lead | any): number {
     let score = 0;
     if (lead?.email) score += 15;
     if (lead?.phone) score += 15;
@@ -59,10 +56,10 @@ export function LeadOverview() {
                                 {score >= 80
                                     ? "Hot Lead - Ready for conversion"
                                     : score >= 60
-                                        ? "Warm Lead - Good potential"
-                                        : score >= 40
-                                            ? "Developing - Needs nurturing"
-                                            : "Cold Lead - More info needed"}
+                                      ? "Warm Lead - Good potential"
+                                      : score >= 40
+                                        ? "Developing - Needs nurturing"
+                                        : "Cold Lead - More info needed"}
                             </p>
                         </div>
                     </div>
@@ -130,105 +127,6 @@ export function LeadOverview() {
                     </div>
                 </div>
             </div>
-
-
-            {/* Deal Details Section */}
-            <div className="p-6 border rounded-lg bg-white">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <Briefcase className="h-6 w-6 text-indigo-600" />
-                        <h3 className="text-lg font-semibold">Deal Details</h3>
-                    </div>
-                    <EditDealDialog
-                        lead={lead}
-                        trigger={
-                            <Button variant="outline" size="sm">
-                                {lead.deal ? "Edit Deal" : "Add Deal Details"}
-                            </Button>
-                        }
-                    />
-                </div>
-
-                {lead.deal ? (
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="p-4 bg-gray-50 rounded-md border">
-                                <div className="text-sm text-gray-500 mb-1">Subject</div>
-                                <div className="font-medium text-lg">{lead.deal.subject}</div>
-                            </div>
-                            <div className="p-4 bg-gray-50 rounded-md border">
-                                <div className="text-sm text-gray-500 mb-1">Value</div>
-                                <div className="font-medium text-lg flex items-center">
-                                    <DollarSign className="h-4 w-4 mr-1 text-green-600" />
-                                    {lead.deal.value?.toLocaleString()}
-                                </div>
-                            </div>
-                            <div className="p-4 bg-gray-50 rounded-md border">
-                                <div className="text-sm text-gray-500 mb-1">Expected Close</div>
-                                <div className="font-medium text-lg flex items-center">
-                                    <CalendarIcon className="h-4 w-4 mr-2 text-gray-400" />
-                                    {lead.deal.expectedCloseDate
-                                        ? format(lead.deal.expectedCloseDate instanceof Timestamp
-                                            ? lead.deal.expectedCloseDate.toDate()
-                                            : lead.deal.expectedCloseDate, "PPP")
-                                        : "Not set"}
-                                </div>
-                            </div>
-                        </div>
-
-                        {lead.deal.description && (
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-900 mb-2">Description</h4>
-                                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md border whitespace-pre-wrap">
-                                    {lead.deal.description}
-                                </p>
-                            </div>
-                        )}
-
-                        {lead.deal.products && lead.deal.products.length > 0 && (
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-900 mb-2">Products / Services</h4>
-                                <div className="border rounded-md overflow-hidden">
-                                    <table className="w-full text-sm">
-                                        <thead className="bg-gray-50 border-b">
-                                            <tr>
-                                                <th className="py-2 px-3 text-left font-medium text-gray-500">Item</th>
-                                                <th className="py-2 px-3 text-right font-medium text-gray-500">Qty</th>
-                                                <th className="py-2 px-3 text-right font-medium text-gray-500">Rate</th>
-                                                <th className="py-2 px-3 text-right font-medium text-gray-500">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y">
-                                            {lead.deal.products.map((item, idx) => (
-                                                <tr key={idx} className="bg-white">
-                                                    <td className="py-2 px-3">{item.description}</td>
-                                                    <td className="py-2 px-3 text-right">{item.quantity}</td>
-                                                    <td className="py-2 px-3 text-right">{item.rate?.toFixed(2)}</td>
-                                                    <td className="py-2 px-3 text-right font-medium">{item.amount?.toFixed(2)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <div className="text-center py-8 bg-gray-50 rounded-md border border-dashed">
-                        <Briefcase className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                        <h3 className="text-sm font-medium text-gray-900">No deal details yet</h3>
-                        <p className="text-sm text-gray-500 mt-1 mb-4">
-                            Add deal information like value, products, and expected close date.
-                        </p>
-                        <EditDealDialog
-                            lead={lead}
-                            trigger={
-                                <Button size="sm">Add Deal Details</Button>
-                            }
-                        />
-                    </div>
-                )}
-            </div>
-        </div >
+        </div>
     );
 }

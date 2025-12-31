@@ -17,6 +17,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Phone,
+    Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -49,6 +50,7 @@ export function LeadSidebar() {
         { icon: User, label: "Profile", href: `/dashboard/leads/${leadId}/profile` },
         { icon: StickyNote, label: "Notes", href: `/dashboard/leads/${leadId}/notes` },
         { icon: Calculator, label: "Estimates", href: `/dashboard/leads/${leadId}/estimates` },
+        { icon: Briefcase, label: "Deal", href: `/dashboard/leads/${leadId}/deal` },
         { icon: CheckSquare, label: "Tasks", href: `/dashboard/leads/${leadId}/tasks` },
         { icon: Paperclip, label: "Files", href: `/dashboard/leads/${leadId}/files` },
         { icon: Bell, label: "Reminders", href: `/dashboard/leads/${leadId}/reminders` },
