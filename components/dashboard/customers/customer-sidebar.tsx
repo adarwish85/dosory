@@ -140,6 +140,7 @@ export function CustomerSidebar() {
             icon: Phone,
             label: "Activities",
             href: `/dashboard/customers/${customerId}/activities`,
+            badge: recordCounts.activities || undefined,
         },
         { icon: MapPin, label: "Map", href: `/dashboard/customers/${customerId}/map` },
     ];

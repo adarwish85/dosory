@@ -22,6 +22,7 @@ interface RecordCounts {
     tickets: number;
     files: number;
     reminders: number;
+    activities: number; // Added activities
 }
 
 interface CustomerContextType {
@@ -47,6 +48,7 @@ const defaultCounts: RecordCounts = {
     tickets: 0,
     files: 0,
     reminders: 0,
+    activities: 0, // Added activities
 };
 
 const CustomerContext = createContext<CustomerContextType>({
@@ -157,22 +159,23 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
         const fetchCounts = async () => {
             const orgId = profile.orgId;
             const collections = [
-                { key: "notes", collection: "notes" },
                 { key: "invoices", collection: "invoices" },
                 { key: "payments", collection: "payments" },
-                { key: "creditNotes", collection: "creditNotes" },
+                { key: "creditNotes", collection: "credit_notes" }, // fixed name
                 { key: "estimates", collection: "estimates" },
                 { key: "expenses", collection: "expenses" },
                 { key: "contracts", collection: "contracts" },
                 { key: "projects", collection: "projects" },
                 { key: "tasks", collection: "tasks" },
                 { key: "tickets", collection: "tickets" },
-                { key: "files", collection: "customerFiles" },
+                { key: "files", collection: "customer_files" }, // fixed name
                 { key: "reminders", collection: "reminders" },
+                { key: "activities", collection: "activities" }, // added
             ];
 
             const counts: Partial<RecordCounts> = {};
 
+            // Handle root collections
             await Promise.all(
                 collections.map(async ({ key, collection: collName }) => {
                     try {
@@ -189,6 +192,16 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
                     }
                 })
             );
+
+            // Handle subcollection: Notes
+            try {
+                const notesQ = query(collection(db, "customers", customerId, "notes"), where("orgId", "==", orgId));
+                const notesSnap = await getCountFromServer(notesQ);
+                counts.notes = notesSnap.data().count;
+            } catch (err) {
+                console.error("Error fetching notes count:", err);
+                counts.notes = 0;
+            }
 
             setRecordCounts((prev) => ({ ...prev, ...counts }));
         };

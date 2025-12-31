@@ -576,10 +576,15 @@ export function useLeads(options: UseLeadsOptions = {}) {
             const leadNotesSnap = await getDocs(leadNotesRef);
             for (const noteDoc of leadNotesSnap.docs) {
                 const noteData = noteDoc.data();
-                await addDoc(collection(db, "notes"), {
+                await addDoc(collection(db, "customers", customerRef.id, "notes"), {
                     ...noteData,
+                    addedFrom: profile?.email || "System", // Ensure addedFrom is set
+                    description: noteData.content || noteData.description || "", // Map content/description
+                    dateAdded: noteData.createdAt
+                        ? new Date(noteData.createdAt.toDate()).toLocaleString()
+                        : new Date().toLocaleString(),
                     customerId: customerRef.id,
-                    orgId: profile.orgId,
+                    orgId: profile.orgId, // Keep orgId just in case
                     transferredFromLeadId: leadId,
                     transferredFromNoteId: noteDoc.id,
                     createdAt: noteData.createdAt || serverTimestamp(),
@@ -598,6 +603,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
             for (const reminderDoc of genericRemindersSnap.docs) {
                 await updateDoc(doc(db, "reminders", reminderDoc.id), {
                     relatedTo: { type: "customer", id: customerRef.id },
+                    customerId: customerRef.id,
                     transferredFromLeadId: leadId,
                     updatedAt: serverTimestamp(),
                 });
@@ -613,12 +619,13 @@ export function useLeads(options: UseLeadsOptions = {}) {
             for (const activityDoc of activitiesSnap.docs) {
                 await updateDoc(doc(db, "activities", activityDoc.id), {
                     relatedTo: { type: "customer", id: customerRef.id },
+                    customerId: customerRef.id,
                     transferredFromLeadId: leadId,
                     updatedAt: serverTimestamp(),
                 });
             }
 
-            // Transfer generic files
+            // Transfer generic files to customer_files
             const genericFilesQuery = query(
                 collection(db, "files"),
                 where("relatedTo.id", "==", leadId),
@@ -626,11 +633,18 @@ export function useLeads(options: UseLeadsOptions = {}) {
             );
             const genericFilesSnap = await getDocs(genericFilesQuery);
             for (const fileDoc of genericFilesSnap.docs) {
-                await updateDoc(doc(db, "files", fileDoc.id), {
+                const fileData = fileDoc.data();
+                // Create new doc in customer_files
+                await addDoc(collection(db, "customer_files"), {
+                    ...fileData,
+                    customerId: customerRef.id,
                     relatedTo: { type: "customer", id: customerRef.id },
                     transferredFromLeadId: leadId,
+                    createdAt: fileData.createdAt || serverTimestamp(), // Keep original date if exists
                     updatedAt: serverTimestamp(),
                 });
+                // Delete old file doc
+                await deleteDoc(fileDoc.ref);
             }
 
             // Transfer logic for legacy collections omitted for brevity/cleaned up in previous step?
