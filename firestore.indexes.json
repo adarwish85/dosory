@@ -321,6 +321,46 @@
                     "order": "DESCENDING"
                 }
             ]
+        },
+        {
+            "collectionGroup": "activities",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "relatedTo.id",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "dateTime",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "activities",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "relatedTo.id",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "relatedTo.type",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "dateTime",
+                    "order": "DESCENDING"
+                }
+            ]
         }
     ],
     "fieldOverrides": []

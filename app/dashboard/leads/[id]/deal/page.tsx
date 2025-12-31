@@ -42,7 +42,13 @@ export default function LeadDealPage() {
                                 <div className="text-sm text-gray-500 mb-1">Value</div>
                                 <div className="font-medium text-lg flex items-center">
                                     <DollarSign className="h-4 w-4 mr-1 text-green-600" />
-                                    {lead.deal.value?.toLocaleString()}
+                                    {(lead.deal.products && lead.deal.products.length > 0
+                                        ? lead.deal.products.reduce(
+                                              (sum: number, p: { amount?: number }) => sum + (p.amount || 0),
+                                              0
+                                          )
+                                        : lead.deal.value || 0
+                                    ).toLocaleString()}
                                 </div>
                             </div>
                             <div className="p-4 bg-gray-50 rounded-md border">

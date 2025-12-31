@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import type { Lead } from "@/lib/types";
 
-// Score calculation
+// Score calculation - includes deal value
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function calculateLeadScore(lead: Lead | any): number {
     let score = 0;
@@ -17,10 +17,21 @@ function calculateLeadScore(lead: Lead | any): number {
     if (lead?.website) score += 5;
     if (lead?.address?.country) score += 5;
     if (lead?.address?.city) score += 5;
-    if (lead?.value && lead.value > 0) score += 15;
     if (lead?.source) score += 10;
     if (lead?.tags?.length > 0) score += 5;
     if (lead?.status === "qualified" || lead?.status === "proposal" || lead?.status === "negotiation") score += 10;
+
+    // Calculate deal value from products or use lead.value
+    const dealValue =
+        lead?.deal?.products?.length > 0
+            ? lead.deal.products.reduce((sum: number, p: { amount?: number }) => sum + (p.amount || 0), 0)
+            : lead?.deal?.value || lead?.value || 0;
+
+    // Score based on deal value
+    if (dealValue > 0) score += 15;
+    if (dealValue >= 10000) score += 5;
+    if (dealValue >= 50000) score += 5;
+
     return Math.min(score, 100);
 }
 
@@ -89,6 +100,37 @@ export function LeadOverview() {
                 </div>
             </div>
 
+            {/* Deal Summary Card */}
+            {lead.deal && (
+                <div className="p-6 border rounded-lg bg-gradient-to-br from-green-50 to-emerald-50">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">💼 Deal Summary</h3>
+                        <Badge variant="outline" className="bg-white">
+                            {lead.deal.subject || "Unnamed Deal"}
+                        </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <div className="text-sm text-gray-500">Deal Value</div>
+                            <div className="text-2xl font-bold text-green-600">
+                                $
+                                {(lead.deal.products && lead.deal.products.length > 0
+                                    ? lead.deal.products.reduce(
+                                          (sum: number, p: { amount?: number }) => sum + (p.amount || 0),
+                                          0
+                                      )
+                                    : lead.deal.value || 0
+                                ).toLocaleString()}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-sm text-gray-500">Products/Services</div>
+                            <div className="text-2xl font-bold text-gray-900">{lead.deal.products?.length || 0}</div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Score Breakdown */}
             <div className="p-6 border rounded-lg">
                 <h3 className="text-lg font-semibold mb-4">Score Breakdown</h3>
@@ -106,8 +148,14 @@ export function LeadOverview() {
                         <Badge variant={lead.company ? "default" : "secondary"}>{lead.company ? "+10" : "0"}</Badge>
                     </div>
                     <div className="flex flex-col gap-1">
-                        <span>Value</span>
-                        <Badge variant={lead.value ? "default" : "secondary"}>{lead.value ? "+15" : "0"}</Badge>
+                        <span>Deal Value</span>
+                        <Badge
+                            variant={
+                                lead.deal?.products?.length || lead.deal?.value || lead.value ? "default" : "secondary"
+                            }
+                        >
+                            {lead.deal?.products?.length || lead.deal?.value || lead.value ? "+15-25" : "0"}
+                        </Badge>
                     </div>
                     <div className="flex flex-col gap-1">
                         <span>Source</span>
