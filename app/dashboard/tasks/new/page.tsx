@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,10 +15,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Loader2, ChevronLeft, UserPlus } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -31,15 +31,16 @@ export default function CreateTaskPage() {
     const projectIdParam = searchParams.get("projectId");
 
     const { createTask } = useTasks();
-    const { customers, loading: customersLoading } = useCustomers({ status: "active" });
-    const { projects, loading: projectsLoading } = useProjects({ status: "in_progress", customerId: customerIdParam || undefined });
+    const { customers } = useCustomers({ status: "active" });
+    const { projects } = useProjects({ status: "in_progress", customerId: customerIdParam || undefined });
     // Assuming useStaff exists and returns a list of staff
-    const { staff, loading: staffLoading } = useStaff();
+    const { staff } = useStaff();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<TaskFormData>({
-        resolver: zodResolver(taskFormSchema),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(taskFormSchema) as any,
         defaultValues: {
             name: "",
             customerId: customerIdParam || "",
@@ -225,7 +226,7 @@ export default function CreateTaskPage() {
                                 <Label>Priority</Label>
                                 <Select
                                     value={watch("priority")}
-                                    onValueChange={(val: any) => setValue("priority", val)}
+                                    onValueChange={(val) => setValue("priority", val as "low" | "medium" | "high" | "urgent")}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
@@ -243,7 +244,7 @@ export default function CreateTaskPage() {
                                 <Label>Status</Label>
                                 <Select
                                     value={watch("status")}
-                                    onValueChange={(val: any) => setValue("status", val)}
+                                    onValueChange={(val) => setValue("status", val as "not_started" | "in_progress" | "testing" | "awaiting_feedback" | "completed")}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />

@@ -27,7 +27,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { taskFormSchema, TaskFormData } from "@/lib/schemas";
 import { useTasks } from "@/lib/hooks/use-projects";
 import { useStaff } from "@/lib/hooks/use-staff";
@@ -53,6 +52,7 @@ export function CreateTaskDialog({
     leadId,
     leadName,
     customerId,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     customerName,
 }: CreateTaskDialogProps) {
     const { createTask } = useTasks();
@@ -60,7 +60,8 @@ export function CreateTaskDialog({
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<TaskFormData>({
-        resolver: zodResolver(taskFormSchema),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(taskFormSchema) as any,
         defaultValues: {
             name: "",
             description: "",

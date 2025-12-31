@@ -279,11 +279,12 @@ export const taskFormSchema = z.object({
     priority: taskPrioritySchema,
     startDate: z.date().optional(),
     dueDate: z.date().optional(),
-    assignees: z.array(z.string()),
-    followers: z.array(z.string()).optional(),
+    assignees: z.array(z.string()).default([]),
+    followers: z.array(z.string()).default([]),
+    milestoneId: z.string().optional(),
     tags: z.array(z.string()).optional(),
-    isPublic: z.boolean(),
-    billable: z.boolean(),
+    isPublic: z.boolean().default(false),
+    billable: z.boolean().default(true),
     hourlyRate: z.number().optional(),
     relatedTo: z
         .object({
@@ -602,3 +603,49 @@ export type TicketReplyFormData = z.infer<typeof ticketReplyFormSchema>;
 export type StaffFormData = z.infer<typeof staffFormSchema>;
 export type RoleFormData = z.infer<typeof roleFormSchema>;
 export type ReminderFormData = z.infer<typeof reminderFormSchema>;
+
+// ============================================
+// Milestone Schema
+// ============================================
+
+export const milestoneFormSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    description: z.string().optional(),
+    dueDate: z.date(),
+    color: z.string().optional(),
+    projectId: z.string(),
+    order: z.number().default(0),
+    status: z.enum(["incomplete", "complete"]).optional(),
+});
+
+// ============================================
+// Time Log Schema
+// ============================================
+
+export const timeLogSchema = z.object({
+    projectId: z.string(),
+    taskId: z.string().optional(),
+    startTime: z.date(),
+    endTime: z.date().optional(),
+    note: z.string().optional(),
+    billable: z.boolean().optional(),
+});
+
+// ============================================
+// Discussion Schema
+// ============================================
+
+export const discussionFormSchema = z.object({
+    projectId: z.string(),
+    subject: z.string().min(1, "Subject is required"),
+    description: z.string().min(1, "Description is required"),
+    participants: z.array(z.string()).optional(),
+});
+
+// ============================================
+// Additional Types
+// ============================================
+
+export type MilestoneFormData = z.infer<typeof milestoneFormSchema>;
+export type TimeLogFormData = z.infer<typeof timeLogSchema>;
+export type DiscussionFormData = z.infer<typeof discussionFormSchema>;

@@ -322,6 +322,7 @@ export interface Project extends BaseEntity {
     estimatedHours?: number;
     members: ProjectMember[];
     tags?: string[];
+    currency?: string;
     progress: number;
 }
 
@@ -356,6 +357,7 @@ export interface Task extends BaseEntity {
     relatedTo?: TaskRelation;
     repeat?: TaskRepeat;
     checklist?: TaskChecklistItem[];
+    milestoneId?: string;
 }
 
 export type TaskStatus = "not_started" | "in_progress" | "testing" | "awaiting_feedback" | "completed";
@@ -838,4 +840,69 @@ export interface VaultItem extends BaseEntity {
     visibility?: "private" | "shared";
     url?: string;
     username?: string;
+}
+
+// ============================================
+// Milestones
+// ============================================
+
+export interface Milestone extends BaseEntity {
+    name: string;
+    description?: string;
+    dueDate: Timestamp;
+    projectId: string;
+    color?: string; // hex code
+    order: number;
+    status: "incomplete" | "complete";
+}
+
+// ============================================
+// Timesheets & Time Logs
+// ============================================
+
+export interface Timesheet extends BaseEntity {
+    projectId: string;
+    taskId?: string;
+    userId: string;
+    startTime: Timestamp;
+    endTime?: Timestamp;
+    duration: number; // in seconds
+    note?: string;
+    billable: boolean;
+}
+
+// ============================================
+// Project Files
+// ============================================
+
+export interface ProjectFile extends BaseEntity {
+    name: string;
+    url: string;
+    size: number;
+    type: string;
+    projectId: string;
+    customerId?: string;
+    uploadedBy: string;
+    folderId?: string;
+    description?: string;
+}
+
+// ============================================
+// Discussions
+// ============================================
+
+export interface ProjectDiscussion extends BaseEntity {
+    projectId: string;
+    subject: string;
+    description: string;
+    lastReply?: Timestamp;
+    createdBy: string;
+    participants: string[];
+}
+
+export interface DiscussionComment extends BaseEntity {
+    discussionId: string;
+    content: string;
+    userId: string;
+    attachments?: string[];
 }
