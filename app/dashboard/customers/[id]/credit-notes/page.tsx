@@ -235,8 +235,8 @@ export default function CreditNotesPage() {
                         bVal = b.number || 0;
                         break;
                     case "amount":
-                        aVal = a.amount || 0;
-                        bVal = b.amount || 0;
+                        aVal = a.total || 0;
+                        bVal = b.total || 0;
                         break;
                     case "date":
                         aVal = a.date?.toMillis?.() || 0;
@@ -258,10 +258,10 @@ export default function CreditNotesPage() {
     }, [creditNotes, searchQuery, sortKey, sortDirection]);
 
     // Totals
-    const openTotal = creditNotes.filter((cn) => cn.status === "open").reduce((sum, cn) => sum + (cn.amount || 0), 0);
+    const openTotal = creditNotes.filter((cn) => cn.status === "open").reduce((sum, cn) => sum + (cn.total || 0), 0);
     const closedTotal = creditNotes
         .filter((cn) => cn.status === "closed")
-        .reduce((sum, cn) => sum + (cn.amount || 0), 0);
+        .reduce((sum, cn) => sum + (cn.total || 0), 0);
 
     // Pagination
     const totalPages = Math.max(1, Math.ceil(processedCreditNotes.length / recordsPerPage));
@@ -286,7 +286,7 @@ export default function CreditNotesPage() {
             selectedIds.length > 0 ? creditNotes.filter((cn) => selectedIds.includes(cn.id)) : processedCreditNotes;
         const csv = [
             "Credit Note #,Amount,Date,Status",
-            ...dataToExport.map((cn) => `"CN-${cn.number}","${cn.amount}","${formatDate(cn.date)}","${cn.status}"`),
+            ...dataToExport.map((cn) => `"CN-${cn.number}","${cn.total}","${formatDate(cn.date)}","${cn.status}"`),
         ].join("\n");
         const blob = new Blob([csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
@@ -586,7 +586,7 @@ export default function CreditNotesPage() {
                                                 )}
                                                 {col.key === "amount" && (
                                                     <span className="font-medium">
-                                                        {formatCurrency(creditNote.amount)}
+                                                        {formatCurrency(creditNote.total)}
                                                     </span>
                                                 )}
 

@@ -21,74 +21,7 @@ import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
 
-// ============================================
-// Types
-// ============================================
-
-export interface Payment {
-    id: string;
-    invoiceId?: string;
-    invoiceNumber?: string;
-    customerId?: string;
-    customerName?: string;
-    amount: number;
-    paymentMode: string;
-    date: any;
-    transactionId?: string;
-    note?: string;
-    orgId: string;
-    createdAt: any;
-}
-
-export interface CreditNote {
-    id: string;
-    number: string;
-    customerId?: string;
-    customerName?: string;
-    invoiceId?: string;
-    amount: number;
-    date: any;
-    status: "open" | "closed" | "void";
-    note?: string;
-    orgId: string;
-    createdAt: any;
-}
-
-export interface Reminder {
-    id: string;
-    title: string;
-    description?: string;
-    customerId?: string;
-    customerName?: string;
-    date: any;
-    isNotified: boolean;
-    createdBy: string;
-    orgId: string;
-    createdAt: any;
-}
-
-export interface CustomerFile {
-    id: string;
-    name: string;
-    url: string;
-    size: number;
-    type: string;
-    customerId?: string;
-    uploadedBy: string;
-    orgId: string;
-    createdAt: any;
-}
-
-export interface VaultItem {
-    id: string;
-    title: string;
-    content: string; // encrypted
-    customerId?: string;
-    visibility: "private" | "shared";
-    createdBy: string;
-    orgId: string;
-    createdAt: any;
-}
+import type { Payment, CreditNote, Reminder, CustomerFile, VaultItem } from "@/lib/types";
 
 // ============================================
 // usePayments Hook
@@ -108,6 +41,7 @@ export function usePayments(options: UsePaymentsOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -146,13 +80,14 @@ export function usePayments(options: UsePaymentsOptions = {}) {
     }, [profile?.orgId, customerId, invoiceId]);
 
     const createPayment = useCallback(
-        async (data: Omit<Payment, "id" | "orgId" | "createdAt">) => {
+        async (data: Omit<Payment, "id" | "orgId" | "createdAt" | "updatedAt">) => {
             if (!profile?.orgId) throw new Error("No organization");
 
             const docRef = await addDoc(collection(db, "payments"), {
                 ...data,
                 orgId: profile.orgId,
                 createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
             });
 
             if (logActivity) {
@@ -187,6 +122,7 @@ export function useCreditNotes(options: UseCreditNotesOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -258,6 +194,7 @@ export function useReminders(options: UseRemindersOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -292,7 +229,7 @@ export function useReminders(options: UseRemindersOptions = {}) {
     }, [profile?.orgId, customerId]);
 
     const createReminder = useCallback(
-        async (data: Omit<Reminder, "id" | "orgId" | "createdAt" | "isNotified">) => {
+        async (data: Omit<Reminder, "id" | "orgId" | "createdAt" | "updatedAt" | "isNotified">) => {
             if (!profile?.orgId) throw new Error("No organization");
 
             return await addDoc(collection(db, "reminders"), {
@@ -300,6 +237,7 @@ export function useReminders(options: UseRemindersOptions = {}) {
                 orgId: profile.orgId,
                 isNotified: false,
                 createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
             });
         },
         [profile?.orgId]
@@ -328,6 +266,7 @@ export function useCustomerFiles(options: UseCustomerFilesOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -383,6 +322,7 @@ export function useCustomerFiles(options: UseCustomerFilesOptions = {}) {
                 uploadedBy: profile.email,
                 orgId: profile.orgId,
                 createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
             });
         },
         [profile]
@@ -412,6 +352,7 @@ export function useVault(options: UseVaultOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -446,13 +387,14 @@ export function useVault(options: UseVaultOptions = {}) {
     }, [profile?.orgId, customerId]);
 
     const createVaultItem = useCallback(
-        async (data: Omit<VaultItem, "id" | "orgId" | "createdAt">) => {
+        async (data: Omit<VaultItem, "id" | "orgId" | "createdAt" | "updatedAt">) => {
             if (!profile?.orgId) throw new Error("No organization");
 
             return await addDoc(collection(db, "vault"), {
                 ...data,
                 orgId: profile.orgId,
                 createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
             });
         },
         [profile]

@@ -31,7 +31,7 @@ export default function CreateTaskPage() {
     const projectIdParam = searchParams.get("projectId");
 
     const { createTask } = useTasks();
-    const { customers, loading: customersLoading } = useCustomers({ status: "active", pageSize: 1000 });
+    const { customers, loading: customersLoading } = useCustomers({ status: "active" });
     const { projects, loading: projectsLoading } = useProjects({ status: "in_progress", customerId: customerIdParam || undefined });
     // Assuming useStaff exists and returns a list of staff
     const { staff, loading: staffLoading } = useStaff();
@@ -137,7 +137,7 @@ export default function CreateTaskPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {customers.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>{c.company || c.name}</SelectItem>
+                                            <SelectItem key={c.id} value={c.id}>{c.company}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>

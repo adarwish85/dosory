@@ -35,6 +35,7 @@ export interface Customer extends BaseEntity {
     groups?: string[];
     notes?: string;
     portalEnabled?: boolean;
+    customFields?: Record<string, unknown>;
 }
 
 export interface Contact extends BaseEntity {
@@ -665,6 +666,7 @@ export interface CustomField extends BaseEntity {
     showOnTable: boolean;
     showOnPdf: boolean;
     order: number;
+    gridWidth?: number;
 }
 
 export type CustomFieldEntity =
@@ -817,4 +819,23 @@ export interface FileDoc extends BaseEntity {
     path: string; // storage path
     relatedTo?: TaskRelation; // { type, id }
     uploadedBy: string;
+}
+
+export interface CustomerFile extends BaseEntity {
+    name: string;
+    url: string;
+    size: number;
+    type: string;
+    customerId: string;
+    uploadedBy: string;
+}
+
+export interface VaultItem extends BaseEntity {
+    name: string;
+    value: string;
+    customerId: string;
+    type: "password" | "text" | "key";
+    visibility?: "private" | "shared";
+    url?: string;
+    username?: string;
 }

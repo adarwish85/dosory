@@ -20,8 +20,8 @@ interface CreateVaultItemDialogProps {
 }
 
 interface FormData {
-    title: string;
-    content: string;
+    name: string;
+    value: string;
     isShared: boolean;
 }
 
@@ -43,11 +43,13 @@ export function CreateVaultItemDialog({ open, onOpenChange }: CreateVaultItemDia
         setLoading(true);
         try {
             await createVaultItem({
-                title: data.title,
-                content: data.content, // Ideally encrypt this client-side or use secure backend
+                name: data.name,
+                value: data.value,
                 visibility: data.isShared ? "shared" : "private",
                 customerId,
-                createdBy: user?.uid || "system",
+                type: "text",
+                username: "",
+                url: "",
             });
 
             toast.success("Vault item added successfully");
@@ -70,24 +72,24 @@ export function CreateVaultItemDialog({ open, onOpenChange }: CreateVaultItemDia
                 </DialogHeader>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="title">Title</Label>
+                        <Label htmlFor="name">Name</Label>
                         <Input
-                            id="title"
-                            {...register("title", { required: "Title is required" })}
+                            id="name"
+                            {...register("name", { required: "Name is required" })}
                             placeholder="e.g., WiFi Password"
                         />
-                        {errors.title && <p className="text-red-500 text-xs">{errors.title.message}</p>}
+                        {errors.name && <p className="text-red-500 text-xs">{errors.name.message}</p>}
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="content">Content</Label>
+                        <Label htmlFor="value">Value</Label>
                         <Textarea
-                            id="content"
-                            {...register("content", { required: "Content is required" })}
+                            id="value"
+                            {...register("value", { required: "Value is required" })}
                             placeholder="Enter sensitive data..."
                             className="font-mono text-sm"
                         />
-                        {errors.content && <p className="text-red-500 text-xs">{errors.content.message}</p>}
+                        {errors.value && <p className="text-red-500 text-xs">{errors.value.message}</p>}
                     </div>
 
                     <div className="flex items-center justify-between border rounded-lg p-3">

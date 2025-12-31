@@ -12,6 +12,7 @@ import { useCustomer } from "../customer-context";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { Timestamp } from "firebase/firestore";
 
 interface CreateReminderDialogProps {
     open: boolean;
@@ -19,7 +20,6 @@ interface CreateReminderDialogProps {
 }
 
 interface FormData {
-    title: string;
     description: string;
     date: string;
     time: string;
@@ -42,12 +42,13 @@ export function CreateReminderDialog({ open, onOpenChange }: CreateReminderDialo
             const dateTime = new Date(`${data.date}T${data.time}`);
 
             await createReminder({
-                title: data.title,
                 description: data.description,
-                date: dateTime,
-                customerId,
-                customerName: customer?.company || "Unknown",
+                date: Timestamp.fromDate(dateTime),
+                relatedTo: { type: "customer", id: customerId || "" },
+                assignedTo: user?.uid || "system",
+                sendEmail: false,
                 createdBy: user?.uid || "system",
+                isRead: false,
             });
 
             toast.success("Reminder set successfully");
@@ -69,15 +70,7 @@ export function CreateReminderDialog({ open, onOpenChange }: CreateReminderDialo
                     <DialogDescription>Create a new reminder for this customer.</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="title">Title</Label>
-                        <Input
-                            id="title"
-                            {...register("title", { required: "Title is required" })}
-                            placeholder="e.g., Follow up call"
-                        />
-                        {errors.title && <p className="text-red-500 text-xs">{errors.title.message}</p>}
-                    </div>
+
 
                     <div className="grid gap-2">
                         <Label htmlFor="description">Description</Label>

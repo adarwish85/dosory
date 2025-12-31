@@ -27,7 +27,7 @@ export default function CreateContractPage() {
     const customerIdParam = searchParams.get("customerId");
 
     const { createContract } = useContracts();
-    const { customers, loading: customersLoading } = useCustomers({ status: "active", pageSize: 1000 });
+    const { customers, loading: customersLoading } = useCustomers({ status: "active" });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -120,7 +120,7 @@ export default function CreateContractPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {customers.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>{c.company || c.name}</SelectItem>
+                                            <SelectItem key={c.id} value={c.id}>{c.company}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>

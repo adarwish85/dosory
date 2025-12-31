@@ -252,10 +252,10 @@ export const projectFormSchema = z.object({
     name: z.string().min(1, "Project name is required"),
     customerId: z.string().min(1, "Customer is required"),
     description: z.string().optional(),
-    status: projectStatusSchema.default("not_started"),
+    status: projectStatusSchema,
     startDate: z.date().optional(),
     deadline: z.date().optional(),
-    billingType: projectBillingTypeSchema.default("fixed"),
+    billingType: projectBillingTypeSchema,
     projectRate: z.number().optional(),
     estimatedHours: z.number().optional(),
     members: z.array(projectMemberSchema).optional(),
@@ -326,7 +326,7 @@ export const expenseFormSchema = z.object({
     paymentMode: z.string().optional(),
     reference: z.string().optional(),
     note: z.string().optional(),
-    billable: z.boolean().default(false),
+    billable: z.boolean(),
 });
 
 export const expenseCategoryFormSchema = z.object({
@@ -382,7 +382,7 @@ export const ticketFormSchema = z.object({
     customerId: z.string().optional(),
     contactId: z.string().optional(),
     departmentId: z.string().min(1, "Department is required"),
-    priority: ticketPrioritySchema.default("medium"),
+    priority: ticketPrioritySchema,
     assignedTo: z.string().optional(),
     serviceId: z.string().optional(),
     projectId: z.string().optional(),
@@ -502,6 +502,7 @@ export const customFieldFormSchema = z.object({
     required: z.boolean().default(false),
     showOnTable: z.boolean().default(false),
     showOnPdf: z.boolean().default(false),
+    gridWidth: z.number().optional(),
 });
 
 // ============================================

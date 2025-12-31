@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Customer } from "@/lib/types";
+import { useCustomFields } from "@/lib/hooks/use-settings";
 
 export function CustomerProfileForm() {
     const params = useParams();
@@ -22,6 +23,9 @@ export function CustomerProfileForm() {
     const [loading, setLoading] = useState(true);
     const { register, handleSubmit, setValue, watch } = useForm();
 
+    // Fetch Custom Fields for Customers
+    const { customFields, loading: fieldsLoading } = useCustomFields("customers");
+
     useEffect(() => {
         if (!customerId) return;
 
@@ -31,9 +35,9 @@ export function CustomerProfileForm() {
                 const docRef = doc(db, "customers", customerId);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    setCustomer({ id: docSnap.id, ...docSnap.data() } as Customer);
-                    // Populate form
                     const data = docSnap.data();
+                    setCustomer({ id: docSnap.id, ...data } as Customer);
+                    // Populate form
                     setValue("company", data.company);
                     setValue("vatNumber", data.vatNumber || "");
                     setValue("phone", data.phone || "");
@@ -45,6 +49,13 @@ export function CustomerProfileForm() {
                     setValue("state", data.address?.state || "");
                     setValue("zipCode", data.address?.zipCode || "");
                     setValue("country", data.address?.country || "");
+
+                    // Populate Custom Fields
+                    if (data.customFields) {
+                        Object.entries(data.customFields).forEach(([key, value]) => {
+                            setValue(`customFields.${key}`, value);
+                        });
+                    }
                 }
             } catch (error) {
                 console.error(error);
@@ -60,6 +71,15 @@ export function CustomerProfileForm() {
 
         try {
             const docRef = doc(db, "customers", customerId);
+
+            // Extract custom fields
+            const customFieldData: Record<string, any> = {};
+            if (data.customFields) {
+                Object.keys(data.customFields).forEach(key => {
+                    customFieldData[key] = data.customFields[key];
+                });
+            }
+
             await updateDoc(docRef, {
                 company: data.company,
                 vatNumber: data.vatNumber,
@@ -74,6 +94,7 @@ export function CustomerProfileForm() {
                     zipCode: data.zipCode,
                     country: data.country,
                 },
+                customFields: customFieldData,
                 updatedAt: new Date(),
             });
 
@@ -84,7 +105,7 @@ export function CustomerProfileForm() {
         }
     };
 
-    if (loading) {
+    if (loading || fieldsLoading) {
         return <div className="p-8">Loading customer...</div>;
     }
 
@@ -189,6 +210,70 @@ export function CustomerProfileForm() {
                             <Input id="country" {...register("country")} />
                         </div>
                     </div>
+
+                    {/* Custom Fields Section */}
+                    {customFields.length > 0 && (
+                        <div className="pt-6 border-t">
+                            <h3 className="text-lg font-semibold mb-4">Additional Information</h3>
+                            <div className="grid grid-cols-12 gap-4">
+                                {customFields.map((field) => (
+                                    <div
+                                        key={field.id}
+                                        className={`col-span-12 md:col-span-${field.gridWidth || 12} grid gap-2`}
+                                    >
+                                        <Label htmlFor={field.slug}>
+                                            {field.required && <span className="text-red-500 mr-1">*</span>}
+                                            {field.name}
+                                        </Label>
+
+                                        {field.type === "text" && (
+                                            <Input
+                                                id={field.slug}
+                                                {...register(`customFields.${field.slug}`, { required: field.required })}
+                                                defaultValue={field.defaultValue}
+                                            />
+                                        )}
+
+                                        {field.type === "textarea" && (
+                                            <Textarea
+                                                id={field.slug}
+                                                {...register(`customFields.${field.slug}`, { required: field.required })}
+                                                defaultValue={field.defaultValue}
+                                            />
+                                        )}
+
+                                        {field.type === "number" && (
+                                            <Input
+                                                id={field.slug}
+                                                type="number"
+                                                {...register(`customFields.${field.slug}`, { required: field.required })}
+                                                defaultValue={field.defaultValue}
+                                            />
+                                        )}
+
+                                        {field.type === "date" && (
+                                            <Input
+                                                id={field.slug}
+                                                type="date"
+                                                {...register(`customFields.${field.slug}`, { required: field.required })}
+                                                defaultValue={field.defaultValue}
+                                            />
+                                        )}
+
+                                        {field.type === "checkbox" && (
+                                            <div className="flex items-center space-x-2 h-10">
+                                                <Checkbox
+                                                    id={field.slug}
+                                                    onCheckedChange={(checked) => setValue(`customFields.${field.slug}`, checked)}
+                                                    defaultChecked={field.defaultValue === "true"}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex gap-2 pt-4">

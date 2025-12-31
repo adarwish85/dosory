@@ -28,7 +28,7 @@ export default function CreateProjectPage() {
     const customerIdParam = searchParams.get("customerId");
 
     const { createProject } = useProjects();
-    const { customers, loading: customersLoading } = useCustomers({ status: "active", pageSize: 1000 });
+    const { customers, loading: customersLoading } = useCustomers({ status: "active" });
     const { profile } = useUserProfile();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,7 +118,7 @@ export default function CreateProjectPage() {
                                     ) : (
                                         customers.map((c) => (
                                             <SelectItem key={c.id} value={c.id}>
-                                                {c.company || c.name}
+                                                {c.company}
                                             </SelectItem>
                                         ))
                                     )}

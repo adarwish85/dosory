@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { estimateFormSchema, type EstimateFormData } from "@/lib/schemas";
 import { useEstimates } from "@/lib/hooks/use-sales";
 import { useCustomers } from "@/lib/hooks/use-customers";
-import { useSettings } from "@/lib/hooks/use-settings"; // Assuming this exists or derived
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +29,7 @@ export default function CreateEstimatePage() {
     const customerIdParam = searchParams.get("customerId");
 
     const { createEstimate } = useEstimates();
-    const { customers, loading: customersLoading } = useCustomers({ status: "active", pageSize: 1000 });
+    const { customers, loading: customersLoading } = useCustomers({ status: "active" });
     const { profile } = useUserProfile(); // Fallback if useSettings doesn't provide currency directly
 
     // Default currency
@@ -134,7 +134,7 @@ export default function CreateEstimatePage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {customers.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>{c.company || c.name}</SelectItem>
+                                            <SelectItem key={c.id} value={c.id}>{c.company}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>

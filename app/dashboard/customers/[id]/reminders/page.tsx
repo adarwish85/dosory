@@ -52,7 +52,7 @@ import { toast } from "sonner";
 // Types
 type SortDirection = "asc" | "desc" | null;
 type RowDensity = "compact" | "comfortable";
-type ColumnKey = "title" | "description" | "date" | "status";
+type ColumnKey = "description" | "date" | "status";
 
 interface ColumnDef {
     key: ColumnKey;
@@ -64,8 +64,7 @@ interface ColumnDef {
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
     { key: "status", label: "Status", defaultVisible: true, sortable: true, width: 100 },
-    { key: "title", label: "Title", defaultVisible: true, sortable: true, width: 200 },
-    { key: "description", label: "Description", defaultVisible: true, sortable: true, width: 300 },
+    { key: "description", label: "Description", defaultVisible: true, sortable: true, width: 400 },
     { key: "date", label: "Date", defaultVisible: true, sortable: true, width: 140 },
 ];
 
@@ -178,7 +177,6 @@ export default function RemindersPage() {
     const [recordsPerPage, setRecordsPerPage] = useState(25);
     const [columnVisibility, setColumnVisibility] = useState<Record<ColumnKey, boolean>>({
         status: true,
-        title: true,
         description: true,
         date: true,
     });
@@ -241,19 +239,14 @@ export default function RemindersPage() {
         if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
             result = result.filter(
-                (r) =>
-                    r.title.toLowerCase().includes(lowerQuery) ||
-                    (r.description || "").toLowerCase().includes(lowerQuery)
+                (r) => (r.description || "").toLowerCase().includes(lowerQuery)
             );
         }
         if (sortKey && sortDirection) {
             result.sort((a, b) => {
                 let aVal: any, bVal: any;
                 switch (sortKey) {
-                    case "title":
-                        aVal = a.title || "";
-                        bVal = b.title || "";
-                        break;
+
                     case "description":
                         aVal = a.description || "";
                         bVal = b.description || "";
@@ -307,10 +300,10 @@ export default function RemindersPage() {
         const dataToExport =
             selectedIds.length > 0 ? reminders.filter((r) => selectedIds.includes(r.id)) : processedReminders;
         const csv = [
-            "Title,Description,Date,Status,Is Notified",
+            "Description,Date,Status",
             ...dataToExport.map(
                 (r) =>
-                    `"${r.title}","${r.description || ""}","${formatDate(r.date)}","${formatStatus(getDateStatus(r.date))}","${r.isNotified}"`
+                    `"${r.description || ""}","${formatDate(r.date)}","${formatStatus(getDateStatus(r.date))}"`
             ),
         ].join("\n");
         const blob = new Blob([csv], { type: "text/csv" });
@@ -623,21 +616,7 @@ export default function RemindersPage() {
                                                             />
                                                         </Badge>
                                                     )}
-                                                    {col.key === "title" && (
-                                                        <div className="flex items-center gap-2">
-                                                            {reminder.isNotified ? (
-                                                                <BellOff className="h-3 w-3 text-gray-400" />
-                                                            ) : (
-                                                                <Bell className="h-3 w-3 text-blue-500" />
-                                                            )}
-                                                            <span className="font-medium text-gray-900">
-                                                                <HighlightText
-                                                                    text={reminder.title}
-                                                                    search={searchQuery}
-                                                                />
-                                                            </span>
-                                                        </div>
-                                                    )}
+
                                                     {col.key === "description" && (
                                                         <span className="text-gray-500 truncate max-w-xs block">
                                                             <HighlightText

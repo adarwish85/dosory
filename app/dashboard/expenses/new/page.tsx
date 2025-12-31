@@ -29,7 +29,7 @@ export default function CreateExpensePage() {
 
     const { createExpense } = useExpenses();
     const { categories, loading: categoriesLoading } = useExpenseCategories();
-    const { customers, loading: customersLoading } = useCustomers({ status: "active", pageSize: 1000 });
+    const { customers, loading: customersLoading } = useCustomers({ status: "active" });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -195,7 +195,7 @@ export default function CreateExpensePage() {
                                 <SelectContent>
                                     <SelectItem value="none">None</SelectItem>
                                     {customers.map((c) => (
-                                        <SelectItem key={c.id} value={c.id}>{c.company || c.name}</SelectItem>
+                                        <SelectItem key={c.id} value={c.id}>{c.company}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>

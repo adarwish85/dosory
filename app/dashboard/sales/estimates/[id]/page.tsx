@@ -99,9 +99,9 @@ export default function EstimateDetailsPage() {
                         <p className="text-sm text-gray-500 ml-2">{estimate.customerName}</p>
                     </div>
                     <span className={`capitalize px-3 py-1 rounded-full text-xs font-medium border ml-2 ${estimate.status === 'accepted' ? 'bg-green-100 text-green-700 border-green-200' :
-                            estimate.status === 'declined' ? 'bg-red-100 text-red-700 border-red-200' :
-                                estimate.status === 'sent' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                                    'bg-gray-100 text-gray-700'
+                        estimate.status === 'declined' ? 'bg-red-100 text-red-700 border-red-200' :
+                            estimate.status === 'sent' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                'bg-gray-100 text-gray-700'
                         }`}>
                         {estimate.status}
                     </span>
@@ -145,10 +145,7 @@ export default function EstimateDetailsPage() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <p className="text-gray-500">Subject</p>
-                                <p className="font-medium">{estimate.subject || "N/A"}</p>
-                            </div>
+
                             <div>
                                 <p className="text-gray-500">Date</p>
                                 <p className="font-medium">

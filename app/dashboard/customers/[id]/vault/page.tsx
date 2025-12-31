@@ -119,11 +119,11 @@ export default function VaultPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <Lock className="h-4 w-4 text-gray-400" />
-                                                <span className="font-medium">{item.title}</span>
+                                                <span className="font-medium">{item.name}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="font-mono text-sm">
-                                            {visibleItems.has(item.id) ? item.content : maskContent(item.content)}
+                                            {visibleItems.has(item.id) ? item.value : maskContent(item.value)}
                                         </TableCell>
                                         <TableCell>
                                             <Badge
