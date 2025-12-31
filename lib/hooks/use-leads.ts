@@ -18,7 +18,6 @@ import {
     getDocs,
     getDoc,
     serverTimestamp,
-    Timestamp,
     QueryConstraint,
     writeBatch,
     getCountFromServer,
@@ -37,6 +36,15 @@ import type { LeadFormData } from "@/lib/schemas";
 // ============================================
 // useLeads Hook
 // ============================================
+
+export interface ConvertLeadOptions {
+    company?: string;
+    email?: string;
+    createContact?: boolean;
+    createProjectFromDeal?: boolean;
+    createInvoiceFromEstimate?: boolean;
+    selectedEstimateId?: string;
+}
 
 interface UseLeadsOptions {
     status?: LeadStatus | "all";
@@ -122,7 +130,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
                     try {
                         const countSnap = await getCountFromServer(globalQ);
                         globalTotal = countSnap.data().count;
-                    } catch (ignore) { }
+                    } catch { }
                 }
 
                 if (!isMounted) return;
@@ -203,6 +211,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         );
 
         return () => unsubscribe();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [profile?.orgId, getBaseConstraints, orderByField, orderDirection, pageSize, page]);
 
     // Reconcile totalRecords with actual fetched leads to prevent count mismatch

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, KeyboardEvent } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
-import { useContracts } from "@/lib/hooks/use-expenses";
+import { useContracts } from "@/lib/hooks/use-contracts";
 import { useFormatters } from "@/lib/hooks/use-formatters";
 import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";

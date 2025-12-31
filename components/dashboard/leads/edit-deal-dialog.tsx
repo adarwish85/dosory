@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Plus, Trash2, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Timestamp } from "firebase/firestore";
 
 // Convert dealSchema to form schema (dates as Date objects)
@@ -51,7 +51,7 @@ interface EditDealDialogProps {
 
 export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDialogProps) {
     const { updateLead } = useLeads();
-    const { toast } = useToast();
+
     const [isLoading, setIsLoading] = useState(false);
     const [internalOpen, setInternalOpen] = useState(false);
 
@@ -103,17 +103,14 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                 value: data.value,
             });
 
-            toast({
-                title: "Deal Updated",
+            toast.success("Deal Updated", {
                 description: "Deal details saved successfully.",
             });
             onOpenChangeHandler?.(false);
         } catch (error) {
             console.error(error);
-            toast({
-                title: "Error",
+            toast.error("Error", {
                 description: "Failed to save deal details.",
-                variant: "destructive",
             });
         } finally {
             setIsLoading(false);
@@ -288,7 +285,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                                                     const qty = parseFloat(e.target.value) || 0;
                                                                     field.onChange(qty);
                                                                     const rate = form.getValues(`products.${index}.rate`);
-                                                                    form.setValue(`products.${index}.amount`, qty * rate);
+                                                                    form.setValue(`products.${index}.amount`, qty * (rate || 0));
                                                                 }}
                                                             />
                                                         </FormControl>
@@ -311,7 +308,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                                                     const rate = parseFloat(e.target.value) || 0;
                                                                     field.onChange(rate);
                                                                     const qty = form.getValues(`products.${index}.quantity`);
-                                                                    form.setValue(`products.${index}.amount`, qty * rate);
+                                                                    form.setValue(`products.${index}.amount`, (qty || 0) * rate);
                                                                 }}
                                                             />
                                                         </FormControl>

@@ -18,6 +18,27 @@ export const addressSchema = z.object({
 export const entityStatusSchema = z.enum(["active", "inactive", "archived"]);
 
 // ============================================
+// Line Item Schema (shared)
+// ============================================
+
+export const lineItemSchema = z.object({
+    id: z.string(),
+    description: z.string().min(1, "Description is required"),
+    longDescription: z.string().optional(),
+    quantity: z.number().min(0.01, "Quantity must be greater than 0"),
+    rate: z.number().min(0, "Rate must be non-negative"),
+    taxId: z.string().optional(),
+    taxRate: z.number().optional(),
+    amount: z.number(),
+    unit: z.string().optional(),
+});
+
+export const discountSchema = z.object({
+    type: z.enum(["percentage", "fixed"]),
+    value: z.number().min(0),
+});
+
+// ============================================
 // Customer & Contact Schemas
 // ============================================
 
@@ -92,26 +113,7 @@ export const leadFormSchema = z.object({
     deal: dealSchema.optional(),
 });
 
-// ============================================
-// Line Item Schema (shared)
-// ============================================
 
-export const lineItemSchema = z.object({
-    id: z.string(),
-    description: z.string().min(1, "Description is required"),
-    longDescription: z.string().optional(),
-    quantity: z.number().min(0.01, "Quantity must be greater than 0"),
-    rate: z.number().min(0, "Rate must be non-negative"),
-    taxId: z.string().optional(),
-    taxRate: z.number().optional(),
-    amount: z.number(),
-    unit: z.string().optional(),
-});
-
-export const discountSchema = z.object({
-    type: z.enum(["percentage", "fixed"]),
-    value: z.number().min(0),
-});
 
 // ============================================
 // Invoice Schema
@@ -252,15 +254,15 @@ export const taskFormSchema = z.object({
     description: z.string().optional(),
     projectId: z.string().optional(),
     customerId: z.string().optional(),
-    status: taskStatusSchema.default("not_started"),
-    priority: taskPrioritySchema.default("medium"),
+    status: taskStatusSchema,
+    priority: taskPrioritySchema,
     startDate: z.date().optional(),
     dueDate: z.date().optional(),
-    assignees: z.array(z.string()).default([]),
+    assignees: z.array(z.string()),
     followers: z.array(z.string()).optional(),
     tags: z.array(z.string()).optional(),
-    isPublic: z.boolean().default(false),
-    billable: z.boolean().default(false),
+    isPublic: z.boolean(),
+    billable: z.boolean(),
     hourlyRate: z.number().optional(),
     relatedTo: z.object({
         type: z.enum(["customer", "lead", "invoice", "estimate", "proposal", "contract"]),
@@ -538,7 +540,7 @@ export const reminderFormSchema = z.object({
     date: z.date(),
     assignedTo: z.string().min(1, "Assignee is required"),
     description: z.string().optional(),
-    sendEmail: z.boolean().default(false),
+    sendEmail: z.boolean(),
     relatedTo: z.object({
         type: z.enum(["customer", "lead", "invoice", "estimate", "proposal", "contract"]),
         id: z.string(),

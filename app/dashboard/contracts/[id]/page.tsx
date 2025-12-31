@@ -138,7 +138,7 @@ export default function ContractDetailsPage() {
                         <PDFDownloadLink
                             document={
                                 <ContractPDF
-                                    contract={contract}
+                                    contract={{ ...contract, contractValue: contract.contractValue || 0 }}
                                     signedDate={contract.signedAt ? formatDate(contract.signedAt) : undefined}
                                 />
                             }

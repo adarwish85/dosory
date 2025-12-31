@@ -92,9 +92,9 @@ interface ContractPDFProps {
         id: string;
         subject: string;
         customerName: string;
-        contractValue: number;
+        contractValue?: number;
         startDate: FirestoreDate;
-        endDate: FirestoreDate;
+        endDate?: FirestoreDate;
         status: string;
         content?: string; // HTML content - Note: PDF renderer has limited HTML support
         description?: string;
@@ -146,7 +146,7 @@ export default function ContractPDF({ contract, signedDate }: ContractPDFProps) 
                         <Text style={styles.label}>Contract Value</Text>
                         <Text style={styles.value}>
                             {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-                                contract.contractValue
+                                contract.contractValue || 0
                             )}
                         </Text>
                     </View>

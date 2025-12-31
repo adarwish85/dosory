@@ -26,15 +26,15 @@ import {
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSales } from "@/lib/hooks/use-sales"; // Assuming useEstimates is here or similar
+import { useEstimates } from "@/lib/hooks/use-sales";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 const convertSchema = z.object({
-    createContact: z.boolean().default(true),
-    createProjectFromDeal: z.boolean().default(false),
-    createInvoiceFromEstimate: z.boolean().default(false),
+    createContact: z.boolean(),
+    createProjectFromDeal: z.boolean(),
+    createInvoiceFromEstimate: z.boolean(),
     selectedEstimateId: z.string().optional(),
 });
 
@@ -49,10 +49,10 @@ interface ConvertLeadDialogProps {
 
 export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: ConvertLeadDialogProps) {
     const { convertToCustomer } = useLeads();
-    const { estimates } = useSales({ leadId: lead.id, type: "estimate" }); // Fetch estimates for this lead
+    const { estimates } = useEstimates({ leadId: lead.id }); // Fetch estimates for this lead
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
-    const { toast } = useToast();
+
     const [internalOpen, setInternalOpen] = useState(false);
 
     const isControlled = open !== undefined;
@@ -81,8 +81,7 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                 selectedEstimateId: data.selectedEstimateId,
             });
 
-            toast({
-                title: "Lead Converted",
+            toast.success("Lead Converted", {
                 description: "Lead successfully converted to customer.",
             });
 
@@ -90,10 +89,8 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
             router.push(`/dashboard/customers/${customerId}`);
         } catch (error) {
             console.error(error);
-            toast({
-                title: "Error",
+            toast.error("Error", {
                 description: "Failed to convert lead. Please try again.",
-                variant: "destructive",
             });
         } finally {
             setIsLoading(false);
