@@ -103,66 +103,8 @@ const STATUS_PIPELINE = [
     { key: "won", label: "Won", color: "bg-green-500" },
 ] as const;
 
-// Calculate lead score with breakdown
-function calculateLeadScoreWithBreakdown(lead: Lead): {
-    score: number;
-    breakdown: { label: string; earned: boolean; points: number }[];
-} {
-    const breakdown: { label: string; earned: boolean; points: number }[] = [];
-    let score = 0;
-
-    // Has email (+15)
-    const hasEmail = !!lead.email;
-    breakdown.push({ label: "Has email", earned: hasEmail, points: 15 });
-    if (hasEmail) score += 15;
-
-    // Has phone (+15)
-    const hasPhone = !!lead.phone;
-    breakdown.push({ label: "Has phone", earned: hasPhone, points: 15 });
-    if (hasPhone) score += 15;
-
-    // Has company (+10)
-    const hasCompany = !!lead.company;
-    breakdown.push({ label: "Has company", earned: hasCompany, points: 10 });
-    if (hasCompany) score += 10;
-
-    // Has value (+15)
-    const hasValue = !!lead.value && lead.value > 0;
-    breakdown.push({ label: "Has deal value", earned: hasValue, points: 15 });
-    if (hasValue) score += 15;
-
-    // Status progression (+20 max)
-    const statusScores: Record<string, number> = {
-        new: 5,
-        contacted: 10,
-        qualified: 15,
-        proposal: 18,
-        negotiation: 20,
-        won: 20,
-        lost: 0,
-        junk: 0,
-    };
-    const statusPoints = statusScores[lead.status] || 0;
-    breakdown.push({ label: `Status: ${lead.status}`, earned: statusPoints > 0, points: statusPoints });
-    score += statusPoints;
-
-    // Has tags (+5)
-    const hasTags = !!lead.tags && lead.tags.length > 0;
-    breakdown.push({ label: "Has tags", earned: hasTags, points: 5 });
-    if (hasTags) score += 5;
-
-    // Has source (+5)
-    const hasSource = !!lead.source;
-    breakdown.push({ label: "Has source", earned: hasSource, points: 5 });
-    if (hasSource) score += 5;
-
-    // Is starred (+5)
-    const isStarred = !!lead.isStarred;
-    breakdown.push({ label: "Is starred", earned: isStarred, points: 5 });
-    if (isStarred) score += 5;
-
-    return { score: Math.min(100, score), breakdown };
-}
+// Shared scoring logic
+import { calculateLeadScoreWithBreakdown } from "@/lib/utils/lead-score";
 
 // Data Completeness Fields
 const COMPLETENESS_FIELDS: { key: keyof Lead | "address"; label: string }[] = [

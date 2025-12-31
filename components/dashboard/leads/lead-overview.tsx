@@ -4,36 +4,7 @@ import { useLead } from "./lead-context";
 import { Target, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import type { Lead } from "@/lib/types";
-
-// Score calculation - includes deal value
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function calculateLeadScore(lead: Lead | any): number {
-    let score = 0;
-    if (lead?.email) score += 15;
-    if (lead?.phone) score += 15;
-    if (lead?.company) score += 10;
-    if (lead?.position) score += 5;
-    if (lead?.website) score += 5;
-    if (lead?.address?.country) score += 5;
-    if (lead?.address?.city) score += 5;
-    if (lead?.source) score += 10;
-    if (lead?.tags?.length > 0) score += 5;
-    if (lead?.status === "qualified" || lead?.status === "proposal" || lead?.status === "negotiation") score += 10;
-
-    // Calculate deal value from products or use lead.value
-    const dealValue =
-        lead?.deal?.products?.length > 0
-            ? lead.deal.products.reduce((sum: number, p: { amount?: number }) => sum + (p.amount || 0), 0)
-            : lead?.deal?.value || lead?.value || 0;
-
-    // Score based on deal value
-    if (dealValue > 0) score += 15;
-    if (dealValue >= 10000) score += 5;
-    if (dealValue >= 50000) score += 5;
-
-    return Math.min(score, 100);
-}
+import { calculateLeadScore, calculateDealValue, getScoreDescription } from "@/lib/utils/lead-score";
 
 const STATUS_ORDER = ["new", "contacted", "qualified", "proposal", "negotiation", "won"];
 
@@ -44,6 +15,7 @@ export function LeadOverview() {
     if (!lead) return <div className="p-8">Lead not found</div>;
 
     const score = calculateLeadScore(lead);
+    const dealValue = calculateDealValue(lead);
     const statusIndex = STATUS_ORDER.indexOf(lead.status || "new");
     const pipelineProgress = statusIndex >= 0 ? ((statusIndex + 1) / STATUS_ORDER.length) * 100 : 0;
 
@@ -63,15 +35,7 @@ export function LeadOverview() {
                         <div className="text-5xl font-bold text-blue-600">{score}</div>
                         <div className="flex-1">
                             <Progress value={score} className="h-3" />
-                            <p className="text-sm text-gray-500 mt-2">
-                                {score >= 80
-                                    ? "Hot Lead - Ready for conversion"
-                                    : score >= 60
-                                      ? "Warm Lead - Good potential"
-                                      : score >= 40
-                                        ? "Developing - Needs nurturing"
-                                        : "Cold Lead - More info needed"}
-                            </p>
+                            <p className="text-sm text-gray-500 mt-2">{getScoreDescription(score)}</p>
                         </div>
                     </div>
                 </div>
@@ -112,16 +76,7 @@ export function LeadOverview() {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <div className="text-sm text-gray-500">Deal Value</div>
-                            <div className="text-2xl font-bold text-green-600">
-                                $
-                                {(lead.deal.products && lead.deal.products.length > 0
-                                    ? lead.deal.products.reduce(
-                                          (sum: number, p: { amount?: number }) => sum + (p.amount || 0),
-                                          0
-                                      )
-                                    : lead.deal.value || 0
-                                ).toLocaleString()}
-                            </div>
+                            <div className="text-2xl font-bold text-green-600">${dealValue.toLocaleString()}</div>
                         </div>
                         <div>
                             <div className="text-sm text-gray-500">Products/Services</div>
@@ -149,12 +104,10 @@ export function LeadOverview() {
                     </div>
                     <div className="flex flex-col gap-1">
                         <span>Deal Value</span>
-                        <Badge
-                            variant={
-                                lead.deal?.products?.length || lead.deal?.value || lead.value ? "default" : "secondary"
-                            }
-                        >
-                            {lead.deal?.products?.length || lead.deal?.value || lead.value ? "+15-25" : "0"}
+                        <Badge variant={dealValue > 0 ? "default" : "secondary"}>
+                            {dealValue > 0
+                                ? `+${15 + (dealValue >= 10000 ? 5 : 0) + (dealValue >= 50000 ? 5 : 0)}`
+                                : "0"}
                         </Badge>
                     </div>
                     <div className="flex flex-col gap-1">

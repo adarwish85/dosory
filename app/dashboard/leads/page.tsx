@@ -40,9 +40,7 @@ import {
     FileDown,
     Mail,
     Phone,
-    AlertTriangle,
     RefreshCcw,
-    Bookmark,
     BookmarkPlus,
     Save,
     FolderOpen,
@@ -53,8 +51,6 @@ import {
     Kanban,
     Table2,
     GitMerge,
-    UserPlus,
-    Settings2,
 } from "lucide-react";
 import {
     Dialog,
@@ -224,50 +220,8 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
     { key: "lastActivity", label: "Last Activity", defaultVisible: false, sortable: true },
 ];
 
-// Calculate lead score based on criteria (0-100)
-function calculateLeadScore(lead: Lead): number {
-    let score = 0;
-    // Has email (+15)
-    if (lead.email) score += 15;
-    // Has phone (+15)
-    if (lead.phone) score += 15;
-    // Has company name (+10)
-    if (lead.company) score += 10;
-    // Has value (+15 scaled)
-    if (lead.value && lead.value > 0) score += Math.min(15, Math.floor(lead.value / 1000));
-    // Status progression (+20 max)
-    const statusScores: Record<string, number> = {
-        new: 5,
-        contacted: 10,
-        qualified: 15,
-        proposal: 18,
-        negotiation: 20,
-        won: 20,
-        lost: 0,
-        junk: 0,
-    };
-    score += statusScores[lead.status] || 0;
-    // Recent activity (+15)
-    if (lead.lastContactedAt) {
-        const daysSinceContact = Math.floor((Date.now() - lead.lastContactedAt.toMillis()) / (1000 * 60 * 60 * 24));
-        if (daysSinceContact < 7) score += 15;
-        else if (daysSinceContact < 30) score += 10;
-        else if (daysSinceContact < 90) score += 5;
-    }
-    // Has tags (+5)
-    if (lead.tags && lead.tags.length > 0) score += 5;
-    // Is starred (+5 bonus)
-    if (lead.isStarred) score += 5;
-    return Math.min(100, score);
-}
-
-// Score color based on value
-function getScoreColor(score: number): string {
-    if (score >= 80) return "bg-green-100 text-green-800";
-    if (score >= 60) return "bg-blue-100 text-blue-800";
-    if (score >= 40) return "bg-yellow-100 text-yellow-800";
-    return "bg-gray-100 text-gray-600";
-}
+// Calculate lead score - now using shared utility
+import { calculateLeadScore, getScoreColor } from "@/lib/utils/lead-score";
 
 const FILTER_OPERATORS: { value: FilterOperator; label: string }[] = [
     { value: "contains", label: "Contains" },
@@ -474,7 +428,6 @@ function HighlightText({ text, search }: { text: string; search: string }) {
 
 // Quick Stats
 function QuickStatsBar({ leads, totalValue, totalCount }: { leads: Lead[]; totalValue: number; totalCount?: number }) {
-    const avgValue = leads.length > 0 ? totalValue / leads.length : 0;
     const qualifiedCount = leads.filter((l) => l.status === "qualified").length;
     const starredCount = leads.filter((l) => l.isStarred).length;
     return (
@@ -980,6 +933,7 @@ export default function LeadsPage() {
     const [emailBody, setEmailBody] = useState("");
 
     // Load saved views from localStorage on mount
+
     useEffect(() => {
         try {
             const stored = localStorage.getItem(SAVED_VIEWS_STORAGE_KEY);
@@ -1140,7 +1094,7 @@ export default function LeadsPage() {
         limit: recordsPerPage,
         page: currentPage,
         searchQuery: searchQuery, // This will only support prefix search
-        orderByField: ((sortKey === "lastActivity" ? "lastContactedAt" : sortKey) as any) || "createdAt",
+        orderByField: ((sortKey === "lastActivity" ? "lastContactedAt" : sortKey) as string) || "createdAt",
         orderDirection: sortDirection || "desc",
     });
 
@@ -1165,7 +1119,7 @@ export default function LeadsPage() {
     // Pagination is handled by server, so "paginatedLeads" is just "processedLeads"
     const paginatedLeads = processedLeads;
     const currentPageIds = useMemo(() => paginatedLeads.map((l) => l.id), [paginatedLeads]);
-    const allFilteredIds = useMemo(() => processedLeads.map((l) => l.id), [processedLeads]);
+
     const visibleColumnsCount = Object.values(columnVisibility).filter(Boolean).length;
 
     // Export function
@@ -1366,12 +1320,14 @@ export default function LeadsPage() {
     }, [selectedLeads, selectionMode, totalRecords, bulkDeleteLeads, bulkDeleteAllMatches, handleClearSelection]);
     const handleInlineEdit = useCallback(
         async (id: string, field: ColumnKey, value: string) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await updateLead(id, { [field]: value } as any);
         },
         [updateLead]
     );
     const handleSaveLead = useCallback(
         async (id: string, data: Partial<Lead>) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await updateLead(id, data as any);
             if (selectedLead?.id === id) setSelectedLead({ ...selectedLead, ...data } as Lead);
         },
@@ -1385,7 +1341,7 @@ export default function LeadsPage() {
     );
     const handleToggleStar = useCallback(
         async (leadId: string, isStarred: boolean) => {
-            await updateLead(leadId, { isStarred } as any);
+            await updateLead(leadId, { isStarred });
         },
         [updateLead]
     );
@@ -1480,7 +1436,7 @@ export default function LeadsPage() {
         const mergedTags = [...(mergeTargetLead.tags || []), ...(mergeSourceLead.tags || [])];
         mergedData.tags = [...new Set(mergedTags)];
 
-        await updateLead(mergeTargetLead.id, mergedData as any);
+        await updateLead(mergeTargetLead.id, mergedData);
         await deleteLead(mergeSourceLead.id);
         setShowMergeDialog(false);
         setMergeTargetLead(null);
@@ -2162,7 +2118,10 @@ export default function LeadsPage() {
                                                     <Checkbox
                                                         checked={isAllPageSelected}
                                                         ref={(el) => {
-                                                            if (el) (el as any).indeterminate = isSomeSelected;
+                                                            if (el) {
+                                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                                (el as any).indeterminate = isSomeSelected;
+                                                            }
                                                         }}
                                                         onCheckedChange={handleSelectAllCheckbox}
                                                     />
@@ -2305,7 +2264,7 @@ export default function LeadsPage() {
                     open={editOpen}
                     onClose={() => setEditOpen(false)}
                     lead={selectedLead}
-                    onSave={handleSaveLead as any}
+                    onSave={(l: Lead) => handleSaveLead(l.id, l)}
                 />
 
                 {/* Merge Dialog */}
