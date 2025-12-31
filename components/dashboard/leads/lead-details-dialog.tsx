@@ -104,22 +104,18 @@ const STATUS_PIPELINE = [
 ] as const;
 
 // Shared scoring logic
-import { calculateLeadScoreWithBreakdown } from "@/lib/utils/lead-score";
-
-// Data Completeness Fields
-const COMPLETENESS_FIELDS: { key: keyof Lead | "address"; label: string }[] = [
-    { key: "email", label: "Email" },
-    { key: "phone", label: "Phone" },
-    { key: "company", label: "Company" },
-    { key: "value", label: "Deal Value" },
-    { key: "website", label: "Website" },
-    { key: "address", label: "Address" },
-    { key: "source", label: "Source" },
-];
+import {
+    calculateLeadScoreWithBreakdown,
+    calculateLeadCompleteness,
+    COMPLETENESS_FIELDS,
+} from "@/lib/utils/lead-score";
+import { estimateFormSchema } from "@/lib/schemas";
+import * as z from "zod";
 
 export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsSheetProps) {
     const [activeTab, setActiveTab] = useState("overview");
     const [showConvertWizard, setShowConvertWizard] = useState(false);
+    const [estimateInitialData, setEstimateInitialData] = useState<Partial<z.infer<typeof estimateFormSchema>>>();
     const [showCreateEstimate, setShowCreateEstimate] = useState(false);
 
     // Notes state
@@ -926,6 +922,30 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     </Button>
                                                 }
                                             />
+                                            {lead.deal && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 ml-2"
+                                                    onClick={() => {
+                                                        setEstimateInitialData({
+                                                            items: [
+                                                                {
+                                                                    id: Math.random().toString(),
+                                                                    description: lead.deal?.description || "Deal Value",
+                                                                    quantity: 1,
+                                                                    rate: lead.deal?.value || 0,
+                                                                    amount: lead.deal?.value || 0,
+                                                                },
+                                                            ],
+                                                            notes: `Created from Deal: ${lead.deal?.description || ""}`,
+                                                        });
+                                                        setShowCreateEstimate(true);
+                                                    }}
+                                                >
+                                                    <Plus className="mr-2 h-4 w-4" /> Create Estimate
+                                                </Button>
+                                            )}
                                         </div>
                                         {lead.deal ? (
                                             <div className="space-y-3">
@@ -1011,12 +1031,6 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             ))
                                         )}
                                     </div>
-
-                                    <CreateEstimateDialog
-                                        open={showCreateEstimate}
-                                        onOpenChange={setShowCreateEstimate}
-                                        leadId={lead.id}
-                                    />
                                 </TabsContent>
 
                                 {/* Proposals Tab */}
@@ -1560,6 +1574,16 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            {/* Create Estimate Dialog */}
+            <CreateEstimateDialog
+                open={showCreateEstimate}
+                onOpenChange={(open) => {
+                    setShowCreateEstimate(open);
+                    if (!open) setEstimateInitialData(undefined);
+                }}
+                leadId={lead.id}
+                initialData={estimateInitialData}
+            />
         </Sheet>
     );
 }

@@ -9,6 +9,17 @@ interface LeadScoreBreakdown {
     points: number;
 }
 
+// Data Completeness Fields
+export const COMPLETENESS_FIELDS: { key: keyof Lead | "address" | "value"; label: string }[] = [
+    { key: "email", label: "Email" },
+    { key: "phone", label: "Phone" },
+    { key: "company", label: "Company" },
+    { key: "value", label: "Deal Value" },
+    { key: "website", label: "Website" },
+    { key: "address", label: "Address" },
+    { key: "source", label: "Source" },
+];
+
 /**
  * Calculate the effective deal value from a lead
  * Prefers products sum if available, falls back to deal.value, then lead.value
@@ -24,6 +35,27 @@ export function calculateDealValue(lead: Lead): number {
     }
     // Fall back to lead.value (legacy field)
     return lead.value || 0;
+}
+
+/**
+ * Calculate data completeness percentage
+ */
+export function calculateLeadCompleteness(lead: Lead): number {
+    if (!lead) return 0;
+
+    let filledCount = 0;
+
+    COMPLETENESS_FIELDS.forEach((field) => {
+        if (field.key === "value") {
+            if (calculateDealValue(lead) > 0) filledCount++;
+        } else if (field.key === "address") {
+            if (lead.address && (lead.address.city || lead.address.country)) filledCount++;
+        } else {
+            if (lead[field.key as keyof Lead]) filledCount++;
+        }
+    });
+
+    return Math.round((filledCount / COMPLETENESS_FIELDS.length) * 100);
 }
 
 /**

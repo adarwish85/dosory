@@ -41,6 +41,7 @@ interface CreateEstimateDialogProps {
     customerId?: string;
     trigger?: React.ReactNode;
     onSuccess?: () => void;
+    initialData?: Partial<EstimateFormData>;
 }
 
 export function CreateEstimateDialog({
@@ -50,6 +51,7 @@ export function CreateEstimateDialog({
     customerId,
     trigger,
     onSuccess,
+    initialData,
 }: CreateEstimateDialogProps) {
     const { createEstimate } = useEstimates();
     const { profile } = useUserProfile();
@@ -103,15 +105,18 @@ export function CreateEstimateDialog({
     useEffect(() => {
         if (open) {
             form.reset({
-                customerId: customerId || undefined, // undefined allows optional validation to pass if logic handles it? No, schema expects one.
+                customerId: customerId || undefined,
                 leadId: leadId || undefined,
                 date: new Date(),
                 expiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
                 currency: currency,
                 items: [{ id: "1", description: "Service", quantity: 1, rate: 100, amount: 100 }],
+                notes: "",
+                terms: "",
+                ...initialData,
             });
         }
-    }, [open, customerId, leadId, currency, form]);
+    }, [open, customerId, leadId, currency, form, initialData]);
 
     const onSubmit = async (data: EstimateFormData) => {
         try {
