@@ -493,31 +493,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                         </div>
 
                                         {/* Row 5: Lead Value, Tags */}
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <FormField
-                                                control={form.control}
-                                                name="value"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-xs">Lead Value</FormLabel>
-                                                        <div className="flex gap-1">
-                                                            <FormControl>
-                                                                <Input
-                                                                    type="number"
-                                                                    {...field}
-                                                                    className="h-9"
-                                                                    onChange={(e) =>
-                                                                        field.onChange(e.target.valueAsNumber)
-                                                                    }
-                                                                />
-                                                            </FormControl>
-                                                            <div className="flex items-center border rounded px-2 bg-gray-50 text-xs text-gray-500">
-                                                                EGP
-                                                            </div>
-                                                        </div>
-                                                    </FormItem>
-                                                )}
-                                            />
+                                        <div className="grid grid-cols-1">
                                             <FormField
                                                 control={form.control}
                                                 name="tags"
@@ -583,6 +559,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                         ...prev,
                                         { value: slug, label: newStatusValue.trim() },
                                     ]);
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     form.setValue("status", slug as any);
                                     setNewStatusValue("");
                                     setShowAddStatusDialog(false);
@@ -599,6 +576,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                             onClick={() => {
                                 const slug = newStatusValue.toLowerCase().replace(/\s+/g, "_");
                                 setCustomStatuses((prev) => [...prev, { value: slug, label: newStatusValue.trim() }]);
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 form.setValue("status", slug as any);
                                 setNewStatusValue("");
                                 setShowAddStatusDialog(false);
