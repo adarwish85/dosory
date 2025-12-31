@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { useEstimates } from "@/lib/hooks/use-sales"; // Correct import path
+import { useEstimates } from "@/lib/hooks/use-sales";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Loader2, FileText } from "lucide-react";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import Link from "next/link";
 import { EstimateStatus } from "@/lib/types";
+import { CreateEstimateDialog } from "@/components/dashboard/sales/create-estimate-dialog";
 
 const statusColors: Record<EstimateStatus, { bg: string; text: string; border: string }> = {
     draft: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
@@ -33,6 +34,7 @@ export default function LeadEstimatesPage() {
     const params = useParams();
     const leadId = params?.id as string;
     const { estimates, loading } = useEstimates({ leadId });
+    const [showCreateDialog, setShowCreateDialog] = useState(false);
 
     if (loading) {
         return (
@@ -49,6 +51,7 @@ export default function LeadEstimatesPage() {
         }).format(amount);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formatDate = (timestamp: any) => {
         if (!timestamp) return "-";
         try {
@@ -64,11 +67,9 @@ export default function LeadEstimatesPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Estimates</h2>
-                <Link href={`/dashboard/sales/estimates/new?leadId=${leadId}`}>
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" /> Create Estimate
-                    </Button>
-                </Link>
+                <Button onClick={() => setShowCreateDialog(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> Create Estimate
+                </Button>
             </div>
 
             <div className="border rounded-md bg-white">
@@ -129,6 +130,8 @@ export default function LeadEstimatesPage() {
                     </TableBody>
                 </Table>
             </div>
+
+            <CreateEstimateDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} leadId={leadId} />
         </div>
     );
 }

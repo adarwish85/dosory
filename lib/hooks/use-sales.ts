@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
     collection,
     query,
@@ -43,6 +43,7 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -110,58 +111,66 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
         return { subtotal, taxTotal, discountAmount, total };
     };
 
-    const createEstimate = useCallback(
-        async (data: EstimateFormData): Promise<string> => {
-            if (!profile?.orgId) throw new Error("No organization");
+    const createEstimate = async (data: EstimateFormData): Promise<string> => {
+        if (!profile?.orgId) throw new Error("No organization");
 
-            // Get customer name
+        // Get client name (Customer or Lead)
+        let customerName = "Unknown Client";
+        if (data.customerId) {
             const customerDoc = await getDoc(doc(db, "customers", data.customerId));
-            const customerName = customerDoc.exists() ? customerDoc.data().company : "Unknown Customer";
+            if (customerDoc.exists()) {
+                customerName = customerDoc.data().company;
+            }
+        } else if (data.leadId) {
+            const leadDoc = await getDoc(doc(db, "leads", data.leadId));
+            if (leadDoc.exists()) {
+                const leadData = leadDoc.data();
+                customerName = leadData.company || leadData.name;
+            }
+        }
 
-            // Generate estimate number
-            const estNumber = `EST-${Date.now().toString().slice(-6).padStart(6, "0")}`;
+        // Generate estimate number
+        const estNumber = `EST-${Date.now().toString().slice(-6).padStart(6, "0")}`;
 
-            // Calculate totals
-            const { subtotal, taxTotal, total } = calculateTotals(data.items, data.discount);
+        // Calculate totals
+        const { subtotal, taxTotal, total } = calculateTotals(data.items, data.discount);
 
-            const docRef = await addDoc(collection(db, "estimates"), {
-                ...data,
-                number: estNumber,
-                customerName,
-                subtotal,
-                taxTotal,
-                total,
-                status: "draft",
-                date: Timestamp.fromDate(data.date),
-                expiryDate: Timestamp.fromDate(data.expiryDate),
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                createdBy: profile.uid,
-            });
+        const docRef = await addDoc(collection(db, "estimates"), {
+            ...data,
+            number: estNumber,
+            customerName,
+            subtotal,
+            taxTotal,
+            total,
+            status: "draft",
+            date: Timestamp.fromDate(data.date),
+            expiryDate: Timestamp.fromDate(data.expiryDate),
+            orgId: profile.orgId,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            createdBy: profile.uid,
+        });
 
-            return docRef.id;
-        },
-        [profile?.orgId, profile?.uid]
-    );
+        return docRef.id;
+    };
 
-    const updateEstimate = useCallback(async (id: string, data: Partial<EstimateFormData>): Promise<void> => {
+    const updateEstimate = async (id: string, data: Partial<EstimateFormData>): Promise<void> => {
         const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
         if (data.date) updateData.date = Timestamp.fromDate(data.date);
         if (data.expiryDate) updateData.expiryDate = Timestamp.fromDate(data.expiryDate);
         await updateDoc(doc(db, "estimates", id), updateData);
-    }, []);
+    };
 
-    const deleteEstimate = useCallback(async (id: string): Promise<void> => {
+    const deleteEstimate = async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "estimates", id));
-    }, []);
+    };
 
-    const markAsSent = useCallback(async (id: string): Promise<void> => {
+    const markAsSent = async (id: string): Promise<void> => {
         await updateDoc(doc(db, "estimates", id), { status: "sent", updatedAt: serverTimestamp() });
-    }, []);
+    };
 
     // FIX BLE-002: Validate expiry date before accepting
-    const markAsAccepted = useCallback(async (id: string): Promise<void> => {
+    const markAsAccepted = async (id: string): Promise<void> => {
         const estimateDoc = await getDoc(doc(db, "estimates", id));
         if (!estimateDoc.exists()) throw new Error("Estimate not found");
 
@@ -180,70 +189,67 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
             acceptedAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });
-    }, []);
+    };
 
-    const markAsDeclined = useCallback(async (id: string): Promise<void> => {
+    const markAsDeclined = async (id: string): Promise<void> => {
         await updateDoc(doc(db, "estimates", id), { status: "declined", updatedAt: serverTimestamp() });
-    }, []);
+    };
 
     // FIX EST-002: Convert to invoice with duplicate check
-    const convertToInvoice = useCallback(
-        async (id: string): Promise<string> => {
-            if (!profile?.orgId) throw new Error("No organization");
+    const convertToInvoice = async (id: string): Promise<string> => {
+        if (!profile?.orgId) throw new Error("No organization");
 
-            const estimateDoc = await getDoc(doc(db, "estimates", id));
-            if (!estimateDoc.exists()) throw new Error("Estimate not found");
+        const estimateDoc = await getDoc(doc(db, "estimates", id));
+        if (!estimateDoc.exists()) throw new Error("Estimate not found");
 
-            const estimate = estimateDoc.data() as Estimate;
+        const estimate = estimateDoc.data() as Estimate;
 
-            // Check if already converted
-            if (estimate.convertedToInvoiceId) {
-                throw new Error("Estimate already converted to invoice: " + estimate.convertedToInvoiceId);
-            }
+        // Check if already converted
+        if (estimate.convertedToInvoiceId) {
+            throw new Error("Estimate already converted to invoice: " + estimate.convertedToInvoiceId);
+        }
 
-            // Check if accepted
-            if (estimate.status !== "accepted") {
-                throw new Error("Only accepted estimates can be converted to invoices");
-            }
+        // Check if accepted
+        if (estimate.status !== "accepted") {
+            throw new Error("Only accepted estimates can be converted to invoices");
+        }
 
-            // Generate invoice number
-            const invNumber = `INV-${Date.now().toString().slice(-6).padStart(6, "0")}`;
+        // Generate invoice number
+        const invNumber = `INV-${Date.now().toString().slice(-6).padStart(6, "0")}`;
 
-            // Create invoice from estimate
-            const invoiceRef = await addDoc(collection(db, "invoices"), {
-                number: invNumber,
-                customerId: estimate.customerId,
-                customerName: estimate.customerName,
-                items: estimate.items,
-                subtotal: estimate.subtotal,
-                taxTotal: estimate.taxTotal,
-                total: estimate.total,
-                amountPaid: 0,
-                amountDue: estimate.total,
-                discount: estimate.discount,
-                status: "draft",
-                date: serverTimestamp(),
-                dueDate: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)), // 30 days
-                currency: estimate.currency || "USD",
-                fromEstimateId: id,
-                fromEstimateNumber: estimate.number,
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                createdBy: profile.uid,
-            });
+        // Create invoice from estimate
+        const invoiceRef = await addDoc(collection(db, "invoices"), {
+            number: invNumber,
+            customerId: estimate.customerId,
+            customerName: estimate.customerName,
+            items: estimate.items,
+            subtotal: estimate.subtotal,
+            taxTotal: estimate.taxTotal,
+            total: estimate.total,
+            amountPaid: 0,
+            amountDue: estimate.total,
+            discount: estimate.discount,
+            status: "draft",
+            date: serverTimestamp(),
+            dueDate: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)), // 30 days
+            currency: estimate.currency || "USD",
+            fromEstimateId: id,
+            fromEstimateNumber: estimate.number,
+            orgId: profile.orgId,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            createdBy: profile.uid,
+        });
 
-            // Update estimate with conversion reference
-            await updateDoc(doc(db, "estimates", id), {
-                convertedToInvoiceId: invoiceRef.id,
-                convertedAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-            });
+        // Update estimate with conversion reference
+        await updateDoc(doc(db, "estimates", id), {
+            convertedToInvoiceId: invoiceRef.id,
+            convertedAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
 
-            return invoiceRef.id;
-        },
-        [profile?.orgId, profile?.uid]
-    );
+        return invoiceRef.id;
+    };
 
     // Calculate estimate stats
     const estimateStats = estimates.reduce(
@@ -290,6 +296,7 @@ export function useProposals(options: UseProposalsOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -332,61 +339,56 @@ export function useProposals(options: UseProposalsOptions = {}) {
         return () => unsubscribe();
     }, [profile?.orgId, status, customerId, leadId]);
 
-    // eslint-disable-next-line react-hooks/preserve-manual-memoization
-    const createProposal = useCallback(
-        async (data: ProposalFormData): Promise<string> => {
-            if (!profile?.orgId) throw new Error("No organization");
+    const createProposal = async (data: ProposalFormData): Promise<string> => {
+        if (!profile?.orgId) throw new Error("No organization");
 
-            // Generate proposal number
-            const propNumber = `PRO-${Date.now().toString().slice(-6).padStart(6, "0")}`;
+        // Generate proposal number
+        const propNumber = `PRO-${Date.now().toString().slice(-6).padStart(6, "0")}`;
 
-            // Calculate total if items provided
-            let total = 0;
-            if (data.items) {
-                total = data.items.reduce((sum, item) => sum + item.quantity * item.rate, 0);
-            }
+        // Calculate total if items provided
+        let total = 0;
+        if (data.items) {
+            total = data.items.reduce((sum, item) => sum + item.quantity * item.rate, 0);
+        }
 
-            const docRef = await addDoc(collection(db, "proposals"), {
-                ...data,
-                number: propNumber,
-                total,
-                status: "draft",
-                date: Timestamp.fromDate(data.date),
-                openTill: Timestamp.fromDate(data.openTill),
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                createdBy: profile.uid,
-            });
+        const docRef = await addDoc(collection(db, "proposals"), {
+            ...data,
+            number: propNumber,
+            total,
+            status: "draft",
+            date: Timestamp.fromDate(data.date),
+            openTill: Timestamp.fromDate(data.openTill),
+            orgId: profile.orgId,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            createdBy: profile.uid,
+        });
 
-            return docRef.id;
-        },
+        return docRef.id;
+    };
 
-        [profile?.orgId, profile?.uid]
-    );
-
-    const updateProposal = useCallback(async (id: string, data: Partial<ProposalFormData>): Promise<void> => {
+    const updateProposal = async (id: string, data: Partial<ProposalFormData>): Promise<void> => {
         const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
         if (data.date) updateData.date = Timestamp.fromDate(data.date);
         if (data.openTill) updateData.openTill = Timestamp.fromDate(data.openTill);
         await updateDoc(doc(db, "proposals", id), updateData);
-    }, []);
+    };
 
-    const deleteProposal = useCallback(async (id: string): Promise<void> => {
+    const deleteProposal = async (id: string): Promise<void> => {
         await deleteDoc(doc(db, "proposals", id));
-    }, []);
+    };
 
-    const markAsSent = useCallback(async (id: string): Promise<void> => {
+    const markAsSent = async (id: string): Promise<void> => {
         await updateDoc(doc(db, "proposals", id), { status: "sent", updatedAt: serverTimestamp() });
-    }, []);
+    };
 
-    const markAsAccepted = useCallback(async (id: string): Promise<void> => {
+    const markAsAccepted = async (id: string): Promise<void> => {
         await updateDoc(doc(db, "proposals", id), { status: "accepted", updatedAt: serverTimestamp() });
-    }, []);
+    };
 
-    const markAsDeclined = useCallback(async (id: string): Promise<void> => {
+    const markAsDeclined = async (id: string): Promise<void> => {
         await updateDoc(doc(db, "proposals", id), { status: "declined", updatedAt: serverTimestamp() });
-    }, []);
+    };
 
     // Calculate proposal stats
     const proposalStats = proposals.reduce(

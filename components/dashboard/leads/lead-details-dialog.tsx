@@ -35,11 +35,15 @@ import {
     ArrowRight,
     AlertTriangle,
     ExternalLink,
+    Calculator,
+    Briefcase,
+    Calendar as CalendarIcon,
+    DollarSign,
 } from "lucide-react";
-import type { Lead, Task as TaskType } from "@/lib/types";
+import type { Lead } from "@/lib/types";
 import { format } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useProposals } from "@/lib/hooks/use-sales";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useProposals, useEstimates } from "@/lib/hooks/use-sales";
 import { useTasks } from "@/lib/hooks/use-projects";
 import { useLeads } from "@/lib/hooks/use-leads";
 import { useStaff } from "@/lib/hooks/use-staff";
@@ -55,17 +59,17 @@ import { db } from "@/lib/firebase";
 import {
     collection,
     addDoc,
-    updateDoc,
     deleteDoc,
     doc,
     serverTimestamp,
     query,
     where,
     onSnapshot,
-    orderBy,
     Timestamp,
 } from "firebase/firestore";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { EditDealDialog } from "./edit-deal-dialog";
+import { CreateEstimateDialog } from "@/components/dashboard/sales/create-estimate-dialog";
 
 interface LeadDetailsSheetProps {
     open: boolean;
@@ -174,6 +178,7 @@ const COMPLETENESS_FIELDS: { key: keyof Lead | "address"; label: string }[] = [
 export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsSheetProps) {
     const [activeTab, setActiveTab] = useState("profile");
     const [showConvertWizard, setShowConvertWizard] = useState(false);
+    const [showCreateEstimate, setShowCreateEstimate] = useState(false);
 
     // Notes state
     const [noteText, setNoteText] = useState("");
@@ -201,8 +206,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     // Hooks
     const { profile } = useUserProfile();
     const { proposals } = useProposals({ leadId: lead?.id });
-    const { tasks, createTask } = useTasks();
-    const { convertToCustomer, updateLead } = useLeads();
+    const { estimates } = useEstimates({ leadId: lead?.id });
+    const { tasks } = useTasks();
+    const { convertToCustomer } = useLeads();
     const { staff } = useStaff();
 
     // Filter tasks related to this lead
@@ -276,6 +282,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                 createdBy: profile.uid,
             });
             setNoteText("");
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("Failed to save note:", error);
             setError(`Failed to save note: ${error.message || "Unknown error"}`);
@@ -316,6 +323,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
             setReminderDesc("");
             setReminderDate(undefined);
             setShowReminderDialog(false);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("Failed to save reminder:", error);
             setError(`Failed to save reminder: ${error.message || "Unknown error"}`);
@@ -413,6 +421,18 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
                                     <User className="h-4 w-4" /> Profile
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="estimates"
+                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
+                                >
+                                    <Calculator className="h-4 w-4" /> Estimates
+                                    <Badge
+                                        variant="secondary"
+                                        className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
+                                    >
+                                        {estimates.length}
+                                    </Badge>
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="proposals"
@@ -662,6 +682,64 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         )}
                                     </div>
 
+                                    {/* Deal Details Section */}
+                                    <div className="p-4 bg-white border rounded-lg shadow-sm">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <Briefcase className="h-5 w-5 text-indigo-600" />
+                                                <h3 className="font-semibold text-gray-900">Deal Details</h3>
+                                            </div>
+                                            <EditDealDialog
+                                                lead={lead}
+                                                trigger={
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                    >
+                                                        {lead.deal ? "Edit" : "Add Details"}
+                                                    </Button>
+                                                }
+                                            />
+                                        </div>
+                                        {lead.deal ? (
+                                            <div className="space-y-3">
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="p-2 bg-gray-50 rounded border">
+                                                        <div className="text-xs text-gray-500">Value</div>
+                                                        <div className="font-medium flex items-center">
+                                                            <DollarSign className="h-3 w-3 mr-1 text-green-600" />
+                                                            {lead.deal.value?.toLocaleString() || "0"}
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-2 bg-gray-50 rounded border">
+                                                        <div className="text-xs text-gray-500">Close Date</div>
+                                                        <div className="font-medium flex items-center">
+                                                            <CalendarIcon className="h-3 w-3 mr-1 text-gray-400" />
+                                                            {lead.deal.expectedCloseDate
+                                                                ? format(
+                                                                      lead.deal.expectedCloseDate instanceof Timestamp
+                                                                          ? lead.deal.expectedCloseDate.toDate()
+                                                                          : lead.deal.expectedCloseDate,
+                                                                      "MMM d, yyyy"
+                                                                  )
+                                                                : "-"}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {lead.deal.description && (
+                                                    <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded border line-clamp-2">
+                                                        {lead.deal.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-4 bg-gray-50 rounded border border-dashed">
+                                                <p className="text-xs text-gray-500">No deal details added.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
                                     {/* Data Completeness & Related Items */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {/* Data Completeness */}
@@ -676,6 +754,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 const complete = COMPLETENESS_FIELDS.filter((f) => {
                                                     if (f.key === "address")
                                                         return lead.address?.street || lead.address?.city;
+                                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                                     return !!(lead as any)[f.key];
                                                 }).length;
                                                 const percent = Math.round(
@@ -708,7 +787,8 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                 const hasValue =
                                                                     field.key === "address"
                                                                         ? lead.address?.street || lead.address?.city
-                                                                        : !!(lead as any)[field.key];
+                                                                        : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                                          !!(lead as any)[field.key];
                                                                 return (
                                                                     <div
                                                                         key={field.key}
@@ -926,6 +1006,60 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             </div>
                                         </div>
                                     )}
+                                </TabsContent>
+
+                                <TabsContent value="estimates" className="m-0">
+                                    <div className="flex justify-end mb-4">
+                                        <Button onClick={() => setShowCreateEstimate(true)} size="sm">
+                                            <Plus className="mr-2 h-4 w-4" /> Create Estimate
+                                        </Button>
+                                    </div>
+
+                                    {/* Estimate List */}
+                                    <div className="space-y-2">
+                                        {estimates.length === 0 ? (
+                                            <div className="text-center py-8 bg-white border rounded-lg border-dashed">
+                                                <Calculator className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                                                <p className="text-sm text-gray-500">No estimates found.</p>
+                                            </div>
+                                        ) : (
+                                            estimates.map((est) => (
+                                                <div
+                                                    key={est.id}
+                                                    className="p-3 bg-white border rounded-lg shadow-sm flex justify-between items-center group hover:border-blue-200 transition-colors"
+                                                >
+                                                    <div>
+                                                        <div className="font-medium text-sm">{est.number}</div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {format(
+                                                                est.date instanceof Timestamp
+                                                                    ? est.date.toDate()
+                                                                    : est.date,
+                                                                "MMM d, yyyy"
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-medium text-sm">
+                                                            {new Intl.NumberFormat("en-US", {
+                                                                style: "currency",
+                                                                currency: est.currency,
+                                                            }).format(est.total)}
+                                                        </div>
+                                                        <Badge variant="outline" className="text-xs h-5 capitalize">
+                                                            {est.status}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+
+                                    <CreateEstimateDialog
+                                        open={showCreateEstimate}
+                                        onOpenChange={setShowCreateEstimate}
+                                        leadId={lead.id}
+                                    />
                                 </TabsContent>
 
                                 {/* Proposals Tab */}
@@ -1355,7 +1489,6 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
             </SheetContent>
 
             {/* Conversion Wizard */}
-            {/* Conversion Wizard */}
             <ConvertLeadWizard
                 open={showConvertWizard}
                 onClose={() => setShowConvertWizard(false)}
@@ -1385,7 +1518,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                             </div>
                             <div className="space-y-2">
                                 <Label>Priority</Label>
-                                <Select value={taskPriority} onValueChange={(v: any) => setTaskPriority(v)}>
+                                <Select value={taskPriority} onValueChange={(v) => setTaskPriority(v)}>
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>

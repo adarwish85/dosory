@@ -113,8 +113,6 @@ export const leadFormSchema = z.object({
     deal: dealSchema.optional(),
 });
 
-
-
 // ============================================
 // Invoice Schema
 // ============================================
@@ -140,18 +138,23 @@ export const invoiceFormSchema = z.object({
 
 export const estimateStatusSchema = z.enum(["draft", "sent", "viewed", "accepted", "declined", "expired"]);
 
-export const estimateFormSchema = z.object({
-    customerId: z.string().min(1, "Customer is required"),
-    leadId: z.string().optional(),
-    date: z.date(),
-    expiryDate: z.date(),
-    currency: z.string().min(1, "Currency is required"),
-    items: z.array(lineItemSchema).min(1, "At least one item is required"),
-    discount: discountSchema.optional(),
-    notes: z.string().optional(),
-    terms: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-});
+export const estimateFormSchema = z
+    .object({
+        customerId: z.string().optional(),
+        leadId: z.string().optional(),
+        date: z.date(),
+        expiryDate: z.date(),
+        currency: z.string().min(1, "Currency is required"),
+        items: z.array(lineItemSchema).min(1, "At least one item is required"),
+        discount: discountSchema.optional(),
+        notes: z.string().optional(),
+        terms: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+    })
+    .refine((data) => data.customerId || data.leadId, {
+        message: "Either Customer or Lead is required",
+        path: ["customerId"],
+    });
 
 // ============================================
 // Proposal Schema
@@ -264,22 +267,30 @@ export const taskFormSchema = z.object({
     isPublic: z.boolean(),
     billable: z.boolean(),
     hourlyRate: z.number().optional(),
-    relatedTo: z.object({
-        type: z.enum(["customer", "lead", "invoice", "estimate", "proposal", "contract"]),
-        id: z.string(),
-    }).optional(),
-    repeat: z.object({
-        frequency: z.enum(["daily", "weekly", "monthly", "yearly", "custom"]),
-        interval: z.number().optional(),
-        endDate: z.any().optional(), // Timestamp or Date
-        days: z.array(z.number()).optional(),
-    }).optional(),
-    checklist: z.array(z.object({
-        id: z.string(),
-        text: z.string(),
-        completed: z.boolean(),
-        assignee: z.string().optional(),
-    })).optional(),
+    relatedTo: z
+        .object({
+            type: z.enum(["customer", "lead", "invoice", "estimate", "proposal", "contract"]),
+            id: z.string(),
+        })
+        .optional(),
+    repeat: z
+        .object({
+            frequency: z.enum(["daily", "weekly", "monthly", "yearly", "custom"]),
+            interval: z.number().optional(),
+            endDate: z.any().optional(), // Timestamp or Date
+            days: z.array(z.number()).optional(),
+        })
+        .optional(),
+    checklist: z
+        .array(
+            z.object({
+                id: z.string(),
+                text: z.string(),
+                completed: z.boolean(),
+                assignee: z.string().optional(),
+            })
+        )
+        .optional(),
 });
 
 // ============================================
@@ -541,10 +552,12 @@ export const reminderFormSchema = z.object({
     assignedTo: z.string().min(1, "Assignee is required"),
     description: z.string().optional(),
     sendEmail: z.boolean(),
-    relatedTo: z.object({
-        type: z.enum(["customer", "lead", "invoice", "estimate", "proposal", "contract"]),
-        id: z.string(),
-    }).optional(),
+    relatedTo: z
+        .object({
+            type: z.enum(["customer", "lead", "invoice", "estimate", "proposal", "contract"]),
+            id: z.string(),
+        })
+        .optional(),
 });
 
 // ============================================
