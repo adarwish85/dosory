@@ -287,6 +287,34 @@ service cloud.firestore {
       allow update, delete: if canModifyByOrg();
     }
 
+    // Milestones
+    match /milestones/{milestoneId} {
+      allow read: if canReadByOrg();
+      allow create: if canCreateByOrg();
+      allow update, delete: if canModifyByOrg();
+    }
+
+    // Timesheets
+    match /timesheets/{timesheetId} {
+      allow read: if canReadByOrg();
+      allow create: if canCreateByOrg();
+      allow update, delete: if canModifyByOrg();
+    }
+
+    // Project Files
+    match /project_files/{fileId} {
+      allow read: if canReadByOrg();
+      allow create: if canCreateByOrg();
+      allow update, delete: if canModifyByOrg();
+    }
+
+    // Project Discussions
+    match /project_discussions/{discussionId} {
+      allow read: if canReadByOrg();
+      allow create: if canCreateByOrg();
+      allow update, delete: if canModifyByOrg();
+    }
+
     // ============================================
     // SUPPORT
     // ============================================

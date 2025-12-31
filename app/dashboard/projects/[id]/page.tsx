@@ -30,8 +30,12 @@ export default function ProjectOverviewPage() {
 
     if (!project) return <div>Project not found</div>;
 
-    const daysLeft = project.deadline
-        ? Math.ceil((project.deadline.toDate().getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    // Safe deadline extraction - handle both Timestamp and Date objects
+    const deadlineDate = project.deadline
+        ? (typeof project.deadline.toDate === 'function' ? project.deadline.toDate() : new Date(project.deadline))
+        : null;
+    const daysLeft = deadlineDate
+        ? Math.ceil((deadlineDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
         : 0;
 
     return (
@@ -79,7 +83,7 @@ export default function ProjectOverviewPage() {
                             <div>
                                 <p className="text-muted-foreground">Deadline</p>
                                 <p className={`font-medium ${daysLeft < 0 ? "text-destructive" : ""}`}>
-                                    {project.deadline ? format(project.deadline.toDate(), "dd/MM/yyyy") : "-"}
+                                    {deadlineDate ? format(deadlineDate, "dd/MM/yyyy") : "-"}
                                 </p>
                             </div>
                         </div>
