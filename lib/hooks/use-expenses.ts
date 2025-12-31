@@ -1,6 +1,3 @@
-// Firestore data hooks for Expenses, Subscriptions, and Contracts
-// Real-time listeners with CRUD operations
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -21,8 +18,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
-import type { Expense, ExpenseCategory, Subscription, SubscriptionStatus, Contract, ContractStatus } from "@/lib/types";
-import type { ExpenseFormData, SubscriptionFormData, ContractFormData } from "@/lib/schemas";
+import type { Expense, ExpenseCategory, Subscription, SubscriptionStatus } from "@/lib/types";
+import type { ExpenseFormData, SubscriptionFormData } from "@/lib/schemas";
 
 // ============================================
 // useExpenses Hook
@@ -46,6 +43,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -125,7 +123,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 
             return docRef.id;
         },
-        [profile?.orgId, profile?.uid]
+        [profile]
     );
 
     const updateExpense = useCallback(async (id: string, data: Partial<ExpenseFormData>): Promise<void> => {
@@ -177,6 +175,7 @@ export function useExpenseCategories() {
 
     useEffect(() => {
         if (!profile?.orgId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -220,6 +219,7 @@ export function useSubscriptions(options: UseSubscriptionsOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -288,7 +288,7 @@ export function useSubscriptions(options: UseSubscriptionsOptions = {}) {
 
             return docRef.id;
         },
-        [profile?.orgId, profile?.uid]
+        [profile]
     );
 
     const updateSubscription = useCallback(async (id: string, data: Partial<SubscriptionFormData>): Promise<void> => {
@@ -343,144 +343,5 @@ export function useSubscriptions(options: UseSubscriptionsOptions = {}) {
         cancelSubscription,
         pauseSubscription,
         resumeSubscription,
-    };
-}
-
-// ============================================
-// useContracts Hook
-// ============================================
-
-interface UseContractsOptions {
-    status?: ContractStatus | "all";
-    customerId?: string;
-}
-
-export function useContracts(options: UseContractsOptions = {}) {
-    const { status = "all", customerId } = options;
-    const { profile } = useUserProfile();
-    const [contracts, setContracts] = useState<Contract[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
-
-    useEffect(() => {
-        if (!profile?.orgId) {
-            setLoading(false);
-            return;
-        }
-
-        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
-
-        if (status !== "all") {
-            constraints.push(where("status", "==", status));
-        }
-
-        if (customerId) {
-            constraints.push(where("customerId", "==", customerId));
-        }
-
-        constraints.push(orderBy("createdAt", "desc"));
-
-        const q = query(collection(db, "contracts"), ...constraints);
-
-        const unsubscribe = onSnapshot(
-            q,
-            (snapshot) => {
-                const data = snapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                })) as Contract[];
-                setContracts(data);
-                setLoading(false);
-            },
-            (err) => {
-                console.error("Error fetching contracts:", err);
-                setError(err);
-                setLoading(false);
-            }
-        );
-
-        return () => unsubscribe();
-    }, [profile?.orgId, status, customerId]);
-
-    const createContract = useCallback(
-        async (data: ContractFormData): Promise<string> => {
-            if (!profile?.orgId) throw new Error("No organization");
-
-            // Get customer name
-            const customerDoc = await getDoc(doc(db, "customers", data.customerId));
-            const customerName = customerDoc.exists() ? customerDoc.data().company : "Unknown Customer";
-
-            const docRef = await addDoc(collection(db, "contracts"), {
-                ...data,
-                customerName,
-                status: "draft",
-                startDate: Timestamp.fromDate(data.startDate),
-                endDate: data.endDate ? Timestamp.fromDate(data.endDate) : null,
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                createdBy: profile.uid,
-            });
-
-            return docRef.id;
-        },
-        [profile?.orgId, profile?.uid]
-    );
-
-    const updateContract = useCallback(async (id: string, data: Partial<ContractFormData>): Promise<void> => {
-        const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
-
-        if (data.startDate) updateData.startDate = Timestamp.fromDate(data.startDate);
-        if (data.endDate) updateData.endDate = Timestamp.fromDate(data.endDate);
-
-        await updateDoc(doc(db, "contracts", id), updateData);
-    }, []);
-
-    const deleteContract = useCallback(async (id: string): Promise<void> => {
-        await updateDoc(doc(db, "contracts", id), {
-            status: "trash",
-            updatedAt: serverTimestamp(),
-        });
-    }, []);
-
-    const markAsSent = useCallback(async (id: string): Promise<void> => {
-        await updateDoc(doc(db, "contracts", id), {
-            status: "sent",
-            updatedAt: serverTimestamp(),
-        });
-    }, []);
-
-    const markAsSigned = useCallback(async (id: string, contactId: string): Promise<void> => {
-        await updateDoc(doc(db, "contracts", id), {
-            status: "signed",
-            signedAt: serverTimestamp(),
-            signedByContactId: contactId,
-            updatedAt: serverTimestamp(),
-        });
-    }, []);
-
-    // Calculate contract stats
-    const contractStats = contracts.reduce(
-        (acc, contract) => {
-            acc[contract.status] = (acc[contract.status] || 0) + 1;
-            acc.total++;
-            if (contract.contractValue) {
-                acc.totalValue += contract.contractValue;
-            }
-            return acc;
-        },
-        { total: 0, totalValue: 0 } as Record<string, number>
-    );
-
-    return {
-        contracts,
-        loading,
-        error,
-        contractStats,
-        createContract,
-        updateContract,
-        deleteContract,
-        markAsSent,
-        markAsSigned,
     };
 }

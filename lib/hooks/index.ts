@@ -13,7 +13,8 @@ export { useInvoices, useInvoice } from "./use-invoices";
 export { useProjects, useProject, useTasks, useTask } from "./use-projects";
 
 // Expenses & Contracts
-export { useExpenses, useExpenseCategories, useContracts } from "./use-expenses";
+export { useExpenses, useExpenseCategories } from "./use-expenses";
+export { useContracts, useContract } from "./use-contracts";
 
 // Support & Knowledge Base
 export { useTickets, useTicketReplies, useDepartments, useKnowledgeBase } from "./use-support";

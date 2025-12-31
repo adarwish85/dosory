@@ -114,6 +114,7 @@ export interface Invoice extends BaseEntity {
     customerId: string;
     customerName: string;
     projectId?: string;
+    projectName?: string; // Denormalized for display
     date: Timestamp;
     dueDate: Timestamp;
     status: InvoiceStatus;
@@ -132,6 +133,12 @@ export interface Invoice extends BaseEntity {
     sentAt?: Timestamp;
     viewedAt?: Timestamp;
     paidAt?: Timestamp;
+    senderName?: string;
+    senderAddress?: string[];
+    billToName?: string;
+    billToAddress?: string[];
+    shipToName?: string;
+    shipToAddress?: string[];
 }
 
 export type InvoiceStatus = "draft" | "sent" | "viewed" | "partial" | "paid" | "overdue" | "cancelled";

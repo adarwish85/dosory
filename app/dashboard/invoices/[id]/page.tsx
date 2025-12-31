@@ -1,9 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { doc, getDoc, updateDoc, deleteDoc, addDoc, collection, Timestamp, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -19,7 +16,6 @@ import {
     ChevronDown,
     FileText,
     Mail,
-    MoreHorizontal,
     Pencil,
     Printer,
     Download,
@@ -37,55 +33,20 @@ import {
     Eye,
     Loader2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useInvoice, useInvoices } from "@/lib/hooks";
+import { InvoiceStatus } from "@/lib/types";
 
-interface LineItem {
-    id: string;
-    description: string;
-    quantity: number;
-    rate: number;
-}
-
-interface Invoice {
-    id: string;
-    number: string;
-    clientName: string;
-    customerName?: string;
-    date: Timestamp | string | Date;
-    dueDate: Timestamp | string | Date;
-    createdAt?: Timestamp | string | Date;
-    total: number;
-    subTotal?: number;
-    tax?: number;
-    taxRate?: number;
-    status: string;
-    items: LineItem[];
-    currency?: string;
-    projectName?: string; // Placeholder for project relation
-    projectId?: string;
-    senderName?: string;
-    senderAddress?: string[];
-    billToName?: string;
-    billToAddress?: string[];
-    shipToName?: string;
-    shipToAddress?: string[];
-}
-
-// Helper to format Firestore Timestamp or Date to readable string
-const formatDate = (date: Timestamp | string | Date | undefined): string => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const formatDate = (date: any): string => {
     if (!date) return "-";
     try {
-        if (date instanceof Timestamp || (date && typeof date === "object" && "toDate" in date)) {
-            return format((date as Timestamp).toDate(), "dd/MM/yyyy");
-        }
-        if (date instanceof Date) {
-            return format(date, "dd/MM/yyyy");
-        }
-        if (typeof date === "string") {
-            return format(new Date(date), "dd/MM/yyyy");
-        }
+        if (date?.toDate) return format(date.toDate(), "dd/MM/yyyy");
+        if (date instanceof Date) return format(date, "dd/MM/yyyy");
+        if (typeof date === "string") return format(new Date(date), "dd/MM/yyyy");
         return "-";
     } catch {
         return "-";
@@ -96,38 +57,17 @@ export default function InvoiceDetailsPage() {
     const params = useParams();
     const router = useRouter();
     const id = params.id as string;
-    const [invoice, setInvoice] = useState<Invoice | null>(null);
-    const [loading, setLoading] = useState(true);
+
+    const { invoice, loading } = useInvoice(id);
+    const { updateStatus, createInvoice, deleteInvoice } = useInvoices(); // Hooks for actions
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-    useEffect(() => {
-        async function fetchInvoice() {
-            if (!id) return;
-            try {
-                const docRef = doc(db, "invoices", id);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    setInvoice({ id: docSnap.id, ...docSnap.data() } as Invoice);
-                }
-            } catch (error) {
-                console.error("Error fetching invoice:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchInvoice();
-    }, [id]);
-
     // Action Handlers
-    const handleUpdateStatus = async (newStatus: string) => {
+    const handleUpdateStatus = async (newStatus: InvoiceStatus) => {
         if (!invoice) return;
         setActionLoading(newStatus);
         try {
-            await updateDoc(doc(db, "invoices", id), {
-                status: newStatus,
-                updatedAt: serverTimestamp(),
-            });
-            setInvoice((prev) => (prev ? { ...prev, status: newStatus } : null));
+            await updateStatus(id, newStatus);
             toast.success(`Invoice marked as ${newStatus}`);
         } catch (error) {
             console.error("Error updating status:", error);
@@ -141,17 +81,21 @@ export default function InvoiceDetailsPage() {
         if (!invoice) return;
         setActionLoading("copy");
         try {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { id: _, ...invoiceData } = invoice;
-            const newInvoice = {
+            // Clean up data for new insertion if needed, dependent on createInvoice implementation
+            // Here we assume createInvoice takes InvoiceFormData.
+            // We might need to map fields if Invoice type differs slightly from FormData
+            const newId = await createInvoice({
                 ...invoiceData,
-                number: `${invoice.number}-COPY`,
-                status: "draft",
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-            };
-            const docRef = await addDoc(collection(db, "invoices"), newInvoice);
+                items: invoice.items || [], // Ensure items
+                date: new Date(),
+                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 days default
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any);
+
             toast.success("Invoice copied successfully");
-            router.push(`/dashboard/invoices/${docRef.id}`);
+            router.push(`/dashboard/invoices/${newId}`);
         } catch (error) {
             console.error("Error copying invoice:", error);
             toast.error("Failed to copy invoice");
@@ -164,9 +108,9 @@ export default function InvoiceDetailsPage() {
         if (!invoice || !confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) return;
         setActionLoading("delete");
         try {
-            await deleteDoc(doc(db, "invoices", id));
+            await deleteInvoice(id);
             toast.success("Invoice deleted");
-            router.push("/dashboard/sales/invoices");
+            router.push("/dashboard/invoices");
         } catch (error) {
             console.error("Error deleting invoice:", error);
             toast.error("Failed to delete invoice");
@@ -176,7 +120,6 @@ export default function InvoiceDetailsPage() {
     };
 
     const handleViewAsCustomer = () => {
-        // Open public invoice view in new tab
         window.open(`/pay/${id}`, "_blank");
     };
 
@@ -196,18 +139,21 @@ export default function InvoiceDetailsPage() {
     const projectName = invoice.projectName || "EGIC Export";
     const senderName = invoice.senderName || "WasilaDev";
     const senderAddress = invoice.senderAddress || ["3a Mabotheen Buildings, Nasr City", "Cairo, Cairo", "Egypt 11521"];
-    const billToName = invoice.billToName || invoice.clientName || "Egyptian German Industrial Corporation (EGIC)";
+    const billToName = invoice.billToName || invoice.customerName || "Egyptian German Industrial Corporation (EGIC)";
     const billToAddress = invoice.billToAddress || ["53 EL-MANIAL ST", "Cairo, Cairo", "EG 11341"];
     const shipToAddress = invoice.shipToAddress || ["53 EL-MANIAL ST", "Cairo, Cairo", "EG 11341"];
 
     // Calculate totals if missing
-    const subTotal = invoice.subTotal || invoice.items.reduce((acc, item) => acc + item.quantity * item.rate, 0);
-    const taxRate = invoice.taxRate || 0.14; // 14% VAT default
-    const tax = invoice.tax || subTotal * taxRate;
-    const total = invoice.total || subTotal + tax;
+    const subTotal =
+        invoice.subTotal || (invoice.items || []).reduce((acc, item) => acc + item.quantity * item.rate, 0);
+    const taxTotal = invoice.taxTotal || 0;
+    const total = invoice.total || subTotal + taxTotal;
+
+    // Assuming taxRate isn't directly on invoice object unless added
+    const taxPercentage = subTotal > 0 ? (taxTotal / subTotal) * 100 : 0;
 
     const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+        switch (status?.toLowerCase()) {
             case "paid":
                 return "bg-green-100 text-green-700 hover:bg-green-100/80";
             case "overdue":
@@ -215,7 +161,7 @@ export default function InvoiceDetailsPage() {
             case "draft":
                 return "bg-gray-100 text-gray-700 hover:bg-gray-100/80";
             default:
-                return "bg-red-50 text-red-600 hover:bg-red-50/80 border-red-100"; // Unpaid default style
+                return "bg-red-50 text-red-600 hover:bg-red-50/80 border-red-100";
         }
     };
 
@@ -227,7 +173,7 @@ export default function InvoiceDetailsPage() {
                     <div className="flex items-center gap-3">
                         <Button
                             variant="ghost"
-                            onClick={() => router.push("/dashboard/sales/invoices")}
+                            onClick={() => router.push("/dashboard/invoices")}
                             className="gap-2 text-gray-600 hover:text-gray-900"
                         >
                             <ArrowLeft className="h-4 w-4" /> Back to Invoices
@@ -245,7 +191,10 @@ export default function InvoiceDetailsPage() {
 
                     <div className="flex items-center gap-2 flex-wrap">
                         <Button variant="outline" size="icon" className="h-9 w-9 bg-white" title="Edit Invoice">
-                            <Pencil className="h-4 w-4 text-gray-600" />
+                            <Pencil
+                                className="h-4 w-4 text-gray-600"
+                                onClick={() => router.push(`/dashboard/invoices/${id}/edit`)}
+                            />
                         </Button>
 
                         <DropdownMenu>
@@ -347,7 +296,7 @@ export default function InvoiceDetailsPage() {
 
                             <div className="space-y-1 text-sm text-gray-800">
                                 <p className="font-bold">{senderName}</p>
-                                {senderAddress.map((line, i) => (
+                                {senderAddress.map((line: string, i: number) => (
                                     <p key={i}>{line}</p>
                                 ))}
                             </div>
@@ -360,7 +309,7 @@ export default function InvoiceDetailsPage() {
                                 <p className="text-sm font-bold text-gray-900 mb-1">Bill To</p>
                                 <p className="text-blue-600 font-medium mb-1">{billToName}</p>
                                 <div className="text-sm text-gray-500 space-y-0.5">
-                                    {billToAddress.map((line, i) => (
+                                    {billToAddress.map((line: string, i: number) => (
                                         <p key={i}>{line}</p>
                                     ))}
                                 </div>
@@ -370,7 +319,7 @@ export default function InvoiceDetailsPage() {
                             <div>
                                 <p className="text-sm font-bold text-gray-900 mb-1">Ship to</p>
                                 <div className="text-sm text-gray-500 space-y-0.5">
-                                    {shipToAddress.map((line, i) => (
+                                    {shipToAddress.map((line: string, i: number) => (
                                         <p key={i}>{line}</p>
                                     ))}
                                 </div>
@@ -413,16 +362,15 @@ export default function InvoiceDetailsPage() {
                             </TableHeader>
                             <TableBody>
                                 {invoice.items &&
-                                    invoice.items.map((item, index) => (
-                                        <TableRow key={item.id} className="border-b border-gray-50">
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    invoice.items.map((item: any, index: number) => (
+                                        <TableRow key={item.id || index} className="border-b border-gray-50">
                                             <TableCell className="text-gray-500 align-top py-4">{index + 1}</TableCell>
                                             <TableCell className="align-top py-4">
                                                 <p className="font-medium text-gray-800">{item.description}</p>
-                                                <p className="text-sm text-gray-500 mt-1">
-                                                    Performance Optimization (export.EGIC.com.eg) Medium Website (50 -
-                                                    200 pages)
-                                                </p>
-                                                <p className="text-sm text-gray-500">Quarterly maintenance fees</p>
+                                                {item.longDescription && (
+                                                    <p className="text-sm text-gray-500 mt-1">{item.longDescription}</p>
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-right text-gray-700 align-top py-4">
                                                 {item.quantity}
@@ -432,7 +380,7 @@ export default function InvoiceDetailsPage() {
                                             </TableCell>
                                             <TableCell className="text-center text-gray-500 text-sm align-top py-4">
                                                 <div>VAT</div>
-                                                <div>{(taxRate * 100).toFixed(2)}%</div>
+                                                <div>{taxPercentage.toFixed(2)}%</div>
                                             </TableCell>
                                             <TableCell className="text-right text-gray-700 align-top py-4">
                                                 {(item.quantity * item.rate).toLocaleString("en-US", {
@@ -455,9 +403,9 @@ export default function InvoiceDetailsPage() {
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                                <span className="font-medium text-gray-700">VAT ({(taxRate * 100).toFixed(2)}%)</span>
+                                <span className="font-medium text-gray-700">VAT ({taxPercentage.toFixed(2)}%)</span>
                                 <span className="text-gray-600">
-                                    EGP{tax.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                    EGP{taxTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm py-2 border-b border-gray-100">

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // Added useSearchParams
-import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,48 +10,69 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useContracts, useCustomers } from "@/lib/hooks";
+import { useContract, useContracts, useCustomers } from "@/lib/hooks";
 import { ContractFormData } from "@/lib/schemas";
 import { toast } from "sonner";
+import { Timestamp } from "firebase/firestore";
 
-export default function CreateContractPage() {
+export default function EditContractPage() {
     const router = useRouter();
-    const searchParams = useSearchParams();
+    const params = useParams();
+    const id = params.id as string;
 
     // Hooks
-    const { createContract } = useContracts();
+    const { contract, loading: contractLoading } = useContract(id);
+    const { updateContract } = useContracts();
     const { customers, loading: customersLoading } = useCustomers({ limit: 1000, status: "active" });
 
     // Local State
-    const [selectedClientId, setSelectedClientId] = useState(searchParams.get("customerId") || "");
-    const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+    const [selectedClientId, setSelectedClientId] = useState("");
+    const [startDate, setStartDate] = useState<Date | undefined>();
     const [endDate, setEndDate] = useState<Date | undefined>();
     const [subject, setSubject] = useState("");
-    const [contractValue, setContractValue] = useState<string>("0"); // Store as string for input handling
+    const [contractValue, setContractValue] = useState<string>("0");
     const [description, setDescription] = useState("");
     const [content, setContent] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
+    // Initialize state when contract loads
+    useEffect(() => {
+        if (contract) {
+            setSelectedClientId(contract.customerId);
+            setSubject(contract.subject);
+            setContractValue(contract.contractValue?.toString() || "0");
+            setDescription(contract.description || "");
+            setContent(contract.content || "");
+
+            // Handle Dates (Firestore Timestamp or Date)
+            if (contract.startDate) {
+                const date =
+                    contract.startDate instanceof Timestamp
+                        ? contract.startDate.toDate()
+                        : new Date(contract.startDate);
+                setStartDate(date);
+            }
+            if (contract.endDate) {
+                const date =
+                    contract.endDate instanceof Timestamp ? contract.endDate.toDate() : new Date(contract.endDate);
+                setEndDate(date);
+            }
+        }
+    }, [contract]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!processSubmission()) return;
-    };
 
-    const processSubmission = async () => {
         if (!selectedClientId) {
             toast.error("Please select a client");
-            return false;
+            return;
         }
         if (!startDate) {
             toast.error("Start date is required");
-            return false;
-        }
-        if (!subject) {
-            toast.error("Subject is required");
-            return false;
+            return;
         }
 
         setSubmitting(true);
@@ -60,27 +80,25 @@ export default function CreateContractPage() {
             const formData: ContractFormData = {
                 subject,
                 customerId: selectedClientId,
-                startDate,
-                endDate,
+                startDate: startDate,
+                endDate: endDate,
                 contractValue: parseFloat(contractValue) || 0,
                 description,
-                content, // Content usually comes from a rich text editor, simplified here
+                content,
             };
 
-            await createContract(formData);
-            toast.success("Contract created successfully");
-            router.push("/dashboard/contracts");
-            return true;
+            await updateContract(id, formData);
+            toast.success("Contract updated successfully");
+            router.push(`/dashboard/contracts/${id}`);
         } catch (error) {
-            console.error("Error creating contract:", error);
-            toast.error("Failed to create contract");
-            return false;
+            console.error("Error updating contract:", error);
+            toast.error("Failed to update contract");
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (customersLoading) {
+    if (contractLoading || customersLoading) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
@@ -88,10 +106,17 @@ export default function CreateContractPage() {
         );
     }
 
+    if (!contract) {
+        return <div className="p-8 text-center text-gray-500">Contract not found.</div>;
+    }
+
     return (
         <div className="p-8 max-w-2xl mx-auto space-y-8">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Create Contract</h2>
+            <div className="flex items-center gap-4">
+                <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h2 className="text-3xl font-bold tracking-tight">Edit Contract</h2>
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -121,17 +146,11 @@ export default function CreateContractPage() {
                                     <SelectValue placeholder="Select a client" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {customers.length === 0 ? (
-                                        <div className="p-2 text-sm text-center text-gray-500">
-                                            No active clients found
-                                        </div>
-                                    ) : (
-                                        customers.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>
-                                                {c.company}
-                                            </SelectItem>
-                                        ))
-                                    )}
+                                    {customers.map((c) => (
+                                        <SelectItem key={c.id} value={c.id}>
+                                            {c.company}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -224,10 +243,10 @@ export default function CreateContractPage() {
                         <Button type="submit" disabled={submitting}>
                             {submitting ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...
                                 </>
                             ) : (
-                                "Create Contract"
+                                "Update Contract"
                             )}
                         </Button>
                     </div>
