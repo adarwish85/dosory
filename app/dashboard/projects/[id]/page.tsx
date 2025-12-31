@@ -32,7 +32,7 @@ export default function ProjectOverviewPage() {
 
     // Safe deadline extraction - handle both Timestamp and Date objects
     const deadlineDate = project.deadline
-        ? (typeof project.deadline.toDate === 'function' ? project.deadline.toDate() : new Date(project.deadline))
+        ? (typeof project.deadline.toDate === 'function' ? project.deadline.toDate() : null)
         : null;
     const daysLeft = deadlineDate
         ? Math.ceil((deadlineDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
