@@ -41,3 +41,12 @@ export { useOrganizationSettings, useOrganizationSettings as useSettings } from 
 
 // Currency Formatting
 export { useCurrency } from "./use-currency";
+
+// HR Module
+export { useDepartments as useHRDepartments, useJobTitles, useLeaveTypes, getDefaultLeaveTypes } from "./use-hr-settings";
+export { useEmployees, useEmployee, useCurrentEmployee, useTeamMembers } from "./use-employees";
+export { useAttendance, useWorkSchedules } from "./use-attendance";
+export { useLeaveRequests, useLeaveBalances, useTeamLeaveCalendar } from "./use-leaves";
+export { usePayrollInputs, usePayrollSummary } from "./use-payroll";
+export { usePerformanceNotes, ratingLabels, ratingColors, flagLabels, flagColors } from "./use-performance";
+export { useEmployeeDocuments } from "./use-employee-documents";

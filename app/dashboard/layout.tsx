@@ -102,7 +102,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     useEffect(() => {
         const saved = localStorage.getItem(RIGHT_SIDEBAR_KEY);
         if (saved !== null) {
-            setRightSidebarOpen(saved !== "true"); // saved "true" means collapsed, so inverse for open state
+            Promise.resolve().then(() => {
+                setRightSidebarOpen(saved !== "true"); // saved "true" means collapsed, so inverse for open state
+            });
         }
     }, []);
 
@@ -284,6 +286,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             icon: BarChart,
             module: "reports",
             children: [{ href: "/dashboard/reports", label: "Reports", module: "reports" }],
+        },
+        {
+            label: "HR",
+            icon: Users,
+            module: "hr",
+            children: [
+                { href: "/dashboard/hr/employees", label: "Employees", module: "hr" },
+                { href: "/dashboard/hr/attendance", label: "Attendance", module: "hr" },
+                { href: "/dashboard/hr/leaves", label: "Leaves", module: "hr" },
+                { href: "/dashboard/hr/payroll", label: "Payroll", module: "hr" },
+                { href: "/dashboard/hr/performance", label: "Performance", module: "hr" },
+                { href: "/dashboard/hr/documents", label: "Documents", module: "hr" },
+                { href: "/dashboard/hr/reports", label: "HR Reports", module: "hr" },
+            ],
         },
     ];
 

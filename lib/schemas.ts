@@ -652,3 +652,196 @@ export const discussionFormSchema = z.object({
 export type MilestoneFormData = z.infer<typeof milestoneFormSchema>;
 export type TimeLogFormData = z.infer<typeof timeLogSchema>;
 export type DiscussionFormData = z.infer<typeof discussionFormSchema>;
+
+// ============================================
+// HR Module Schemas
+// ============================================
+
+// Employee
+export const employmentTypeSchema = z.enum(["full_time", "part_time", "contractor"]);
+export const workLocationSchema = z.enum(["office", "remote", "hybrid"]);
+export const employeeStatusSchema = z.enum(["active", "on_leave", "terminated"]);
+export const hrRoleSchema = z.enum(["hr_admin", "manager", "employee"]);
+
+export const employeeFormSchema = z.object({
+    userId: z.string().optional(),
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.string().email("Valid email is required"),
+    phone: z.string().optional(),
+    employmentType: employmentTypeSchema,
+    departmentId: z.string().min(1, "Department is required"),
+    jobTitleId: z.string().min(1, "Job title is required"),
+    reportingManagerId: z.string().optional(),
+    hireDate: z.date(),
+    status: employeeStatusSchema,
+    workLocation: workLocationSchema,
+    hrRole: hrRoleSchema,
+});
+
+export type EmployeeFormData = z.infer<typeof employeeFormSchema>;
+
+// HR Department (renamed to avoid conflict with support module)
+export const hrDepartmentFormSchema = z.object({
+    name: z.string().min(1, "Department name is required"),
+    description: z.string().optional(),
+    managerId: z.string().optional(),
+    parentDepartmentId: z.string().optional(),
+});
+
+export type HRDepartmentFormData = z.infer<typeof hrDepartmentFormSchema>;
+
+// Job Title
+export const jobTitleFormSchema = z.object({
+    name: z.string().min(1, "Job title is required"),
+    description: z.string().optional(),
+    departmentId: z.string().optional(),
+    level: z.number().min(1).max(5).optional(),
+});
+
+export type JobTitleFormData = z.infer<typeof jobTitleFormSchema>;
+
+// Work Schedule
+export const workDaySchema = z.object({
+    enabled: z.boolean(),
+    startTime: z.string(),
+    endTime: z.string(),
+    breakMinutes: z.number().min(0),
+});
+
+export const workScheduleFormSchema = z.object({
+    employeeId: z.string().min(1, "Employee is required"),
+    name: z.string().min(1, "Schedule name is required"),
+    effectiveFrom: z.date(),
+    effectiveTo: z.date().optional(),
+    timezone: z.string(),
+    weeklySchedule: z.object({
+        sunday: workDaySchema,
+        monday: workDaySchema,
+        tuesday: workDaySchema,
+        wednesday: workDaySchema,
+        thursday: workDaySchema,
+        friday: workDaySchema,
+        saturday: workDaySchema,
+    }),
+    isDefault: z.boolean().optional(),
+});
+
+export type WorkScheduleFormData = z.infer<typeof workScheduleFormSchema>;
+
+// Attendance
+export const attendanceStatusSchema = z.enum(["present", "absent", "late", "early_leave", "on_leave", "holiday"]);
+
+export const attendanceLogFormSchema = z.object({
+    employeeId: z.string().min(1, "Employee is required"),
+    date: z.date(),
+    clockIn: z.date().optional(),
+    clockOut: z.date().optional(),
+    status: attendanceStatusSchema,
+    isManualEntry: z.boolean().optional(),
+    manualEntryReason: z.string().optional(),
+    notes: z.string().optional(),
+});
+
+export type AttendanceLogFormData = z.infer<typeof attendanceLogFormSchema>;
+
+// Leave Type
+export const leaveTypeFormSchema = z.object({
+    name: z.string().min(1, "Leave type name is required"),
+    code: z.string().min(1, "Leave code is required"),
+    description: z.string().optional(),
+    color: z.string().min(1, "Color is required"),
+    defaultDaysPerYear: z.number().min(0),
+    isPaid: z.boolean(),
+    requiresApproval: z.boolean(),
+    allowsHalfDay: z.boolean(),
+});
+
+export type LeaveTypeFormData = z.infer<typeof leaveTypeFormSchema>;
+
+// Leave Request
+export const leaveRequestStatusSchema = z.enum(["pending", "approved", "rejected", "cancelled"]);
+
+export const leaveRequestFormSchema = z.object({
+    leaveTypeId: z.string().min(1, "Leave type is required"),
+    startDate: z.date(),
+    endDate: z.date(),
+    isHalfDay: z.boolean().optional(),
+    halfDayType: z.enum(["morning", "afternoon"]).optional(),
+    reason: z.string().optional(),
+});
+
+export type LeaveRequestFormData = z.infer<typeof leaveRequestFormSchema>;
+
+// Payroll Input
+export const payFrequencySchema = z.enum(["monthly", "bi_weekly", "weekly"]);
+export const allowanceTypeSchema = z.enum(["housing", "transport", "meal", "phone", "other"]);
+export const deductionTypeSchema = z.enum(["tax", "insurance", "loan", "other"]);
+
+export const payrollAllowanceSchema = z.object({
+    id: z.string(),
+    type: allowanceTypeSchema,
+    name: z.string().min(1),
+    amount: z.number().min(0),
+    isRecurring: z.boolean(),
+});
+
+export const payrollDeductionSchema = z.object({
+    id: z.string(),
+    type: deductionTypeSchema,
+    name: z.string().min(1),
+    amount: z.number().min(0),
+    isRecurring: z.boolean(),
+});
+
+export const payrollInputFormSchema = z.object({
+    employeeId: z.string().min(1, "Employee is required"),
+    baseSalary: z.number().min(0, "Base salary must be positive"),
+    currency: z.string().min(1, "Currency is required"),
+    payFrequency: payFrequencySchema,
+    allowances: z.array(payrollAllowanceSchema),
+    deductions: z.array(payrollDeductionSchema),
+    overtimeRate: z.number().min(1).optional(),
+    effectiveFrom: z.date(),
+    effectiveTo: z.date().optional(),
+});
+
+export type PayrollInputFormData = z.infer<typeof payrollInputFormSchema>;
+
+// Performance Note
+export const performanceRatingSchema = z.union([
+    z.literal(1),
+    z.literal(2),
+    z.literal(3),
+    z.literal(4),
+    z.literal(5),
+]);
+export const performanceFlagSchema = z.enum(["promotion_candidate", "performance_concern", "none"]);
+
+export const performanceNoteFormSchema = z.object({
+    employeeId: z.string().min(1, "Employee is required"),
+    month: z.number().min(1).max(12),
+    year: z.number().min(2020),
+    rating: performanceRatingSchema.optional(),
+    flag: performanceFlagSchema.optional(),
+    notes: z.string().min(1, "Notes are required"),
+    projectId: z.string().optional(),
+    taskId: z.string().optional(),
+    incidentDescription: z.string().optional(),
+    isConfidential: z.boolean(),
+});
+
+export type PerformanceNoteFormData = z.infer<typeof performanceNoteFormSchema>;
+
+// Employee Document
+export const documentCategorySchema = z.enum(["contract", "id_document", "certificate", "other"]);
+
+export const employeeDocumentFormSchema = z.object({
+    employeeId: z.string().min(1, "Employee is required"),
+    name: z.string().min(1, "Document name is required"),
+    category: documentCategorySchema,
+    description: z.string().optional(),
+    expiryDate: z.date().optional(),
+});
+
+export type EmployeeDocumentFormData = z.infer<typeof employeeDocumentFormSchema>;
