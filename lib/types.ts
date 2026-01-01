@@ -324,6 +324,7 @@ export interface Project extends BaseEntity {
     tags?: string[];
     currency?: string;
     progress: number;
+    pinned?: boolean;
 }
 
 export type ProjectStatus = "not_started" | "in_progress" | "on_hold" | "cancelled" | "finished";
@@ -866,7 +867,7 @@ export interface Milestone extends BaseEntity {
 export interface TaskList extends BaseEntity {
     name: string;
     projectId: string;
-    milestoneId: string;  // Required - task lists must belong to a milestone
+    milestoneId: string; // Required - task lists must belong to a milestone
     order: number;
     color?: string;
     description?: string;
@@ -932,4 +933,3 @@ export interface DiscussionComment extends BaseEntity {
     userId: string;
     attachments?: string[];
 }
-

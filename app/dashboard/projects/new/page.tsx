@@ -43,10 +43,18 @@ export default function CreateProjectPage() {
             estimatedHours: 0,
             projectRate: 0,
             tags: [],
+            currency: "USD",
+            pinned: false,
         },
     });
 
-    const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        setValue,
+        watch,
+    } = form;
     const startDate = watch("startDate");
     const deadline = watch("deadline");
 
@@ -103,7 +111,9 @@ export default function CreateProjectPage() {
                     <CardContent className="grid gap-6">
                         {/* Customer Selection */}
                         <div className="grid gap-2">
-                            <Label htmlFor="customerId">Customer <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="customerId">
+                                Customer <span className="text-red-500">*</span>
+                            </Label>
                             <Select
                                 value={watch("customerId")}
                                 onValueChange={(val) => setValue("customerId", val, { shouldValidate: true })}
@@ -114,7 +124,9 @@ export default function CreateProjectPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {customersLoading ? (
-                                        <div className="p-2 flex items-center justify-center text-sm text-gray-500">Loading customers...</div>
+                                        <div className="p-2 flex items-center justify-center text-sm text-gray-500">
+                                            Loading customers...
+                                        </div>
                                     ) : (
                                         customers.map((c) => (
                                             <SelectItem key={c.id} value={c.id}>
@@ -129,7 +141,9 @@ export default function CreateProjectPage() {
 
                         {/* Project Name */}
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Project Name <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="name">
+                                Project Name <span className="text-red-500">*</span>
+                            </Label>
                             <Input
                                 id="name"
                                 placeholder="e.g. Website Redesign"
@@ -217,7 +231,7 @@ export default function CreateProjectPage() {
                             <Label htmlFor="status">Status</Label>
                             <Select
                                 value={watch("status")}
-                                onValueChange={(val: any) => setValue("status", val)}
+                                onValueChange={(val: ProjectFormData["status"]) => setValue("status", val)}
                             >
                                 <SelectTrigger>
                                     <SelectValue />
@@ -236,7 +250,7 @@ export default function CreateProjectPage() {
                             <Label htmlFor="billingType">Billing Type</Label>
                             <Select
                                 value={watch("billingType")}
-                                onValueChange={(val: any) => setValue("billingType", val)}
+                                onValueChange={(val: ProjectFormData["billingType"]) => setValue("billingType", val)}
                             >
                                 <SelectTrigger>
                                     <SelectValue />

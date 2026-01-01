@@ -18,10 +18,28 @@ import {
     Plus,
     MoreHorizontal,
     FileInput,
+    Pin,
+    Pencil,
+    Copy,
+    Download,
+    Trash,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { EditProjectDialog } from "@/components/dashboard/projects/edit-project-dialog";
+import { useState } from "react";
+import { useProjects } from "@/lib/hooks/use-projects";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { ProjectFormData } from "@/lib/schemas";
 
 export default function ProjectDetailLayout({ children }: { children: React.ReactNode }) {
     const params = useParams();
@@ -42,6 +60,10 @@ export default function ProjectDetailLayout({ children }: { children: React.Reac
         { name: "Sales", href: `/dashboard/projects/${projectId}/sales`, icon: Zap },
     ];
 
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const { updateProject, createProject, deleteProject } = useProjects();
+    const router = useRouter();
+
     if (loading) {
         return (
             <div className="space-y-6">
@@ -59,6 +81,61 @@ export default function ProjectDetailLayout({ children }: { children: React.Reac
         return <div>Project not found</div>;
     }
 
+    const handleDuplicateProject = async () => {
+        if (!project) return;
+        try {
+            // Simplified duplication: Copy main fields
+            const data: ProjectFormData = {
+                name: `${project.name} (Copy)`,
+                customerId: project.customerId,
+                description: project.description || "",
+                status: "not_started",
+                startDate: project.startDate ? project.startDate.toDate() : undefined,
+                deadline: project.deadline ? project.deadline.toDate() : undefined,
+                billingType: project.billingType,
+                projectRate: project.projectRate,
+                estimatedHours: project.estimatedHours,
+                currency: project.currency || "USD",
+                tags: project.tags,
+                members: project.members,
+                pinned: false,
+            };
+
+            const newId = await createProject(data);
+            toast.success("Project duplicated");
+            router.push(`/dashboard/projects/${newId}`);
+        } catch {
+            toast.error("Failed to duplicate project");
+        }
+    };
+
+    const handleExportProject = () => {
+        if (!project) return;
+        const data = JSON.stringify(project, null, 2);
+        const blob = new Blob([data], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `project-${project.name.toLowerCase().replace(/\s+/g, "-")}-${format(new Date(), "yyyy-MM-dd")}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("Project data exported");
+    };
+
+    const handleDeleteProject = async () => {
+        if (!confirm("Are you sure you want to delete this project? This action cannot be undone.")) return;
+
+        try {
+            await deleteProject(project.id);
+            toast.success("Project deleted");
+            router.push("/dashboard/projects");
+        } catch {
+            toast.error("Failed to delete project");
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -74,8 +151,8 @@ export default function ProjectDetailLayout({ children }: { children: React.Reac
                                 project.status === "finished"
                                     ? "default" // success not available by default
                                     : project.status === "in_progress"
-                                        ? "default"
-                                        : "secondary"
+                                      ? "default"
+                                      : "secondary"
                             }
                         >
                             {project.status.replace("_", " ")}
@@ -91,9 +168,36 @@ export default function ProjectDetailLayout({ children }: { children: React.Reac
                         <Plus className="h-4 w-4" />
                         New Task
                     </Button>
-                    <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem onClick={() => updateProject(project.id, { pinned: !project.pinned })}>
+                                <Pin className={cn("mr-2 h-4 w-4", project.pinned && "fill-current")} />
+                                {project.pinned ? "Unpin Project" : "Pin Project"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit Project
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleDuplicateProject}>
+                                <Copy className="mr-2 h-4 w-4" />
+                                Duplicate Project
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleExportProject}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Export Data
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-600" onClick={handleDeleteProject}>
+                                <Trash className="mr-2 h-4 w-4" />
+                                Delete Project
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
 
@@ -102,9 +206,7 @@ export default function ProjectDetailLayout({ children }: { children: React.Reac
                 <div className="flex overflow-x-auto no-scrollbar">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
-                        const isActive = tab.exact
-                            ? pathname === tab.href
-                            : pathname.startsWith(tab.href);
+                        const isActive = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
 
                         return (
                             <Link
@@ -127,6 +229,8 @@ export default function ProjectDetailLayout({ children }: { children: React.Reac
 
             {/* Content */}
             <div className="min-h-[500px]">{children}</div>
+
+            {project && <EditProjectDialog project={project} open={isEditOpen} onOpenChange={setIsEditOpen} />}
         </div>
     );
 }

@@ -258,8 +258,10 @@ export const projectFormSchema = z.object({
     billingType: projectBillingTypeSchema,
     projectRate: z.number().optional(),
     estimatedHours: z.number().optional(),
+    currency: z.string().optional(),
     members: z.array(projectMemberSchema).optional(),
     tags: z.array(z.string()).optional(),
+    pinned: z.boolean().optional(),
 });
 
 // ============================================

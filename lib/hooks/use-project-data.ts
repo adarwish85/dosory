@@ -1,4 +1,3 @@
-
 // Firestore data hooks for Project-related data
 // - Milestones (Kanban/List)
 // - Timesheets (Tracking)
@@ -38,7 +37,6 @@ export function useMilestones(projectId: string | undefined) {
 
     useEffect(() => {
         if (!profile?.orgId || !projectId) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -90,7 +88,16 @@ export function useMilestones(projectId: string | undefined) {
         await deleteDoc(doc(db, "milestones", id));
     }, []);
 
-    return { milestones, loading, createMilestone, updateMilestone, deleteMilestone };
+    const reorderMilestones = useCallback(async (items: { id: string; order: number }[]) => {
+        const batch = (await import("firebase/firestore")).writeBatch(db);
+        items.forEach(({ id, order }) => {
+            const ref = doc(db, "milestones", id);
+            batch.update(ref, { order, updatedAt: serverTimestamp() });
+        });
+        await batch.commit();
+    }, []);
+
+    return { milestones, loading, createMilestone, updateMilestone, deleteMilestone, reorderMilestones };
 }
 
 // ============================================
@@ -165,22 +172,25 @@ export function useTimesheets(projectId: string | undefined, taskId?: string) {
     );
 
     // Start Timer (create a log with no end time)
-    const startTimer = useCallback(async (taskId?: string, note?: string) => {
-        if (!profile?.orgId || !projectId) throw new Error("Missing context");
+    const startTimer = useCallback(
+        async (taskId?: string, note?: string) => {
+            if (!profile?.orgId || !projectId) throw new Error("Missing context");
 
-        return await addDoc(collection(db, "timesheets"), {
-            projectId,
-            taskId,
-            userId: profile.uid,
-            startTime: serverTimestamp(),
-            note,
-            billable: true,
-            duration: 0,
-            orgId: profile.orgId,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
-    }, [profile, projectId]);
+            return await addDoc(collection(db, "timesheets"), {
+                projectId,
+                taskId,
+                userId: profile.uid,
+                startTime: serverTimestamp(),
+                note,
+                billable: true,
+                duration: 0,
+                orgId: profile.orgId,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+        },
+        [profile, projectId]
+    );
 
     // Stop Timer (update the most recent active log)
     const stopTimer = useCallback(async (logId: string) => {
@@ -259,7 +269,7 @@ export function useProjectDiscussions(projectId: string | undefined) {
         async (discussionId: string, content: string) => {
             if (!profile?.orgId) throw new Error("No organization");
 
-            const discussion = discussions.find(d => d.id === discussionId);
+            const discussion = discussions.find((d) => d.id === discussionId);
             if (!discussion) throw new Error("Discussion not found");
 
             const newComment = {
@@ -295,7 +305,6 @@ export function useProjectFiles(projectId: string | undefined) {
 
     useEffect(() => {
         if (!profile?.orgId || !projectId) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
