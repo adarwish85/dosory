@@ -6,7 +6,6 @@ import { useMilestones } from "@/lib/hooks/use-project-data";
 import { useTaskLists, useTasks } from "@/lib/hooks";
 import { CreateMilestoneDialog } from "@/components/dashboard/projects/create-milestone-dialog";
 import { Button } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
