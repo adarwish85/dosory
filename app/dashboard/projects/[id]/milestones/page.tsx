@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useMilestones } from "@/lib/hooks/use-project-data";
 import { useTaskLists, useTasks } from "@/lib/hooks";
@@ -340,7 +340,7 @@ export default function MilestonesPage() {
     const { taskLists, taskListsByMilestone, createTaskList, deleteTaskList, updateTaskList } = useTaskLists({
         projectId,
     });
-    const { tasks, updateTask } = useTasks({ projectId });
+    const { tasks, updateTask, createTask } = useTasks({ projectId });
 
     // Drag state
     const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -348,6 +348,7 @@ export default function MilestonesPage() {
 
     // Edit dialog state
     const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [editName, setEditName] = useState("");
     const [editDescription, setEditDescription] = useState("");
     const [editDueDate, setEditDueDate] = useState("");
@@ -443,6 +444,31 @@ export default function MilestonesPage() {
         setImportTargetListId(listId);
         setImportTargetMilestoneId(milestoneId);
         setImportDialogOpen(true);
+    };
+
+    const handleAddTask = async (listId: string, name: string) => {
+        const list = taskLists.find((tl) => tl.id === listId);
+        if (!list) return;
+
+        try {
+            await createTask({
+                name,
+                projectId,
+                milestoneId: list.milestoneId,
+                taskListId: listId,
+                status: "not_started",
+                priority: "medium",
+                assignees: [],
+                followers: [],
+                tags: [],
+                isPublic: false,
+                billable: false,
+            });
+            toast.success("Task created");
+        } catch (error) {
+            console.error("Error creating task:", error);
+            toast.error("Failed to create task");
+        }
     };
 
     const handleImportTasks = async (taskIds: string[]) => {

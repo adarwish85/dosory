@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { taskFormSchema, type TaskFormData } from "@/lib/schemas";
-import { useTasks, useProjects, useTaskLists } from "@/lib/hooks";
+import { useTasks, useProjects, useTaskLists, useProject } from "@/lib/hooks";
 import { useMilestones } from "@/lib/hooks/use-project-data";
 import { useCustomers } from "@/lib/hooks/use-customers";
 import { useStaff } from "@/lib/hooks/use-staff";
@@ -34,6 +34,7 @@ export default function CreateTaskPage() {
     const { createTask } = useTasks();
     const { customers } = useCustomers({ status: "active" });
     const { projects } = useProjects({ status: "in_progress", customerId: customerIdParam || undefined });
+    const { project: contextProject } = useProject(projectIdParam || null); // Fetch context project
     const { staff } = useStaff();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,11 +57,28 @@ export default function CreateTaskPage() {
         },
     });
 
-    const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        setValue,
+        watch,
+        reset,
+    } = form;
     const customerId = watch("customerId");
     const projectId = watch("projectId");
     const milestoneId = watch("milestoneId");
     const selectedDueDate = watch("dueDate");
+
+    // Auto-fill context from fetched project
+    useEffect(() => {
+        if (contextProject) {
+            setValue("projectId", contextProject.id);
+            if (contextProject.customerId) {
+                setValue("customerId", contextProject.customerId);
+            }
+        }
+    }, [contextProject, setValue]);
 
     // Fetch milestones and task lists for selected project
     const { milestones } = useMilestones(projectId || "");
@@ -69,18 +87,18 @@ export default function CreateTaskPage() {
     // Filter projects based on selected customer
     const filteredProjects = useMemo(() => {
         if (!customerId) return projects;
-        return projects.filter(p => p.customerId === customerId);
+        return projects.filter((p) => p.customerId === customerId);
     }, [projects, customerId]);
 
     // Get task lists for selected milestone only
     const filteredTaskLists = useMemo(() => {
         if (!milestoneId) return [];
-        return taskLists.filter(tl => tl.milestoneId === milestoneId);
+        return taskLists.filter((tl) => tl.milestoneId === milestoneId);
     }, [taskLists, milestoneId]);
 
     // Find selected milestone to check due date
     const selectedMilestone = useMemo(() => {
-        return milestones.find(m => m.id === milestoneId);
+        return milestones.find((m) => m.id === milestoneId);
     }, [milestones, milestoneId]);
 
     // Check if due date is after milestone
@@ -121,90 +139,109 @@ export default function CreateTaskPage() {
     return (
         <div className="max-w-3xl mx-auto py-8 px-4">
             <div className="mb-6 flex items-center gap-2 text-gray-500 text-sm">
-                <Link
-                    href={customerIdParam ? `/dashboard/customers/${customerIdParam}/tasks` : projectIdParam ? `/dashboard/projects/${projectIdParam}/tasks` : "/dashboard/tasks"}
-                    className="flex items-center hover:text-gray-900 transition-colors"
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.back()}
+                    className="px-0 hover:bg-transparent hover:text-gray-900"
                 >
                     <ChevronLeft className="h-4 w-4 mr-1" />
-                    Back to Tasks
-                </Link>
+                    Back
+                </Button>
             </div>
 
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">New Task</h1>
-                <p className="text-gray-500 mt-1">Create and assign a new task.</p>
+                <p className="text-gray-500 mt-1">
+                    {contextProject ? (
+                        <>
+                            Adding task to <span className="font-medium text-gray-900">{contextProject.name}</span>
+                        </>
+                    ) : (
+                        "Create and assign a new task."
+                    )}
+                </p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Task Information</CardTitle>
+                        <CardTitle>Task Details</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-6">
                         {/* Name */}
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Task Name <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="name">
+                                Subject <span className="text-red-500">*</span>
+                            </Label>
                             <Input
                                 id="name"
-                                placeholder="e.g. Update Homepage Hero"
+                                placeholder="What needs to be done?"
                                 {...register("name")}
-                                className={cn(errors.name && "border-red-500")}
+                                className={cn("text-lg", errors.name && "border-red-500")}
+                                autoFocus
                             />
                             {errors.name && <p className="text-red-500 text-xs">{errors.name.message}</p>}
                         </div>
 
-                        {/* Customer & Project */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="customerId">Customer</Label>
-                                <Select
-                                    value={watch("customerId")}
-                                    onValueChange={(val) => {
-                                        setValue("customerId", val);
-                                        setValue("projectId", "");
-                                        setValue("milestoneId", "");
-                                        setValue("taskListId", "");
-                                    }}
-                                    disabled={!!customerIdParam}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Customer" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {customers.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>{c.company}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                        {/* Context Fields (Hidden if fixed, shown otherwise) */}
+                        {!projectIdParam && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="customerId">Customer</Label>
+                                    <Select
+                                        value={watch("customerId")}
+                                        onValueChange={(val) => {
+                                            setValue("customerId", val);
+                                            setValue("projectId", "");
+                                            setValue("milestoneId", "");
+                                            setValue("taskListId", "");
+                                        }}
+                                        disabled={!!customerIdParam}
+                                    >
+                                        <SelectTrigger className="bg-white">
+                                            <SelectValue placeholder="Select Customer" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {customers.map((c) => (
+                                                <SelectItem key={c.id} value={c.id}>
+                                                    {c.company}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="projectId">Project</Label>
-                                <Select
-                                    value={watch("projectId")}
-                                    onValueChange={(val) => {
-                                        setValue("projectId", val === "none" ? "" : val);
-                                        setValue("milestoneId", "");
-                                        setValue("taskListId", "");
-                                    }}
-                                    disabled={!!projectIdParam}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Project (Optional)" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">No Project</SelectItem>
-                                        {filteredProjects.map((p) => (
-                                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="projectId">Project</Label>
+                                    <Select
+                                        value={watch("projectId")}
+                                        onValueChange={(val) => {
+                                            setValue("projectId", val === "none" ? "" : val);
+                                            setValue("milestoneId", "");
+                                            setValue("taskListId", "");
+                                        }}
+                                        disabled={!!projectIdParam}
+                                    >
+                                        <SelectTrigger className="bg-white">
+                                            <SelectValue placeholder="Select Project (Optional)" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">No Project</SelectItem>
+                                            {filteredProjects.map((p) => (
+                                                <SelectItem key={p.id} value={p.id}>
+                                                    {p.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        {/* Milestone & Task List - Show only when project is selected */}
+                        {/* Milestone & Task List */}
                         {projectId && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-dashed">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="grid gap-2">
                                     <Label className="flex items-center gap-2">
                                         <FolderTree className="h-4 w-4 text-gray-400" />
@@ -218,31 +255,23 @@ export default function CreateTaskPage() {
                                         }}
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select Milestone (Optional)" />
+                                            <SelectValue placeholder="No Milestone" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="none">No Milestone</SelectItem>
                                             {milestones.map((m) => (
                                                 <SelectItem key={m.id} value={m.id}>
                                                     <div className="flex items-center gap-2">
-                                                        <div 
-                                                            className="w-2 h-2 rounded-full" 
+                                                        <div
+                                                            className="w-2 h-2 rounded-full"
                                                             style={{ backgroundColor: m.color || "#3b82f6" }}
                                                         />
                                                         {m.name}
-                                                        {m.status === "complete" && (
-                                                            <Badge variant="secondary" className="text-[10px] px-1 py-0 ml-1">Done</Badge>
-                                                        )}
                                                     </div>
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    {selectedMilestone && (
-                                        <p className="text-xs text-muted-foreground">
-                                            Due: {format(selectedMilestone.dueDate?.toDate?.() || selectedMilestone.dueDate as unknown as Date, "MMM d, yyyy")}
-                                        </p>
-                                    )}
                                 </div>
 
                                 <div className="grid gap-2">
@@ -256,56 +285,72 @@ export default function CreateTaskPage() {
                                         disabled={!milestoneId}
                                     >
                                         <SelectTrigger className={!milestoneId ? "opacity-50" : ""}>
-                                            <SelectValue placeholder={milestoneId ? "Select Task List (Optional)" : "Select milestone first"} />
+                                            <SelectValue
+                                                placeholder={milestoneId ? "No Task List" : "Select milestone first"}
+                                            />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="none">No Task List</SelectItem>
                                             {filteredTaskLists.map((tl) => (
-                                                <SelectItem key={tl.id} value={tl.id}>{tl.name}</SelectItem>
+                                                <SelectItem key={tl.id} value={tl.id}>
+                                                    {tl.name}
+                                                </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    {milestoneId && filteredTaskLists.length === 0 && (
-                                        <p className="text-xs text-muted-foreground italic">
-                                            No task lists in this milestone
-                                        </p>
-                                    )}
                                 </div>
                             </div>
                         )}
 
-                        {/* Description */}
                         <div className="grid gap-2">
                             <Label htmlFor="description">Description</Label>
                             <Textarea
                                 id="description"
-                                placeholder="Task details..."
-                                className="min-h-[100px]"
+                                placeholder="Add more details..."
+                                className="min-h-[120px] resize-y"
                                 {...register("description")}
                             />
                         </div>
 
-                        {/* Assignees */}
-                        <div className="grid gap-2">
-                            <Label>Assigned To</Label>
-                            <Select
-                                onValueChange={(val) => setValue("assignees", [val])}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Staff Member" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {staff?.map((s) => (
-                                        <SelectItem key={s.id} value={s.id}>
-                                            {s.firstName} {s.lastName}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid gap-2">
+                                <Label>Assigned To</Label>
+                                <Select onValueChange={(val) => setValue("assignees", [val])}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Unassigned" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {staff?.map((s) => (
+                                            <SelectItem key={s.id} value={s.id}>
+                                                {s.firstName} {s.lastName}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label>Priority</Label>
+                                <Select
+                                    value={watch("priority")}
+                                    onValueChange={(val) =>
+                                        setValue("priority", val as "low" | "medium" | "high" | "urgent")
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="low">Low</SelectItem>
+                                        <SelectItem value="medium">Medium</SelectItem>
+                                        <SelectItem value="high">High</SelectItem>
+                                        <SelectItem value="urgent">Urgent</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
-                        {/* Dates & Priority */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
                                 <Label>Due Date</Label>
                                 <Popover>
@@ -319,7 +364,11 @@ export default function CreateTaskPage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {watch("dueDate") ? format(watch("dueDate")!, "PPP") : <span>Pick a date</span>}
+                                            {watch("dueDate") ? (
+                                                format(watch("dueDate")!, "PPP")
+                                            ) : (
+                                                <span>Pick a date</span>
+                                            )}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -334,34 +383,26 @@ export default function CreateTaskPage() {
                                 {isDueDateAfterMilestone && (
                                     <div className="flex items-center gap-1 text-amber-600 text-xs">
                                         <AlertTriangle className="h-3 w-3" />
-                                        <span>Due date is after milestone deadline</span>
+                                        <span>After milestone deadline</span>
                                     </div>
                                 )}
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label>Priority</Label>
-                                <Select
-                                    value={watch("priority")}
-                                    onValueChange={(val) => setValue("priority", val as "low" | "medium" | "high" | "urgent")}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="low">Low</SelectItem>
-                                        <SelectItem value="medium">Medium</SelectItem>
-                                        <SelectItem value="high">High</SelectItem>
-                                        <SelectItem value="urgent">Urgent</SelectItem>
-                                    </SelectContent>
-                                </Select>
                             </div>
 
                             <div className="grid gap-2">
                                 <Label>Status</Label>
                                 <Select
                                     value={watch("status")}
-                                    onValueChange={(val) => setValue("status", val as "not_started" | "in_progress" | "testing" | "awaiting_feedback" | "completed")}
+                                    onValueChange={(val) =>
+                                        setValue(
+                                            "status",
+                                            val as
+                                                | "not_started"
+                                                | "in_progress"
+                                                | "testing"
+                                                | "awaiting_feedback"
+                                                | "completed"
+                                        )
+                                    }
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
@@ -377,14 +418,16 @@ export default function CreateTaskPage() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4 pt-2">
+                        <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
                             <div className="flex items-center space-x-2">
                                 <Checkbox
                                     id="isPublic"
                                     checked={watch("isPublic")}
                                     onCheckedChange={(checked) => setValue("isPublic", !!checked)}
                                 />
-                                <Label htmlFor="isPublic">Visible to Customer</Label>
+                                <Label htmlFor="isPublic" className="font-normal cursor-pointer">
+                                    Visible to Customer
+                                </Label>
                             </div>
 
                             <div className="flex items-center space-x-2">
@@ -393,10 +436,11 @@ export default function CreateTaskPage() {
                                     checked={watch("billable")}
                                     onCheckedChange={(checked) => setValue("billable", !!checked)}
                                 />
-                                <Label htmlFor="billable">Billable</Label>
+                                <Label htmlFor="billable" className="font-normal cursor-pointer">
+                                    Billable
+                                </Label>
                             </div>
                         </div>
-
                     </CardContent>
                     <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
                         <Button type="button" variant="ghost" className="mr-2" onClick={() => router.back()}>
