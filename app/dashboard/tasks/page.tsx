@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTasks } from "@/lib/hooks";
-import type { TaskStatus, TaskPriority } from "@/lib/types";
+import type { Task, TaskStatus, TaskPriority } from "@/lib/types";
 import { format } from "date-fns";
 import Link from "next/link";
 import {
