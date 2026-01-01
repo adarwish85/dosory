@@ -14,6 +14,7 @@ import {
     addDoc,
     updateDoc,
     deleteDoc,
+    getDoc,
     serverTimestamp,
     Timestamp,
     QueryConstraint,
