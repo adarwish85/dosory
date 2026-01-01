@@ -12,6 +12,7 @@ export { useInvoices, useInvoice } from "./use-invoices";
 // Projects & Tasks
 export { useProjects, useProject, useTasks, useTask } from "./use-projects";
 export { useTaskLists } from "./use-task-lists";
+export { useMilestones, useTimesheets, useProjectDiscussions, useProjectFiles } from "./use-project-data";
 
 // Expenses & Contracts
 export { useExpenses, useExpenseCategories } from "./use-expenses";

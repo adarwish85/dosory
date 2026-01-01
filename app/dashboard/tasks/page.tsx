@@ -9,9 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
     Plus,
     Search,
-    Filter,
     RefreshCw,
-    LayoutGrid,
     Loader2,
     Download,
     Trash2,
@@ -22,13 +20,12 @@ import {
     ChevronRight,
     ChevronsLeft,
     ChevronsRight,
-    Pencil,
-    ExternalLink,
-    Trash,
     CheckSquare,
     Clock,
     AlertTriangle,
     CircleDot,
+    Pencil,
+    Trash,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTasks } from "@/lib/hooks";
@@ -47,6 +44,7 @@ import {
     DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { BulkAssignDialog } from "@/components/dashboard/tasks/bulk-assign-dialog";
 
 const statusColors: Record<TaskStatus, { bg: string; text: string }> = {
     not_started: { bg: "bg-gray-100", text: "text-gray-700" },
@@ -117,7 +115,7 @@ function HighlightText({ text, search }: { text: string; search: string }) {
     );
 }
 
-function QuickStatsBar({ tasks, stats }: { tasks: any[]; stats: Record<string, number> }) {
+function QuickStatsBar({ tasks, stats }: { tasks: Task[]; stats: Record<string, number> }) {
     const urgentCount = tasks.filter((t) => t.priority === "urgent").length;
     return (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
@@ -279,9 +277,10 @@ export default function TasksPage() {
     });
     const [rowDensity, setRowDensity] = useState<RowDensity>("comfortable");
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
+    const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
 
-    const { tasks, loading, taskStats, updateTaskStatus, deleteTask } = useTasks();
+    const { tasks, loading, taskStats, updateTask, updateTaskStatus, deleteTask } = useTasks();
 
     const filteredTasks = useMemo(() => {
         let result = tasks.filter((task) => task.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -326,6 +325,18 @@ export default function TasksPage() {
             setSelectionMode("none");
         }
     }, [selectedTasks, deleteTask]);
+
+    const handleBulkAssign = async (projectId: string, milestoneId: string, taskListId: string) => {
+        for (const taskId of selectedTasks) {
+            await updateTask(taskId, {
+                projectId,
+                milestoneId,
+                taskListId,
+            });
+        }
+        setSelectedTasks([]);
+        setSelectionMode("none");
+    };
 
     const handleSelectAllOnPage = useCallback(() => {
         setSelectedTasks(currentPageIds);
@@ -396,6 +407,7 @@ export default function TasksPage() {
     );
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCurrentPage(1);
     }, [searchQuery, statusFilter]);
 
@@ -478,6 +490,9 @@ export default function TasksPage() {
                                 <DropdownMenuContent>
                                     <DropdownMenuLabel>With {selectedTasks.length} selected</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => setBulkAssignOpen(true)}>
+                                        <LayoutList className="mr-2 h-4 w-4" /> Assign to...
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
                                         <Trash2 className="mr-2 h-4 w-4" /> Delete
                                     </DropdownMenuItem>
@@ -573,7 +588,10 @@ export default function TasksPage() {
                                     <Checkbox
                                         checked={isAllPageSelected}
                                         ref={(el) => {
-                                            if (el) (el as any).indeterminate = isSomeSelected;
+                                            if (el) {
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                (el as any).indeterminate = isSomeSelected;
+                                            }
                                         }}
                                         onCheckedChange={(c) => (c ? handleSelectAllOnPage() : handleClearSelection())}
                                     />
@@ -602,7 +620,6 @@ export default function TasksPage() {
                                 </TableRow>
                             ) : (
                                 paginatedTasks.map((task, index) => {
-                                    const statusColor = statusColors[task.status];
                                     const priorityColor = priorityColors[task.priority];
                                     return (
                                         <TableRow
@@ -657,7 +674,29 @@ export default function TasksPage() {
                                                         }
                                                     >
                                                         <SelectTrigger className="h-7 text-xs font-normal w-36">
-                                                            <SelectValue />
+                                                            <SelectValue>
+                                                                {Object.entries(statusColors).map(([status, color]) => {
+                                                                    if (status === task.status) {
+                                                                        return (
+                                                                            <div
+                                                                                key={status}
+                                                                                className="flex items-center"
+                                                                            >
+                                                                                <div
+                                                                                    className={cn(
+                                                                                        "w-2 h-2 rounded-full mr-2",
+                                                                                        color.bg
+                                                                                    )}
+                                                                                />
+                                                                                <span className={color.text}>
+                                                                                    {status.replace("_", " ")}
+                                                                                </span>
+                                                                            </div>
+                                                                        );
+                                                                    }
+                                                                    return null;
+                                                                })}
+                                                            </SelectValue>
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="not_started">Not Started</SelectItem>
@@ -744,6 +783,13 @@ export default function TasksPage() {
                 </div>
                 <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Space Select • Click to edit</div>
             </div>
+
+            <BulkAssignDialog
+                open={bulkAssignOpen}
+                onOpenChange={setBulkAssignOpen}
+                selectedCount={selectedTasks.length}
+                onAssign={handleBulkAssign}
+            />
         </TooltipProvider>
     );
 }

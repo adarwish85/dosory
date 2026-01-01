@@ -58,6 +58,7 @@ import {
     DragStartEvent,
     DragEndEvent,
 } from "@dnd-kit/core";
+import { ImportTasksDialog } from "@/components/dashboard/projects/import-tasks-dialog";
 import {
     SortableContext,
     sortableKeyboardCoordinates,
@@ -76,14 +77,10 @@ function DraggableTaskItem({
     milestone: Milestone;
     onToggleComplete: (task: Task) => void;
 }) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: task.id, data: { task, type: "task" } });
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: task.id,
+        data: { task, type: "task" },
+    });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -91,11 +88,8 @@ function DraggableTaskItem({
     };
 
     const isTaskComplete = task.status === "completed";
-    const taskOverdue = task.dueDate &&
-        !isTaskComplete &&
-        isAfter(new Date(), task.dueDate.toDate());
-    const afterMilestone = task.dueDate &&
-        isAfter(task.dueDate.toDate(), milestone.dueDate.toDate());
+    const taskOverdue = task.dueDate && !isTaskComplete && isAfter(new Date(), task.dueDate.toDate());
+    const afterMilestone = task.dueDate && isAfter(task.dueDate.toDate(), milestone.dueDate.toDate());
 
     return (
         <div
@@ -121,12 +115,7 @@ function DraggableTaskItem({
                     <Circle className="h-4 w-4 text-gray-300" />
                 )}
             </button>
-            <span className={cn(
-                "text-sm flex-1 truncate",
-                isTaskComplete && "line-through"
-            )}>
-                {task.name}
-            </span>
+            <span className={cn("text-sm flex-1 truncate", isTaskComplete && "line-through")}>{task.name}</span>
             {afterMilestone && !isTaskComplete && (
                 <span title="Due after milestone">
                     <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
@@ -149,6 +138,7 @@ function TaskListDropZone({
     taskListProgress,
     onDeleteTaskList,
     onToggleComplete,
+    onImportTasks,
 }: {
     list: TaskList;
     listTasks: Task[];
@@ -156,53 +146,79 @@ function TaskListDropZone({
     taskListProgress: { completed: number; total: number; percent: number };
     onDeleteTaskList: (id: string) => void;
     onToggleComplete: (task: Task) => void;
+    onImportTasks: (taskListId: string) => void;
 }) {
-    return (
-        <div className="border rounded-lg p-3 bg-gray-50/50">
-            <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                    <ListTodo className="h-4 w-4 text-gray-400" />
-                    <span className="font-medium text-sm">{list.name}</span>
-                    <Badge variant="secondary" className="text-xs">
-                        {taskListProgress.completed}/{taskListProgress.total}
-                    </Badge>
-                </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6">
-                            <MoreHorizontal className="h-3 w-3" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => confirm("Delete task list?") && onDeleteTaskList(list.id)}
-                        >
-                            <Trash className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: list.id,
+        data: { list, type: "taskList" },
+    });
 
-            {/* Tasks in this list - droppable zone */}
-            <SortableContext items={listTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-                {listTasks.length > 0 ? (
-                    <div className="space-y-1 ml-6 min-h-[40px]">
-                        {listTasks.map(task => (
-                            <DraggableTaskItem
-                                key={task.id}
-                                task={task}
-                                milestone={milestone}
-                                onToggleComplete={onToggleComplete}
-                            />
-                        ))}
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} className={cn(isDragging && "opacity-50")}>
+            <div className="border rounded-lg p-3 bg-gray-50/50">
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                        <button {...attributes} {...listeners} className="cursor-grab hover:text-gray-700">
+                            <GripVertical className="h-4 w-4 text-gray-400" />
+                        </button>
+                        <ListTodo className="h-4 w-4 text-gray-400" />
+                        <span className="font-medium text-sm">{list.name}</span>
+                        <Badge variant="secondary" className="text-xs">
+                            {taskListProgress.completed}/{taskListProgress.total}
+                        </Badge>
                     </div>
-                ) : (
-                    <p className="text-xs text-muted-foreground ml-6 italic py-2 border-2 border-dashed border-gray-200 rounded text-center">
-                        Drop tasks here
-                    </p>
-                )}
-            </SortableContext>
+                    <div className="flex items-center gap-1">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-xs px-2 text-gray-500 hover:text-gray-900"
+                            onClick={() => onImportTasks(list.id)}
+                        >
+                            <FolderPlus className="h-3 w-3 mr-1" /> Import
+                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                    <MoreHorizontal className="h-3 w-3" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    className="text-red-600"
+                                    onClick={() => confirm("Delete task list?") && onDeleteTaskList(list.id)}
+                                >
+                                    <Trash className="mr-2 h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </div>
+
+                {/* Tasks in this list - droppable zone */}
+                <SortableContext items={listTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                    {listTasks.length > 0 ? (
+                        <div className="space-y-1 ml-6 min-h-[40px]">
+                            {listTasks.map((task) => (
+                                <DraggableTaskItem
+                                    key={task.id}
+                                    task={task}
+                                    milestone={milestone}
+                                    onToggleComplete={onToggleComplete}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-xs text-muted-foreground ml-6 italic py-2 border-2 border-dashed border-gray-200 rounded text-center">
+                            Drop tasks here
+                        </p>
+                    )}
+                </SortableContext>
+            </div>
         </div>
     );
 }
@@ -211,11 +227,14 @@ export default function MilestonesPage() {
     const params = useParams();
     const projectId = params.id as string;
     const { milestones, loading, deleteMilestone, updateMilestone } = useMilestones(projectId);
-    const { taskLists, taskListsByMilestone, createTaskList, deleteTaskList } = useTaskLists({ projectId });
+    const { taskLists, taskListsByMilestone, createTaskList, deleteTaskList, updateTaskList } = useTaskLists({
+        projectId,
+    });
     const { tasks, updateTask } = useTasks({ projectId });
 
     // Drag state
     const [activeTask, setActiveTask] = useState<Task | null>(null);
+    const [activeTaskList, setActiveTaskList] = useState<TaskList | null>(null);
 
     // Edit dialog state
     const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
@@ -228,6 +247,11 @@ export default function MilestonesPage() {
     const [creatingTaskListFor, setCreatingTaskListFor] = useState<string | null>(null);
     const [newTaskListName, setNewTaskListName] = useState("");
     const [creatingTaskList, setCreatingTaskList] = useState(false);
+
+    // Import Dialog State
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
+    const [importTargetListId, setImportTargetListId] = useState<string>("");
+    const [importTargetMilestoneId, setImportTargetMilestoneId] = useState<string>("");
 
     // Expanded milestones
     const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(new Set());
@@ -248,9 +272,9 @@ export default function MilestonesPage() {
     const milestoneProgress = useMemo(() => {
         const progress: Record<string, { completed: number; total: number; percent: number }> = {};
 
-        milestones.forEach(m => {
-            const milestoneTasks = tasks.filter(t => t.milestoneId === m.id);
-            const completedTasks = milestoneTasks.filter(t => t.status === "completed");
+        milestones.forEach((m) => {
+            const milestoneTasks = tasks.filter((t) => t.milestoneId === m.id);
+            const completedTasks = milestoneTasks.filter((t) => t.status === "completed");
             const total = milestoneTasks.length;
             const completed = completedTasks.length;
             const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -264,9 +288,9 @@ export default function MilestonesPage() {
     const taskListProgress = useMemo(() => {
         const progress: Record<string, { completed: number; total: number; percent: number }> = {};
 
-        taskLists.forEach(tl => {
-            const listTasks = tasks.filter(t => t.taskListId === tl.id);
-            const completedTasks = listTasks.filter(t => t.status === "completed");
+        taskLists.forEach((tl) => {
+            const listTasks = tasks.filter((t) => t.taskListId === tl.id);
+            const completedTasks = listTasks.filter((t) => t.status === "completed");
             const total = listTasks.length;
             const completed = completedTasks.length;
             const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -277,17 +301,18 @@ export default function MilestonesPage() {
     }, [taskLists, tasks]);
 
     // Sort milestones by due date
-    const sortedMilestones = useMemo(() =>
-        [...milestones].sort((a, b) => a.dueDate.seconds - b.dueDate.seconds),
+    const sortedMilestones = useMemo(
+        () => [...milestones].sort((a, b) => a.dueDate.seconds - b.dueDate.seconds),
         [milestones]
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isOverdue = (date: any) => {
         return new Date() > date.toDate();
     };
 
     const toggleMilestone = (id: string) => {
-        setExpandedMilestones(prev => {
+        setExpandedMilestones((prev) => {
             const next = new Set(prev);
             if (next.has(id)) next.delete(id);
             else next.add(id);
@@ -304,6 +329,30 @@ export default function MilestonesPage() {
         setEditColor(milestone.color || "#3b82f6");
     };
 
+    const handleOpenImport = (listId: string, milestoneId: string) => {
+        setImportTargetListId(listId);
+        setImportTargetMilestoneId(milestoneId);
+        setImportDialogOpen(true);
+    };
+
+    const handleImportTasks = async (taskIds: string[]) => {
+        if (!importTargetListId || !importTargetMilestoneId) return;
+
+        try {
+            for (const taskId of taskIds) {
+                await updateTask(taskId, {
+                    projectId,
+                    milestoneId: importTargetMilestoneId,
+                    taskListId: importTargetListId,
+                });
+            }
+            toast.success(`Imported ${taskIds.length} tasks`);
+        } catch {
+            console.error("Failed to import tasks");
+            toast.error("Failed to import tasks");
+        }
+    };
+
     // Save milestone edits
     const saveEdit = async () => {
         if (!editingMilestone) return;
@@ -316,7 +365,7 @@ export default function MilestonesPage() {
             });
             toast.success("Milestone updated");
             setEditingMilestone(null);
-        } catch (error) {
+        } catch {
             toast.error("Failed to update milestone");
         }
     };
@@ -335,8 +384,8 @@ export default function MilestonesPage() {
             setCreatingTaskListFor(null);
             setNewTaskListName("");
             // Auto-expand the milestone
-            setExpandedMilestones(prev => new Set([...prev, creatingTaskListFor]));
-        } catch (error) {
+            setExpandedMilestones((prev) => new Set([...prev, creatingTaskListFor]));
+        } catch {
             toast.error("Failed to create task list");
         } finally {
             setCreatingTaskList(false);
@@ -344,15 +393,19 @@ export default function MilestonesPage() {
     };
 
     // Get tasks for a task list
-    const getTasksForList = useCallback((taskListId: string) => {
-        return tasks.filter(t => t.taskListId === taskListId);
-    }, [tasks]);
+    const getTasksForList = useCallback(
+        (taskListId: string) => {
+            return tasks.filter((t) => t.taskListId === taskListId);
+        },
+        [tasks]
+    );
 
     // Toggle task complete
     const toggleTaskComplete = async (task: Task) => {
         try {
             await updateTask(task.id, {
                 status: task.status === "completed" ? "not_started" : "completed",
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
         } catch {
             toast.error("Failed to update task");
@@ -363,26 +416,60 @@ export default function MilestonesPage() {
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
         const taskData = active.data.current?.task as Task | undefined;
+        const listData = active.data.current?.list as TaskList | undefined;
+
         if (taskData) {
             setActiveTask(taskData);
+        } else if (listData) {
+            setActiveTaskList(listData);
         }
     };
 
-    // Handle drag end - move task to new list
+    // Handle drag end - move task or list
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveTask(null);
+        setActiveTaskList(null);
 
         if (!over) return;
 
         const activeId = active.id as string;
         const overId = over.id as string;
 
-        // If dropped on the same task, do nothing
         if (activeId === overId) return;
 
+        const activeData = active.data.current;
+
+        // Handle Task List Reordering/Moving
+        if (activeData?.type === "taskList") {
+            const activeList = taskLists.find((tl) => tl.id === activeId);
+            const overList = taskLists.find((tl) => tl.id === overId);
+
+            // Dropping one list over another
+            if (activeList && overList) {
+                // Same milestone: just reorder potentially (UI sort, but for simplicity we rely on sort order update)
+                // Different milestone: move the list
+                if (activeList.milestoneId !== overList.milestoneId) {
+                    await updateTaskList(activeId, { milestoneId: overList.milestoneId });
+                    toast.success("Task list moved to new milestone");
+                } else {
+                    // Reordering within same milestone logic would go here
+                    // For now, simple swap of order if needed, but Firestore hook sorts by order field
+                    // Implementing full reorder requires updating all order fields.
+                    // Let's implement basic swap for adjacent
+                    // A better way is using dnd-kit's arrayMove and saving new order
+                    // For this MVP, let's just support moving between milestones if dragged over a list in another milestone
+                }
+            }
+
+            // Also support dropping a list onto a milestone card header (if we make milestone droppable)
+            // But simply dragging list over another list is easiest
+            return;
+        }
+
+        // Handle Task Moving (existing logic)
         // Find the task being dragged
-        const draggedTask = tasks.find(t => t.id === activeId);
+        const draggedTask = tasks.find((t) => t.id === activeId);
         if (!draggedTask) return;
 
         // Determine the target task list
@@ -390,13 +477,13 @@ export default function MilestonesPage() {
         let targetMilestoneId: string | undefined;
 
         // Check if dropped on another task
-        const overTask = tasks.find(t => t.id === overId);
+        const overTask = tasks.find((t) => t.id === overId);
         if (overTask) {
             targetTaskListId = overTask.taskListId;
             targetMilestoneId = overTask.milestoneId;
         } else {
             // Dropped on a task list directly
-            const overTaskList = taskLists.find(tl => tl.id === overId);
+            const overTaskList = taskLists.find((tl) => tl.id === overId);
             if (overTaskList) {
                 targetTaskListId = overTaskList.id;
                 targetMilestoneId = overTaskList.milestoneId;
@@ -409,6 +496,7 @@ export default function MilestonesPage() {
                 await updateTask(activeId, {
                     taskListId: targetTaskListId,
                     milestoneId: targetMilestoneId,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } as any);
                 toast.success("Task moved");
             } catch {
@@ -438,7 +526,9 @@ export default function MilestonesPage() {
                 <div className="flex justify-between items-center">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">Milestones</h2>
-                        <p className="text-muted-foreground text-sm">Organize tasks into milestones and task lists. Drag tasks to move between lists.</p>
+                        <p className="text-muted-foreground text-sm">
+                            Organize tasks into milestones and task lists. Drag tasks to move between lists.
+                        </p>
                     </div>
                     <CreateMilestoneDialog projectId={projectId} />
                 </div>
@@ -447,7 +537,9 @@ export default function MilestonesPage() {
                     <div className="text-center py-20 border rounded-lg bg-gray-50/50 border-dashed">
                         <Calendar className="h-10 w-10 mx-auto mb-4 text-gray-400" />
                         <h3 className="text-lg font-medium text-gray-900">No milestones yet</h3>
-                        <p className="text-sm text-gray-500 mt-1 mb-4">Create a milestone to track major project phases.</p>
+                        <p className="text-sm text-gray-500 mt-1 mb-4">
+                            Create a milestone to track major project phases.
+                        </p>
                         <CreateMilestoneDialog projectId={projectId} />
                     </div>
                 ) : (
@@ -460,10 +552,13 @@ export default function MilestonesPage() {
                             const lists = taskListsByMilestone[milestone.id] || [];
 
                             return (
-                                <Card key={milestone.id} className={cn(
-                                    "transition-all",
-                                    isCompleted ? "bg-gray-50/50 border-gray-200" : "bg-white"
-                                )}>
+                                <Card
+                                    key={milestone.id}
+                                    className={cn(
+                                        "transition-all",
+                                        isCompleted ? "bg-gray-50/50 border-gray-200" : "bg-white"
+                                    )}
+                                >
                                     <CardHeader className="pb-3">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3 flex-1">
@@ -488,11 +583,18 @@ export default function MilestonesPage() {
                                                         {milestone.name}
                                                     </CardTitle>
                                                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                                                        <span className={cn("flex items-center gap-1", overdue && "text-red-600")}>
+                                                        <span
+                                                            className={cn(
+                                                                "flex items-center gap-1",
+                                                                overdue && "text-red-600"
+                                                            )}
+                                                        >
                                                             <Calendar className="h-3 w-3" />
                                                             {format(milestone.dueDate.toDate(), "MMM d, yyyy")}
                                                         </span>
-                                                        <span>{progress.completed}/{progress.total} tasks</span>
+                                                        <span>
+                                                            {progress.completed}/{progress.total} tasks
+                                                        </span>
                                                         {lists.length > 0 && (
                                                             <span className="flex items-center gap-1">
                                                                 <ListTodo className="h-3 w-3" />
@@ -505,10 +607,16 @@ export default function MilestonesPage() {
 
                                             <div className="flex items-center gap-2">
                                                 <Badge
-                                                    variant={isCompleted ? "default" : overdue ? "destructive" : "secondary"}
+                                                    variant={
+                                                        isCompleted ? "default" : overdue ? "destructive" : "secondary"
+                                                    }
                                                     className={isCompleted ? "bg-green-500" : ""}
                                                 >
-                                                    {isCompleted ? "Complete" : overdue ? "Overdue" : `${progress.percent}%`}
+                                                    {isCompleted
+                                                        ? "Complete"
+                                                        : overdue
+                                                          ? "Overdue"
+                                                          : `${progress.percent}%`}
                                                 </Badge>
 
                                                 <DropdownMenu>
@@ -521,21 +629,28 @@ export default function MilestonesPage() {
                                                         <DropdownMenuItem onClick={() => openEditDialog(milestone)}>
                                                             <Pencil className="mr-2 h-4 w-4" /> Edit
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => setCreatingTaskListFor(milestone.id)}>
+                                                        <DropdownMenuItem
+                                                            onClick={() => setCreatingTaskListFor(milestone.id)}
+                                                        >
                                                             <FolderPlus className="mr-2 h-4 w-4" /> Add Task List
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem
-                                                            onClick={() => updateMilestone(milestone.id, {
-                                                                status: isCompleted ? "incomplete" : "complete"
-                                                            })}
+                                                            onClick={() =>
+                                                                updateMilestone(milestone.id, {
+                                                                    status: isCompleted ? "incomplete" : "complete",
+                                                                })
+                                                            }
                                                         >
                                                             {isCompleted ? "Mark Incomplete" : "Mark Complete"}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
                                                         <DropdownMenuItem
                                                             className="text-red-600"
-                                                            onClick={() => confirm("Delete milestone?") && deleteMilestone(milestone.id)}
+                                                            onClick={() =>
+                                                                confirm("Delete milestone?") &&
+                                                                deleteMilestone(milestone.id)
+                                                            }
                                                         >
                                                             <Trash className="mr-2 h-4 w-4" /> Delete
                                                         </DropdownMenuItem>
@@ -549,9 +664,12 @@ export default function MilestonesPage() {
                                             <Progress
                                                 value={isCompleted ? 100 : progress.percent}
                                                 className="h-1.5"
-                                                style={{
-                                                    "--progress-foreground": milestone.color || "#3b82f6"
-                                                } as any}
+                                                style={
+                                                    {
+                                                        "--progress-foreground": milestone.color || "#3b82f6",
+                                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                    } as any
+                                                }
                                             />
                                         </div>
                                     </CardHeader>
@@ -562,7 +680,9 @@ export default function MilestonesPage() {
                                             {lists.length === 0 ? (
                                                 <div className="text-center py-6 border rounded-lg border-dashed bg-gray-50/50">
                                                     <FolderPlus className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                                                    <p className="text-sm text-muted-foreground mb-2">No task lists yet</p>
+                                                    <p className="text-sm text-muted-foreground mb-2">
+                                                        No task lists yet
+                                                    </p>
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
@@ -573,22 +693,34 @@ export default function MilestonesPage() {
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3">
-                                                    {lists.map(list => {
-                                                        const listProgress = taskListProgress[list.id] || { completed: 0, total: 0, percent: 0 };
-                                                        const listTasks = getTasksForList(list.id);
+                                                    <SortableContext
+                                                        items={lists.map((l) => l.id)}
+                                                        strategy={verticalListSortingStrategy}
+                                                    >
+                                                        {lists.map((list) => {
+                                                            const listProgress = taskListProgress[list.id] || {
+                                                                completed: 0,
+                                                                total: 0,
+                                                                percent: 0,
+                                                            };
+                                                            const listTasks = getTasksForList(list.id);
 
-                                                        return (
-                                                            <TaskListDropZone
-                                                                key={list.id}
-                                                                list={list}
-                                                                listTasks={listTasks}
-                                                                milestone={milestone}
-                                                                taskListProgress={listProgress}
-                                                                onDeleteTaskList={deleteTaskList}
-                                                                onToggleComplete={toggleTaskComplete}
-                                                            />
-                                                        );
-                                                    })}
+                                                            return (
+                                                                <TaskListDropZone
+                                                                    key={list.id}
+                                                                    list={list}
+                                                                    listTasks={listTasks}
+                                                                    milestone={milestone}
+                                                                    taskListProgress={listProgress}
+                                                                    onDeleteTaskList={deleteTaskList}
+                                                                    onToggleComplete={toggleTaskComplete}
+                                                                    onImportTasks={(listId) =>
+                                                                        handleOpenImport(listId, milestone.id)
+                                                                    }
+                                                                />
+                                                            );
+                                                        })}
+                                                    </SortableContext>
 
                                                     {/* Add task list button */}
                                                     <Button
@@ -612,7 +744,7 @@ export default function MilestonesPage() {
                 {/* Drag Overlay */}
                 <DragOverlay>
                     {activeTask && (
-                        <div className="flex items-center gap-2 py-1.5 px-2 rounded bg-white shadow-lg border">
+                        <div className="flex items-center gap-2 py-1.5 px-2 rounded bg-white shadow-lg border cursor-grabbing">
                             <GripVertical className="h-3.5 w-3.5 text-gray-400" />
                             {activeTask.status === "completed" ? (
                                 <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -620,6 +752,15 @@ export default function MilestonesPage() {
                                 <Circle className="h-4 w-4 text-gray-300" />
                             )}
                             <span className="text-sm">{activeTask.name}</span>
+                        </div>
+                    )}
+                    {activeTaskList && (
+                        <div className="border rounded-lg p-3 bg-white shadow-xl cursor-grabbing w-[300px]">
+                            <div className="flex items-center gap-2 mb-2">
+                                <GripVertical className="h-4 w-4 text-gray-400" />
+                                <ListTodo className="h-4 w-4 text-gray-400" />
+                                <span className="font-medium text-sm">{activeTaskList.name}</span>
+                            </div>
                         </div>
                     )}
                 </DragOverlay>
@@ -677,7 +818,9 @@ export default function MilestonesPage() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => setEditingMilestone(null)}>Cancel</Button>
+                            <Button variant="outline" onClick={() => setEditingMilestone(null)}>
+                                Cancel
+                            </Button>
                             <Button onClick={saveEdit}>Save Changes</Button>
                         </DialogFooter>
                     </DialogContent>
@@ -702,14 +845,27 @@ export default function MilestonesPage() {
                             />
                         </div>
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => setCreatingTaskListFor(null)}>Cancel</Button>
-                            <Button onClick={handleCreateTaskList} disabled={!newTaskListName.trim() || creatingTaskList}>
+                            <Button variant="outline" onClick={() => setCreatingTaskListFor(null)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleCreateTaskList}
+                                disabled={!newTaskListName.trim() || creatingTaskList}
+                            >
                                 {creatingTaskList && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Create
                             </Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+
+                <ImportTasksDialog
+                    open={importDialogOpen}
+                    onOpenChange={setImportDialogOpen}
+                    currentProjectId={projectId}
+                    targetTaskListId={importTargetListId}
+                    onImport={handleImportTasks}
+                />
             </div>
         </DndContext>
     );
