@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 const SECTIONS = [
+    { label: "Chart of Accounts", href: "/dashboard/setup/finance/chart-of-accounts" },
     { label: "Currencies", href: "/dashboard/setup/finance/currencies" },
     { label: "Payment Modes", href: "/dashboard/setup/finance/payment-modes" },
     { label: "Tax Rates", href: "/dashboard/setup/finance/tax-rates" },

@@ -47,10 +47,17 @@ export { useTaskComments } from "./use-task-comments";
 export { calculateProjectHealthStatus } from "./use-projects";
 
 // HR Module
-export { useDepartments as useHRDepartments, useJobTitles, useLeaveTypes, getDefaultLeaveTypes } from "./use-hr-settings";
+export {
+    useDepartments as useHRDepartments,
+    useJobTitles,
+    useLeaveTypes,
+    getDefaultLeaveTypes,
+} from "./use-hr-settings";
 export { useEmployees, useEmployee, useCurrentEmployee, useTeamMembers } from "./use-employees";
 export { useAttendance, useWorkSchedules } from "./use-attendance";
 export { useLeaveRequests, useLeaveBalances, useTeamLeaveCalendar } from "./use-leaves";
 export { usePayrollInputs, usePayrollSummary } from "./use-payroll";
 export { usePerformanceNotes, ratingLabels, ratingColors, flagLabels, flagColors } from "./use-performance";
 export { useEmployeeDocuments } from "./use-employee-documents";
+export * from "./use-finance";
+export * from "./use-financial-reports";

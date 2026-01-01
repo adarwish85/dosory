@@ -29,6 +29,8 @@ import { useActivity } from "@/lib/hooks/use-activity";
 import { createNotification } from "@/lib/hooks/use-notifications";
 import type { Invoice, InvoiceStatus, LineItem } from "@/lib/types";
 import type { InvoiceFormData } from "@/lib/schemas";
+import { useFinance } from "@/lib/hooks/use-finance";
+import { Timestamp as FirestoreTimestamp } from "firebase/firestore";
 
 // ============================================
 // FIX BLE-001: Invoice Status Transition Map
@@ -173,6 +175,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
     } = options;
     const { profile } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
+    const { recordJournalEntry, accounts } = useFinance(); // Integrate Finance Engine
 
     // Data State
     const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -377,6 +380,40 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
             await logActivity("invoice_sent", `Sent invoice ${invoice.number}`, id, "invoice");
         }
 
+        // FINANCE V1: Auto-create Journal Entry when Invoice is SENT
+        if (newStatus === "sent" && invoice.status === "draft") {
+            // Find accounts
+            const arAccount = accounts.find((a) => a.code === "1200");
+            const incomeAccount = accounts.find((a) => a.code === "4000"); // Default Sales
+
+            if (arAccount && incomeAccount) {
+                await recordJournalEntry({
+                    date: FirestoreTimestamp.now(),
+                    description: `Invoice #${invoice.numberFormatted} Sent`,
+                    referenceId: id,
+                    referenceType: "invoice",
+                    totalAmount: invoice.total,
+                    status: "posted",
+                    lines: [
+                        {
+                            accountId: arAccount.id,
+                            accountName: arAccount.name,
+                            debit: invoice.total,
+                            credit: 0,
+                            description: `Invoice #${invoice.numberFormatted}`,
+                        },
+                        {
+                            accountId: incomeAccount.id,
+                            accountName: incomeAccount.name,
+                            debit: 0,
+                            credit: invoice.total,
+                            description: `Revenue from #${invoice.numberFormatted}`,
+                        },
+                    ],
+                }).catch((e) => console.error("Failed to record invoice JE:", e));
+            }
+        }
+
         // Notify creator if paid
         if (newStatus === "paid" && invoice.createdBy && invoice.createdBy !== profile?.uid) {
             createNotification({
@@ -454,6 +491,40 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
                 amount,
                 paymentMode,
             });
+        }
+
+        // FINANCE V1: Auto-create Journal Entry for Payment
+        const arAccount = accounts.find((a) => a.code === "1200");
+        // Map payment mode to asset account
+        const isBank = ["bank_transfer", "cheque", "card"].includes(paymentMode.toLowerCase());
+        const assetCode = isBank ? "1010" : "1000"; // 1010 Bank, 1000 Cash
+        const assetAccount = accounts.find((a) => a.code === assetCode);
+
+        if (arAccount && assetAccount) {
+            await recordJournalEntry({
+                date: paymentDate ? FirestoreTimestamp.fromDate(paymentDate) : FirestoreTimestamp.now(),
+                description: `Payment for #${invoice.numberFormatted}`,
+                referenceId: paymentId,
+                referenceType: "payment",
+                totalAmount: amount,
+                status: "posted",
+                lines: [
+                    {
+                        accountId: assetAccount.id,
+                        accountName: assetAccount.name,
+                        debit: amount,
+                        credit: 0,
+                        description: `Payment received via ${paymentMode}`,
+                    },
+                    {
+                        accountId: arAccount.id,
+                        accountName: arAccount.name,
+                        debit: 0,
+                        credit: amount,
+                        description: `Payment applied to #${invoice.numberFormatted}`,
+                    },
+                ],
+            }).catch((e) => console.error("Failed to record payment JE:", e));
         }
 
         // Notify creator if fully paid

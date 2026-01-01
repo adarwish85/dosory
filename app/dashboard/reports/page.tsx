@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { useInvoices } from "@/lib/hooks/use-invoices";
 import { useCustomers } from "@/lib/hooks/use-customers";
 import { useProjects } from "@/lib/hooks/use-projects";
@@ -10,21 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, subDays, subMonths, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import {
     FileText,
@@ -97,7 +85,7 @@ export default function ReportsPage() {
     const { start, end } = getDateRange(dateRange);
 
     const filteredInvoices = useMemo(() => {
-        return invoices.filter(inv => {
+        return invoices.filter((inv) => {
             if (!inv.date) return false;
             const invDate = inv.date.toDate();
             return isWithinInterval(invDate, { start, end });
@@ -105,7 +93,7 @@ export default function ReportsPage() {
     }, [invoices, start, end]);
 
     const filteredExpenses = useMemo(() => {
-        return expenses.filter(exp => {
+        return expenses.filter((exp) => {
             if (!exp.date) return false;
             const expDate = exp.date.toDate();
             return isWithinInterval(expDate, { start, end });
@@ -131,8 +119,8 @@ export default function ReportsPage() {
             profitMargin,
             collectionRate,
             invoiceCount: filteredInvoices.length,
-            paidCount: filteredInvoices.filter(i => i.status === "paid").length,
-            overdueCount: filteredInvoices.filter(i => i.status === "overdue").length,
+            paidCount: filteredInvoices.filter((i) => i.status === "paid").length,
+            overdueCount: filteredInvoices.filter((i) => i.status === "overdue").length,
         };
     }, [filteredInvoices, filteredExpenses]);
 
@@ -140,11 +128,11 @@ export default function ReportsPage() {
     const revenueByCustomer = useMemo(() => {
         const customerRevenue = new Map<string, { name: string; revenue: number; invoices: number }>();
 
-        filteredInvoices.forEach(inv => {
+        filteredInvoices.forEach((inv) => {
             const existing = customerRevenue.get(inv.customerId) || {
                 name: inv.customerName || "Unknown",
                 revenue: 0,
-                invoices: 0
+                invoices: 0,
             };
             existing.revenue += inv.total || 0;
             existing.invoices += 1;
@@ -160,12 +148,12 @@ export default function ReportsPage() {
     const revenueByProject = useMemo(() => {
         const projectRevenue = new Map<string, { name: string; revenue: number; invoices: number }>();
 
-        filteredInvoices.forEach(inv => {
+        filteredInvoices.forEach((inv) => {
             if (!inv.projectId) return;
             const existing = projectRevenue.get(inv.projectId) || {
                 name: inv.projectName || "Unknown",
                 revenue: 0,
-                invoices: 0
+                invoices: 0,
             };
             existing.revenue += inv.total || 0;
             existing.invoices += 1;
@@ -181,26 +169,25 @@ export default function ReportsPage() {
     const expensesByCategory = useMemo(() => {
         const categoryExpenses = new Map<string, { name: string; amount: number; count: number }>();
 
-        filteredExpenses.forEach(exp => {
+        filteredExpenses.forEach((exp) => {
             const category = exp.categoryId || "Uncategorized";
             const existing = categoryExpenses.get(category) || {
                 name: category,
                 amount: 0,
-                count: 0
+                count: 0,
             };
             existing.amount += exp.amount || 0;
             existing.count += 1;
             categoryExpenses.set(category, existing);
         });
 
-        return Array.from(categoryExpenses.values())
-            .sort((a, b) => b.amount - a.amount);
+        return Array.from(categoryExpenses.values()).sort((a, b) => b.amount - a.amount);
     }, [filteredExpenses]);
 
     // Invoice status breakdown
     const invoiceStatusBreakdown = useMemo(() => {
         const statusCounts: Record<string, number> = {};
-        filteredInvoices.forEach(inv => {
+        filteredInvoices.forEach((inv) => {
             statusCounts[inv.status] = (statusCounts[inv.status] || 0) + 1;
         });
         return statusCounts;
@@ -210,7 +197,9 @@ export default function ReportsPage() {
         return (
             <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
+                    {[1, 2, 3, 4].map((i) => (
+                        <Skeleton key={i} className="h-32 rounded-lg" />
+                    ))}
                 </div>
                 <Skeleton className="h-[400px] rounded-lg" />
             </div>
@@ -226,14 +215,22 @@ export default function ReportsPage() {
                     <p className="text-muted-foreground">Financial insights and business analytics</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <Button variant="outline" asChild>
+                        <Link href="/dashboard/reports/profit-loss">Profit & Loss</Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                        <Link href="/dashboard/reports/balance-sheet">Balance Sheet</Link>
+                    </Button>
                     <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeOption)}>
                         <SelectTrigger className="w-[180px]">
                             <Calendar className="h-4 w-4 mr-2" />
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            {dateRangeOptions.map(opt => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                            {dateRangeOptions.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -250,15 +247,15 @@ export default function ReportsPage() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-green-600 font-medium">Total Revenue</p>
-                                <p className="text-2xl font-bold text-green-900">{formatCurrency(stats.totalRevenue)}</p>
+                                <p className="text-2xl font-bold text-green-900">
+                                    {formatCurrency(stats.totalRevenue)}
+                                </p>
                             </div>
                             <div className="p-2 bg-green-500 rounded-lg">
                                 <DollarSign className="h-5 w-5 text-white" />
                             </div>
                         </div>
-                        <p className="text-xs text-green-600 mt-2">
-                            {stats.invoiceCount} invoices
-                        </p>
+                        <p className="text-xs text-green-600 mt-2">{stats.invoiceCount} invoices</p>
                     </CardContent>
                 </Card>
 
@@ -291,18 +288,24 @@ export default function ReportsPage() {
                                 <FileText className="h-5 w-5 text-white" />
                             </div>
                         </div>
-                        <p className="text-xs text-amber-600 mt-2">
-                            {stats.overdueCount} overdue
-                        </p>
+                        <p className="text-xs text-amber-600 mt-2">{stats.overdueCount} overdue</p>
                     </CardContent>
                 </Card>
 
-                <Card className={`bg-gradient-to-br ${stats.profit >= 0 ? "from-emerald-50 to-emerald-100 border-emerald-200" : "from-red-50 to-red-100 border-red-200"}`}>
+                <Card
+                    className={`bg-gradient-to-br ${stats.profit >= 0 ? "from-emerald-50 to-emerald-100 border-emerald-200" : "from-red-50 to-red-100 border-red-200"}`}
+                >
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className={`text-sm font-medium ${stats.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>Net Profit</p>
-                                <p className={`text-2xl font-bold ${stats.profit >= 0 ? "text-emerald-900" : "text-red-900"}`}>
+                                <p
+                                    className={`text-sm font-medium ${stats.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}
+                                >
+                                    Net Profit
+                                </p>
+                                <p
+                                    className={`text-2xl font-bold ${stats.profit >= 0 ? "text-emerald-900" : "text-red-900"}`}
+                                >
                                     {formatCurrency(stats.profit)}
                                 </p>
                             </div>
@@ -363,8 +366,12 @@ export default function ReportsPage() {
                                         };
                                         return (
                                             <div key={status} className="flex items-center gap-3">
-                                                <div className={`w-3 h-3 rounded-full ${colors[status] || "bg-gray-400"}`} />
-                                                <span className="text-sm capitalize flex-1">{status.replace("_", " ")}</span>
+                                                <div
+                                                    className={`w-3 h-3 rounded-full ${colors[status] || "bg-gray-400"}`}
+                                                />
+                                                <span className="text-sm capitalize flex-1">
+                                                    {status.replace("_", " ")}
+                                                </span>
                                                 <span className="text-sm font-medium">{count}</span>
                                                 <div className="w-24 bg-gray-100 rounded-full h-2">
                                                     <div
@@ -395,13 +402,19 @@ export default function ReportsPage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {filteredInvoices.slice(0, 5).map(inv => (
+                                        {filteredInvoices.slice(0, 5).map((inv) => (
                                             <TableRow key={inv.id}>
-                                                <TableCell className="font-medium">{inv.numberFormatted || inv.number}</TableCell>
+                                                <TableCell className="font-medium">
+                                                    {inv.numberFormatted || inv.number}
+                                                </TableCell>
                                                 <TableCell className="text-gray-500">{inv.customerName}</TableCell>
-                                                <TableCell className="text-right">{formatCurrency(inv.total)}</TableCell>
+                                                <TableCell className="text-right">
+                                                    {formatCurrency(inv.total)}
+                                                </TableCell>
                                                 <TableCell>
-                                                    <Badge variant="secondary" className="capitalize">{inv.status}</Badge>
+                                                    <Badge variant="secondary" className="capitalize">
+                                                        {inv.status}
+                                                    </Badge>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -437,16 +450,21 @@ export default function ReportsPage() {
                                         </TableRow>
                                     ) : (
                                         revenueByCustomer.map((cust, idx) => {
-                                            const share = stats.totalRevenue > 0 ? (cust.revenue / stats.totalRevenue) * 100 : 0;
+                                            const share =
+                                                stats.totalRevenue > 0 ? (cust.revenue / stats.totalRevenue) * 100 : 0;
                                             return (
                                                 <TableRow key={idx}>
                                                     <TableCell className="font-medium">{cust.name}</TableCell>
                                                     <TableCell className="text-center">{cust.invoices}</TableCell>
-                                                    <TableCell className="text-right font-medium">{formatCurrency(cust.revenue)}</TableCell>
+                                                    <TableCell className="text-right font-medium">
+                                                        {formatCurrency(cust.revenue)}
+                                                    </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
                                                             <Progress value={share} className="h-2 flex-1" />
-                                                            <span className="text-xs text-muted-foreground w-10">{share.toFixed(0)}%</span>
+                                                            <span className="text-xs text-muted-foreground w-10">
+                                                                {share.toFixed(0)}%
+                                                            </span>
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -484,16 +502,21 @@ export default function ReportsPage() {
                                         </TableRow>
                                     ) : (
                                         revenueByProject.map((proj, idx) => {
-                                            const share = stats.totalRevenue > 0 ? (proj.revenue / stats.totalRevenue) * 100 : 0;
+                                            const share =
+                                                stats.totalRevenue > 0 ? (proj.revenue / stats.totalRevenue) * 100 : 0;
                                             return (
                                                 <TableRow key={idx}>
                                                     <TableCell className="font-medium">{proj.name}</TableCell>
                                                     <TableCell className="text-center">{proj.invoices}</TableCell>
-                                                    <TableCell className="text-right font-medium">{formatCurrency(proj.revenue)}</TableCell>
+                                                    <TableCell className="text-right font-medium">
+                                                        {formatCurrency(proj.revenue)}
+                                                    </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
                                                             <Progress value={share} className="h-2 flex-1" />
-                                                            <span className="text-xs text-muted-foreground w-10">{share.toFixed(0)}%</span>
+                                                            <span className="text-xs text-muted-foreground w-10">
+                                                                {share.toFixed(0)}%
+                                                            </span>
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -521,12 +544,15 @@ export default function ReportsPage() {
                                 ) : (
                                     <div className="space-y-4">
                                         {expensesByCategory.map((cat, idx) => {
-                                            const share = stats.totalExpenses > 0 ? (cat.amount / stats.totalExpenses) * 100 : 0;
+                                            const share =
+                                                stats.totalExpenses > 0 ? (cat.amount / stats.totalExpenses) * 100 : 0;
                                             return (
                                                 <div key={idx} className="space-y-2">
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-sm font-medium">{cat.name}</span>
-                                                        <span className="text-sm text-muted-foreground">{formatCurrency(cat.amount)}</span>
+                                                        <span className="text-sm text-muted-foreground">
+                                                            {formatCurrency(cat.amount)}
+                                                        </span>
                                                     </div>
                                                     <Progress value={share} className="h-2" />
                                                 </div>
@@ -545,7 +571,9 @@ export default function ReportsPage() {
                                 <div className="space-y-4">
                                     <div className="p-4 bg-red-50 rounded-lg">
                                         <p className="text-sm text-red-600">Total Expenses</p>
-                                        <p className="text-2xl font-bold text-red-900">{formatCurrency(stats.totalExpenses)}</p>
+                                        <p className="text-2xl font-bold text-red-900">
+                                            {formatCurrency(stats.totalExpenses)}
+                                        </p>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="p-3 bg-gray-50 rounded-lg">

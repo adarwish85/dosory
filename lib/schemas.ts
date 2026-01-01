@@ -349,16 +349,19 @@ export const taskFormSchema = z.object({
 
 export const expenseFormSchema = z.object({
     categoryId: z.string().min(1, "Category is required"),
+    payee: z.string().optional(), // Made optional to support existing usage or strict later
     amount: z.number().min(0.01, "Amount must be greater than 0"),
     currency: z.string().min(1, "Currency is required"),
     taxId: z.string().optional(),
     date: z.date(),
     customerId: z.string().optional(),
     projectId: z.string().optional(),
-    paymentMode: z.string().optional(),
+    paymentMode: z.string().optional(), // Keep flexible for now or migrate to enum
     reference: z.string().optional(),
+    description: z.string().optional(), // Map note to description
     note: z.string().optional(),
     billable: z.boolean(),
+    attachments: z.array(z.string()).optional(),
 });
 
 export const expenseCategoryFormSchema = z.object({
@@ -837,13 +840,7 @@ export const payrollInputFormSchema = z.object({
 export type PayrollInputFormData = z.infer<typeof payrollInputFormSchema>;
 
 // Performance Note
-export const performanceRatingSchema = z.union([
-    z.literal(1),
-    z.literal(2),
-    z.literal(3),
-    z.literal(4),
-    z.literal(5),
-]);
+export const performanceRatingSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]);
 export const performanceFlagSchema = z.enum(["promotion_candidate", "performance_concern", "none"]);
 
 export const performanceNoteFormSchema = z.object({
@@ -873,3 +870,47 @@ export const employeeDocumentFormSchema = z.object({
 });
 
 export type EmployeeDocumentFormData = z.infer<typeof employeeDocumentFormSchema>;
+
+// ============================================
+// Finance Schemas
+// ============================================
+
+export const accountTypeSchema = z.enum(["asset", "liability", "equity", "income", "expense"]);
+export const accountSubTypeSchema = z.enum([
+    "current_asset",
+    "fixed_asset",
+    "current_liability",
+    "long_term_liability",
+    "sales",
+    "other_income",
+    "operating_expense",
+    "cost_of_goods_sold",
+    "retained_earnings",
+    "owner_equity",
+]);
+
+export const accountFormSchema = z.object({
+    code: z.string().min(1, "Account code is required"),
+    name: z.string().min(1, "Account name is required"),
+    type: accountTypeSchema,
+    subType: accountSubTypeSchema,
+    description: z.string().optional(),
+    parentId: z.string().optional(),
+    currency: z.string(),
+});
+
+export const journalLineSchema = z.object({
+    accountId: z.string().min(1, "Account is required"),
+    debit: z.number().min(0),
+    credit: z.number().min(0),
+    description: z.string().optional(),
+});
+
+export const journalEntryFormSchema = z.object({
+    date: z.date(),
+    description: z.string().min(1, "Description is required"),
+    referenceId: z.string().optional(),
+    referenceType: z.enum(["invoice", "payment", "expense", "manual", "transfer"]).optional(),
+    lines: z.array(journalLineSchema).min(2, "At least two lines are required"),
+    status: z.enum(["draft", "posted", "voided"]).default("draft"),
+});
