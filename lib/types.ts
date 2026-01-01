@@ -358,6 +358,7 @@ export interface Task extends BaseEntity {
     repeat?: TaskRepeat;
     checklist?: TaskChecklistItem[];
     milestoneId?: string;
+    taskListId?: string;
 }
 
 export type TaskStatus = "not_started" | "in_progress" | "testing" | "awaiting_feedback" | "completed";
@@ -854,6 +855,19 @@ export interface Milestone extends BaseEntity {
     color?: string; // hex code
     order: number;
     status: "incomplete" | "complete";
+}
+
+// ============================================
+// Task Lists (under Milestones)
+// ============================================
+
+export interface TaskList extends BaseEntity {
+    name: string;
+    projectId: string;
+    milestoneId: string;  // Required - task lists must belong to a milestone
+    order: number;
+    color?: string;
+    description?: string;
 }
 
 // ============================================

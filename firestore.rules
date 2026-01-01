@@ -315,6 +315,13 @@ service cloud.firestore {
       allow update, delete: if canModifyByOrg();
     }
 
+    // Task Lists (under Milestones)
+    match /task_lists/{taskListId} {
+      allow read: if canReadByOrg();
+      allow create: if canCreateByOrg();
+      allow update, delete: if canModifyByOrg();
+    }
+
     // ============================================
     // SUPPORT
     // ============================================

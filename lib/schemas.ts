@@ -282,6 +282,7 @@ export const taskFormSchema = z.object({
     assignees: z.array(z.string()).default([]),
     followers: z.array(z.string()).default([]),
     milestoneId: z.string().optional(),
+    taskListId: z.string().optional(),
     tags: z.array(z.string()).optional(),
     isPublic: z.boolean().default(false),
     billable: z.boolean().default(true),
