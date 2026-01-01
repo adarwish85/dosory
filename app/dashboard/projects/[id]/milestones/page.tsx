@@ -62,6 +62,7 @@ import {
 } from "@dnd-kit/core";
 import { ImportTasksDialog } from "@/components/dashboard/projects/import-tasks-dialog";
 import { EditTaskDialog } from "@/components/dashboard/tasks/edit-task-dialog";
+import { EditTaskListDialog } from "@/components/dashboard/projects/edit-task-list-dialog";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import {
     SortableContext,
@@ -145,6 +146,7 @@ function TaskListDropZone({
     onImportTasks,
     onAddTask,
     onEditTask,
+    onEditTaskList,
 }: {
     list: TaskList;
     listTasks: Task[];
@@ -155,6 +157,7 @@ function TaskListDropZone({
     onImportTasks: (taskListId: string) => void;
     onAddTask: (listId: string, name: string) => Promise<void>;
     onEditTask: (task: Task) => void;
+    onEditTaskList: (list: TaskList) => void;
 }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: list.id,
@@ -241,6 +244,9 @@ function TaskListDropZone({
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => onEditTaskList(list)}>
+                                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                     className="text-red-600"
                                     onClick={() => confirm("Delete task list?") && onDeleteTaskList(list.id)}
@@ -358,6 +364,9 @@ export default function MilestonesPage() {
     const [creatingTaskListFor, setCreatingTaskListFor] = useState<string | null>(null);
     const [newTaskListName, setNewTaskListName] = useState("");
     const [creatingTaskList, setCreatingTaskList] = useState(false);
+
+    // Edit task list state
+    const [editingTaskList, setEditingTaskList] = useState<TaskList | null>(null);
 
     // Import Dialog State
     const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -855,6 +864,7 @@ export default function MilestonesPage() {
                                                                     }
                                                                     onAddTask={handleAddTask}
                                                                     onEditTask={setEditingTask}
+                                                                    onEditTaskList={setEditingTaskList}
                                                                 />
                                                             );
                                                         })}
@@ -1010,6 +1020,14 @@ export default function MilestonesPage() {
                         open={!!editingTask}
                         onOpenChange={(open) => !open && setEditingTask(null)}
                         task={editingTask}
+                    />
+                )}
+
+                {editingTaskList && (
+                    <EditTaskListDialog
+                        open={!!editingTaskList}
+                        onOpenChange={(open) => !open && setEditingTaskList(null)}
+                        taskList={editingTaskList}
                     />
                 )}
             </div>

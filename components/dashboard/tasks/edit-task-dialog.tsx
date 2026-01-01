@@ -8,8 +8,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { taskFormSchema, TaskFormData } from "@/lib/schemas";
-import { useTasks } from "@/lib/hooks/use-projects";
+import { useTasks, useProjects } from "@/lib/hooks/use-projects";
+import { useMilestones } from "@/lib/hooks/use-project-data";
+import { useTaskLists } from "@/lib/hooks/use-task-lists";
 import { useStaff } from "@/lib/hooks/use-staff";
 import { useEffect, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
@@ -28,7 +31,16 @@ interface EditTaskDialogProps {
 export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps) {
     const { updateTask } = useTasks();
     const { staff } = useStaff();
+    const { projects } = useProjects();
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Contextual State
+    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(task.projectId || null);
+    const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(task.milestoneId || null);
+    const [isGeneralTask, setIsGeneralTask] = useState<boolean>(!task.projectId);
+
+    const { milestones } = useMilestones(selectedProjectId || undefined);
+    const { taskLists } = useTaskLists({ projectId: selectedProjectId || undefined });
 
     const form = useForm<TaskFormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,12 +59,20 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
             startDate: task.startDate ? task.startDate.toDate() : undefined,
             relatedTo: task.relatedTo,
             customerId: task.customerId,
+            projectId: task.projectId,
+            milestoneId: task.milestoneId,
+            taskListId: task.taskListId,
         },
     });
 
     // Reset form when task changes
     useEffect(() => {
         if (open && task) {
+            const hasProject = !!task.projectId;
+            setIsGeneralTask(!hasProject);
+            setSelectedProjectId(task.projectId || null);
+            setSelectedMilestoneId(task.milestoneId || null);
+
             form.reset({
                 name: task.name,
                 description: task.description || "",
@@ -67,9 +87,45 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 startDate: task.startDate ? task.startDate.toDate() : undefined,
                 relatedTo: task.relatedTo,
                 customerId: task.customerId,
+                projectId: task.projectId,
+                milestoneId: task.milestoneId,
+                taskListId: task.taskListId,
             });
         }
     }, [open, task, form]);
+
+    // Handle "General Task" toggle
+    const handleGeneralTaskChange = (checked: boolean) => {
+        setIsGeneralTask(checked);
+        if (checked) {
+            // Clear project fields
+            setSelectedProjectId(null);
+            setSelectedMilestoneId(null);
+            form.setValue("projectId", undefined);
+            form.setValue("milestoneId", undefined);
+            form.setValue("taskListId", undefined);
+        } else {
+            // If untoggling, user will select project manually, no action needed yet
+        }
+    };
+
+    const handleProjectChange = (projectId: string) => {
+        setSelectedProjectId(projectId);
+        form.setValue("projectId", projectId);
+
+        // Reset cascading fields
+        setSelectedMilestoneId(null);
+        form.setValue("milestoneId", undefined);
+        form.setValue("taskListId", undefined);
+    };
+
+    const handleMilestoneChange = (milestoneId: string) => {
+        setSelectedMilestoneId(milestoneId);
+        form.setValue("milestoneId", milestoneId);
+
+        // Reset cascading fields
+        form.setValue("taskListId", undefined);
+    };
 
     const onSubmit = async (data: TaskFormData) => {
         try {
@@ -105,6 +161,117 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                 </FormItem>
                             )}
                         />
+
+                        <div className="flex items-center space-x-2 pb-2">
+                            <Checkbox
+                                id="general-task"
+                                checked={isGeneralTask}
+                                onCheckedChange={handleGeneralTaskChange}
+                            />
+                            <label
+                                htmlFor="general-task"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                General Task (Not linked to any project)
+                            </label>
+                        </div>
+
+                        {!isGeneralTask && (
+                            <>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="projectId"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Project</FormLabel>
+                                                <Select value={field.value} onValueChange={handleProjectChange}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select project" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {projects.map((p) => (
+                                                            <SelectItem key={p.id} value={p.id}>
+                                                                {p.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="milestoneId"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Milestone</FormLabel>
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={handleMilestoneChange}
+                                                    disabled={!selectedProjectId}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select milestone" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {milestones.map((m) => (
+                                                            <SelectItem key={m.id} value={m.id}>
+                                                                {m.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="taskListId"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Task List</FormLabel>
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={field.onChange}
+                                                    disabled={!selectedProjectId}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select task list" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {taskLists
+                                                            .filter(
+                                                                (tl) =>
+                                                                    !selectedMilestoneId ||
+                                                                    tl.milestoneId === selectedMilestoneId
+                                                            )
+                                                            .map((tl) => (
+                                                                <SelectItem key={tl.id} value={tl.id}>
+                                                                    {tl.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </>
+                        )}
 
                         <div className="grid grid-cols-2 gap-4">
                             <FormField

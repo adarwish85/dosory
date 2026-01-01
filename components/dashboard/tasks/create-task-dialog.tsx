@@ -3,33 +3,17 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { taskFormSchema, TaskFormData } from "@/lib/schemas";
-import { useTasks } from "@/lib/hooks/use-projects";
+import { useTasks, useProjects } from "@/lib/hooks/use-projects";
+import { useMilestones } from "@/lib/hooks/use-project-data";
+import { useTaskLists } from "@/lib/hooks/use-task-lists";
 import { useStaff } from "@/lib/hooks/use-staff";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -56,8 +40,17 @@ export function CreateTaskDialog({
     customerName,
 }: CreateTaskDialogProps) {
     const { createTask } = useTasks();
+    const { projects } = useProjects();
     const { staff } = useStaff();
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Contextual State
+    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+    const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
+    const [isGeneralTask, setIsGeneralTask] = useState<boolean>(true); // Default to General (no project) unless context dictates otherwise
+
+    const { milestones } = useMilestones(selectedProjectId || undefined);
+    const { taskLists } = useTaskLists({ projectId: selectedProjectId || undefined });
 
     const form = useForm<TaskFormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,13 +65,30 @@ export function CreateTaskDialog({
             isPublic: false,
             billable: false,
             hourlyRate: 0,
-            relatedTo: leadId ? { type: "lead", id: leadId } : customerId ? { type: "customer", id: customerId } : undefined,
+            relatedTo: leadId
+                ? { type: "lead", id: leadId }
+                : customerId
+                  ? { type: "customer", id: customerId }
+                  : undefined,
             customerId: customerId,
+            projectId: undefined,
+            milestoneId: undefined,
+            taskListId: undefined,
         },
     });
 
     useEffect(() => {
         if (open) {
+            // If opened with context that implies a project (future proofing), we'd set it here.
+            // For now, default to General Task if no project ID is passed (props doesn't have projectId yet, but we can add logic later)
+            // If leadId is present, we might still want to link to a project?
+            // The prompt says "if opened within a tasklist/ or milestone / or project".
+            // Since this dialog is currently used for Leads, keep default.
+
+            setIsGeneralTask(true);
+            setSelectedProjectId(null);
+            setSelectedMilestoneId(null);
+
             form.reset({
                 name: "",
                 description: "",
@@ -89,11 +99,43 @@ export function CreateTaskDialog({
                 isPublic: false,
                 billable: false,
                 hourlyRate: 0,
-                relatedTo: leadId ? { type: "lead", id: leadId } : customerId ? { type: "customer", id: customerId } : undefined,
+                relatedTo: leadId
+                    ? { type: "lead", id: leadId }
+                    : customerId
+                      ? { type: "customer", id: customerId }
+                      : undefined,
                 customerId: customerId,
+                projectId: undefined,
+                milestoneId: undefined,
+                taskListId: undefined,
             });
         }
     }, [open, leadId, customerId, form]);
+
+    const handleGeneralTaskChange = (checked: boolean) => {
+        setIsGeneralTask(checked);
+        if (checked) {
+            setSelectedProjectId(null);
+            setSelectedMilestoneId(null);
+            form.setValue("projectId", undefined);
+            form.setValue("milestoneId", undefined);
+            form.setValue("taskListId", undefined);
+        }
+    };
+
+    const handleProjectChange = (projectId: string) => {
+        setSelectedProjectId(projectId);
+        form.setValue("projectId", projectId);
+        setSelectedMilestoneId(null);
+        form.setValue("milestoneId", undefined);
+        form.setValue("taskListId", undefined);
+    };
+
+    const handleMilestoneChange = (milestoneId: string) => {
+        setSelectedMilestoneId(milestoneId);
+        form.setValue("milestoneId", milestoneId);
+        form.setValue("taskListId", undefined);
+    };
 
     const onSubmit = async (data: TaskFormData) => {
         try {
@@ -130,6 +172,117 @@ export function CreateTaskDialog({
                                 </FormItem>
                             )}
                         />
+
+                        <div className="flex items-center space-x-2 pb-2">
+                            <Checkbox
+                                id="general-task"
+                                checked={isGeneralTask}
+                                onCheckedChange={handleGeneralTaskChange}
+                            />
+                            <label
+                                htmlFor="general-task"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                General Task (Not linked to any project)
+                            </label>
+                        </div>
+
+                        {!isGeneralTask && (
+                            <>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="projectId"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Project</FormLabel>
+                                                <Select value={field.value} onValueChange={handleProjectChange}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select project" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {projects.map((p) => (
+                                                            <SelectItem key={p.id} value={p.id}>
+                                                                {p.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="milestoneId"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Milestone</FormLabel>
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={handleMilestoneChange}
+                                                    disabled={!selectedProjectId}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select milestone" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {milestones.map((m) => (
+                                                            <SelectItem key={m.id} value={m.id}>
+                                                                {m.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="taskListId"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Task List</FormLabel>
+                                                <Select
+                                                    value={field.value}
+                                                    onValueChange={field.onChange}
+                                                    disabled={!selectedProjectId}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select task list" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {taskLists
+                                                            .filter(
+                                                                (tl) =>
+                                                                    !selectedMilestoneId ||
+                                                                    tl.milestoneId === selectedMilestoneId
+                                                            )
+                                                            .map((tl) => (
+                                                                <SelectItem key={tl.id} value={tl.id}>
+                                                                    {tl.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </>
+                        )}
 
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
@@ -196,9 +349,7 @@ export function CreateTaskDialog({
                                                     mode="single"
                                                     selected={field.value}
                                                     onSelect={field.onChange}
-                                                    disabled={(date) =>
-                                                        date < new Date("1900-01-01")
-                                                    }
+                                                    disabled={(date) => date < new Date("1900-01-01")}
                                                     initialFocus
                                                 />
                                             </PopoverContent>
@@ -238,9 +389,7 @@ export function CreateTaskDialog({
                                                     mode="single"
                                                     selected={field.value}
                                                     onSelect={field.onChange}
-                                                    disabled={(date) =>
-                                                        date < new Date("1900-01-01")
-                                                    }
+                                                    disabled={(date) => date < new Date("1900-01-01")}
                                                     initialFocus
                                                 />
                                             </PopoverContent>
@@ -334,9 +483,7 @@ export function CreateTaskDialog({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Followers</FormLabel>
-                                        <Select
-                                            onValueChange={(val) => field.onChange([...(field.value || []), val])}
-                                        >
+                                        <Select onValueChange={(val) => field.onChange([...(field.value || []), val])}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select followers" />
@@ -366,11 +513,7 @@ export function CreateTaskDialog({
                                 <FormItem>
                                     <FormLabel>Task Description</FormLabel>
                                     <FormControl>
-                                        <Textarea
-                                            placeholder="Add Description"
-                                            className="min-h-[100px]"
-                                            {...field}
-                                        />
+                                        <Textarea placeholder="Add Description" className="min-h-[100px]" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
