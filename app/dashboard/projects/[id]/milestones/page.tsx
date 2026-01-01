@@ -27,6 +27,8 @@ import {
     ListTodo,
     GripVertical,
     Loader2,
+    Check,
+    X,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -59,6 +61,8 @@ import {
     DragEndEvent,
 } from "@dnd-kit/core";
 import { ImportTasksDialog } from "@/components/dashboard/projects/import-tasks-dialog";
+import { EditTaskDialog } from "@/components/dashboard/tasks/edit-task-dialog";
+import { useUserProfile } from "@/components/hooks/use-user-profile";
 import {
     SortableContext,
     sortableKeyboardCoordinates,
@@ -139,6 +143,8 @@ function TaskListDropZone({
     onDeleteTaskList,
     onToggleComplete,
     onImportTasks,
+    onAddTask,
+    onEditTask,
 }: {
     list: TaskList;
     listTasks: Task[];
@@ -147,11 +153,58 @@ function TaskListDropZone({
     onDeleteTaskList: (id: string) => void;
     onToggleComplete: (task: Task) => void;
     onImportTasks: (taskListId: string) => void;
+    onAddTask: (listId: string, name: string) => Promise<void>;
+    onEditTask: (task: Task) => void;
 }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: list.id,
         data: { list, type: "taskList" },
     });
+
+    const [isAddingTask, setIsAddingTask] = useState(false);
+    const [newTaskName, setNewTaskName] = useState("");
+    const [submittingTask, setSubmittingTask] = useState(false);
+
+    // Auto-focus input when adding task
+    const inputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        if (isAddingTask && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isAddingTask]);
+
+    const handleAddTask = async () => {
+        if (!newTaskName.trim()) {
+            setIsAddingTask(false);
+            return;
+        }
+
+        setSubmittingTask(true);
+        try {
+            await onAddTask(list.id, newTaskName);
+            setNewTaskName("");
+            // Keep adding mode open for rapid entry? User said "inline input (fast)".
+            // Often rapid entry means keeping it open. Let's keep it open but clear value.
+            // Or maybe close it. Let's close it for now to be safe, or check UX.
+            // Ideally: Type -> Enter -> Save -> Clear -> Ready for next.
+            // Let's implement Type -> Enter -> Save -> Clear.
+        } catch {
+            // Error handled in parent
+        } finally {
+            setSubmittingTask(false);
+            inputRef.current?.focus();
+        }
+    };
+
+    const onKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleAddTask();
+        } else if (e.key === "Escape") {
+            setIsAddingTask(false);
+            setNewTaskName("");
+        }
+    };
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -159,8 +212,8 @@ function TaskListDropZone({
     };
 
     return (
-        <div ref={setNodeRef} style={style} className={cn(isDragging && "opacity-50")}>
-            <div className="border rounded-lg p-3 bg-gray-50/50">
+        <div ref={setNodeRef} style={style} className={cn("flex flex-col h-full", isDragging && "opacity-50")}>
+            <div className="border rounded-lg p-3 bg-gray-50/50 flex flex-col h-full">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                         <button {...attributes} {...listeners} className="cursor-grab hover:text-gray-700">
@@ -201,23 +254,80 @@ function TaskListDropZone({
 
                 {/* Tasks in this list - droppable zone */}
                 <SortableContext items={listTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-                    {listTasks.length > 0 ? (
-                        <div className="space-y-1 ml-6 min-h-[40px]">
-                            {listTasks.map((task) => (
+                    <div className="space-y-1 ml-6 min-h-[40px] flex-1">
+                        {listTasks.map((task) => (
+                            <div key={task.id} className="group relative">
                                 <DraggableTaskItem
-                                    key={task.id}
                                     task={task}
                                     milestone={milestone}
                                     onToggleComplete={onToggleComplete}
                                 />
-                            ))}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-1 top-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // prevent drag?
+                                        onEditTask(task);
+                                    }}
+                                >
+                                    <Pencil className="h-3 w-3" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </SortableContext>
+
+                {/* Inline Add Task */}
+                <div className="ml-6 mt-2">
+                    {isAddingTask ? (
+                        <div className="flex items-center gap-2">
+                            <Input
+                                ref={inputRef}
+                                value={newTaskName}
+                                onChange={(e) => setNewTaskName(e.target.value)}
+                                onKeyDown={onKeyDown}
+                                placeholder="Task name..."
+                                className="h-8 text-sm"
+                                disabled={submittingTask}
+                            />
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                onClick={handleAddTask}
+                                disabled={submittingTask}
+                            >
+                                {submittingTask ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Check className="h-4 w-4" />
+                                )}
+                            </Button>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => {
+                                    setIsAddingTask(false);
+                                    setNewTaskName("");
+                                }}
+                                disabled={submittingTask}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
                         </div>
                     ) : (
-                        <p className="text-xs text-muted-foreground ml-6 italic py-2 border-2 border-dashed border-gray-200 rounded text-center">
-                            Drop tasks here
-                        </p>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-xs text-muted-foreground hover:text-foreground h-8 px-2"
+                            onClick={() => setIsAddingTask(true)}
+                        >
+                            <Plus className="h-3 w-3 mr-2" /> Add Task
+                        </Button>
                     )}
-                </SortableContext>
+                </div>
             </div>
         </div>
     );
@@ -717,6 +827,8 @@ export default function MilestonesPage() {
                                                                     onImportTasks={(listId) =>
                                                                         handleOpenImport(listId, milestone.id)
                                                                     }
+                                                                    onAddTask={handleAddTask}
+                                                                    onEditTask={setEditingTask}
                                                                 />
                                                             );
                                                         })}
@@ -866,6 +978,14 @@ export default function MilestonesPage() {
                     targetTaskListId={importTargetListId}
                     onImport={handleImportTasks}
                 />
+
+                {editingTask && (
+                    <EditTaskDialog
+                        open={!!editingTask}
+                        onOpenChange={(open) => !open && setEditingTask(null)}
+                        task={editingTask}
+                    />
+                )}
             </div>
         </DndContext>
     );

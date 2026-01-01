@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTasks } from "@/lib/hooks";
 import type { Task, TaskStatus, TaskPriority } from "@/lib/types";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
     DropdownMenu,
