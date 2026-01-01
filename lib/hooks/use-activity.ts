@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { collection, query, orderBy, limit, onSnapshot, addDoc, Timestamp, where } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, addDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/components/auth-provider";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -24,7 +24,8 @@ export type ActivityType =
     | "contract_created"
     | "contract_deleted"
     | "contract_updated"
-    | "contract_status_changed";
+    | "contract_status_changed"
+    | "project_duplicated";
 
 export interface Activity {
     id: string;
@@ -35,7 +36,7 @@ export interface Activity {
     userId: string;
     userName?: string;
     createdAt: Timestamp;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 const ACTIVITY_ICONS: Record<ActivityType, { icon: string; color: string }> = {
@@ -57,6 +58,7 @@ const ACTIVITY_ICONS: Record<ActivityType, { icon: string; color: string }> = {
     contract_deleted: { icon: "🗑️", color: "text-red-500" },
     contract_updated: { icon: "📝", color: "text-blue-400" },
     contract_status_changed: { icon: "🔄", color: "text-orange-500" },
+    project_duplicated: { icon: "👯", color: "text-blue-400" },
 };
 
 export function getActivityMeta(type: ActivityType) {
@@ -80,7 +82,9 @@ export function useActivity(options: UseActivityOptions = {}) {
 
     useEffect(() => {
         if (!enabled || !orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => {
+                setLoading(false);
+            });
             return;
         }
 
@@ -104,34 +108,37 @@ export function useActivity(options: UseActivityOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [orgId, fetchLimit]);
+    }, [orgId, fetchLimit, enabled]);
 
     // Helper to log a new activity
-    const logActivity = async (
-        type: ActivityType,
-        message: string,
-        entityId?: string,
-        entityType?: string,
-        metadata?: Record<string, any>
-    ) => {
-        if (!orgId || !user?.uid) return;
+    const logActivity = useCallback(
+        async (
+            type: ActivityType,
+            message: string,
+            entityId?: string,
+            entityType?: string,
+            metadata?: Record<string, unknown>
+        ) => {
+            if (!orgId || !user?.uid) return;
 
-        try {
-            const activitiesRef = collection(db, "organizations", orgId, "activities");
-            await addDoc(activitiesRef, {
-                type,
-                message,
-                entityId,
-                entityType,
-                userId: user.uid,
-                userName: user.displayName || user.email,
-                createdAt: Timestamp.now(),
-                metadata,
-            });
-        } catch (error) {
-            console.error("Error logging activity:", error);
-        }
-    };
+            try {
+                const activitiesRef = collection(db, "organizations", orgId, "activities");
+                await addDoc(activitiesRef, {
+                    type,
+                    message,
+                    entityId,
+                    entityType,
+                    userId: user.uid,
+                    userName: user.displayName || user.email,
+                    createdAt: Timestamp.now(),
+                    metadata,
+                });
+            } catch (error) {
+                console.error("Error logging activity:", error);
+            }
+        },
+        [orgId, user]
+    );
 
     return {
         activities,

@@ -39,7 +39,6 @@ import { useState } from "react";
 import { useProjects } from "@/lib/hooks/use-projects";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ProjectFormData } from "@/lib/schemas";
 
 export default function ProjectDetailLayout({ children }: { children: React.ReactNode }) {
     const params = useParams();
@@ -61,7 +60,7 @@ export default function ProjectDetailLayout({ children }: { children: React.Reac
     ];
 
     const [isEditOpen, setIsEditOpen] = useState(false);
-    const { updateProject, createProject, deleteProject } = useProjects();
+    const { updateProject, deleteProject, duplicateProjectDeep } = useProjects();
     const router = useRouter();
 
     if (loading) {
@@ -83,29 +82,14 @@ export default function ProjectDetailLayout({ children }: { children: React.Reac
 
     const handleDuplicateProject = async () => {
         if (!project) return;
+        const loadingToast = toast.loading("Duplicating project and all associated data...");
         try {
-            // Simplified duplication: Copy main fields
-            const data: ProjectFormData = {
-                name: `${project.name} (Copy)`,
-                customerId: project.customerId,
-                description: project.description || "",
-                status: "not_started",
-                startDate: project.startDate ? project.startDate.toDate() : undefined,
-                deadline: project.deadline ? project.deadline.toDate() : undefined,
-                billingType: project.billingType,
-                projectRate: project.projectRate,
-                estimatedHours: project.estimatedHours,
-                currency: project.currency || "USD",
-                tags: project.tags,
-                members: project.members,
-                pinned: false,
-            };
-
-            const newId = await createProject(data);
-            toast.success("Project duplicated");
+            const newId = await duplicateProjectDeep(project.id, `${project.name} (Copy)`);
+            toast.success("Project duplicated with all milestones and tasks", { id: loadingToast });
             router.push(`/dashboard/projects/${newId}`);
-        } catch {
-            toast.error("Failed to duplicate project");
+        } catch (error) {
+            console.error("Deep duplication error:", error);
+            toast.error("Failed to duplicate project", { id: loadingToast });
         }
     };
 

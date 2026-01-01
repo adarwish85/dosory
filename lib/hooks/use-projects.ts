@@ -16,9 +16,11 @@ import {
     updateDoc,
     deleteDoc,
     getDoc,
+    getDocs,
     serverTimestamp,
     Timestamp,
     QueryConstraint,
+    writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -55,7 +57,9 @@ export function useProjects(options: UseProjectsOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => {
+                setLoading(false);
+            });
             return;
         }
 
@@ -120,7 +124,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
 
             return docRef.id;
         },
-        [profile?.orgId, profile?.uid, logActivity]
+        [profile, logActivity]
     );
 
     const updateProject = useCallback(async (id: string, data: Partial<ProjectFormData>): Promise<void> => {
@@ -181,6 +185,115 @@ export function useProjects(options: UseProjectsOptions = {}) {
         [logActivity]
     );
 
+    const duplicateProjectDeep = useCallback(
+        async (sourceProjectId: string, newName: string): Promise<string> => {
+            if (!profile?.orgId) throw new Error("No organization");
+
+            // 1. Fetch Source Project
+            const projectSnap = await getDoc(doc(db, "projects", sourceProjectId));
+            if (!projectSnap.exists()) throw new Error("Source project not found");
+            const projectData = projectSnap.data();
+
+            // 2. Create New Project
+            const newProjectData = {
+                ...projectData,
+                name: newName,
+                progress: 0,
+                status: "not_started",
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                createdBy: profile.uid,
+                pinned: false,
+            };
+            const newProjectRef = await addDoc(collection(db, "projects"), newProjectData);
+            const newProjectId = newProjectRef.id;
+
+            // 3. Duplicate Milestones
+            const milestonesQuery = query(
+                collection(db, "milestones"),
+                where("projectId", "==", sourceProjectId),
+                where("orgId", "==", profile.orgId)
+            );
+            const milestonesSnap = await getDocs(milestonesQuery);
+
+            for (const milestoneDoc of milestonesSnap.docs) {
+                const milestoneData = milestoneDoc.data();
+                const oldMilestoneId = milestoneDoc.id;
+
+                const newMilestoneRef = await addDoc(collection(db, "milestones"), {
+                    ...milestoneData,
+                    projectId: newProjectId,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    status: "incomplete",
+                });
+                const newMilestoneId = newMilestoneRef.id;
+
+                // 4. Duplicate Task Lists for this Milestone
+                const taskListsQuery = query(
+                    collection(db, "task_lists"),
+                    where("milestoneId", "==", oldMilestoneId),
+                    where("orgId", "==", profile.orgId)
+                );
+                const taskListsSnap = await getDocs(taskListsQuery);
+
+                for (const taskListDoc of taskListsSnap.docs) {
+                    const taskListData = taskListDoc.data();
+                    const oldTaskListId = taskListDoc.id;
+
+                    const newTaskListRef = await addDoc(collection(db, "task_lists"), {
+                        ...taskListData,
+                        projectId: newProjectId,
+                        milestoneId: newMilestoneId,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                        createdBy: profile.uid,
+                    });
+                    const newTaskListId = newTaskListRef.id;
+
+                    // 5. Duplicate Tasks for this Task List
+                    const tasksQuery = query(
+                        collection(db, "tasks"),
+                        where("taskListId", "==", oldTaskListId),
+                        where("orgId", "==", profile.orgId)
+                    );
+                    const tasksSnap = await getDocs(tasksQuery);
+
+                    const taskBatch = writeBatch(db);
+                    tasksSnap.docs.forEach((tDoc) => {
+                        const tData = tDoc.data();
+                        const tRef = doc(collection(db, "tasks"));
+                        taskBatch.set(tRef, {
+                            ...tData,
+                            projectId: newProjectId,
+                            milestoneId: newMilestoneId,
+                            taskListId: newTaskListId,
+                            status: "not_started",
+                            createdAt: serverTimestamp(),
+                            updatedAt: serverTimestamp(),
+                            createdBy: profile.uid,
+                        });
+                    });
+                    if (tasksSnap.docs.length > 0) {
+                        await taskBatch.commit();
+                    }
+                }
+            }
+
+            if (logActivity) {
+                await logActivity(
+                    "project_duplicated",
+                    `Duplicated project from ${projectData.name} to ${newName}`,
+                    newProjectId,
+                    "project"
+                );
+            }
+
+            return newProjectId;
+        },
+        [profile, logActivity]
+    );
+
     // Calculate project stats by status
     const projectStats = projects.reduce(
         (acc, project) => {
@@ -201,6 +314,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
         deleteProject,
         updateProgress,
         updateStatus,
+        duplicateProjectDeep,
     };
 }
 
@@ -215,8 +329,10 @@ export function useProject(id: string | null) {
 
     useEffect(() => {
         if (!id) {
-            setProject(null);
-            setLoading(false);
+            Promise.resolve().then(() => {
+                setProject(null);
+                setLoading(false);
+            });
             return;
         }
 
@@ -277,7 +393,9 @@ export function useTasks(options: UseTasksOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => {
+                setLoading(false);
+            });
             return;
         }
 
@@ -329,7 +447,19 @@ export function useTasks(options: UseTasksOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, projectId, customerId, assignee, orderByField, orderDirection, queryLimit, relatedTo?.id, relatedTo?.type]);
+    }, [
+        profile?.orgId,
+        status,
+        projectId,
+        customerId,
+        assignee,
+        orderByField,
+        orderDirection,
+        queryLimit,
+        relatedTo?.id,
+        relatedTo?.type,
+        relatedTo,
+    ]);
 
     const createTask = useCallback(
         async (data: TaskFormData): Promise<string> => {
@@ -364,7 +494,7 @@ export function useTasks(options: UseTasksOptions = {}) {
 
             return docRef.id;
         },
-        [profile?.orgId, profile?.uid]
+        [profile]
     );
 
     const updateTask = useCallback(async (id: string, data: Partial<TaskFormData>): Promise<void> => {
@@ -428,8 +558,10 @@ export function useTask(id: string | null) {
 
     useEffect(() => {
         if (!id) {
-            setTask(null);
-            setLoading(false);
+            Promise.resolve().then(() => {
+                setTask(null);
+                setLoading(false);
+            });
             return;
         }
 

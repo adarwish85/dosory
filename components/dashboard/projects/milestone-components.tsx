@@ -63,7 +63,8 @@ interface MilestoneItemProps {
     onImportTasks: (listId: string, milestoneId: string) => void;
     onEditMilestone: (m: Milestone) => void;
     onDeleteMilestone: (id: string) => void;
-    onUpdateMilestone: (id: string, data: Partial<Milestone>) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onUpdateMilestone: (id: string, data: any) => void;
     setCreatingTaskListFor: (id: string) => void;
 
     // Components
