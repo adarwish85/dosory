@@ -30,8 +30,8 @@ import { PageHeader } from "@/components/dashboard/shared/page-header";
 // Schema
 const journalLineSchema = z.object({
     accountId: z.string().min(1, "Account is required"),
-    debit: z.number().min(0).default(0),
-    credit: z.number().min(0).default(0),
+    debit: z.number().min(0),
+    credit: z.number().min(0),
     description: z.string().optional(),
     entityType: z.enum(["customer", "vendor"]).optional(),
     entityId: z.string().optional(),
@@ -42,7 +42,7 @@ const journalEntryFormSchema = z.object({
     reference: z.string().optional(),
     description: z.string().optional(),
     currency: z.string().min(1, "Currency is required"),
-    fxRate: z.number().min(0.000001, "Rate must be positive").default(1.0),
+    fxRate: z.number().min(0.000001, "Rate must be positive"),
     lines: z.array(journalLineSchema).min(2, "At least two lines are required"),
 });
 
