@@ -37,6 +37,20 @@ export interface JournalEntry extends BaseEntity {
     status: "draft" | "posted" | "voided";
     periodId?: string; // Link to financial period
     workspaceId: string;
+    // V1.1: Multi-currency & FX
+    currency: string; // Transaction currency (e.g. "EUR")
+    fxRate: number; // Exchange rate to Base Currency (1.0 if same)
+}
+
+export interface AuditLog extends BaseEntity {
+    action: "create" | "update" | "delete";
+    entityType: "journal_entry" | "invoice" | "payment" | "expense";
+    entityId: string;
+    userId: string;
+    userEmail?: string;
+    details: Record<string, unknown>; // Snapshot of changes or state
+    timestamp: Timestamp;
+    orgId: string;
 }
 
 export interface JournalLine {
@@ -45,6 +59,9 @@ export interface JournalLine {
     debit: number;
     credit: number;
     description?: string;
+    // V1.1: Sub-ledger Linkage
+    entityType?: "customer" | "vendor";
+    entityId?: string;
 }
 
 export interface FinancialPeriod extends BaseEntity {

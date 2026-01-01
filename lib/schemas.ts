@@ -904,6 +904,8 @@ export const journalLineSchema = z.object({
     debit: z.number().min(0),
     credit: z.number().min(0),
     description: z.string().optional(),
+    entityType: z.enum(["customer", "vendor"]).optional(),
+    entityId: z.string().optional(),
 });
 
 export const journalEntryFormSchema = z.object({
@@ -913,4 +915,6 @@ export const journalEntryFormSchema = z.object({
     referenceType: z.enum(["invoice", "payment", "expense", "manual", "transfer"]).optional(),
     lines: z.array(journalLineSchema).min(2, "At least two lines are required"),
     status: z.enum(["draft", "posted", "voided"]).default("draft"),
+    currency: z.string().min(1, "Currency is required"),
+    fxRate: z.number().default(1.0),
 });

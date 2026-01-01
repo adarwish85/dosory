@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { collection, query, where, getDocs, orderBy, Timestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useFinance } from "./use-finance";
@@ -177,9 +177,64 @@ export function useFinancialReports() {
         }
     }, [profile?.orgId, accounts, fetchAccounts]);
 
+    // V1.1: AR Aging Report
+    const getARAging = useCallback(async (): Promise<AgingReportItem[]> => {
+        if (!profile?.orgId) throw new Error("No organization");
+
+        // Query invoices with outstanding balance
+        const q = query(collection(db, "invoices"), where("orgId", "==", profile.orgId), where("amountDue", ">", 0));
+
+        const snapshot = await getDocs(q);
+        const invoices = snapshot.docs.map((d) => d.data());
+
+        const map = new Map<string, AgingReportItem>();
+        const now = new Date();
+
+        invoices.forEach((inv) => {
+            const customerId = inv.customerId;
+            if (!map.has(customerId)) {
+                map.set(customerId, {
+                    entityId: customerId,
+                    entityName: inv.customerName || "Unknown",
+                    totalDue: 0,
+                    buckets: { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0 },
+                });
+            }
+            const item = map.get(customerId)!;
+            const due = inv.amountDue;
+            item.totalDue += due;
+
+            // Age based on Due Date
+            const dueDate = inv.dueDate ? inv.dueDate.toDate() : inv.date.toDate();
+            const diffTime = now.getTime() - dueDate.getTime();
+            const daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (daysOverdue <= 30) item.buckets["0-30"] += due;
+            else if (daysOverdue <= 60) item.buckets["31-60"] += due;
+            else if (daysOverdue <= 90) item.buckets["61-90"] += due;
+            else item.buckets["90+"] += due;
+        });
+
+        return Array.from(map.values());
+    }, [profile?.orgId]);
+
     return {
         getProfitAndLoss,
         getBalanceSheet,
+        getARAging,
         loading,
+    };
+}
+
+// V1.1 Types
+export interface AgingReportItem {
+    entityId: string;
+    entityName: string;
+    totalDue: number;
+    buckets: {
+        "0-30": number;
+        "31-60": number;
+        "61-90": number;
+        "90+": number;
     };
 }

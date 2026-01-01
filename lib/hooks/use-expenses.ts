@@ -140,6 +140,8 @@ export function useExpenses(options: UseExpensesOptions = {}) {
                     referenceType: "expense",
                     totalAmount: data.amount,
                     status: "posted",
+                    currency: data.currency, // V1.1: Use expense currency
+                    fxRate: 1.0, // V1.1: Default to 1.0 until FX UI added
                     lines: [
                         {
                             accountId: debitAccount.id,
@@ -147,6 +149,8 @@ export function useExpenses(options: UseExpensesOptions = {}) {
                             debit: data.amount,
                             credit: 0,
                             description: `Expense to ${data.payee}`,
+                            entityType: "vendor",
+                            entityId: "external_vendor", // Placeholder or matching logic needed later
                         },
                         {
                             accountId: creditAccount.id,

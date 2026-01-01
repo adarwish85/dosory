@@ -5,18 +5,16 @@ import {
     where,
     getDocs,
     addDoc,
-    updateDoc,
     doc,
     increment,
     serverTimestamp,
     orderBy,
     runTransaction,
-    limit,
     Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
-import { Account, JournalEntry, AccountType, AccountSubType } from "@/lib/types/finance";
+import { Account, JournalEntry } from "@/lib/types/finance";
 import { getDoc } from "firebase/firestore";
 
 const DEFAULT_ACCOUNTS: Partial<Account>[] = [
@@ -169,11 +167,14 @@ export function useFinance() {
 
     // THE DOUBLE-ENTRY ENGINE
     const recordJournalEntry = async (
-        entry: Omit<JournalEntry, "id" | "orgId" | "createdAt" | "updatedAt" | "workspaceId">
+        entry: Omit<
+            JournalEntry,
+            "id" | "orgId" | "createdAt" | "updatedAt" | "workspaceId" | "status" | "periodId"
+        > & { status?: "draft" | "posted" | "voided" }
     ) => {
         if (!profile?.orgId) throw new Error("No organization");
 
-        // 1. Validate Debits == Credits
+        // 1. Validate Debits == Credits (Base Currency)
         const totalDebit = entry.lines.reduce((sum, line) => sum + line.debit, 0);
         const totalCredit = entry.lines.reduce((sum, line) => sum + line.credit, 0);
 
@@ -200,57 +201,52 @@ export function useFinance() {
 
         try {
             await runTransaction(db, async (transaction) => {
-                // 2. Create Journal Entry Document
                 const jeRef = doc(collection(db, "journal_entries"));
-                transaction.set(jeRef, {
+                const jeId = jeRef.id;
+
+                // 2. Create Journal Entry Document
+                const finalEntry: JournalEntry = {
                     ...entry,
+                    id: jeId,
+                    status: entry.status || "posted",
                     orgId: profile.orgId,
                     workspaceId: profile.orgId,
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp(),
+                    createdAt: serverTimestamp() as Timestamp, // Cast for local type compatibility
+                    updatedAt: serverTimestamp() as Timestamp,
                     createdBy: profile.uid,
-                    totalAmount: totalDebit, // Convention: Total volume of one side
+                    totalAmount: totalDebit,
+                };
+
+                transaction.set(jeRef, finalEntry);
+
+                // 3. Audit Logging (V1.1)
+                const auditRef = doc(collection(db, "financial_audit_logs"));
+                transaction.set(auditRef, {
+                    orgId: profile.orgId,
+                    action: "create",
+                    entityType: "journal_entry",
+                    entityId: jeId,
+                    userId: profile.uid,
+                    timestamp: serverTimestamp(),
+                    details: {
+                        amount: totalDebit,
+                        reference: entry.referenceId || "none",
+                        currency: entry.currency,
+                        fxRate: entry.fxRate,
+                    },
                 });
 
-                // 3. Atomically Update Account Balances
-                // For each line, we need to read the account first (Firestore rule), then update.
-                // However, we can use increment() if we trust the generic structure.
-                // But let's stick to read-modify-write for safety or just simplistic increment if we don't need to read.
-                // Firestore `increment` is atomic and easier.
-
-                // We must handle multiple lines affecting the same account.
-                // Aggregate impact per account first.
-                const accountUpdates: Record<string, number> = {}; // accountId -> netChange
+                // 4. Atomically Update Account Balances
+                const accountUpdates: Record<string, number> = {};
 
                 entry.lines.forEach((line) => {
                     if (!accountUpdates[line.accountId]) accountUpdates[line.accountId] = 0;
-
-                    // Debit generally increases Assets/Expenses, decreases Liab/Equity/Income
-                    // BUT for "balance" field, we usually store normal balance?
-                    // OR we store signed balance where Debit = + and Credit = - ?
-                    // Let's standardise: Assets/Exp are Debit Normal (+), Liab/Eq/Inc are Credit Normal (-).
-                    // Actually, simplest for DB is: Balance = Sum(Debits) - Sum(Credits) for ALL accounts.
-                    // Then UI flips the sign based on account type.
-
                     accountUpdates[line.accountId] += line.debit - line.credit;
                 });
 
-                // Apply updates
                 for (const [accountId, netChange] of Object.entries(accountUpdates)) {
-                    // Logic: we assume 'balance' field exists.
-                    // We can use FieldValue.increment(netChange)
                     const accRef = doc(db, "accounts", accountId);
-                    // Note: We are NOT reading the doc here, just blindly incrementing.
-                    // This avoids "max writes" issues if we had to read them all in one go,
-                    // though runTransaction requires reads before writes if we used current data.
-                    // But `update` with `increment` doesn't need a read.
-                    // BUT: runTransaction requires we perform ALL reads before ANY writes.
-                    // So we can't use `update` randomly if we read anything else?
-                    // Actually we didn't read anything in this transaction yet.
-
-                    // However, to be strict component of a transaction, let's just use update.
                     transaction.update(accRef, {
-                        // @ts-expect-error - Firestore generic typing is tricky with increment
                         balance: typeof netChange === "number" ? increment(netChange) : 0,
                     });
                 }

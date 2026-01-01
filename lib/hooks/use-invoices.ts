@@ -14,7 +14,6 @@ import {
     addDoc,
     updateDoc,
     deleteDoc,
-    getDoc,
     serverTimestamp,
     Timestamp,
     QueryConstraint,
@@ -69,7 +68,7 @@ async function generateInvoiceNumber(
     settings?: InvoiceNumberSettings
 ): Promise<{ number: number; formatted: string }> {
     // Use Firestore transaction for atomic increment
-    const { runTransaction, getDoc } = await import("firebase/firestore");
+    const { runTransaction } = await import("firebase/firestore");
 
     const counterRef = doc(db, "organizations", orgId, "counters", "invoices");
     const settingsRef = doc(db, "organizations", orgId, "settings", "general");
@@ -394,6 +393,8 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
                     referenceType: "invoice",
                     totalAmount: invoice.total,
                     status: "posted",
+                    currency: invoice.currency || "USD", // V1.1
+                    fxRate: 1.0, // V1.1
                     lines: [
                         {
                             accountId: arAccount.id,
@@ -401,6 +402,8 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
                             debit: invoice.total,
                             credit: 0,
                             description: `Invoice #${invoice.numberFormatted}`,
+                            entityType: "customer", // V1.1: AR Linkage
+                            entityId: invoice.customerId,
                         },
                         {
                             accountId: incomeAccount.id,
@@ -508,6 +511,8 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
                 referenceType: "payment",
                 totalAmount: amount,
                 status: "posted",
+                currency: invoice.currency || "USD", // V1.1: Payment currency matches invoice for now
+                fxRate: 1.0, // V1.1
                 lines: [
                     {
                         accountId: assetAccount.id,
@@ -522,6 +527,8 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
                         debit: 0,
                         credit: amount,
                         description: `Payment applied to #${invoice.numberFormatted}`,
+                        entityType: "customer", // V1.1: AR Linkage
+                        entityId: invoice.customerId,
                     },
                 ],
             }).catch((e) => console.error("Failed to record payment JE:", e));
