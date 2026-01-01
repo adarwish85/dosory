@@ -3,7 +3,7 @@ import { collection, query, where, getDocs, orderBy, Timestamp } from "firebase/
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useFinance } from "./use-finance";
-import { JournalEntry, AccountType } from "@/lib/types/finance";
+import { JournalEntry, AccountType, Account } from "@/lib/types/finance";
 
 export interface PnLReport {
     income: number;
