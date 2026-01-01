@@ -94,6 +94,7 @@ async function generateContractNumber(orgId: string): Promise<{ number: number; 
 interface UseContractsOptions {
     status?: ContractStatus | "all";
     customerId?: string;
+    projectId?: string;
     limit?: number;
     page?: number;
     orderByField?: "startDate" | "createdAt" | "contractValue";
@@ -104,6 +105,7 @@ export function useContracts(options: UseContractsOptions = {}) {
     const {
         status = "all",
         customerId,
+        projectId,
         limit: pageSize = 50,
         page = 1,
         orderByField = "createdAt",
@@ -135,6 +137,9 @@ export function useContracts(options: UseContractsOptions = {}) {
                 if (customerId) {
                     constraints.push(where("customerId", "==", customerId));
                 }
+                if (projectId) {
+                    constraints.push(where("projectId", "==", projectId));
+                }
 
                 const q = query(collection(db, "contracts"), ...constraints);
                 const snapshot = await getCountFromServer(q);
@@ -145,7 +150,7 @@ export function useContracts(options: UseContractsOptions = {}) {
         };
 
         fetchCount();
-    }, [profile?.orgId, status, customerId]);
+    }, [profile?.orgId, status, customerId, projectId]);
 
     // Fetch Contracts
     useEffect(() => {
@@ -167,6 +172,10 @@ export function useContracts(options: UseContractsOptions = {}) {
 
         if (customerId) {
             constraints.push(where("customerId", "==", customerId));
+        }
+
+        if (projectId) {
+            constraints.push(where("projectId", "==", projectId));
         }
 
         if (page > 1 && cursors[page - 1]) {
@@ -199,7 +208,7 @@ export function useContracts(options: UseContractsOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, customerId, pageSize, page, orderByField, orderDirection, cursors]);
+    }, [profile?.orgId, status, customerId, projectId, pageSize, page, orderByField, orderDirection, cursors]);
 
     // Calculate stats
     const contractStats = contracts.reduce(

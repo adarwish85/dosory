@@ -462,6 +462,8 @@ export interface Contract extends BaseEntity {
     status: ContractStatus;
     signedAt?: Timestamp;
     signedByContactId?: string;
+    projectId?: string;
+    projectName?: string;
 }
 
 export type ContractStatus = "draft" | "sent" | "signed" | "expired" | "trash";
