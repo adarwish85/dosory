@@ -358,7 +358,7 @@ export default function NewJournalEntryPage() {
                                                                 <SelectItem value="none">- None -</SelectItem>
                                                                 {customers.map((c) => (
                                                                     <SelectItem key={c.id} value={c.id}>
-                                                                        {c.company || c.name}
+                                                                        {c.company}
                                                                     </SelectItem>
                                                                 ))}
                                                             </SelectContent>
