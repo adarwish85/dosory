@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { taskFormSchema, type TaskFormData } from "@/lib/schemas";
-import { useTasks, useProjects } from "@/lib/hooks/use-projects";
+import { useTasks, useProjects, useTaskLists } from "@/lib/hooks";
+import { useMilestones } from "@/lib/hooks/use-project-data";
 import { useCustomers } from "@/lib/hooks/use-customers";
 import { useStaff } from "@/lib/hooks/use-staff";
 import { Button } from "@/components/ui/button";
@@ -17,12 +18,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, Loader2, ChevronLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { format, isAfter } from "date-fns";
+import { Calendar as CalendarIcon, Loader2, ChevronLeft, AlertTriangle, FolderTree, ListTodo } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
-import { useMemo } from "react";
 
 export default function CreateTaskPage() {
     const router = useRouter();
@@ -33,7 +34,6 @@ export default function CreateTaskPage() {
     const { createTask } = useTasks();
     const { customers } = useCustomers({ status: "active" });
     const { projects } = useProjects({ status: "in_progress", customerId: customerIdParam || undefined });
-    // Assuming useStaff exists and returns a list of staff
     const { staff } = useStaff();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,15 +47,24 @@ export default function CreateTaskPage() {
             projectId: projectIdParam || "",
             status: "not_started",
             priority: "medium",
-            assignees: [], // TODO: Handle multi-select
+            assignees: [],
             tags: [],
             isPublic: false,
             billable: false,
+            milestoneId: "",
+            taskListId: "",
         },
     });
 
     const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
     const customerId = watch("customerId");
+    const projectId = watch("projectId");
+    const milestoneId = watch("milestoneId");
+    const selectedDueDate = watch("dueDate");
+
+    // Fetch milestones and task lists for selected project
+    const { milestones } = useMilestones(projectId || "");
+    const { taskLists } = useTaskLists({ projectId: projectId || "", milestoneId: milestoneId || undefined });
 
     // Filter projects based on selected customer
     const filteredProjects = useMemo(() => {
@@ -63,16 +72,41 @@ export default function CreateTaskPage() {
         return projects.filter(p => p.customerId === customerId);
     }, [projects, customerId]);
 
+    // Get task lists for selected milestone only
+    const filteredTaskLists = useMemo(() => {
+        if (!milestoneId) return [];
+        return taskLists.filter(tl => tl.milestoneId === milestoneId);
+    }, [taskLists, milestoneId]);
+
+    // Find selected milestone to check due date
+    const selectedMilestone = useMemo(() => {
+        return milestones.find(m => m.id === milestoneId);
+    }, [milestones, milestoneId]);
+
+    // Check if due date is after milestone
+    const isDueDateAfterMilestone = useMemo(() => {
+        if (!selectedMilestone || !selectedDueDate) return false;
+        const milestoneDue = selectedMilestone.dueDate?.toDate?.() || selectedMilestone.dueDate;
+        return isAfter(selectedDueDate, milestoneDue as Date);
+    }, [selectedMilestone, selectedDueDate]);
+
     const onSubmit = async (data: TaskFormData) => {
         setIsSubmitting(true);
         try {
-            await createTask(data);
+            // Clean up empty values
+            const cleanData = {
+                ...data,
+                projectId: data.projectId || undefined,
+                milestoneId: data.milestoneId || undefined,
+                taskListId: data.taskListId || undefined,
+            };
+            await createTask(cleanData);
             toast.success("Task created successfully");
 
             if (customerIdParam) {
                 router.push(`/dashboard/customers/${customerIdParam}/tasks`);
             } else if (projectIdParam) {
-                router.push(`/dashboard/projects/${projectIdParam}`);
+                router.push(`/dashboard/projects/${projectIdParam}/tasks`);
             } else {
                 router.push(`/dashboard/tasks`);
             }
@@ -88,7 +122,7 @@ export default function CreateTaskPage() {
         <div className="max-w-3xl mx-auto py-8 px-4">
             <div className="mb-6 flex items-center gap-2 text-gray-500 text-sm">
                 <Link
-                    href={customerIdParam ? `/dashboard/customers/${customerIdParam}/tasks` : "/dashboard/tasks"}
+                    href={customerIdParam ? `/dashboard/customers/${customerIdParam}/tasks` : projectIdParam ? `/dashboard/projects/${projectIdParam}/tasks` : "/dashboard/tasks"}
                     className="flex items-center hover:text-gray-900 transition-colors"
                 >
                     <ChevronLeft className="h-4 w-4 mr-1" />
@@ -127,9 +161,9 @@ export default function CreateTaskPage() {
                                     value={watch("customerId")}
                                     onValueChange={(val) => {
                                         setValue("customerId", val);
-                                        // Reset project if customer changes and project doesn't belong to new customer
-                                        // Currently we just clear it for safety
                                         setValue("projectId", "");
+                                        setValue("milestoneId", "");
+                                        setValue("taskListId", "");
                                     }}
                                     disabled={!!customerIdParam}
                                 >
@@ -148,7 +182,11 @@ export default function CreateTaskPage() {
                                 <Label htmlFor="projectId">Project</Label>
                                 <Select
                                     value={watch("projectId")}
-                                    onValueChange={(val) => setValue("projectId", val)}
+                                    onValueChange={(val) => {
+                                        setValue("projectId", val === "none" ? "" : val);
+                                        setValue("milestoneId", "");
+                                        setValue("taskListId", "");
+                                    }}
                                     disabled={!!projectIdParam}
                                 >
                                     <SelectTrigger>
@@ -164,6 +202,78 @@ export default function CreateTaskPage() {
                             </div>
                         </div>
 
+                        {/* Milestone & Task List - Show only when project is selected */}
+                        {projectId && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-dashed">
+                                <div className="grid gap-2">
+                                    <Label className="flex items-center gap-2">
+                                        <FolderTree className="h-4 w-4 text-gray-400" />
+                                        Milestone
+                                    </Label>
+                                    <Select
+                                        value={watch("milestoneId") || ""}
+                                        onValueChange={(val) => {
+                                            setValue("milestoneId", val === "none" ? "" : val);
+                                            setValue("taskListId", "");
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select Milestone (Optional)" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">No Milestone</SelectItem>
+                                            {milestones.map((m) => (
+                                                <SelectItem key={m.id} value={m.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        <div 
+                                                            className="w-2 h-2 rounded-full" 
+                                                            style={{ backgroundColor: m.color || "#3b82f6" }}
+                                                        />
+                                                        {m.name}
+                                                        {m.status === "complete" && (
+                                                            <Badge variant="secondary" className="text-[10px] px-1 py-0 ml-1">Done</Badge>
+                                                        )}
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {selectedMilestone && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Due: {format(selectedMilestone.dueDate?.toDate?.() || selectedMilestone.dueDate as unknown as Date, "MMM d, yyyy")}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label className="flex items-center gap-2">
+                                        <ListTodo className="h-4 w-4 text-gray-400" />
+                                        Task List
+                                    </Label>
+                                    <Select
+                                        value={watch("taskListId") || ""}
+                                        onValueChange={(val) => setValue("taskListId", val === "none" ? "" : val)}
+                                        disabled={!milestoneId}
+                                    >
+                                        <SelectTrigger className={!milestoneId ? "opacity-50" : ""}>
+                                            <SelectValue placeholder={milestoneId ? "Select Task List (Optional)" : "Select milestone first"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">No Task List</SelectItem>
+                                            {filteredTaskLists.map((tl) => (
+                                                <SelectItem key={tl.id} value={tl.id}>{tl.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {milestoneId && filteredTaskLists.length === 0 && (
+                                        <p className="text-xs text-muted-foreground italic">
+                                            No task lists in this milestone
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Description */}
                         <div className="grid gap-2">
                             <Label htmlFor="description">Description</Label>
@@ -175,7 +285,7 @@ export default function CreateTaskPage() {
                             />
                         </div>
 
-                        {/* Assignees - Simplified as Single Select for MVP, schema supports array */}
+                        {/* Assignees */}
                         <div className="grid gap-2">
                             <Label>Assigned To</Label>
                             <Select
@@ -204,7 +314,8 @@ export default function CreateTaskPage() {
                                             variant={"outline"}
                                             className={cn(
                                                 "w-full justify-start text-left font-normal",
-                                                !watch("dueDate") && "text-muted-foreground"
+                                                !watch("dueDate") && "text-muted-foreground",
+                                                isDueDateAfterMilestone && "border-amber-400 bg-amber-50"
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -220,6 +331,12 @@ export default function CreateTaskPage() {
                                         />
                                     </PopoverContent>
                                 </Popover>
+                                {isDueDateAfterMilestone && (
+                                    <div className="flex items-center gap-1 text-amber-600 text-xs">
+                                        <AlertTriangle className="h-3 w-3" />
+                                        <span>Due date is after milestone deadline</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid gap-2">
