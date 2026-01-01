@@ -418,7 +418,7 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     tasksBillableDefault: false,
     tasksTimerRoundOff: "no_round",
     tasksTimerRoundOffMultiples: "5",
-    tasksDefaultStatus: "not_started",
+    tasksDefaultStatus: "to_do",
     tasksDefaultPriority: "medium",
     tasksModalWidth: "modal-lg",
 

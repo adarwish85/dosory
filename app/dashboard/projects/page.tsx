@@ -50,19 +50,19 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const statusColors: Record<ProjectStatus, { bg: string; text: string; border: string }> = {
-    not_started: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
-    in_progress: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200" },
+    draft: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
+    active: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200" },
     on_hold: { bg: "bg-orange-50", text: "text-orange-600", border: "border-orange-200" },
-    cancelled: { bg: "bg-red-50", text: "text-red-600", border: "border-red-200" },
-    finished: { bg: "bg-green-50", text: "text-green-600", border: "border-green-200" },
+    completed: { bg: "bg-green-50", text: "text-green-600", border: "border-green-200" },
+    archived: { bg: "bg-red-50", text: "text-red-600", border: "border-red-200" },
 };
 
 const statusLabels: Record<ProjectStatus, string> = {
-    not_started: "Not Started",
-    in_progress: "In Progress",
+    draft: "Draft",
+    active: "Active",
     on_hold: "On Hold",
-    cancelled: "Cancelled",
-    finished: "Finished",
+    completed: "Completed",
+    archived: "Archived",
 };
 
 type ColumnKey = "name" | "customer" | "status" | "progress" | "startDate" | "deadline";
@@ -123,16 +123,16 @@ function QuickStatsBar({ projects, stats }: { projects: any[]; stats: Record<str
             <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-yellow-600 mb-1">
                     <Clock className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">In Progress</span>
+                    <span className="text-xs font-medium uppercase">Active</span>
                 </div>
-                <div className="text-2xl font-bold text-yellow-900">{stats.in_progress || 0}</div>
+                <div className="text-2xl font-bold text-yellow-900">{stats.active || 0}</div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1">
                     <CheckCircle2 className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Finished</span>
+                    <span className="text-xs font-medium uppercase">Completed</span>
                 </div>
-                <div className="text-2xl font-bold text-green-900">{stats.finished || 0}</div>
+                <div className="text-2xl font-bold text-green-900">{stats.completed || 0}</div>
             </div>
             <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-orange-600 mb-1">
@@ -422,7 +422,7 @@ export default function ProjectsPage() {
 
                 {/* Status Tabs */}
                 <div className="flex flex-wrap gap-2">
-                    {(["not_started", "in_progress", "on_hold", "cancelled", "finished"] as ProjectStatus[]).map(
+                    {(["draft", "active", "on_hold", "completed", "archived"] as ProjectStatus[]).map(
                         (status) => {
                             const colors = statusColors[status];
                             const count = projectStats[status] || 0;
@@ -599,7 +599,7 @@ export default function ProjectsPage() {
                                 </TableRow>
                             ) : (
                                 paginatedProjects.map((project, index) => {
-                                    const colors = statusColors[project.status] || statusColors["not_started"];
+                                    const colors = statusColors[project.status] || statusColors["draft"];
                                     return (
                                         <TableRow
                                             key={project.id}

@@ -47,19 +47,17 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const statusColors: Record<TaskStatus, { bg: string; text: string }> = {
-    not_started: { bg: "bg-gray-100", text: "text-gray-700" },
+    to_do: { bg: "bg-gray-100", text: "text-gray-700" },
     in_progress: { bg: "bg-blue-100", text: "text-blue-700" },
-    testing: { bg: "bg-purple-100", text: "text-purple-700" },
-    awaiting_feedback: { bg: "bg-orange-100", text: "text-orange-700" },
-    completed: { bg: "bg-green-100", text: "text-green-700" },
+    blocked: { bg: "bg-red-100", text: "text-red-700" },
+    done: { bg: "bg-green-100", text: "text-green-700" },
 };
 
 const statusLabels: Record<TaskStatus, string> = {
-    not_started: "Not Started",
+    to_do: "To Do",
     in_progress: "In Progress",
-    testing: "Testing",
-    awaiting_feedback: "Awaiting Feedback",
-    completed: "Completed",
+    blocked: "Blocked",
+    done: "Done",
 };
 
 const priorityColors: Record<TaskPriority, { bg: string; text: string }> = {
@@ -147,12 +145,12 @@ function QuickStatsBar({ tasks, stats }: { tasks: any[]; stats: Record<string, n
                 </div>
                 <div className="text-2xl font-bold text-red-900">{urgentCount}</div>
             </div>
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg px-4 py-3">
-                <div className="flex items-center gap-2 text-purple-600 mb-1">
-                    <CircleDot className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Testing</span>
+            <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg px-4 py-3">
+                <div className="flex items-center gap-2 text-red-600 mb-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="text-xs font-medium uppercase">Blocked</span>
                 </div>
-                <div className="text-2xl font-bold text-purple-900">{stats.testing || 0}</div>
+                <div className="text-2xl font-bold text-red-900">{stats.blocked || 0}</div>
             </div>
         </div>
     );
@@ -413,7 +411,7 @@ export default function ProjectTasksPage() {
 
                 {/* Status Tabs */}
                 <div className="flex flex-wrap gap-2">
-                    {(["not_started", "in_progress", "testing", "awaiting_feedback", "completed"] as TaskStatus[]).map(
+                    {(["to_do", "in_progress", "blocked", "done"] as TaskStatus[]).map(
                         (status) => {
                             const colors = statusColors[status];
                             const count = taskStats[status] || 0;
@@ -651,13 +649,10 @@ export default function ProjectTasksPage() {
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="not_started">Not Started</SelectItem>
+                                                            <SelectItem value="to_do">To Do</SelectItem>
                                                             <SelectItem value="in_progress">In Progress</SelectItem>
-                                                            <SelectItem value="testing">Testing</SelectItem>
-                                                            <SelectItem value="awaiting_feedback">
-                                                                Awaiting Feedback
-                                                            </SelectItem>
-                                                            <SelectItem value="completed">Completed</SelectItem>
+                                                            <SelectItem value="blocked">Blocked</SelectItem>
+                                                            <SelectItem value="done">Done</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </TableCell>

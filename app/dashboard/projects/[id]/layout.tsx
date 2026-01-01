@@ -132,11 +132,11 @@ export default function ProjectDetailLayout({ children }: { children: React.Reac
                     <div className="flex items-center gap-2">
                         <Badge
                             variant={
-                                project.status === "finished"
+                                project.status === "completed"
                                     ? "default" // success not available by default
-                                    : project.status === "in_progress"
-                                      ? "default"
-                                      : "secondary"
+                                    : project.status === "active"
+                                        ? "default"
+                                        : "secondary"
                             }
                         >
                             {project.status.replace("_", " ")}

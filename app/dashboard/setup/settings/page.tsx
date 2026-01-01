@@ -442,7 +442,7 @@ export default function SettingsPage() {
         tasksBillableDefault: false,
         tasksTimerRoundOff: "no_round",
         tasksTimerRoundOffMultiples: "5",
-        tasksDefaultStatus: "not_started",
+        tasksDefaultStatus: "to_do",
         tasksDefaultPriority: "medium",
         tasksModalWidth: "modal-lg",
     });
@@ -461,7 +461,7 @@ export default function SettingsPage() {
                 tasksBillableDefault: settings.tasksBillableDefault ?? false,
                 tasksTimerRoundOff: settings.tasksTimerRoundOff ?? "no_round",
                 tasksTimerRoundOffMultiples: settings.tasksTimerRoundOffMultiples ?? "5",
-                tasksDefaultStatus: settings.tasksDefaultStatus ?? "not_started",
+                tasksDefaultStatus: settings.tasksDefaultStatus ?? "to_do",
                 tasksDefaultPriority: settings.tasksDefaultPriority ?? "medium",
                 tasksModalWidth: settings.tasksModalWidth ?? "modal-lg",
             }));
@@ -2951,7 +2951,7 @@ export default function SettingsPage() {
                                     <SelectValue placeholder="Select" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="not_started">Not Started</SelectItem>
+                                    <SelectItem value="to_do">Not Started</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

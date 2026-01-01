@@ -33,7 +33,7 @@ export default function CreateTaskPage() {
 
     const { createTask } = useTasks();
     const { customers } = useCustomers({ status: "active" });
-    const { projects } = useProjects({ status: "in_progress", customerId: customerIdParam || undefined });
+    const { projects } = useProjects({ status: "active", customerId: customerIdParam || undefined });
     const { project: contextProject } = useProject(projectIdParam || null); // Fetch context project
     const { staff } = useStaff();
 
@@ -46,7 +46,7 @@ export default function CreateTaskPage() {
             name: "",
             customerId: customerIdParam || "",
             projectId: projectIdParam || "",
-            status: "not_started",
+            status: "to_do",
             priority: "medium",
             assignees: [],
             tags: [],
@@ -396,11 +396,11 @@ export default function CreateTaskPage() {
                                         setValue(
                                             "status",
                                             val as
-                                                | "not_started"
-                                                | "in_progress"
-                                                | "testing"
-                                                | "awaiting_feedback"
-                                                | "completed"
+                                            | "to_do"
+                                            | "in_progress"
+                                            | "in_progress"
+                                            | "in_progress"
+                                            | "done"
                                         )
                                     }
                                 >
@@ -408,11 +408,11 @@ export default function CreateTaskPage() {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="not_started">Not Started</SelectItem>
+                                        <SelectItem value="to_do">Not Started</SelectItem>
                                         <SelectItem value="in_progress">In Progress</SelectItem>
-                                        <SelectItem value="testing">Testing</SelectItem>
-                                        <SelectItem value="awaiting_feedback">Awaiting Feedback</SelectItem>
-                                        <SelectItem value="completed">Completed</SelectItem>
+                                        <SelectItem value="in_progress">Testing</SelectItem>
+                                        <SelectItem value="in_progress">Awaiting Feedback</SelectItem>
+                                        <SelectItem value="done">Completed</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

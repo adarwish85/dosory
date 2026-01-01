@@ -24,9 +24,9 @@ export default function GanttPage() {
 
     // Map progress to status
     const progressToStatus = useCallback((progress: number): TaskStatus => {
-        if (progress >= 100) return "completed";
+        if (progress >= 100) return "done";
         if (progress > 0) return "in_progress";
-        return "not_started";
+        return "to_do";
     }, []);
 
     // Handle date change from Gantt drag
@@ -113,10 +113,8 @@ export default function GanttPage() {
 
             // Calculate progress based on status
             let progress = 0;
-            if (t.status === "completed") progress = 100;
+            if (t.status === "done") progress = 100;
             else if (t.status === "in_progress") progress = 50;
-            else if (t.status === "testing") progress = 75;
-            else if (t.status === "awaiting_feedback") progress = 90;
 
             return {
                 start,

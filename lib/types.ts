@@ -315,6 +315,8 @@ export interface Project extends BaseEntity {
     customerName: string;
     description?: string;
     status: ProjectStatus;
+    priority: ProjectPriority;
+    projectType: ProjectType;
     startDate?: Timestamp;
     deadline?: Timestamp;
     billingType: ProjectBillingType;
@@ -325,15 +327,34 @@ export interface Project extends BaseEntity {
     currency?: string;
     progress: number;
     pinned?: boolean;
+
+    // V1 Enhancements
+    projectOwnerId?: string;
+    projectOwnerName?: string;
+    healthStatus?: ProjectHealthStatus; // Computed on read
+
+    // Cross-module links
+    linkedContractId?: string;
+    linkedInvoiceIds?: string[];
 }
 
-export type ProjectStatus = "not_started" | "in_progress" | "on_hold" | "cancelled" | "finished";
+export type ProjectStatus = "draft" | "active" | "on_hold" | "completed" | "archived";
+
+export type ProjectPriority = "low" | "medium" | "high" | "critical";
+
+export type ProjectType = "internal" | "client";
+
+export type ProjectHealthStatus = "on_track" | "at_risk" | "off_track";
 
 export type ProjectBillingType = "fixed" | "hourly" | "task_hours";
+
+export type ProjectRole = "project_admin" | "project_manager" | "contributor" | "viewer";
 
 export interface ProjectMember {
     staffId: string;
     hourlyRate?: number;
+    role?: ProjectRole;
+    addedAt?: Timestamp;
 }
 
 // ============================================
@@ -344,6 +365,7 @@ export interface Task extends BaseEntity {
     name: string;
     description?: string;
     projectId?: string;
+    projectName?: string; // Denormalized
     customerId?: string;
     status: TaskStatus;
     priority: TaskPriority;
@@ -360,9 +382,20 @@ export interface Task extends BaseEntity {
     checklist?: TaskChecklistItem[];
     milestoneId?: string;
     taskListId?: string;
+
+    // V1 Enhancements
+    estimatedHours?: number;
+    actualHours?: number;
+    blockedByTaskId?: string;
+    blockedByTaskName?: string; // Denormalized
+    isBlocked?: boolean; // Computed: true if blockedByTaskId and blocker not completed
+    isOverdue?: boolean; // Computed: dueDate < now && status != completed
+    attachments?: TaskAttachment[];
+    commentCount?: number;
+    lastCommentAt?: Timestamp;
 }
 
-export type TaskStatus = "not_started" | "in_progress" | "testing" | "awaiting_feedback" | "completed";
+export type TaskStatus = "to_do" | "in_progress" | "blocked" | "done";
 
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
@@ -383,6 +416,26 @@ export interface TaskRepeat {
 export interface TaskRelation {
     type: "customer" | "lead" | "invoice" | "estimate" | "proposal" | "contract";
     id: string;
+}
+
+export interface TaskAttachment {
+    id: string;
+    name: string;
+    url: string;
+    size: number;
+    type: string;
+    uploadedBy: string;
+    uploadedByName?: string;
+    uploadedAt: Timestamp;
+}
+
+export interface TaskComment extends BaseEntity {
+    taskId: string;
+    content: string;
+    authorId: string;
+    authorName: string;
+    authorAvatar?: string;
+    mentions?: string[];
 }
 
 // ============================================

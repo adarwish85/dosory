@@ -42,8 +42,8 @@ export function CustomerOverview() {
 
     // Project Data
     const projectStats = {
-        active: projects.filter((p) => p.status === "in_progress" || p.status === "not_started").length,
-        completed: projects.filter((p) => p.status === "finished").length,
+        active: projects.filter((p) => p.status === "active").length,
+        completed: projects.filter((p) => p.status === "completed").length,
         total: projects.length,
     };
 

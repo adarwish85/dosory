@@ -193,7 +193,7 @@ export default function ProjectsPage() {
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
-            not_started: "bg-gray-50 text-gray-600 border-gray-100",
+            to_do: "bg-gray-50 text-gray-600 border-gray-100",
             in_progress: "bg-blue-50 text-blue-600 border-blue-100",
             on_hold: "bg-orange-50 text-orange-600 border-orange-100",
             cancelled: "bg-red-50 text-red-600 border-red-100",
@@ -366,7 +366,7 @@ export default function ProjectsPage() {
                             <CheckCircle2 className="h-4 w-4" />
                             <span className="text-xs font-medium uppercase">Completed</span>
                         </div>
-                        <div className="text-2xl font-bold text-green-900">{projectStats["finished"] || 0}</div>
+                        <div className="text-2xl font-bold text-green-900">{projectStats["completed"] || 0}</div>
                     </div>
                 </div>
 

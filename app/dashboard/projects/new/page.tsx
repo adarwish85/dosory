@@ -34,18 +34,21 @@ export default function CreateProjectPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<ProjectFormData>({
-        resolver: zodResolver(projectFormSchema),
+        resolver: zodResolver(projectFormSchema) as any,
         defaultValues: {
             name: "",
             customerId: customerIdParam || "",
-            status: "not_started",
+            status: "active",
             billingType: "fixed",
+            priority: "medium",
+            projectType: "client",
+            projectOwnerId: profile?.uid || "",
             estimatedHours: 0,
             projectRate: 0,
             tags: [],
             currency: "USD",
             pinned: false,
-        },
+        } as any,
     });
 
     const {
@@ -237,11 +240,11 @@ export default function CreateProjectPage() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="not_started">Not Started</SelectItem>
+                                    <SelectItem value="to_do">Not Started</SelectItem>
                                     <SelectItem value="in_progress">In Progress</SelectItem>
                                     <SelectItem value="on_hold">On Hold</SelectItem>
-                                    <SelectItem value="finished">Finished</SelectItem>
-                                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                                    <SelectItem value="completed">Finished</SelectItem>
+                                    <SelectItem value="archived">Cancelled</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

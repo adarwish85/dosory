@@ -26,8 +26,46 @@ import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
 import { createBulkNotifications } from "@/lib/hooks/use-notifications";
-import type { Project, ProjectStatus, Task, TaskStatus } from "@/lib/types";
+import type { Project, ProjectStatus, ProjectHealthStatus, Task, TaskStatus } from "@/lib/types";
 import type { ProjectFormData, TaskFormData } from "@/lib/schemas";
+
+// ============================================
+// Health Status Calculation Helper
+// ============================================
+
+export function calculateProjectHealthStatus(
+    tasks: Task[],
+    milestones: { dueDate: Date; status: string }[] = []
+): ProjectHealthStatus {
+    const now = new Date();
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+    // Check for overdue items (Off Track)
+    const hasOverdueMilestone = milestones.some(
+        (m) => m.status !== "complete" && m.dueDate < now
+    );
+    const hasOverdueCriticalTask = tasks.some(
+        (t) => t.status !== "done" && t.priority === "urgent" && t.dueDate && t.dueDate.toDate() < now
+    );
+
+    if (hasOverdueMilestone || hasOverdueCriticalTask) {
+        return "off_track";
+    }
+
+    // Check for upcoming due items (At Risk)
+    const hasUpcomingMilestone = milestones.some(
+        (m) => m.status !== "complete" && m.dueDate >= now && m.dueDate <= threeDaysFromNow
+    );
+    const hasUpcomingTask = tasks.some(
+        (t) => t.status !== "done" && t.dueDate && t.dueDate.toDate() >= now && t.dueDate.toDate() <= threeDaysFromNow
+    );
+
+    if (hasUpcomingMilestone || hasUpcomingTask) {
+        return "at_risk";
+    }
+
+    return "on_track";
+}
 
 // ============================================
 // useProjects Hook
@@ -165,15 +203,15 @@ export function useProjects(options: UseProjectsOptions = {}) {
                 updatedAt: serverTimestamp(),
             };
 
-            // If marking as finished, set progress to 100%
-            if (newStatus === "finished") {
+            // If marking as completed, set progress to 100%
+            if (newStatus === "completed") {
                 updateData.progress = 100;
-                updateData.finishedAt = serverTimestamp();
+                updateData.completedAt = serverTimestamp();
             }
 
-            // If marking as cancelled, record cancellation time
-            if (newStatus === "cancelled") {
-                updateData.cancelledAt = serverTimestamp();
+            // If marking as archived, record archival time
+            if (newStatus === "archived") {
+                updateData.archivedAt = serverTimestamp();
             }
 
             await updateDoc(doc(db, "projects", id), updateData);
@@ -199,7 +237,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
                 ...projectData,
                 name: newName,
                 progress: 0,
-                status: "not_started",
+                status: "to_do",
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 createdBy: profile.uid,
@@ -268,7 +306,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
                             projectId: newProjectId,
                             milestoneId: newMilestoneId,
                             taskListId: newTaskListId,
-                            status: "not_started",
+                            status: "to_do",
                             createdAt: serverTimestamp(),
                             updatedAt: serverTimestamp(),
                             createdBy: profile.uid,
@@ -512,16 +550,74 @@ export function useTasks(options: UseTasksOptions = {}) {
 
     const updateTaskStatus = useCallback(
         async (id: string, newStatus: TaskStatus): Promise<void> => {
+            // Check if task is blocked when trying to complete
+            if (newStatus === "done") {
+                const task = tasks.find((t) => t.id === id);
+                if (task?.isBlocked) {
+                    throw new Error("Cannot mark as done: Task is blocked by another task");
+                }
+            }
+
             await updateDoc(doc(db, "tasks", id), {
                 status: newStatus,
                 updatedAt: serverTimestamp(),
             });
 
-            if (newStatus === "completed" && logActivity) {
-                await logActivity("task_completed", "Task completed", id, "task");
+            // If task completed, auto-unblock dependent tasks
+            if (newStatus === "done") {
+                // Find tasks blocked by this one
+                const q = query(
+                    collection(db, "tasks"),
+                    where("blockedByTaskId", "==", id)
+                );
+                const blockedTasks = await getDocs(q);
+
+                for (const blockedDoc of blockedTasks.docs) {
+                    await updateDoc(doc(db, "tasks", blockedDoc.id), {
+                        isBlocked: false,
+                        updatedAt: serverTimestamp(),
+                    });
+                }
+
+                if (logActivity) {
+                    await logActivity("task_completed", "Task completed", id, "task");
+                }
             }
         },
-        [logActivity]
+        [tasks, logActivity]
+    );
+
+    // Set a task as blocked by another
+    const setBlocker = useCallback(
+        async (taskId: string, blockerTaskId: string | null): Promise<void> => {
+            if (!profile?.orgId) throw new Error("No organization");
+
+            if (blockerTaskId) {
+                // Get blocker task details
+                const blockerDoc = await getDoc(doc(db, "tasks", blockerTaskId));
+                if (!blockerDoc.exists()) throw new Error("Blocker task not found");
+
+                const blockerData = blockerDoc.data();
+                const isBlocked = blockerData.status !== "done";
+
+                await updateDoc(doc(db, "tasks", taskId), {
+                    blockedByTaskId: blockerTaskId,
+                    blockedByTaskName: blockerData.name,
+                    isBlocked,
+                    status: isBlocked ? "blocked" : undefined,
+                    updatedAt: serverTimestamp(),
+                });
+            } else {
+                // Remove blocker
+                await updateDoc(doc(db, "tasks", taskId), {
+                    blockedByTaskId: null,
+                    blockedByTaskName: null,
+                    isBlocked: false,
+                    updatedAt: serverTimestamp(),
+                });
+            }
+        },
+        [profile]
     );
 
     // Calculate task stats
@@ -530,6 +626,10 @@ export function useTasks(options: UseTasksOptions = {}) {
             acc[task.status] = (acc[task.status] || 0) + 1;
             acc[task.priority] = (acc[task.priority] || 0) + 1;
             acc.total++;
+            if (task.isBlocked) acc.blocked = (acc.blocked || 0) + 1;
+            if (task.dueDate && task.dueDate.toDate() < new Date() && task.status !== "done") {
+                acc.overdue = (acc.overdue || 0) + 1;
+            }
             return acc;
         },
         { total: 0 } as Record<string, number>
@@ -544,6 +644,7 @@ export function useTasks(options: UseTasksOptions = {}) {
         updateTask,
         deleteTask,
         updateTaskStatus,
+        setBlocker,
     };
 }
 

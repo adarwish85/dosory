@@ -58,7 +58,7 @@ export function CreateTaskDialog({
         defaultValues: {
             name: "",
             description: "",
-            status: "not_started",
+            status: "to_do",
             priority: "medium",
             assignees: [],
             followers: [],
@@ -92,7 +92,7 @@ export function CreateTaskDialog({
             form.reset({
                 name: "",
                 description: "",
-                status: "not_started",
+                status: "to_do",
                 priority: "medium",
                 assignees: [],
                 followers: [],

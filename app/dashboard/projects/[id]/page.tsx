@@ -198,7 +198,7 @@ export default function ProjectOverviewPage() {
                                 </div>
                                 <div>
                                     <p className="text-muted-foreground">Status</p>
-                                    <Badge variant={project.status === "finished" ? "default" : "secondary"} className="capitalize mt-1">
+                                    <Badge variant={project.status === "completed" ? "default" : "secondary"} className="capitalize mt-1">
                                         {project.status.replace("_", " ")}
                                     </Badge>
                                 </div>
@@ -362,11 +362,11 @@ export default function ProjectOverviewPage() {
                         <CardContent>
                             <div className="space-y-3">
                                 {[
-                                    { key: "not_started", label: "Not Started", color: "bg-gray-400" },
+                                    { key: "to_do", label: "Not Started", color: "bg-gray-400" },
                                     { key: "in_progress", label: "In Progress", color: "bg-blue-500" },
-                                    { key: "testing", label: "Testing", color: "bg-purple-500" },
-                                    { key: "awaiting_feedback", label: "Awaiting Feedback", color: "bg-amber-500" },
-                                    { key: "completed", label: "Completed", color: "bg-green-500" },
+                                    { key: "in_progress", label: "Testing", color: "bg-purple-500" },
+                                    { key: "in_progress", label: "Awaiting Feedback", color: "bg-amber-500" },
+                                    { key: "done", label: "Completed", color: "bg-green-500" },
                                 ].map(status => {
                                     const count = Number(taskStats[status.key]) || 0;
                                     const percent = taskStats.total > 0 ? (count / taskStats.total) * 100 : 0;

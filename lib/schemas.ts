@@ -239,13 +239,20 @@ export const productFormSchema = z.object({
 // Project Schema
 // ============================================
 
-export const projectStatusSchema = z.enum(["not_started", "in_progress", "on_hold", "cancelled", "finished"]);
+export const projectStatusSchema = z.enum(["draft", "active", "on_hold", "completed", "archived"]);
+
+export const projectPrioritySchema = z.enum(["low", "medium", "high", "critical"]);
+
+export const projectTypeSchema = z.enum(["internal", "client"]);
+
+export const projectRoleSchema = z.enum(["project_admin", "project_manager", "contributor", "viewer"]);
 
 export const projectBillingTypeSchema = z.enum(["fixed", "hourly", "task_hours"]);
 
 export const projectMemberSchema = z.object({
     staffId: z.string(),
     hourlyRate: z.number().optional(),
+    role: projectRoleSchema.optional(),
 });
 
 export const projectFormSchema = z.object({
@@ -253,6 +260,8 @@ export const projectFormSchema = z.object({
     customerId: z.string().min(1, "Customer is required"),
     description: z.string().optional(),
     status: projectStatusSchema,
+    priority: projectPrioritySchema.default("medium"),
+    projectType: projectTypeSchema.default("client"),
     startDate: z.date().optional(),
     deadline: z.date().optional(),
     billingType: projectBillingTypeSchema,
@@ -262,15 +271,29 @@ export const projectFormSchema = z.object({
     members: z.array(projectMemberSchema).optional(),
     tags: z.array(z.string()).optional(),
     pinned: z.boolean().optional(),
+    projectOwnerId: z.string().optional(),
+    linkedContractId: z.string().optional(),
+    linkedInvoiceIds: z.array(z.string()).optional(),
 });
 
 // ============================================
 // Task Schema
 // ============================================
 
-export const taskStatusSchema = z.enum(["not_started", "in_progress", "testing", "awaiting_feedback", "completed"]);
+export const taskStatusSchema = z.enum(["to_do", "in_progress", "blocked", "done"]);
 
 export const taskPrioritySchema = z.enum(["low", "medium", "high", "urgent"]);
+
+export const taskAttachmentSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    url: z.string(),
+    size: z.number(),
+    type: z.string(),
+    uploadedBy: z.string(),
+    uploadedByName: z.string().optional(),
+    uploadedAt: z.any(), // Timestamp
+});
 
 export const taskFormSchema = z.object({
     name: z.string().min(1, "Task name is required"),
@@ -289,6 +312,11 @@ export const taskFormSchema = z.object({
     isPublic: z.boolean().default(false),
     billable: z.boolean().default(true),
     hourlyRate: z.number().optional(),
+    // V1 Enhancements
+    estimatedHours: z.number().optional(),
+    actualHours: z.number().optional(),
+    blockedByTaskId: z.string().optional(),
+    attachments: z.array(taskAttachmentSchema).optional(),
     relatedTo: z
         .object({
             type: z.enum(["customer", "lead", "invoice", "estimate", "proposal", "contract"]),

@@ -42,6 +42,10 @@ export { useOrganizationSettings, useOrganizationSettings as useSettings } from 
 // Currency Formatting
 export { useCurrency } from "./use-currency";
 
+// Project Management Enhancements
+export { useTaskComments } from "./use-task-comments";
+export { calculateProjectHealthStatus } from "./use-projects";
+
 // HR Module
 export { useDepartments as useHRDepartments, useJobTitles, useLeaveTypes, getDefaultLeaveTypes } from "./use-hr-settings";
 export { useEmployees, useEmployee, useCurrentEmployee, useTeamMembers } from "./use-employees";

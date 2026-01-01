@@ -19,7 +19,7 @@ export function TasksWidget({ settings, density }: TasksWidgetProps) {
 
     // Get overdue and upcoming tasks
     const overdueTasks = tasks.filter((t) => {
-        if (t.status === "completed") return false;
+        if (t.status === "done") return false;
         if (!t.dueDate) return false;
         try {
             const dueDate = t.dueDate.toDate();
@@ -29,7 +29,7 @@ export function TasksWidget({ settings, density }: TasksWidgetProps) {
         }
     });
 
-    const upcomingTasks = tasks.filter((t) => t.status !== "completed").slice(0, limit);
+    const upcomingTasks = tasks.filter((t) => t.status !== "done").slice(0, limit);
 
     const formatDate = (timestamp: any) => {
         if (!timestamp) return "-";
@@ -83,7 +83,7 @@ export function TasksWidget({ settings, density }: TasksWidgetProps) {
                             className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 group"
                         >
                             <div className="flex items-center gap-2 min-w-0">
-                                {task.status === "completed" ? (
+                                {task.status === "done" ? (
                                     <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
                                 ) : isOverdue(task.dueDate) ? (
                                     <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />

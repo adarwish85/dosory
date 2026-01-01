@@ -49,7 +49,7 @@ export default function EditTaskPage() {
             name: "",
             customerId: "",
             projectId: "",
-            status: "not_started",
+            status: "to_do",
             priority: "medium",
             assignees: [],
             tags: [],
@@ -74,7 +74,7 @@ export default function EditTaskPage() {
                 description: task.description || "",
                 customerId: task.customerId || "",
                 projectId: task.projectId || "",
-                status: task.status || "not_started",
+                status: task.status || "to_do",
                 priority: task.priority || "medium",
                 assignees: task.assignees || [],
                 tags: task.tags || [],
@@ -432,17 +432,17 @@ export default function EditTaskPage() {
                                 <Label>Status</Label>
                                 <Select
                                     value={watch("status")}
-                                    onValueChange={(val) => setValue("status", val as "not_started" | "in_progress" | "testing" | "awaiting_feedback" | "completed")}
+                                    onValueChange={(val) => setValue("status", val as "to_do" | "in_progress" | "in_progress" | "in_progress" | "done")}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="not_started">Not Started</SelectItem>
+                                        <SelectItem value="to_do">Not Started</SelectItem>
                                         <SelectItem value="in_progress">In Progress</SelectItem>
-                                        <SelectItem value="testing">Testing</SelectItem>
-                                        <SelectItem value="awaiting_feedback">Awaiting Feedback</SelectItem>
-                                        <SelectItem value="completed">Completed</SelectItem>
+                                        <SelectItem value="in_progress">Testing</SelectItem>
+                                        <SelectItem value="in_progress">Awaiting Feedback</SelectItem>
+                                        <SelectItem value="done">Completed</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

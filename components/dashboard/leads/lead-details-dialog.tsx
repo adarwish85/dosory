@@ -288,7 +288,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
             await addDoc(collection(db, "tasks"), {
                 name: taskName.trim(),
                 description: "",
-                status: "not_started",
+                status: "to_do",
                 priority: taskPriority,
                 dueDate: taskDueDate ? Timestamp.fromDate(taskDueDate) : null,
                 startDate: null,
@@ -745,14 +745,14 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     <div className="flex items-center gap-1">
                                                         <Badge variant="outline" className="text-orange-600">
                                                             {
-                                                                relatedTasks.filter((t) => t.status !== "completed")
+                                                                relatedTasks.filter((t) => t.status !== "done")
                                                                     .length
                                                             }{" "}
                                                             open
                                                         </Badge>
                                                         <Badge variant="secondary">
                                                             {
-                                                                relatedTasks.filter((t) => t.status === "completed")
+                                                                relatedTasks.filter((t) => t.status === "done")
                                                                     .length
                                                             }{" "}
                                                             done
@@ -1097,11 +1097,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     className="p-3 border rounded-md bg-white flex items-start gap-3"
                                                 >
                                                     <div
-                                                        className={`mt-0.5 w-4 h-4 rounded-full border-2 ${task.status === "completed" ? "bg-green-500 border-green-500" : "border-gray-300"}`}
+                                                        className={`mt-0.5 w-4 h-4 rounded-full border-2 ${task.status === "done" ? "bg-green-500 border-green-500" : "border-gray-300"}`}
                                                     />
                                                     <div className="flex-1">
                                                         <h4
-                                                            className={`text-sm font-medium ${task.status === "completed" ? "line-through text-gray-500" : "text-gray-900"}`}
+                                                            className={`text-sm font-medium ${task.status === "done" ? "line-through text-gray-500" : "text-gray-900"}`}
                                                         >
                                                             {task.name}
                                                         </h4>

@@ -487,7 +487,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
                     name: leadDoc.deal.subject || `Project for ${finalCompany}`,
                     customerId: customerRef.id,
                     description: leadDoc.deal.description || "",
-                    status: "not_started",
+                    status: "to_do",
                     projectRate: leadDoc.deal.value || 0,
                     startDate: serverTimestamp(), // Default to today
                     deadline: leadDoc.deal.expectedCloseDate || null, // Map expectedCloseDate to deadline if exists

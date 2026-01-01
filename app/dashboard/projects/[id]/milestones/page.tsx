@@ -89,7 +89,7 @@ function DraggableTaskItem({
         transition,
     };
 
-    const isTaskComplete = task.status === "completed";
+    const isTaskComplete = task.status === "done";
     const taskOverdue = task.dueDate && !isTaskComplete && isAfter(new Date(), task.dueDate.toDate());
     const afterMilestone = task.dueDate && isAfter(task.dueDate.toDate(), milestone.dueDate.toDate());
 
@@ -395,7 +395,7 @@ export default function MilestonesPage() {
 
         milestones.forEach((m) => {
             const milestoneTasks = tasks.filter((t) => t.milestoneId === m.id);
-            const completedTasks = milestoneTasks.filter((t) => t.status === "completed");
+            const completedTasks = milestoneTasks.filter((t) => t.status === "done");
             const total = milestoneTasks.length;
             const completed = completedTasks.length;
             const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -428,7 +428,7 @@ export default function MilestonesPage() {
 
         taskLists.forEach((tl) => {
             const listTasks = tasks.filter((t) => t.taskListId === tl.id);
-            const completedTasks = listTasks.filter((t) => t.status === "completed");
+            const completedTasks = listTasks.filter((t) => t.status === "done");
             const total = listTasks.length;
             const completed = completedTasks.length;
             const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -491,7 +491,7 @@ export default function MilestonesPage() {
                 projectId,
                 milestoneId: list.milestoneId,
                 taskListId: listId,
-                status: "not_started",
+                status: "to_do",
                 priority: "medium",
                 assignees: [],
                 followers: [],
@@ -567,7 +567,7 @@ export default function MilestonesPage() {
     const toggleTaskComplete = async (task: Task) => {
         try {
             await updateTask(task.id, {
-                status: task.status === "completed" ? "not_started" : "completed",
+                status: task.status === "done" ? "to_do" : "done",
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
         } catch {
@@ -848,7 +848,7 @@ export default function MilestonesPage() {
                     {activeTask && (
                         <div className="flex items-center gap-2 py-1.5 px-2 rounded bg-white shadow-lg border cursor-grabbing">
                             <GripVertical className="h-3.5 w-3.5 text-gray-400" />
-                            {activeTask.status === "completed" ? (
+                            {activeTask.status === "done" ? (
                                 <CheckCircle2 className="h-4 w-4 text-green-500" />
                             ) : (
                                 <Circle className="h-4 w-4 text-gray-300" />

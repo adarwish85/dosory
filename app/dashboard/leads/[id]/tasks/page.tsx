@@ -13,19 +13,17 @@ import { CreateTaskDialog } from "@/components/dashboard/tasks/create-task-dialo
 import { TaskStatus, TaskPriority } from "@/lib/types";
 
 const statusColors: Record<TaskStatus, { bg: string; text: string; border: string }> = {
-    not_started: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
+    to_do: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
     in_progress: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200" },
-    testing: { bg: "bg-purple-50", text: "text-purple-600", border: "border-purple-200" },
-    awaiting_feedback: { bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-200" },
-    completed: { bg: "bg-green-50", text: "text-green-600", border: "border-green-200" },
+    blocked: { bg: "bg-red-50", text: "text-red-600", border: "border-red-200" },
+    done: { bg: "bg-green-50", text: "text-green-600", border: "border-green-200" },
 };
 
 const statusLabels: Record<TaskStatus, string> = {
-    not_started: "Not Started",
+    to_do: "To Do",
     in_progress: "In Progress",
-    testing: "Testing",
-    awaiting_feedback: "Awaiting Feedback",
-    completed: "Completed",
+    blocked: "Blocked",
+    done: "Done",
 };
 
 const priorityColors: Record<TaskPriority, { text: string }> = {
@@ -97,7 +95,7 @@ export default function LeadTasksPage() {
                             </TableRow>
                         ) : (
                             tasks.map((task) => {
-                                const statusColor = statusColors[task.status] || statusColors.not_started;
+                                const statusColor = statusColors[task.status] || statusColors.to_do;
                                 const priorityColor = priorityColors[task.priority] || priorityColors.medium;
 
                                 return (
