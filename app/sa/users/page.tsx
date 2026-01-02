@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { GlobalUser } from "@/lib/types/super-admin";
-import { Users, Search, Ban, CheckCircle, MoreHorizontal } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Users, Search, Ban, CheckCircle, MoreHorizontal, Trash2, Edit, Shield, ShieldOff, Eye } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
 
@@ -20,21 +23,28 @@ export default function UsersPage() {
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
 
+    // Dialog states
+    const [viewUser, setViewUser] = useState<GlobalUser | null>(null);
+    const [editUser, setEditUser] = useState<GlobalUser | null>(null);
+    const [deleteUser, setDeleteUser] = useState<GlobalUser | null>(null);
+    const [editForm, setEditForm] = useState({ displayName: "", email: "", role: "" });
+
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const res = await fetch("/api/sa/users");
-                if (!res.ok) throw new Error("Failed to fetch");
-                const data = await res.json();
-                setUsers(data.users || []);
-            } catch (e: any) {
-                setError(e.message);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchUsers();
     }, []);
+
+    const fetchUsers = async () => {
+        try {
+            const res = await fetch("/api/sa/users");
+            if (!res.ok) throw new Error("Failed to fetch");
+            const data = await res.json();
+            setUsers(data.users || []);
+        } catch (e: any) {
+            setError(e.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleStatusChange = async (userId: string, newStatus: "active" | "blocked") => {
         if (!currentUser) return;
@@ -47,9 +57,66 @@ export default function UsersPage() {
             if (!res.ok) throw new Error("Failed to update");
             setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
             toast.success(`User ${newStatus === "blocked" ? "blocked" : "activated"}`);
-        } catch (e: any) {
+        } catch {
             toast.error("Failed to update user");
         }
+    };
+
+    const handleToggleSuperAdmin = async (userId: string, isSuperAdmin: boolean) => {
+        if (!currentUser) return;
+        try {
+            const res = await fetch(`/api/sa/users/${userId}/super-admin`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isSuperAdmin, actorId: currentUser.uid })
+            });
+            if (!res.ok) throw new Error("Failed to update");
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, isSuperAdmin } : u));
+            toast.success(isSuperAdmin ? "User granted super admin" : "Super admin revoked");
+        } catch {
+            toast.error("Failed to update super admin status");
+        }
+    };
+
+    const handleEditUser = async () => {
+        if (!currentUser || !editUser) return;
+        try {
+            const res = await fetch(`/api/sa/users/${editUser.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...editForm, actorId: currentUser.uid })
+            });
+            if (!res.ok) throw new Error("Failed to update");
+            setUsers(prev => prev.map(u => u.id === editUser.id ? { ...u, ...editForm } : u));
+            toast.success("User updated");
+            setEditUser(null);
+        } catch {
+            toast.error("Failed to update user");
+        }
+    };
+
+    const handleDeleteUser = async () => {
+        if (!currentUser || !deleteUser) return;
+        try {
+            const res = await fetch(`/api/sa/users/${deleteUser.id}?actorId=${currentUser.uid}`, {
+                method: "DELETE"
+            });
+            if (!res.ok) throw new Error("Failed to delete");
+            setUsers(prev => prev.filter(u => u.id !== deleteUser.id));
+            toast.success("User deleted");
+            setDeleteUser(null);
+        } catch {
+            toast.error("Failed to delete user");
+        }
+    };
+
+    const openEdit = (user: GlobalUser) => {
+        setEditForm({
+            displayName: user.displayName || "",
+            email: user.email || "",
+            role: user.role || ""
+        });
+        setEditUser(user);
     };
 
     const filteredUsers = users.filter(u =>
@@ -132,7 +199,9 @@ export default function UsersPage() {
                                         </TableCell>
                                         <TableCell>
                                             {u.isSuperAdmin ? (
-                                                <Badge variant="outline">Yes</Badge>
+                                                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">
+                                                    <Shield className="h-3 w-3 mr-1" /> Yes
+                                                </Badge>
                                             ) : "—"}
                                         </TableCell>
                                         <TableCell>{u.tenantMemberships?.length || 0}</TableCell>
@@ -144,18 +213,38 @@ export default function UsersPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => setViewUser(u)}>
+                                                        <Eye className="mr-2 h-4 w-4" /> View Details
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => openEdit(u)}>
+                                                        <Edit className="mr-2 h-4 w-4" /> Edit User
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
                                                     {u.status === "blocked" ? (
                                                         <DropdownMenuItem onClick={() => handleStatusChange(u.id, "active")}>
                                                             <CheckCircle className="mr-2 h-4 w-4" /> Activate
                                                         </DropdownMenuItem>
                                                     ) : (
-                                                        <DropdownMenuItem
-                                                            onClick={() => handleStatusChange(u.id, "blocked")}
-                                                            className="text-red-600"
-                                                        >
+                                                        <DropdownMenuItem onClick={() => handleStatusChange(u.id, "blocked")}>
                                                             <Ban className="mr-2 h-4 w-4" /> Block User
                                                         </DropdownMenuItem>
                                                     )}
+                                                    {u.isSuperAdmin ? (
+                                                        <DropdownMenuItem onClick={() => handleToggleSuperAdmin(u.id, false)}>
+                                                            <ShieldOff className="mr-2 h-4 w-4" /> Revoke Super Admin
+                                                        </DropdownMenuItem>
+                                                    ) : (
+                                                        <DropdownMenuItem onClick={() => handleToggleSuperAdmin(u.id, true)}>
+                                                            <Shield className="mr-2 h-4 w-4" /> Grant Super Admin
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem
+                                                        onClick={() => setDeleteUser(u)}
+                                                        className="text-red-600"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete User
+                                                    </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>
@@ -166,6 +255,97 @@ export default function UsersPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            {/* View User Dialog */}
+            <Dialog open={!!viewUser} onOpenChange={() => setViewUser(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>User Details</DialogTitle>
+                    </DialogHeader>
+                    {viewUser && (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div><strong>ID:</strong></div>
+                                <div className="font-mono text-xs">{viewUser.id}</div>
+                                <div><strong>Display Name:</strong></div>
+                                <div>{viewUser.displayName || "—"}</div>
+                                <div><strong>Email:</strong></div>
+                                <div>{viewUser.email}</div>
+                                <div><strong>Role:</strong></div>
+                                <div>{viewUser.role || "—"}</div>
+                                <div><strong>Status:</strong></div>
+                                <div><Badge variant={viewUser.status === "active" ? "default" : "destructive"}>{viewUser.status || "active"}</Badge></div>
+                                <div><strong>Super Admin:</strong></div>
+                                <div>{viewUser.isSuperAdmin ? "Yes" : "No"}</div>
+                                <div><strong>Organization:</strong></div>
+                                <div className="font-mono text-xs">{viewUser.orgId || "—"}</div>
+                                <div><strong>Created:</strong></div>
+                                <div>{viewUser.createdAt ? new Date(viewUser.createdAt as any).toLocaleDateString() : "—"}</div>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setViewUser(null)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit User Dialog */}
+            <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit User</DialogTitle>
+                        <DialogDescription>Update user information</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Display Name</Label>
+                            <Input
+                                value={editForm.displayName}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, displayName: e.target.value }))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Email</Label>
+                            <Input
+                                type="email"
+                                value={editForm.email}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Role</Label>
+                            <Input
+                                value={editForm.role}
+                                onChange={(e) => setEditForm(prev => ({ ...prev, role: e.target.value }))}
+                                placeholder="admin, member, etc."
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setEditUser(null)}>Cancel</Button>
+                        <Button onClick={handleEditUser}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete User</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete <strong>{deleteUser?.email}</strong>? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteUser} className="bg-red-600 hover:bg-red-700">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

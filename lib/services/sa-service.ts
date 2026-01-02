@@ -129,6 +129,40 @@ export class SAService {
         await this.logAudit("update_user_status", "user", id, actorId, { status });
     }
 
+    static async getUser(id: string): Promise<GlobalUser | null> {
+        return safeQuery(async () => {
+            const snap = await adminDb.collection(USERS_COLL).doc(id).get();
+            if (!snap.exists) return null;
+            return { id: snap.id, ...snap.data() } as GlobalUser;
+        }, null);
+    }
+
+    static async updateUser(id: string, updates: Partial<GlobalUser>, actorId: string) {
+        const allowedFields = ["displayName", "email", "role", "orgId"];
+        const filteredUpdates: Record<string, any> = {};
+
+        for (const key of allowedFields) {
+            if (updates[key as keyof GlobalUser] !== undefined) {
+                filteredUpdates[key] = updates[key as keyof GlobalUser];
+            }
+        }
+
+        if (Object.keys(filteredUpdates).length > 0) {
+            await adminDb.collection(USERS_COLL).doc(id).update(filteredUpdates);
+            await this.logAudit("update_user", "user", id, actorId, filteredUpdates);
+        }
+    }
+
+    static async deleteUser(id: string, actorId: string) {
+        await adminDb.collection(USERS_COLL).doc(id).delete();
+        await this.logAudit("delete_user", "user", id, actorId, {});
+    }
+
+    static async toggleSuperAdmin(id: string, isSuperAdmin: boolean, actorId: string) {
+        await adminDb.collection(USERS_COLL).doc(id).update({ isSuperAdmin });
+        await this.logAudit("toggle_super_admin", "user", id, actorId, { isSuperAdmin });
+    }
+
     // ========================================
     // Plans
     // ========================================
