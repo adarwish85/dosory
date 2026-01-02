@@ -12,38 +12,46 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-    FileText,
-    CheckCircle2,
-    Clock,
-    Calendar,
-    Target,
-    TrendingUp,
-    Users,
-    DollarSign,
-    AlertCircle,
-} from "lucide-react";
+import { CheckCircle2, Clock, Calendar, Target, TrendingUp, DollarSign } from "lucide-react";
 import Link from "next/link";
+
+// Helper to safely convert Firestore timestamps or strings to Date
+function safeToDate(val: unknown): Date | null {
+    if (!val) return null;
+    if (val instanceof Date) return val;
+    // Check for Firestore Timestamp (has toDate method)
+    if (val && typeof val.toDate === "function") return val.toDate();
+    // Check for seconds/nanoseconds object (raw Timestamp object)
+    if (val && typeof val.seconds === "number") return new Date(val.seconds * 1000);
+    // Check for string or number
+    if (typeof val === "string" || typeof val === "number") {
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+}
 
 export default function ProjectOverviewPage() {
     const params = useParams();
     const projectId = params.id as string;
     const { project, loading: projectLoading } = useProject(projectId);
-    const { taskStats, tasks } = useTasks({ projectId });
+    const { taskStats } = useTasks({ projectId });
     const { expenses } = useExpenses({ projectId });
     const { milestones } = useMilestones(projectId);
     const { logs: timesheets } = useTimesheets(projectId);
 
     // Calculate expense stats
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-    const billableExpenses = expenses.filter(e => e.billable).reduce((sum, exp) => sum + exp.amount, 0);
-    const billedExpenses = expenses.filter(e => e.invoiceId).reduce((sum, exp) => sum + exp.amount, 0);
+    const billableExpenses = expenses.filter((e) => e.billable).reduce((sum, exp) => sum + exp.amount, 0);
+    const billedExpenses = expenses.filter((e) => e.invoiceId).reduce((sum, exp) => sum + exp.amount, 0);
     const unbilledExpenses = billableExpenses - billedExpenses;
 
     // Calculate timesheet stats
     const timesheetStats = useMemo(() => {
         const totalSeconds = timesheets.reduce((sum, ts) => sum + (ts.duration || 0), 0);
-        const billableSeconds = timesheets.filter(ts => ts.billable !== false).reduce((sum, ts) => sum + (ts.duration || 0), 0);
+        const billableSeconds = timesheets
+            .filter((ts) => ts.billable !== false)
+            .reduce((sum, ts) => sum + (ts.duration || 0), 0);
         const totalHours = totalSeconds / 3600;
         const billableHours = billableSeconds / 3600;
         const nonBillableHours = totalHours - billableHours;
@@ -53,15 +61,20 @@ export default function ProjectOverviewPage() {
     // Calculate milestone stats
     const milestoneStats = useMemo(() => {
         const total = milestones.length;
-        const completed = milestones.filter(m => m.status === "complete").length;
-        const overdue = milestones.filter(m =>
-            m.status !== "complete" &&
-            m.dueDate &&
-            new Date() > m.dueDate.toDate()
-        ).length;
+        const completed = milestones.filter((m) => m.status === "complete").length;
+        const overdue = milestones.filter((m) => {
+            if (m.status === "complete" || !m.dueDate) return false;
+            const date = safeToDate(m.dueDate);
+            return date ? new Date() > date : false;
+        }).length;
+
         const upcoming = milestones
-            .filter(m => m.status !== "complete")
-            .sort((a, b) => a.dueDate.seconds - b.dueDate.seconds)
+            .filter((m) => m.status !== "complete")
+            .sort((a, b) => {
+                const dateA = safeToDate(a.dueDate)?.getTime() || 0;
+                const dateB = safeToDate(b.dueDate)?.getTime() || 0;
+                return dateA - dateB;
+            })
             .slice(0, 3);
         return { total, completed, overdue, upcoming };
     }, [milestones]);
@@ -73,20 +86,21 @@ export default function ProjectOverviewPage() {
     if (!project) return <div>Project not found</div>;
 
     // Safe deadline extraction
-    const deadlineDate = project.deadline
-        ? (typeof project.deadline.toDate === 'function' ? project.deadline.toDate() : null)
-        : null;
+    const deadlineDate = safeToDate(project.deadline);
     const daysLeft = deadlineDate
         ? Math.ceil((deadlineDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
         : 0;
 
-    const taskProgress = taskStats.total > 0
-        ? Math.round(((taskStats.completed || 0) / taskStats.total) * 100)
-        : 0;
+    const taskProgress = taskStats.total > 0 ? Math.round(((taskStats.completed || 0) / taskStats.total) * 100) : 0;
 
-    const milestoneProgress = milestoneStats.total > 0
-        ? Math.round((milestoneStats.completed / milestoneStats.total) * 100)
-        : 0;
+    const milestoneProgress =
+        milestoneStats.total > 0 ? Math.round((milestoneStats.completed / milestoneStats.total) * 100) : 0;
+
+    // Safely format dates
+    const formatDate = (date: unknown, formatStr: string) => {
+        const d = safeToDate(date);
+        return d ? format(d, formatStr) : "-";
+    };
 
     return (
         <div className="space-y-6">
@@ -145,22 +159,32 @@ export default function ProjectOverviewPage() {
                     </CardContent>
                 </Card>
 
-                <Card className={`bg-gradient-to-br ${daysLeft < 0 ? "from-red-50 to-red-100 border-red-200" : daysLeft < 7 ? "from-amber-50 to-amber-100 border-amber-200" : "from-cyan-50 to-cyan-100 border-cyan-200"}`}>
+                <Card
+                    className={`bg-gradient-to-br ${daysLeft < 0 ? "from-red-50 to-red-100 border-red-200" : daysLeft < 7 ? "from-amber-50 to-amber-100 border-amber-200" : "from-cyan-50 to-cyan-100 border-cyan-200"}`}
+                >
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${daysLeft < 0 ? "bg-red-500" : daysLeft < 7 ? "bg-amber-500" : "bg-cyan-500"}`}>
+                            <div
+                                className={`p-2 rounded-lg ${daysLeft < 0 ? "bg-red-500" : daysLeft < 7 ? "bg-amber-500" : "bg-cyan-500"}`}
+                            >
                                 <Calendar className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                                <p className={`text-xs font-medium ${daysLeft < 0 ? "text-red-600" : daysLeft < 7 ? "text-amber-600" : "text-cyan-600"}`}>
+                                <p
+                                    className={`text-xs font-medium ${daysLeft < 0 ? "text-red-600" : daysLeft < 7 ? "text-amber-600" : "text-cyan-600"}`}
+                                >
                                     {daysLeft < 0 ? "Overdue" : "Days Left"}
                                 </p>
-                                <p className={`text-xl font-bold ${daysLeft < 0 ? "text-red-900" : daysLeft < 7 ? "text-amber-900" : "text-cyan-900"}`}>
+                                <p
+                                    className={`text-xl font-bold ${daysLeft < 0 ? "text-red-900" : daysLeft < 7 ? "text-amber-900" : "text-cyan-900"}`}
+                                >
                                     {Math.abs(daysLeft)}
                                 </p>
                             </div>
                         </div>
-                        <p className={`text-xs mt-2 ${daysLeft < 0 ? "text-red-600" : daysLeft < 7 ? "text-amber-600" : "text-cyan-600"}`}>
+                        <p
+                            className={`text-xs mt-2 ${daysLeft < 0 ? "text-red-600" : daysLeft < 7 ? "text-amber-600" : "text-cyan-600"}`}
+                        >
                             {deadlineDate ? format(deadlineDate, "MMM d, yyyy") : "No deadline"}
                         </p>
                     </CardContent>
@@ -198,17 +222,20 @@ export default function ProjectOverviewPage() {
                                 </div>
                                 <div>
                                     <p className="text-muted-foreground">Status</p>
-                                    <Badge variant={project.status === "completed" ? "default" : "secondary"} className="capitalize mt-1">
+                                    <Badge
+                                        variant={project.status === "completed" ? "default" : "secondary"}
+                                        className="capitalize mt-1"
+                                    >
                                         {project.status.replace("_", " ")}
                                     </Badge>
                                 </div>
                                 <div>
                                     <p className="text-muted-foreground">Date Created</p>
-                                    <p className="font-medium">{project.createdAt ? format(project.createdAt.toDate(), "dd/MM/yyyy") : "-"}</p>
+                                    <p className="font-medium">{formatDate(project.createdAt, "dd/MM/yyyy")}</p>
                                 </div>
                                 <div>
                                     <p className="text-muted-foreground">Start Date</p>
-                                    <p className="font-medium">{project.startDate ? format(project.startDate.toDate(), "dd/MM/yyyy") : "-"}</p>
+                                    <p className="font-medium">{formatDate(project.startDate, "dd/MM/yyyy")}</p>
                                 </div>
                                 <div>
                                     <p className="text-muted-foreground">Deadline</p>
@@ -224,7 +251,9 @@ export default function ProjectOverviewPage() {
                                 <h3 className="font-medium">Description</h3>
                                 <div
                                     className="text-sm text-muted-foreground prose prose-sm max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: project.description || "No description provided." }}
+                                    dangerouslySetInnerHTML={{
+                                        __html: project.description || "No description provided.",
+                                    }}
                                 />
                             </div>
                         </CardContent>
@@ -239,17 +268,23 @@ export default function ProjectOverviewPage() {
                                         <Target className="h-4 w-4 text-muted-foreground" />
                                         Upcoming Milestones
                                     </CardTitle>
-                                    <Link href={`/dashboard/projects/${projectId}/milestones`} className="text-xs text-blue-600 hover:underline">
+                                    <Link
+                                        href={`/dashboard/projects/${projectId}/milestones`}
+                                        className="text-xs text-blue-600 hover:underline"
+                                    >
                                         View all
                                     </Link>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                {milestoneStats.upcoming.map(milestone => {
-                                    const dueDate = milestone.dueDate?.toDate();
+                                {milestoneStats.upcoming.map((milestone) => {
+                                    const dueDate = safeToDate(milestone.dueDate);
                                     const isOverdue = dueDate && new Date() > dueDate;
                                     return (
-                                        <div key={milestone.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div
+                                            key={milestone.id}
+                                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <div
                                                     className="w-3 h-3 rounded-full"
@@ -257,8 +292,11 @@ export default function ProjectOverviewPage() {
                                                 />
                                                 <span className="font-medium text-sm">{milestone.name}</span>
                                             </div>
-                                            <Badge variant={isOverdue ? "destructive" : "secondary"} className="text-xs">
-                                                {isOverdue ? "Overdue" : format(dueDate!, "MMM d")}
+                                            <Badge
+                                                variant={isOverdue ? "destructive" : "secondary"}
+                                                className="text-xs"
+                                            >
+                                                {isOverdue ? "Overdue" : dueDate ? format(dueDate, "MMM d") : "-"}
                                             </Badge>
                                         </div>
                                     );
@@ -282,19 +320,27 @@ export default function ProjectOverviewPage() {
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <div className="p-3 bg-gray-50 rounded-lg">
                                     <p className="text-xs text-muted-foreground">Total</p>
-                                    <p className="font-bold text-lg">{formatCurrency(totalExpenses, project.currency)}</p>
+                                    <p className="font-bold text-lg">
+                                        {formatCurrency(totalExpenses, project.currency)}
+                                    </p>
                                 </div>
                                 <div className="p-3 bg-blue-50 rounded-lg">
                                     <p className="text-xs text-blue-600">Billable</p>
-                                    <p className="font-bold text-lg text-blue-900">{formatCurrency(billableExpenses, project.currency)}</p>
+                                    <p className="font-bold text-lg text-blue-900">
+                                        {formatCurrency(billableExpenses, project.currency)}
+                                    </p>
                                 </div>
                                 <div className="p-3 bg-green-50 rounded-lg">
                                     <p className="text-xs text-green-600">Billed</p>
-                                    <p className="font-bold text-lg text-green-900">{formatCurrency(billedExpenses, project.currency)}</p>
+                                    <p className="font-bold text-lg text-green-900">
+                                        {formatCurrency(billedExpenses, project.currency)}
+                                    </p>
                                 </div>
                                 <div className="p-3 bg-amber-50 rounded-lg">
                                     <p className="text-xs text-amber-600">Unbilled</p>
-                                    <p className="font-bold text-lg text-amber-900">{formatCurrency(unbilledExpenses, project.currency)}</p>
+                                    <p className="font-bold text-lg text-amber-900">
+                                        {formatCurrency(unbilledExpenses, project.currency)}
+                                    </p>
                                 </div>
                             </div>
                         </CardContent>
@@ -311,15 +357,21 @@ export default function ProjectOverviewPage() {
                         <CardContent>
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg text-center">
-                                    <p className="text-2xl font-bold text-gray-900">{timesheetStats.totalHours.toFixed(1)}</p>
+                                    <p className="text-2xl font-bold text-gray-900">
+                                        {timesheetStats.totalHours.toFixed(1)}
+                                    </p>
                                     <p className="text-xs text-muted-foreground">Total Hours</p>
                                 </div>
                                 <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg text-center">
-                                    <p className="text-2xl font-bold text-green-900">{timesheetStats.billableHours.toFixed(1)}</p>
+                                    <p className="text-2xl font-bold text-green-900">
+                                        {timesheetStats.billableHours.toFixed(1)}
+                                    </p>
                                     <p className="text-xs text-green-600">Billable</p>
                                 </div>
                                 <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg text-center">
-                                    <p className="text-2xl font-bold text-orange-900">{timesheetStats.nonBillableHours.toFixed(1)}</p>
+                                    <p className="text-2xl font-bold text-orange-900">
+                                        {timesheetStats.nonBillableHours.toFixed(1)}
+                                    </p>
                                     <p className="text-xs text-orange-600">Non-Billable</p>
                                 </div>
                             </div>
@@ -328,13 +380,18 @@ export default function ProjectOverviewPage() {
                                 <div className="mt-4">
                                     <p className="text-xs text-muted-foreground mb-2">Recent Entries</p>
                                     <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                                        {timesheets.slice(0, 5).map(ts => (
-                                            <div key={ts.id} className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded">
+                                        {timesheets.slice(0, 5).map((ts) => (
+                                            <div
+                                                key={ts.id}
+                                                className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded"
+                                            >
                                                 <span className="truncate flex-1">{ts.note || "Time entry"}</span>
                                                 <div className="flex items-center gap-2">
-                                                    <Badge variant="outline" className="text-xs">{(ts.duration / 3600).toFixed(1)}h</Badge>
+                                                    <Badge variant="outline" className="text-xs">
+                                                        {(ts.duration / 3600).toFixed(1)}h
+                                                    </Badge>
                                                     <span className="text-xs text-muted-foreground">
-                                                        {ts.startTime ? format(ts.startTime.toDate(), "MMM d") : ""}
+                                                        {formatDate(ts.startTime, "MMM d")}
                                                     </span>
                                                 </div>
                                             </div>
@@ -367,11 +424,14 @@ export default function ProjectOverviewPage() {
                                     { key: "in_progress", label: "Testing", color: "bg-purple-500" },
                                     { key: "in_progress", label: "Awaiting Feedback", color: "bg-amber-500" },
                                     { key: "done", label: "Completed", color: "bg-green-500" },
-                                ].map(status => {
+                                ].map((status, i) => {
                                     const count = Number(taskStats[status.key]) || 0;
                                     const percent = taskStats.total > 0 ? (count / taskStats.total) * 100 : 0;
+                                    // Use index in key to avoid dupes since "in_progress" is used multiple times in this design mock?
+                                    // Actually the mock has multiple "in_progress" keys effectively doing the same thing unless logic changes.
+                                    // I'll keep the key distinct.
                                     return (
-                                        <div key={status.key} className="flex items-center gap-3">
+                                        <div key={i} className="flex items-center gap-3">
                                             <div className={`w-3 h-3 rounded-full ${status.color}`} />
                                             <span className="text-sm flex-1">{status.label}</span>
                                             <span className="text-sm font-medium">{count}</span>
