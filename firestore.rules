@@ -58,8 +58,44 @@ service cloud.firestore {
     }
 
     // ============================================
-    // USER MANAGEMENT
+    // RBAC HELPER FUNCTIONS (V2)
     // ============================================
+
+    // Fetch the user's assigned role document
+    function getRole(orgId, roleId) {
+        return get(/databases/$(database)/documents/organizations/$(orgId)/roles/$(roleId)).data;
+    }
+
+    // Check if user has a specific permission
+    // FALLBACK: If user has 'admin' or 'owner' string role, allow everything (Migration Phase)
+    function hasPermission(orgId, permission) {
+        let userData = getUserData();
+        // 1. Superadmin Override
+        if (userData.role == 'superadmin') return true;
+        
+        // 2. Organization Admin Override (Legacy/Hybrid)
+        if (userData.orgId == orgId && (userData.role == 'admin' || userData.role == 'owner')) return true;
+
+        // 3. RBAC Check
+        // Ensure user belongs to org
+        if (userData.orgId != orgId) return false;
+        
+        // Get Role ID (assume stored on user, or default to 'staff' if missing? No, deny if missing)
+        // In V2 migration, we might not have roleId yet. 
+        if (!('roleId' in userData)) return false; 
+        
+        let role = getRole(orgId, userData.roleId);
+        return role.permissions.hasAny([permission]); 
+    }
+
+    // Helper to check permission with "global" or "own" scope
+    // For now, simple check.
+    function can(permission) {
+        let userData = getUserData();
+        let orgId = userData.orgId;
+        // Optimization: Pass orgId to helper
+        return hasPermission(orgId, permission);
+    }
     
     // Users: Users can read/write their own profile, superadmins can read all
     match /users/{userId} {

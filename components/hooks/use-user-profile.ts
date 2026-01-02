@@ -19,9 +19,10 @@ export interface UserProfile {
     phone?: string;
     jobTitle?: string;
     photoURL?: string;
-    // Added: actual role when impersonating
     actualRole?: "superadmin" | "admin" | "staff" | "customer";
     actualOrgId?: string;
+    // RBAC Permissions (V2)
+    permissions?: string[];
 }
 
 export function useUserProfile() {
