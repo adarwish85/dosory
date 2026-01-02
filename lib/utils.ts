@@ -47,3 +47,7 @@ export function formatBytes(bytes: number, decimals = 2) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
+
+export function formatNumber(num: number): string {
+    return new Intl.NumberFormat("en-US").format(num);
+}

@@ -20,9 +20,12 @@ function safeToDate(val: unknown): Date | null {
     if (!val) return null;
     if (val instanceof Date) return val;
     // Check for Firestore Timestamp (has toDate method)
-    if (val && typeof val.toDate === "function") return val.toDate();
+    // Check for Firestore Timestamp (has toDate method)
+    if (val && typeof (val as { toDate: unknown }).toDate === "function")
+        return (val as { toDate: () => Date }).toDate();
     // Check for seconds/nanoseconds object (raw Timestamp object)
-    if (val && typeof val.seconds === "number") return new Date(val.seconds * 1000);
+    if (val && typeof (val as { seconds: unknown }).seconds === "number")
+        return new Date((val as { seconds: number }).seconds * 1000);
     // Check for string or number
     if (typeof val === "string" || typeof val === "number") {
         const d = new Date(val);
