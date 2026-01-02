@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getSetupRedirect, getSettingsTabRedirect } from '@/lib/setup-redirects';
 
 export const config = {
     matcher: [
@@ -14,7 +15,7 @@ export const config = {
     ],
 };
 
-export default function middleware(req: NextRequest) {
+export default async function middleware(req: NextRequest) {
     const url = req.nextUrl;
     const hostname = req.headers.get("host") || "";
 
@@ -60,6 +61,22 @@ export default function middleware(req: NextRequest) {
                 headers: requestHeaders,
             },
         });
+    }
+
+    // Handle Setup menu redirects for backward compatibility
+    if (url.pathname.startsWith('/dashboard/setup')) {
+        // Check for direct URL redirects
+        const redirect = getSetupRedirect(url.pathname);
+        if (redirect) {
+            return NextResponse.redirect(new URL(redirect, req.url));
+        }
+
+        // Check for settings tab redirects (?tab=xxx)
+        if (url.pathname === '/dashboard/setup/settings') {
+            const tab = url.searchParams.get('tab');
+            const settingsRedirect = getSettingsTabRedirect(tab);
+            return NextResponse.redirect(new URL(settingsRedirect, req.url));
+        }
     }
 
     return NextResponse.next();

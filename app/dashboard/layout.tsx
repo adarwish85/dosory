@@ -445,7 +445,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     </div>
                                     <DropdownMenuItem asChild className="rounded-lg">
                                         <Link
-                                            href={`/dashboard/setup/staff/${user?.uid}`}
+                                            href={`/dashboard/setup/team-roles/staff/${user?.uid}`}
                                             className="cursor-pointer py-3"
                                         >
                                             <User className="h-5 w-5 mr-3" />

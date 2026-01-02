@@ -76,7 +76,7 @@ export default function EditStaffPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
-                <Link href="/dashboard/setup/staff">
+                <Link href="/dashboard/setup/team-roles/staff">
                     <Button variant="ghost" size="icon">
                         <ArrowLeft className="h-5 w-5" />
                     </Button>

@@ -10,7 +10,7 @@ const STEP_LINKS: Record<string, string> = {
     welcome: "/dashboard",
     companyProfile: "/dashboard/setup/settings",
     firstRecord: "/dashboard/customers",
-    inviteTeam: "/dashboard/setup/staff",
+    inviteTeam: "/dashboard/setup/team-roles/staff",
     integrations: "/dashboard/setup/settings",
 };
 
@@ -170,8 +170,8 @@ export default function OnboardingChecklist() {
                                 isComplete
                                     ? "bg-green-50 text-green-700"
                                     : isCurrent
-                                      ? "bg-blue-50 text-blue-700"
-                                      : "hover:bg-gray-50 text-gray-600"
+                                        ? "bg-blue-50 text-blue-700"
+                                        : "hover:bg-gray-50 text-gray-600"
                             )}
                         >
                             {isComplete ? (

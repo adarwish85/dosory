@@ -27,6 +27,7 @@ export interface OrganizationSettings {
     phone?: string;
     email?: string;
     vatNumber?: string;
+    companyInfoFormat?: string;
 
     // Localization
     dateFormat: string;

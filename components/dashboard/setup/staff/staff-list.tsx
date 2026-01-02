@@ -259,14 +259,14 @@ export function StaffList() {
                                             </Avatar>
                                             <div className="flex flex-col gap-0.5">
                                                 <Link
-                                                    href={`/dashboard/setup/staff/${encodeURIComponent(member.id)}`}
+                                                    href={`/dashboard/setup/team-roles/staff/${encodeURIComponent(member.id)}`}
                                                     className="font-semibold text-gray-900 hover:text-blue-600 block line-clamp-1"
                                                 >
                                                     {member.firstName} {member.lastName}
                                                 </Link>
                                                 <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4">
                                                     <Link
-                                                        href={`/dashboard/setup/staff/${encodeURIComponent(member.id)}`}
+                                                        href={`/dashboard/setup/team-roles/staff/${encodeURIComponent(member.id)}`}
                                                         className="hover:text-blue-600 hover:underline px-0.5"
                                                     >
                                                         View

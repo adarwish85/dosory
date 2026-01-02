@@ -169,7 +169,7 @@ export default function EmailTemplatesPage() {
                                         <div className="flex items-center gap-3">
                                             <span className="text-sm text-gray-500 min-w-[120px]">Template Name</span>
                                             <Link
-                                                href={`/dashboard/setup/email-templates/edit?template=${encodeURIComponent(template)}&category=${encodeURIComponent(section.title)}`}
+                                                href={`/dashboard/setup/templates-docs/email-templates/edit?template=${encodeURIComponent(template)}&category=${encodeURIComponent(section.title)}`}
                                                 className="text-blue-600 hover:underline text-left"
                                             >
                                                 {template}

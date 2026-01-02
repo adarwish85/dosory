@@ -14,7 +14,7 @@ export default function EmailIntegrationPage() {
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Email Integration</h1>
                 <Button variant="outline" asChild>
-                    <Link href="/dashboard/setup/support/spam-filters">Spam Filters</Link>
+                    <Link href="/dashboard/setup/operations/support-config/spam-filters">Spam Filters</Link>
                 </Button>
             </div>
 

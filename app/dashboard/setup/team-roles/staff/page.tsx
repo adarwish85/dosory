@@ -3,8 +3,8 @@
 import { useState, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StaffList } from "@/components/dashboard/setup/staff/staff-list";
-import JoinRequestsPage from "../join-requests/page";
-import RolesPage from "../roles/page";
+import JoinRequestsPage from "../../join-requests/page";
+import RolesPage from "../roles-permissions/page";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 export default function StaffPage() {

@@ -5,17 +5,16 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 const SECTIONS = [
-    { label: "Chart of Accounts", href: "/dashboard/setup/finance/chart-of-accounts" },
-    { label: "Currencies", href: "/dashboard/setup/finance/currencies" },
-    { label: "Payment Modes", href: "/dashboard/setup/finance/payment-modes" },
-    { label: "Tax Rates", href: "/dashboard/setup/finance/tax-rates" },
-    { label: "Expenses Categories", href: "/dashboard/setup/finance/expenses-categories" },
+    { label: "Sources", href: "/dashboard/setup/sales-crm/leads-config/sources" },
+    { label: "Statuses", href: "/dashboard/setup/sales-crm/leads-config/statuses" },
+    { label: "Web to Lead", href: "/dashboard/setup/sales-crm/leads-config/web-to-lead" },
+    { label: "Forms", href: "/dashboard/setup/sales-crm/leads-config/forms" },
 ];
 
-export default function SetupFinancePage() {
+export default function SetupLeadsPage() {
     return (
         <div className="p-6">
-            <PageHeader title="Finance Setup" />
+            <PageHeader title="Leads Setup" />
             <div className="grid gap-4 mt-6">
                 {SECTIONS.map((section) => (
                     <Link

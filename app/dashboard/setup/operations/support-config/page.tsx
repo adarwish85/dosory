@@ -5,14 +5,18 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 const SECTIONS = [
-    { label: "Main Menu", href: "/dashboard/setup/menu-setup/main-menu" },
-    { label: "Setup Menu", href: "/dashboard/setup/menu-setup/setup-menu" },
+    { label: "Departments", href: "/dashboard/setup/team-roles/departments" },
+    { label: "Predefined Replies", href: "/dashboard/setup/operations/support-config/predefined-replies" },
+    { label: "Services", href: "/dashboard/setup/operations/support-config/services" },
+    { label: "Spam Filters", href: "/dashboard/setup/operations/support-config/spam-filters" },
+    { label: "Ticket Priority", href: "/dashboard/setup/operations/support-config/ticket-priority" },
+    { label: "Ticket Statuses", href: "/dashboard/setup/operations/support-config/ticket-statuses" },
 ];
 
-export default function SetupMenuSetupPage() {
+export default function SetupSupportPage() {
     return (
         <div className="p-6">
-            <PageHeader title="Menu Setup" />
+            <PageHeader title="Support Setup" />
             <div className="grid gap-4 mt-6">
                 {SECTIONS.map((section) => (
                     <Link
