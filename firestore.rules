@@ -237,167 +237,23 @@ service cloud.firestore {
     // Invoices
     match /invoices/{invoiceId} {
       allow read: if canReadByOrg();
+      // Allow create by org members (for drafting)
       allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-    
-    // Estimates
-    match /estimates/{estimateId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-    
-    // Proposals
-    match /proposals/{proposalId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-    
-    // Contracts
-    match /contracts/{contractId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // ============================================
-    // PROJECT MANAGEMENT
-    // ============================================
-    
-    // Projects
-    match /projects/{projectId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-      
-      // Project tasks
-      match /tasks/{taskId} {
-        allow read: if canReadByOrg();
-        allow create: if canCreateByOrg();
-        allow update, delete: if canModifyByOrg();
-      }
-    }
-    
-    // Standalone tasks
-    match /tasks/{taskId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Milestones
-    match /milestones/{milestoneId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Timesheets
-    match /timesheets/{timesheetId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Project Files
-    match /project_files/{fileId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Project Discussions
-    match /project_discussions/{discussionId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Task Lists (under Milestones)
-    match /task_lists/{taskListId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // ============================================
-    // SUPPORT
-    // ============================================
-    
-    // Support tickets
-    match /support_tickets/{ticketId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-      
-      // Ticket messages
-      match /messages/{messageId} {
-        allow read: if canReadByOrg();
-        allow create: if canCreateByOrg();
-        allow update, delete: if canModifyByOrg();
-      }
-    }
-
-    // ============================================
-    // OTHER ROOT COLLECTIONS
-    // ============================================
-
-    // Contacts (Root level access needed for useContacts hook)
-    match /contacts/{contactId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Tickets (Customer tickets, not platform tickets)
-    match /tickets/{ticketId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Notes (Root level for customer notes)
-    match /notes/{noteId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Reminders (Root level)
-    match /reminders/{reminderId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Customer Files
-    match /customerFiles/{fileId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Generic Files (used by new lead files implementation)
-    match /files/{fileId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Credit Notes
-    match /creditNotes/{creditNoteId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
+      // Update restrictions: 
+      // 1. Cannot change 'amountPaid' directly (must use API)
+      // 2. Cannot change 'status' to/from 'paid' directly
+      allow update: if canModifyByOrg() 
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['amountPaid', 'paymentIds']))
+        && (request.resource.data.status == resource.data.status || resource.data.status == 'draft');
+        
+      allow delete: if canModifyByOrg() && resource.data.status == 'draft';
     }
 
     // Payments
     match /payments/{paymentId} {
       allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
+      // Block ALL direct creates/updates from client. Must use 'processPayment' API.
+      allow create, update, delete: if false; 
     }
 
     // Expenses

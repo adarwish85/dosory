@@ -19,4 +19,11 @@ export { sendOnboardingEmails, onUserCreated } from "./onboardingEmails";
 export { onTaskUpdate } from "./tasks";
 
 // Export reminder automation
+// Export reminder automation
 export { checkReminders } from "./reminders";
+
+// Export finance automation
+export { processPayment, finalizeInvoice, voidInvoice } from "./finance";
+
+// Export analytics triggers
+export { onInvoiceWrite, dailyAnalyticsSnapshot } from "./analytics";
