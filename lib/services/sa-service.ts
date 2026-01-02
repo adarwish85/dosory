@@ -7,7 +7,7 @@ import {
 import { FieldValue } from "firebase-admin/firestore";
 
 // Collection names
-const TENANTS_COLL = "tenants";
+const TENANTS_COLL = "organizations";
 const USERS_COLL = "users";
 const PLANS_COLL = "sa_plans";
 const SUBSCRIPTIONS_COLL = "sa_subscriptions";
