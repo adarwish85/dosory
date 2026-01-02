@@ -16,9 +16,10 @@ import {
     SupportTicket,
     SupportTicketStatus,
     TicketMessage,
-    SupportSettings,
     SupportTicketPriority,
+    SupportSettings,
 } from "@/lib/types/support";
+import { SupportSettingsService } from "./support-settings-service";
 
 const TICKETS_COLLECTION = "tickets";
 const TICKET_MESSAGES_COLLECTION = "messages";
@@ -85,11 +86,26 @@ export class TicketService {
             "id" | "createdAt" | "updatedAt" | "slaResponseDueAt" | "slaResolutionDueAt" | "slaStatus"
         >
     ) {
+        // Fetch Settings for SLA & Auto-Assign
+        const settings = await SupportSettingsService.getSettings(data.tenantId);
+
+        // Auto-Assignment Logic
+        let assignedAgentId = data.assignedAgentId;
+        if (!assignedAgentId && settings?.autoAssignRules) {
+            const rule = settings.autoAssignRules.find(
+                (r: { category: string; agentId: string }) => r.category === data.category
+            );
+            if (rule) {
+                assignedAgentId = rule.agentId;
+            }
+        }
+
         // Calculate SLA
-        const { response, resolution } = this.calculateSlaDates(data.priority);
+        const { response, resolution } = this.calculateSlaDates(data.priority, settings);
 
         await addDoc(collection(db, TICKETS_COLLECTION), {
             ...data,
+            assignedAgentId,
             slaResponseDueAt: Timestamp.fromDate(response),
             slaResolutionDueAt: Timestamp.fromDate(resolution),
             slaStatus: "on_track",

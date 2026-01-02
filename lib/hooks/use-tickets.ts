@@ -121,7 +121,7 @@ export function useSupportTicketMessages(ticketId: string) {
         if (!ticketId) return;
         setLoading(true);
         try {
-            const data = await TicketService.getMessages(ticketId);
+            const data = await TicketService.getTicketMessages(ticketId);
             setMessages(data);
         } catch (error) {
             console.error(error);

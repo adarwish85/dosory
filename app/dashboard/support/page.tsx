@@ -15,6 +15,8 @@ import {
     MessageSquare,
     User,
     BarChart3,
+    BookOpen,
+    Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,6 +106,16 @@ export default function SupportPage() {
                     <Link href="/dashboard/support/reports">
                         <Button variant="outline">
                             <BarChart3 className="mr-2 h-4 w-4" /> Reports
+                        </Button>
+                    </Link>
+                    <Link href="/dashboard/support/kb">
+                        <Button variant="outline">
+                            <BookOpen className="mr-2 h-4 w-4" /> Knowledge Base
+                        </Button>
+                    </Link>
+                    <Link href="/dashboard/setup/support">
+                        <Button variant="ghost" size="icon">
+                            <Settings className="h-4 w-4" />
                         </Button>
                     </Link>
                 </div>
