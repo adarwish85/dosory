@@ -20,7 +20,7 @@ export { useContracts, useContract } from "./use-contracts";
 
 // Support & Knowledge Base
 export { useTickets, useTicketReplies, useDepartments, useKnowledgeBase } from "./use-support";
-
+export * from "./use-tickets";
 // Staff, Roles & Settings
 export {
     useStaff,

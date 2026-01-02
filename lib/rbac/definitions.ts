@@ -1,4 +1,3 @@
-
 // Detailed permission structure with Own/Global distinctions for UI rendering
 export const PERMISSION_MODULES = [
     {
@@ -171,6 +170,20 @@ export const PERMISSION_MODULES = [
             { id: "edit-own-timesheets", label: "Edit Own Timesheets" },
             { id: "delete-timesheets-global", label: "Delete Timesheets (Global)" },
             { id: "delete-own-timesheets", label: "Delete Own Timesheets" },
+        ],
+    },
+    {
+        id: "tickets",
+        label: "Support Tickets",
+        actions: [
+            { id: "view-own", label: "View (Assigned)" },
+            { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit Properties" },
+            { id: "reply", label: "Reply" },
+            { id: "delete", label: "Delete" },
+            { id: "close", label: "Close" },
+            { id: "assign", label: "Assign" },
         ],
     },
     {

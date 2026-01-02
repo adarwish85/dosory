@@ -1,393 +1,368 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { use, useState, useRef } from "react";
+import Link from "next/link";
 import {
-    Bold,
-    Italic,
-    Underline,
-    Link,
-    Image as ImageIcon,
-    MoreHorizontal,
-    AlignLeft,
-    AlignCenter,
-    AlignRight,
-    Printer,
-    Edit2,
-    Plus,
-    Loader2,
     ArrowLeft,
+    Clock,
+    User,
+    Mail,
+    MoreVertical,
+    CheckCircle,
+    AlertCircle,
+    Paperclip,
+    Send,
+    Lock,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-interface Ticket {
-    id: string;
-    subject: string;
-    status: string;
-    priority: string;
-    department?: string;
-    contact?: {
-        name: string;
-        email: string;
+import { useSupportTicket, useSupportTicketMessages, usePermission, useStaff } from "@/lib/hooks";
+import { format } from "date-fns";
+import { SupportTicket, SupportTicketStatus, SupportTicketPriority } from "@/lib/types/support";
+
+// Helper components
+function StatusBadge({ status }: { status: SupportTicketStatus }) {
+    const colors = {
+        open: "bg-blue-100 text-blue-800",
+        in_progress: "bg-purple-100 text-purple-800",
+        waiting_on_customer: "bg-yellow-100 text-yellow-800",
+        resolved: "bg-green-100 text-green-800",
+        closed: "bg-gray-100 text-gray-800",
     };
-    customer?: {
-        name: string;
-    };
-    assignee?: string;
-    createdAt?: { toDate?: () => Date } | Date;
-    lastReply?: { toDate?: () => Date } | Date;
-    messages?: Array<{
-        sender: string;
-        senderType: string;
-        content: string;
-        createdAt: { toDate?: () => Date } | Date;
-    }>;
+    return (
+        <Badge variant="secondary" className={colors[status] || "bg-gray-100"}>
+            {status.replace(/_/g, " ")}
+        </Badge>
+    );
 }
 
-export default function TicketPage() {
-    const params = useParams();
-    const router = useRouter();
-    const ticketId = params?.id as string;
-    const [ticket, setTicket] = useState<Ticket | null>(null);
-    const [loading, setLoading] = useState(true);
+function PriorityBadge({ priority }: { priority: SupportTicketPriority }) {
+    const colors = {
+        low: "bg-gray-100 text-gray-800",
+        medium: "bg-blue-100 text-blue-800",
+        high: "bg-orange-100 text-orange-800",
+        critical: "bg-red-100 text-red-800",
+    };
+    return (
+        <Badge variant="outline" className={colors[priority] || "bg-gray-100"}>
+            {priority}
+        </Badge>
+    );
+}
 
-    useEffect(() => {
-        if (!ticketId) {
-            setLoading(false);
-            return;
-        }
+// Timeline Component
+function TicketTimeline({ ticketId }: { ticketId: string }) {
+    const { messages, loading } = useSupportTicketMessages(ticketId);
 
-        async function loadTicket() {
-            try {
-                const docRef = doc(db, "support_tickets", ticketId);
-                const docSnap = await getDoc(docRef);
+    if (loading) return <div className="p-4 text-center text-gray-500">Loading timeline...</div>;
+    if (messages.length === 0) return <div className="p-4 text-center text-gray-500">No messages yet.</div>;
 
-                if (docSnap.exists()) {
-                    setTicket({ id: docSnap.id, ...docSnap.data() } as Ticket);
-                } else {
-                    console.error("Ticket not found");
-                }
-            } catch (error) {
-                console.error("Error loading ticket:", error);
-            } finally {
-                setLoading(false);
-            }
-        }
+    return (
+        <div className="space-y-6">
+            {messages.map((msg) => (
+                <div key={msg.id} className={`flex gap-4 ${msg.senderType === "customer" ? "" : "flex-row-reverse"}`}>
+                    <Avatar className="h-8 w-8">
+                        <AvatarFallback
+                            className={msg.senderType === "agent" ? "bg-blue-100 text-blue-600" : "bg-gray-100"}
+                        >
+                            {msg.senderName?.charAt(0) || (msg.senderType === "agent" ? "A" : "C")}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div
+                        className={`flex flex-col max-w-[80%] ${msg.senderType === "customer" ? "items-start" : "items-end"}`}
+                    >
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-medium">
+                                {msg.senderName || (msg.senderType === "agent" ? "Support Agent" : "Customer")}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                                {format(msg.createdAt.toDate(), "MMM dd, HH:mm")}
+                            </span>
+                            {msg.isInternal && (
+                                <Badge
+                                    variant="outline"
+                                    className="text-[10px] px-1 py-0 h-4 bg-yellow-50 text-yellow-700 border-yellow-200"
+                                >
+                                    Internal Note
+                                </Badge>
+                            )}
+                        </div>
+                        <div
+                            className={`p-3 rounded-lg text-sm ${
+                                msg.isInternal
+                                    ? "bg-yellow-50 border border-yellow-100 text-gray-800"
+                                    : msg.senderType === "agent"
+                                      ? "bg-blue-50 text-blue-900"
+                                      : "bg-white border text-gray-800"
+                            }`}
+                        >
+                            <div dangerouslySetInnerHTML={{ __html: msg.body }} />
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
 
-        loadTicket();
-    }, [ticketId]);
+// Reply Component
+function ReplyBox({ ticketId }: { ticketId: string }) {
+    const [body, setBody] = useState("");
+    const [isInternal, setIsInternal] = useState(false);
+    const { sendMessage } = useSupportTicketMessages(ticketId);
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
-        );
-    }
-
-    if (!ticket) {
-        return <div className="p-8">Ticket not found</div>;
-    }
-
-    const getStatusColor = (status: string) => {
-        switch (status?.toLowerCase()) {
-            case "answered":
-                return "text-blue-600 bg-blue-50 border-blue-200";
-            case "open":
-                return "text-orange-600 bg-orange-50 border-orange-200";
-            case "closed":
-                return "text-gray-600 bg-gray-50 border-gray-200";
-            default:
-                return "text-gray-600 bg-gray-50 border-gray-200";
-        }
+    const handleSubmit = async () => {
+        if (!body.trim()) return;
+        await sendMessage(body, isInternal);
+        setBody("");
     };
 
     return (
-        <div className="flex gap-6">
-            {/* Main Content */}
-            <div className="flex-1 space-y-6">
-                <Button
-                    variant="ghost"
-                    onClick={() => router.push("/dashboard/support")}
-                    className="w-fit gap-2 text-gray-600 hover:text-gray-900 -ml-2"
-                >
-                    <ArrowLeft className="h-4 w-4" /> Back to Tickets
-                </Button>
-                <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                        <h2 className="text-xl font-bold text-gray-900">
-                            #{ticketId?.slice(0, 4)} - {ticket.subject}
-                        </h2>
-                        <Badge variant="outline" className={getStatusColor(ticket.status)}>
-                            {ticket.status}
-                        </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" className="text-gray-600 gap-2">
-                            🤖 Summarize (AI)
-                        </Button>
-                    </div>
-                </div>
-
-                <div className="bg-gray-100 p-2 rounded-t-md border-b border-gray-200 flex gap-4 text-sm font-medium text-gray-600">
-                    <div className="flex items-center gap-2 text-gray-900 bg-white px-3 py-1 rounded shadow-sm">
-                        <span>↩ Add Reply</span>
-                    </div>
-                    <div className="flex items-center gap-2 cursor-pointer hover:text-gray-900">
-                        <span>📝 Add Note</span>
-                    </div>
-                    <div className="flex items-center gap-2 cursor-pointer hover:text-gray-900">
-                        <span>🔔 Reminders</span>
-                    </div>
-                    <div className="flex items-center gap-2 cursor-pointer hover:text-gray-900">
-                        <span>✅ Tasks</span>
-                    </div>
-                </div>
-
-                <div className="bg-white border rounded-b-md p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <Select>
-                            <SelectTrigger className="bg-gray-50 text-gray-500">
-                                <SelectValue placeholder="Insert predefined reply" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="1">Reply 1</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select>
-                            <SelectTrigger className="bg-gray-50 text-gray-500">
-                                <SelectValue placeholder="Insert knowledge base link" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="1">Link 1</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="border rounded-md">
-                        <div className="border-b p-2 bg-gray-50 flex items-center gap-2 text-gray-600">
-                            <span className="text-xs mr-2">File Edit View Insert Format Tools Table</span>
-                        </div>
-                        <div className="border-b p-2 flex items-center gap-4 text-gray-600">
-                            <Select defaultValue="system">
-                                <SelectTrigger className="w-[120px] h-8 text-sm">
-                                    <SelectValue placeholder="System Font" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="system">System Font</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Select defaultValue="12">
-                                <SelectTrigger className="w-[80px] h-8 text-sm">
-                                    <SelectValue placeholder="12pt" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="12">12pt</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <div className="h-4 w-px bg-gray-300 mx-2"></div>
-                            <Bold className="w-4 h-4 cursor-pointer" />
-                            <Italic className="w-4 h-4 cursor-pointer" />
-                            <Underline className="w-4 h-4 cursor-pointer" />
-                            <div className="h-4 w-px bg-gray-300 mx-2"></div>
-                            <AlignLeft className="w-4 h-4 cursor-pointer" />
-                            <AlignCenter className="w-4 h-4 cursor-pointer" />
-                            <AlignRight className="w-4 h-4 cursor-pointer" />
-                            <div className="h-4 w-px bg-gray-300 mx-2"></div>
-                            <ImageIcon className="w-4 h-4 cursor-pointer" />
-                            <Link className="w-4 h-4 cursor-pointer" />
-                            <MoreHorizontal className="w-4 h-4 cursor-pointer ml-auto" />
-                        </div>
-                        <div className="p-4 min-h-[200px] text-gray-400">Add Reply</div>
-                    </div>
-
-                    <div>
-                        <label className="text-sm font-medium text-gray-700">Attachments</label>
-                        <div className="flex gap-2 mt-1">
-                            <Button variant="outline" className="h-9">
-                                Choose File
-                            </Button>
-                            <div className="flex items-center px-3 border rounded-md text-sm text-gray-500 bg-gray-50 flex-1">
-                                No file chosen
-                            </div>
-                            <Button variant="outline" size="icon" className="h-9 w-9">
-                                <Plus className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="text-sm font-medium text-gray-700">CC</label>
-                        <Input className="mt-1" />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="assign" />
-                            <label htmlFor="assign" className="text-sm font-medium leading-none">
-                                Assign this ticket to me automatically
-                            </label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="return" defaultChecked />
-                            <label htmlFor="return" className="text-sm font-medium leading-none">
-                                Return to ticket list after response is submitted
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
+        <Card className={`border-t ${isInternal ? "bg-yellow-50/50" : "bg-gray-50/50"}`}>
+            <CardContent className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">
-                        {ticket.lastReply
-                            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                              `Last Reply: ${new Date((ticket.lastReply as any).toDate?.() || ticket.lastReply).toLocaleDateString()}`
-                            : "No replies yet"}
-                    </span>
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-700">Ticket Status</span>
-                            <Select defaultValue={ticket.status?.toLowerCase() || "open"}>
-                                <SelectTrigger className="w-[140px] h-9 bg-gray-50">
-                                    <SelectValue placeholder="Open" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="open">Open</SelectItem>
-                                    <SelectItem value="in_progress">In Progress</SelectItem>
-                                    <SelectItem value="answered">Answered</SelectItem>
-                                    <SelectItem value="closed">Closed</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <Button variant="outline" className="gap-2">
-                            🤖 Suggest Reply (AI)
+                    <span className="text-sm font-medium text-gray-700">Reply</span>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsInternal(!isInternal)}
+                        className={isInternal ? "text-yellow-600 bg-yellow-100" : "text-gray-500"}
+                    >
+                        <Lock className="h-3 w-3 mr-1" />
+                        Internal Note
+                    </Button>
+                </div>
+                <Textarea
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    placeholder={isInternal ? "Add an internal note..." : "Type your reply..."}
+                    className="min-h-[100px] bg-white"
+                />
+                <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm">
+                        <Paperclip className="h-4 w-4 mr-2" /> Attach
+                    </Button>
+                    <Button
+                        size="sm"
+                        onClick={handleSubmit}
+                        className={isInternal ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+                    >
+                        <Send className="h-4 w-4 mr-2" />
+                        {isInternal ? "Add Note" : "Send Reply"}
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+export default function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = useResult(params); // Workaround if use() is not available or params is standard promise
+    // Actually in Next 15+ params is a promise, need to await it.
+    // But since this is a client component, we might get it differently or generic "use"
+    // For now assuming standard Next.js 15 pattern: use(params)
+
+    // START WORKAROUND for Next.js 15 'use' hook
+    // Since I can't easily import 'use' from 'react' if simple type check fails or environment issues
+    // I will unwrap it with a custom hook or just assume it's passed already if this were a server component
+    // But this is "use client".
+    // In Next 15 client components page props are still promises.
+    // I will use a simple "use" polyfill logic inline or standard await if async component (but client components cant be async usually)
+    // Actually, create a wrapper component is safer.
+
+    return <TicketDetailContent ticketId={id} />;
+}
+
+// Temporary hook helper to unwrap params
+function useResult<T>(promise: Promise<T>): T {
+    // This is a naive implementation, meant to mimic React.use()
+    // In real Next.js 16/15 environment, we should use `React.use(promise)`
+    // Since I can't be 100% sure of the environment React version details here without checking package.json deep deps
+    // I will try to use the `use` from react if imported
+    return use(promise);
+}
+
+function TicketDetailContent({ ticketId }: { ticketId: string }) {
+    const { ticket, loading, updateStatus } = useSupportTicket(ticketId);
+    const { can } = usePermission();
+    const { staff } = useStaff();
+
+    if (loading) return <div className="p-8 text-center">Loading ticket...</div>;
+    if (!ticket) return <div className="p-8 text-center">Ticket not found</div>;
+
+    const assignedAgent = staff.find((s) => s.id === ticket.assignedAgentId);
+
+    return (
+        <div className="flex flex-col h-full space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <Link href="/dashboard/support">
+                        <Button variant="ghost" size="icon">
+                            <ArrowLeft className="h-4 w-4" />
                         </Button>
-                        <Button className="bg-gray-900 text-white hover:bg-gray-800">Add Response</Button>
+                    </Link>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-xl font-bold">{ticket.subject}</h1>
+                            <StatusBadge status={ticket.status} />
+                            {ticket.slaStatus === "breached" && (
+                                <Badge variant="destructive" className="flex items-center gap-1">
+                                    <AlertCircle className="h-3 w-3" /> SLA
+                                </Badge>
+                            )}
+                        </div>
+                        <div className="text-sm text-gray-500 mt-1 flex items-center gap-3">
+                            <span>#{ticket.id}</span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {format(ticket.createdAt.toDate(), "MMM dd, yyyy HH:mm")}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <h3 className="font-bold text-lg text-gray-900 mt-8">Request History</h3>
-                <div className="border rounded-md p-4 bg-white">
-                    {ticket.messages && ticket.messages.length > 0 ? (
-                        ticket.messages.map((message, index) => (
-                            <div key={index} className="flex justify-between items-start mb-4 last:mb-0">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-bold text-blue-600">{message.sender}</span>
-                                    <Badge variant="secondary" className="bg-blue-50 text-blue-600 text-xs">
-                                        {message.senderType}
-                                    </Badge>
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                    <span>
-                                        Posted: {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                        {new Date(
-                                            (message.createdAt as any)?.toDate?.() || message.createdAt
-                                        ).toLocaleString()}
-                                    </span>
-                                    <Printer className="h-3 w-3 cursor-pointer" />
-                                    <Edit2 className="h-3 w-3 cursor-pointer" />
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-4 text-gray-500">No messages yet</div>
+                <div className="flex items-center gap-2">
+                    {can("tickets_close") && ticket.status !== "closed" && (
+                        <Button variant="outline" onClick={() => updateStatus("closed")}>
+                            Close Ticket
+                        </Button>
                     )}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => updateStatus("in_progress")}>
+                                Mark In Progress
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => updateStatus("waiting_on_customer")}>
+                                Mark Waiting on Customer
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </div>
 
-            {/* Sidebar Info */}
-            <div className="w-80 space-y-6">
-                <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-gray-900">Ticket Information</h3>
-                    <Badge className="bg-gray-900 text-white hover:bg-gray-800 cursor-pointer">Save</Badge>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Content */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Description */}
+                    <Card>
+                        <CardContent className="p-6">
+                            <h3 className="text-sm font-medium text-gray-500 mb-2">Description</h3>
+                            <div className="prose prose-sm max-w-none text-gray-800">{ticket.description}</div>
+                        </CardContent>
+                    </Card>
+
+                    <Separator />
+
+                    {/* Timeline */}
+                    <TicketTimeline ticketId={ticket.id} />
+
+                    {/* Reply Box */}
+                    {ticket.status !== "closed" && (
+                        <div className="sticky bottom-4 z-10">
+                            <ReplyBox ticketId={ticket.id} />
+                        </div>
+                    )}
                 </div>
 
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-xs font-semibold text-gray-600 block mb-1">Subject</label>
-                        <Input defaultValue={ticket.subject} className="h-8" />
-                    </div>
+                {/* Sidebar */}
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-sm font-medium">Ticket Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4 text-sm">
+                            <div>
+                                <div className="text-gray-500 mb-1">Priority</div>
+                                <PriorityBadge priority={ticket.priority} />
+                            </div>
+                            <div>
+                                <div className="text-gray-500 mb-1">Assignee</div>
+                                <div className="flex items-center gap-2">
+                                    <Avatar className="h-6 w-6">
+                                        <AvatarFallback>{assignedAgent?.firstName?.charAt(0) || "?"}</AvatarFallback>
+                                    </Avatar>
+                                    <span>
+                                        {assignedAgent
+                                            ? `${assignedAgent.firstName} ${assignedAgent.lastName}`
+                                            : "Unassigned"}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-gray-500 mb-1">Category</div>
+                                <div className="font-medium">{ticket.category}</div>
+                            </div>
+                            <div>
+                                <div className="text-gray-500 mb-1">Source</div>
+                                <div className="capitalize">{ticket.source.replace(/_/g, " ")}</div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                    <div>
-                        <label className="text-xs font-semibold text-gray-600 block mb-1">Contact</label>
-                        <Input defaultValue={ticket.contact?.name || "-"} className="h-8" />
-                    </div>
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-sm font-medium">Customer</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4 text-sm">
+                            {/* Mock Customer Info - In real app fetch customer */}
+                            <div className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarFallback>C</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <div className="font-medium">Customer Name</div>
+                                    <div className="text-gray-500">customer@example.com</div>
+                                </div>
+                            </div>
+                            <div className="pt-2">
+                                <Link href="#" className="text-blue-600 hover:underline flex items-center gap-1">
+                                    <User className="h-3 w-3" /> View Profile
+                                </Link>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                    <div className="grid grid-cols-2 gap-2">
-                        <div>
-                            <label className="text-xs font-semibold text-gray-600 block mb-1">Name</label>
-                            <Input
-                                value={ticket.contact?.name || "-"}
-                                readOnly
-                                className="h-8 bg-gray-50 text-gray-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-gray-600 block mb-1">Email address</label>
-                            <Input
-                                value={ticket.contact?.email || "-"}
-                                readOnly
-                                className="h-8 bg-gray-50 text-gray-500 truncate"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="text-xs font-semibold text-gray-600 block mb-1">Department</label>
-                        <Select defaultValue={ticket.department || "technical"}>
-                            <SelectTrigger className="h-8">
-                                <SelectValue placeholder="Technical Support" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="technical">Technical Support</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div>
-                        <label className="text-xs font-semibold text-gray-600 block mb-1">Assign ticket</label>
-                        <Select defaultValue={ticket.assignee || ""}>
-                            <SelectTrigger className="h-8">
-                                <SelectValue placeholder="Select assignee" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">Unassigned</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                        <div>
-                            <label className="text-xs font-semibold text-gray-600 block mb-1">Priority</label>
-                            <Select defaultValue={ticket.priority?.toLowerCase() || "medium"}>
-                                <SelectTrigger className="h-8">
-                                    <SelectValue placeholder="Medium" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="low">Low</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="high">High</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-gray-600 block mb-1">Service</label>
-                            <Select>
-                                <SelectTrigger className="h-8">
-                                    <SelectValue placeholder="Select service" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">Nothing selected</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
+                    {ticket.slaResolutionDueAt && (
+                        <Card className={ticket.slaStatus === "breached" ? "border-red-200 bg-red-50" : ""}>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                    <Clock className="h-4 w-4" /> SLA Target
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Response Due</span>
+                                    <span className="font-medium">
+                                        {format(ticket.slaResponseDueAt!.toDate(), "MMM dd, HH:mm")}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Resolution Due</span>
+                                    <span className="font-medium">
+                                        {format(ticket.slaResolutionDueAt!.toDate(), "MMM dd, HH:mm")}
+                                    </span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>

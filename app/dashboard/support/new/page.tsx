@@ -1,205 +1,168 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ticketFormSchema, type TicketFormData } from "@/lib/schemas";
-import { useTickets, useDepartments } from "@/lib/hooks/use-support";
-import { useCustomers } from "@/lib/hooks/use-customers";
-import { useStaff } from "@/lib/hooks/use-staff";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Loader2, ChevronLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useSupportTickets, useStaff, useCustomers } from "@/lib/hooks";
+import { SupportTicketPriority } from "@/lib/types/support";
 
-export default function CreateTicketPage() {
+export default function NewTicketPage() {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const customerIdParam = searchParams.get("customerId");
+    const { createTicket, loading } = useSupportTickets();
+    const { staff } = useStaff();
+    const { customers } = useCustomers();
 
-    const { createTicket } = useTickets();
-    const { departments, loading: departmentsLoading } = useDepartments();
-    const { customers, loading: customersLoading } = useCustomers({ status: "active" });
-    const { staff, loading: staffLoading } = useStaff();
+    const [subject, setSubject] = useState("");
+    const [description, setDescription] = useState("");
+    const [priority, setPriority] = useState<SupportTicketPriority>("medium");
+    const [category, setCategory] = useState("General");
+    const [assignedAgentId, setAssignedAgentId] = useState<string>("unassigned");
+    const [customerId, setCustomerId] = useState<string>("");
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    // Mock categories for V1
+    const CATEGORIES = ["General", "Billing", "Technical", "Feature Request", "Bug"];
 
-    const form = useForm<TicketFormData>({
-        resolver: zodResolver(ticketFormSchema),
-        defaultValues: {
-            subject: "",
-            customerId: customerIdParam || "",
-            priority: "medium",
-            departmentId: "",
-            tags: [],
-        },
-    });
-
-    const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
-
-    useEffect(() => {
-        if (customerIdParam) {
-            setValue("customerId", customerIdParam);
-        }
-    }, [customerIdParam, setValue]);
-
-    const onSubmit = async (data: TicketFormData) => {
-        setIsSubmitting(true);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         try {
-            await createTicket(data);
-            toast.success("Ticket created successfully");
-
-            if (customerIdParam) {
-                router.push(`/dashboard/customers/${customerIdParam}/tickets`);
-            } else {
-                router.push("/dashboard/support");
-            }
+            await createTicket({
+                subject,
+                description,
+                priority,
+                category,
+                source: "manual",
+                status: "open",
+                assignedAgentId: assignedAgentId === "unassigned" ? null : assignedAgentId,
+                customerId: customerId || null,
+                metadata: {},
+            });
+            router.push("/dashboard/support");
         } catch (error) {
-            console.error("Error creating ticket:", error);
-            toast.error("Failed to create ticket");
-        } finally {
-            setIsSubmitting(false);
+            console.error("Failed to create ticket", error);
         }
     };
 
     return (
-        <div className="max-w-3xl mx-auto py-8 px-4">
-            <div className="mb-6 flex items-center gap-2 text-gray-500 text-sm">
-                <Link
-                    href={customerIdParam ? `/dashboard/customers/${customerIdParam}/tickets` : "/dashboard/support"}
-                    className="flex items-center hover:text-gray-900 transition-colors"
-                >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Back to Tickets
+        <div className="max-w-2xl mx-auto space-y-6">
+            <div className="flex items-center gap-4">
+                <Link href="/dashboard/support">
+                    <Button variant="ghost" size="icon">
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
                 </Link>
+                <h1 className="text-2xl font-bold tracking-tight">Create New Ticket</h1>
             </div>
 
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">New Support Ticket</h1>
-                <p className="text-gray-500 mt-1">Open a new ticket for a customer issue.</p>
-            </div>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Ticket Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-6">
-                        {/* Subject */}
-                        <div className="grid gap-2">
-                            <Label htmlFor="subject">Subject <span className="text-red-500">*</span></Label>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Ticket Details</CardTitle>
+                    <CardDescription>Create a new support ticket.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                            <Label>Subject</Label>
                             <Input
-                                id="subject"
-                                placeholder="e.g. Login Issue"
-                                {...register("subject")}
-                                className={cn(errors.subject && "border-red-500")}
+                                placeholder="Brief summary of the issue"
+                                value={subject}
+                                onChange={(e) => setSubject(e.target.value)}
+                                required
                             />
-                            {errors.subject && <p className="text-red-500 text-xs">{errors.subject.message}</p>}
                         </div>
 
-                        {/* Customer & Department */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="customerId">Customer</Label>
-                                <Select
-                                    value={watch("customerId")}
-                                    onValueChange={(val) => setValue("customerId", val)}
-                                    disabled={!!customerIdParam}
-                                >
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Category</Label>
+                                <Select value={category} onValueChange={setCategory}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select Customer" />
+                                        <SelectValue placeholder="Select category" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="none">Unknown / Internal</SelectItem>
-                                        {customers.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>{c.company}</SelectItem>
+                                        {CATEGORIES.map((c) => (
+                                            <SelectItem key={c} value={c}>
+                                                {c}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="departmentId">Department <span className="text-red-500">*</span></Label>
-                                <Select
-                                    value={watch("departmentId")}
-                                    onValueChange={(val) => setValue("departmentId", val, { shouldValidate: true })}
-                                >
-                                    <SelectTrigger className={cn(errors.departmentId && "border-red-500")}>
-                                        <SelectValue placeholder="Select Department" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {departmentsLoading ? (
-                                            <div className="p-2 text-xs text-center">Loading...</div>
-                                        ) : (
-                                            departments.map((d) => (
-                                                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                                            ))
-                                        )}
-                                        {departments.length === 0 && !departmentsLoading && (
-                                            <SelectItem value="general">General Support (Auto)</SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                                {errors.departmentId && <p className="text-red-500 text-xs">{errors.departmentId.message}</p>}
-                            </div>
-                        </div>
-
-                        {/* Priority & Assignee */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="priority">Priority</Label>
-                                <Select
-                                    value={watch("priority")}
-                                    onValueChange={(val: any) => setValue("priority", val)}
-                                >
+                            <div className="space-y-2">
+                                <Label>Priority</Label>
+                                <Select value={priority} onValueChange={(v) => setPriority(v as SupportTicketPriority)}>
                                     <SelectTrigger>
-                                        <SelectValue />
+                                        <SelectValue placeholder="Select priority" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="low">Low</SelectItem>
                                         <SelectItem value="medium">Medium</SelectItem>
                                         <SelectItem value="high">High</SelectItem>
+                                        <SelectItem value="critical">Critical</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="assignedTo">Assign To (Optional)</Label>
-                                <Select
-                                    value={watch("assignedTo")}
-                                    onValueChange={(val) => setValue("assignedTo", val)}
-                                >
+                        <div className="space-y-2">
+                            <Label>Description</Label>
+                            <Textarea
+                                placeholder="Detailed description of the problem..."
+                                className="min-h-[150px]"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Customer (Optional)</Label>
+                                <Select value={customerId} onValueChange={setCustomerId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select customer" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {customers.map((c) => (
+                                            <SelectItem key={c.id} value={c.id}>
+                                                {c.company}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Assign Agent (Optional)</Label>
+                                <Select value={assignedAgentId} onValueChange={setAssignedAgentId}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Unassigned" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="unassigned">Unassigned</SelectItem>
-                                        {staff?.map((s) => (
-                                            <SelectItem key={s.id} value={s.id}>{s.firstName} {s.lastName}</SelectItem>
+                                        {staff.map((s) => (
+                                            <SelectItem key={s.id} value={s.id}>
+                                                {s.firstName} {s.lastName}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
-                    </CardContent>
-                    <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
-                        <Button type="button" variant="ghost" className="mr-2" onClick={() => router.back()}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Ticket
-                        </Button>
-                    </CardFooter>
-                </Card>
-            </form>
+
+                        <div className="flex justify-end pt-4">
+                            <Button type="submit" disabled={loading}>
+                                <Save className="mr-2 h-4 w-4" />
+                                {loading ? "Creating..." : "Create Ticket"}
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
         </div>
     );
 }
