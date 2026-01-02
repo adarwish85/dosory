@@ -145,7 +145,7 @@ export default function InvoiceDetailsPage() {
 
     // Calculate totals if missing
     const subTotal =
-        invoice.subtotal || (invoice.items || []).reduce((acc, item) => acc + item.quantity * item.rate, 0);
+        invoice.subtotal || (invoice.items || []).reduce((acc: number, item) => acc + item.quantity * item.rate, 0);
     const taxTotal = invoice.taxTotal || 0;
     const total = invoice.total || subTotal + taxTotal;
 
