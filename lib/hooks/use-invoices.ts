@@ -18,32 +18,24 @@ import {
     serverTimestamp,
     Timestamp,
     QueryConstraint,
-    runTransaction,
     limit,
     startAfter,
     getCountFromServer,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useUserProfile } from "@/components/hooks/use-user-profile";
-import { useActivity } from "@/lib/hooks/use-activity";
-import { createNotification } from "@/lib/hooks/use-notifications";
-import type { Invoice, InvoiceStatus, LineItem } from "@/lib/types";
-import type { InvoiceFormData } from "@/lib/schemas";
-import { useFinance } from "@/lib/hooks/use-finance";
-import { Timestamp as FirestoreTimestamp } from "firebase/firestore";
 
 // ============================================
 // FIX BLE-001: Invoice Status Transition Map
 // ============================================
 
 const ALLOWED_STATUS_TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
-    draft: ["sent", "cancelled"],
-    sent: ["viewed", "partial", "paid", "overdue", "cancelled"],
-    viewed: ["partial", "paid", "overdue", "cancelled"],
+    draft: ["sent", "cancelled", "void"],
+    sent: ["viewed", "partial", "paid", "overdue", "cancelled", "void"],
+    viewed: ["partial", "paid", "overdue", "cancelled", "void"],
     partial: ["paid", "overdue", "cancelled"],
     paid: [], // Terminal state - no transitions allowed
     overdue: ["partial", "paid", "cancelled"],
     cancelled: [], // Terminal state
+    void: [], // Terminal state
 };
 
 function validateStatusTransition(currentStatus: InvoiceStatus, newStatus: InvoiceStatus): boolean {
@@ -175,7 +167,6 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
     } = options;
     const { profile } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
-    const { recordJournalEntry, accounts } = useFinance(); // Integrate Finance Engine
 
     // Data State
     const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -353,7 +344,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         }
     };
 
-    // FIX BLE-001: Status transition with validation
+    // FIX BLE-001: Status transition with validation (SERVERLESS V2)
     const updateStatus = async (id: string, newStatus: InvoiceStatus): Promise<void> => {
         const invoiceDoc = await getDoc(doc(db, "invoices", id));
         if (!invoiceDoc.exists()) throw new Error("Invoice not found");
@@ -364,59 +355,35 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
             throw new Error(getStatusTransitionError(invoice.status, newStatus));
         }
 
+        // Use Cloud Functions for critical transitions (sent, void)
+        const { getFunctions, httpsCallable } = await import("firebase/functions");
+        const functions = getFunctions();
+
+        if (newStatus === "sent") {
+            const finalizeInvoiceFn = httpsCallable(functions, "finalizeInvoice");
+            await finalizeInvoiceFn({ invoiceId: id });
+
+            if (logActivity) {
+                await logActivity("invoice_sent", `Sent invoice ${invoice.number}`, id, "invoice");
+            }
+            return;
+        }
+
+        if (newStatus === "void") {
+            const voidInvoiceFn = httpsCallable(functions, "voidInvoice");
+            await voidInvoiceFn({ invoiceId: id, reason: "Voided via Dashboard" });
+            return;
+        }
+
+        // For non-critical statuses (viewed, etc), update directly
         const updateData: Record<string, unknown> = {
             status: newStatus,
             updatedAt: serverTimestamp(),
         };
 
-        // Add timestamps for specific statuses
-        if (newStatus === "sent") updateData.sentAt = serverTimestamp();
-        if (newStatus === "paid") updateData.paidAt = serverTimestamp();
         if (newStatus === "viewed") updateData.viewedAt = serverTimestamp();
 
         await updateDoc(doc(db, "invoices", id), updateData);
-
-        if (logActivity && newStatus === "sent") {
-            await logActivity("invoice_sent", `Sent invoice ${invoice.number}`, id, "invoice");
-        }
-
-        // FINANCE V1: Auto-create Journal Entry when Invoice is SENT
-        if (newStatus === "sent" && invoice.status === "draft") {
-            // Find accounts
-            const arAccount = accounts.find((a) => a.code === "1200");
-            const incomeAccount = accounts.find((a) => a.code === "4000"); // Default Sales
-
-            if (arAccount && incomeAccount) {
-                await recordJournalEntry({
-                    date: FirestoreTimestamp.now(),
-                    description: `Invoice #${invoice.numberFormatted} Sent`,
-                    referenceId: id,
-                    referenceType: "invoice",
-                    totalAmount: invoice.total,
-                    status: "posted",
-                    currency: invoice.currency || "USD", // V1.1
-                    fxRate: 1.0, // V1.1
-                    lines: [
-                        {
-                            accountId: arAccount.id,
-                            accountName: arAccount.name,
-                            debit: invoice.total,
-                            credit: 0,
-                            description: `Invoice #${invoice.numberFormatted}`,
-                            entityType: "customer", // V1.1: AR Linkage
-                            entityId: invoice.customerId,
-                        },
-                        {
-                            accountId: incomeAccount.id,
-                            accountName: incomeAccount.name,
-                            debit: 0,
-                            credit: invoice.total,
-                            description: `Revenue from #${invoice.numberFormatted}`,
-                        },
-                    ],
-                }).catch((e) => console.error("Failed to record invoice JE:", e));
-            }
-        }
 
         // Notify creator if paid
         if (newStatus === "paid" && invoice.createdBy && invoice.createdBy !== profile?.uid) {
@@ -432,7 +399,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         }
     };
 
-    // FIX INV-002: Payment with overpayment validation
+    // FIX INV-002: Payment with overpayment validation (SERVERLESS V2)
     const recordPayment = async (
         invoiceId: string,
         amount: number,
@@ -442,12 +409,12 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
     ): Promise<string> => {
         if (!profile?.orgId) throw new Error("No organization");
 
+        // Pre-validation for UX (server also validates)
         const invoiceDoc = await getDoc(doc(db, "invoices", invoiceId));
         if (!invoiceDoc.exists()) throw new Error("Invoice not found");
 
         const invoice = invoiceDoc.data() as Invoice;
 
-        // Validate: no overpayment
         if (amount > invoice.amountDue) {
             throw new Error(`Payment amount (${amount}) exceeds balance due (${invoice.amountDue})`);
         }
@@ -456,105 +423,50 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
             throw new Error("Payment amount must be greater than zero");
         }
 
-        // Use transaction for atomic update
-        const paymentId = await runTransaction(db, async (transaction) => {
-            const newAmountPaid = invoice.amountPaid + amount;
-            const newAmountDue = invoice.total - newAmountPaid;
-            const newStatus: InvoiceStatus = newAmountDue <= 0 ? "paid" : "partial";
+        // Use Cloud Function for secure, atomic payment processing
+        const { getFunctions, httpsCallable } = await import("firebase/functions");
+        const functions = getFunctions();
+        const processPaymentFn = httpsCallable(functions, "processPayment");
 
-            // Create payment record
-            const paymentRef = doc(collection(db, "payments"));
-            transaction.set(paymentRef, {
+        try {
+            await processPaymentFn({
                 invoiceId,
-                invoiceNumber: invoice.number,
-                customerId: invoice.customerId,
-                customerName: invoice.customerName,
                 amount,
                 paymentMode,
-                date: paymentDate ? Timestamp.fromDate(paymentDate) : serverTimestamp(),
                 note: note || "",
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                createdBy: profile.uid,
+                date: (paymentDate || new Date()).toISOString(),
             });
 
-            // Update invoice
-            transaction.update(doc(db, "invoices", invoiceId), {
-                amountPaid: newAmountPaid,
-                amountDue: newAmountDue,
-                status: newStatus,
-                ...(newStatus === "paid" && { paidAt: serverTimestamp() }),
-                updatedAt: serverTimestamp(),
-            });
+            if (logActivity) {
+                await logActivity("invoice_paid", `Received payment of ${amount}`, invoiceId, "invoice", {
+                    amount,
+                    paymentMode,
+                });
+            }
 
-            return paymentRef.id;
-        });
+            // Notify creator if fully paid
+            const newPaid = invoice.amountPaid + amount;
+            const newDue = invoice.total - newPaid;
+            const isPaidNow = newDue <= 0;
 
-        if (logActivity) {
-            await logActivity("invoice_paid", `Received payment of ${amount}`, invoiceId, "invoice", {
-                amount,
-                paymentMode,
-            });
+            if (isPaidNow && invoice.createdBy && invoice.createdBy !== profile?.uid) {
+                createNotification({
+                    type: "invoice.paid",
+                    title: "Invoice Paid",
+                    message: `Invoice #${invoice.numberFormatted || invoice.number} has been fully paid via ${paymentMode}.`,
+                    link: `/dashboard/invoices/${invoiceId}`,
+                    orgId: invoice.orgId,
+                    userId: invoice.createdBy,
+                    metadata: { invoiceId },
+                }).catch(console.error);
+            }
+
+            return "payment_success"; // Cloud Function doesn't return payment ID in current impl
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "Payment processing failed";
+            console.error("Payment processing failed:", error);
+            throw new Error(errorMessage);
         }
-
-        // FINANCE V1: Auto-create Journal Entry for Payment
-        const arAccount = accounts.find((a) => a.code === "1200");
-        // Map payment mode to asset account
-        const isBank = ["bank_transfer", "cheque", "card"].includes(paymentMode.toLowerCase());
-        const assetCode = isBank ? "1010" : "1000"; // 1010 Bank, 1000 Cash
-        const assetAccount = accounts.find((a) => a.code === assetCode);
-
-        if (arAccount && assetAccount) {
-            await recordJournalEntry({
-                date: paymentDate ? FirestoreTimestamp.fromDate(paymentDate) : FirestoreTimestamp.now(),
-                description: `Payment for #${invoice.numberFormatted}`,
-                referenceId: paymentId,
-                referenceType: "payment",
-                totalAmount: amount,
-                status: "posted",
-                currency: invoice.currency || "USD", // V1.1: Payment currency matches invoice for now
-                fxRate: 1.0, // V1.1
-                lines: [
-                    {
-                        accountId: assetAccount.id,
-                        accountName: assetAccount.name,
-                        debit: amount,
-                        credit: 0,
-                        description: `Payment received via ${paymentMode}`,
-                    },
-                    {
-                        accountId: arAccount.id,
-                        accountName: arAccount.name,
-                        debit: 0,
-                        credit: amount,
-                        description: `Payment applied to #${invoice.numberFormatted}`,
-                        entityType: "customer", // V1.1: AR Linkage
-                        entityId: invoice.customerId,
-                    },
-                ],
-            }).catch((e) => console.error("Failed to record payment JE:", e));
-        }
-
-        // Notify creator if fully paid
-        // Note: newStatus is calculated inside transaction but not returned.
-        // We know logical check: newAmountDue <= 0
-        const newPaid = invoice.amountPaid + amount;
-        const newDue = invoice.total - newPaid;
-        const isPaidNow = newDue <= 0;
-
-        if (isPaidNow && invoice.createdBy && invoice.createdBy !== profile?.uid) {
-            createNotification({
-                type: "invoice.paid",
-                title: "Invoice Paid",
-                message: `Invoice #${invoice.numberFormatted || invoice.number} has been fully paid via ${paymentMode}.`,
-                link: `/dashboard/invoices/${invoiceId}`,
-                orgId: invoice.orgId,
-                userId: invoice.createdBy,
-                metadata: { invoiceId },
-            }).catch(console.error);
-        }
-
-        return paymentId;
     };
 
     // Convenience functions using updateStatus

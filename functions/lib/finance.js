@@ -8,6 +8,19 @@ if (!admin.apps.length) {
     admin.initializeApp();
 }
 const db = admin.firestore();
+// Helper to find account by code (simple scan or assumed index)
+async function findAccountByCode(t, orgId, code) {
+    const accountsRef = db.collection("organizations").doc(orgId).collection("accounts");
+    // Note: Transactional query requires an index on 'code' usually. 
+    // Fallback: This might be slow if many accounts, but usually CoAs are small < 100.
+    const q = accountsRef.where("code", "==", code).limit(1);
+    const snap = await t.get(q);
+    if (!snap.empty) {
+        const doc = snap.docs[0];
+        return { id: doc.id, name: doc.data().name };
+    }
+    return null;
+}
 // ----------------------------------------------------------------------------
 // 1. Process Payment (Callable)
 // ----------------------------------------------------------------------------
@@ -82,6 +95,49 @@ exports.processPayment = functions.https.onCall(async (data, context) => {
                 status: newStatus,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
+            // 6. AUTO-ACCOUNTING: Create Journal Entry (Cash/Bank vs AR)
+            // Payment Mode Mapping
+            const isBank = ["bank_transfer", "cheque", "card"].includes(paymentMode.toLowerCase());
+            const assetCode = isBank ? "1010" : "1000"; // Bank or Cash
+            const [assetAccount, arAccount] = await Promise.all([
+                findAccountByCode(t, orgId, assetCode),
+                findAccountByCode(t, orgId, "1200") // Accounts Receivable
+            ]);
+            if (assetAccount && arAccount) {
+                const jeRef = db.collection("journal_entries").doc();
+                const jeData = {
+                    orgId,
+                    date: admin.firestore.Timestamp.fromDate(new Date(date)),
+                    description: `Payment for #${(invoice === null || invoice === void 0 ? void 0 : invoice.numberFormatted) || (invoice === null || invoice === void 0 ? void 0 : invoice.number) || "INV"}`,
+                    referenceId: paymentRef.id,
+                    referenceType: "payment",
+                    totalAmount: amount,
+                    status: "posted",
+                    currency: (invoice === null || invoice === void 0 ? void 0 : invoice.currency) || "USD",
+                    fxRate: 1.0,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                    createdBy: userId,
+                    lines: [
+                        {
+                            accountId: assetAccount.id,
+                            accountName: assetAccount.name,
+                            debit: amount,
+                            credit: 0,
+                            description: `Payment received via ${paymentMode}`
+                        },
+                        {
+                            accountId: arAccount.id,
+                            accountName: arAccount.name,
+                            debit: 0,
+                            credit: amount,
+                            description: `Payment applied to #${(invoice === null || invoice === void 0 ? void 0 : invoice.numberFormatted) || (invoice === null || invoice === void 0 ? void 0 : invoice.number)}`,
+                            entityType: "customer",
+                            entityId: invoice === null || invoice === void 0 ? void 0 : invoice.customerId
+                        }
+                    ]
+                };
+                t.set(jeRef, jeData);
+            }
         });
         return { success: true, message: "Payment processed successfully." };
     }
@@ -104,7 +160,7 @@ exports.finalizeInvoice = functions.https.onCall(async (data, context) => {
     const invoiceRef = db.collection("invoices").doc(invoiceId);
     try {
         await db.runTransaction(async (t) => {
-            var _a;
+            var _a, _b;
             const invoiceDoc = await t.get(invoiceRef);
             if (!invoiceDoc.exists)
                 throw new functions.https.HttpsError("not-found", "Invoice not found.");
@@ -115,11 +171,54 @@ exports.finalizeInvoice = functions.https.onCall(async (data, context) => {
             // Logic to assign permanent number could go here (e.g. atomic counter)
             // For now, we assume the draft number becomes final or we mark it 'sent/open'
             t.update(invoiceRef, {
-                status: "sent", // or 'viewed' / 'open'
+                status: "sent",
                 isFinalized: true,
                 finalizedAt: admin.firestore.FieldValue.serverTimestamp(),
                 finalizedBy: (_a = context.auth) === null || _a === void 0 ? void 0 : _a.uid
             });
+            // AUTO-ACCOUNTING: Create Journal Entry (AR vs Income)
+            const orgId = invoice === null || invoice === void 0 ? void 0 : invoice.orgId;
+            if (orgId) {
+                const [arAccount, incomeAccount] = await Promise.all([
+                    findAccountByCode(t, orgId, "1200"), // AR
+                    findAccountByCode(t, orgId, "4000") // Sales Income
+                ]);
+                if (arAccount && incomeAccount) {
+                    const jeRef = db.collection("journal_entries").doc();
+                    const jeData = {
+                        orgId,
+                        date: admin.firestore.Timestamp.now(),
+                        description: `Invoice #${(invoice === null || invoice === void 0 ? void 0 : invoice.numberFormatted) || (invoice === null || invoice === void 0 ? void 0 : invoice.number) || "INV"} Sent`,
+                        referenceId: invoiceId,
+                        referenceType: "invoice",
+                        totalAmount: (invoice === null || invoice === void 0 ? void 0 : invoice.total) || 0,
+                        status: "posted",
+                        currency: (invoice === null || invoice === void 0 ? void 0 : invoice.currency) || "USD",
+                        fxRate: 1.0,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                        createdBy: ((_b = context.auth) === null || _b === void 0 ? void 0 : _b.uid) || "system",
+                        lines: [
+                            {
+                                accountId: arAccount.id,
+                                accountName: arAccount.name,
+                                debit: (invoice === null || invoice === void 0 ? void 0 : invoice.total) || 0,
+                                credit: 0,
+                                description: `Invoice #${(invoice === null || invoice === void 0 ? void 0 : invoice.numberFormatted) || (invoice === null || invoice === void 0 ? void 0 : invoice.number) || "INV"}`,
+                                entityType: "customer",
+                                entityId: invoice === null || invoice === void 0 ? void 0 : invoice.customerId
+                            },
+                            {
+                                accountId: incomeAccount.id,
+                                accountName: incomeAccount.name,
+                                debit: 0,
+                                credit: (invoice === null || invoice === void 0 ? void 0 : invoice.total) || 0,
+                                description: `Revenue from #${(invoice === null || invoice === void 0 ? void 0 : invoice.numberFormatted) || (invoice === null || invoice === void 0 ? void 0 : invoice.number) || "INV"}`
+                            }
+                        ]
+                    };
+                    t.set(jeRef, jeData);
+                }
+            }
         });
         return { success: true };
     }

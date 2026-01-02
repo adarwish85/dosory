@@ -164,7 +164,7 @@ export interface Invoice extends BaseEntity {
     shipToAddress?: string[];
 }
 
-export type InvoiceStatus = "draft" | "sent" | "viewed" | "partial" | "paid" | "overdue" | "cancelled";
+export type InvoiceStatus = "draft" | "sent" | "viewed" | "partial" | "paid" | "overdue" | "cancelled" | "void";
 
 export interface LineItem {
     id: string;

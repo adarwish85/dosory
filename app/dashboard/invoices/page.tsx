@@ -73,6 +73,7 @@ const statusColors: Record<InvoiceStatus, { bg: string; text: string; border: st
     paid: { bg: "bg-green-50", text: "text-green-600", border: "border-green-200" },
     overdue: { bg: "bg-red-50", text: "text-red-600", border: "border-red-200" },
     cancelled: { bg: "bg-gray-50", text: "text-gray-500", border: "border-gray-200" },
+    void: { bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200" },
 };
 
 const statusLabels: Record<InvoiceStatus, string> = {
@@ -83,6 +84,7 @@ const statusLabels: Record<InvoiceStatus, string> = {
     paid: "Paid",
     overdue: "Overdue",
     cancelled: "Cancelled",
+    void: "Void",
 };
 
 type ColumnKey = "number" | "customer" | "date" | "dueDate" | "amount" | "status";
@@ -137,7 +139,15 @@ function HighlightText({ text, search }: { text: string; search: string }) {
     );
 }
 
-function QuickStatsBar({ invoices, currency, totalCount }: { invoices: any[]; currency: string; totalCount?: number }) {
+function QuickStatsBar({
+    invoices,
+    currency,
+    totalCount,
+}: {
+    invoices: Invoice[];
+    currency: string;
+    totalCount?: number;
+}) {
     const total = totalCount ?? invoices.length;
     const paid = invoices.filter((i) => i.status === "paid").reduce((sum, i) => sum + (i.total || 0), 0);
     const overdue = invoices.filter((i) => i.status === "overdue").length;
@@ -212,13 +222,14 @@ export default function InvoicesPage() {
         status: statusFilter,
         limit: isClientMode ? 1000 : recordsPerPage,
         page: isClientMode ? 1 : currentPage,
-        orderByField: (sortKey === "date"
-            ? "date"
-            : sortKey === "amount"
-              ? "total"
-              : sortKey === "status"
-                ? "status"
-                : "createdAt") as any,
+        orderByField:
+            sortKey === "date"
+                ? "date"
+                : sortKey === "amount"
+                  ? "total"
+                  : sortKey === "status"
+                    ? "status"
+                    : "createdAt",
         orderDirection: sortDirection || "desc",
     });
     const { settings } = useSettings();
@@ -417,13 +428,14 @@ export default function InvoicesPage() {
     );
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCurrentPage(1);
     }, [searchQuery, statusFilter]);
 
     const isAllPageSelected = currentPageIds.length > 0 && currentPageIds.every((id) => selectedInvoices.includes(id));
     const isSomeSelected = selectedInvoices.length > 0 && !isAllPageSelected;
 
-    const renderCell = (invoice: any, column: InvoiceColumnDef) => {
+    const renderCell = (invoice: Invoice, column: InvoiceColumnDef) => {
         switch (column.key) {
             case "number":
                 return (
@@ -630,7 +642,9 @@ export default function InvoicesPage() {
                                             <Checkbox
                                                 checked={isAllPageSelected}
                                                 ref={(el) => {
-                                                    if (el) (el as any).indeterminate = isSomeSelected;
+                                                    if (el)
+                                                        (el as HTMLElement & { indeterminate: boolean }).indeterminate =
+                                                            isSomeSelected;
                                                 }}
                                                 onCheckedChange={(c) =>
                                                     c ? handleSelectAllOnPage() : handleClearSelection()

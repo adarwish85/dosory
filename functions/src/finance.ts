@@ -30,6 +30,47 @@ interface FinalizeInvoiceRequest {
     invoiceId: string;
 }
 
+// Accounting Types
+interface JournalEntryLine {
+    accountId: string;
+    accountName: string;
+    debit: number;
+    credit: number;
+    description: string;
+    entityType?: "customer" | "vendor";
+    entityId?: string;
+}
+
+interface JournalEntry {
+    orgId: string;
+    date: admin.firestore.Timestamp;
+    description: string;
+    referenceId: string;
+    referenceType: "invoice" | "payment" | "expense";
+    totalAmount: number;
+    status: "draft" | "posted";
+    lines: JournalEntryLine[];
+    currency: string;
+    fxRate: number;
+    createdAt: admin.firestore.FieldValue;
+    createdBy: string;
+}
+
+
+// Helper to find account by code (simple scan or assumed index)
+async function findAccountByCode(t: admin.firestore.Transaction, orgId: string, code: string): Promise<{ id: string, name: string } | null> {
+    const accountsRef = db.collection("organizations").doc(orgId).collection("accounts");
+    // Note: Transactional query requires an index on 'code' usually. 
+    // Fallback: This might be slow if many accounts, but usually CoAs are small < 100.
+    const q = accountsRef.where("code", "==", code).limit(1);
+    const snap = await t.get(q);
+    if (!snap.empty) {
+        const doc = snap.docs[0];
+        return { id: doc.id, name: doc.data().name };
+    }
+    return null;
+}
+
 // ----------------------------------------------------------------------------
 // 1. Process Payment (Callable)
 // ----------------------------------------------------------------------------
@@ -120,6 +161,52 @@ export const processPayment = functions.https.onCall(async (data: PaymentRequest
                 status: newStatus,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
+
+            // 6. AUTO-ACCOUNTING: Create Journal Entry (Cash/Bank vs AR)
+            // Payment Mode Mapping
+            const isBank = ["bank_transfer", "cheque", "card"].includes(paymentMode.toLowerCase());
+            const assetCode = isBank ? "1010" : "1000"; // Bank or Cash
+
+            const [assetAccount, arAccount] = await Promise.all([
+                findAccountByCode(t, orgId, assetCode),
+                findAccountByCode(t, orgId, "1200") // Accounts Receivable
+            ]);
+
+            if (assetAccount && arAccount) {
+                const jeRef = db.collection("journal_entries").doc();
+                const jeData: JournalEntry = {
+                    orgId,
+                    date: admin.firestore.Timestamp.fromDate(new Date(date)),
+                    description: `Payment for #${invoice?.numberFormatted || invoice?.number || "INV"}`,
+                    referenceId: paymentRef.id,
+                    referenceType: "payment",
+                    totalAmount: amount,
+                    status: "posted",
+                    currency: invoice?.currency || "USD",
+                    fxRate: 1.0,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                    createdBy: userId,
+                    lines: [
+                        {
+                            accountId: assetAccount.id,
+                            accountName: assetAccount.name,
+                            debit: amount,
+                            credit: 0,
+                            description: `Payment received via ${paymentMode}`
+                        },
+                        {
+                            accountId: arAccount.id,
+                            accountName: arAccount.name,
+                            debit: 0,
+                            credit: amount,
+                            description: `Payment applied to #${invoice?.numberFormatted || invoice?.number}`,
+                            entityType: "customer",
+                            entityId: invoice?.customerId
+                        }
+                    ]
+                };
+                t.set(jeRef, jeData);
+            }
         });
 
         return { success: true, message: "Payment processed successfully." };
@@ -157,11 +244,56 @@ export const finalizeInvoice = functions.https.onCall(async (data: FinalizeInvoi
             // For now, we assume the draft number becomes final or we mark it 'sent/open'
 
             t.update(invoiceRef, {
-                status: "sent", // or 'viewed' / 'open'
+                status: "sent",
                 isFinalized: true,
                 finalizedAt: admin.firestore.FieldValue.serverTimestamp(),
                 finalizedBy: context.auth?.uid
             });
+
+            // AUTO-ACCOUNTING: Create Journal Entry (AR vs Income)
+            const orgId = invoice?.orgId;
+            if (orgId) {
+                const [arAccount, incomeAccount] = await Promise.all([
+                    findAccountByCode(t, orgId, "1200"), // AR
+                    findAccountByCode(t, orgId, "4000")  // Sales Income
+                ]);
+
+                if (arAccount && incomeAccount) {
+                    const jeRef = db.collection("journal_entries").doc();
+                    const jeData: JournalEntry = {
+                        orgId,
+                        date: admin.firestore.Timestamp.now(),
+                        description: `Invoice #${invoice?.numberFormatted || invoice?.number || "INV"} Sent`,
+                        referenceId: invoiceId,
+                        referenceType: "invoice",
+                        totalAmount: invoice?.total || 0,
+                        status: "posted",
+                        currency: invoice?.currency || "USD",
+                        fxRate: 1.0,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                        createdBy: context.auth?.uid || "system",
+                        lines: [
+                            {
+                                accountId: arAccount.id,
+                                accountName: arAccount.name,
+                                debit: invoice?.total || 0,
+                                credit: 0,
+                                description: `Invoice #${invoice?.numberFormatted || invoice?.number || "INV"}`,
+                                entityType: "customer",
+                                entityId: invoice?.customerId
+                            },
+                            {
+                                accountId: incomeAccount.id,
+                                accountName: incomeAccount.name,
+                                debit: 0,
+                                credit: invoice?.total || 0,
+                                description: `Revenue from #${invoice?.numberFormatted || invoice?.number || "INV"}`
+                            }
+                        ]
+                    };
+                    t.set(jeRef, jeData);
+                }
+            }
         });
         return { success: true };
     } catch (error) {

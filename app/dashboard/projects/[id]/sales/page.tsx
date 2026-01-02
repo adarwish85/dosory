@@ -10,14 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -55,6 +48,7 @@ const statusConfig: Record<InvoiceStatus, { label: string; color: string; icon: 
     paid: { label: "Paid", color: "bg-green-100 text-green-700", icon: <CheckCircle2 className="h-3 w-3" /> },
     overdue: { label: "Overdue", color: "bg-red-100 text-red-700", icon: <AlertCircle className="h-3 w-3" /> },
     cancelled: { label: "Cancelled", color: "bg-gray-200 text-gray-500", icon: <AlertCircle className="h-3 w-3" /> },
+    void: { label: "Void", color: "bg-slate-100 text-slate-700", icon: <AlertCircle className="h-3 w-3" /> },
 };
 
 export default function ProjectSalesPage() {
@@ -71,13 +65,12 @@ export default function ProjectSalesPage() {
         let result = invoices;
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
-            result = result.filter(inv =>
-                inv.number?.toLowerCase().includes(q) ||
-                inv.customerName?.toLowerCase().includes(q)
+            result = result.filter(
+                (inv) => inv.number?.toLowerCase().includes(q) || inv.customerName?.toLowerCase().includes(q)
             );
         }
         if (statusFilter !== "all") {
-            result = result.filter(inv => inv.status === statusFilter);
+            result = result.filter((inv) => inv.status === statusFilter);
         }
         return result;
     }, [invoices, searchQuery, statusFilter]);
@@ -95,7 +88,9 @@ export default function ProjectSalesPage() {
         return (
             <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-lg" />)}
+                    {[1, 2, 3, 4].map((i) => (
+                        <Skeleton key={i} className="h-24 rounded-lg" />
+                    ))}
                 </div>
                 <Skeleton className="h-[400px] rounded-lg" />
             </div>
@@ -139,7 +134,9 @@ export default function ProjectSalesPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-amber-900">{formatCurrency(totals.totalDue)}</div>
-                        <p className="text-xs text-amber-600 mt-1">{(Number(invoiceStats.sent) || 0) + (Number(invoiceStats.overdue) || 0)} pending</p>
+                        <p className="text-xs text-amber-600 mt-1">
+                            {(Number(invoiceStats.sent) || 0) + (Number(invoiceStats.overdue) || 0)} pending
+                        </p>
                     </CardContent>
                 </Card>
                 <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
@@ -167,7 +164,7 @@ export default function ProjectSalesPage() {
                 >
                     <span className="font-bold">{invoices.length}</span> All
                 </button>
-                {(["draft", "sent", "partial", "paid", "overdue"] as InvoiceStatus[]).map(status => {
+                {(["draft", "sent", "partial", "paid", "overdue"] as InvoiceStatus[]).map((status) => {
                     const config = statusConfig[status];
                     const count = Number(invoiceStats[status]) || 0;
                     const isActive = statusFilter === status;
@@ -198,7 +195,9 @@ export default function ProjectSalesPage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <Link href={`/dashboard/invoices/new?projectId=${projectId}&projectName=${encodeURIComponent(project?.name || "")}&customerId=${project?.customerId || ""}`}>
+                <Link
+                    href={`/dashboard/invoices/new?projectId=${projectId}&projectName=${encodeURIComponent(project?.name || "")}&customerId=${project?.customerId || ""}`}
+                >
                     <Button className="bg-gray-900 text-white hover:bg-gray-800">
                         <Plus className="mr-2 h-4 w-4" /> New Invoice
                     </Button>
@@ -228,12 +227,14 @@ export default function ProjectSalesPage() {
                                     <Receipt className="h-10 w-10 mx-auto mb-3 text-gray-300" />
                                     <p className="font-medium">No invoices found</p>
                                     <p className="text-sm mt-1">
-                                        {searchQuery ? "Try a different search term" : "Create an invoice to track project revenue"}
+                                        {searchQuery
+                                            ? "Try a different search term"
+                                            : "Create an invoice to track project revenue"}
                                     </p>
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredInvoices.map(invoice => {
+                            filteredInvoices.map((invoice) => {
                                 const config = statusConfig[invoice.status];
                                 return (
                                     <TableRow key={invoice.id} className="group hover:bg-gray-50">
@@ -249,10 +250,12 @@ export default function ProjectSalesPage() {
                                         <TableCell className="text-gray-500">
                                             {invoice.date ? format(invoice.date.toDate(), "MMM d, yyyy") : "-"}
                                         </TableCell>
-                                        <TableCell className={cn(
-                                            "text-gray-500",
-                                            invoice.status === "overdue" && "text-red-600 font-medium"
-                                        )}>
+                                        <TableCell
+                                            className={cn(
+                                                "text-gray-500",
+                                                invoice.status === "overdue" && "text-red-600 font-medium"
+                                            )}
+                                        >
                                             {invoice.dueDate ? format(invoice.dueDate.toDate(), "MMM d, yyyy") : "-"}
                                         </TableCell>
                                         <TableCell className="text-right font-medium">
@@ -261,10 +264,12 @@ export default function ProjectSalesPage() {
                                         <TableCell className="text-right text-green-600">
                                             {formatCurrency(invoice.amountPaid)}
                                         </TableCell>
-                                        <TableCell className={cn(
-                                            "text-right",
-                                            invoice.amountDue > 0 ? "text-amber-600 font-medium" : "text-gray-400"
-                                        )}>
+                                        <TableCell
+                                            className={cn(
+                                                "text-right",
+                                                invoice.amountDue > 0 ? "text-amber-600 font-medium" : "text-gray-400"
+                                            )}
+                                        >
                                             {formatCurrency(invoice.amountDue)}
                                         </TableCell>
                                         <TableCell>
@@ -295,7 +300,9 @@ export default function ProjectSalesPage() {
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     {invoice.status === "draft" && (
-                                                        <DropdownMenuItem onClick={() => updateStatus(invoice.id, "sent")}>
+                                                        <DropdownMenuItem
+                                                            onClick={() => updateStatus(invoice.id, "sent")}
+                                                        >
                                                             <Send className="mr-2 h-4 w-4" /> Mark as Sent
                                                         </DropdownMenuItem>
                                                     )}
