@@ -21,7 +21,7 @@ import {
     AlertCircle,
 } from "lucide-react";
 import { useInvoices, useSettings } from "@/lib/hooks";
-import type { InvoiceStatus } from "@/lib/types";
+import type { Invoice, InvoiceStatus } from "@/lib/types";
 import { format } from "date-fns";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -222,14 +222,7 @@ export default function InvoicesPage() {
         status: statusFilter,
         limit: isClientMode ? 1000 : recordsPerPage,
         page: isClientMode ? 1 : currentPage,
-        orderByField:
-            sortKey === "date"
-                ? "date"
-                : sortKey === "amount"
-                  ? "total"
-                  : sortKey === "status"
-                    ? "status"
-                    : "createdAt",
+        orderByField: sortKey === "amount" ? "total" : "date", // Only use supported fields
         orderDirection: sortDirection || "desc",
     });
     const { settings } = useSettings();
@@ -642,9 +635,11 @@ export default function InvoicesPage() {
                                             <Checkbox
                                                 checked={isAllPageSelected}
                                                 ref={(el) => {
-                                                    if (el)
-                                                        (el as HTMLElement & { indeterminate: boolean }).indeterminate =
+                                                    if (el) {
+                                                        // Need to cast through unknown to set indeterminate property
+                                                        (el as unknown as HTMLInputElement).indeterminate =
                                                             isSomeSelected;
+                                                    }
                                                 }}
                                                 onCheckedChange={(c) =>
                                                     c ? handleSelectAllOnPage() : handleClearSelection()

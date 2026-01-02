@@ -22,6 +22,13 @@ import {
     startAfter,
     getCountFromServer,
 } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useActivity } from "@/lib/hooks/use-activity";
+import { createNotification } from "@/lib/hooks/use-notifications";
+import type { Invoice, InvoiceStatus, LineItem } from "@/lib/types";
+import type { InvoiceFormData } from "@/lib/schemas";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 // ============================================
 // FIX BLE-001: Invoice Status Transition Map

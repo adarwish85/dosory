@@ -38,7 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useInvoice, useInvoices } from "@/lib/hooks";
-import { InvoiceStatus } from "@/lib/types";
+import { InvoiceStatus, LineItem } from "@/lib/types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formatDate = (date: any): string => {
@@ -145,7 +145,8 @@ export default function InvoiceDetailsPage() {
 
     // Calculate totals if missing
     const subTotal =
-        invoice.subtotal || (invoice.items || []).reduce((acc: number, item) => acc + item.quantity * item.rate, 0);
+        invoice.subtotal ||
+        (invoice.items || []).reduce((acc: number, item: LineItem) => acc + item.quantity * item.rate, 0);
     const taxTotal = invoice.taxTotal || 0;
     const total = invoice.total || subTotal + taxTotal;
 

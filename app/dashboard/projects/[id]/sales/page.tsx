@@ -234,7 +234,7 @@ export default function ProjectSalesPage() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredInvoices.map((invoice) => {
+                            filteredInvoices.map((invoice: Invoice) => {
                                 const config = statusConfig[invoice.status];
                                 return (
                                     <TableRow key={invoice.id} className="group hover:bg-gray-50">
