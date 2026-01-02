@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, RefreshCw, Trash2, Loader2, ShieldCheck, Users } from "lucide-react";
+import { Search, RefreshCw, Trash2, Loader2, ShieldCheck, Users, LayoutGrid, Table } from "lucide-react";
 import { RoleForm } from "@/components/dashboard/setup/roles/role-form";
+import { PermissionMatrix } from "@/components/dashboard/setup/roles/permission-matrix";
 import { useRoles, useStaff } from "@/lib/hooks";
 import {
     AlertDialog,
@@ -19,9 +20,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function RolesPage() {
     const [searchQuery, setSearchQuery] = useState("");
+    const [viewMode, setViewMode] = useState<"cards" | "matrix">("cards");
     const { roles, loading, deleteRole } = useRoles();
     const { staff } = useStaff();
 
@@ -75,25 +78,58 @@ export default function RolesPage() {
             </div>
 
             {/* Toolbar */}
-            <div className="flex justify-between items-center gap-4">
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
-                        <RefreshCw className="h-4 w-4" />
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg border">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setViewMode("cards")}
+                        className={cn(
+                            "h-8 px-3 gap-2",
+                            viewMode === "cards"
+                                ? "bg-white shadow-sm text-gray-900 hover:bg-white"
+                                : "text-gray-500 hover:text-gray-900"
+                        )}
+                    >
+                        <LayoutGrid className="h-4 w-4" />
+                        Cards
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setViewMode("matrix")}
+                        className={cn(
+                            "h-8 px-3 gap-2",
+                            viewMode === "matrix"
+                                ? "bg-white shadow-sm text-gray-900 hover:bg-white"
+                                : "text-gray-500 hover:text-gray-900"
+                        )}
+                    >
+                        <Table className="h-4 w-4" />
+                        Matrix
                     </Button>
                 </div>
-                <div className="relative w-64">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                    <Input
-                        placeholder="Search roles..."
-                        className="pl-9"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button variant="outline" size="icon" onClick={() => window.location.reload()} title="Refresh">
+                        <RefreshCw className="h-4 w-4" />
+                    </Button>
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                        <Input
+                            placeholder="Search roles..."
+                            className="pl-9"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* Role Cards */}
-            {filteredRoles.length === 0 ? (
+            {/* Content View */}
+            {viewMode === "matrix" ? (
+                <PermissionMatrix />
+            ) : filteredRoles.length === 0 ? (
                 <div className="bg-white rounded-lg border p-10 text-center">
                     <ShieldCheck className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -137,7 +173,7 @@ export default function RolesPage() {
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>Delete Role</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        Are you sure you want to delete "{role.name}"?
+                                                        Are you sure you want to delete &quot;{role.name}&quot;?
                                                         {userCount > 0 && (
                                                             <span className="block mt-2 text-red-600 font-medium">
                                                                 ⚠️ This role has {userCount} user(s) assigned.
