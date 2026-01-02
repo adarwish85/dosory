@@ -1,7 +1,7 @@
 "use client";
 
-import { DashboardGrid } from "@/components/dashboard/grid/DashboardGrid";
+import { TodayView } from "@/components/dashboard/today/today-view";
 
 export default function DashboardPage() {
-    return <DashboardGrid />;
+    return <TodayView />;
 }
