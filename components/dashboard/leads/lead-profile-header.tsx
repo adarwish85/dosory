@@ -2,9 +2,10 @@
 
 import { useLead } from "./lead-context";
 import { Button } from "@/components/ui/button";
-import { Phone, Mail, Calendar, FileText, CheckSquare, Bell, UserPlus } from "lucide-react";
+import { Phone, Mail, Calendar, FileText, CheckSquare, Bell, UserPlus, Link as LinkIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConvertLeadDialog } from "./convert-lead-dialog";
+import { toSlug, createSlugId } from "@/lib/url-utils";
 
 export function LeadProfileHeader() {
     const { lead, loading } = useLead();
@@ -29,15 +30,30 @@ export function LeadProfileHeader() {
                     <ConvertLeadDialog
                         lead={lead}
                         trigger={
-                            <Button
-                                variant="default"
-                                size="icon"
-                                className="bg-emerald-600 hover:bg-emerald-700"
-                            >
+                            <Button variant="default" size="icon" className="bg-emerald-600 hover:bg-emerald-700">
                                 <UserPlus className="h-4 w-4" />
                             </Button>
                         }
                     />
+
+                    {/* Copy Share Link */}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                    const slug = lead.slug || toSlug(lead.name);
+                                    const url = `${window.location.origin}/dashboard/leads/${createSlugId(slug, lead.id)}`;
+                                    navigator.clipboard.writeText(url);
+                                    // Could add toast notification here
+                                }}
+                            >
+                                <LinkIcon className="h-4 w-4 text-gray-600" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Copy Share Link</TooltipContent>
+                    </Tooltip>
 
                     <Tooltip>
                         <TooltipTrigger asChild>

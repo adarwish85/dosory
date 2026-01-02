@@ -16,6 +16,7 @@ export class ReportsService {
      * Get Business Health Overview
      * Aggregates Revenue, Expenses, Net Profit, and Active Projects
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async getBusinessHealth(_filter: ReportFilter): Promise<ReportResponse> {
         try {
             // Define date range
@@ -62,6 +63,7 @@ export class ReportsService {
     /**
      * Get Sales Pipeline Report
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async getSalesPipeline(_filter: ReportFilter): Promise<ReportResponse> {
         try {
             // TODO: Implement Real Firestore Aggregation
@@ -115,6 +117,7 @@ export class ReportsService {
     /**
      * Get Revenue Summary Report
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async getRevenueSummary(_filter: ReportFilter): Promise<ReportResponse> {
         try {
             // TODO: Real Firestore Aggregation on 'invoices' collection
@@ -170,6 +173,7 @@ export class ReportsService {
     /**
      * Get Invoices Report
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async getInvoicesReport(_filter: ReportFilter): Promise<ReportResponse> {
         try {
             // TODO: Real Firestore Aggregation
@@ -477,6 +481,105 @@ export class ReportsService {
             };
         } catch (error) {
             console.error("Error generating Cash Flow:", error);
+            return this.getEmptyResponse();
+        }
+    }
+
+    /**
+     * Get Marketing Lead Sources Report
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async getLeadSources(_filter: ReportFilter): Promise<ReportResponse> {
+        try {
+            // Mock Data
+            const kpis = {
+                totalLeads: { label: "Total Leads", value: 1250, trend: "up" as const, change: 12 },
+                conversionRate: { label: "Conversion Rate", value: 4.8, suffix: "%", trend: "up" as const },
+                costPerLead: { label: "Cost Per Lead", value: 45, prefix: "$", trend: "down" as const },
+            };
+
+            const series = [
+                { label: "Organic Search", value: 450 },
+                { label: "Social Media", value: 300 },
+                { label: "Direct", value: 200 },
+                { label: "Referral", value: 150 },
+                { label: "Paid Ads", value: 100 },
+                { label: "Email", value: 50 },
+            ];
+
+            return {
+                kpis,
+                series,
+                breakdowns: series,
+                table: {
+                    columns: [
+                        { key: "source", label: "Source" },
+                        { key: "leads", label: "Leads", type: "number" },
+                        { key: "percent", label: "Percent", type: "percent" },
+                    ],
+                    rows: series.map((s) => ({
+                        source: s.label,
+                        leads: s.value,
+                        percent: (s.value / 1250) * 100,
+                    })),
+                    total: series.length,
+                },
+            };
+        } catch (error) {
+            console.error("Error generating Lead Sources:", error);
+            return this.getEmptyResponse();
+        }
+    }
+
+    /**
+     * Get Marketing Campaign Performance Report
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async getCampaignPerformance(_filter: ReportFilter): Promise<ReportResponse> {
+        try {
+            // Mock Data
+            const kpis = {
+                activeCampaigns: { label: "Active Campaigns", value: 3, trend: "neutral" as const },
+                totalSpend: { label: "Total Spend", value: 12000, prefix: "$", trend: "up" as const },
+                roi: { label: "ROI", value: 250, suffix: "%", trend: "up" as const },
+            };
+
+            const series = [
+                { date: "Jan", spend: 3000, revenue: 8000 },
+                { date: "Feb", spend: 4000, revenue: 11000 },
+                { date: "Mar", spend: 5000, revenue: 14000 },
+            ];
+
+            const campaigns = [
+                { name: "Summer Sale", spend: 5000, revenue: 15000, leads: 200 },
+                { name: "New Arrival", spend: 4000, revenue: 10000, leads: 150 },
+                { name: "Brand Awareness", spend: 3000, revenue: 5000, leads: 100 },
+            ];
+
+            return {
+                kpis,
+                series,
+                breakdowns: [],
+                table: {
+                    columns: [
+                        { key: "campaign", label: "Campaign" },
+                        { key: "spend", label: "Spend", type: "currency" },
+                        { key: "revenue", label: "Revenue", type: "currency" },
+                        { key: "leads", label: "Leads", type: "number" },
+                        { key: "roi", label: "ROI", type: "percent" },
+                    ],
+                    rows: campaigns.map((c) => ({
+                        campaign: c.name,
+                        spend: c.spend,
+                        revenue: c.revenue,
+                        leads: c.leads,
+                        roi: ((c.revenue - c.spend) / c.spend) * 100,
+                    })),
+                    total: campaigns.length,
+                },
+            };
+        } catch (error) {
+            console.error("Error generating Campaign Performance:", error);
             return this.getEmptyResponse();
         }
     }

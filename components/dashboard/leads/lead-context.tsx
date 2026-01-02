@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { useParams } from "next/navigation";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc, collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { parseSlugId, toSlug, createSlugId } from "@/lib/url-utils";
 import { Lead } from "@/lib/types";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 
@@ -17,7 +18,7 @@ interface Contact {
     position?: string;
     isPrimary?: boolean;
     isActive?: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 interface LeadContextType {
@@ -51,8 +52,14 @@ interface LeadProviderProps {
 }
 
 export function LeadProvider({ children }: LeadProviderProps) {
+    // URL Parsing & Redirection Logic
     const params = useParams();
-    const leadId = params?.id as string;
+    const rawId = params?.id as string;
+    const router = useRouter(); // Import useRouter at top
+
+    // We store the *intended* ID to fetch, but we also check the URL format
+    const [leadId, setLeadId] = useState<string | null>(null);
+
     const { profile } = useUserProfile();
 
     const [lead, setLead] = useState<Lead | null>(null);
@@ -60,9 +67,33 @@ export function LeadProvider({ children }: LeadProviderProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
-    const loadLead = async () => {
+    // Initial Parse & redirect check
+    useEffect(() => {
+        if (!rawId) return;
+
+        const { publicId } = parseSlugId(rawId);
+        setLeadId(publicId);
+
+        // If we have a lead already loaded, check if we need to canonicalize the URL
+        if (lead && lead.id === publicId) {
+            const expectedSlug = lead.slug || toSlug(lead.name);
+            const expectedParam = createSlugId(expectedSlug, publicId);
+
+            // If the current URL param doesn't match the expected slug--id format
+            if (rawId !== expectedParam) {
+                // Replace URL without reloading (shallow if possible, but Next app router structure usually means route change)
+                // However, we want to update the history.
+                console.log(`[LeadProvider] Redirecting to canonical URL: ${expectedParam}`);
+                router.replace(`/dashboard/leads/${expectedParam}`);
+            }
+        }
+    }, [rawId, lead, router]);
+
+    // Wrap loadLead in useCallback to be stable for dependencies
+
+    const loadLead = useCallback(async () => {
         if (!leadId) {
-            setLoading(false);
+            // Wait until leadId is parsed from rawId
             return;
         }
         try {
@@ -81,11 +112,11 @@ export function LeadProvider({ children }: LeadProviderProps) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [leadId]);
 
     useEffect(() => {
         loadLead();
-    }, [leadId]);
+    }, [leadId, loadLead]);
 
     // Subscribe to contacts associated with this lead
     useEffect(() => {

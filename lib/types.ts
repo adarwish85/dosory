@@ -93,6 +93,8 @@ export interface Lead extends BaseEntity {
     isStarred?: boolean;
     leadScore?: number; // 0-100 score based on criteria
     deal?: Deal;
+    slug?: string;
+    slugHistory?: string[];
 }
 
 export interface Deal {
