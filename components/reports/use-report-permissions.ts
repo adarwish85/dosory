@@ -18,7 +18,7 @@ export function useReportPermissions(): ReportPermissions & { loading: boolean }
     // For now, if user is admin or owner, give all access.
     // If we have a custom role, we should check distinct permissions.
 
-    const isAdmin = profile?.role === "admin" || profile?.role === "owner";
+    const isAdmin = profile?.role === "admin";
 
     return {
         loading,

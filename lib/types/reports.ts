@@ -8,8 +8,9 @@ export interface ReportKpi {
 }
 
 export interface ReportChartSeries {
-    date: string; // ISO date or "MMM YYYY" label
-    [key: string]: string | number;
+    date?: string; // ISO date or "MMM YYYY" label
+    label?: string; // For categorical charts
+    [key: string]: string | number | undefined;
 }
 
 export interface ReportBreakdownItem {

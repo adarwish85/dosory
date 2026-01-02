@@ -23,7 +23,8 @@ interface ChartCardProps {
     description?: string;
     loading?: boolean;
     empty?: boolean;
-    data: Record<string, string | number | undefined>[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any[];
     type: "line" | "bar" | "pie" | "area" | "composed";
     series?: { key: string; color: string; name?: string }[];
     height?: number;

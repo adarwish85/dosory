@@ -10,7 +10,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 interface DataTableProps {
     title?: string;
     columns: ReportTableColumn[];
-    data: Record<string, unknown>[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any[];
     total?: number;
     page?: number;
     pageSize?: number;
@@ -30,7 +31,8 @@ export function DataTable({
 }: DataTableProps) {
     const totalPages = Math.ceil(total / pageSize);
 
-    const renderCell = (row: Record<string, unknown>, col: ReportTableColumn) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const renderCell = (row: any, col: ReportTableColumn) => {
         const val = row[col.key];
         if (val === null || val === undefined) return "-";
 

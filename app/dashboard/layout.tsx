@@ -237,7 +237,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
 
     const navItems = [
-        { href: "/dashboard", label: "Home", icon: Home, module: "home" },
+        { href: "/dashboard", label: "Dashboard", icon: Home, module: "home" },
         {
             label: "Sales",
             icon: Zap,
@@ -279,7 +279,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             label: "Support",
             icon: LifeBuoy,
             module: "support",
-            children: [{ href: "/dashboard/support", label: "Support", module: "support" }],
+            children: [{ href: "/dashboard/support", label: "Tickets", module: "support" }],
         },
         {
             label: "Reports",

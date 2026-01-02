@@ -1,6 +1,6 @@
 import { db } from "@/lib/firebase";
 import { ReportResponse, ReportFilter } from "@/lib/types/reports";
-import { JournalEntryLine } from "@/lib/types/finance";
+import { JournalLine } from "@/lib/types/finance";
 import {
     collection,
     query,
@@ -16,12 +16,12 @@ export class ReportsService {
      * Get Business Health Overview
      * Aggregates Revenue, Expenses, Net Profit, and Active Projects
      */
-    async getBusinessHealth(filter: ReportFilter): Promise<ReportResponse> {
+    async getBusinessHealth(_filter: ReportFilter): Promise<ReportResponse> {
         try {
             // Define date range
-            const now = new Date();
-            _ = filter.startDate || startOfMonth(now);
-            _ = filter.endDate || endOfMonth(now);
+            // const now = new Date();
+            // const startDate = filter.startDate || startOfMonth(now);
+            // const endDate = filter.endDate || endOfMonth(now);
 
             // 1. Aggregations (Mocked for now)
             // TODO: Replace with real Firestore aggregations
@@ -262,7 +262,7 @@ export class ReportsService {
 
                 if (!monthlyStats[monthKey]) monthlyStats[monthKey] = { income: 0, expenses: 0 };
 
-                je.lines.forEach((line: JournalEntryLine) => {
+                je.lines.forEach((line: JournalLine) => {
                     const acc = accountMap.get(line.accountId);
                     if (!acc) return;
 
@@ -425,7 +425,7 @@ export class ReportsService {
     /**
      * Get Cash Flow Report
      */
-    async getCashFlow(_filter: ReportFilter): Promise<ReportResponse> {
+    async getCashFlow(filter: ReportFilter): Promise<ReportResponse> {
         try {
             if (!filter.orgId) return this.getEmptyResponse();
 
