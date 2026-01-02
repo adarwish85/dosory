@@ -64,7 +64,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { useLeads } from "@/lib/hooks";
+import { useLeads, usePermission } from "@/lib/hooks";
 import type { Lead, LeadStatus } from "@/lib/types";
 import Link from "next/link";
 import { TableSkeleton } from "@/components/ui/skeleton-loaders";
@@ -725,11 +725,13 @@ function KanbanBoard({
     onStatusChange,
     onView,
     onEdit,
+    canEdit = false,
 }: {
     leads: Lead[];
     onStatusChange: (id: string, status: LeadStatus) => void;
     onView: (lead: Lead) => void;
     onEdit: (lead: Lead) => void;
+    canEdit?: boolean;
 }) {
     const statusColumns = LEAD_STATUSES.filter((s) => !["won", "lost", "junk"].includes(s.value));
     const closedStatuses = LEAD_STATUSES.filter((s) => ["won", "lost", "junk"].includes(s.value));
@@ -742,6 +744,7 @@ function KanbanBoard({
 
     const handleDrop = (e: React.DragEvent, newStatus: LeadStatus) => {
         e.preventDefault();
+        if (!canEdit) return;
         const leadId = e.dataTransfer.getData("leadId");
         if (leadId) onStatusChange(leadId, newStatus);
     };
@@ -753,8 +756,8 @@ function KanbanBoard({
         return (
             <div
                 key={lead.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, lead.id)}
+                draggable={canEdit}
+                onDragStart={(e) => canEdit && handleDragStart(e, lead.id)}
                 className="bg-white border rounded-lg p-3 cursor-move hover:shadow-md transition-shadow group"
             >
                 <div className="flex items-start justify-between mb-2">
@@ -1079,26 +1082,29 @@ export default function LeadsPage() {
     // State for Search Debounce
     const [localSearch, setLocalSearch] = useState(searchQuery);
 
+    const isSearching = !!searchQuery.trim();
+    const isClientMode = isSearching;
+
     const tableRef = useRef<HTMLDivElement>(null);
     const {
         leads,
         loading,
-        leadStats,
-        totalRecords: serverTotal,
-        deleteLead,
+        createLead: addLead,
         updateLead,
+        deleteLead,
         bulkDeleteLeads,
         bulkDeleteAllMatches,
+        leadStats,
+        totalRecords: serverTotal,
     } = useLeads({
-        status: statusFilter,
-        limit: recordsPerPage,
-        page: currentPage,
-        searchQuery: searchQuery, // This will only support prefix search
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        orderByField: ((sortKey === "lastActivity" ? "lastContactedAt" : sortKey) as any) || "createdAt",
+        limit: isClientMode ? 1000 : recordsPerPage,
+        page: isClientMode ? 1 : currentPage,
+        orderByField: (sortKey || "lastActivity") as any, // Cast to any to avoid generic union issues if needed, or remove cast if safe
         orderDirection: sortDirection || "desc",
+        searchQuery: searchQuery, // Add search query to hook!
     });
 
+    const { can } = usePermission();
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -1512,13 +1518,17 @@ export default function LeadsPage() {
                         <HoverCard openDelay={300} closeDelay={100}>
                             <HoverCardTrigger asChild>
                                 <span className="font-medium cursor-pointer text-gray-900 hover:text-blue-600 w-fit">
-                                    <InlineEditCell
-                                        value={lead.name || ""}
-                                        field="name"
-                                        leadId={lead.id}
-                                        onSave={handleInlineEdit}
-                                        searchQuery={searchQuery}
-                                    />
+                                    {can("leads_edit") ? (
+                                        <InlineEditCell
+                                            value={lead.name || ""}
+                                            field="name"
+                                            leadId={lead.id}
+                                            onSave={handleInlineEdit}
+                                            searchQuery={searchQuery}
+                                        />
+                                    ) : (
+                                        <HighlightText text={lead.name || "-"} search={searchQuery} />
+                                    )}
                                 </span>
                             </HoverCardTrigger>
                             <HoverCardContent
@@ -1541,38 +1551,53 @@ export default function LeadsPage() {
                             >
                                 View
                             </button>
-                            <span className="text-gray-300">|</span>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEdit(lead);
-                                }}
-                                className="hover:text-blue-600 hover:underline px-0.5"
-                            >
-                                Edit
-                            </button>
-                            <span className="text-gray-300">|</span>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(lead.id);
-                                }}
-                                className="hover:text-red-600 hover:underline px-0.5"
-                            >
-                                Delete
-                            </button>
+                            {can("leads_edit") && (
+                                <>
+                                    <span className="text-gray-300">|</span>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEdit(lead);
+                                        }}
+                                        className="hover:text-blue-600 hover:underline px-0.5"
+                                    >
+                                        Edit
+                                    </button>
+                                </>
+                            )}
+                            {can("leads_delete") && (
+                                <>
+                                    <span className="text-gray-300">|</span>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(lead.id);
+                                        }}
+                                        className="hover:text-red-600 hover:underline px-0.5"
+                                    >
+                                        Delete
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 );
             case "company":
                 return (
-                    <InlineEditCell
-                        value={lead.company || ""}
-                        field="company"
-                        leadId={lead.id}
-                        onSave={handleInlineEdit}
-                        searchQuery={searchQuery}
-                    />
+                    // eslint-disable-next-line react/jsx-no-useless-fragment
+                    <>
+                        {can("leads_edit") ? (
+                            <InlineEditCell
+                                value={lead.company || ""}
+                                field="company"
+                                leadId={lead.id}
+                                onSave={handleInlineEdit}
+                                searchQuery={searchQuery}
+                            />
+                        ) : (
+                            <HighlightText text={lead.company || "-"} search={searchQuery} />
+                        )}
+                    </>
                 );
             case "email":
                 return lead.email ? (
@@ -1608,7 +1633,11 @@ export default function LeadsPage() {
                 );
             case "status":
                 return (
-                    <Select value={lead.status} onValueChange={(v) => handleStatusChange(lead.id, v as LeadStatus)}>
+                    <Select
+                        value={lead.status}
+                        onValueChange={(v) => handleStatusChange(lead.id, v as LeadStatus)}
+                        disabled={!can("leads_edit")}
+                    >
                         <SelectTrigger className="h-7 text-xs w-[110px]">
                             <SelectValue />
                         </SelectTrigger>
@@ -1701,11 +1730,13 @@ export default function LeadsPage() {
                 {/* Header Actions Row */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <Link href="/dashboard/leads/new">
-                            <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                                <Plus className="mr-2 h-4 w-4" /> New Lead
-                            </Button>
-                        </Link>
+                        {can("leads_create") && (
+                            <Link href="/dashboard/leads/new">
+                                <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                                    <Plus className="mr-2 h-4 w-4" /> New Lead
+                                </Button>
+                            </Link>
+                        )}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="icon">
@@ -1713,9 +1744,11 @@ export default function LeadsPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={() => setShowImportWizard(true)}>
-                                    <Upload className="mr-2 h-4 w-4" /> Import
-                                </DropdownMenuItem>
+                                {can("leads_create") && (
+                                    <DropdownMenuItem onClick={() => setShowImportWizard(true)}>
+                                        <Upload className="mr-2 h-4 w-4" /> Import
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => exportLeads(true)}>
                                     <Download className="mr-2 h-4 w-4" /> Export All ({processedLeads.length})
@@ -1742,33 +1775,39 @@ export default function LeadsPage() {
                                         With {selectionMode === "all" ? totalRecords : selectedLeads.length} selected
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuLabel className="text-xs text-gray-500">
-                                        Change Status To
-                                    </DropdownMenuLabel>
-                                    {LEAD_STATUSES.map((s) => (
-                                        <DropdownMenuItem
-                                            key={s.value}
-                                            onClick={() => handleBulkStatusUpdate(s.value as LeadStatus)}
-                                        >
-                                            <RefreshCcw className="mr-2 h-4 w-4" /> {s.label}
-                                        </DropdownMenuItem>
-                                    ))}
-                                    <DropdownMenuSeparator />
+                                    {can("leads_edit") && (
+                                        <>
+                                            <DropdownMenuLabel className="text-xs text-gray-500">
+                                                Change Status To
+                                            </DropdownMenuLabel>
+                                            {LEAD_STATUSES.map((s) => (
+                                                <DropdownMenuItem
+                                                    key={s.value}
+                                                    onClick={() => handleBulkStatusUpdate(s.value as LeadStatus)}
+                                                >
+                                                    <RefreshCcw className="mr-2 h-4 w-4" /> {s.label}
+                                                </DropdownMenuItem>
+                                            ))}
+                                            <DropdownMenuSeparator />
+                                        </>
+                                    )}
                                     <DropdownMenuItem onClick={handleBatchEmail}>
                                         <Send className="mr-2 h-4 w-4" /> Send Email to Selected
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={openBulkEmailCompose}>
                                         <Mail className="mr-2 h-4 w-4" /> Compose Email...
                                     </DropdownMenuItem>
-                                    {selectedLeads.length === 2 && (
+                                    {selectedLeads.length === 2 && can("leads_edit") && (
                                         <DropdownMenuItem onClick={openMergeDialog}>
                                             <GitMerge className="mr-2 h-4 w-4" /> Merge Selected
                                         </DropdownMenuItem>
                                     )}
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                    </DropdownMenuItem>
+                                    {can("leads_delete") && (
+                                        <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
+                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                        </DropdownMenuItem>
+                                    )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}
@@ -2245,6 +2284,7 @@ export default function LeadsPage() {
                         onStatusChange={handleStatusChange}
                         onView={handleView}
                         onEdit={handleEdit}
+                        canEdit={can("leads_edit")}
                     />
                 )}
 

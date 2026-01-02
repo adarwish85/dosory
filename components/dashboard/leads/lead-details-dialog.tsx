@@ -46,6 +46,7 @@ import { useProposals, useEstimates } from "@/lib/hooks/use-sales";
 import { useTasks } from "@/lib/hooks/use-projects";
 import { useLeads } from "@/lib/hooks/use-leads";
 import { useStaff } from "@/lib/hooks/use-staff";
+import { usePermission } from "@/lib/hooks";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -143,6 +144,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
 
     // Hooks
     const { profile } = useUserProfile();
+    const { can } = usePermission();
     const { proposals } = useProposals({ leadId: lead?.id });
     const { estimates } = useEstimates({ leadId: lead?.id });
     const { tasks } = useTasks();
@@ -344,9 +346,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                         <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2 text-gray-600">
                             <Printer className="h-4 w-4" /> Print
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => onEdit(lead)} className="text-gray-600">
-                            <Pencil className="h-4 w-4" />
-                        </Button>
+                        {can("leads_edit") && (
+                            <Button variant="ghost" size="icon" onClick={() => onEdit(lead)} className="text-gray-600">
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                        )}
                     </div>
                 </SheetHeader>
 
@@ -464,14 +468,14 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 score >= 70
                                                     ? "text-green-600"
                                                     : score >= 40
-                                                      ? "text-yellow-600"
-                                                      : "text-red-500";
+                                                        ? "text-yellow-600"
+                                                        : "text-red-500";
                                             const bgColor =
                                                 score >= 70
                                                     ? "from-green-50 to-green-100 border-green-200"
                                                     : score >= 40
-                                                      ? "from-yellow-50 to-yellow-100 border-yellow-200"
-                                                      : "from-red-50 to-red-100 border-red-200";
+                                                        ? "from-yellow-50 to-yellow-100 border-yellow-200"
+                                                        : "from-red-50 to-red-100 border-red-200";
                                             return (
                                                 <div
                                                     className={`p-3 bg-gradient-to-br ${bgColor} border rounded-lg shadow-sm lg:col-span-1`}
@@ -585,13 +589,15 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 <ArrowRight className="h-5 w-5 text-blue-600" />
                                                 <h3 className="font-semibold text-gray-900">Conversion Pipeline</h3>
                                             </div>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => setShowConvertWizard(true)}
-                                            >
-                                                <User className="mr-1 h-4 w-4" /> Convert to Customer
-                                            </Button>
+                                            {can("leads_edit") && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => setShowConvertWizard(true)}
+                                                >
+                                                    <User className="mr-1 h-4 w-4" /> Convert to Customer
+                                                </Button>
+                                            )}
                                         </div>
                                         <div className="flex items-center gap-1">
                                             {STATUS_PIPELINE.map((stage, i) => {
@@ -680,7 +686,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                     field.key === "address"
                                                                         ? lead.address?.street || lead.address?.city
                                                                         : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                                          !!(lead as any)[field.key];
+                                                                        !!(lead as any)[field.key];
                                                                 return (
                                                                     <div
                                                                         key={field.key}
@@ -702,10 +708,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                                 {field.label}
                                                                             </span>
                                                                         </span>
-                                                                        {!hasValue && (
+                                                                        {!hasValue && can("leads_edit") && (
                                                                             <button
                                                                                 onClick={() => onEdit(lead)}
                                                                                 className="text-blue-600 hover:underline text-[10px]"
+                                                                                disabled={!can("leads_edit")}
                                                                             >
                                                                                 Add
                                                                             </button>
@@ -963,11 +970,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <CalendarIcon className="h-3 w-3 mr-1 text-gray-400" />
                                                             {lead.deal.expectedCloseDate
                                                                 ? format(
-                                                                      lead.deal.expectedCloseDate instanceof Timestamp
-                                                                          ? lead.deal.expectedCloseDate.toDate()
-                                                                          : lead.deal.expectedCloseDate,
-                                                                      "MMM d, yyyy"
-                                                                  )
+                                                                    lead.deal.expectedCloseDate instanceof Timestamp
+                                                                        ? lead.deal.expectedCloseDate.toDate()
+                                                                        : lead.deal.expectedCloseDate,
+                                                                    "MMM d, yyyy"
+                                                                )
                                                                 : "-"}
                                                         </div>
                                                     </div>
@@ -1165,9 +1172,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <span className="text-xs text-gray-400">
                                                                 {note.createdAt
                                                                     ? format(
-                                                                          note.createdAt.toDate(),
-                                                                          "MMM d, yyyy @ h:mm a"
-                                                                      )
+                                                                        note.createdAt.toDate(),
+                                                                        "MMM d, yyyy @ h:mm a"
+                                                                    )
                                                                     : "Just now"}
                                                             </span>
                                                             <Button
@@ -1244,9 +1251,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                 <Calendar className="h-3 w-3 inline mr-1" />
                                                                 {reminder.date
                                                                     ? format(
-                                                                          reminder.date.toDate(),
-                                                                          "MMM d, yyyy @ h:mm a"
-                                                                      )
+                                                                        reminder.date.toDate(),
+                                                                        "MMM d, yyyy @ h:mm a"
+                                                                    )
                                                                     : "No date"}
                                                             </p>
                                                         </div>
@@ -1286,9 +1293,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         <p className="text-xs text-gray-500">
                                                             {lead.createdAt
                                                                 ? format(
-                                                                      lead.createdAt.toDate(),
-                                                                      "MMM d, yyyy @ h:mm a"
-                                                                  )
+                                                                    lead.createdAt.toDate(),
+                                                                    "MMM d, yyyy @ h:mm a"
+                                                                )
                                                                 : "Unknown date"}
                                                         </p>
                                                     </div>
@@ -1313,9 +1320,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <p className="text-xs text-gray-500 mt-1">
                                                                 {note.createdAt
                                                                     ? format(
-                                                                          note.createdAt.toDate(),
-                                                                          "MMM d, yyyy @ h:mm a"
-                                                                      )
+                                                                        note.createdAt.toDate(),
+                                                                        "MMM d, yyyy @ h:mm a"
+                                                                    )
                                                                     : ""}
                                                             </p>
                                                         </div>
@@ -1342,9 +1349,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                 For:{" "}
                                                                 {reminder.date
                                                                     ? format(
-                                                                          reminder.date.toDate(),
-                                                                          "MMM d, yyyy @ h:mm a"
-                                                                      )
+                                                                        reminder.date.toDate(),
+                                                                        "MMM d, yyyy @ h:mm a"
+                                                                    )
                                                                     : ""}
                                                             </p>
                                                         </div>
@@ -1378,9 +1385,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <p className="text-xs text-gray-500 mt-1">
                                                                 {task.createdAt
                                                                     ? format(
-                                                                          task.createdAt.toDate(),
-                                                                          "MMM d, yyyy @ h:mm a"
-                                                                      )
+                                                                        task.createdAt.toDate(),
+                                                                        "MMM d, yyyy @ h:mm a"
+                                                                    )
                                                                     : ""}
                                                             </p>
                                                         </div>
@@ -1429,9 +1436,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             Updated:{" "}
                                                             {lead.updatedAt
                                                                 ? format(
-                                                                      lead.updatedAt.toDate(),
-                                                                      "MMM d, yyyy @ h:mm a"
-                                                                  )
+                                                                    lead.updatedAt.toDate(),
+                                                                    "MMM d, yyyy @ h:mm a"
+                                                                )
                                                                 : "Unknown"}
                                                         </p>
                                                     </div>

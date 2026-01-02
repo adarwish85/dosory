@@ -61,3 +61,4 @@ export { usePerformanceNotes, ratingLabels, ratingColors, flagLabels, flagColors
 export { useEmployeeDocuments } from "./use-employee-documents";
 export * from "./use-finance";
 export * from "./use-financial-reports";
+export { usePermission } from "./use-permission";

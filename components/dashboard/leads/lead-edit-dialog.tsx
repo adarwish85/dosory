@@ -18,7 +18,7 @@ import { LEAD_STATUSES, LEAD_SOURCES } from "@/lib/constants";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useStaff } from "@/lib/hooks/use-staff";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useLeads } from "@/lib/hooks";
+import { useLeads, usePermission } from "@/lib/hooks";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // World Countries
@@ -150,6 +150,7 @@ interface LeadEditSheetProps {
 export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProps) {
     const { staff } = useStaff();
     const { leads } = useLeads({});
+    const { can } = usePermission();
     const [duplicateWarning, setDuplicateWarning] = useState<{ type: "email" | "phone"; duplicates: Lead[] } | null>(
         null
     );
@@ -319,6 +320,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                                 size="icon"
                                                                 className="h-9 w-9 shrink-0"
                                                                 onClick={() => setShowAddStatusDialog(true)}
+                                                                disabled={!can("leads_edit")}
                                                             >
                                                                 <Plus className="h-4 w-4" />
                                                             </Button>
@@ -353,6 +355,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                                 size="icon"
                                                                 className="h-9 w-9 shrink-0"
                                                                 onClick={() => setShowAddSourceDialog(true)}
+                                                                disabled={!can("leads_edit")}
                                                             >
                                                                 <Plus className="h-4 w-4" />
                                                             </Button>
@@ -534,6 +537,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                             size="sm"
                             onClick={form.handleSubmit(handleSubmit)}
                             className="bg-gray-900 text-white hover:bg-gray-800"
+                            disabled={!can("leads_edit")}
                         >
                             Save Changes
                         </Button>

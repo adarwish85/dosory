@@ -20,7 +20,7 @@ import {
     Clock,
     AlertCircle,
 } from "lucide-react";
-import { useInvoices, useSettings } from "@/lib/hooks";
+import { useInvoices, useSettings, usePermission } from "@/lib/hooks";
 import type { Invoice, InvoiceStatus } from "@/lib/types";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -227,6 +227,7 @@ export default function InvoicesPage() {
     });
     const { settings } = useSettings();
     const currency = settings.currency || "USD";
+    const { can } = usePermission();
 
     const filteredInvoices = useMemo(() => {
         if (!isClientMode) return invoices;
@@ -247,9 +248,9 @@ export default function InvoicesPage() {
     // If client mode, slice. If server mode, invoices IS the slice.
     const paginatedInvoices = isClientMode
         ? filteredInvoices.slice(
-              (currentPage - 1) * recordsPerPage,
-              (currentPage - 1) * recordsPerPage + recordsPerPage
-          )
+            (currentPage - 1) * recordsPerPage,
+            (currentPage - 1) * recordsPerPage + recordsPerPage
+        )
         : filteredInvoices;
 
     const startIndex = (currentPage - 1) * recordsPerPage;
@@ -454,16 +455,20 @@ export default function InvoicesPage() {
                             >
                                 Edit
                             </Link>
-                            <span className="text-gray-300">|</span>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(invoice.id);
-                                }}
-                                className="hover:text-red-600 hover:underline px-0.5"
-                            >
-                                Delete
-                            </button>
+                            {can("invoices_delete") && (
+                                <>
+                                    <span className="text-gray-300">|</span>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(invoice.id);
+                                        }}
+                                        className="hover:text-red-600 hover:underline px-0.5"
+                                    >
+                                        Delete
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 );
@@ -505,14 +510,16 @@ export default function InvoicesPage() {
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Link href="/dashboard/invoices/new">
-                            <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                                <span className="hidden sm:inline">
-                                    <span className="mr-2">+</span>Create New Invoice
-                                </span>
-                                <span className="sm:hidden">+ Invoice</span>
-                            </Button>
-                        </Link>
+                        {can("invoices_create") && (
+                            <Link href="/dashboard/invoices/new">
+                                <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                                    <span className="hidden sm:inline">
+                                        <span className="mr-2">+</span>Create New Invoice
+                                    </span>
+                                    <span className="sm:hidden">+ Invoice</span>
+                                </Button>
+                            </Link>
+                        )}
                         <span className="text-sm text-gray-500">Show</span>
                         <Select
                             value={recordsPerPage.toString()}
@@ -546,9 +553,11 @@ export default function InvoicesPage() {
                                 <DropdownMenuContent>
                                     <DropdownMenuLabel>With {selectedInvoices.length} selected</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                    </DropdownMenuItem>
+                                    {can("invoices_delete") && (
+                                        <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
+                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                        </DropdownMenuItem>
+                                    )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}
