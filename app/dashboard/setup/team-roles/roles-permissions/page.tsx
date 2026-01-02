@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, RefreshCw, Trash2, Loader2, ShieldCheck, Users, LayoutGrid, Table } from "lucide-react";
 import { RoleForm } from "@/components/dashboard/setup/roles/role-form";
 import { PermissionMatrix } from "@/components/dashboard/setup/roles/permission-matrix";
+import { MigrateUsersDialog } from "@/components/dashboard/setup/roles/migrate-users-dialog";
 import { useRoles, useStaff } from "@/lib/hooks";
 import {
     AlertDialog,
@@ -74,7 +75,10 @@ export default function RolesPage() {
                     <ShieldCheck className="h-6 w-6 text-gray-600" />
                     <h1 className="text-2xl font-semibold text-gray-900">Roles & Permissions</h1>
                 </div>
-                <RoleForm />
+                <div className="flex items-center gap-3">
+                    <MigrateUsersDialog />
+                    <RoleForm />
+                </div>
             </div>
 
             {/* Toolbar */}
