@@ -79,5 +79,14 @@ export default async function middleware(req: NextRequest) {
         }
     }
 
+    // Super Admin Route Protection
+    // Note: Detailed permission checks happen in the layout/page via AuthContext
+    // But we can add a basic layer here if cookies are present
+    if (url.pathname.startsWith('/sa')) {
+        // For now, let the layout handle the redirect based on user claims
+        // checking cookies here would require firebase-admin which is edge-incompatible without hacks
+        return NextResponse.next();
+    }
+
     return NextResponse.next();
 }

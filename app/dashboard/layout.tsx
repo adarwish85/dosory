@@ -323,7 +323,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const handleExitImpersonation = () => {
         localStorage.removeItem("impersonation-storage");
-        window.location.href = "/bunny/tenants";
+        window.location.href = "/sa/tenants";
     };
 
     return (

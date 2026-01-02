@@ -34,7 +34,7 @@ export default function SetupSuperAdminPage() {
 
             // Redirect after 2 seconds
             setTimeout(() => {
-                router.push("/bunny");
+                router.push("/sa");
             }, 2000);
         } catch (err) {
             console.error("Error setting role:", err);

@@ -97,7 +97,7 @@ export default function SignupPage() {
         }
 
         // Reserved subdomains
-        const reserved = ["www", "app", "api", "admin", "mail", "ftp", "localhost", "test", "staging", "dev", "bunny"];
+        const reserved = ["www", "app", "api", "admin", "mail", "ftp", "localhost", "test", "staging", "dev", "sa"];
         if (reserved.includes(cleaned)) {
             setSubdomainError("This subdomain is reserved");
             setSubdomainAvailable(null);
