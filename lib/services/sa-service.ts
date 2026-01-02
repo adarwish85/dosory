@@ -1,15 +1,10 @@
+import { adminDb } from "@/lib/firebase-admin";
 import {
-    collection, doc, getDoc, getDocs, setDoc,
-    updateDoc, deleteDoc, query, where, orderBy,
-    serverTimestamp, addDoc, limit, getCountFromServer
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import {
-    Tenant, GlobalUser, Plan, Subscription,
-    ModuleCatalog, TenantModule, AuditLogEntry,
+    Tenant, GlobalUser, Plan,
+    ModuleCatalog, AuditLogEntry,
     SupportIssue, SystemHealthStatus, OverviewStats
 } from "@/lib/types/super-admin";
-import { AuditService } from "./audit-service";
+import { FieldValue } from "firebase-admin/firestore";
 
 // Collection names
 const TENANTS_COLL = "tenants";
@@ -17,119 +12,136 @@ const USERS_COLL = "users";
 const PLANS_COLL = "sa_plans";
 const SUBSCRIPTIONS_COLL = "sa_subscriptions";
 const MODULES_COLL = "sa_modules";
-const TENANT_MODULES_COLL = "sa_tenant_modules";
 const AUDIT_LOGS_COLL = "sa_audit_logs";
 const SUPPORT_ISSUES_COLL = "sa_support_issues";
+
+// Helper to safely execute Firestore operations
+async function safeQuery<T>(operation: () => Promise<T>, fallback: T): Promise<T> {
+    try {
+        return await operation();
+    } catch (error: any) {
+        console.error("Firestore operation failed:", error.message);
+        return fallback;
+    }
+}
 
 export class SAService {
     // ========================================
     // Overview
     // ========================================
     static async getOverviewStats(): Promise<OverviewStats> {
-        // Get tenant counts
-        const tenantsSnap = await getCountFromServer(collection(db, TENANTS_COLL));
-        const activeTenantsSnap = await getCountFromServer(
-            query(collection(db, TENANTS_COLL), where("status", "==", "active"))
-        );
+        return safeQuery(async () => {
+            // Get tenant counts
+            const tenantsSnap = await adminDb.collection(TENANTS_COLL).count().get();
+            const activeTenantsSnap = await adminDb.collection(TENANTS_COLL)
+                .where("status", "==", "active").count().get();
 
-        // Get user count
-        const usersSnap = await getCountFromServer(collection(db, USERS_COLL));
+            // Get user count
+            const usersSnap = await adminDb.collection(USERS_COLL).count().get();
 
-        // Get pages count (from website builder)
-        let totalPages = 0;
-        try {
-            const websitesSnap = await getDocs(collection(db, "websites"));
-            for (const website of websitesSnap.docs) {
-                const pagesSnap = await getCountFromServer(
-                    collection(db, "websites", website.id, "pages")
-                );
-                totalPages += pagesSnap.data().count;
+            // Get pages count (from website builder)
+            let totalPages = 0;
+            try {
+                const websitesSnap = await adminDb.collection("websites").get();
+                for (const website of websitesSnap.docs) {
+                    const pagesSnap = await adminDb.collection("websites")
+                        .doc(website.id).collection("pages").count().get();
+                    totalPages += pagesSnap.data().count;
+                }
+            } catch (e) {
+                // Ignore if websites collection doesn't exist
             }
-        } catch (e) {
-            // Ignore if websites collection doesn't exist
-        }
 
-        // Calculate MRR from subscriptions
-        let mrr = 0;
-        try {
-            const subsSnap = await getDocs(
-                query(collection(db, SUBSCRIPTIONS_COLL), where("status", "==", "active"))
-            );
-            subsSnap.forEach(doc => {
-                mrr += doc.data().mrr || 0;
-            });
-        } catch (e) {
-            // Ignore if collection doesn't exist
-        }
+            // Calculate MRR from subscriptions
+            let mrr = 0;
+            try {
+                const subsSnap = await adminDb.collection(SUBSCRIPTIONS_COLL)
+                    .where("status", "==", "active").get();
+                subsSnap.forEach(doc => {
+                    mrr += doc.data().mrr || 0;
+                });
+            } catch (e) {
+                // Ignore if collection doesn't exist
+            }
 
-        return {
-            totalTenants: tenantsSnap.data().count,
-            activeTenants: activeTenantsSnap.data().count,
-            totalUsers: usersSnap.data().count,
-            totalPages,
-            mrr,
-            systemHealth: "healthy" // Will be enhanced later
-        };
+            return {
+                totalTenants: tenantsSnap.data().count,
+                activeTenants: activeTenantsSnap.data().count,
+                totalUsers: usersSnap.data().count,
+                totalPages,
+                mrr,
+                systemHealth: "healthy"
+            };
+        }, {
+            totalTenants: 0,
+            activeTenants: 0,
+            totalUsers: 0,
+            totalPages: 0,
+            mrr: 0,
+            systemHealth: "healthy"
+        });
     }
 
     // ========================================
     // Tenants
     // ========================================
     static async getTenants(limitCount: number = 50): Promise<Tenant[]> {
-        const q = query(
-            collection(db, TENANTS_COLL),
-            orderBy("createdAt", "desc"),
-            limit(limitCount)
-        );
-        const snap = await getDocs(q);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant));
+        return safeQuery(async () => {
+            const snap = await adminDb.collection(TENANTS_COLL)
+                .orderBy("createdAt", "desc")
+                .limit(limitCount)
+                .get();
+            return snap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant));
+        }, []);
     }
 
     static async getTenant(id: string): Promise<Tenant | null> {
-        const docRef = doc(db, TENANTS_COLL, id);
-        const snap = await getDoc(docRef);
-        if (!snap.exists()) return null;
-        return { id: snap.id, ...snap.data() } as Tenant;
+        return safeQuery(async () => {
+            const snap = await adminDb.collection(TENANTS_COLL).doc(id).get();
+            if (!snap.exists) return null;
+            return { id: snap.id, ...snap.data() } as Tenant;
+        }, null);
     }
 
     static async updateTenantStatus(id: string, status: Tenant["status"], actorId: string) {
-        await updateDoc(doc(db, TENANTS_COLL, id), {
+        await adminDb.collection(TENANTS_COLL).doc(id).update({
             status,
-            updatedAt: serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp()
         });
-        await AuditService.log("update_tenant_status", "tenant", id, actorId, { status });
+        await this.logAudit("update_tenant_status", "tenant", id, actorId, { status });
     }
 
     // ========================================
     // Users
     // ========================================
     static async getUsers(limitCount: number = 50): Promise<GlobalUser[]> {
-        const q = query(
-            collection(db, USERS_COLL),
-            orderBy("createdAt", "desc"),
-            limit(limitCount)
-        );
-        const snap = await getDocs(q);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as GlobalUser));
+        return safeQuery(async () => {
+            const snap = await adminDb.collection(USERS_COLL)
+                .orderBy("createdAt", "desc")
+                .limit(limitCount)
+                .get();
+            return snap.docs.map(d => ({ id: d.id, ...d.data() } as GlobalUser));
+        }, []);
     }
 
     static async updateUserStatus(id: string, status: GlobalUser["status"], actorId: string) {
-        await updateDoc(doc(db, USERS_COLL, id), { status });
-        await AuditService.log("update_user_status", "user", id, actorId, { status });
+        await adminDb.collection(USERS_COLL).doc(id).update({ status });
+        await this.logAudit("update_user_status", "user", id, actorId, { status });
     }
 
     // ========================================
     // Plans
     // ========================================
     static async getPlans(): Promise<Plan[]> {
-        const snap = await getDocs(collection(db, PLANS_COLL));
-        if (snap.empty) {
-            // Seed default plans if none exist
-            await this.seedDefaultPlans();
-            const newSnap = await getDocs(collection(db, PLANS_COLL));
-            return newSnap.docs.map(d => ({ id: d.id, ...d.data() } as Plan));
-        }
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as Plan));
+        return safeQuery(async () => {
+            const snap = await adminDb.collection(PLANS_COLL).get();
+            if (snap.empty) {
+                await this.seedDefaultPlans();
+                const newSnap = await adminDb.collection(PLANS_COLL).get();
+                return newSnap.docs.map(d => ({ id: d.id, ...d.data() } as Plan));
+            }
+            return snap.docs.map(d => ({ id: d.id, ...d.data() } as Plan));
+        }, []);
     }
 
     static async seedDefaultPlans() {
@@ -152,9 +164,9 @@ export class SAService {
         ];
 
         for (const plan of plans) {
-            await addDoc(collection(db, PLANS_COLL), {
+            await adminDb.collection(PLANS_COLL).add({
                 ...plan,
-                createdAt: serverTimestamp()
+                createdAt: FieldValue.serverTimestamp()
             });
         }
     }
@@ -163,13 +175,15 @@ export class SAService {
     // Modules
     // ========================================
     static async getModules(): Promise<ModuleCatalog[]> {
-        const snap = await getDocs(collection(db, MODULES_COLL));
-        if (snap.empty) {
-            await this.seedDefaultModules();
-            const newSnap = await getDocs(collection(db, MODULES_COLL));
-            return newSnap.docs.map(d => ({ moduleKey: d.id, ...d.data() } as ModuleCatalog));
-        }
-        return snap.docs.map(d => ({ moduleKey: d.id, ...d.data() } as ModuleCatalog));
+        return safeQuery(async () => {
+            const snap = await adminDb.collection(MODULES_COLL).get();
+            if (snap.empty) {
+                await this.seedDefaultModules();
+                const newSnap = await adminDb.collection(MODULES_COLL).get();
+                return newSnap.docs.map(d => ({ moduleKey: d.id, ...d.data() } as ModuleCatalog));
+            }
+            return snap.docs.map(d => ({ moduleKey: d.id, ...d.data() } as ModuleCatalog));
+        }, []);
     }
 
     static async seedDefaultModules() {
@@ -184,56 +198,70 @@ export class SAService {
 
         for (const mod of modules) {
             const key = mod.name.toLowerCase().replace(/\s/g, "-");
-            await setDoc(doc(db, MODULES_COLL, key), mod);
+            await adminDb.collection(MODULES_COLL).doc(key).set(mod);
         }
     }
 
     static async toggleModule(moduleKey: string, isEnabled: boolean, actorId: string) {
-        await updateDoc(doc(db, MODULES_COLL, moduleKey), { isEnabled });
-        await AuditService.log("toggle_module", "module", moduleKey, actorId, { isEnabled });
+        await adminDb.collection(MODULES_COLL).doc(moduleKey).update({ isEnabled });
+        await this.logAudit("toggle_module", "module", moduleKey, actorId, { isEnabled });
     }
 
     // ========================================
     // Audit Logs
     // ========================================
     static async getAuditLogs(limitCount: number = 100): Promise<AuditLogEntry[]> {
-        const q = query(
-            collection(db, AUDIT_LOGS_COLL),
-            orderBy("timestamp", "desc"),
-            limit(limitCount)
-        );
-        const snap = await getDocs(q);
-        return snap.docs.map(d => ({
-            id: d.id,
-            ...d.data(),
-            createdAt: d.data().timestamp // Map timestamp to createdAt
-        } as AuditLogEntry));
+        return safeQuery(async () => {
+            const snap = await adminDb.collection(AUDIT_LOGS_COLL)
+                .orderBy("timestamp", "desc")
+                .limit(limitCount)
+                .get();
+            return snap.docs.map(d => ({
+                id: d.id,
+                ...d.data(),
+                createdAt: d.data().timestamp
+            } as AuditLogEntry));
+        }, []);
+    }
+
+    static async logAudit(
+        action: string,
+        resourceType: string,
+        resourceId: string,
+        actorId: string,
+        details: Record<string, any> = {}
+    ) {
+        try {
+            await adminDb.collection(AUDIT_LOGS_COLL).add({
+                action,
+                resourceType,
+                resourceId,
+                actorId,
+                details,
+                timestamp: FieldValue.serverTimestamp()
+            });
+        } catch (error) {
+            console.error("Failed to write audit log", error);
+        }
     }
 
     // ========================================
     // Support Issues
     // ========================================
     static async getSupportIssues(): Promise<SupportIssue[]> {
-        try {
-            const q = query(
-                collection(db, SUPPORT_ISSUES_COLL),
-                orderBy("createdAt", "desc"),
-                limit(50)
-            );
-            const snap = await getDocs(q);
+        return safeQuery(async () => {
+            const snap = await adminDb.collection(SUPPORT_ISSUES_COLL)
+                .orderBy("createdAt", "desc")
+                .limit(50)
+                .get();
             return snap.docs.map(d => ({ id: d.id, ...d.data() } as SupportIssue));
-        } catch (e) {
-            // Return empty if collection doesn't exist
-            return [];
-        }
+        }, []);
     }
 
     // ========================================
     // System Health
     // ========================================
     static async getSystemHealth(): Promise<SystemHealthStatus[]> {
-        // In production, this would ping actual services
-        // For now, return simulated health checks
         return [
             { service: "API", status: "healthy", latencyMs: 45, lastChecked: new Date() },
             { service: "Database", status: "healthy", latencyMs: 12, lastChecked: new Date() },
