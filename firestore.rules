@@ -103,111 +103,130 @@ service cloud.firestore {
     // HELPER FUNCTIONS
     // ============================================
     
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
     function isSuperAdmin() {
-      return request.auth != null && request.auth.token.isSuperAdmin == true;
+      return isAuthenticated() && request.auth.token.isSuperAdmin == true;
     }
 
+    // Check if user has the correct orgId claim matching the document
     function isOrgMember(orgId) {
-       // Check if the user has the custom claim 'orgId' matching the document's orgId
-       return request.auth != null && request.auth.token.orgId == orgId;
+       return isAuthenticated() && request.auth.token.orgId == orgId;
     }
     
     function isOrgAdmin(orgId) {
        return isOrgMember(orgId) && request.auth.token.role == 'admin';
     }
 
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
     // ============================================
     // ROOT COLLECTIONS (TENANT ISOLATED)
     // ============================================
 
-    // Generic rule for simple tenant-isolated collections
-    // Only allows access if the document's `orgId` matches the user's `orgId` claim.
+    // Common rule for standard tenant collections:
+    // Read/Write: SuperAdmin OR OrgMember (where doc.orgId == claim.orgId)
+    // Create: SuperAdmin OR OrgMember (where newItem.orgId == claim.orgId)
+    
     match /leads/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
 
     match /customers/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
 
     match /contacts/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
 
     match /projects/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
     
     match /tasks/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
 
     match /employees/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
 
     match /files/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
 
     match /activities/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
     
     match /invoices/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
     
     match /payments/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
     
     match /expenses/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
     
     match /proposals/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
     
     match /estimates/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
 
     match /reminders/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
     
     match /contracts/{docId} {
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
     
+    // Staff docs often use email as ID. 
+    // Tenants need to read staff profiles in their org.
+    // Each staff doc MUST have an `orgId` field.
     match /staff/{docId} {
-       // Staff is slightly different, it might be looked up by ID or query.
-       // Usually it has orgId field.
-      allow read, write: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
-      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      // Creation: Usually done by Admin via API, but if client-side:
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId) && request.auth.token.role == 'admin'); 
     }
     
-    // Notifications - usually filtered by userId, but orgId check is good too
+    // Notifications
     match /notifications/{docId} {
-       allow read, update: if isSuperAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
-       allow create: if isSuperAdmin() || (request.auth != null && request.resource.data.userId == request.auth.uid) || (isOrgMember(request.resource.data.orgId)); // Allow creating relevant notifications
+       // Users read/update their own notifications
+       allow read, update, delete: if isSuperAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+       // Create: System (via API) or User triggers? 
+       // Often created by backend. If client creates:
+       allow create: if isSuperAdmin() || (isAuthenticated() && request.resource.data.userId == request.auth.uid);
     }
 
 
@@ -215,21 +234,14 @@ service cloud.firestore {
     // TENANT-SCOPED COLLECTIONS (LEGACY / SPECIFIC)
     // ============================================
     
-    // Pattern for tenant-scoped data
-    // Usage: /tenantData/{orgId}/students/{studentId}
     match /tenantData/{orgId}/{collection}/{docId} {
-      // Super Admins have full access to all tenant data
-      allow read, write: if isSuperAdmin();
-      
-      // Tenant members can access their own tenant's data
-      allow read, write: if isOrgMember(orgId);
+      allow read, write: if isSuperAdmin() || isOrgMember(orgId);
     }
     
     // ============================================
     // DEFAULT: DENY ALL
     // ============================================
     
-    // Any path not explicitly matched is denied
     match /{document=**} {
       allow read, write: if false;
     }

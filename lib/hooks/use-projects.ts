@@ -41,9 +41,7 @@ export function calculateProjectHealthStatus(
     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
     // Check for overdue items (Off Track)
-    const hasOverdueMilestone = milestones.some(
-        (m) => m.status !== "complete" && m.dueDate < now
-    );
+    const hasOverdueMilestone = milestones.some((m) => m.status !== "complete" && m.dueDate < now);
     const hasOverdueCriticalTask = tasks.some(
         (t) => t.status !== "done" && t.priority === "urgent" && t.dueDate && t.dueDate.toDate() < now
     );
@@ -87,13 +85,15 @@ export function useProjects(options: UseProjectsOptions = {}) {
         orderDirection = "desc",
         limit: queryLimit = 100,
     } = options;
-    const { profile } = useUserProfile();
+    const { profile, loading: profileLoading } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.orgId) {
             Promise.resolve().then(() => {
                 setLoading(false);
@@ -134,7 +134,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, customerId, orderByField, orderDirection, queryLimit]);
+    }, [profile?.orgId, profileLoading, status, customerId, orderByField, orderDirection, queryLimit]);
 
     const createProject = useCallback(
         async (data: ProjectFormData): Promise<string> => {
@@ -423,13 +423,15 @@ export function useTasks(options: UseTasksOptions = {}) {
         limit: queryLimit = 100,
         relatedTo,
     } = options;
-    const { profile } = useUserProfile();
+    const { profile, loading: profileLoading } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.orgId) {
             Promise.resolve().then(() => {
                 setLoading(false);
@@ -497,6 +499,7 @@ export function useTasks(options: UseTasksOptions = {}) {
         relatedTo?.id,
         relatedTo?.type,
         relatedTo,
+        profileLoading,
     ]);
 
     const createTask = useCallback(
@@ -566,10 +569,7 @@ export function useTasks(options: UseTasksOptions = {}) {
             // If task completed, auto-unblock dependent tasks
             if (newStatus === "done") {
                 // Find tasks blocked by this one
-                const q = query(
-                    collection(db, "tasks"),
-                    where("blockedByTaskId", "==", id)
-                );
+                const q = query(collection(db, "tasks"), where("blockedByTaskId", "==", id));
                 const blockedTasks = await getDocs(q);
 
                 for (const blockedDoc of blockedTasks.docs) {

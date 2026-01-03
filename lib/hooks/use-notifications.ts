@@ -55,7 +55,7 @@ export interface Notification {
     read: boolean;
     orgId: string;
     userId: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     createdAt: Date;
 }
 
@@ -70,15 +70,17 @@ const convertTimestamp = (ts: Timestamp | Date | undefined): Date => {
  * Hook to manage user notifications with real-time updates
  */
 export function useNotifications() {
-    const { profile } = useUserProfile();
+    const { profile, loading: profileLoading } = useUserProfile();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
 
     // Real-time subscription to user's notifications
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.uid || !profile?.orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 
@@ -117,7 +119,7 @@ export function useNotifications() {
         );
 
         return () => unsubscribe();
-    }, [profile?.uid, profile?.orgId]);
+    }, [profile?.uid, profile?.orgId, profileLoading]);
 
     // Mark a single notification as read
     const markAsRead = useCallback(async (notificationId: string): Promise<void> => {
@@ -160,7 +162,7 @@ export async function createNotification(data: {
     link?: string;
     orgId: string;
     userId: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }): Promise<string> {
     const docRef = await addDoc(collection(db, "notifications"), {
         ...data,
@@ -180,7 +182,7 @@ export async function createBulkNotifications(
         title: string;
         message: string;
         link?: string;
-        metadata?: Record<string, any>;
+        metadata?: Record<string, unknown>;
     }
 ): Promise<void> {
     const batch = writeBatch(db);

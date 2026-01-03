@@ -26,19 +26,20 @@ export interface UserProfile {
 }
 
 export function useUserProfile() {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const { isImpersonating, impersonatedOrgId, originalRole } = useImpersonation();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchProfile() {
+            if (authLoading) return;
+
             if (!user) {
                 setProfile(null);
                 setLoading(false);
                 return;
             }
-
             try {
                 const docRef = doc(db, "users", user.uid);
                 console.log("Fetching user profile...");
@@ -117,11 +118,12 @@ export function useUserProfile() {
         }
 
         fetchProfile();
-    }, [user, isImpersonating, impersonatedOrgId]);
+    }, [user, authLoading, isImpersonating, impersonatedOrgId]);
 
     // Sync Admin to Staff Collection (only if NOT impersonating)
     useEffect(() => {
         async function syncAdminToStaff() {
+            if (authLoading) return;
             if (!user || !profile || (profile.role !== "admin" && profile.role !== "superadmin")) return;
             // Don't sync when impersonating
             if (isImpersonating) return;
@@ -157,7 +159,7 @@ export function useUserProfile() {
         if (profile) {
             syncAdminToStaff();
         }
-    }, [user, profile, isImpersonating]);
+    }, [user, profile, isImpersonating, authLoading]);
 
     return { profile, loading };
 }

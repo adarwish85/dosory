@@ -14,7 +14,6 @@ import {
     addDoc,
     updateDoc,
     deleteDoc,
-    getDoc,
     setDoc,
     serverTimestamp,
     QueryConstraint,
@@ -35,16 +34,18 @@ interface UseStaffOptions {
 }
 
 export function useStaff(options: UseStaffOptions = {}) {
-    const { status = "all", roleId, departmentId } = options;
-    const { profile } = useUserProfile();
+    const { status = "all", roleId } = options;
+    const { profile, loading: profileLoading } = useUserProfile();
     const [staff, setStaff] = useState<Staff[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.orgId) {
             console.log("useStaff: No orgId available, skipping fetch");
-            setLoading(false);
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 
@@ -86,7 +87,7 @@ export function useStaff(options: UseStaffOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, roleId]);
+    }, [profile?.orgId, profileLoading, status, roleId]);
 
     const createStaff = useCallback(
         async (data: StaffFormData): Promise<string> => {
@@ -111,7 +112,7 @@ export function useStaff(options: UseStaffOptions = {}) {
 
             return result.staffId;
         },
-        [profile?.orgId]
+        [profile]
     );
 
     const updateStaff = useCallback(async (id: string, data: Partial<StaffFormData>): Promise<void> => {
@@ -155,13 +156,15 @@ export function useStaff(options: UseStaffOptions = {}) {
 // ============================================
 
 export function useRoles() {
-    const { profile } = useUserProfile();
+    const { profile, loading: profileLoading } = useUserProfile();
     const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 
@@ -177,7 +180,7 @@ export function useRoles() {
         });
 
         return () => unsubscribe();
-    }, [profile?.orgId]);
+    }, [profile?.orgId, profileLoading]);
 
     const createRole = useCallback(
         async (data: RoleFormData): Promise<string> => {
@@ -192,7 +195,7 @@ export function useRoles() {
 
             return docRef.id;
         },
-        [profile?.orgId]
+        [profile]
     );
 
     const updateRole = useCallback(async (id: string, data: Partial<RoleFormData>): Promise<void> => {
@@ -214,13 +217,15 @@ export function useRoles() {
 // ============================================
 
 export function useTaxes() {
-    const { profile } = useUserProfile();
+    const { profile, loading: profileLoading } = useUserProfile();
     const [taxes, setTaxes] = useState<Tax[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 
@@ -236,7 +241,7 @@ export function useTaxes() {
         });
 
         return () => unsubscribe();
-    }, [profile?.orgId]);
+    }, [profile?.orgId, profileLoading]);
 
     const createTax = useCallback(
         async (name: string, rate: number, isDefault = false): Promise<string> => {
@@ -253,7 +258,7 @@ export function useTaxes() {
 
             return docRef.id;
         },
-        [profile?.orgId]
+        [profile]
     );
 
     const updateTax = useCallback(async (id: string, data: Partial<Tax>): Promise<void> => {
@@ -275,13 +280,15 @@ export function useTaxes() {
 // ============================================
 
 export function useCurrencies() {
-    const { profile } = useUserProfile();
+    const { profile, loading: profileLoading } = useUserProfile();
     const [currencies, setCurrencies] = useState<Currency[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 
@@ -297,7 +304,7 @@ export function useCurrencies() {
         });
 
         return () => unsubscribe();
-    }, [profile?.orgId]);
+    }, [profile?.orgId, profileLoading]);
 
     const createCurrency = useCallback(
         async (data: Omit<Currency, "id" | "orgId" | "createdAt" | "updatedAt">): Promise<string> => {
@@ -312,7 +319,7 @@ export function useCurrencies() {
 
             return docRef.id;
         },
-        [profile?.orgId]
+        [profile]
     );
 
     return { currencies, loading, createCurrency };
@@ -323,13 +330,15 @@ export function useCurrencies() {
 // ============================================
 
 export function usePaymentModes() {
-    const { profile } = useUserProfile();
+    const { profile, loading: profileLoading } = useUserProfile();
     const [paymentModes, setPaymentModes] = useState<PaymentMode[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 
@@ -345,7 +354,7 @@ export function usePaymentModes() {
         });
 
         return () => unsubscribe();
-    }, [profile?.orgId]);
+    }, [profile?.orgId, profileLoading]);
 
     const createPaymentMode = useCallback(
         async (name: string, description?: string): Promise<string> => {
@@ -363,7 +372,7 @@ export function usePaymentModes() {
 
             return docRef.id;
         },
-        [profile?.orgId]
+        [profile]
     );
 
     return { paymentModes, loading, createPaymentMode };
@@ -374,13 +383,15 @@ export function usePaymentModes() {
 // ============================================
 
 export function useCustomFields(fieldTo?: string) {
-    const { profile } = useUserProfile();
+    const { profile, loading: profileLoading } = useUserProfile();
     const [customFields, setCustomFields] = useState<CustomField[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 
@@ -404,7 +415,7 @@ export function useCustomFields(fieldTo?: string) {
         });
 
         return () => unsubscribe();
-    }, [profile?.orgId, fieldTo]);
+    }, [profile?.orgId, fieldTo, profileLoading]);
 
     const createCustomField = useCallback(
         async (
@@ -433,7 +444,7 @@ export function useCustomFields(fieldTo?: string) {
 
             return docRef.id;
         },
-        [profile?.orgId, customFields]
+        [profile, customFields]
     );
 
     const updateCustomField = useCallback(async (id: string, data: Partial<CustomField>): Promise<void> => {
@@ -455,13 +466,15 @@ export function useCustomFields(fieldTo?: string) {
 // ============================================
 
 export function useEmailTemplates(type?: string) {
-    const { profile } = useUserProfile();
+    const { profile, loading: profileLoading } = useUserProfile();
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 
@@ -485,7 +498,7 @@ export function useEmailTemplates(type?: string) {
         });
 
         return () => unsubscribe();
-    }, [profile?.orgId, type]);
+    }, [profile?.orgId, type, profileLoading]);
 
     const createTemplate = useCallback(
         async (data: Omit<EmailTemplate, "id" | "orgId" | "createdAt" | "updatedAt" | "slug">): Promise<string> => {
@@ -506,7 +519,7 @@ export function useEmailTemplates(type?: string) {
 
             return docRef.id;
         },
-        [profile?.orgId]
+        [profile]
     );
 
     const updateTemplate = useCallback(async (id: string, data: Partial<EmailTemplate>): Promise<void> => {
@@ -528,13 +541,15 @@ export function useEmailTemplates(type?: string) {
 // ============================================
 
 export function useOrganization() {
-    const { profile } = useUserProfile();
+    const { profile, loading: profileLoading } = useUserProfile();
     const [organization, setOrganization] = useState<Organization | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 
@@ -548,7 +563,7 @@ export function useOrganization() {
         });
 
         return () => unsubscribe();
-    }, [profile?.orgId]);
+    }, [profile?.orgId, profileLoading]);
 
     const updateOrganization = useCallback(
         async (data: Partial<Organization>): Promise<void> => {
@@ -563,7 +578,7 @@ export function useOrganization() {
                 { merge: true }
             );
         },
-        [profile?.orgId]
+        [profile]
     );
 
     return { organization, loading, updateOrganization };
