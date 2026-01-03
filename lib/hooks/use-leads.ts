@@ -237,17 +237,31 @@ export function useLeads(options: UseLeadsOptions = {}) {
         async (data: LeadFormData): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
 
-            const docRef = await addDoc(collection(db, "leads"), {
-                ...data,
-                name_lower: data.name.toLowerCase(),
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                createdBy: profile.uid,
+            const { getAuth } = await import("firebase/auth");
+            const auth = getAuth();
+            const token = await auth.currentUser?.getIdToken();
+
+            if (!token) throw new Error("Not authenticated");
+
+            const response = await fetch("/api/leads", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(data),
             });
 
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to create lead");
+            }
+
+            const newId = result.id;
+
             // Optimistic Update
-            setLeads((prev) => [{ id: docRef.id, ...data, name_lower: data.name.toLowerCase() } as Lead, ...prev]);
+            setLeads((prev) => [{ id: newId, ...data, name_lower: data.name.toLowerCase() } as Lead, ...prev]);
             setTotalRecords((prev) => prev + 1);
             setLeadStats((prev) => ({
                 ...prev,
@@ -264,11 +278,11 @@ export function useLeads(options: UseLeadsOptions = {}) {
                     link: "/dashboard/leads",
                     orgId: profile.orgId,
                     userId: data.assignedTo,
-                    metadata: { leadId: docRef.id },
+                    metadata: { leadId: newId },
                 }).catch(console.error);
             }
 
-            return docRef.id;
+            return newId;
         },
         [profile?.orgId, profile?.uid]
     );
@@ -280,11 +294,6 @@ export function useLeads(options: UseLeadsOptions = {}) {
             // If assignment is changing, we need to check if it's new
             let isNewAssignment = false;
             if (data.assignedTo !== undefined) {
-                // Optimization: We could rely on UI passing correct data, but safely we should check old doc?
-                // For now, let's assume if data.assignedTo is passed and not null, we notify if it's not me.
-                // Ideally we check if it CHANGED.
-                // Let's fetch the doc to be safe, though it adds latency.
-                // It's an important action, so safety > micro-perf.
                 const oldDoc = await getDoc(doc(db, "leads", id));
                 if (oldDoc.exists()) {
                     const oldData = oldDoc.data() as Lead;
@@ -294,15 +303,27 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 }
             }
 
-            await updateDoc(doc(db, "leads", id), {
-                ...data,
-                ...(data.name ? { name_lower: data.name.toLowerCase() } : {}),
-                updatedAt: serverTimestamp(),
+            const { getAuth } = await import("firebase/auth");
+            const auth = getAuth();
+            const token = await auth.currentUser?.getIdToken();
+
+            if (!token) throw new Error("Not authenticated");
+
+            const response = await fetch(`/api/leads/${id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(data),
             });
 
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.error || "Failed to update lead");
+            }
+
             if (isNewAssignment && data.assignedTo && data.assignedTo !== profile.uid) {
-                // Fetch name if not in data? We have name in data usually for updates? Not always.
-                // We can use generic message or fetch name.
                 createNotification({
                     type: "lead.status_changed", // or lead.assigned
                     title: "Lead Assigned",
@@ -319,6 +340,12 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
     const deleteLead = useCallback(
         async (id: string): Promise<void> => {
+            const { getAuth } = await import("firebase/auth");
+            const auth = getAuth();
+            const token = await auth.currentUser?.getIdToken();
+
+            if (!token) throw new Error("Not authenticated");
+
             // Optimistic Update
             const leadToDelete = leads.find((l) => l.id === id);
             const value = leadToDelete?.value || 0;
@@ -331,7 +358,18 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 totalValue: Math.max(0, prev.totalValue - value),
             }));
 
-            await deleteDoc(doc(db, "leads", id));
+            const response = await fetch(`/api/leads/${id}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                const result = await response.json();
+                // Revert optimistic update? For now just throw.
+                throw new Error(result.error || "Failed to delete lead");
+            }
         },
         [leads]
     );
@@ -339,6 +377,12 @@ export function useLeads(options: UseLeadsOptions = {}) {
     const bulkDeleteLeads = useCallback(
         async (ids: string[]): Promise<void> => {
             if (!ids.length) return;
+
+            const { getAuth } = await import("firebase/auth");
+            const auth = getAuth();
+            const token = await auth.currentUser?.getIdToken();
+
+            if (!token) throw new Error("Not authenticated");
 
             // Optimistic Update
             const leadsToDelete = leads.filter((l) => ids.includes(l.id));
@@ -352,15 +396,22 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 totalValue: Math.max(0, prev.totalValue - totalVal),
             }));
 
-            const batchSize = 500;
-            for (let i = 0; i < ids.length; i += batchSize) {
-                const batch = writeBatch(db);
-                const chunk = ids.slice(i, i + batchSize);
-                chunk.forEach((id) => {
-                    batch.delete(doc(db, "leads", id));
+            // Loop and delete individually via API
+            // Note: Ideally backend supports bulk delete, but this ensures entitlement checks per item
+            // or we add a bulk endpoint. For 500 items this is slow, but acceptable for MVP enforcement.
+            const deletePromises = ids.map(async (id) => {
+                const response = await fetch(`/api/leads/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 });
-                await batch.commit();
-            }
+                if (!response.ok) {
+                    console.error(`Failed to delete lead ${id}`);
+                }
+            });
+
+            await Promise.all(deletePromises);
         },
         [leads]
     );
@@ -659,7 +710,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
             await deleteDoc(doc(db, "leads", leadId));
             return customerRef.id;
         },
-        [profile?.orgId, profile?.uid]
+        [profile?.orgId, profile?.uid, profile?.email]
     );
 
     return {
