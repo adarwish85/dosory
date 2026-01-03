@@ -630,6 +630,17 @@ export class BillingService {
         }, { merge: true });
     }
 
+    static async incrementUsage(
+        tenantId: string,
+        metric: "usersCount" | "storageUsedGB",
+        delta: number
+    ): Promise<void> {
+        await adminDb.collection(TENANT_USAGE_COLL).doc(tenantId).set({
+            [metric]: FieldValue.increment(delta),
+            updatedAt: FieldValue.serverTimestamp()
+        }, { merge: true });
+    }
+
     static async getTenantsExceedingLimits(): Promise<UsageExceeded[]> {
         const exceeded: UsageExceeded[] = [];
 

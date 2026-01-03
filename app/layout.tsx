@@ -31,6 +31,11 @@ export const metadata: Metadata = {
     },
 };
 
+import { ImpersonationProvider } from "@/lib/contexts/ImpersonationContext";
+import { ImpersonationBanner } from "@/components/impersonation/ImpersonationBanner";
+
+// ... (existing imports, but wait, replace modifies a chunk)
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -40,7 +45,10 @@ export default function RootLayout({
         <html lang="en">
             <body className={`${urbanist.variable} ${geistMono.variable} antialiased font-sans`}>
                 <PlatformSettingsProvider>
-                    <AuthProvider>{children}</AuthProvider>
+                    <ImpersonationProvider>
+                        <ImpersonationBanner />
+                        <AuthProvider>{children}</AuthProvider>
+                    </ImpersonationProvider>
                     <Toaster richColors position="top-right" />
                 </PlatformSettingsProvider>
             </body>

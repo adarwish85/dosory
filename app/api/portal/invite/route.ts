@@ -1,30 +1,44 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { adminDb, adminAuth } from "@/lib/firebase-admin";
 import { headers } from "next/headers";
 import { sendPortalInviteEmail } from "@/lib/email"; // Placeholder
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
         const { customerId, contactId, modules } = await req.json();
 
         // 1. Auth Check
-        const headerList = await headers();
-        const idToken = headerList.get("Authorization")?.split("Bearer ")[1];
-        if (!idToken) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const { getAuthenticatedUser } = await import("@/lib/auth/getAuthenticatedUser");
+        const auth = await getAuthenticatedUser(req);
 
-        const decodedToken = await adminAuth.verifyIdToken(idToken);
-        const uid = decodedToken.uid;
-        const userDoc = await adminDb.collection("users").doc(uid).get();
-        const orgId = userDoc.data()?.orgId;
+        if (!auth.isAuthenticated || !auth.userId) {
+            return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.status || 401 });
+        }
+
+        let orgId = auth.orgId;
+
+        // If orgId not in token/context, try fetching from user doc
+        if (!orgId) {
+            const userDoc = await adminDb.collection("users").doc(auth.userId).get();
+            orgId = userDoc.data()?.orgId;
+        }
 
         if (!orgId) return NextResponse.json({ error: "Org not found" }, { status: 403 });
 
-        // 2. Check Subscription Capabilities
-        const subDoc = await adminDb.collection("subscriptions").doc(orgId).get();
-        const subscription = subDoc.data();
+        // 2. Check Entitlements
+        const { TenantEntitlements } = await import("@/lib/entitlements/tenantEntitlements");
 
-        if (!subscription?.capabilities?.clientPortal) {
-            return NextResponse.json({ error: "Client Portal is not enabled in your plan." }, { status: 403 });
+        // Ensure write access (blocks suspended/past_due)
+        await TenantEntitlements.ensureWriteAccess(orgId);
+
+        const hasPortalAccess = await TenantEntitlements.getFeature(orgId, "support", "customerPortal");
+
+        if (!hasPortalAccess) {
+            return NextResponse.json({
+                error: "Client Portal is not enabled in your plan.",
+                reason: "FEATURE_NOT_ENABLED",
+                upgradeHint: true
+            }, { status: 403 });
         }
 
         // 3. Verify Customer Ownership

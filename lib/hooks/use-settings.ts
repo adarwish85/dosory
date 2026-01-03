@@ -92,28 +92,52 @@ export function useStaff(options: UseStaffOptions = {}) {
         async (data: StaffFormData): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
 
-            const docRef = await addDoc(collection(db, "staff"), {
-                ...data,
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                createdBy: profile.uid,
+            const response = await fetch("/api/admin/create-staff", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    ...data,
+                    orgId: profile.orgId,
+                }),
             });
 
-            return docRef.id;
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to create staff member");
+            }
+
+            return result.staffId;
         },
-        [profile?.orgId, profile?.uid]
+        [profile?.orgId]
     );
 
     const updateStaff = useCallback(async (id: string, data: Partial<StaffFormData>): Promise<void> => {
-        await updateDoc(doc(db, "staff", id), {
-            ...data,
-            updatedAt: serverTimestamp(),
+        const response = await fetch(`/api/admin/staff/${id}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
         });
+
+        if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.error || "Failed to update staff member");
+        }
     }, []);
 
     const deleteStaff = useCallback(async (id: string): Promise<void> => {
-        await deleteDoc(doc(db, "staff", id));
+        const response = await fetch(`/api/admin/staff/${id}`, {
+            method: "DELETE",
+        });
+
+        if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.error || "Failed to delete staff member");
+        }
     }, []);
 
     return {

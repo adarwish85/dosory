@@ -7,9 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tenant } from "@/lib/types/super-admin";
-import { ArrowLeft, Building2, User, Calendar, Globe, Palette } from "lucide-react";
+import { ArrowLeft, Building2, User, Calendar, Globe, Palette, LockKeyhole } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
+import { useImpersonation } from "@/lib/contexts/ImpersonationContext";
 import { toast } from "sonner";
 import { saFetch, saPatch } from "@/lib/api/saFetch";
 
@@ -23,10 +24,12 @@ const statusColors: Record<string, string> = {
 export default function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const { user } = useAuth();
+    const { startImpersonation } = useImpersonation();
     const [tenant, setTenant] = useState<Tenant | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [updating, setUpdating] = useState(false);
+    const [impersonating, setImpersonating] = useState(false);
 
     useEffect(() => {
         const fetchTenant = async () => {
@@ -53,6 +56,31 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
             toast.error("Failed to update status");
         } finally {
             setUpdating(false);
+        }
+    };
+
+    const handleImpersonate = async () => {
+        if (!tenant) return;
+        setImpersonating(true);
+        try {
+            // Start session via API
+            const result = await saFetch<{ sessionId: string }>(`/api/sa/impersonation/start`, {
+                method: "POST",
+                body: JSON.stringify({
+                    tenantId: id,
+                    reason: "Support investigation from SA Console",
+                    // userId: tenant.ownerUserId // Optional: impersonate specific owner?
+                })
+            });
+
+            toast.info("Starting impersonation session...");
+
+            // Switch context
+            startImpersonation(result.sessionId, id);
+
+        } catch (e: unknown) {
+            toast.error("Failed to start impersonation: " + ((e as Error).message || "Unknown error"));
+            setImpersonating(false);
         }
     };
 
@@ -169,9 +197,18 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                         <Separator />
                         <div className="space-y-2">
                             <p className="text-sm font-medium">Impersonation</p>
-                            <Button variant="secondary" disabled>
-                                Login as Tenant Admin
+                            <Button
+                                variant="secondary"
+                                disabled={impersonating || tenant.status === "cancelled"}
+                                onClick={handleImpersonate}
+                                className="w-full sm:w-auto"
+                            >
+                                <LockKeyhole className="mr-2 h-4 w-4" />
+                                {impersonating ? "Starting Session..." : "Impersonate Tenant Admin"}
                             </Button>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Caution: You will be logged in as an admin of this tenant. All actions are audited.
+                            </p>
                         </div>
                     </CardContent>
                 </Card>

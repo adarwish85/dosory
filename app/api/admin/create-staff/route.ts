@@ -19,9 +19,33 @@ export async function POST(request: NextRequest) {
             roleId,
             permissions,
             orgId,
-            createdBy,
-            sendWelcomeEmail = true,
         } = body;
+
+        const { sendWelcomeEmail = true } = body;
+
+        // 1. Auth & Impersonation Check
+        const { getAuthenticatedUser } = await import("@/lib/auth/getAuthenticatedUser");
+        const auth = await getAuthenticatedUser(request);
+
+        if (!auth.isAuthenticated || !auth.userId) {
+            return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.status || 401 });
+        }
+
+        // Enforce orgId match if user belongs to an org (unless super admin context)
+        // If impersonating, auth.orgId is the target tenant.
+        if (auth.orgId && auth.orgId !== orgId) {
+            return NextResponse.json({ error: "Organization mismatch" }, { status: 403 });
+        }
+
+        // If not impersonating and not super admin, we trust auth.orgId
+        // But wait, this is /api/admin/*, implying it's for the Tenant Admin.
+        // So standard auth applies.
+
+        // Block specific actions for Support Agents if needed? 
+        // For now, allow.
+
+        // Override createdBy with the actual actor
+        const actualCreatedBy = auth.actor ? `SA:${auth.actor.email}` : auth.userId;
 
         // Validate required fields
         if (!email || !firstName || !lastName || !orgId) {
@@ -32,14 +56,14 @@ export async function POST(request: NextRequest) {
         }
 
         // Check Subscription Quota
-        const { checkQuota } = await import("@/lib/quotas");
-        const quotaCheck = await checkQuota(orgId, "staff");
-        if (!quotaCheck.allowed) {
+        const { TenantEntitlements } = await import("@/lib/entitlements/tenantEntitlements");
+        try {
+            await TenantEntitlements.enforceLimit(orgId, "maxUsers");
+        } catch (error: any) {
             return NextResponse.json(
                 {
-                    error:
-                        quotaCheck.error ||
-                        "Staff limit reached for your current plan. Please upgrade to add more staff.",
+                    error: "User limit exceeded. Please upgrade your plan or add more seats.",
+                    code: "USER_LIMIT_EXCEEDED"
                 },
                 { status: 403 }
             );
@@ -109,8 +133,12 @@ export async function POST(request: NextRequest) {
                 status: "active",
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                createdBy: createdBy || null,
+                createdBy: actualCreatedBy || null,
             });
+
+        // Increment usage
+        const { BillingService } = await import("@/lib/services/billing-service");
+        await BillingService.incrementUsage(orgId, "usersCount", 1);
 
         // Send welcome email if requested
         let emailSent = false;
