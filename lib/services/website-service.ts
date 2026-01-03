@@ -1,18 +1,37 @@
+/**
+ * Website Service - CLIENT-SIDE
+ * 
+ * Uses Firebase Client SDK (not Admin SDK)
+ * Audit logging is handled by calling the API route, not directly importing AuditService
+ */
 
 import {
     collection, doc, getDoc, getDocs, setDoc,
-    updateDoc, deleteDoc, query, where, orderBy,
+    updateDoc, deleteDoc, query, orderBy,
     serverTimestamp, addDoc, writeBatch
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Website, WebsitePage, WebsiteSection, WebsiteVersion, WebsiteAsset } from "@/lib/types/website";
-import { AuditService } from "./audit-service";
 
 const WEBSITES_COLL = "websites";
 const PAGES_COLL = "pages";
 const SECTIONS_COLL = "sections";
 const ASSETS_COLL = "assets";
 const VERSIONS_COLL = "website_versions";
+
+// Helper to log audit (calls API instead of importing server-side AuditService)
+async function logAudit(action: string, targetType: string, targetId: string, userId: string, payload: Record<string, any> = {}) {
+    try {
+        // Fire-and-forget audit log via API
+        fetch("/api/sa/audit-log", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action, targetType, targetId, userId, payload })
+        }).catch(() => { }); // Silently fail, don't block main operation
+    } catch {
+        // Audit logging should never block the primary operation
+    }
+}
 
 export class WebsiteService {
 
@@ -67,7 +86,7 @@ export class WebsiteService {
             createdBy: userId
         });
 
-        await AuditService.log("create_page", "page", docRef.id, userId, { title: data.title });
+        logAudit("create_page", "page", docRef.id, userId, { title: data.title });
 
         return docRef.id;
     }
@@ -149,7 +168,7 @@ export class WebsiteService {
             description
         };
 
-        await addDoc(collection(db, VERSIONS_COLL), versionData);
+        const versionRef = await addDoc(collection(db, VERSIONS_COLL), versionData);
 
         // 2. Mark Page as Published
         await this.updatePage(websiteId, pageId, {
@@ -157,7 +176,7 @@ export class WebsiteService {
             publishedAt: serverTimestamp() as any
         });
 
-        await AuditService.log("publish_page", "page", pageId, userId, { versionId: "new" });
+        logAudit("publish_page", "page", pageId, userId, { versionId: versionRef.id });
     }
 
     // --- Asset Operations ---
@@ -180,7 +199,7 @@ export class WebsiteService {
             uploadedBy: userId
         });
 
-        await AuditService.log("upload_asset", "asset", docRef.id, userId, { name: asset.fileName });
+        logAudit("upload_asset", "asset", docRef.id, userId, { name: asset.fileName });
         return docRef.id;
     }
 }
