@@ -138,41 +138,81 @@ export function useCustomers(options: UseCustomersOptions = {}) {
         async (data: CustomerFormData): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
 
-            const docRef = await addDoc(collection(db, "customers"), {
-                ...data,
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                createdBy: profile.uid,
+            // Get Firebase ID token for API auth
+            const { getAuth } = await import("firebase/auth");
+            const auth = getAuth();
+            const token = await auth.currentUser?.getIdToken();
+
+            if (!token) throw new Error("Not authenticated");
+
+            const response = await fetch("/api/customers", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    ...data,
+                    orgId: profile.orgId,
+                }),
             });
 
-            // Trigger onboarding step completion for first record
-            try {
-                const onboardingRef = doc(db, "users", profile.uid, "onboarding", "state");
-                await updateDoc(onboardingRef, { "steps.firstRecord": true });
-            } catch (e) {
-                // Silently fail if onboarding doesn't exist
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to create customer");
             }
 
             // Log activity
             if (logActivity) {
-                await logActivity("customer_created", `Created customer ${data.company}`, docRef.id, "customer");
+                await logActivity("customer_created", `Created customer ${data.company}`, result.id, "customer");
             }
 
-            return docRef.id;
+            return result.id;
         },
-        [profile?.orgId, profile?.uid, logActivity]
+        [profile?.orgId, logActivity]
     );
 
     const updateCustomer = useCallback(async (id: string, data: Partial<CustomerFormData>): Promise<void> => {
-        await updateDoc(doc(db, "customers", id), {
-            ...data,
-            updatedAt: serverTimestamp(),
+        const { getAuth } = await import("firebase/auth");
+        const auth = getAuth();
+        const token = await auth.currentUser?.getIdToken();
+
+        if (!token) throw new Error("Not authenticated");
+
+        const response = await fetch(`/api/customers/${id}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
         });
+
+        if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.error || "Failed to update customer");
+        }
     }, []);
 
     const deleteCustomer = useCallback(async (id: string): Promise<void> => {
-        await deleteDoc(doc(db, "customers", id));
+        const { getAuth } = await import("firebase/auth");
+        const auth = getAuth();
+        const token = await auth.currentUser?.getIdToken();
+
+        if (!token) throw new Error("Not authenticated");
+
+        const response = await fetch(`/api/customers/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.error || "Failed to delete customer");
+        }
     }, []);
 
     return {
@@ -284,28 +324,72 @@ export function useContacts(options: UseContactsOptions = {}) {
         async (data: ContactFormData): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
 
-            const docRef = await addDoc(collection(db, "contacts"), {
-                ...data,
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                createdBy: profile.uid,
+            const { getAuth } = await import("firebase/auth");
+            const auth = getAuth();
+            const token = await auth.currentUser?.getIdToken();
+
+            if (!token) throw new Error("Not authenticated");
+
+            const response = await fetch("/api/contacts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify(data),
             });
 
-            return docRef.id;
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to create contact");
+            }
+
+            return result.id;
         },
-        [profile?.orgId, profile?.uid]
+        [profile?.orgId]
     );
 
     const updateContact = useCallback(async (id: string, data: Partial<ContactFormData>): Promise<void> => {
-        await updateDoc(doc(db, "contacts", id), {
-            ...data,
-            updatedAt: serverTimestamp(),
+        const { getAuth } = await import("firebase/auth");
+        const auth = getAuth();
+        const token = await auth.currentUser?.getIdToken();
+
+        if (!token) throw new Error("Not authenticated");
+
+        const response = await fetch(`/api/contacts/${id}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
         });
+
+        if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.error || "Failed to update contact");
+        }
     }, []);
 
     const deleteContact = useCallback(async (id: string): Promise<void> => {
-        await deleteDoc(doc(db, "contacts", id));
+        const { getAuth } = await import("firebase/auth");
+        const auth = getAuth();
+        const token = await auth.currentUser?.getIdToken();
+
+        if (!token) throw new Error("Not authenticated");
+
+        const response = await fetch(`/api/contacts/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.error || "Failed to delete contact");
+        }
     }, []);
 
     return {
