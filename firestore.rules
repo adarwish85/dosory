@@ -4,476 +4,95 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // ============================================
-    // HELPER FUNCTIONS
+    // SUPER ADMIN COLLECTIONS - STRICT ACCESS
     // ============================================
     
-    // Get user data - SAFE ACCESS
-    function getUserData() {
-      let userDoc = request.auth != null ? get(/databases/$(database)/documents/users/$(request.auth.uid)) : null;
-      return userDoc != null ? userDoc.data : {};
+    // Super Admin Audit Logs - IMMUTABLE
+    // Only create and read allowed, no update or delete
+    match /sa_audit_logs/{logId} {
+      allow create: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
+      allow read: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
+      // Audit logs are immutable - no updates or deletes
+      allow update, delete: if false;
     }
     
-    // Check if user belongs to the org
-    function belongsToOrg(orgId) {
-      let data = getUserData();
-      let userOrgId = "orgId" in data ? data.orgId : ("organizationId" in data ? data.organizationId : null);
-      return request.auth != null && userOrgId != null && userOrgId == orgId;
-    }
-
-    // Check if user is the document owner
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+    // SA Plans - Super Admin only
+    match /sa_plans/{planId} {
+      allow read: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
+      allow write: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
     }
     
-    // Check if user is superadmin (platform-level access)
-    function isSuperAdmin() {
-      let data = getUserData();
-      return request.auth != null && "role" in data && data.role == "superadmin";
+    // SA Modules - Super Admin only
+    match /sa_modules/{moduleId} {
+      allow read: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
+      allow write: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
     }
     
-    // Check if user is admin of their org
-    function isOrgAdmin(orgId) {
-      let data = getUserData();
-      return belongsToOrg(orgId) && "role" in data && data.role in ["owner", "admin", "superadmin"];
+    // SA Support Issues - Super Admin only
+    match /sa_support_issues/{issueId} {
+      allow read, write: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
     }
     
-    // Validate orgId is present on create
-    function hasValidOrgId() {
-      return request.resource.data.orgId != null && request.resource.data.orgId != "";
-    }
-    
-    // Check org access for read operations (resource exists)
-    function canReadByOrg() {
-      return belongsToOrg(resource.data.orgId) || isSuperAdmin();
-    }
-    
-    // Check org access for create operations
-    function canCreateByOrg() {
-      return hasValidOrgId() && (belongsToOrg(request.resource.data.orgId) || isSuperAdmin());
-    }
-    
-    // Check org access for update/delete operations
-    function canModifyByOrg() {
-      return belongsToOrg(resource.data.orgId) || isSuperAdmin();
-    }
-
     // ============================================
-    // RBAC HELPER FUNCTIONS (V2)
-    // ============================================
-
-    // Fetch the user's assigned role document
-    function getRole(orgId, roleId) {
-        return get(/databases/$(database)/documents/organizations/$(orgId)/roles/$(roleId)).data;
-    }
-
-    // Check if user has a specific permission
-    // FALLBACK: If user has 'admin' or 'owner' string role, allow everything (Migration Phase)
-    function hasPermission(orgId, permission) {
-        let userData = getUserData();
-        // 1. Superadmin Override
-        if (userData.role == 'superadmin') return true;
-        
-        // 2. Organization Admin Override (Legacy/Hybrid)
-        if (userData.orgId == orgId && (userData.role == 'admin' || userData.role == 'owner')) return true;
-
-        // 3. RBAC Check
-        // Ensure user belongs to org
-        if (userData.orgId != orgId) return false;
-        
-        // Get Role ID (assume stored on user, or default to 'staff' if missing? No, deny if missing)
-        // In V2 migration, we might not have roleId yet. 
-        if (!('roleId' in userData)) return false; 
-        
-        let role = getRole(orgId, userData.roleId);
-        return role.permissions.hasAny([permission]); 
-    }
-
-    // Helper to check permission with "global" or "own" scope
-    // For now, simple check.
-    function can(permission) {
-        let userData = getUserData();
-        let orgId = userData.orgId;
-        // Optimization: Pass orgId to helper
-        return hasPermission(orgId, permission);
-    }
-    
-    // Users: Users can read/write their own profile, superadmins can read all
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if isSuperAdmin();
-      
-      // Allow access to subcollections (e.g. onboarding)
-      match /{document=**} {
-        allow read, write: if request.auth != null;
-      }
-    }
-
-    // Staff
-    match /staff/{staffId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // ============================================
-    // ORGANIZATION MANAGEMENT
+    // MULTI-TENANT DATA COLLECTIONS
     // ============================================
     
-    // Organizations: Members can read/update, superadmins have full access
+    // Organizations (Tenants) - Super Admin can read/write all
+    // Tenant members can only access their own org
     match /organizations/{orgId} {
-      // Allow read for all users (including unauthenticated for subdomain check during signup)
-      allow read: if true;
-      // Allow write only if org admin
-      // Allow create if user is listed as owner OR if they meet the old check
-      allow create: if (request.auth != null && request.resource.data.ownerId == request.auth.uid) || canCreateByOrg();
-      // Allow update if user is the org owner OR org admin
-      allow update: if (request.auth != null && resource.data.ownerId == request.auth.uid) || isOrgAdmin(orgId) || isSuperAdmin();
-      allow delete: if isSuperAdmin();
-
-      match /settings/{settingId} {
-        allow read: if belongsToOrg(orgId) || isSuperAdmin();
-        allow write: if isOrgAdmin(orgId) || isSuperAdmin();
-      }
-
-      match /branding/{fileId} {
-        allow read: if true; // Public read for logos/branding
-        allow write: if isOrgAdmin(orgId) || isSuperAdmin();
-      }
-
-      // User-specific settings (dashboard layout, preferences)
-      // Users can read/write their own settings within their org
-      match /userSettings/{userId} {
-        allow read, write: if request.auth != null && (
-          request.auth.uid == userId || 
-          (belongsToOrg(orgId) && request.auth.uid == userId)
-        );
-      }
+      // Super Admins have full access
+      allow read, write: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
       
-      // Counters (for invoice numbers etc)
-      match /counters/{counterId} {
-        allow read: if belongsToOrg(orgId) || isSuperAdmin();
-        allow write: if belongsToOrg(orgId) || isSuperAdmin(); // Allow write for atomic increments
-      }
-
-      // Organization activity feed (audit log)
-      match /activities/{activityId} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null;
-        allow update, delete: if isOrgAdmin(orgId) || isSuperAdmin();
-      }
-
-      // Allow access to other subcollections (admin access)
-      match /{document=**} {
-        allow read: if belongsToOrg(orgId) || isSuperAdmin();
-        allow write: if isOrgAdmin(orgId) || isSuperAdmin();
-      }
-    }
-    
-    // Platform subscriptions (superadmin only)
-    match /platformSubscriptions/{subId} {
-      allow read, write: if isSuperAdmin();
-    }
-
-    // ============================================
-    // CRM - CUSTOMERS & LEADS
-    // ============================================
-    
-    // Customers
-    match /customers/{customerId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
+      // Org members can read their own organization
+      allow read: if request.auth != null 
+        && request.auth.uid in resource.data.memberIds;
       
-      // Customer contacts (subcollection) - may not have orgId
-      match /contacts/{contactId} {
-        allow read, write: if request.auth != null;
-      }
-
-      // Customer Notes (subcollection) - may not have orgId
-      match /notes/{noteId} {
-        allow read, write: if request.auth != null;
-      }
+      // Org admins can update their organization
+      allow update: if request.auth != null 
+        && request.auth.uid == resource.data.ownerId;
+    }
+    
+    // Global Users - Super Admin can read/write all
+    match /users/{userId} {
+      // Super Admins have full access
+      allow read, write: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
       
-      // Other customer subcollections
-      match /{subcollection}/{docId} {
-        allow read, write: if request.auth != null;
-      }
+      // Users can read and update their own profile
+      allow read, update: if request.auth != null 
+        && request.auth.uid == userId;
     }
     
-    // Legacy clients collection
-    match /clients/{clientId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
+    // ============================================
+    // TENANT-SCOPED COLLECTIONS
+    // ============================================
+    
+    // Pattern for tenant-scoped data
+    // Usage: /tenantData/{orgId}/students/{studentId}
+    match /tenantData/{orgId}/{collection}/{docId} {
+      // Super Admins have full access to all tenant data
+      allow read, write: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
       
-      match /contacts/{contactId} {
-        allow read: if canReadByOrg();
-        allow create: if canCreateByOrg();
-        allow update, delete: if canModifyByOrg();
-      }
+      // Tenant members can access their own tenant's data
+      allow read, write: if request.auth != null 
+        && exists(/databases/$(database)/documents/organizations/$(orgId))
+        && request.auth.uid in get(/databases/$(database)/documents/organizations/$(orgId)).data.memberIds;
     }
     
-    // Leads
-    match /leads/{leadId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-      
-      // Lead Notes (subcollection) - notes don't have orgId, so auth-only check
-      // Access is implicitly controlled by parent lead access
-      match /notes/{noteId} {
-        allow read, write: if request.auth != null;
-      }
-      
-      // Lead Reminders (subcollection)
-      match /reminders/{reminderId} {
-        allow read, write: if request.auth != null;
-      }
-      
-      // Other lead subcollections (attachments, etc.)
-      match /{subcollection}/{docId} {
-        allow read, write: if request.auth != null;
-      }
-    }
-
-    // Lead Notes
-    match /leadNotes/{noteId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Lead Reminders
-    match /leadReminders/{reminderId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Lead Attachments
-    match /leadAttachments/{attachmentId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Lead Files
-    match /leadFiles/{fileId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
     // ============================================
-    // SALES - INVOICES, ESTIMATES, PROPOSALS
+    // DEFAULT: DENY ALL
     // ============================================
     
-    // Invoices
-    match /invoices/{invoiceId} {
-      allow read: if canReadByOrg();
-      // Allow create by org members (for drafting)
-      allow create: if canCreateByOrg();
-      // Update restrictions: 
-      // 1. Cannot change 'amountPaid' directly (must use API)
-      // 2. Cannot change 'status' to/from 'paid' directly
-      allow update: if canModifyByOrg() 
-        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['amountPaid', 'paymentIds']))
-        && (request.resource.data.status == resource.data.status || resource.data.status == 'draft');
-        
-      allow delete: if canModifyByOrg() && resource.data.status == 'draft';
-    }
-
-    // Payments
-    match /payments/{paymentId} {
-      allow read: if canReadByOrg();
-      // Block ALL direct creates/updates from client. Must use 'processPayment' API.
-      allow create, update, delete: if false; 
-    }
-
-    // Expenses
-    match /expenses/{expenseId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Expense Categories
-    match /expenseCategories/{categoryId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Taxes
-    match /taxes/{taxId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Notifications
-    match /notifications/{notificationId} {
-      // Notifications might need user-specific access too, but org-based is a good baseline
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // ============================================
-    // KNOWLEDGE BASE
-    // ============================================
-
-    // Knowledge Base Groups/Categories
-    match /knowledgeGroups/{groupId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Knowledge Base Articles
-    match /knowledgeArticles/{articleId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // ============================================
-    // MESSAGING
-    // ============================================
-
-    // Conversations
-    match /conversations/{conversationId} {
-      allow read: if request.auth != null && request.auth.uid in resource.data.participants;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && request.auth.uid in resource.data.participants;
-      allow delete: if false; // Don't allow deleting conversations
-
-      // Messages subcollection
-      match /messages/{messageId} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null;
-        allow update, delete: if false;
-      }
-    }
-
-    // Departments
-    match /departments/{departmentId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // ============================================
-    // SUBSCRIPTIONS (TENANT LEVEL)
-    // ============================================
-    
-    // Customer subscriptions
-    match /subscriptions/{subId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // ============================================
-    // PLATFORM CONFIG (SUPERADMIN)
-    // ============================================
-    
-    // Platform-level documents (landing page config, site design, etc.)
-    match /platform/{docId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-    
-    // Email templates: platform/emailTemplates/templates/{templateId}
-    match /platform/emailTemplates/templates/{templateId} {
-      allow read: if isSuperAdmin();
-      allow write: if isSuperAdmin();
-      
-      // Template versions
-      match /versions/{versionId} {
-        allow read, write: if isSuperAdmin();
-      }
-    }
-    
-    // Site pages for site builder: platform/pages/items/{pageId}
-    match /platform/pages/items/{pageId} {
-      allow read: if true; // Public can read published pages
-      allow write: if isSuperAdmin();
-    }
-    
-    // Subscription plans: platform/subscriptionPlans/plans/{planId}
-    match /platform/subscriptionPlans/plans/{planId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-
-    // Platform tickets (support tickets to super admin)
-    match /platformTickets/{ticketId} {
-      // Tenant users can read/write their own org's tickets
-      allow read: if canReadByOrg() || isSuperAdmin();
-      allow create: if request.auth != null && hasValidOrgId();
-      allow update: if canModifyByOrg() || isSuperAdmin();
-      allow delete: if isSuperAdmin();
-    }
-
-    // System banners (super admin broadcasts)
-    match /system_banners/{bannerId} {
-      allow read: if request.auth != null; // All authenticated users can read
-      allow write: if isSuperAdmin();
-    }
-    // ============================================
-    // OTHER COLLECTIONS
-    // ============================================
-
-    // Activities
-    match /activities/{activityId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Join Requests
-    match /join_requests/{requestId} {
-      // Need special handling? Likely new users don't have org yet?
-      // For now, allow auth users to create, but read restrictive?
-      // Actually, join requests usually involve orgId.
-      allow read: if canReadByOrg();
-      allow create: if request.auth != null; // Allow creation by any auth user
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Roles
-    match /roles/{roleId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // Analytics
-    match /analytics/{docId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-      
-      match /{document=**} {
-        allow read, write: if canReadByOrg();
-      }
-    }
-
-    // Invitations
-    match /invitations/{inviteId} {
-      allow read: if canReadByOrg();
-      allow create: if canCreateByOrg();
-      allow update, delete: if canModifyByOrg();
-    }
-
-    // ============================================
-    // CATCH-ALL DENY
-    // ============================================
-    
-    // Deny access to any undefined collection
+    // Any path not explicitly matched is denied
     match /{document=**} {
       allow read, write: if false;
     }

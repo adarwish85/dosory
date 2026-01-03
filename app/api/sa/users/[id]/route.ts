@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SAService } from "@/lib/services/sa-service";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireSuperAdmin(req);
+    if (!auth.success) return auth.response;
+
     try {
         const { id } = await params;
         const user = await SAService.getUser(id);
@@ -22,16 +26,13 @@ export async function PATCH(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireSuperAdmin(req);
+    if (!auth.success) return auth.response;
+
     try {
         const { id } = await params;
         const body = await req.json();
-        const { actorId, ...updates } = body;
-
-        if (!actorId) {
-            return NextResponse.json({ error: "Actor ID required" }, { status: 400 });
-        }
-
-        await SAService.updateUser(id, updates, actorId);
+        await SAService.updateUser(id, body, auth.user.uid);
         return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error("SA User Update Error:", error);
@@ -43,16 +44,12 @@ export async function DELETE(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireSuperAdmin(req);
+    if (!auth.success) return auth.response;
+
     try {
         const { id } = await params;
-        const { searchParams } = new URL(req.url);
-        const actorId = searchParams.get("actorId");
-
-        if (!actorId) {
-            return NextResponse.json({ error: "Actor ID required" }, { status: 400 });
-        }
-
-        await SAService.deleteUser(id, actorId);
+        await SAService.deleteUser(id, auth.user.uid);
         return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error("SA User Delete Error:", error);

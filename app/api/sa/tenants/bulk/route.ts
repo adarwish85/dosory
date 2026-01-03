@@ -1,19 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SAService } from "@/lib/services/sa-service";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 
 export async function POST(req: NextRequest) {
+    const auth = await requireSuperAdmin(req);
+    if (!auth.success) return auth.response;
+
     try {
         const body = await req.json();
-        const { ids, action, actorId, value } = body;
+        const { ids, action } = body;
 
-        if (!Array.isArray(ids) || ids.length === 0 || !action || !actorId) {
+        if (!Array.isArray(ids) || ids.length === 0 || !action) {
             return NextResponse.json(
-                { error: "Missing required fields: ids, action, actorId" },
+                { error: "Missing required fields: ids, action" },
                 { status: 400 }
             );
         }
 
         let processed = 0;
+        const actorId = auth.user.uid;
 
         for (const id of ids) {
             try {
@@ -45,9 +50,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, processed });
     } catch (error: any) {
         console.error("SA Tenants Bulk Action Error:", error);
-        return NextResponse.json(
-            { error: "Failed to perform bulk action" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Failed to perform bulk action" }, { status: 500 });
     }
 }

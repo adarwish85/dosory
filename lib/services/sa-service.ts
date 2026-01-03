@@ -192,27 +192,38 @@ export class SAService {
         return safeQuery(async () => {
             const snap = await adminDb.collection(PLANS_COLL).get();
             if (snap.empty) {
-                await this.seedDefaultPlans();
-                const newSnap = await adminDb.collection(PLANS_COLL).get();
-                return newSnap.docs.map(d => ({ id: d.id, ...d.data() } as Plan));
+                // Only seed if explicitly allowed (NEVER in production by default)
+                const canSeed = process.env.ALLOW_AUTO_SEED === "true";
+                if (canSeed) {
+                    console.log("[SA] Auto-seeding default plans (ALLOW_AUTO_SEED=true)");
+                    await this.seedDefaultPlans();
+                    const newSnap = await adminDb.collection(PLANS_COLL).get();
+                    return newSnap.docs.map(d => ({ id: d.id, ...d.data() } as Plan));
+                }
+                console.warn("[SA] Plans collection is empty. Set ALLOW_AUTO_SEED=true to seed.");
+                return [];
             }
             return snap.docs.map(d => ({ id: d.id, ...d.data() } as Plan));
         }, []);
     }
 
     static async seedDefaultPlans() {
+        // Use deterministic IDs to prevent duplicate seeding
         const plans = [
             {
+                id: "plan_starter",
                 name: "Starter", price: 0, interval: "monthly",
                 limits: { maxUsers: 3, maxProjects: 5, maxStorage: 100, features: ["basic"] },
                 isActive: true
             },
             {
+                id: "plan_professional",
                 name: "Professional", price: 4900, interval: "monthly",
                 limits: { maxUsers: 10, maxProjects: 50, maxStorage: 5000, features: ["basic", "reports", "api"] },
                 isActive: true
             },
             {
+                id: "plan_enterprise",
                 name: "Enterprise", price: 19900, interval: "monthly",
                 limits: { maxUsers: -1, maxProjects: -1, maxStorage: 50000, features: ["all"] },
                 isActive: true
@@ -220,8 +231,9 @@ export class SAService {
         ];
 
         for (const plan of plans) {
-            await adminDb.collection(PLANS_COLL).add({
-                ...plan,
+            const { id, ...data } = plan;
+            await adminDb.collection(PLANS_COLL).doc(id).set({
+                ...data,
                 createdAt: FieldValue.serverTimestamp()
             });
         }
@@ -234,9 +246,16 @@ export class SAService {
         return safeQuery(async () => {
             const snap = await adminDb.collection(MODULES_COLL).get();
             if (snap.empty) {
-                await this.seedDefaultModules();
-                const newSnap = await adminDb.collection(MODULES_COLL).get();
-                return newSnap.docs.map(d => ({ moduleKey: d.id, ...d.data() } as ModuleCatalog));
+                // Only seed if explicitly allowed (NEVER in production by default)
+                const canSeed = process.env.ALLOW_AUTO_SEED === "true";
+                if (canSeed) {
+                    console.log("[SA] Auto-seeding default modules (ALLOW_AUTO_SEED=true)");
+                    await this.seedDefaultModules();
+                    const newSnap = await adminDb.collection(MODULES_COLL).get();
+                    return newSnap.docs.map(d => ({ moduleKey: d.id, ...d.data() } as ModuleCatalog));
+                }
+                console.warn("[SA] Modules collection is empty. Set ALLOW_AUTO_SEED=true to seed.");
+                return [];
             }
             return snap.docs.map(d => ({ moduleKey: d.id, ...d.data() } as ModuleCatalog));
         }, []);
