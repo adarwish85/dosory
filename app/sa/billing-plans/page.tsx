@@ -11,18 +11,55 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
-import { saGet, saPost, saPatch } from "@/lib/utils/sa-fetch";
+import { saGet, saPost, saPatch } from "@/lib/api/saFetch";
 import { Plan, Addon, Subscription, UsageExceeded, PlanStatus } from "@/lib/types/billing";
 import { MODULE_FEATURES_SCHEMA } from "@/lib/types/features-schema";
 import {
-    CreditCard, Package, Users, BarChart3, Settings, Plus, MoreHorizontal,
-    Edit, Copy, Archive, Send, Eye, Trash2, CheckCircle, XCircle, AlertTriangle,
-    DollarSign, Clock
+    CreditCard,
+    Package,
+    Users,
+    BarChart3,
+    Settings,
+    Plus,
+    MoreHorizontal,
+    Edit,
+    Copy,
+    Archive,
+    Send,
+    Eye,
+    Trash2,
+    CheckCircle,
+    XCircle,
+    AlertTriangle,
+    DollarSign,
+    Clock,
 } from "lucide-react";
 
 export default function BillingPlansPage() {
@@ -93,8 +130,8 @@ function PlansTab() {
 
             const data = await saGet<{ plans: Plan[] }>(`/api/sa/billing/plans?${params}`);
             setPlans(data.plans || []);
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err: unknown) {
+            toast.error((err as Error).message || String(err));
         } finally {
             setLoading(false);
         }
@@ -106,8 +143,8 @@ function PlansTab() {
             toast.success("Plan published");
             fetchPlans();
             setConfirmAction(null);
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err: unknown) {
+            toast.error((err as Error).message || String(err));
         }
     };
 
@@ -117,8 +154,8 @@ function PlansTab() {
             toast.success("Plan archived");
             fetchPlans();
             setConfirmAction(null);
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err: unknown) {
+            toast.error((err as Error).message || String(err));
         }
     };
 
@@ -127,8 +164,8 @@ function PlansTab() {
             await saPost(`/api/sa/billing/plans/${plan.id}/duplicate-version`, {});
             toast.success("Plan duplicated as new draft");
             fetchPlans();
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err: unknown) {
+            toast.error((err as Error).message || String(err));
         }
     };
 
@@ -140,7 +177,7 @@ function PlansTab() {
         const colors = {
             draft: "bg-yellow-100 text-yellow-800",
             published: "bg-green-100 text-green-800",
-            archived: "bg-gray-100 text-gray-600"
+            archived: "bg-gray-100 text-gray-600",
         };
         return <Badge className={colors[status]}>{status}</Badge>;
     };
@@ -166,7 +203,9 @@ function PlansTab() {
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-64"
                     />
-                    <Button variant="outline" size="sm" onClick={fetchPlans}>Search</Button>
+                    <Button variant="outline" size="sm" onClick={fetchPlans}>
+                        Search
+                    </Button>
                 </div>
                 <Button onClick={() => setShowCreate(true)}>
                     <Plus className="h-4 w-4 mr-2" /> Create Plan
@@ -192,13 +231,27 @@ function PlansTab() {
                             {loading ? (
                                 Array.from({ length: 3 }).map((_, i) => (
                                     <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-32" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-20" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-16" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-16" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-12" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-20" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-8" />
+                                        </TableCell>
                                         <TableCell></TableCell>
                                     </TableRow>
                                 ))
@@ -222,7 +275,9 @@ function PlansTab() {
                                                 <div className="font-medium flex items-center gap-2">
                                                     {plan.name}
                                                     {plan.ui?.badge && (
-                                                        <Badge variant="outline" className="text-xs">{plan.ui.badge}</Badge>
+                                                        <Badge variant="outline" className="text-xs">
+                                                            {plan.ui.badge}
+                                                        </Badge>
                                                     )}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground">{plan.id}</div>
@@ -242,13 +297,19 @@ function PlansTab() {
                                         <TableCell>
                                             {plan.trial?.enabled ? (
                                                 <span className="text-blue-600">{plan.trial.days} days</span>
-                                            ) : "—"}
+                                            ) : (
+                                                "—"
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             <div className="text-sm">
-                                                <span>{plan.limits?.maxUsers === -1 ? "∞" : plan.limits?.maxUsers} users</span>
+                                                <span>
+                                                    {plan.limits?.maxUsers === -1 ? "∞" : plan.limits?.maxUsers} users
+                                                </span>
                                                 <span className="text-muted-foreground mx-1">•</span>
-                                                <span>{plan.limits?.storageGB === -1 ? "∞" : plan.limits?.storageGB} GB</span>
+                                                <span>
+                                                    {plan.limits?.storageGB === -1 ? "∞" : plan.limits?.storageGB} GB
+                                                </span>
                                             </div>
                                         </TableCell>
                                         <TableCell>
@@ -270,13 +331,19 @@ function PlansTab() {
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     {plan.status === "draft" && (
-                                                        <DropdownMenuItem onClick={() => setConfirmAction({ plan, action: "publish" })}>
+                                                        <DropdownMenuItem
+                                                            onClick={() =>
+                                                                setConfirmAction({ plan, action: "publish" })
+                                                            }
+                                                        >
                                                             <Send className="mr-2 h-4 w-4" /> Publish
                                                         </DropdownMenuItem>
                                                     )}
                                                     {plan.status !== "archived" && (
                                                         <DropdownMenuItem
-                                                            onClick={() => setConfirmAction({ plan, action: "archive" })}
+                                                            onClick={() =>
+                                                                setConfirmAction({ plan, action: "archive" })
+                                                            }
                                                             className="text-red-600"
                                                         >
                                                             <Archive className="mr-2 h-4 w-4" /> Archive
@@ -297,7 +364,10 @@ function PlansTab() {
             <PlanEditorDialog
                 plan={editPlan}
                 open={showCreate || !!editPlan}
-                onClose={() => { setShowCreate(false); setEditPlan(null); }}
+                onClose={() => {
+                    setShowCreate(false);
+                    setEditPlan(null);
+                }}
                 onSave={fetchPlans}
             />
 
@@ -311,8 +381,7 @@ function PlansTab() {
                         <AlertDialogDescription>
                             {confirmAction?.action === "publish"
                                 ? `Publishing "${confirmAction?.plan.name}" will make it available for new subscriptions. This action creates an immutable version.`
-                                : `Are you sure you want to archive "${confirmAction?.plan.name}"? Archived plans cannot be assigned to new subscriptions.`
-                            }
+                                : `Are you sure you want to archive "${confirmAction?.plan.name}"? Archived plans cannot be assigned to new subscriptions.`}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -343,7 +412,7 @@ function PlanEditorDialog({
     plan,
     open,
     onClose,
-    onSave
+    onSave,
 }: {
     plan: Plan | null;
     open: boolean;
@@ -364,7 +433,7 @@ function PlanEditorDialog({
         storageGB: 10,
         modules: [] as string[],
         badge: "",
-        sortOrder: 0
+        sortOrder: 0,
     });
     const [saving, setSaving] = useState(false);
 
@@ -384,7 +453,7 @@ function PlanEditorDialog({
                 storageGB: plan.limits?.storageGB || 10,
                 modules: plan.entitlements?.modules || [],
                 badge: plan.ui?.badge || "",
-                sortOrder: plan.ui?.sortOrder || 0
+                sortOrder: plan.ui?.sortOrder || 0,
             });
         } else {
             setForm({
@@ -401,7 +470,7 @@ function PlanEditorDialog({
                 storageGB: 10,
                 modules: [],
                 badge: "",
-                sortOrder: 0
+                sortOrder: 0,
             });
         }
     }, [plan]);
@@ -421,25 +490,25 @@ function PlanEditorDialog({
                 currency: form.currency,
                 billing: {
                     monthlyPrice: form.isFree ? 0 : form.monthlyPrice,
-                    annualPrice: form.isFree ? 0 : form.annualPrice
+                    annualPrice: form.isFree ? 0 : form.annualPrice,
                 },
                 trial: {
                     enabled: form.trialEnabled,
                     days: form.trialDays,
-                    eligibility: form.trialEligibility
+                    eligibility: form.trialEligibility,
                 },
                 limits: {
                     maxUsers: form.maxUsers,
-                    storageGB: form.storageGB
+                    storageGB: form.storageGB,
                 },
                 entitlements: {
                     modules: form.modules,
-                    featuresByModule: {}
+                    featuresByModule: {},
                 },
                 ui: {
                     badge: form.badge || undefined,
-                    sortOrder: form.sortOrder
-                }
+                    sortOrder: form.sortOrder,
+                },
             };
 
             if (plan) {
@@ -451,19 +520,19 @@ function PlanEditorDialog({
             }
             onSave();
             onClose();
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err: unknown) {
+            toast.error((err as Error).message || String(err));
         } finally {
             setSaving(false);
         }
     };
 
     const toggleModule = (moduleKey: string) => {
-        setForm(prev => ({
+        setForm((prev) => ({
             ...prev,
             modules: prev.modules.includes(moduleKey)
-                ? prev.modules.filter(m => m !== moduleKey)
-                : [...prev.modules, moduleKey]
+                ? prev.modules.filter((m) => m !== moduleKey)
+                : [...prev.modules, moduleKey],
         }));
     };
 
@@ -473,7 +542,9 @@ function PlanEditorDialog({
                 <DialogHeader>
                     <DialogTitle>{plan ? "Edit Plan" : "Create Plan"}</DialogTitle>
                     <DialogDescription>
-                        {plan ? "Modify plan details. Published plans cannot be edited." : "Create a new subscription plan."}
+                        {plan
+                            ? "Modify plan details. Published plans cannot be edited."
+                            : "Create a new subscription plan."}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -486,7 +557,7 @@ function PlanEditorDialog({
                                 <Label>Plan Name *</Label>
                                 <Input
                                     value={form.name}
-                                    onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+                                    onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                                     placeholder="e.g., Professional"
                                 />
                             </div>
@@ -494,7 +565,7 @@ function PlanEditorDialog({
                                 <Label>Badge</Label>
                                 <Input
                                     value={form.badge}
-                                    onChange={(e) => setForm(p => ({ ...p, badge: e.target.value }))}
+                                    onChange={(e) => setForm((p) => ({ ...p, badge: e.target.value }))}
                                     placeholder="e.g., Most Popular"
                                 />
                             </div>
@@ -503,7 +574,7 @@ function PlanEditorDialog({
                             <Label>Description</Label>
                             <Input
                                 value={form.description}
-                                onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
+                                onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                                 placeholder="Brief description of this plan"
                             />
                         </div>
@@ -515,7 +586,7 @@ function PlanEditorDialog({
                         <div className="flex items-center gap-2">
                             <Switch
                                 checked={form.isFree}
-                                onCheckedChange={(c) => setForm(p => ({ ...p, isFree: c }))}
+                                onCheckedChange={(c) => setForm((p) => ({ ...p, isFree: c }))}
                             />
                             <Label>Free Plan</Label>
                         </div>
@@ -526,7 +597,9 @@ function PlanEditorDialog({
                                     <Input
                                         type="number"
                                         value={form.monthlyPrice}
-                                        onChange={(e) => setForm(p => ({ ...p, monthlyPrice: parseInt(e.target.value) || 0 }))}
+                                        onChange={(e) =>
+                                            setForm((p) => ({ ...p, monthlyPrice: parseInt(e.target.value) || 0 }))
+                                        }
                                         placeholder="4900 = $49.00"
                                     />
                                 </div>
@@ -535,7 +608,9 @@ function PlanEditorDialog({
                                     <Input
                                         type="number"
                                         value={form.annualPrice}
-                                        onChange={(e) => setForm(p => ({ ...p, annualPrice: parseInt(e.target.value) || 0 }))}
+                                        onChange={(e) =>
+                                            setForm((p) => ({ ...p, annualPrice: parseInt(e.target.value) || 0 }))
+                                        }
                                         placeholder="49900 = $499.00"
                                     />
                                 </div>
@@ -549,7 +624,7 @@ function PlanEditorDialog({
                         <div className="flex items-center gap-2">
                             <Switch
                                 checked={form.trialEnabled}
-                                onCheckedChange={(c) => setForm(p => ({ ...p, trialEnabled: c }))}
+                                onCheckedChange={(c) => setForm((p) => ({ ...p, trialEnabled: c }))}
                             />
                             <Label>Enable Trial</Label>
                         </div>
@@ -560,12 +635,22 @@ function PlanEditorDialog({
                                     <Input
                                         type="number"
                                         value={form.trialDays}
-                                        onChange={(e) => setForm(p => ({ ...p, trialDays: parseInt(e.target.value) || 14 }))}
+                                        onChange={(e) =>
+                                            setForm((p) => ({ ...p, trialDays: parseInt(e.target.value) || 14 }))
+                                        }
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Eligibility</Label>
-                                    <Select value={form.trialEligibility} onValueChange={(v: any) => setForm(p => ({ ...p, trialEligibility: v }))}>
+                                    <Select
+                                        value={form.trialEligibility}
+                                        onValueChange={(v) =>
+                                            setForm((p) => ({
+                                                ...p,
+                                                trialEligibility: v as "new_customers_only" | "all",
+                                            }))
+                                        }
+                                    >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
@@ -588,7 +673,9 @@ function PlanEditorDialog({
                                 <Input
                                     type="number"
                                     value={form.maxUsers}
-                                    onChange={(e) => setForm(p => ({ ...p, maxUsers: parseInt(e.target.value) || 0 }))}
+                                    onChange={(e) =>
+                                        setForm((p) => ({ ...p, maxUsers: parseInt(e.target.value) || 0 }))
+                                    }
                                 />
                             </div>
                             <div className="space-y-2">
@@ -596,7 +683,9 @@ function PlanEditorDialog({
                                 <Input
                                     type="number"
                                     value={form.storageGB}
-                                    onChange={(e) => setForm(p => ({ ...p, storageGB: parseInt(e.target.value) || 0 }))}
+                                    onChange={(e) =>
+                                        setForm((p) => ({ ...p, storageGB: parseInt(e.target.value) || 0 }))
+                                    }
                                 />
                             </div>
                         </div>
@@ -610,10 +699,11 @@ function PlanEditorDialog({
                                 <div
                                     key={mod.moduleKey}
                                     onClick={() => toggleModule(mod.moduleKey)}
-                                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${form.modules.includes(mod.moduleKey)
+                                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                                        form.modules.includes(mod.moduleKey)
                                             ? "border-primary bg-primary/5"
                                             : "border-muted hover:border-muted-foreground/50"
-                                        }`}
+                                    }`}
                                 >
                                     <div className="font-medium text-sm">{mod.moduleName}</div>
                                     <div className="text-xs text-muted-foreground">{mod.features.length} features</div>
@@ -624,9 +714,11 @@ function PlanEditorDialog({
                 </div>
 
                 <DialogFooter>
-                    <Button variant="outline" onClick={onClose}>Cancel</Button>
+                    <Button variant="outline" onClick={onClose}>
+                        Cancel
+                    </Button>
                     <Button onClick={handleSave} disabled={saving}>
-                        {saving ? "Saving..." : (plan ? "Save Changes" : "Create Plan")}
+                        {saving ? "Saving..." : plan ? "Save Changes" : "Create Plan"}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -652,8 +744,8 @@ function AddonsTab() {
             setLoading(true);
             const data = await saGet<{ addons: Addon[] }>("/api/sa/billing/addons");
             setAddons(data.addons || []);
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err: unknown) {
+            toast.error((err as Error).message || String(err));
         } finally {
             setLoading(false);
         }
@@ -664,8 +756,8 @@ function AddonsTab() {
             await saPost(`/api/sa/billing/addons/${addon.id}/deactivate`, {});
             toast.success("Addon deactivated");
             fetchAddons();
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err: unknown) {
+            toast.error((err as Error).message || String(err));
         }
     };
 
@@ -673,7 +765,7 @@ function AddonsTab() {
         extra_users: "Extra Users",
         extra_storage: "Extra Storage",
         feature_pack: "Feature Pack",
-        module_pack: "Module Pack"
+        module_pack: "Module Pack",
     };
 
     return (
@@ -704,11 +796,21 @@ function AddonsTab() {
                             {loading ? (
                                 Array.from({ length: 3 }).map((_, i) => (
                                     <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-32" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-16" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-16" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
                                         <TableCell></TableCell>
                                     </TableRow>
                                 ))
@@ -737,7 +839,13 @@ function AddonsTab() {
                                             <Badge variant="outline">{typeLabels[addon.type]}</Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge className={addon.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}>
+                                            <Badge
+                                                className={
+                                                    addon.status === "active"
+                                                        ? "bg-green-100 text-green-800"
+                                                        : "bg-gray-100 text-gray-600"
+                                                }
+                                            >
                                                 {addon.status}
                                             </Badge>
                                         </TableCell>
@@ -745,7 +853,9 @@ function AddonsTab() {
                                         <TableCell>
                                             <div className="text-sm">
                                                 {addon.effect?.addUsers && <div>+{addon.effect.addUsers} users</div>}
-                                                {addon.effect?.addStorageGB && <div>+{addon.effect.addStorageGB} GB</div>}
+                                                {addon.effect?.addStorageGB && (
+                                                    <div>+{addon.effect.addStorageGB} GB</div>
+                                                )}
                                                 {addon.effect?.enableModules?.length && (
                                                     <div>+{addon.effect.enableModules.length} modules</div>
                                                 )}
@@ -784,7 +894,10 @@ function AddonsTab() {
             <AddonEditorDialog
                 addon={editAddon}
                 open={showCreate || !!editAddon}
-                onClose={() => { setShowCreate(false); setEditAddon(null); }}
+                onClose={() => {
+                    setShowCreate(false);
+                    setEditAddon(null);
+                }}
                 onSave={fetchAddons}
             />
         </div>
@@ -798,7 +911,7 @@ function AddonEditorDialog({
     addon,
     open,
     onClose,
-    onSave
+    onSave,
 }: {
     addon: Addon | null;
     open: boolean;
@@ -812,7 +925,7 @@ function AddonEditorDialog({
         monthlyPrice: 0,
         annualPrice: 0,
         addUsers: 0,
-        addStorageGB: 0
+        addStorageGB: 0,
     });
     const [saving, setSaving] = useState(false);
 
@@ -825,7 +938,7 @@ function AddonEditorDialog({
                 monthlyPrice: addon.pricing?.monthlyPrice || 0,
                 annualPrice: addon.pricing?.annualPrice || 0,
                 addUsers: addon.effect?.addUsers || 0,
-                addStorageGB: addon.effect?.addStorageGB || 0
+                addStorageGB: addon.effect?.addStorageGB || 0,
             });
         } else {
             setForm({
@@ -835,7 +948,7 @@ function AddonEditorDialog({
                 monthlyPrice: 0,
                 annualPrice: 0,
                 addUsers: 0,
-                addStorageGB: 0
+                addStorageGB: 0,
             });
         }
     }, [addon]);
@@ -855,12 +968,12 @@ function AddonEditorDialog({
                 pricing: {
                     monthlyPrice: form.monthlyPrice,
                     annualPrice: form.annualPrice,
-                    currency: "USD"
+                    currency: "USD",
                 },
                 effect: {
                     addUsers: form.addUsers || undefined,
-                    addStorageGB: form.addStorageGB || undefined
-                }
+                    addStorageGB: form.addStorageGB || undefined,
+                },
             };
 
             if (addon) {
@@ -872,8 +985,8 @@ function AddonEditorDialog({
             }
             onSave();
             onClose();
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err: unknown) {
+            toast.error((err as Error).message || String(err));
         } finally {
             setSaving(false);
         }
@@ -891,7 +1004,7 @@ function AddonEditorDialog({
                         <Label>Addon Name *</Label>
                         <Input
                             value={form.name}
-                            onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
+                            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                             placeholder="e.g., Extra 5 Users"
                         />
                     </div>
@@ -899,12 +1012,15 @@ function AddonEditorDialog({
                         <Label>Description</Label>
                         <Input
                             value={form.description}
-                            onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
+                            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Type</Label>
-                        <Select value={form.type} onValueChange={(v: any) => setForm(p => ({ ...p, type: v }))}>
+                        <Select
+                            value={form.type}
+                            onValueChange={(v) => setForm((p) => ({ ...p, type: v as Addon["type"] }))}
+                        >
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>
@@ -922,7 +1038,9 @@ function AddonEditorDialog({
                             <Input
                                 type="number"
                                 value={form.monthlyPrice}
-                                onChange={(e) => setForm(p => ({ ...p, monthlyPrice: parseInt(e.target.value) || 0 }))}
+                                onChange={(e) =>
+                                    setForm((p) => ({ ...p, monthlyPrice: parseInt(e.target.value) || 0 }))
+                                }
                             />
                         </div>
                         <div className="space-y-2">
@@ -930,7 +1048,7 @@ function AddonEditorDialog({
                             <Input
                                 type="number"
                                 value={form.annualPrice}
-                                onChange={(e) => setForm(p => ({ ...p, annualPrice: parseInt(e.target.value) || 0 }))}
+                                onChange={(e) => setForm((p) => ({ ...p, annualPrice: parseInt(e.target.value) || 0 }))}
                             />
                         </div>
                     </div>
@@ -940,7 +1058,7 @@ function AddonEditorDialog({
                             <Input
                                 type="number"
                                 value={form.addUsers}
-                                onChange={(e) => setForm(p => ({ ...p, addUsers: parseInt(e.target.value) || 0 }))}
+                                onChange={(e) => setForm((p) => ({ ...p, addUsers: parseInt(e.target.value) || 0 }))}
                             />
                         </div>
                         <div className="space-y-2">
@@ -948,16 +1066,20 @@ function AddonEditorDialog({
                             <Input
                                 type="number"
                                 value={form.addStorageGB}
-                                onChange={(e) => setForm(p => ({ ...p, addStorageGB: parseInt(e.target.value) || 0 }))}
+                                onChange={(e) =>
+                                    setForm((p) => ({ ...p, addStorageGB: parseInt(e.target.value) || 0 }))
+                                }
                             />
                         </div>
                     </div>
                 </div>
 
                 <DialogFooter>
-                    <Button variant="outline" onClick={onClose}>Cancel</Button>
+                    <Button variant="outline" onClick={onClose}>
+                        Cancel
+                    </Button>
                     <Button onClick={handleSave} disabled={saving}>
-                        {saving ? "Saving..." : (addon ? "Save" : "Create")}
+                        {saving ? "Saving..." : addon ? "Save" : "Create"}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -985,8 +1107,8 @@ function SubscriptionsTab() {
 
             const data = await saGet<{ subscriptions: Subscription[] }>(`/api/sa/billing/subscriptions?${params}`);
             setSubscriptions(data.subscriptions || []);
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err: unknown) {
+            toast.error((err as Error).message || String(err));
         } finally {
             setLoading(false);
         }
@@ -997,7 +1119,7 @@ function SubscriptionsTab() {
         active: "bg-green-100 text-green-800",
         past_due: "bg-yellow-100 text-yellow-800",
         suspended: "bg-red-100 text-red-800",
-        canceled: "bg-gray-100 text-gray-600"
+        canceled: "bg-gray-100 text-gray-600",
     };
 
     return (
@@ -1035,12 +1157,24 @@ function SubscriptionsTab() {
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-8" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-32" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-16" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-16" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-8" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             ) : subscriptions.length === 0 ? (
@@ -1066,9 +1200,11 @@ function SubscriptionsTab() {
                                         </TableCell>
                                         <TableCell className="text-muted-foreground text-sm">
                                             {sub.currentPeriodEnd
-                                                ? new Date((sub.currentPeriodEnd as any)._seconds * 1000).toLocaleDateString()
-                                                : "—"
-                                            }
+                                                ? new Date(
+                                                      (sub.currentPeriodEnd as unknown as { _seconds: number })
+                                                          ._seconds * 1000
+                                                  ).toLocaleDateString()
+                                                : "—"}
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -1097,8 +1233,8 @@ function UsageTab() {
             setLoading(true);
             const data = await saGet<{ exceeded: UsageExceeded[] }>("/api/sa/billing/usage/exceeded");
             setExceeded(data.exceeded || []);
-        } catch (err: any) {
-            toast.error(err.message);
+        } catch (err: unknown) {
+            toast.error((err as Error).message || String(err));
         } finally {
             setLoading(false);
         }
@@ -1126,11 +1262,21 @@ function UsageTab() {
                             {loading ? (
                                 Array.from({ length: 3 }).map((_, i) => (
                                     <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-32" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-16" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-20" />
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             ) : exceeded.length === 0 ? (
@@ -1148,15 +1294,27 @@ function UsageTab() {
                                         <TableCell>
                                             <div>
                                                 <div className="font-medium">{item.tenantName}</div>
-                                                <div className="text-xs text-muted-foreground font-mono">{item.tenantId}</div>
+                                                <div className="text-xs text-muted-foreground font-mono">
+                                                    {item.tenantId}
+                                                </div>
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge className={item.severity === "critical" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}>
+                                            <Badge
+                                                className={
+                                                    item.severity === "critical"
+                                                        ? "bg-red-100 text-red-800"
+                                                        : "bg-yellow-100 text-yellow-800"
+                                                }
+                                            >
                                                 {item.severity === "critical" ? (
-                                                    <><AlertTriangle className="h-3 w-3 mr-1" /> Critical</>
+                                                    <>
+                                                        <AlertTriangle className="h-3 w-3 mr-1" /> Critical
+                                                    </>
                                                 ) : (
-                                                    <><Clock className="h-3 w-3 mr-1" /> Warning</>
+                                                    <>
+                                                        <Clock className="h-3 w-3 mr-1" /> Warning
+                                                    </>
                                                 )}
                                             </Badge>
                                         </TableCell>
@@ -1165,14 +1323,19 @@ function UsageTab() {
                                                 <span className="text-red-600">
                                                     {item.exceeded.users.current}/{item.exceeded.users.limit}
                                                 </span>
-                                            ) : "—"}
+                                            ) : (
+                                                "—"
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             {item.exceeded.storage ? (
                                                 <span className="text-red-600">
-                                                    {item.exceeded.storage.current.toFixed(1)}/{item.exceeded.storage.limit} GB
+                                                    {item.exceeded.storage.current.toFixed(1)}/
+                                                    {item.exceeded.storage.limit} GB
                                                 </span>
-                                            ) : "—"}
+                                            ) : (
+                                                "—"
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             <Button variant="outline" size="sm">

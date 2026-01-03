@@ -10,17 +10,18 @@ import { ModuleCatalog } from "@/lib/types/super-admin";
 import { Settings, Package, Zap, Crown } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
+import { saFetch, saPatch } from "@/lib/api/saFetch";
 
-const categoryIcons: Record<string, any> = {
+const categoryIcons: Record<string, React.ElementType> = {
     core: Package,
     addon: Zap,
-    premium: Crown
+    premium: Crown,
 };
 
 const categoryColors: Record<string, string> = {
     core: "bg-blue-100 text-blue-800",
     addon: "bg-purple-100 text-purple-800",
-    premium: "bg-amber-100 text-amber-800"
+    premium: "bg-amber-100 text-amber-800",
 };
 
 export default function ModulesPage() {
@@ -32,12 +33,10 @@ export default function ModulesPage() {
     useEffect(() => {
         const fetchModules = async () => {
             try {
-                const res = await fetch("/api/sa/modules");
-                if (!res.ok) throw new Error("Failed to fetch");
-                const data = await res.json();
+                const data = await saFetch<{ modules: ModuleCatalog[] }>("/api/sa/modules");
                 setModules(data.modules || []);
-            } catch (e: any) {
-                setError(e.message);
+            } catch (e: unknown) {
+                setError((e as Error).message || String(e));
             } finally {
                 setLoading(false);
             }
@@ -48,17 +47,10 @@ export default function ModulesPage() {
     const handleToggle = async (moduleKey: string, isEnabled: boolean) => {
         if (!user) return;
         try {
-            const res = await fetch("/api/sa/modules", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ moduleKey, isEnabled, actorId: user.uid })
-            });
-            if (!res.ok) throw new Error("Failed to update");
-            setModules(prev => prev.map(m =>
-                m.moduleKey === moduleKey ? { ...m, isEnabled } : m
-            ));
+            await saPatch("/api/sa/modules", { moduleKey, isEnabled, actorId: user.uid });
+            setModules((prev) => prev.map((m) => (m.moduleKey === moduleKey ? { ...m, isEnabled } : m)));
             toast.success(`Module ${isEnabled ? "enabled" : "disabled"}`);
-        } catch (e: any) {
+        } catch {
             toast.error("Failed to update module");
         }
     };
@@ -98,7 +90,7 @@ export default function ModulesPage() {
                         </CardContent>
                     </Card>
                 ) : (
-                    modules.map(mod => {
+                    modules.map((mod) => {
                         const Icon = categoryIcons[mod.category] || Package;
                         return (
                             <Card key={mod.moduleKey}>

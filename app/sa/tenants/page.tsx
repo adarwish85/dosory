@@ -13,17 +13,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tenant } from "@/lib/types/super-admin";
 import { Building2, Search, Eye, MoreHorizontal, Trash2, Edit, CheckCircle, Ban, XCircle, Pause } from "lucide-react";
 import Link from "next/link";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
+import { saFetch, saPatch, saDelete, saPost } from "@/lib/api/saFetch";
 
 const statusColors: Record<string, string> = {
     active: "bg-green-100 text-green-800",
     trial: "bg-blue-100 text-blue-800",
     suspended: "bg-red-100 text-red-800",
-    cancelled: "bg-gray-100 text-gray-800"
+    cancelled: "bg-gray-100 text-gray-800",
 };
 
 export default function TenantsPage() {
@@ -47,12 +70,10 @@ export default function TenantsPage() {
 
     const fetchTenants = async () => {
         try {
-            const res = await fetch("/api/sa/tenants");
-            if (!res.ok) throw new Error("Failed to fetch");
-            const data = await res.json();
+            const data = await saFetch<{ tenants: Tenant[] }>("/api/sa/tenants");
             setTenants(data.tenants || []);
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e: unknown) {
+            setError((e as Error).message || String(e));
         } finally {
             setLoading(false);
         }
@@ -61,13 +82,8 @@ export default function TenantsPage() {
     const handleStatusChange = async (tenantId: string, newStatus: Tenant["status"]) => {
         if (!currentUser) return;
         try {
-            const res = await fetch(`/api/sa/tenants/${tenantId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: newStatus, actorId: currentUser.uid })
-            });
-            if (!res.ok) throw new Error("Failed to update");
-            setTenants(prev => prev.map(t => t.id === tenantId ? { ...t, status: newStatus } : t));
+            await saPatch(`/api/sa/tenants/${tenantId}`, { status: newStatus, actorId: currentUser.uid });
+            setTenants((prev) => prev.map((t) => (t.id === tenantId ? { ...t, status: newStatus } : t)));
             toast.success(`Tenant status changed to ${newStatus}`);
         } catch {
             toast.error("Failed to update tenant status");
@@ -77,19 +93,20 @@ export default function TenantsPage() {
     const handleEditTenant = async () => {
         if (!currentUser || !editTenant) return;
         try {
-            const res = await fetch(`/api/sa/tenants/${editTenant.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...editForm, actorId: currentUser.uid })
-            });
-            if (!res.ok) throw new Error("Failed to update");
-            setTenants(prev => prev.map(t => t.id === editTenant.id ? {
-                ...t,
-                name: editForm.name,
-                subdomain: editForm.subdomain,
-                status: editForm.status as Tenant["status"],
-                planId: editForm.planId
-            } : t));
+            await saPatch(`/api/sa/tenants/${editTenant.id}`, { ...editForm, actorId: currentUser.uid });
+            setTenants((prev) =>
+                prev.map((t) =>
+                    t.id === editTenant.id
+                        ? {
+                              ...t,
+                              name: editForm.name,
+                              subdomain: editForm.subdomain,
+                              status: editForm.status as Tenant["status"],
+                              planId: editForm.planId,
+                          }
+                        : t
+                )
+            );
             toast.success("Tenant updated");
             setEditTenant(null);
         } catch {
@@ -100,11 +117,8 @@ export default function TenantsPage() {
     const handleDeleteTenant = async () => {
         if (!currentUser || !deleteTenant) return;
         try {
-            const res = await fetch(`/api/sa/tenants/${deleteTenant.id}?actorId=${currentUser.uid}`, {
-                method: "DELETE"
-            });
-            if (!res.ok) throw new Error("Failed to delete");
-            setTenants(prev => prev.filter(t => t.id !== deleteTenant.id));
+            await saDelete(`/api/sa/tenants/${deleteTenant.id}?actorId=${currentUser.uid}`);
+            setTenants((prev) => prev.filter((t) => t.id !== deleteTenant.id));
             toast.success("Tenant deleted");
             setDeleteTenant(null);
         } catch {
@@ -115,29 +129,29 @@ export default function TenantsPage() {
     const handleBulkAction = async () => {
         if (!currentUser || !bulkAction || selectedIds.size === 0) return;
         try {
-            const res = await fetch("/api/sa/tenants/bulk", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ids: Array.from(selectedIds),
-                    action: bulkAction,
-                    actorId: currentUser.uid
-                })
+            const data = await saPost<{ processed: number }>("/api/sa/tenants/bulk", {
+                ids: Array.from(selectedIds),
+                action: bulkAction,
+                actorId: currentUser.uid,
             });
-            if (!res.ok) throw new Error("Failed");
-            const data = await res.json();
 
             // Update local state based on action
             if (bulkAction === "delete") {
-                setTenants(prev => prev.filter(t => !selectedIds.has(t.id)));
+                setTenants((prev) => prev.filter((t) => !selectedIds.has(t.id)));
             } else if (bulkAction === "activate") {
-                setTenants(prev => prev.map(t => selectedIds.has(t.id) ? { ...t, status: "active" as const } : t));
+                setTenants((prev) =>
+                    prev.map((t) => (selectedIds.has(t.id) ? { ...t, status: "active" as const } : t))
+                );
             } else if (bulkAction === "suspend") {
-                setTenants(prev => prev.map(t => selectedIds.has(t.id) ? { ...t, status: "suspended" as const } : t));
+                setTenants((prev) =>
+                    prev.map((t) => (selectedIds.has(t.id) ? { ...t, status: "suspended" as const } : t))
+                );
             } else if (bulkAction === "trial") {
-                setTenants(prev => prev.map(t => selectedIds.has(t.id) ? { ...t, status: "trial" as const } : t));
+                setTenants((prev) => prev.map((t) => (selectedIds.has(t.id) ? { ...t, status: "trial" as const } : t)));
             } else if (bulkAction === "cancel") {
-                setTenants(prev => prev.map(t => selectedIds.has(t.id) ? { ...t, status: "cancelled" as const } : t));
+                setTenants((prev) =>
+                    prev.map((t) => (selectedIds.has(t.id) ? { ...t, status: "cancelled" as const } : t))
+                );
             }
 
             toast.success(`Bulk action completed: ${data.processed} tenants affected`);
@@ -153,7 +167,7 @@ export default function TenantsPage() {
             name: tenant.name || "",
             subdomain: tenant.subdomain || "",
             status: tenant.status || "active",
-            planId: tenant.planId || ""
+            planId: tenant.planId || "",
         });
         setEditTenant(tenant);
     };
@@ -172,15 +186,17 @@ export default function TenantsPage() {
         if (selectedIds.size === filteredTenants.length) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(filteredTenants.map(t => t.id)));
+            setSelectedIds(new Set(filteredTenants.map((t) => t.id)));
         }
     };
 
-    const filteredTenants = tenants.filter(t =>
-        t.name?.toLowerCase().includes(search.toLowerCase()) ||
-        t.subdomain?.toLowerCase().includes(search.toLowerCase())
+    const filteredTenants = tenants.filter(
+        (t) =>
+            t.name?.toLowerCase().includes(search.toLowerCase()) ||
+            t.subdomain?.toLowerCase().includes(search.toLowerCase())
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formatDate = (dateValue: any) => {
         if (!dateValue) return "—";
         if (dateValue._seconds) return new Date(dateValue._seconds * 1000).toLocaleDateString();
@@ -193,7 +209,7 @@ export default function TenantsPage() {
         activate: "Activate Selected",
         suspend: "Suspend Selected",
         trial: "Set to Trial",
-        cancel: "Cancel Selected"
+        cancel: "Cancel Selected",
     };
 
     return (
@@ -223,7 +239,9 @@ export default function TenantsPage() {
                         <span className="text-sm font-medium">{selectedIds.size} selected</span>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">Bulk Actions</Button>
+                                <Button variant="outline" size="sm">
+                                    Bulk Actions
+                                </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuItem onClick={() => setBulkAction("activate")}>
@@ -266,7 +284,9 @@ export default function TenantsPage() {
                             <TableRow>
                                 <TableHead className="w-12">
                                     <Checkbox
-                                        checked={selectedIds.size === filteredTenants.length && filteredTenants.length > 0}
+                                        checked={
+                                            selectedIds.size === filteredTenants.length && filteredTenants.length > 0
+                                        }
                                         onCheckedChange={toggleSelectAll}
                                     />
                                 </TableHead>
@@ -282,12 +302,24 @@ export default function TenantsPage() {
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-4" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-32" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-20" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-20" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
                                         <TableCell></TableCell>
                                     </TableRow>
                                 ))
@@ -301,8 +333,11 @@ export default function TenantsPage() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filteredTenants.map(tenant => (
-                                    <TableRow key={tenant.id} className={selectedIds.has(tenant.id) ? "bg-muted/50" : ""}>
+                                filteredTenants.map((tenant) => (
+                                    <TableRow
+                                        key={tenant.id}
+                                        className={selectedIds.has(tenant.id) ? "bg-muted/50" : ""}
+                                    >
                                         <TableCell>
                                             <Checkbox
                                                 checked={selectedIds.has(tenant.id)}
@@ -310,7 +345,9 @@ export default function TenantsPage() {
                                             />
                                         </TableCell>
                                         <TableCell className="font-medium">{tenant.name}</TableCell>
-                                        <TableCell className="text-muted-foreground">{tenant.subdomain || "—"}</TableCell>
+                                        <TableCell className="text-muted-foreground">
+                                            {tenant.subdomain || "—"}
+                                        </TableCell>
                                         <TableCell>
                                             <Badge className={statusColors[tenant.status] || ""}>{tenant.status}</Badge>
                                         </TableCell>
@@ -339,22 +376,30 @@ export default function TenantsPage() {
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     {tenant.status !== "active" && (
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(tenant.id, "active")}>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleStatusChange(tenant.id, "active")}
+                                                        >
                                                             <CheckCircle className="mr-2 h-4 w-4" /> Activate
                                                         </DropdownMenuItem>
                                                     )}
                                                     {tenant.status !== "trial" && (
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(tenant.id, "trial")}>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleStatusChange(tenant.id, "trial")}
+                                                        >
                                                             <Pause className="mr-2 h-4 w-4" /> Set to Trial
                                                         </DropdownMenuItem>
                                                     )}
                                                     {tenant.status !== "suspended" && (
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(tenant.id, "suspended")}>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleStatusChange(tenant.id, "suspended")}
+                                                        >
                                                             <Ban className="mr-2 h-4 w-4" /> Suspend
                                                         </DropdownMenuItem>
                                                     )}
                                                     {tenant.status !== "cancelled" && (
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(tenant.id, "cancelled")}>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleStatusChange(tenant.id, "cancelled")}
+                                                        >
                                                             <XCircle className="mr-2 h-4 w-4" /> Cancel
                                                         </DropdownMenuItem>
                                                     )}
@@ -385,25 +430,43 @@ export default function TenantsPage() {
                     {viewTenant && (
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div><strong>ID:</strong></div>
+                                <div>
+                                    <strong>ID:</strong>
+                                </div>
                                 <div className="font-mono text-xs">{viewTenant.id}</div>
-                                <div><strong>Name:</strong></div>
+                                <div>
+                                    <strong>Name:</strong>
+                                </div>
                                 <div>{viewTenant.name}</div>
-                                <div><strong>Subdomain:</strong></div>
+                                <div>
+                                    <strong>Subdomain:</strong>
+                                </div>
                                 <div>{viewTenant.subdomain || "—"}</div>
-                                <div><strong>Status:</strong></div>
-                                <div><Badge className={statusColors[viewTenant.status]}>{viewTenant.status}</Badge></div>
-                                <div><strong>Plan:</strong></div>
+                                <div>
+                                    <strong>Status:</strong>
+                                </div>
+                                <div>
+                                    <Badge className={statusColors[viewTenant.status]}>{viewTenant.status}</Badge>
+                                </div>
+                                <div>
+                                    <strong>Plan:</strong>
+                                </div>
                                 <div>{viewTenant.planId || "—"}</div>
-                                <div><strong>Owner:</strong></div>
+                                <div>
+                                    <strong>Owner:</strong>
+                                </div>
                                 <div className="font-mono text-xs">{viewTenant.ownerUserId || "—"}</div>
-                                <div><strong>Created:</strong></div>
+                                <div>
+                                    <strong>Created:</strong>
+                                </div>
                                 <div>{formatDate(viewTenant.createdAt)}</div>
                             </div>
                         </div>
                     )}
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setViewTenant(null)}>Close</Button>
+                        <Button variant="outline" onClick={() => setViewTenant(null)}>
+                            Close
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -420,21 +483,21 @@ export default function TenantsPage() {
                             <Label>Tenant Name</Label>
                             <Input
                                 value={editForm.name}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                                onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
                             />
                         </div>
                         <div className="space-y-2">
                             <Label>Subdomain</Label>
                             <Input
                                 value={editForm.subdomain}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, subdomain: e.target.value }))}
+                                onChange={(e) => setEditForm((prev) => ({ ...prev, subdomain: e.target.value }))}
                             />
                         </div>
                         <div className="space-y-2">
                             <Label>Status</Label>
                             <Select
                                 value={editForm.status}
-                                onValueChange={(val) => setEditForm(prev => ({ ...prev, status: val }))}
+                                onValueChange={(val) => setEditForm((prev) => ({ ...prev, status: val }))}
                             >
                                 <SelectTrigger>
                                     <SelectValue />
@@ -451,13 +514,15 @@ export default function TenantsPage() {
                             <Label>Plan ID</Label>
                             <Input
                                 value={editForm.planId}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, planId: e.target.value }))}
+                                onChange={(e) => setEditForm((prev) => ({ ...prev, planId: e.target.value }))}
                                 placeholder="e.g., starter, pro, enterprise"
                             />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditTenant(null)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setEditTenant(null)}>
+                            Cancel
+                        </Button>
                         <Button onClick={handleEditTenant}>Save Changes</Button>
                     </DialogFooter>
                 </DialogContent>
@@ -469,7 +534,8 @@ export default function TenantsPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete Tenant</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete <strong>{deleteTenant?.name}</strong>? This will permanently remove the tenant and all associated data. This action cannot be undone.
+                            Are you sure you want to delete <strong>{deleteTenant?.name}</strong>? This will permanently
+                            remove the tenant and all associated data. This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -487,7 +553,9 @@ export default function TenantsPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirm Bulk Action</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to <strong>{bulkActionLabels[bulkAction || ""]?.toLowerCase()}</strong> for {selectedIds.size} tenants?
+                            Are you sure you want to{" "}
+                            <strong>{bulkActionLabels[bulkAction || ""]?.toLowerCase()}</strong> for {selectedIds.size}{" "}
+                            tenants?
                             {bulkAction === "delete" && " This action cannot be undone."}
                         </AlertDialogDescription>
                     </AlertDialogHeader>

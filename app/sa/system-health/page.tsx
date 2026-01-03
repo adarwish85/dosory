@@ -6,23 +6,32 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { SystemHealthStatus } from "@/lib/types/super-admin";
 import {
-    Activity, Server, Database, Shield, HardDrive, Mail,
-    CheckCircle, AlertTriangle, XCircle, RefreshCw
+    Activity,
+    Server,
+    Database,
+    Shield,
+    HardDrive,
+    Mail,
+    CheckCircle,
+    AlertTriangle,
+    XCircle,
+    RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { saFetch } from "@/lib/api/saFetch";
 
-const statusConfig: Record<string, { color: string; icon: any; bg: string }> = {
+const statusConfig: Record<string, { color: string; icon: React.ElementType; bg: string }> = {
     healthy: { color: "text-green-600", icon: CheckCircle, bg: "bg-green-100" },
     degraded: { color: "text-yellow-600", icon: AlertTriangle, bg: "bg-yellow-100" },
-    down: { color: "text-red-600", icon: XCircle, bg: "bg-red-100" }
+    down: { color: "text-red-600", icon: XCircle, bg: "bg-red-100" },
 };
 
-const serviceIcons: Record<string, any> = {
+const serviceIcons: Record<string, React.ElementType> = {
     API: Server,
     Database: Database,
     Auth: Shield,
     Storage: HardDrive,
-    Email: Mail
+    Email: Mail,
 };
 
 export default function SystemHealthPage() {
@@ -33,12 +42,10 @@ export default function SystemHealthPage() {
 
     const fetchHealth = async () => {
         try {
-            const res = await fetch("/api/sa/system-health");
-            if (!res.ok) throw new Error("Failed to fetch");
-            const data = await res.json();
+            const data = await saFetch<{ services: SystemHealthStatus[] }>("/api/sa/system-health");
             setServices(data.services || []);
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e: unknown) {
+            setError((e as Error).message);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -54,11 +61,11 @@ export default function SystemHealthPage() {
         fetchHealth();
     };
 
-    const overallStatus = services.some(s => s.status === "down")
+    const overallStatus = services.some((s) => s.status === "down")
         ? "down"
-        : services.some(s => s.status === "degraded")
-            ? "degraded"
-            : "healthy";
+        : services.some((s) => s.status === "degraded")
+          ? "degraded"
+          : "healthy";
 
     const overallConfig = statusConfig[overallStatus];
 
@@ -89,7 +96,9 @@ export default function SystemHealthPage() {
                         </>
                     ) : (
                         <>
-                            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${overallConfig.bg}`}>
+                            <div
+                                className={`h-12 w-12 rounded-full flex items-center justify-center ${overallConfig.bg}`}
+                            >
                                 <overallConfig.icon className={`h-6 w-6 ${overallConfig.color}`} />
                             </div>
                             <div>
@@ -100,8 +109,8 @@ export default function SystemHealthPage() {
                                     {overallStatus === "healthy"
                                         ? "All services operational"
                                         : overallStatus === "degraded"
-                                            ? "Some services experiencing issues"
-                                            : "Critical services down"}
+                                          ? "Some services experiencing issues"
+                                          : "Critical services down"}
                                 </p>
                             </div>
                         </>
@@ -137,7 +146,7 @@ export default function SystemHealthPage() {
                         </CardContent>
                     </Card>
                 ) : (
-                    services.map(service => {
+                    services.map((service) => {
                         const config = statusConfig[service.status];
                         const Icon = serviceIcons[service.service] || Server;
                         return (
@@ -153,13 +162,9 @@ export default function SystemHealthPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex items-center justify-between">
-                                        <Badge className={config.bg + " " + config.color}>
-                                            {service.status}
-                                        </Badge>
+                                        <Badge className={config.bg + " " + config.color}>{service.status}</Badge>
                                         {service.latencyMs !== undefined && (
-                                            <span className="text-sm text-muted-foreground">
-                                                {service.latencyMs}ms
-                                            </span>
+                                            <span className="text-sm text-muted-foreground">{service.latencyMs}ms</span>
                                         )}
                                     </div>
                                     {service.message && (

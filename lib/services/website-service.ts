@@ -1,16 +1,26 @@
 /**
  * Website Service - CLIENT-SIDE
- * 
+ *
  * Uses Firebase Client SDK (not Admin SDK)
  * Audit logging is handled by calling the API route, not directly importing AuditService
  */
 
 import {
-    collection, doc, getDoc, getDocs, setDoc,
-    updateDoc, deleteDoc, query, orderBy,
-    serverTimestamp, addDoc, writeBatch
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    query,
+    orderBy,
+    serverTimestamp,
+    addDoc,
+    writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { saPost } from "@/lib/api/saFetch";
 import { Website, WebsitePage, WebsiteSection, WebsiteVersion, WebsiteAsset } from "@/lib/types/website";
 
 const WEBSITES_COLL = "websites";
@@ -20,21 +30,22 @@ const ASSETS_COLL = "assets";
 const VERSIONS_COLL = "website_versions";
 
 // Helper to log audit (calls API instead of importing server-side AuditService)
-async function logAudit(action: string, targetType: string, targetId: string, userId: string, payload: Record<string, any> = {}) {
+async function logAudit(
+    action: string,
+    targetType: string,
+    targetId: string,
+    userId: string,
+    payload: Record<string, unknown> = {}
+) {
     try {
         // Fire-and-forget audit log via API
-        fetch("/api/sa/audit-log", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action, targetType, targetId, userId, payload })
-        }).catch(() => { }); // Silently fail, don't block main operation
+        saPost("/api/sa/audit-log", { action, targetType, targetId, userId, payload }).catch(() => {});
     } catch {
         // Audit logging should never block the primary operation
     }
 }
 
 export class WebsiteService {
-
     // --- Website Operations ---
 
     static async getWebsite(id: string = "dosory-main"): Promise<Website | null> {
@@ -61,12 +72,9 @@ export class WebsiteService {
     // --- Page Operations ---
 
     static async getPages(websiteId: string): Promise<WebsitePage[]> {
-        const q = query(
-            collection(db, WEBSITES_COLL, websiteId, PAGES_COLL),
-            orderBy("createdAt", "desc")
-        );
+        const q = query(collection(db, WEBSITES_COLL, websiteId, PAGES_COLL), orderBy("createdAt", "desc"));
         const snap = await getDocs(q);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as WebsitePage));
+        return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as WebsitePage);
     }
 
     static async getPage(websiteId: string, pageId: string): Promise<WebsitePage | null> {
@@ -83,7 +91,7 @@ export class WebsiteService {
             status: "draft",
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-            createdBy: userId
+            createdBy: userId,
         });
 
         logAudit("create_page", "page", docRef.id, userId, { title: data.title });
@@ -95,7 +103,7 @@ export class WebsiteService {
         const docRef = doc(db, WEBSITES_COLL, websiteId, PAGES_COLL, pageId);
         await updateDoc(docRef, {
             ...updates,
-            updatedAt: serverTimestamp()
+            updatedAt: serverTimestamp(),
         });
     }
 
@@ -111,7 +119,7 @@ export class WebsiteService {
             orderBy("order", "asc")
         );
         const snap = await getDocs(q);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() } as WebsiteSection));
+        return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as WebsiteSection);
     }
 
     static async updateSectionsOrder(websiteId: string, pageId: string, sections: WebsiteSection[]) {
@@ -129,7 +137,7 @@ export class WebsiteService {
             const ref = doc(db, WEBSITES_COLL, websiteId, PAGES_COLL, pageId, SECTIONS_COLL, section.id);
             await updateDoc(ref, {
                 ...section,
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
             });
         } else {
             // Create
@@ -138,7 +146,7 @@ export class WebsiteService {
                 ...section,
                 pageId,
                 createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
             });
         }
     }
@@ -161,11 +169,12 @@ export class WebsiteService {
             pageId,
             snapshot: {
                 page: page,
-                sections: sections
+                sections: sections,
             },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             createdAt: serverTimestamp() as any, // casting for simplicity
             createdBy: userId,
-            description
+            description,
         };
 
         const versionRef = await addDoc(collection(db, VERSIONS_COLL), versionData);
@@ -173,7 +182,8 @@ export class WebsiteService {
         // 2. Mark Page as Published
         await this.updatePage(websiteId, pageId, {
             status: "published",
-            publishedAt: serverTimestamp() as any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            publishedAt: serverTimestamp() as any,
         });
 
         logAudit("publish_page", "page", pageId, userId, { versionId: versionRef.id });
@@ -182,12 +192,9 @@ export class WebsiteService {
     // --- Asset Operations ---
 
     static async getAssets(websiteId: string): Promise<WebsiteAsset[]> {
-        const q = query(
-            collection(db, WEBSITES_COLL, websiteId, ASSETS_COLL),
-            orderBy("createdAt", "desc")
-        );
+        const q = query(collection(db, WEBSITES_COLL, websiteId, ASSETS_COLL), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as WebsiteAsset));
+        return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as WebsiteAsset);
     }
 
     static async createAsset(websiteId: string, asset: Partial<WebsiteAsset>, userId: string): Promise<string> {
@@ -196,7 +203,7 @@ export class WebsiteService {
             ...asset,
             websiteId,
             createdAt: serverTimestamp(),
-            uploadedBy: userId
+            uploadedBy: userId,
         });
 
         logAudit("upload_asset", "asset", docRef.id, userId, { name: asset.fileName });

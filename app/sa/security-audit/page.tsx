@@ -9,12 +9,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AuditLogEntry } from "@/lib/types/super-admin";
 import { Shield, Search, Filter } from "lucide-react";
+import { saFetch } from "@/lib/api/saFetch";
 
 const actionColors: Record<string, string> = {
     create: "bg-green-100 text-green-800",
     update: "bg-blue-100 text-blue-800",
     delete: "bg-red-100 text-red-800",
-    toggle: "bg-purple-100 text-purple-800"
+    toggle: "bg-purple-100 text-purple-800",
 };
 
 export default function SecurityAuditPage() {
@@ -27,12 +28,10 @@ export default function SecurityAuditPage() {
     useEffect(() => {
         const fetchLogs = async () => {
             try {
-                const res = await fetch("/api/sa/audit-logs");
-                if (!res.ok) throw new Error("Failed to fetch");
-                const data = await res.json();
+                const data = await saFetch<{ logs: AuditLogEntry[] }>("/api/sa/audit-logs");
                 setLogs(data.logs || []);
-            } catch (e: any) {
-                setError(e.message);
+            } catch (e: unknown) {
+                setError((e as Error).message);
             } finally {
                 setLoading(false);
             }
@@ -40,8 +39,9 @@ export default function SecurityAuditPage() {
         fetchLogs();
     }, []);
 
-    const filteredLogs = logs.filter(log => {
-        const matchesSearch = log.action.toLowerCase().includes(search.toLowerCase()) ||
+    const filteredLogs = logs.filter((log) => {
+        const matchesSearch =
+            log.action.toLowerCase().includes(search.toLowerCase()) ||
             log.targetType.toLowerCase().includes(search.toLowerCase()) ||
             log.actorEmail?.toLowerCase().includes(search.toLowerCase());
         const matchesAction = actionFilter === "all" || log.action.includes(actionFilter);
@@ -109,11 +109,21 @@ export default function SecurityAuditPage() {
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-20" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-32" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-28" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-40" />
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             ) : filteredLogs.length === 0 ? (
@@ -129,18 +139,22 @@ export default function SecurityAuditPage() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filteredLogs.map(log => {
+                                filteredLogs.map((log) => {
                                     const actionType = log.action.split("_")[0];
                                     return (
                                         <TableRow key={log.id}>
                                             <TableCell>
-                                                <Badge className={actionColors[actionType] || "bg-gray-100 text-gray-800"}>
+                                                <Badge
+                                                    className={actionColors[actionType] || "bg-gray-100 text-gray-800"}
+                                                >
                                                     {log.action}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
                                                 <span className="text-muted-foreground">{log.targetType}:</span>{" "}
-                                                <span className="font-mono text-xs">{log.targetId?.slice(0, 8)}...</span>
+                                                <span className="font-mono text-xs">
+                                                    {log.targetId?.slice(0, 8)}...
+                                                </span>
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
                                                 {log.actorEmail || log.actorUserId?.slice(0, 8)}

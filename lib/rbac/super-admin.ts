@@ -1,10 +1,9 @@
-
 export enum SuperAdminRole {
-    PlatformAdmin = 'PlatformAdmin',
-    ContentAdmin = 'ContentAdmin',
-    SupportAgent = 'SupportAgent',
-    BillingAdmin = 'BillingAdmin',
-    SecurityAdmin = 'SecurityAdmin',
+    PlatformAdmin = "PlatformAdmin",
+    ContentAdmin = "ContentAdmin",
+    SupportAgent = "SupportAgent",
+    BillingAdmin = "BillingAdmin",
+    SecurityAdmin = "SecurityAdmin",
 }
 
 export interface SuperAdminUser {
@@ -12,14 +11,17 @@ export interface SuperAdminUser {
     email: string;
     role: SuperAdminRole;
     isSuperAdmin: true;
+    status?: "active" | "disabled";
+    createdAt?: unknown;
+    updatedAt?: unknown;
 }
 
 export const SUPER_ADMIN_PERMISSIONS: Record<SuperAdminRole, string[]> = {
-    [SuperAdminRole.PlatformAdmin]: ['*'],
-    [SuperAdminRole.ContentAdmin]: ['website-builder', 'media-library'],
-    [SuperAdminRole.SupportAgent]: ['tenants', 'users'],
-    [SuperAdminRole.BillingAdmin]: ['billing', 'plans'],
-    [SuperAdminRole.SecurityAdmin]: ['audit-logs', 'security'],
+    [SuperAdminRole.PlatformAdmin]: ["*"],
+    [SuperAdminRole.ContentAdmin]: ["website-builder", "media-library"],
+    [SuperAdminRole.SupportAgent]: ["tenants", "users"],
+    [SuperAdminRole.BillingAdmin]: ["billing", "plans"],
+    [SuperAdminRole.SecurityAdmin]: ["audit-logs", "security"],
 };
 
 export function hasSuperAdminPermission(role: SuperAdminRole, permission: string): boolean {

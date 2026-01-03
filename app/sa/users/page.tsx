@@ -11,11 +11,34 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { GlobalUser } from "@/lib/types/super-admin";
 import { Users, Search, Ban, CheckCircle, MoreHorizontal, Trash2, Edit, Shield, ShieldOff, Eye } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
+import { saFetch, saPatch, saDelete, saPost } from "@/lib/api/saFetch";
 
 export default function UsersPage() {
     const { user: currentUser } = useAuth();
@@ -38,12 +61,10 @@ export default function UsersPage() {
 
     const fetchUsers = async () => {
         try {
-            const res = await fetch("/api/sa/users");
-            if (!res.ok) throw new Error("Failed to fetch");
-            const data = await res.json();
+            const data = await saFetch<{ users: GlobalUser[] }>("/api/sa/users");
             setUsers(data.users || []);
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e: unknown) {
+            setError((e as Error).message || String(e));
         } finally {
             setLoading(false);
         }
@@ -52,13 +73,8 @@ export default function UsersPage() {
     const handleStatusChange = async (userId: string, newStatus: "active" | "blocked") => {
         if (!currentUser) return;
         try {
-            const res = await fetch(`/api/sa/users/${userId}/status`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: newStatus, actorId: currentUser.uid })
-            });
-            if (!res.ok) throw new Error("Failed to update");
-            setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+            await saPatch(`/api/sa/users/${userId}/status`, { status: newStatus, actorId: currentUser.uid });
+            setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status: newStatus } : u)));
             toast.success(`User ${newStatus === "blocked" ? "blocked" : "activated"}`);
         } catch {
             toast.error("Failed to update user");
@@ -68,13 +84,8 @@ export default function UsersPage() {
     const handleToggleSuperAdmin = async (userId: string, isSuperAdmin: boolean) => {
         if (!currentUser) return;
         try {
-            const res = await fetch(`/api/sa/users/${userId}/super-admin`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ isSuperAdmin, actorId: currentUser.uid })
-            });
-            if (!res.ok) throw new Error("Failed to update");
-            setUsers(prev => prev.map(u => u.id === userId ? { ...u, isSuperAdmin } : u));
+            await saPatch(`/api/sa/users/${userId}/super-admin`, { isSuperAdmin, actorId: currentUser.uid });
+            setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isSuperAdmin } : u)));
             toast.success(isSuperAdmin ? "User granted super admin" : "Super admin revoked");
         } catch {
             toast.error("Failed to update super admin status");
@@ -84,13 +95,8 @@ export default function UsersPage() {
     const handleEditUser = async () => {
         if (!currentUser || !editUser) return;
         try {
-            const res = await fetch(`/api/sa/users/${editUser.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...editForm, actorId: currentUser.uid })
-            });
-            if (!res.ok) throw new Error("Failed to update");
-            setUsers(prev => prev.map(u => u.id === editUser.id ? { ...u, ...editForm } : u));
+            await saPatch(`/api/sa/users/${editUser.id}`, { ...editForm, actorId: currentUser.uid });
+            setUsers((prev) => prev.map((u) => (u.id === editUser.id ? { ...u, ...editForm } : u)));
             toast.success("User updated");
             setEditUser(null);
         } catch {
@@ -101,11 +107,8 @@ export default function UsersPage() {
     const handleDeleteUser = async () => {
         if (!currentUser || !deleteUser) return;
         try {
-            const res = await fetch(`/api/sa/users/${deleteUser.id}?actorId=${currentUser.uid}`, {
-                method: "DELETE"
-            });
-            if (!res.ok) throw new Error("Failed to delete");
-            setUsers(prev => prev.filter(u => u.id !== deleteUser.id));
+            await saDelete(`/api/sa/users/${deleteUser.id}?actorId=${currentUser.uid}`);
+            setUsers((prev) => prev.filter((u) => u.id !== deleteUser.id));
             toast.success("User deleted");
             setDeleteUser(null);
         } catch {
@@ -116,29 +119,23 @@ export default function UsersPage() {
     const handleBulkAction = async () => {
         if (!currentUser || !bulkAction || selectedIds.size === 0) return;
         try {
-            const res = await fetch("/api/sa/users/bulk", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ids: Array.from(selectedIds),
-                    action: bulkAction,
-                    actorId: currentUser.uid
-                })
+            const data = await saPost<{ processed: number }>("/api/sa/users/bulk", {
+                ids: Array.from(selectedIds),
+                action: bulkAction,
+                actorId: currentUser.uid,
             });
-            if (!res.ok) throw new Error("Failed");
-            const data = await res.json();
 
             // Update local state based on action
             if (bulkAction === "delete") {
-                setUsers(prev => prev.filter(u => !selectedIds.has(u.id)));
+                setUsers((prev) => prev.filter((u) => !selectedIds.has(u.id)));
             } else if (bulkAction === "block") {
-                setUsers(prev => prev.map(u => selectedIds.has(u.id) ? { ...u, status: "blocked" as const } : u));
+                setUsers((prev) => prev.map((u) => (selectedIds.has(u.id) ? { ...u, status: "blocked" as const } : u)));
             } else if (bulkAction === "activate") {
-                setUsers(prev => prev.map(u => selectedIds.has(u.id) ? { ...u, status: "active" as const } : u));
+                setUsers((prev) => prev.map((u) => (selectedIds.has(u.id) ? { ...u, status: "active" as const } : u)));
             } else if (bulkAction === "grant_super_admin") {
-                setUsers(prev => prev.map(u => selectedIds.has(u.id) ? { ...u, isSuperAdmin: true } : u));
+                setUsers((prev) => prev.map((u) => (selectedIds.has(u.id) ? { ...u, isSuperAdmin: true } : u)));
             } else if (bulkAction === "revoke_super_admin") {
-                setUsers(prev => prev.map(u => selectedIds.has(u.id) ? { ...u, isSuperAdmin: false } : u));
+                setUsers((prev) => prev.map((u) => (selectedIds.has(u.id) ? { ...u, isSuperAdmin: false } : u)));
             }
 
             toast.success(`Bulk action completed: ${data.processed} users affected`);
@@ -153,7 +150,7 @@ export default function UsersPage() {
         setEditForm({
             displayName: user.displayName || "",
             email: user.email || "",
-            role: user.role || ""
+            role: user.role || "",
         });
         setEditUser(user);
     };
@@ -172,13 +169,14 @@ export default function UsersPage() {
         if (selectedIds.size === filteredUsers.length) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(filteredUsers.map(u => u.id)));
+            setSelectedIds(new Set(filteredUsers.map((u) => u.id)));
         }
     };
 
-    const filteredUsers = users.filter(u =>
-        u.email.toLowerCase().includes(search.toLowerCase()) ||
-        u.displayName?.toLowerCase().includes(search.toLowerCase())
+    const filteredUsers = users.filter(
+        (u) =>
+            u.email.toLowerCase().includes(search.toLowerCase()) ||
+            u.displayName?.toLowerCase().includes(search.toLowerCase())
     );
 
     const bulkActionLabels: Record<string, string> = {
@@ -186,7 +184,7 @@ export default function UsersPage() {
         block: "Block Selected",
         activate: "Activate Selected",
         grant_super_admin: "Grant Super Admin",
-        revoke_super_admin: "Revoke Super Admin"
+        revoke_super_admin: "Revoke Super Admin",
     };
 
     return (
@@ -214,7 +212,9 @@ export default function UsersPage() {
                         <span className="text-sm font-medium">{selectedIds.size} selected</span>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">Bulk Actions</Button>
+                                <Button variant="outline" size="sm">
+                                    Bulk Actions
+                                </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuItem onClick={() => setBulkAction("activate")}>
@@ -274,12 +274,24 @@ export default function UsersPage() {
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-4" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-32" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-40" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-20" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-12" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-8" />
+                                        </TableCell>
                                         <TableCell></TableCell>
                                     </TableRow>
                                 ))
@@ -293,7 +305,7 @@ export default function UsersPage() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filteredUsers.map(u => (
+                                filteredUsers.map((u) => (
                                     <TableRow key={u.id} className={selectedIds.has(u.id) ? "bg-muted/50" : ""}>
                                         <TableCell>
                                             <Checkbox
@@ -310,10 +322,15 @@ export default function UsersPage() {
                                         </TableCell>
                                         <TableCell>
                                             {u.isSuperAdmin ? (
-                                                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">
+                                                <Badge
+                                                    variant="outline"
+                                                    className="bg-purple-50 text-purple-700 border-purple-300"
+                                                >
                                                     <Shield className="h-3 w-3 mr-1" /> Yes
                                                 </Badge>
-                                            ) : "—"}
+                                            ) : (
+                                                "—"
+                                            )}
                                         </TableCell>
                                         <TableCell>{u.tenantMemberships?.length || 0}</TableCell>
                                         <TableCell>
@@ -332,20 +349,28 @@ export default function UsersPage() {
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     {u.status === "blocked" ? (
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(u.id, "active")}>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleStatusChange(u.id, "active")}
+                                                        >
                                                             <CheckCircle className="mr-2 h-4 w-4" /> Activate
                                                         </DropdownMenuItem>
                                                     ) : (
-                                                        <DropdownMenuItem onClick={() => handleStatusChange(u.id, "blocked")}>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleStatusChange(u.id, "blocked")}
+                                                        >
                                                             <Ban className="mr-2 h-4 w-4" /> Block User
                                                         </DropdownMenuItem>
                                                     )}
                                                     {u.isSuperAdmin ? (
-                                                        <DropdownMenuItem onClick={() => handleToggleSuperAdmin(u.id, false)}>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleToggleSuperAdmin(u.id, false)}
+                                                        >
                                                             <ShieldOff className="mr-2 h-4 w-4" /> Revoke Super Admin
                                                         </DropdownMenuItem>
                                                     ) : (
-                                                        <DropdownMenuItem onClick={() => handleToggleSuperAdmin(u.id, true)}>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleToggleSuperAdmin(u.id, true)}
+                                                        >
                                                             <Shield className="mr-2 h-4 w-4" /> Grant Super Admin
                                                         </DropdownMenuItem>
                                                     )}
@@ -376,27 +401,53 @@ export default function UsersPage() {
                     {viewUser && (
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div><strong>ID:</strong></div>
+                                <div>
+                                    <strong>ID:</strong>
+                                </div>
                                 <div className="font-mono text-xs">{viewUser.id}</div>
-                                <div><strong>Display Name:</strong></div>
+                                <div>
+                                    <strong>Display Name:</strong>
+                                </div>
                                 <div>{viewUser.displayName || "—"}</div>
-                                <div><strong>Email:</strong></div>
+                                <div>
+                                    <strong>Email:</strong>
+                                </div>
                                 <div>{viewUser.email}</div>
-                                <div><strong>Role:</strong></div>
+                                <div>
+                                    <strong>Role:</strong>
+                                </div>
                                 <div>{viewUser.role || "—"}</div>
-                                <div><strong>Status:</strong></div>
-                                <div><Badge variant={viewUser.status === "active" ? "default" : "destructive"}>{viewUser.status || "active"}</Badge></div>
-                                <div><strong>Super Admin:</strong></div>
+                                <div>
+                                    <strong>Status:</strong>
+                                </div>
+                                <div>
+                                    <Badge variant={viewUser.status === "active" ? "default" : "destructive"}>
+                                        {viewUser.status || "active"}
+                                    </Badge>
+                                </div>
+                                <div>
+                                    <strong>Super Admin:</strong>
+                                </div>
                                 <div>{viewUser.isSuperAdmin ? "Yes" : "No"}</div>
-                                <div><strong>Organization:</strong></div>
+                                <div>
+                                    <strong>Organization:</strong>
+                                </div>
                                 <div className="font-mono text-xs">{viewUser.orgId || "—"}</div>
-                                <div><strong>Created:</strong></div>
-                                <div>{viewUser.createdAt ? new Date(viewUser.createdAt as any).toLocaleDateString() : "—"}</div>
+                                <div>
+                                    <strong>Created:</strong>
+                                </div>
+                                <div>
+                                    {viewUser.createdAt
+                                        ? new Date(viewUser.createdAt as unknown as string).toLocaleDateString()
+                                        : "—"}
+                                </div>
                             </div>
                         </div>
                     )}
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setViewUser(null)}>Close</Button>
+                        <Button variant="outline" onClick={() => setViewUser(null)}>
+                            Close
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -413,7 +464,7 @@ export default function UsersPage() {
                             <Label>Display Name</Label>
                             <Input
                                 value={editForm.displayName}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, displayName: e.target.value }))}
+                                onChange={(e) => setEditForm((prev) => ({ ...prev, displayName: e.target.value }))}
                             />
                         </div>
                         <div className="space-y-2">
@@ -421,20 +472,22 @@ export default function UsersPage() {
                             <Input
                                 type="email"
                                 value={editForm.email}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                                onChange={(e) => setEditForm((prev) => ({ ...prev, email: e.target.value }))}
                             />
                         </div>
                         <div className="space-y-2">
                             <Label>Role</Label>
                             <Input
                                 value={editForm.role}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, role: e.target.value }))}
+                                onChange={(e) => setEditForm((prev) => ({ ...prev, role: e.target.value }))}
                                 placeholder="admin, member, etc."
                             />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditUser(null)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setEditUser(null)}>
+                            Cancel
+                        </Button>
                         <Button onClick={handleEditUser}>Save Changes</Button>
                     </DialogFooter>
                 </DialogContent>
@@ -446,7 +499,8 @@ export default function UsersPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete User</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete <strong>{deleteUser?.email}</strong>? This action cannot be undone.
+                            Are you sure you want to delete <strong>{deleteUser?.email}</strong>? This action cannot be
+                            undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -464,7 +518,9 @@ export default function UsersPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirm Bulk Action</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to <strong>{bulkActionLabels[bulkAction || ""]?.toLowerCase()}</strong> for {selectedIds.size} users?
+                            Are you sure you want to{" "}
+                            <strong>{bulkActionLabels[bulkAction || ""]?.toLowerCase()}</strong> for {selectedIds.size}{" "}
+                            users?
                             {bulkAction === "delete" && " This action cannot be undone."}
                         </AlertDialogDescription>
                     </AlertDialogHeader>

@@ -11,12 +11,13 @@ import { ArrowLeft, Building2, User, Calendar, Globe, Palette } from "lucide-rea
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
+import { saFetch, saPatch } from "@/lib/api/saFetch";
 
 const statusColors: Record<string, string> = {
     active: "bg-green-100 text-green-800",
     trial: "bg-blue-100 text-blue-800",
     suspended: "bg-red-100 text-red-800",
-    cancelled: "bg-gray-100 text-gray-800"
+    cancelled: "bg-gray-100 text-gray-800",
 };
 
 export default function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,12 +31,10 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
     useEffect(() => {
         const fetchTenant = async () => {
             try {
-                const res = await fetch(`/api/sa/tenants/${id}`);
-                if (!res.ok) throw new Error("Failed to fetch");
-                const data = await res.json();
+                const data = await saFetch<Tenant>(`/api/sa/tenants/${id}`);
                 setTenant(data);
-            } catch (e: any) {
-                setError(e.message);
+            } catch (e: unknown) {
+                setError((e as Error).message || String(e));
             } finally {
                 setLoading(false);
             }
@@ -47,15 +46,10 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
         if (!user) return;
         setUpdating(true);
         try {
-            const res = await fetch(`/api/sa/tenants/${id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: newStatus, actorId: user.uid })
-            });
-            if (!res.ok) throw new Error("Failed to update");
-            setTenant(prev => prev ? { ...prev, status: newStatus } : null);
+            await saPatch(`/api/sa/tenants/${id}`, { status: newStatus, actorId: user.uid });
+            setTenant((prev) => (prev ? { ...prev, status: newStatus } : null));
             toast.success(`Tenant status updated to ${newStatus}`);
-        } catch (e: any) {
+        } catch {
             toast.error("Failed to update status");
         } finally {
             setUpdating(false);
@@ -81,12 +75,12 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
         return (
             <div className="space-y-6">
                 <Link href="/sa/tenants">
-                    <Button variant="ghost"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Tenants</Button>
+                    <Button variant="ghost">
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tenants
+                    </Button>
                 </Link>
                 <Card className="border-red-500">
-                    <CardContent className="pt-6 text-center text-red-600">
-                        {error || "Tenant not found"}
-                    </CardContent>
+                    <CardContent className="pt-6 text-center text-red-600">{error || "Tenant not found"}</CardContent>
                 </Card>
             </div>
         );
@@ -96,7 +90,9 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
         <div className="space-y-6">
             {/* Breadcrumb */}
             <Link href="/sa/tenants">
-                <Button variant="ghost" size="sm"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Tenants</Button>
+                <Button variant="ghost" size="sm">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tenants
+                </Button>
             </Link>
 
             {/* Header */}
@@ -157,7 +153,7 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                         <div className="space-y-2">
                             <p className="text-sm font-medium">Change Status</p>
                             <div className="flex flex-wrap gap-2">
-                                {(["active", "trial", "suspended", "cancelled"] as const).map(status => (
+                                {(["active", "trial", "suspended", "cancelled"] as const).map((status) => (
                                     <Button
                                         key={status}
                                         variant={tenant.status === status ? "default" : "outline"}

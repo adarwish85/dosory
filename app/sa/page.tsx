@@ -5,16 +5,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OverviewStats } from "@/lib/types/super-admin";
-import {
-    Building2, Users, FileText, DollarSign,
-    Activity, ExternalLink, Settings, LayoutTemplate
-} from "lucide-react";
+import { saFetch } from "@/lib/api/saFetch";
+import { Building2, Users, FileText, DollarSign, Activity, ExternalLink, Settings, LayoutTemplate } from "lucide-react";
 import Link from "next/link";
 
 function StatCard({
-    title, value, icon: Icon, loading
+    title,
+    value,
+    icon: Icon,
+    loading,
 }: {
-    title: string; value: string | number; icon: any; loading?: boolean
+    title: string;
+    value: string | number;
+    icon: React.ElementType;
+    loading?: boolean;
 }) {
     return (
         <Card>
@@ -23,11 +27,7 @@ function StatCard({
                 <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                {loading ? (
-                    <Skeleton className="h-8 w-24" />
-                ) : (
-                    <div className="text-2xl font-bold">{value}</div>
-                )}
+                {loading ? <Skeleton className="h-8 w-24" /> : <div className="text-2xl font-bold">{value}</div>}
             </CardContent>
         </Card>
     );
@@ -41,12 +41,10 @@ export default function SAOverviewPage() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await fetch("/api/sa/overview");
-                if (!res.ok) throw new Error("Failed to fetch");
-                const data = await res.json();
+                const data = await saFetch<OverviewStats>("/api/sa/overview");
                 setStats(data);
-            } catch (e: any) {
-                setError(e.message);
+            } catch (e: unknown) {
+                setError((e as Error).message);
             } finally {
                 setLoading(false);
             }
@@ -57,7 +55,7 @@ export default function SAOverviewPage() {
     const healthColor = {
         healthy: "bg-green-500",
         degraded: "bg-yellow-500",
-        down: "bg-red-500"
+        down: "bg-red-500",
     }[stats?.systemHealth || "healthy"];
 
     return (
@@ -79,30 +77,10 @@ export default function SAOverviewPage() {
 
             {/* KPI Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                    title="Total Tenants"
-                    value={stats?.totalTenants ?? 0}
-                    icon={Building2}
-                    loading={loading}
-                />
-                <StatCard
-                    title="Active Tenants"
-                    value={stats?.activeTenants ?? 0}
-                    icon={Building2}
-                    loading={loading}
-                />
-                <StatCard
-                    title="Total Users"
-                    value={stats?.totalUsers ?? 0}
-                    icon={Users}
-                    loading={loading}
-                />
-                <StatCard
-                    title="Website Pages"
-                    value={stats?.totalPages ?? 0}
-                    icon={FileText}
-                    loading={loading}
-                />
+                <StatCard title="Total Tenants" value={stats?.totalTenants ?? 0} icon={Building2} loading={loading} />
+                <StatCard title="Active Tenants" value={stats?.activeTenants ?? 0} icon={Building2} loading={loading} />
+                <StatCard title="Total Users" value={stats?.totalUsers ?? 0} icon={Users} loading={loading} />
+                <StatCard title="Website Pages" value={stats?.totalPages ?? 0} icon={FileText} loading={loading} />
             </div>
 
             {/* Secondary Row */}
@@ -110,7 +88,9 @@ export default function SAOverviewPage() {
                 {/* MRR Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Recurring Revenue</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                            Monthly Recurring Revenue
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         {loading ? (
@@ -134,7 +114,9 @@ export default function SAOverviewPage() {
                         ) : (
                             <>
                                 <div className={`h-4 w-4 rounded-full ${healthColor}`} />
-                                <span className="text-xl font-semibold capitalize">{stats?.systemHealth || "Unknown"}</span>
+                                <span className="text-xl font-semibold capitalize">
+                                    {stats?.systemHealth || "Unknown"}
+                                </span>
                             </>
                         )}
                     </CardContent>
@@ -165,19 +147,29 @@ export default function SAOverviewPage() {
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-3">
                     <Link href="/sa/tenants">
-                        <Button variant="outline"><Building2 className="mr-2 h-4 w-4" /> Manage Tenants</Button>
+                        <Button variant="outline">
+                            <Building2 className="mr-2 h-4 w-4" /> Manage Tenants
+                        </Button>
                     </Link>
                     <Link href="/sa/users">
-                        <Button variant="outline"><Users className="mr-2 h-4 w-4" /> Manage Users</Button>
+                        <Button variant="outline">
+                            <Users className="mr-2 h-4 w-4" /> Manage Users
+                        </Button>
                     </Link>
                     <Link href="/sa/billing-plans">
-                        <Button variant="outline"><DollarSign className="mr-2 h-4 w-4" /> Billing Plans</Button>
+                        <Button variant="outline">
+                            <DollarSign className="mr-2 h-4 w-4" /> Billing Plans
+                        </Button>
                     </Link>
                     <Link href="/sa/modules">
-                        <Button variant="outline"><Settings className="mr-2 h-4 w-4" /> Modules</Button>
+                        <Button variant="outline">
+                            <Settings className="mr-2 h-4 w-4" /> Modules
+                        </Button>
                     </Link>
                     <Link href="/sa/security-audit">
-                        <Button variant="outline"><Activity className="mr-2 h-4 w-4" /> Audit Logs</Button>
+                        <Button variant="outline">
+                            <Activity className="mr-2 h-4 w-4" /> Audit Logs
+                        </Button>
                     </Link>
                 </CardContent>
             </Card>

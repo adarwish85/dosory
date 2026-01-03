@@ -7,19 +7,20 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SupportIssue } from "@/lib/types/super-admin";
 import { LifeBuoy, AlertCircle } from "lucide-react";
+import { saFetch } from "@/lib/api/saFetch";
 
 const priorityColors: Record<string, string> = {
     low: "bg-gray-100 text-gray-800",
     medium: "bg-blue-100 text-blue-800",
     high: "bg-orange-100 text-orange-800",
-    critical: "bg-red-100 text-red-800"
+    critical: "bg-red-100 text-red-800",
 };
 
 const statusColors: Record<string, string> = {
     open: "bg-yellow-100 text-yellow-800",
     in_progress: "bg-blue-100 text-blue-800",
     resolved: "bg-green-100 text-green-800",
-    closed: "bg-gray-100 text-gray-800"
+    closed: "bg-gray-100 text-gray-800",
 };
 
 export default function SupportPage() {
@@ -30,12 +31,10 @@ export default function SupportPage() {
     useEffect(() => {
         const fetchIssues = async () => {
             try {
-                const res = await fetch("/api/sa/support/issues");
-                if (!res.ok) throw new Error("Failed to fetch");
-                const data = await res.json();
+                const data = await saFetch<{ issues: SupportIssue[] }>("/api/sa/support/issues");
                 setIssues(data.issues || []);
-            } catch (e: any) {
-                setError(e.message);
+            } catch (e: unknown) {
+                setError((e as Error).message);
             } finally {
                 setLoading(false);
             }
@@ -58,7 +57,7 @@ export default function SupportPage() {
                         <CardTitle className="text-sm font-medium text-muted-foreground">Open Issues</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{issues.filter(i => i.status === "open").length}</div>
+                        <div className="text-2xl font-bold">{issues.filter((i) => i.status === "open").length}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -66,7 +65,9 @@ export default function SupportPage() {
                         <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{issues.filter(i => i.status === "in_progress").length}</div>
+                        <div className="text-2xl font-bold">
+                            {issues.filter((i) => i.status === "in_progress").length}
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -74,7 +75,9 @@ export default function SupportPage() {
                         <CardTitle className="text-sm font-medium text-muted-foreground">Critical</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-600">{issues.filter(i => i.priority === "critical").length}</div>
+                        <div className="text-2xl font-bold text-red-600">
+                            {issues.filter((i) => i.priority === "critical").length}
+                        </div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -114,11 +117,21 @@ export default function SupportPage() {
                             {loading ? (
                                 Array.from({ length: 3 }).map((_, i) => (
                                     <TableRow key={i}>
-                                        <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-48" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-16" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-20" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             ) : issues.length === 0 ? (
@@ -134,15 +147,19 @@ export default function SupportPage() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                issues.map(issue => (
+                                issues.map((issue) => (
                                     <TableRow key={issue.id}>
                                         <TableCell className="font-medium">{issue.subject}</TableCell>
-                                        <TableCell className="text-muted-foreground">{issue.tenantName || issue.tenantId}</TableCell>
+                                        <TableCell className="text-muted-foreground">
+                                            {issue.tenantName || issue.tenantId}
+                                        </TableCell>
                                         <TableCell>
                                             <Badge className={priorityColors[issue.priority]}>{issue.priority}</Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge className={statusColors[issue.status]}>{issue.status.replace("_", " ")}</Badge>
+                                            <Badge className={statusColors[issue.status]}>
+                                                {issue.status.replace("_", " ")}
+                                            </Badge>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground text-sm">
                                             {issue.createdAt?.toDate?.()?.toLocaleDateString() || "—"}
