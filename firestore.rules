@@ -215,7 +215,12 @@ service cloud.firestore {
     // Tenants need to read staff profiles in their org.
     // Each staff doc MUST have an `orgId` field.
     match /staff/{docId} {
-      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      // Allow users to read their own staff doc (for sync/check)
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == docId) || (isOrgMember(resource.data.orgId));
+      
+      // Update/Delete: Standard org rules
+      allow update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+
       // Creation: Usually done by Admin via API, but if client-side:
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId) && request.auth.token.role == 'admin'); 
     }

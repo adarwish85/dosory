@@ -68,7 +68,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         page = 1,
         searchQuery = "",
     } = options;
-    const { profile } = useUserProfile();
+    const { profile, loading: profileLoading } = useUserProfile();
 
     // Data State
     const [leads, setLeads] = useState<Lead[]>([]);
@@ -103,15 +103,13 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
     // Effect: Fetch Stats & Total Count
     useEffect(() => {
+        if (profileLoading) return;
         let isMounted = true;
         const fetchStatsAndCount = async () => {
             if (!profile?.orgId) return;
             try {
                 // 1. Aggregation for global stats
                 const globalQ = query(collection(db, "leads"), where("orgId", "==", profile.orgId));
-                // Fallback to client-side count if aggregation fails (or for development locally if indexes miss)
-                // Actually, getAggregateFromServer requires index. getCountFromServer is cheaper/supported more broadly without specific composite index sometimes?
-                // For "Total Value", we definitely need aggregation.
 
                 // We'll wrap in try/catch individual parts to ensure partial success
                 let globalTotal = 0;
@@ -157,12 +155,14 @@ export function useLeads(options: UseLeadsOptions = {}) {
         return () => {
             isMounted = false;
         };
-    }, [profile?.orgId, getBaseConstraints]);
+    }, [profile?.orgId, profileLoading, getBaseConstraints]);
 
     // Effect: Fetch Paginated Data
     useEffect(() => {
+        if (profileLoading) return;
+
         if (!profile?.orgId) {
-            setLoading(false);
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 
@@ -180,8 +180,6 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 console.warn(
                     "Missing cursor for page " + page + ", loading from scratch (might be inaccurate deep in list)."
                 );
-                // Fallback: If we don't have cursor (e.g. reload or jump), we can't efficiently jump to page X in Firestore.
-                // ideally handling "Invalid Cursor" by resetting to Page 1 in UI.
             }
         }
 
@@ -212,7 +210,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
         return () => unsubscribe();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [profile?.orgId, getBaseConstraints, orderByField, orderDirection, pageSize, page]);
+    }, [profile?.orgId, profileLoading, getBaseConstraints, orderByField, orderDirection, pageSize, page]);
 
     // Reconcile totalRecords with actual fetched leads to prevent count mismatch
     // This fixes the issue where onSnapshot updates with new data (e.g. from other users)
