@@ -20,13 +20,15 @@ export interface Tenant {
 export interface GlobalUser {
     id: string;
     email: string;
-    displayName: string;
+    displayName?: string;
     photoURL?: string;
     status: "active" | "blocked";
     isSuperAdmin?: boolean;
-    tenantMemberships: string[]; // Array of tenant IDs
+    role?: string; // admin, member, etc.
+    orgId?: string; // Primary organization ID
+    tenantMemberships?: string[]; // Array of tenant IDs
     lastLoginAt?: Timestamp;
-    createdAt: Timestamp;
+    createdAt?: Timestamp;
 }
 
 // --- Plan ---
