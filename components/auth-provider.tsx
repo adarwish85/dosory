@@ -20,7 +20,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         // Listen to Firebase Auth state changes
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
+                try {
+                    // Force refresh token to get latest custom claims (like orgId)
+                    await firebaseUser.getIdTokenResult(true);
+                } catch (e) {
+                    console.error("Failed to refresh token", e);
+                }
+            }
             setUser(firebaseUser);
             setLoading(false);
         });

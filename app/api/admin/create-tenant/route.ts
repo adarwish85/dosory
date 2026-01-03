@@ -38,17 +38,29 @@ export async function POST(request: NextRequest) {
             tempPassword = Math.random().toString(36).slice(-12) + "A1!";
         }
 
+        // Helper to derive name from email
+        const deriveNameFromEmail = (email: string) => {
+            const prefix = email.split("@")[0];
+            return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+        };
+
+        const derivedName = deriveNameFromEmail(email);
+        const userDisplayName = displayName || derivedName;
+        const userFirstName = displayName?.split(" ")[0] || derivedName;
+        const userLastName = displayName?.split(" ").slice(1).join(" ") || "Admin";
+
         try {
             // Create the Firebase Auth user
             const userRecord = await adminAuth.createUser({
                 email,
                 password: tempPassword,
-                displayName: displayName || organizationName,
+                displayName: userDisplayName,
                 emailVerified: false,
             });
             userId = userRecord.uid;
-        } catch (authError: any) {
-            if (authError.code === "auth/email-already-exists") {
+        } catch (authError: unknown) {
+            const firebaseError = authError as { code?: string; message?: string };
+            if (firebaseError.code === "auth/email-already-exists") {
                 return NextResponse.json({ error: "A user with this email already exists" }, { status: 400 });
             }
             throw authError;
@@ -75,26 +87,32 @@ export async function POST(request: NextRequest) {
             });
 
         // Create the user document with tenant association
-        await adminDb
-            .collection("users")
-            .doc(userId)
-            .set({
-                email,
-                displayName: displayName || organizationName,
-                role: "admin", // Tenant admin
-                orgId: tenantId,
-                organizationId: tenantId, // Keep for backward compatibility if needed, else remove. Better to keep for now.
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
+        await adminDb.collection("users").doc(userId).set({
+            email,
+            displayName: userDisplayName,
+            firstName: userFirstName,
+            lastName: userLastName,
+            role: "admin", // Tenant admin
+            orgId: tenantId,
+            organizationId: tenantId, // Keep for backward compatibility if needed, else remove. Better to keep for now.
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        // Set Custom Claims for Tenant Admin
+        await adminAuth.setCustomUserClaims(userId, {
+            orgId: tenantId,
+            role: "admin",
+        });
 
         // Create the staff document for the admin (using same ID)
         await adminDb
             .collection("staff")
             .doc(userId)
             .set({
-                firstName: displayName?.split(" ")[0] || organizationName,
-                lastName: displayName?.split(" ").slice(1).join(" ") || "Admin",
+                firstName: userFirstName,
+                lastName: userLastName,
+                displayName: userDisplayName,
                 email,
                 phone: phone || "",
                 roleId: "admin", // Placeholder, system should handle this
@@ -115,12 +133,7 @@ export async function POST(request: NextRequest) {
 
                 // Send welcome email via template
                 const { sendWelcomeTenantEmail } = await import("@/lib/email");
-                const sent = await sendWelcomeTenantEmail(
-                    email,
-                    displayName || organizationName,
-                    organizationName,
-                    resetLink
-                );
+                const sent = await sendWelcomeTenantEmail(email, userDisplayName, organizationName, resetLink);
 
                 if (!sent) {
                     console.warn("Failed to send welcome email. Check SMTP settings.");
@@ -153,8 +166,8 @@ export async function POST(request: NextRequest) {
                 ? "Tenant created. Password reset email will be sent."
                 : "Tenant created successfully.",
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error creating tenant:", error);
-        return NextResponse.json({ error: error.message || "Failed to create tenant" }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message || "Failed to create tenant" }, { status: 500 });
     }
 }

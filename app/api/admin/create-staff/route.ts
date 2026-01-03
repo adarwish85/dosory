@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         // But wait, this is /api/admin/*, implying it's for the Tenant Admin.
         // So standard auth applies.
 
-        // Block specific actions for Support Agents if needed? 
+        // Block specific actions for Support Agents if needed?
         // For now, allow.
 
         // Override createdBy with the actual actor
@@ -59,11 +59,11 @@ export async function POST(request: NextRequest) {
         const { TenantEntitlements } = await import("@/lib/entitlements/tenantEntitlements");
         try {
             await TenantEntitlements.enforceLimit(orgId, "maxUsers");
-        } catch (error: any) {
+        } catch {
             return NextResponse.json(
                 {
                     error: "User limit exceeded. Please upgrade your plan or add more seats.",
-                    code: "USER_LIMIT_EXCEEDED"
+                    code: "USER_LIMIT_EXCEEDED",
                 },
                 { status: 403 }
             );
@@ -85,11 +85,12 @@ export async function POST(request: NextRequest) {
                 emailVerified: false,
             });
             userId = userRecord.uid;
-        } catch (authError: any) {
-            if (authError.code === "auth/email-already-exists") {
+        } catch (authError: unknown) {
+            const firebaseError = authError as { code?: string; message?: string };
+            if (firebaseError.code === "auth/email-already-exists") {
                 return NextResponse.json({ error: "A user with this email already exists" }, { status: 400 });
             }
-            if (authError.code === "auth/invalid-email") {
+            if (firebaseError.code === "auth/invalid-email") {
                 return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
             }
             console.error("Firebase Auth error:", authError);
@@ -108,6 +109,14 @@ export async function POST(request: NextRequest) {
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
+
+        // Set Custom Claims
+        await adminAuth.setCustomUserClaims(userId, {
+            orgId,
+            role: isAdmin ? "admin" : "staff",
+            // We can also add permissions if we want fine-grained access in rules later
+            // permissions: permissions || []
+        });
 
         // Use email as the staff document ID (lowercase for consistency)
         const staffDocId = email.toLowerCase();
@@ -174,8 +183,11 @@ export async function POST(request: NextRequest) {
                 ? "Staff member created and welcome email sent"
                 : "Staff member created (email not sent)",
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error creating staff:", error);
-        return NextResponse.json({ error: error.message || "Failed to create staff member" }, { status: 500 });
+        return NextResponse.json(
+            { error: (error as Error).message || "Failed to create staff member" },
+            { status: 500 }
+        );
     }
 }
