@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/auth-provider";
 import { format } from "date-fns";
@@ -101,6 +101,7 @@ export default function WebsiteBuilderPage() {
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>Create New Page</DialogTitle>
+                                <DialogDescription>Add a new page to your website with a unique slug.</DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="space-y-2">

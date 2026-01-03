@@ -41,6 +41,34 @@ service cloud.firestore {
     }
     
     // ============================================
+    // WEBSITE BUILDER COLLECTIONS - SUPER ADMIN
+    // ============================================
+    
+    // Websites - Super Admin only
+    match /websites/{websiteId} {
+      allow read, write: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
+      
+      // Pages subcollection
+      match /pages/{pageId} {
+        allow read, write: if request.auth != null 
+          && request.auth.token.isSuperAdmin == true;
+      }
+      
+      // Sections subcollection  
+      match /sections/{sectionId} {
+        allow read, write: if request.auth != null 
+          && request.auth.token.isSuperAdmin == true;
+      }
+    }
+    
+    // Website assets - Super Admin only
+    match /website_assets/{assetId} {
+      allow read, write: if request.auth != null 
+        && request.auth.token.isSuperAdmin == true;
+    }
+    
+    // ============================================
     // MULTI-TENANT DATA COLLECTIONS
     // ============================================
     
