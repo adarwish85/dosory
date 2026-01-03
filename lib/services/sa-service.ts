@@ -111,6 +111,28 @@ export class SAService {
         await this.logAudit("update_tenant_status", "tenant", id, actorId, { status });
     }
 
+    static async updateTenant(id: string, updates: Partial<Tenant>, actorId: string) {
+        const allowedFields = ["name", "subdomain", "status", "planId", "settings"];
+        const filteredUpdates: Record<string, any> = {};
+
+        for (const key of allowedFields) {
+            if (updates[key as keyof Tenant] !== undefined) {
+                filteredUpdates[key] = updates[key as keyof Tenant];
+            }
+        }
+
+        if (Object.keys(filteredUpdates).length > 0) {
+            filteredUpdates.updatedAt = FieldValue.serverTimestamp();
+            await adminDb.collection(TENANTS_COLL).doc(id).update(filteredUpdates);
+            await this.logAudit("update_tenant", "tenant", id, actorId, filteredUpdates);
+        }
+    }
+
+    static async deleteTenant(id: string, actorId: string) {
+        await adminDb.collection(TENANTS_COLL).doc(id).delete();
+        await this.logAudit("delete_tenant", "tenant", id, actorId, {});
+    }
+
     // ========================================
     // Users
     // ========================================

@@ -16,7 +16,7 @@ export async function GET(
             );
         }
 
-        return NextResponse.json(tenant);
+        return NextResponse.json({ tenant });
     } catch (error: any) {
         console.error("SA Tenant Detail Error:", error);
         return NextResponse.json(
@@ -33,21 +33,48 @@ export async function PATCH(
     try {
         const { id } = await params;
         const body = await req.json();
-        const { status, actorId } = body;
+        const { actorId, ...updates } = body;
 
-        if (!status || !actorId) {
+        if (!actorId) {
             return NextResponse.json(
-                { error: "Missing required fields" },
+                { error: "Actor ID required" },
                 { status: 400 }
             );
         }
 
-        await SAService.updateTenantStatus(id, status, actorId);
+        await SAService.updateTenant(id, updates, actorId);
         return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error("SA Tenant Update Error:", error);
         return NextResponse.json(
             { error: "Failed to update tenant" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function DELETE(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const { searchParams } = new URL(req.url);
+        const actorId = searchParams.get("actorId");
+
+        if (!actorId) {
+            return NextResponse.json(
+                { error: "Actor ID required" },
+                { status: 400 }
+            );
+        }
+
+        await SAService.deleteTenant(id, actorId);
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        console.error("SA Tenant Delete Error:", error);
+        return NextResponse.json(
+            { error: "Failed to delete tenant" },
             { status: 500 }
         );
     }
