@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
 import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { doc, setDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
@@ -29,7 +29,6 @@ export default function SignupPage() {
     const [joinMessage, setJoinMessage] = useState("");
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
-    const router = useRouter();
 
     if (loading) {
         return <div className="flex h-screen items-center justify-center bg-gray-100">Loading...</div>;
@@ -166,7 +165,7 @@ export default function SignupPage() {
                 createdAt: serverTimestamp(),
             });
 
-            // 4. Create Staff record for admin
+            // 4. Create Staff record for admin (using same ID)
             await setDoc(doc(db, "staff", user.email!.toLowerCase()), {
                 authUid: user.uid,
                 firstName: orgName.split(" ")[0] || "Admin",
@@ -183,7 +182,25 @@ export default function SignupPage() {
                 createdBy: user.uid,
             });
 
-            // 5. Send Welcome Email (fire-and-forget)
+            // 5. Set custom claims for Firestore security rules
+            const claimsResponse = await fetch("/api/auth/set-claims", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    uid: user.uid,
+                    orgId: orgId,
+                    role: "admin",
+                }),
+            });
+
+            if (!claimsResponse.ok) {
+                console.warn("Failed to set custom claims:", await claimsResponse.text());
+            }
+
+            // 6. Force token refresh to pick up new claims
+            await user.getIdToken(true);
+
+            // 7. Send Welcome Email (fire-and-forget)
             const protocol = window.location.protocol;
             const host = window.location.host;
             const isLocal = host.includes("localhost");
@@ -204,12 +221,12 @@ export default function SignupPage() {
 
             // Redirect to subdomain
             window.location.href = loginUrl;
-        } catch (err: any) {
+        } catch (err: unknown) {
             // If we created a user but failed to setup Firestore, delete the user so they can try again
             if (auth.currentUser) {
                 await deleteUser(auth.currentUser);
             }
-            setError(err.message);
+            setError((err as Error).message);
             setSubmitting(false);
         }
     };
@@ -258,8 +275,8 @@ export default function SignupPage() {
 
             // Show success message
             setStep("join-submitted");
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError((err as Error).message);
         } finally {
             setSubmitting(false);
         }
@@ -302,7 +319,7 @@ export default function SignupPage() {
                             <div>
                                 <h3 className="font-semibold text-gray-900">Join Existing Organization</h3>
                                 <p className="text-sm text-gray-500">
-                                    Request to join a company that's already using the platform
+                                    Request to join a company that&apos;s already using the platform
                                 </p>
                             </div>
                         </button>
@@ -518,8 +535,8 @@ export default function SignupPage() {
                     </CardHeader>
                     <CardContent className="text-center">
                         <p className="text-sm text-gray-500 mb-4">
-                            You'll be able to access the platform once your request is approved. The admin will assign
-                            your role and permissions.
+                            You&apos;ll be able to access the platform once your request is approved. The admin will
+                            assign your role and permissions.
                         </p>
                         <p className="text-sm text-gray-600">Check your email for updates.</p>
                     </CardContent>
