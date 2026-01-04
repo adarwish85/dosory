@@ -248,9 +248,9 @@ service cloud.firestore {
     // PLATFORM & SYSTEM COLLECTIONS
     // ============================================
     
-    // Platform Settings - read by all authenticated, write by SuperAdmin
+    // Platform Settings - publicly readable (needed for login/signup pages), write by SuperAdmin
     match /platform/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if true;  // Public read - non-sensitive config
       allow write: if isSuperAdmin();
     }
     

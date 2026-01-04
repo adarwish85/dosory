@@ -161,5 +161,61 @@ export function useUserProfile() {
         }
     }, [user, profile, isImpersonating, authLoading]);
 
+    // Auto-sync claims: If Firestore profile has orgId/role but token doesn't, sync them
+    useEffect(() => {
+        async function syncClaimsIfNeeded() {
+            if (authLoading || !user || !profile) return;
+            // Don't sync for superadmins (they have different claim structure)
+            if (profile.role === "superadmin") return;
+            // Don't sync during impersonation
+            if (isImpersonating) return;
+
+            try {
+                // Get current token claims
+                const tokenResult = await user.getIdTokenResult();
+                const tokenOrgId = tokenResult.claims.orgId as string | undefined;
+                const tokenRole = tokenResult.claims.role as string | undefined;
+
+                // Check if claims are missing or mismatched
+                const needsSync =
+                    (profile.orgId && !tokenOrgId) ||
+                    (profile.orgId && tokenOrgId !== profile.orgId) ||
+                    (profile.role && !tokenRole);
+
+                if (needsSync) {
+                    console.log("🔄 Claims out of sync - syncing from Firestore profile...");
+                    console.log(`   Profile: orgId=${profile.orgId}, role=${profile.role}`);
+                    console.log(`   Token: orgId=${tokenOrgId}, role=${tokenRole}`);
+
+                    // Call API to set claims
+                    const response = await fetch("/api/auth/set-claims", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            uid: user.uid,
+                            orgId: profile.actualOrgId || profile.orgId,
+                            role: profile.actualRole || profile.role,
+                        }),
+                    });
+
+                    if (response.ok) {
+                        console.log("✅ Claims synced successfully, refreshing token...");
+                        // Force token refresh to pick up new claims
+                        await user.getIdToken(true);
+                        console.log("✅ Token refreshed with new claims");
+                        // Page might need a reload to re-run Firestore listeners with new token
+                        // But we'll let the user see if it works without reload first
+                    } else {
+                        console.warn("⚠️ Failed to sync claims:", await response.text());
+                    }
+                }
+            } catch (error) {
+                console.error("Error in claims sync:", error);
+            }
+        }
+
+        syncClaimsIfNeeded();
+    }, [user, profile, authLoading, isImpersonating]);
+
     return { profile, loading };
 }
