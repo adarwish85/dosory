@@ -36,7 +36,7 @@ const LeadContext = createContext<LeadContextType>({
     loading: true,
     error: null,
     leadId: null,
-    refreshLead: () => {},
+    refreshLead: () => { },
 });
 
 export function useLead() {
@@ -81,10 +81,17 @@ export function LeadProvider({ children }: LeadProviderProps) {
 
             // If the current URL param doesn't match the expected slug--id format
             if (rawId !== expectedParam) {
-                // Replace URL without reloading (shallow if possible, but Next app router structure usually means route change)
-                // However, we want to update the history.
-                console.log(`[LeadProvider] Redirecting to canonical URL: ${expectedParam}`);
-                router.replace(`/dashboard/leads/${expectedParam}`);
+                // Get the current pathname to preserve any tab segment (e.g., /activities, /profile)
+                const currentPath = window.location.pathname;
+                const leadBasePath = `/dashboard/leads/${rawId}`;
+                const tabSegment = currentPath.startsWith(leadBasePath)
+                    ? currentPath.slice(leadBasePath.length)
+                    : '';
+
+                // Replace URL with canonical format, preserving tab segment
+                const canonicalUrl = `/dashboard/leads/${expectedParam}${tabSegment}`;
+                console.log(`[LeadProvider] Redirecting to canonical URL: ${canonicalUrl}`);
+                router.replace(canonicalUrl);
             }
         }
     }, [rawId, lead, router]);

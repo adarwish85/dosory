@@ -1105,9 +1105,6 @@ export default function LeadsPage() {
         searchQuery: searchQuery, // Add search query to hook!
     });
 
-    // Debug: log what the page receives
-    console.log("📋 Page received leads:", leads.length, "loading:", loading, "serverTotal:", serverTotal);
-
     const { can } = usePermission();
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
