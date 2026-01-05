@@ -396,9 +396,23 @@ service cloud.firestore {
     }
     
     // ============================================
-    // DEFAULT: DENY ALL
+    // DEFAULT: CATCH-ALL FOR TENANT-ISOLATED COLLECTIONS
     // ============================================
+    // Allow authenticated users to access documents where orgId matches their token claim
+    // This catches any tenant-isolated collections not explicitly defined above
     
+    match /{collection}/{docId} {
+      // Allow read/write if authenticated and document's orgId matches user's token orgId
+      allow read, write: if isAuthenticated() 
+        && resource.data.orgId != null 
+        && request.auth.token.orgId == resource.data.orgId;
+      // Allow create if authenticated and new document's orgId matches user's token orgId  
+      allow create: if isAuthenticated()
+        && request.resource.data.orgId != null
+        && request.auth.token.orgId == request.resource.data.orgId;
+    }
+    
+    // Final deny for anything else
     match /{document=**} {
       allow read, write: if false;
     }
