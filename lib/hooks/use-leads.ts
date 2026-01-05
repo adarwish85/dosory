@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     collection,
     query,
@@ -82,6 +82,9 @@ export function useLeads(options: UseLeadsOptions = {}) {
     // Stats State
     const [leadStats, setLeadStats] = useState({ total: 0, totalValue: 0, starred: 0, qualified: 0 });
 
+    // Listener version tracking to prevent stale updates
+    const listenerVersionRef = useRef(0);
+
     // Helper: Build constraints based on filters (excluding pagination)
     const getBaseConstraints = useCallback(() => {
         if (!profile?.orgId) return [];
@@ -159,16 +162,19 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
     // Effect: Fetch Paginated Data
     useEffect(() => {
-        console.log("📊 useLeads effect running:", { profileLoading, orgId: profile?.orgId, page, pageSize, orderByField, orderDirection });
+        // Increment version to invalidate previous listeners
+        const currentVersion = ++listenerVersionRef.current;
+
+        console.log("📊 useLeads effect v" + currentVersion + ":", { profileLoading, orgId: profile?.orgId, page, pageSize, orderByField, orderDirection });
 
         if (profileLoading) {
-            console.log("📊 useLeads: Waiting for profile to load...");
+            console.log("📊 useLeads v" + currentVersion + ": Waiting for profile...");
             return;
         }
 
         if (!profile?.orgId) {
-            console.log("📊 useLeads: No orgId, setting loading=false");
-            Promise.resolve().then(() => setLoading(false));
+            console.log("📊 useLeads v" + currentVersion + ": No orgId, skipping");
+            setLoading(false);
             return;
         }
 
@@ -183,20 +189,25 @@ export function useLeads(options: UseLeadsOptions = {}) {
             if (prevCursor) {
                 constraints.push(startAfter(prevCursor));
             } else {
-                console.warn(
-                    "Missing cursor for page " + page + ", loading from scratch (might be inaccurate deep in list)."
-                );
+                console.warn("useLeads v" + currentVersion + ": Missing cursor for page " + page);
             }
         }
 
         constraints.push(limit(pageSize));
 
         const q = query(collection(db, "leads"), ...constraints);
+        console.log("📊 useLeads v" + currentVersion + ": Setting up listener for orgId:", profile.orgId);
 
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
-                console.log("📊 useLeads: Received", snapshot.docs.length, "leads for orgId:", profile.orgId);
+                // Check if this is still the active listener
+                if (listenerVersionRef.current !== currentVersion) {
+                    console.log("📊 useLeads v" + currentVersion + ": STALE - ignoring (current is v" + listenerVersionRef.current + ")");
+                    return;
+                }
+
+                console.log("📊 useLeads v" + currentVersion + ": Received", snapshot.docs.length, "leads");
                 const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Lead[];
 
                 // Update Cursor for the NEXT page
@@ -209,13 +220,22 @@ export function useLeads(options: UseLeadsOptions = {}) {
                 setLoading(false);
             },
             (err) => {
-                console.error("Error fetching leads:", err);
+                // Check if this is still the active listener
+                if (listenerVersionRef.current !== currentVersion) {
+                    console.log("📊 useLeads v" + currentVersion + ": STALE error - ignoring");
+                    return;
+                }
+
+                console.error("📊 useLeads v" + currentVersion + ": Error:", err);
                 setError(err);
                 setLoading(false);
             }
         );
 
-        return () => unsubscribe();
+        return () => {
+            console.log("📊 useLeads v" + currentVersion + ": Cleaning up");
+            unsubscribe();
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [profile?.orgId, profileLoading, getBaseConstraints, orderByField, orderDirection, pageSize, page]);
 
