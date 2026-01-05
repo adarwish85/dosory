@@ -30,9 +30,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
                 try {
+                    // Clear stale claims_synced flag after 5 minutes
+                    const syncedTime = sessionStorage.getItem("claims_synced_time");
+                    if (syncedTime && Date.now() - parseInt(syncedTime) > 5 * 60 * 1000) {
+                        sessionStorage.removeItem("claims_synced");
+                        sessionStorage.removeItem("claims_synced_time");
+                    }
+
                     // Force refresh token to get latest custom claims (like orgId)
                     let tokenResult = await firebaseUser.getIdTokenResult(true);
                     let currentClaims = tokenResult.claims;
+
+                    // Always log current claims for debugging
+                    console.log("🔑 Token claims:", {
+                        orgId: currentClaims.orgId || "MISSING",
+                        role: currentClaims.role || "MISSING",
+                        isSuperAdmin: currentClaims.isSuperAdmin || false,
+                        email: firebaseUser.email,
+                    });
 
                     // If orgId claim is missing, try to sync from Firestore
                     if (!currentClaims.orgId && !currentClaims.isSuperAdmin) {
@@ -77,6 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                                         // Use sessionStorage flag to prevent infinite reload loop
                                         if (!sessionStorage.getItem("claims_synced")) {
                                             sessionStorage.setItem("claims_synced", "true");
+                                            sessionStorage.setItem("claims_synced_time", Date.now().toString());
                                             console.log("🔄 Reloading page to apply new claims...");
                                             window.location.reload();
                                             return; // Exit early, page will reload
