@@ -128,7 +128,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
                     try {
                         const countSnap = await getCountFromServer(globalQ);
                         globalTotal = countSnap.data().count;
-                    } catch {}
+                    } catch { }
                 }
 
                 if (!isMounted) return;
@@ -159,9 +159,15 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
     // Effect: Fetch Paginated Data
     useEffect(() => {
-        if (profileLoading) return;
+        console.log("📊 useLeads effect running:", { profileLoading, orgId: profile?.orgId, page, pageSize, orderByField, orderDirection });
+
+        if (profileLoading) {
+            console.log("📊 useLeads: Waiting for profile to load...");
+            return;
+        }
 
         if (!profile?.orgId) {
+            console.log("📊 useLeads: No orgId, setting loading=false");
             Promise.resolve().then(() => setLoading(false));
             return;
         }
