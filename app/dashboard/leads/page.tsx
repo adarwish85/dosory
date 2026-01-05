@@ -1100,7 +1100,7 @@ export default function LeadsPage() {
         limit: isClientMode ? 1000 : recordsPerPage,
         page: isClientMode ? 1 : currentPage,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        orderByField: (sortKey || "lastActivity") as any, // Cast to any to avoid generic union issues if needed, or remove cast if safe
+        orderByField: (sortKey || "createdAt") as any, // Use createdAt as default - lastActivity might not exist on all docs
         orderDirection: sortDirection || "desc",
         searchQuery: searchQuery, // Add search query to hook!
     });
