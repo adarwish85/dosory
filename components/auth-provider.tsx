@@ -72,6 +72,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                                             orgId: currentClaims.orgId,
                                             role: currentClaims.role,
                                         });
+
+                                        // Force page reload to restart Firestore listeners with new token
+                                        // Use sessionStorage flag to prevent infinite reload loop
+                                        if (!sessionStorage.getItem("claims_synced")) {
+                                            sessionStorage.setItem("claims_synced", "true");
+                                            console.log("🔄 Reloading page to apply new claims...");
+                                            window.location.reload();
+                                            return; // Exit early, page will reload
+                                        }
                                     } else {
                                         console.warn("⚠️ Failed to set claims:", await response.text());
                                     }
