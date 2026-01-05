@@ -380,8 +380,18 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin() || isOrgMember(orgId);
     }
     
+    // Organization User Settings Subcollection (dashboard layouts, preferences)
+    match /organizations/{orgId}/userSettings/{userId} {
+      allow read, write: if isSuperAdmin() || (isOrgMember(orgId) && isOwner(userId));
+    }
+    
     // User Onboarding State Subcollection
     match /users/{userId}/onboarding/{docId} {
+      allow read, write: if isSuperAdmin() || isOwner(userId);
+    }
+    
+    // User Settings Subcollection (sticky notes, personal preferences)
+    match /users/{userId}/settings/{docId} {
       allow read, write: if isSuperAdmin() || isOwner(userId);
     }
     
