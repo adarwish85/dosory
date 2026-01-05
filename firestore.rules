@@ -235,6 +235,111 @@ service cloud.firestore {
        allow create: if isSuperAdmin() || (isAuthenticated() && request.resource.data.userId == request.auth.uid);
     }
 
+    // ============================================
+    // TENANT SETTINGS & CONFIG COLLECTIONS
+    // ============================================
+    
+    match /roles/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /taxes/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /currencies/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /paymentModes/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /customFields/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /emailTemplates/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /settings/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /dashboard_layouts/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /sticky_notes/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /departments/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /attendance/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /leaves/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /leaveTypes/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /payroll/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /chats/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+      
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read, write: if isSuperAdmin() || request.auth != null;
+      }
+    }
+    
+    match /support_tickets/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /credit_notes/{docId} {
+      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
+      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    }
+    
+    match /subscriptions/{docId} {
+      // Subscriptions are managed by API, tenants can read their own
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.token.orgId == docId);
+      allow write: if isSuperAdmin();
+    }
+    
+    match /tenantUsage/{docId} {
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.token.orgId == docId);
+      allow write: if isSuperAdmin();
+    }
+
 
     // ============================================
     // TENANT-SCOPED COLLECTIONS (LEGACY / SPECIFIC)
