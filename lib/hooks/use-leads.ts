@@ -190,6 +190,7 @@ export function useLeads(options: UseLeadsOptions = {}) {
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
+                console.log("📊 useLeads: Received", snapshot.docs.length, "leads for orgId:", profile.orgId);
                 const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Lead[];
 
                 // Update Cursor for the NEXT page
