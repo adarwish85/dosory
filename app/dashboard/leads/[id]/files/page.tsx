@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Loader2, File as FileIcon, Trash2, Download, UploadCloud } from "lucide-react";
 import { format } from "date-fns";
-import { formatBytes } from "@/lib/utils";
+import { formatBytes } from "@/lib/utils"; \nimport { toast } from "sonner";
 
 export default function LeadFilesPage() {
     const params = useParams();
@@ -39,10 +39,15 @@ export default function LeadFilesPage() {
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
             try {
-                await uploadFile(e.target.files[0]);
-            } catch (error) {
-                alert("Failed to upload file");
+                await uploadFile(file);
+                toast.success("File uploaded successfully");
+            } catch (error: any) {
+                console.error("File upload error:", error);
+                toast.error("Failed to upload file", {
+                    description: error.message || "Please check your permissions and try again."
+                });
             } finally {
                 if (fileInputRef.current) {
                     fileInputRef.current.value = "";

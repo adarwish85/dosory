@@ -6,11 +6,28 @@ import { useTasks } from "@/lib/hooks/use-projects";
 import { useLead } from "@/lib/hooks/use-leads";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Loader2, CheckSquare } from "lucide-react";
+import { Plus, Loader2, CheckSquare, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { CreateTaskDialog } from "@/components/dashboard/tasks/create-task-dialog";
-import { TaskStatus, TaskPriority } from "@/lib/types";
+import { TaskStatus, TaskPriority, Task } from "@/lib/types";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const statusColors: Record<TaskStatus, { bg: string; text: string; border: string }> = {
     to_do: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
@@ -39,11 +56,13 @@ export default function LeadTasksPage() {
     const { lead } = useLead(leadId);
 
     // Fetch tasks related to this lead
-    const { tasks, loading } = useTasks({
+    const { tasks, loading, deleteTask, updateTask } = useTasks({
         relatedTo: { type: "lead", id: leadId }
     });
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
 
     if (loading) {
         return (
@@ -81,12 +100,13 @@ export default function LeadTasksPage() {
                             <TableHead className="font-semibold text-gray-900">Priority</TableHead>
                             <TableHead className="font-semibold text-gray-900">Status</TableHead>
                             <TableHead className="font-semibold text-gray-900">Assignees</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {tasks.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                                     <div className="flex flex-col items-center gap-2">
                                         <CheckSquare className="h-8 w-8 text-gray-300" />
                                         <p>No tasks found for this lead.</p>
@@ -122,6 +142,28 @@ export default function LeadTasksPage() {
                                         <TableCell className="text-gray-500 text-sm">
                                             {task.assignees?.length || 0} users
                                         </TableCell>
+                                        <TableCell>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => setEditingTask(task)}>
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="text-red-600"
+                                                        onClick={() => setDeletingTaskId(task.id)}
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
                                     </TableRow>
                                 );
                             })
@@ -136,6 +178,49 @@ export default function LeadTasksPage() {
                 leadId={leadId}
                 leadName={lead?.name}
             />
+
+            {/* Edit Task Dialog */}
+            {editingTask && (
+                <CreateTaskDialog
+                    open={!!editingTask}
+                    onOpenChange={(open) => !open && setEditingTask(null)}
+                    leadId={leadId}
+                    leadName={lead?.name}
+                    initialData={editingTask}
+                    taskId={editingTask.id}
+                />
+            )}
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={!!deletingTaskId} onOpenChange={(open) => !open && setDeletingTaskId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete this task? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={async () => {
+                                if (deletingTaskId) {
+                                    try {
+                                        await deleteTask(deletingTaskId);
+                                        toast.success("Task deleted successfully");
+                                        setDeletingTaskId(null);
+                                    } catch (error: any) {
+                                        toast.error("Failed to delete task", { description: error.message });
+                                    }
+                                }
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

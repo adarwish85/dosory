@@ -119,16 +119,24 @@ export function CreateEstimateDialog({
     }, [open, customerId, leadId, currency, form, initialData]);
 
     const onSubmit = async (data: EstimateFormData) => {
+        // Additional safety check
+        if (!profile?.orgId) {
+            toast.error("Profile not loaded", { description: "Please wait for your profile to load and try again." });
+            console.error("Estimate creation failed: profile.orgId not available", { profile });
+            return;
+        }
+
         try {
             setIsLoading(true);
+            console.log("Creating estimate with data:", { ...data, orgId: profile.orgId });
             await createEstimate(data);
             toast.success("Estimate Created");
             onOpenChange(false);
             onSuccess?.();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-            console.error(error);
-            toast.error("Failed to create estimate", { description: error.message });
+            console.error("Estimate creation error:", error);
+            toast.error("Failed to create estimate", { description: error.message || "Please check your permissions and try again." });
         } finally {
             setIsLoading(false);
         }
@@ -388,7 +396,7 @@ export function CreateEstimateDialog({
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isLoading}>
+                            <Button type="submit" disabled={isLoading || !profile?.orgId}>
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Create Estimate
                             </Button>
