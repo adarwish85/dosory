@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Loader2, File as FileIcon, Trash2, Download, UploadCloud } from "lucide-react";
 import { format } from "date-fns";
-import { formatBytes } from "@/lib/utils"; \nimport { toast } from "sonner";
+import { formatBytes } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function LeadFilesPage() {
     const params = useParams();
