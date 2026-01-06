@@ -131,7 +131,10 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
                 console.log("✅ Step 2a: Lead document fetched successfully");
                 if (leadDoc.exists()) {
                     const leadData = leadDoc.data();
-                    customerName = leadData.company || leadData.name;
+                    console.log("📋 Lead data fields:", Object.keys(leadData));
+                    console.log("📋 Full lead data:", leadData);
+                    // Try various common field names for lead title/name
+                    customerName = leadData.title || leadData.company || leadData.name || leadData.companyName || leadData.contactName || "Unknown Client";
                 }
             }
             console.log("✅ Step 2: Customer name:", customerName);
