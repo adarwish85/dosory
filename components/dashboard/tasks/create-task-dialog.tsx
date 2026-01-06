@@ -28,6 +28,8 @@ interface CreateTaskDialogProps {
     leadName?: string;
     customerId?: string;
     customerName?: string;
+    initialData?: any; // Task data for editing
+    taskId?: string; // ID of task being edited
 }
 
 export function CreateTaskDialog({
@@ -38,8 +40,10 @@ export function CreateTaskDialog({
     customerId,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     customerName,
+    initialData,
+    taskId,
 }: CreateTaskDialogProps) {
-    const { createTask } = useTasks();
+    const { createTask, updateTask } = useTasks();
     const { projects } = useProjects();
     const { staff } = useStaff();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,8 +72,8 @@ export function CreateTaskDialog({
             relatedTo: leadId
                 ? { type: "lead", id: leadId }
                 : customerId
-                  ? { type: "customer", id: customerId }
-                  : undefined,
+                    ? { type: "customer", id: customerId }
+                    : undefined,
             customerId: customerId,
             projectId: undefined,
             milestoneId: undefined,
@@ -79,38 +83,41 @@ export function CreateTaskDialog({
 
     useEffect(() => {
         if (open) {
-            // If opened with context that implies a project (future proofing), we'd set it here.
-            // For now, default to General Task if no project ID is passed (props doesn't have projectId yet, but we can add logic later)
-            // If leadId is present, we might still want to link to a project?
-            // The prompt says "if opened within a tasklist/ or milestone / or project".
-            // Since this dialog is currently used for Leads, keep default.
-
             setIsGeneralTask(true);
             setSelectedProjectId(null);
             setSelectedMilestoneId(null);
 
-            form.reset({
-                name: "",
-                description: "",
-                status: "to_do",
-                priority: "medium",
-                assignees: [],
-                followers: [],
-                isPublic: false,
-                billable: false,
-                hourlyRate: 0,
-                relatedTo: leadId
-                    ? { type: "lead", id: leadId }
-                    : customerId
-                      ? { type: "customer", id: customerId }
-                      : undefined,
-                customerId: customerId,
-                projectId: undefined,
-                milestoneId: undefined,
-                taskListId: undefined,
-            });
+            // If editing, use initialData, otherwise use defaults
+            if (initialData) {
+                form.reset({
+                    ...initialData,
+                    startDate: initialData.startDate?.toDate ? initialData.startDate.toDate() : initialData.startDate,
+                    dueDate: initialData.dueDate?.toDate ? initialData.dueDate.toDate() : initialData.dueDate,
+                });
+            } else {
+                form.reset({
+                    name: "",
+                    description: "",
+                    status: "to_do",
+                    priority: "medium",
+                    assignees: [],
+                    followers: [],
+                    isPublic: false,
+                    billable: false,
+                    hourlyRate: 0,
+                    relatedTo: leadId
+                        ? { type: "lead", id: leadId }
+                        : customerId
+                            ? { type: "customer", id: customerId }
+                            : undefined,
+                    customerId: customerId,
+                    projectId: undefined,
+                    milestoneId: undefined,
+                    taskListId: undefined,
+                });
+            }
         }
-    }, [open, leadId, customerId, form]);
+    }, [open, leadId, customerId, form, initialData]);
 
     const handleGeneralTaskChange = (checked: boolean) => {
         setIsGeneralTask(checked);
@@ -140,11 +147,17 @@ export function CreateTaskDialog({
     const onSubmit = async (data: TaskFormData) => {
         try {
             setIsSubmitting(true);
-            await createTask(data);
+            if (taskId) {
+                // Editing existing task
+                await updateTask(taskId, data);
+            } else {
+                // Creating new task
+                await createTask(data);
+            }
             onOpenChange(false);
             form.reset();
         } catch (error) {
-            console.error("Failed to create task:", error);
+            console.error("Failed to save task:", error);
         } finally {
             setIsSubmitting(false);
         }
@@ -154,7 +167,7 @@ export function CreateTaskDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Create Task</DialogTitle>
+                    <DialogTitle>{taskId ? "Edit Task" : "Create Task"}</DialogTitle>
                 </DialogHeader>
 
                 <Form {...form}>
