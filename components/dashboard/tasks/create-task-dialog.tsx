@@ -52,6 +52,8 @@ export function CreateTaskDialog({
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
     const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
     const [isGeneralTask, setIsGeneralTask] = useState<boolean>(true); // Default to General (no project) unless context dictates otherwise
+    const [startDateOpen, setStartDateOpen] = useState(false);
+    const [dueDateOpen, setDueDateOpen] = useState(false);
 
     const { milestones } = useMilestones(selectedProjectId || undefined);
     const { taskLists } = useTaskLists({ projectId: selectedProjectId || undefined });
@@ -338,7 +340,7 @@ export function CreateTaskDialog({
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
                                         <FormLabel>Start Date</FormLabel>
-                                        <Popover>
+                                        <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
                                                     <Button
@@ -361,7 +363,10 @@ export function CreateTaskDialog({
                                                 <Calendar
                                                     mode="single"
                                                     selected={field.value}
-                                                    onSelect={field.onChange}
+                                                    onSelect={(date) => {
+                                                        field.onChange(date);
+                                                        setStartDateOpen(false);
+                                                    }}
                                                     disabled={(date) => date < new Date("1900-01-01")}
                                                     initialFocus
                                                 />
@@ -378,7 +383,7 @@ export function CreateTaskDialog({
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
                                         <FormLabel>Due Date</FormLabel>
-                                        <Popover>
+                                        <Popover open={dueDateOpen} onOpenChange={setDueDateOpen}>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
                                                     <Button
@@ -401,7 +406,10 @@ export function CreateTaskDialog({
                                                 <Calendar
                                                     mode="single"
                                                     selected={field.value}
-                                                    onSelect={field.onChange}
+                                                    onSelect={(date) => {
+                                                        field.onChange(date);
+                                                        setDueDateOpen(false);
+                                                    }}
                                                     disabled={(date) => date < new Date("1900-01-01")}
                                                     initialFocus
                                                 />

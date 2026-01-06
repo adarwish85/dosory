@@ -29,7 +29,7 @@ import { CalendarIcon, Plus, Trash2, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 
 // Extend schema for form usage if needed, but schema is good.
 type EstimateFormData = z.infer<typeof estimateFormSchema>;
@@ -128,6 +128,16 @@ export function CreateEstimateDialog({
 
         try {
             setIsLoading(true);
+
+            // Log auth token to verify orgId claim
+            const user = auth.currentUser;
+            if (user) {
+                const tokenResult = await user.getIdTokenResult();
+                console.log("📋 Auth token claims:", tokenResult.claims);
+                console.log("📋 Profile orgId:", profile.orgId);
+                console.log("📋 Match:", tokenResult.claims.orgId === profile.orgId);
+            }
+
             console.log("Creating estimate with data:", { ...data, orgId: profile.orgId });
             await createEstimate(data);
             toast.success("Estimate Created");
@@ -136,6 +146,8 @@ export function CreateEstimateDialog({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("Estimate creation error:", error);
+            console.error("Error code:", error.code);
+            console.error("Error message:", error.message);
             toast.error("Failed to create estimate", { description: error.message || "Please check your permissions and try again." });
         } finally {
             setIsLoading(false);
