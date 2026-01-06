@@ -112,29 +112,45 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
     };
 
     const createEstimate = async (data: EstimateFormData): Promise<string> => {
+        console.log("🔍 Step 1: Checking orgId...");
         if (!profile?.orgId) throw new Error("No organization");
+        console.log("✅ Step 1: orgId present:", profile.orgId);
 
         // Get client name (Customer or Lead)
         let customerName = "Unknown Client";
-        if (data.customerId) {
-            const customerDoc = await getDoc(doc(db, "customers", data.customerId));
-            if (customerDoc.exists()) {
-                customerName = customerDoc.data().company;
+        try {
+            console.log("🔍 Step 2: Fetching customer/lead name...");
+            if (data.customerId) {
+                const customerDoc = await getDoc(doc(db, "customers", data.customerId));
+                if (customerDoc.exists()) {
+                    customerName = customerDoc.data().company;
+                }
+            } else if (data.leadId) {
+                console.log("🔍 Step 2a: Fetching lead document:", data.leadId);
+                const leadDoc = await getDoc(doc(db, "leads", data.leadId));
+                console.log("✅ Step 2a: Lead document fetched successfully");
+                if (leadDoc.exists()) {
+                    const leadData = leadDoc.data();
+                    customerName = leadData.company || leadData.name;
+                }
             }
-        } else if (data.leadId) {
-            const leadDoc = await getDoc(doc(db, "leads", data.leadId));
-            if (leadDoc.exists()) {
-                const leadData = leadDoc.data();
-                customerName = leadData.company || leadData.name;
-            }
+            console.log("✅ Step 2: Customer name:", customerName);
+        } catch (error) {
+            console.error("❌ Step 2 FAILED: Error fetching customer/lead:", error);
+            throw error;
         }
 
         // Generate estimate number
+        console.log("🔍 Step 3: Generating estimate number...");
         const estNumber = `EST-${Date.now().toString().slice(-6).padStart(6, "0")}`;
+        console.log("✅ Step 3: Estimate number:", estNumber);
 
         // Calculate totals
+        console.log("🔍 Step 4: Calculating totals...");
         const { subtotal, taxTotal, total } = calculateTotals(data.items, data.discount);
+        console.log("✅ Step 4: Totals calculated:", { subtotal, taxTotal, total });
 
+        console.log("🔍 Step 5: Creating estimate document in Firestore...");
         const docRef = await addDoc(collection(db, "estimates"), {
             ...data,
             number: estNumber,
@@ -150,10 +166,10 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
             updatedAt: serverTimestamp(),
             createdBy: profile.uid,
         });
+        console.log("✅ Step 5: Estimate created successfully! ID:", docRef.id);
 
         return docRef.id;
     };
-
     const updateEstimate = async (id: string, data: Partial<EstimateFormData>): Promise<void> => {
         const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
         if (data.date) updateData.date = Timestamp.fromDate(data.date);
