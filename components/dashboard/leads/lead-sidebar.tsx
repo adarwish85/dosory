@@ -62,7 +62,7 @@ export function LeadSidebar() {
             <div
                 className={cn(
                     "border-r bg-gray-50/50 h-full py-4 flex flex-col transition-all duration-300 relative",
-                    collapsed ? "w-16" : "w-64"
+                    collapsed ? "w-16" : "w-[200px]"
                 )}
             >
                 {/* Edge Toggle Button - Fixed Position */}
