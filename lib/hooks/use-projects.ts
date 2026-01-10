@@ -144,9 +144,11 @@ export function useProjects(options: UseProjectsOptions = {}) {
             const customerDoc = await getDoc(doc(db, "customers", data.customerId));
             const customerName = customerDoc.exists() ? customerDoc.data().company : "Unknown Customer";
 
+            const slugify = (text: string) => text.toString().toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w-]+/g, "").replace(/--+/g, "-");
             const docRef = await addDoc(collection(db, "projects"), {
                 ...data,
                 customerName,
+                slug: slugify(data.name),
                 progress: 0,
                 startDate: data.startDate ? Timestamp.fromDate(data.startDate) : null,
                 deadline: data.deadline ? Timestamp.fromDate(data.deadline) : null,

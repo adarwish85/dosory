@@ -36,6 +36,7 @@ export interface Customer extends BaseEntity {
     notes?: string;
     portalEnabled?: boolean;
     customFields?: Record<string, unknown>;
+    slug?: string;
 }
 
 export interface Contact extends BaseEntity {
@@ -338,6 +339,7 @@ export interface Project extends BaseEntity {
     // Cross-module links
     linkedContractId?: string;
     linkedInvoiceIds?: string[];
+    slug?: string;
 }
 
 export type ProjectStatus = "draft" | "active" | "on_hold" | "completed" | "archived";

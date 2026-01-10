@@ -519,24 +519,43 @@ export function useLeads(options: UseLeadsOptions = {}) {
 
             console.log("🔄 Starting lead conversion for ID:", leadId);
 
-            // 1. Create Customer
-            console.log("🔄 Step 1: Creating customer...");
-            const customerRef = await addDoc(collection(db, "customers"), {
-                company: finalCompany,
-                phone: leadDoc.phone || "",
-                website: leadDoc.website || "",
-                address: leadDoc.address || {},
-                defaultLanguage: leadDoc.defaultLanguage || "en",
-                notes: leadDoc.description || "",
-                groups: leadDoc.tags || [],
-                status: "active",
-                fromLeadId: leadId,
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                createdBy: profile.uid,
-            });
-            console.log("✅ Customer created:", customerRef.id);
+            // Idempotency Check: Check if a customer with fromLeadId already exists
+            console.log("🔄 Checking for existing customer from this lead...");
+            const existingCustomerQuery = query(
+                collection(db, "customers"),
+                where("fromLeadId", "==", leadId),
+                where("orgId", "==", profile.orgId)
+            );
+            const existingCustomerSnap = await getDocs(existingCustomerQuery);
+
+            let customerRef: { id: string };
+            if (existingCustomerSnap.docs.length > 0) {
+                // Customer already exists from a previous partial conversion
+                customerRef = { id: existingCustomerSnap.docs[0].id };
+                console.log("✅ Existing customer found (idempotency):", customerRef.id);
+            } else {
+                // 1. Create Customer
+                console.log("🔄 Step 1: Creating customer...");
+                const slugify = (text: string) => text.toString().toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w-]+/g, "").replace(/--+/g, "-");
+                const newCustomerRef = await addDoc(collection(db, "customers"), {
+                    company: finalCompany,
+                    phone: leadDoc.phone || "",
+                    website: leadDoc.website || "",
+                    address: leadDoc.address || {},
+                    defaultLanguage: leadDoc.defaultLanguage || "en",
+                    notes: leadDoc.description || "",
+                    groups: leadDoc.tags || [],
+                    status: "active",
+                    fromLeadId: leadId,
+                    slug: slugify(finalCompany),
+                    orgId: profile.orgId,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    createdBy: profile.uid,
+                });
+                customerRef = newCustomerRef;
+                console.log("✅ Customer created:", customerRef.id);
+            }
 
             // 2. Create Contact (Optional)
             if (createContact) {

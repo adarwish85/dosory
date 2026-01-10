@@ -4,6 +4,7 @@ import { getAuthenticatedUser } from "@/lib/auth/getAuthenticatedUser";
 import { TenantEntitlements } from "@/lib/entitlements/tenantEntitlements";
 import { logAudit } from "@/lib/services/audit-service-server";
 import { FieldValue } from "firebase-admin/firestore";
+import { slugify } from "@/lib/utils/slugify";
 
 export async function POST(req: NextRequest) {
     try {
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
             ...otherData,
             name,
             name_lower: name.toLowerCase(),
+            slug: slugify(name),
             orgId: auth.orgId,
             createdBy: auth.userId, // The actual user (or impersonator)
             createdAt: FieldValue.serverTimestamp(),

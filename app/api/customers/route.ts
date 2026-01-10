@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import admin from "@/lib/firebase-admin";
+import { slugify } from "@/lib/utils/slugify";
 
 export async function POST(request: NextRequest) {
     try {
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
         const docRef = await adminDb.collection("customers").add({
             ...customerData,
             orgId,
+            slug: slugify(customerData.company),
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             createdBy: auth.userId,
