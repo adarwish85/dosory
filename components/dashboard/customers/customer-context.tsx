@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useParams } from "next/navigation";
-import { doc, getDoc, collection, query, where, onSnapshot, getCountFromServer } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, query, where, onSnapshot, getCountFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Customer, Contact } from "@/lib/types";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -84,19 +84,35 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
     const [recordCounts, setRecordCounts] = useState<RecordCounts>(defaultCounts);
 
     useEffect(() => {
-        if (!customerId) {
+        if (!customerId || !profile?.orgId) {
             setLoading(false);
             return;
         }
 
-        // Load customer data
+        // Load customer data - try by ID first, then by slug
         const loadCustomer = async () => {
             try {
+                // 1. Try fetching by document ID first
                 const docRef = doc(db, "customers", customerId);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
                     setCustomer({ id: docSnap.id, ...docSnap.data() } as Customer);
+                    setLoading(false);
+                    return;
+                }
+
+                // 2. If not found by ID, try querying by slug
+                const slugQuery = query(
+                    collection(db, "customers"),
+                    where("slug", "==", customerId),
+                    where("orgId", "==", profile.orgId)
+                );
+                const slugSnap = await getDocs(slugQuery);
+
+                if (!slugSnap.empty) {
+                    const foundDoc = slugSnap.docs[0];
+                    setCustomer({ id: foundDoc.id, ...foundDoc.data() } as Customer);
                 } else {
                     setError(new Error("Customer not found"));
                 }
@@ -109,7 +125,7 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
         };
 
         loadCustomer();
-    }, [customerId]);
+    }, [customerId, profile?.orgId]);
 
     // Subscribe to contacts from top-level collection (filtered by customerId)
     useEffect(() => {

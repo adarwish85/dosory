@@ -366,6 +366,7 @@ export function useProject(id: string | null) {
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
+    const { profile } = useUserProfile();
 
     useEffect(() => {
         if (!id) {
@@ -376,25 +377,49 @@ export function useProject(id: string | null) {
             return;
         }
 
-        const unsubscribe = onSnapshot(
-            doc(db, "projects", id),
-            (snapshot) => {
-                if (snapshot.exists()) {
-                    setProject({ id: snapshot.id, ...snapshot.data() } as Project);
-                } else {
-                    setProject(null);
+        // Try fetching by ID first, if not found try by slug
+        const loadProject = async () => {
+            try {
+                setLoading(true);
+                // 1. Try by document ID
+                const docRef = doc(db, "projects", id);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    setProject({ id: docSnap.id, ...docSnap.data() } as Project);
+                    setLoading(false);
+                    return;
                 }
+
+                // 2. If not found and we have orgId, try by slug
+                if (profile?.orgId) {
+                    const slugQuery = query(
+                        collection(db, "projects"),
+                        where("slug", "==", id),
+                        where("orgId", "==", profile.orgId)
+                    );
+                    const slugSnap = await getDocs(slugQuery);
+
+                    if (!slugSnap.empty) {
+                        const foundDoc = slugSnap.docs[0];
+                        setProject({ id: foundDoc.id, ...foundDoc.data() } as Project);
+                        setLoading(false);
+                        return;
+                    }
+                }
+
+                // Not found by ID or slug
+                setProject(null);
                 setLoading(false);
-            },
-            (err) => {
+            } catch (err) {
                 console.error("Error fetching project:", err);
-                setError(err);
+                setError(err as Error);
                 setLoading(false);
             }
-        );
+        };
 
-        return () => unsubscribe();
-    }, [id]);
+        loadProject();
+    }, [id, profile?.orgId]);
 
     return { project, loading, error };
 }
