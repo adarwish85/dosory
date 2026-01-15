@@ -1,10 +1,16 @@
 import { adminDb } from "@/lib/firebase-admin";
 import {
-    Tenant, GlobalUser, Plan,
-    ModuleCatalog, AuditLogEntry,
-    SupportIssue, SystemHealthStatus, OverviewStats
+    Tenant,
+    GlobalUser,
+    Plan,
+    ModuleCatalog,
+    AuditLogEntry,
+    SupportIssue,
+    SystemHealthStatus,
+    OverviewStats,
 } from "@/lib/types/super-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 
 // Collection names
 const TENANTS_COLL = "organizations";
@@ -19,8 +25,9 @@ const SUPPORT_ISSUES_COLL = "sa_support_issues";
 async function safeQuery<T>(operation: () => Promise<T>, fallback: T): Promise<T> {
     try {
         return await operation();
-    } catch (error: any) {
-        console.error("Firestore operation failed:", error.message);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Firestore operation failed:", message);
         return fallback;
     }
 }
@@ -30,56 +37,65 @@ export class SAService {
     // Overview
     // ========================================
     static async getOverviewStats(): Promise<OverviewStats> {
-        return safeQuery(async () => {
-            // Get tenant counts
-            const tenantsSnap = await adminDb.collection(TENANTS_COLL).count().get();
-            const activeTenantsSnap = await adminDb.collection(TENANTS_COLL)
-                .where("status", "==", "active").count().get();
+        return safeQuery(
+            async () => {
+                // Get tenant counts
+                const tenantsSnap = await adminDb.collection(TENANTS_COLL).count().get();
+                const activeTenantsSnap = await adminDb
+                    .collection(TENANTS_COLL)
+                    .where("status", "==", "active")
+                    .count()
+                    .get();
 
-            // Get user count
-            const usersSnap = await adminDb.collection(USERS_COLL).count().get();
+                // Get user count
+                const usersSnap = await adminDb.collection(USERS_COLL).count().get();
 
-            // Get pages count (from website builder)
-            let totalPages = 0;
-            try {
-                const websitesSnap = await adminDb.collection("websites").get();
-                for (const website of websitesSnap.docs) {
-                    const pagesSnap = await adminDb.collection("websites")
-                        .doc(website.id).collection("pages").count().get();
-                    totalPages += pagesSnap.data().count;
+                // Get pages count (from website builder)
+                let totalPages = 0;
+                try {
+                    const websitesSnap = await adminDb.collection("websites").get();
+                    for (const website of websitesSnap.docs) {
+                        const pagesSnap = await adminDb
+                            .collection("websites")
+                            .doc(website.id)
+                            .collection("pages")
+                            .count()
+                            .get();
+                        totalPages += pagesSnap.data().count;
+                    }
+                } catch {
+                    // Ignore if websites collection doesn't exist
                 }
-            } catch (e) {
-                // Ignore if websites collection doesn't exist
-            }
 
-            // Calculate MRR from subscriptions
-            let mrr = 0;
-            try {
-                const subsSnap = await adminDb.collection(SUBSCRIPTIONS_COLL)
-                    .where("status", "==", "active").get();
-                subsSnap.forEach(doc => {
-                    mrr += doc.data().mrr || 0;
-                });
-            } catch (e) {
-                // Ignore if collection doesn't exist
-            }
+                // Calculate MRR from subscriptions
+                let mrr = 0;
+                try {
+                    const subsSnap = await adminDb.collection(SUBSCRIPTIONS_COLL).where("status", "==", "active").get();
+                    subsSnap.forEach((doc) => {
+                        mrr += doc.data().mrr || 0;
+                    });
+                } catch {
+                    // Ignore if collection doesn't exist
+                }
 
-            return {
-                totalTenants: tenantsSnap.data().count,
-                activeTenants: activeTenantsSnap.data().count,
-                totalUsers: usersSnap.data().count,
-                totalPages,
-                mrr,
-                systemHealth: "healthy"
-            };
-        }, {
-            totalTenants: 0,
-            activeTenants: 0,
-            totalUsers: 0,
-            totalPages: 0,
-            mrr: 0,
-            systemHealth: "healthy"
-        });
+                return {
+                    totalTenants: tenantsSnap.data().count,
+                    activeTenants: activeTenantsSnap.data().count,
+                    totalUsers: usersSnap.data().count,
+                    totalPages,
+                    mrr,
+                    systemHealth: "healthy",
+                };
+            },
+            {
+                totalTenants: 0,
+                activeTenants: 0,
+                totalUsers: 0,
+                totalPages: 0,
+                mrr: 0,
+                systemHealth: "healthy",
+            }
+        );
     }
 
     // ========================================
@@ -87,11 +103,8 @@ export class SAService {
     // ========================================
     static async getTenants(limitCount: number = 50): Promise<Tenant[]> {
         return safeQuery(async () => {
-            const snap = await adminDb.collection(TENANTS_COLL)
-                .orderBy("createdAt", "desc")
-                .limit(limitCount)
-                .get();
-            return snap.docs.map(d => ({ id: d.id, ...d.data() } as Tenant));
+            const snap = await adminDb.collection(TENANTS_COLL).orderBy("createdAt", "desc").limit(limitCount).get();
+            return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Tenant);
         }, []);
     }
 
@@ -106,14 +119,14 @@ export class SAService {
     static async updateTenantStatus(id: string, status: Tenant["status"], actorId: string) {
         await adminDb.collection(TENANTS_COLL).doc(id).update({
             status,
-            updatedAt: FieldValue.serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp(),
         });
         await this.logAudit("update_tenant_status", "tenant", id, actorId, { status });
     }
 
     static async updateTenant(id: string, updates: Partial<Tenant>, actorId: string) {
         const allowedFields = ["name", "subdomain", "status", "planId", "settings"];
-        const filteredUpdates: Record<string, any> = {};
+        const filteredUpdates: Record<string, unknown> = {};
 
         for (const key of allowedFields) {
             if (updates[key as keyof Tenant] !== undefined) {
@@ -129,8 +142,51 @@ export class SAService {
     }
 
     static async deleteTenant(id: string, actorId: string) {
+        const adminAuth = getAuth();
+
+        // 1. Find all users belonging to this tenant
+        const usersSnap = await adminDb.collection(USERS_COLL).where("orgId", "==", id).get();
+
+        // 2. Clear claims and update user documents
+        const batch = adminDb.batch();
+        for (const userDoc of usersSnap.docs) {
+            const userId = userDoc.id;
+
+            // Clear Firebase Auth custom claims
+            try {
+                const currentUser = await adminAuth.getUser(userId);
+                const existingClaims = currentUser.customClaims || {};
+                await adminAuth.setCustomUserClaims(userId, {
+                    ...existingClaims,
+                    orgId: null,
+                    role: null,
+                });
+            } catch (e) {
+                console.error(`Failed to clear claims for user ${userId}:`, e);
+            }
+
+            // Update Firestore user document
+            batch.update(userDoc.ref, {
+                orgId: FieldValue.delete(),
+                role: FieldValue.delete(),
+                status: "orphaned",
+                previousOrgId: id,
+                orphanedAt: FieldValue.serverTimestamp(),
+            });
+        }
+
+        // 3. Commit user updates
+        if (!usersSnap.empty) {
+            await batch.commit();
+        }
+
+        // 4. Delete the organization document
         await adminDb.collection(TENANTS_COLL).doc(id).delete();
-        await this.logAudit("delete_tenant", "tenant", id, actorId, {});
+
+        // 5. Log the action with affected user count
+        await this.logAudit("delete_tenant", "tenant", id, actorId, {
+            affectedUsers: usersSnap.size,
+        });
     }
 
     // ========================================
@@ -138,11 +194,8 @@ export class SAService {
     // ========================================
     static async getUsers(limitCount: number = 50): Promise<GlobalUser[]> {
         return safeQuery(async () => {
-            const snap = await adminDb.collection(USERS_COLL)
-                .orderBy("createdAt", "desc")
-                .limit(limitCount)
-                .get();
-            return snap.docs.map(d => ({ id: d.id, ...d.data() } as GlobalUser));
+            const snap = await adminDb.collection(USERS_COLL).orderBy("createdAt", "desc").limit(limitCount).get();
+            return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as GlobalUser);
         }, []);
     }
 
@@ -161,7 +214,7 @@ export class SAService {
 
     static async updateUser(id: string, updates: Partial<GlobalUser>, actorId: string) {
         const allowedFields = ["displayName", "email", "role", "orgId"];
-        const filteredUpdates: Record<string, any> = {};
+        const filteredUpdates: Record<string, unknown> = {};
 
         for (const key of allowedFields) {
             if (updates[key as keyof GlobalUser] !== undefined) {
@@ -198,12 +251,12 @@ export class SAService {
                     console.log("[SA] Auto-seeding default plans (ALLOW_AUTO_SEED=true)");
                     await this.seedDefaultPlans();
                     const newSnap = await adminDb.collection(PLANS_COLL).get();
-                    return newSnap.docs.map(d => ({ id: d.id, ...d.data() } as Plan));
+                    return newSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Plan);
                 }
                 console.warn("[SA] Plans collection is empty. Set ALLOW_AUTO_SEED=true to seed.");
                 return [];
             }
-            return snap.docs.map(d => ({ id: d.id, ...d.data() } as Plan));
+            return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Plan);
         }, []);
     }
 
@@ -212,30 +265,39 @@ export class SAService {
         const plans = [
             {
                 id: "plan_starter",
-                name: "Starter", price: 0, interval: "monthly",
+                name: "Starter",
+                price: 0,
+                interval: "monthly",
                 limits: { maxUsers: 3, maxProjects: 5, maxStorage: 100, features: ["basic"] },
-                isActive: true
+                isActive: true,
             },
             {
                 id: "plan_professional",
-                name: "Professional", price: 4900, interval: "monthly",
+                name: "Professional",
+                price: 4900,
+                interval: "monthly",
                 limits: { maxUsers: 10, maxProjects: 50, maxStorage: 5000, features: ["basic", "reports", "api"] },
-                isActive: true
+                isActive: true,
             },
             {
                 id: "plan_enterprise",
-                name: "Enterprise", price: 19900, interval: "monthly",
+                name: "Enterprise",
+                price: 19900,
+                interval: "monthly",
                 limits: { maxUsers: -1, maxProjects: -1, maxStorage: 50000, features: ["all"] },
-                isActive: true
-            }
+                isActive: true,
+            },
         ];
 
         for (const plan of plans) {
             const { id, ...data } = plan;
-            await adminDb.collection(PLANS_COLL).doc(id).set({
-                ...data,
-                createdAt: FieldValue.serverTimestamp()
-            });
+            await adminDb
+                .collection(PLANS_COLL)
+                .doc(id)
+                .set({
+                    ...data,
+                    createdAt: FieldValue.serverTimestamp(),
+                });
         }
     }
 
@@ -252,22 +314,46 @@ export class SAService {
                     console.log("[SA] Auto-seeding default modules (ALLOW_AUTO_SEED=true)");
                     await this.seedDefaultModules();
                     const newSnap = await adminDb.collection(MODULES_COLL).get();
-                    return newSnap.docs.map(d => ({ moduleKey: d.id, ...d.data() } as ModuleCatalog));
+                    return newSnap.docs.map((d) => ({ moduleKey: d.id, ...d.data() }) as ModuleCatalog);
                 }
                 console.warn("[SA] Modules collection is empty. Set ALLOW_AUTO_SEED=true to seed.");
                 return [];
             }
-            return snap.docs.map(d => ({ moduleKey: d.id, ...d.data() } as ModuleCatalog));
+            return snap.docs.map((d) => ({ moduleKey: d.id, ...d.data() }) as ModuleCatalog);
         }, []);
     }
 
     static async seedDefaultModules() {
         const modules = [
-            { name: "CRM", description: "Customer relationship management", category: "core", isEnabled: true, icon: "Users" },
-            { name: "Projects", description: "Project management", category: "core", isEnabled: true, icon: "FolderKanban" },
+            {
+                name: "CRM",
+                description: "Customer relationship management",
+                category: "core",
+                isEnabled: true,
+                icon: "Users",
+            },
+            {
+                name: "Projects",
+                description: "Project management",
+                category: "core",
+                isEnabled: true,
+                icon: "FolderKanban",
+            },
             { name: "Support", description: "Helpdesk ticketing", category: "core", isEnabled: true, icon: "LifeBuoy" },
-            { name: "Invoicing", description: "Billing and invoices", category: "core", isEnabled: true, icon: "Receipt" },
-            { name: "Reports", description: "Advanced reporting", category: "addon", isEnabled: true, icon: "BarChart3" },
+            {
+                name: "Invoicing",
+                description: "Billing and invoices",
+                category: "core",
+                isEnabled: true,
+                icon: "Receipt",
+            },
+            {
+                name: "Reports",
+                description: "Advanced reporting",
+                category: "addon",
+                isEnabled: true,
+                icon: "BarChart3",
+            },
             { name: "API Access", description: "REST API access", category: "premium", isEnabled: false, icon: "Code" },
         ];
 
@@ -287,15 +373,15 @@ export class SAService {
     // ========================================
     static async getAuditLogs(limitCount: number = 100): Promise<AuditLogEntry[]> {
         return safeQuery(async () => {
-            const snap = await adminDb.collection(AUDIT_LOGS_COLL)
-                .orderBy("timestamp", "desc")
-                .limit(limitCount)
-                .get();
-            return snap.docs.map(d => ({
-                id: d.id,
-                ...d.data(),
-                createdAt: d.data().timestamp
-            } as AuditLogEntry));
+            const snap = await adminDb.collection(AUDIT_LOGS_COLL).orderBy("timestamp", "desc").limit(limitCount).get();
+            return snap.docs.map(
+                (d) =>
+                    ({
+                        id: d.id,
+                        ...d.data(),
+                        createdAt: d.data().timestamp,
+                    }) as AuditLogEntry
+            );
         }, []);
     }
 
@@ -304,7 +390,7 @@ export class SAService {
         resourceType: string,
         resourceId: string,
         actorId: string,
-        details: Record<string, any> = {}
+        details: Record<string, unknown> = {}
     ) {
         try {
             await adminDb.collection(AUDIT_LOGS_COLL).add({
@@ -313,7 +399,7 @@ export class SAService {
                 resourceId,
                 actorId,
                 details,
-                timestamp: FieldValue.serverTimestamp()
+                timestamp: FieldValue.serverTimestamp(),
             });
         } catch (error) {
             console.error("Failed to write audit log", error);
@@ -325,11 +411,8 @@ export class SAService {
     // ========================================
     static async getSupportIssues(): Promise<SupportIssue[]> {
         return safeQuery(async () => {
-            const snap = await adminDb.collection(SUPPORT_ISSUES_COLL)
-                .orderBy("createdAt", "desc")
-                .limit(50)
-                .get();
-            return snap.docs.map(d => ({ id: d.id, ...d.data() } as SupportIssue));
+            const snap = await adminDb.collection(SUPPORT_ISSUES_COLL).orderBy("createdAt", "desc").limit(50).get();
+            return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as SupportIssue);
         }, []);
     }
 
