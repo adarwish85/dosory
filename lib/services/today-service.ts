@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, Timestamp, orderBy, limit } from "firebase/firestore";
 import { TodayDashboardData, TodayItem, MetricTile, AlertItem, ActivityFeedItem } from "@/lib/types/today";
 import { Task, Ticket, Invoice } from "@/lib/types";
 
@@ -136,17 +136,74 @@ export class TodayService {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async getMetrics(role: string, orgId: string, userId: string): Promise<MetricTile[]> {
-        // Mock metrics for now, would replace with real aggregation calls
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const startOfDay = Timestamp.fromDate(today);
+        const endOfDay = Timestamp.fromDate(tomorrow);
+
         if (role === "admin") {
-            return [
-                { id: "1", label: "Revenue Today", value: "$3,450", trend: "up", trendValue: "+12%" },
-                { id: "2", label: "New Leads", value: "12", trend: "up" },
-                { id: "3", label: "Active Users", value: "45", trend: "neutral" },
-            ];
+            try {
+                // 1. Revenue Today
+                const paymentsRef = collection(db, "payments");
+                const paymentsQuery = query(
+                    paymentsRef,
+                    where("orgId", "==", orgId),
+                    where("date", ">=", startOfDay),
+                    where("date", "<", endOfDay)
+                );
+                const paymentsSnap = await getDocs(paymentsQuery);
+                const revenueToday = paymentsSnap.docs.reduce((sum, doc) => sum + (doc.data().amount || 0), 0);
+
+                // 2. New Leads Today
+                const leadsRef = collection(db, "leads");
+                const leadsQuery = query(leadsRef, where("orgId", "==", orgId), where("createdAt", ">=", startOfDay));
+                const leadsSnap = await getDocs(leadsQuery); // In production, use count() aggregation
+                const leadsCount = leadsSnap.size;
+
+                // 3. Active Users
+                const staffRef = collection(db, "staff");
+                const staffQuery = query(staffRef, where("orgId", "==", orgId), where("status", "==", "active"));
+                const staffSnap = await getDocs(staffQuery); // In production, use count() aggregation
+                const staffCount = staffSnap.size;
+
+                return [
+                    {
+                        id: "1",
+                        label: "Revenue Today",
+                        value: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+                            revenueToday
+                        ),
+                        trend: "neutral",
+                    },
+                    {
+                        id: "2",
+                        label: "New Leads",
+                        value: leadsCount.toString(),
+                        trend: leadsCount > 0 ? "up" : "neutral",
+                    },
+                    {
+                        id: "3",
+                        label: "Active Users",
+                        value: staffCount.toString(),
+                        trend: "neutral",
+                    },
+                ];
+            } catch (error) {
+                console.error("Error fetching metrics:", error);
+                return [
+                    { id: "1", label: "Revenue Today", value: "$0.00", trend: "neutral" },
+                    { id: "2", label: "New Leads", value: "0", trend: "neutral" },
+                    { id: "3", label: "Active Users", value: "-", trend: "neutral" },
+                ];
+            }
         } else if (role === "sales") {
+            // Placeholder: Implement Sales metrics (Calls, Meetings) via helper or real collections
             return [
-                { id: "1", label: "Calls Made", value: "18", trend: "up", trendValue: "Goal: 20" },
-                { id: "2", label: "Meetings", value: "3", trend: "neutral" },
+                { id: "1", label: "Calls Made", value: "0", trend: "neutral" },
+                { id: "2", label: "Meetings", value: "0", trend: "neutral" },
                 { id: "3", label: "Deals Closed", value: "$0", trend: "neutral" },
             ];
         }
@@ -172,17 +229,28 @@ export class TodayService {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async getActivityFeed(orgId: string, userId: string): Promise<ActivityFeedItem[]> {
-        // Mock feed for now
-        return [
-            {
-                id: "1",
-                actorName: "System",
-                action: "generated daily report",
-                target: "Daily Summary",
-                targetUrl: "#",
-                timestamp: Timestamp.now(),
-            },
-        ];
+        try {
+            const ref = collection(db, "activities");
+            const q = query(ref, where("orgId", "==", orgId), orderBy("createdAt", "desc"), limit(5));
+
+            const snap = await getDocs(q);
+            if (snap.empty) return [];
+
+            return snap.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    actorName: data.actorName || "User",
+                    action: data.action || "performed action",
+                    target: data.targetName || data.targetId || "item",
+                    targetUrl: "#", // Could be dynamic based on targetType
+                    timestamp: data.createdAt as Timestamp,
+                };
+            });
+        } catch (error) {
+            console.warn("Failed to fetch activity feed:", error);
+            return [];
+        }
     }
 
     private prioritizeItems(items: TodayItem[]): TodayItem[] {
