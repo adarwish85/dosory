@@ -79,16 +79,40 @@ export function LeadProvider({ children }: LeadProviderProps) {
             const expectedSlug = lead.slug || toSlug(lead.name);
             const expectedParam = createSlugId(expectedSlug, publicId);
 
-            // If the current URL param doesn't match the expected slug--id format
-            if (rawId !== expectedParam) {
-                // Get the current pathname to preserve any tab segment (e.g., /activities, /profile)
-                const currentPath = window.location.pathname;
-                const leadBasePath = `/dashboard/leads/${rawId}`;
-                const tabSegment = currentPath.startsWith(leadBasePath) ? currentPath.slice(leadBasePath.length) : "";
+            // Normalize strings for comparison to avoid case-sensitivity loops
+            const normalizedRawId = rawId.toLowerCase();
+            const normalizedExpectedParam = expectedParam.toLowerCase();
 
-                // Replace URL with canonical format, preserving tab segment
+            // If the current URL param doesn't match the expected slug--id format
+            if (normalizedRawId !== normalizedExpectedParam) {
+                // Get the current pathname
+                const currentPath = window.location.pathname;
+
+                // Construct the canonical base path
+                const canonicalBasePath = `/dashboard/leads/${expectedParam}`;
+
+                // If we are ALREADY starting with the canonical path (case-insensitive check), do NOT redirect
+                // This prevents loops where sub-paths or query params might mislead the logic
+                if (currentPath.toLowerCase().startsWith(canonicalBasePath.toLowerCase())) {
+                    console.log(`[LeadProvider] Already on canonical path: ${currentPath}, skipping redirect.`);
+                    return;
+                }
+
+                // Preserving tab segment logic
+                // Avoid using rawId in replace since it might be partial or different case
+                // Instead, reconstruct from the segments after /leads/
+                const match = currentPath.match(/\/dashboard\/leads\/[^\/]+(\/.*)?$/);
+                const tabSegment = match ? match[1] || "" : "";
+
+                // Replace URL with canonical format
                 const canonicalUrl = `/dashboard/leads/${expectedParam}${tabSegment}`;
-                console.log(`[LeadProvider] Redirecting to canonical URL: ${canonicalUrl}`);
+
+                // Double check we aren't redirecting to the EXACT same URL
+                if (canonicalUrl.toLowerCase() === currentPath.toLowerCase()) {
+                    return;
+                }
+
+                console.log(`[LeadProvider] Redirecting to canonical URL: ${canonicalUrl} (was ${currentPath})`);
                 router.replace(canonicalUrl);
             }
         }
