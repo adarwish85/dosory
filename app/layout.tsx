@@ -33,6 +33,7 @@ export const metadata: Metadata = {
 
 import { ImpersonationProvider } from "@/lib/contexts/ImpersonationContext";
 import { ImpersonationBanner } from "@/components/impersonation/ImpersonationBanner";
+import { UserProfileProvider } from "@/components/user-profile-provider";
 
 // ... (existing imports, but wait, replace modifies a chunk)
 
@@ -47,7 +48,9 @@ export default function RootLayout({
                 <PlatformSettingsProvider>
                     <ImpersonationProvider>
                         <ImpersonationBanner />
-                        <AuthProvider>{children}</AuthProvider>
+                        <AuthProvider>
+                            <UserProfileProvider>{children}</UserProfileProvider>
+                        </AuthProvider>
                     </ImpersonationProvider>
                     <Toaster richColors position="top-right" />
                 </PlatformSettingsProvider>
