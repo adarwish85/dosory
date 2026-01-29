@@ -47,14 +47,15 @@ export function LeadOverview() {
                         <h3 className="text-lg font-semibold">Conversion Pipeline</h3>
                     </div>
                     <Progress value={pipelineProgress} className="h-3 mb-4" />
-                    <div className="flex justify-between">
+                    <div className="grid grid-cols-6 gap-1">
                         {STATUS_ORDER.map((status, idx) => {
                             const isActive = lead.status === status;
                             const isPassed = statusIndex > idx;
                             return (
                                 <div
                                     key={status}
-                                    className={`text-xs font-medium ${isActive ? "text-green-600" : isPassed ? "text-gray-600" : "text-gray-400"}`}
+                                    className={`text-[10px] md:text-xs font-medium text-center truncate px-0.5 ${isActive ? "text-green-600 font-bold" : isPassed ? "text-gray-600" : "text-gray-400"}`}
+                                    title={status.charAt(0).toUpperCase() + status.slice(1)}
                                 >
                                     {status.charAt(0).toUpperCase() + status.slice(1)}
                                 </div>
