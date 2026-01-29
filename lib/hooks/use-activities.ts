@@ -72,7 +72,8 @@ export function useActivities(options: UseActivitiesOptions = {}) {
             constraints.push(where("outcome", "==", outcome));
         }
 
-        constraints.push(orderBy("dateTime", "desc"));
+        // Removed orderBy("dateTime", "desc") to avoid requiring a composite index
+        // constraints.push(orderBy("dateTime", "desc"));
 
         const q = query(collection(db, "activities"), ...constraints);
 
@@ -83,6 +84,14 @@ export function useActivities(options: UseActivitiesOptions = {}) {
                     id: d.id,
                     ...d.data(),
                 })) as Activity[];
+
+                // Client-side sort
+                data.sort((a, b) => {
+                    const timeA = a.dateTime?.toMillis() || 0;
+                    const timeB = b.dateTime?.toMillis() || 0;
+                    return timeB - timeA;
+                });
+
                 setActivities(data);
                 setLoading(false);
             },
