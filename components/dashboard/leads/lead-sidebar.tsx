@@ -56,9 +56,15 @@ export function LeadSidebar() {
             where("orgId", "==", profile.orgId)
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            setRemindersCount(snapshot.docs.length);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                setRemindersCount(snapshot.docs.length);
+            },
+            (error) => {
+                console.error("Error subscribing to leadReminders:", error);
+            }
+        );
 
         return () => unsubscribe();
     }, [leadId, profile?.orgId]);
@@ -73,9 +79,15 @@ export function LeadSidebar() {
             where("orgId", "==", profile.orgId)
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            setNotesCount(snapshot.docs.length);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                setNotesCount(snapshot.docs.length);
+            },
+            (error) => {
+                console.error("Error subscribing to leadNotes:", error);
+            }
+        );
 
         return () => unsubscribe();
     }, [leadId, profile?.orgId]);
