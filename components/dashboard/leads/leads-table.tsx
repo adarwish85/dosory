@@ -624,7 +624,7 @@ export function LeadsTable({
                                 </SortableContext>
                             </TableRow>
                         </TableHeader>
-                        <TableBody style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}>
+                        <TableBody>
                             {leads.length === 0 ? (
                                 <TableRow>
                                     <TableCell
@@ -635,48 +635,65 @@ export function LeadsTable({
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                virtualRows.map((virtualRow) => {
-                                    const lead = leads[virtualRow.index];
-                                    const isSelected = selectionMode === "all" || selectedLeads.includes(lead.id);
+                                <>
+                                    {virtualRows.length > 0 && (
+                                        <TableRow style={{ height: `${virtualRows[0].start}px` }}>
+                                            <TableCell colSpan={orderedColumns.length + 1} className="p-0 border-0" />
+                                        </TableRow>
+                                    )}
+                                    {virtualRows.map((virtualRow) => {
+                                        const lead = leads[virtualRow.index];
+                                        const isSelected = selectionMode === "all" || selectedLeads.includes(lead.id);
 
-                                    return (
+                                        return (
+                                            <TableRow
+                                                key={lead.id}
+                                                // Removed absolute positioning classes
+                                                className={`group hover:bg-gray-50 ${isSelected ? "bg-blue-50/50" : ""} ${lead.isStarred ? "bg-yellow-50/30" : ""} ${focusedRowIndex === virtualRow.index ? "ring-2 ring-inset ring-blue-500" : ""} ${ROW_DENSITY_STYLES[rowDensity]}`}
+                                                style={{
+                                                    height: `${virtualRow.size}px`,
+                                                    // Removed transform style
+                                                }}
+                                            >
+                                                <TableCell
+                                                    className={`text-center sticky left-0 z-30 p-0 w-[48px] min-w-[48px] max-w-[48px] border-r border-gray-100 ${isSelected ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50`}
+                                                >
+                                                    <div className="flex items-center justify-center w-full h-full">
+                                                        <Checkbox
+                                                            checked={isSelected}
+                                                            onCheckedChange={(c) => onSelectLead(lead.id, !!c)}
+                                                        />
+                                                    </div>
+                                                </TableCell>
+                                                {orderedColumns.map(
+                                                    (col) =>
+                                                        columnVisibility[col.key] && (
+                                                            <TableCell
+                                                                key={col.key}
+                                                                style={{
+                                                                    width: columnWidths[col.key] || 100,
+                                                                    minWidth: columnWidths[col.key] || 100,
+                                                                    maxWidth: columnWidths[col.key] || 100,
+                                                                }}
+                                                                className={`overflow-hidden text-ellipsis whitespace-nowrap p-2 ${col.key === "name" ? `sticky left-[48px] z-30 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${isSelected ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50` : ""}`}
+                                                            >
+                                                                {renderCell(lead, col)}
+                                                            </TableCell>
+                                                        )
+                                                )}
+                                            </TableRow>
+                                        );
+                                    })}
+                                    {virtualRows.length > 0 && (
                                         <TableRow
-                                            key={lead.id}
-                                            className={`group hover:bg-gray-50 absolute w-full top-0 left-0 ${isSelected ? "bg-blue-50/50" : ""} ${lead.isStarred ? "bg-yellow-50/30" : ""} ${focusedRowIndex === virtualRow.index ? "ring-2 ring-inset ring-blue-500" : ""} ${ROW_DENSITY_STYLES[rowDensity]}`}
                                             style={{
-                                                height: `${virtualRow.size}px`,
-                                                transform: `translateY(${virtualRow.start}px)`,
+                                                height: `${rowVirtualizer.getTotalSize() - virtualRows[virtualRows.length - 1].end}px`,
                                             }}
                                         >
-                                            <TableCell
-                                                className={`text-center sticky left-0 z-30 p-0 w-[48px] min-w-[48px] max-w-[48px] border-r border-gray-100 ${isSelected ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50`}
-                                            >
-                                                <div className="flex items-center justify-center w-full h-full">
-                                                    <Checkbox
-                                                        checked={isSelected}
-                                                        onCheckedChange={(c) => onSelectLead(lead.id, !!c)}
-                                                    />
-                                                </div>
-                                            </TableCell>
-                                            {orderedColumns.map(
-                                                (col) =>
-                                                    columnVisibility[col.key] && (
-                                                        <TableCell
-                                                            key={col.key}
-                                                            style={{
-                                                                width: columnWidths[col.key] || 100,
-                                                                minWidth: columnWidths[col.key] || 100,
-                                                                maxWidth: columnWidths[col.key] || 100,
-                                                            }}
-                                                            className={`overflow-hidden text-ellipsis whitespace-nowrap p-2 ${col.key === "name" ? `sticky left-[48px] z-30 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${isSelected ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50` : ""}`}
-                                                        >
-                                                            {renderCell(lead, col)}
-                                                        </TableCell>
-                                                    )
-                                            )}
+                                            <TableCell colSpan={orderedColumns.length + 1} className="p-0 border-0" />
                                         </TableRow>
-                                    );
-                                })
+                                    )}
+                                </>
                             )}
                         </TableBody>
                     </Table>
