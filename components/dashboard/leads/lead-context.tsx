@@ -36,7 +36,7 @@ const LeadContext = createContext<LeadContextType>({
     loading: true,
     error: null,
     leadId: null,
-    refreshLead: () => { },
+    refreshLead: () => {},
 });
 
 export function useLead() {
@@ -84,9 +84,7 @@ export function LeadProvider({ children }: LeadProviderProps) {
                 // Get the current pathname to preserve any tab segment (e.g., /activities, /profile)
                 const currentPath = window.location.pathname;
                 const leadBasePath = `/dashboard/leads/${rawId}`;
-                const tabSegment = currentPath.startsWith(leadBasePath)
-                    ? currentPath.slice(leadBasePath.length)
-                    : '';
+                const tabSegment = currentPath.startsWith(leadBasePath) ? currentPath.slice(leadBasePath.length) : "";
 
                 // Replace URL with canonical format, preserving tab segment
                 const canonicalUrl = `/dashboard/leads/${expectedParam}${tabSegment}`;
@@ -104,19 +102,23 @@ export function LeadProvider({ children }: LeadProviderProps) {
             return;
         }
         try {
+            console.log(`[LeadContext] loading lead ${leadId}...`);
             setLoading(true);
             const docRef = doc(db, "leads", leadId);
             const docSnap = await getDoc(docRef);
 
             if (docSnap.exists()) {
+                console.log(`[LeadContext] lead ${leadId} found`);
                 setLead({ id: docSnap.id, ...docSnap.data() } as Lead);
             } else {
+                console.warn(`[LeadContext] lead ${leadId} not found`);
                 setError(new Error("Lead not found"));
             }
         } catch (err) {
             console.error("Error loading lead:", err);
             setError(err as Error);
         } finally {
+            console.log(`[LeadContext] finished loading lead ${leadId}`);
             setLoading(false);
         }
     }, [leadId]);

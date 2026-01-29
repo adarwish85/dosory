@@ -50,7 +50,8 @@ export function useFiles(options: UseFilesOptions = {}) {
             constraints.push(where("uploadedBy", "==", uploadedBy));
         }
 
-        constraints.push(orderBy("createdAt", "desc"));
+        // Removed orderBy("createdAt", "desc") to avoid requiring a composite index with orgId
+        // constraints.push(orderBy("createdAt", "desc"));
 
         const q = query(collection(db, "files"), ...constraints);
 
@@ -61,6 +62,14 @@ export function useFiles(options: UseFilesOptions = {}) {
                     id: doc.id,
                     ...doc.data(),
                 })) as FileDoc[];
+
+                // Client-side sort
+                data.sort((a, b) => {
+                    const dateA = a.createdAt?.toMillis() || 0;
+                    const dateB = b.createdAt?.toMillis() || 0;
+                    return dateB - dateA;
+                });
+
                 setFiles(data);
                 setLoading(false);
             },
@@ -74,36 +83,39 @@ export function useFiles(options: UseFilesOptions = {}) {
         return () => unsubscribe();
     }, [profile?.orgId, relatedTo?.id, relatedTo?.type, uploadedBy]);
 
-    const uploadFile = useCallback(async (file: File) => {
-        if (!profile?.orgId || !relatedTo) throw new Error("Missing context");
+    const uploadFile = useCallback(
+        async (file: File) => {
+            if (!profile?.orgId || !relatedTo) throw new Error("Missing context");
 
-        try {
-            setUploading(true);
-            const path = `files/${profile.orgId}/${relatedTo.type}/${relatedTo.id}/${Date.now()}_${file.name}`;
-            const storageRef = ref(storage, path);
+            try {
+                setUploading(true);
+                const path = `files/${profile.orgId}/${relatedTo.type}/${relatedTo.id}/${Date.now()}_${file.name}`;
+                const storageRef = ref(storage, path);
 
-            await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(storageRef);
+                await uploadBytes(storageRef, file);
+                const url = await getDownloadURL(storageRef);
 
-            await addDoc(collection(db, "files"), {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                url,
-                path,
-                relatedTo,
-                uploadedBy: profile.uid,
-                orgId: profile.orgId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-            });
-        } catch (err) {
-            console.error("Error uploading file:", err);
-            throw err;
-        } finally {
-            setUploading(false);
-        }
-    }, [profile?.orgId, profile?.uid, relatedTo?.id, relatedTo?.type]);
+                await addDoc(collection(db, "files"), {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    url,
+                    path,
+                    relatedTo,
+                    uploadedBy: profile.uid,
+                    orgId: profile.orgId,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+            } catch (err) {
+                console.error("Error uploading file:", err);
+                throw err;
+            } finally {
+                setUploading(false);
+            }
+        },
+        [profile?.orgId, profile?.uid, relatedTo?.id, relatedTo?.type]
+    );
 
     const deleteFile = useCallback(async (file: FileDoc) => {
         try {
