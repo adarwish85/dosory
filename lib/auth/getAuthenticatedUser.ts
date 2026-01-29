@@ -1,14 +1,13 @@
-
 import { NextRequest } from "next/server";
-import { adminAuth } from "@/lib/firebase-admin";
+import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { ImpersonationService } from "@/lib/impersonation/impersonationService";
 import { SuperAdminRole } from "@/lib/rbac/super-admin";
 
 export interface AuthContext {
     isAuthenticated: boolean;
-    userId?: string;     // The EFFECTIVE user ID (impersonated or real)
+    userId?: string; // The EFFECTIVE user ID (impersonated or real)
     email?: string;
-    orgId?: string;      // The EFFECTIVE org ID (impersonated or real)
+    orgId?: string; // The EFFECTIVE org ID (impersonated or real)
     role?: string;
 
     // Impersonation Metadata
@@ -26,7 +25,7 @@ export interface AuthContext {
 
 /**
  * Unified Authentication Helper.
- * 
+ *
  * Supports:
  * 1. Standard Bearer Token (Firebase ID Token)
  * 2. Impersonation Session Header (x-impersonation-session-id)
@@ -44,10 +43,10 @@ export async function getAuthenticatedUser(req: NextRequest): Promise<AuthContex
                     isAuthenticated: true,
                     // If targetUserId is set, we act as that user.
                     // If NOT set, we act as the tenant owner? Or we just have the orgId?
-                    // Usually we need a userId for most operations. 
+                    // Usually we need a userId for most operations.
                     // If targetUserId is missing, we might need to fetch the owner ID or create a temp ID.
-                    // For now, let's assume if targetUserId is missing, we leave userId undefined 
-                    // BUT many APIs require userId. 
+                    // For now, let's assume if targetUserId is missing, we leave userId undefined
+                    // BUT many APIs require userId.
                     // Strategy: If impersonating tenant-only, allow actions that don't need distinct userId,
                     // or use a placeholder "impersonator" ID.
                     userId: session.targetUserId || `impersonator_${session.actorUid}`,
@@ -60,8 +59,8 @@ export async function getAuthenticatedUser(req: NextRequest): Promise<AuthContex
                         uid: session.actorUid,
                         email: session.actorEmail,
                         role: session.actorRole,
-                        sessionId: session.id
-                    }
+                        sessionId: session.id,
+                    },
                 };
             } else {
                 // Invalid or expired session
@@ -69,7 +68,7 @@ export async function getAuthenticatedUser(req: NextRequest): Promise<AuthContex
                     isAuthenticated: false,
                     isImpersonating: false,
                     error: "Impersonation session expired or invalid",
-                    status: 401
+                    status: 401,
                 };
             }
         }
@@ -77,7 +76,12 @@ export async function getAuthenticatedUser(req: NextRequest): Promise<AuthContex
         // 2. Standard Bearer Token Fallback
         const authHeader = req.headers.get("Authorization");
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return { isAuthenticated: false, isImpersonating: false, error: "Missing Authorization header", status: 401 };
+            return {
+                isAuthenticated: false,
+                isImpersonating: false,
+                error: "Missing Authorization header",
+                status: 401,
+            };
         }
 
         const token = authHeader.split("Bearer ")[1];
@@ -85,35 +89,35 @@ export async function getAuthenticatedUser(req: NextRequest): Promise<AuthContex
             const decodedToken = await adminAuth.verifyIdToken(token);
             const uid = decodedToken.uid;
 
-            // We usually fetch the user profile to get orgId, 
-            // OR we rely on custom claims if we set them.
-            // For now, let's fetch the user profile from Firestore to be safe and consistent with existing logic?
-            // Existing logic in `create-staff` didn't fetch user... wait `create-staff` was the admin api.
-            // Existing logic in `invite` fetched user `adminDb.collection("users").doc(uid)`.
+            let orgId = decodedToken.orgId as string | undefined;
 
-            // To be truly unified, we should fetch the user doc here.
-            // BUT this might be expensive for every request. 
-            // Optimization: Custom Claims. 
-            // If custom claims `orgId` exists, use it.
-
-            const orgId = decodedToken.orgId as string | undefined;
-            // If no orgId in token, we might need to fetch.
-            // For this implementation, let's rely on token first.
+            // Fallback: If orgId is missing in token, fetch from Firestore
+            if (!orgId) {
+                const userDoc = await adminDb.collection("users").doc(uid).get();
+                if (userDoc.exists) {
+                    orgId = userDoc.data()?.orgId;
+                }
+            }
 
             return {
                 isAuthenticated: true,
                 userId: uid,
                 email: decodedToken.email,
-                orgId: orgId, // Might be undefined if not in claims
-                role: decodedToken.role as string || "user",
+                orgId: orgId,
+                role: (decodedToken.role as string) || "user",
 
-                isImpersonating: false
+                isImpersonating: false,
             };
-
-        } catch (error: any) {
-            return { isAuthenticated: false, isImpersonating: false, error: "Invalid token: " + error.message, status: 401 };
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            return {
+                isAuthenticated: false,
+                isImpersonating: false,
+                error: "Invalid token: " + errorMessage,
+                status: 401,
+            };
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Auth helper error:", error);
         return { isAuthenticated: false, isImpersonating: false, error: "Authentication failed", status: 500 };
     }

@@ -46,6 +46,8 @@ import { useProposals, useEstimates } from "@/lib/hooks/use-sales";
 import { useTasks } from "@/lib/hooks/use-projects";
 import { useLeads } from "@/lib/hooks/use-leads";
 import { useStaff } from "@/lib/hooks/use-staff";
+import { useActivities } from "@/lib/hooks/use-activities";
+import { useFiles } from "@/lib/hooks/use-files";
 import { usePermission } from "@/lib/hooks";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -150,6 +152,8 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     const { tasks } = useTasks();
     const { convertToCustomer } = useLeads();
     const { staff } = useStaff();
+    const { activities } = useActivities({ relatedToType: "lead", relatedToId: lead?.id });
+    const { files } = useFiles({ relatedTo: lead?.id ? { type: "lead", id: lead.id } : undefined });
 
     // Filter tasks related to this lead
     const relatedTasks = tasks.filter((t) => t.relatedTo?.type === "lead" && t.relatedTo?.id === lead?.id);
@@ -331,18 +335,20 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     return (
         <Sheet open={open} onOpenChange={onClose}>
             <SheetContent className="w-[90%] sm:max-w-[800px] p-0 flex flex-col gap-0 bg-white">
-                <SheetHeader className="px-6 py-4 border-b flex flex-row items-center justify-between sticky top-0 bg-white z-10 shrink-0">
-                    <div className="flex flex-col items-start gap-1">
-                        <SheetTitle className="text-xl font-bold flex items-center gap-2">
-                            #{lead.id.substring(0, 4)} - {lead.name}
-                        </SheetTitle>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <span className="capitalize">{lead.status}</span>
-                            <span>•</span>
-                            <span>{lead.company || "No Company"}</span>
+                <SheetHeader className="px-6 py-4 border-b flex flex-col space-y-4 sticky top-0 bg-white z-10 shrink-0">
+                    <div className="flex justify-between items-start">
+                        <div className="flex flex-col items-start gap-1">
+                            <SheetTitle className="text-xl font-bold flex items-center gap-2">
+                                #{lead.id.substring(0, 4)} - {lead.name}
+                            </SheetTitle>
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <span className="capitalize">{lead.status}</span>
+                                <span>•</span>
+                                <span>{lead.company || "No Company"}</span>
+                            </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-end gap-2">
                         <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2 text-gray-600">
                             <Printer className="h-4 w-4" /> Print
                         </Button>
@@ -375,6 +381,12 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
                                     <Phone className="h-4 w-4" /> Activities
+                                    <Badge
+                                        variant="secondary"
+                                        className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
+                                    >
+                                        {activities.length}
+                                    </Badge>
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="deal"
@@ -423,34 +435,36 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
                                     <Bell className="h-4 w-4" /> Reminders
-                                    {reminders.length > 0 && (
-                                        <Badge
-                                            variant="secondary"
-                                            className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
-                                        >
-                                            {reminders.length}
-                                        </Badge>
-                                    )}
+                                    <Badge
+                                        variant="secondary"
+                                        className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
+                                    >
+                                        {reminders.length}
+                                    </Badge>
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="attachments"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
                                     <Paperclip className="h-4 w-4" /> Files
+                                    <Badge
+                                        variant="secondary"
+                                        className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
+                                    >
+                                        {files.length}
+                                    </Badge>
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="notes"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
                                     <StickyNote className="h-4 w-4" /> Notes
-                                    {notes.length > 0 && (
-                                        <Badge
-                                            variant="secondary"
-                                            className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
-                                        >
-                                            {notes.length}
-                                        </Badge>
-                                    )}
+                                    <Badge
+                                        variant="secondary"
+                                        className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
+                                    >
+                                        {notes.length}
+                                    </Badge>
                                 </TabsTrigger>
                             </TabsList>
                         </div>
@@ -468,14 +482,14 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 score >= 70
                                                     ? "text-green-600"
                                                     : score >= 40
-                                                        ? "text-yellow-600"
-                                                        : "text-red-500";
+                                                      ? "text-yellow-600"
+                                                      : "text-red-500";
                                             const bgColor =
                                                 score >= 70
                                                     ? "from-green-50 to-green-100 border-green-200"
                                                     : score >= 40
-                                                        ? "from-yellow-50 to-yellow-100 border-yellow-200"
-                                                        : "from-red-50 to-red-100 border-red-200";
+                                                      ? "from-yellow-50 to-yellow-100 border-yellow-200"
+                                                      : "from-red-50 to-red-100 border-red-200";
                                             return (
                                                 <div
                                                     className={`p-3 bg-gradient-to-br ${bgColor} border rounded-lg shadow-sm lg:col-span-1`}
@@ -605,12 +619,15 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 const isPast =
                                                     STATUS_PIPELINE.findIndex((s) => s.key === lead.status) > i;
                                                 return (
-                                                    <div key={stage.key} className="flex-1 flex flex-col items-center">
+                                                    <div
+                                                        key={stage.key}
+                                                        className="flex-1 flex flex-col items-center min-w-0"
+                                                    >
                                                         <div
                                                             className={`w-full h-2 rounded-full ${isPast || isActive ? stage.color : "bg-gray-200"}`}
                                                         />
                                                         <span
-                                                            className={`text-[10px] mt-1 ${isActive ? "font-bold text-gray-900" : isPast ? "text-gray-600" : "text-gray-400"}`}
+                                                            className={`text-[10px] mt-1 w-full text-center truncate px-0.5 ${isActive ? "font-bold text-gray-900" : isPast ? "text-gray-600" : "text-gray-400"}`}
                                                         >
                                                             {stage.label}
                                                         </span>
@@ -686,7 +703,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                     field.key === "address"
                                                                         ? lead.address?.street || lead.address?.city
                                                                         : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                                        !!(lead as any)[field.key];
+                                                                          !!(lead as any)[field.key];
                                                                 return (
                                                                     <div
                                                                         key={field.key}
@@ -751,17 +768,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     </span>
                                                     <div className="flex items-center gap-1">
                                                         <Badge variant="outline" className="text-orange-600">
-                                                            {
-                                                                relatedTasks.filter((t) => t.status !== "done")
-                                                                    .length
-                                                            }{" "}
+                                                            {relatedTasks.filter((t) => t.status !== "done").length}{" "}
                                                             open
                                                         </Badge>
                                                         <Badge variant="secondary">
-                                                            {
-                                                                relatedTasks.filter((t) => t.status === "done")
-                                                                    .length
-                                                            }{" "}
+                                                            {relatedTasks.filter((t) => t.status === "done").length}{" "}
                                                             done
                                                         </Badge>
                                                     </div>
@@ -970,11 +981,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <CalendarIcon className="h-3 w-3 mr-1 text-gray-400" />
                                                             {lead.deal.expectedCloseDate
                                                                 ? format(
-                                                                    lead.deal.expectedCloseDate instanceof Timestamp
-                                                                        ? lead.deal.expectedCloseDate.toDate()
-                                                                        : lead.deal.expectedCloseDate,
-                                                                    "MMM d, yyyy"
-                                                                )
+                                                                      lead.deal.expectedCloseDate instanceof Timestamp
+                                                                          ? lead.deal.expectedCloseDate.toDate()
+                                                                          : lead.deal.expectedCloseDate,
+                                                                      "MMM d, yyyy"
+                                                                  )
                                                                 : "-"}
                                                         </div>
                                                     </div>
@@ -1172,9 +1183,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <span className="text-xs text-gray-400">
                                                                 {note.createdAt
                                                                     ? format(
-                                                                        note.createdAt.toDate(),
-                                                                        "MMM d, yyyy @ h:mm a"
-                                                                    )
+                                                                          note.createdAt.toDate(),
+                                                                          "MMM d, yyyy @ h:mm a"
+                                                                      )
                                                                     : "Just now"}
                                                             </span>
                                                             <Button
@@ -1251,9 +1262,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                 <Calendar className="h-3 w-3 inline mr-1" />
                                                                 {reminder.date
                                                                     ? format(
-                                                                        reminder.date.toDate(),
-                                                                        "MMM d, yyyy @ h:mm a"
-                                                                    )
+                                                                          reminder.date.toDate(),
+                                                                          "MMM d, yyyy @ h:mm a"
+                                                                      )
                                                                     : "No date"}
                                                             </p>
                                                         </div>
@@ -1293,9 +1304,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         <p className="text-xs text-gray-500">
                                                             {lead.createdAt
                                                                 ? format(
-                                                                    lead.createdAt.toDate(),
-                                                                    "MMM d, yyyy @ h:mm a"
-                                                                )
+                                                                      lead.createdAt.toDate(),
+                                                                      "MMM d, yyyy @ h:mm a"
+                                                                  )
                                                                 : "Unknown date"}
                                                         </p>
                                                     </div>
@@ -1320,9 +1331,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <p className="text-xs text-gray-500 mt-1">
                                                                 {note.createdAt
                                                                     ? format(
-                                                                        note.createdAt.toDate(),
-                                                                        "MMM d, yyyy @ h:mm a"
-                                                                    )
+                                                                          note.createdAt.toDate(),
+                                                                          "MMM d, yyyy @ h:mm a"
+                                                                      )
                                                                     : ""}
                                                             </p>
                                                         </div>
@@ -1349,9 +1360,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                 For:{" "}
                                                                 {reminder.date
                                                                     ? format(
-                                                                        reminder.date.toDate(),
-                                                                        "MMM d, yyyy @ h:mm a"
-                                                                    )
+                                                                          reminder.date.toDate(),
+                                                                          "MMM d, yyyy @ h:mm a"
+                                                                      )
                                                                     : ""}
                                                             </p>
                                                         </div>
@@ -1385,9 +1396,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             <p className="text-xs text-gray-500 mt-1">
                                                                 {task.createdAt
                                                                     ? format(
-                                                                        task.createdAt.toDate(),
-                                                                        "MMM d, yyyy @ h:mm a"
-                                                                    )
+                                                                          task.createdAt.toDate(),
+                                                                          "MMM d, yyyy @ h:mm a"
+                                                                      )
                                                                     : ""}
                                                             </p>
                                                         </div>
@@ -1436,9 +1447,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             Updated:{" "}
                                                             {lead.updatedAt
                                                                 ? format(
-                                                                    lead.updatedAt.toDate(),
-                                                                    "MMM d, yyyy @ h:mm a"
-                                                                )
+                                                                      lead.updatedAt.toDate(),
+                                                                      "MMM d, yyyy @ h:mm a"
+                                                                  )
                                                                 : "Unknown"}
                                                         </p>
                                                     </div>

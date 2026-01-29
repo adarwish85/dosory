@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { taskFormSchema, TaskFormData } from "@/lib/schemas";
+import { Task } from "@/lib/types";
 import { useTasks, useProjects } from "@/lib/hooks/use-projects";
 import { useMilestones } from "@/lib/hooks/use-project-data";
 import { useTaskLists } from "@/lib/hooks/use-task-lists";
@@ -28,7 +29,7 @@ interface CreateTaskDialogProps {
     leadName?: string;
     customerId?: string;
     customerName?: string;
-    initialData?: any; // Task data for editing
+    initialData?: Partial<Task>; // Task data for editing
     taskId?: string; // ID of task being edited
 }
 
@@ -74,8 +75,8 @@ export function CreateTaskDialog({
             relatedTo: leadId
                 ? { type: "lead", id: leadId }
                 : customerId
-                    ? { type: "customer", id: customerId }
-                    : undefined,
+                  ? { type: "customer", id: customerId }
+                  : undefined,
             customerId: customerId,
             projectId: undefined,
             milestoneId: undefined,
@@ -93,8 +94,14 @@ export function CreateTaskDialog({
             if (initialData) {
                 form.reset({
                     ...initialData,
-                    startDate: initialData.startDate?.toDate ? initialData.startDate.toDate() : initialData.startDate,
-                    dueDate: initialData.dueDate?.toDate ? initialData.dueDate.toDate() : initialData.dueDate,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    startDate: ((initialData.startDate as any)?.toDate
+                        ? (initialData.startDate as any).toDate()
+                        : initialData.startDate) as Date,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    dueDate: ((initialData.dueDate as any)?.toDate
+                        ? (initialData.dueDate as any).toDate()
+                        : initialData.dueDate) as Date,
                 });
             } else {
                 form.reset({
@@ -110,8 +117,8 @@ export function CreateTaskDialog({
                     relatedTo: leadId
                         ? { type: "lead", id: leadId }
                         : customerId
-                            ? { type: "customer", id: customerId }
-                            : undefined,
+                          ? { type: "customer", id: customerId }
+                          : undefined,
                     customerId: customerId,
                     projectId: undefined,
                     milestoneId: undefined,
@@ -340,7 +347,7 @@ export function CreateTaskDialog({
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
                                         <FormLabel>Start Date</FormLabel>
-                                        <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
+                                        <Popover open={startDateOpen} onOpenChange={setStartDateOpen} modal={true}>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
                                                     <Button
@@ -383,7 +390,7 @@ export function CreateTaskDialog({
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
                                         <FormLabel>Due Date</FormLabel>
-                                        <Popover open={dueDateOpen} onOpenChange={setDueDateOpen}>
+                                        <Popover open={dueDateOpen} onOpenChange={setDueDateOpen} modal={true}>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
                                                     <Button

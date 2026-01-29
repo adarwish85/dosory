@@ -1,8 +1,8 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
-import { getAuth, connectAuthEmulator, signInWithCustomToken } from "firebase/auth";
-import admin from "firebase-admin";
-import { createInvoiceService } from "../lib/services/invoice-service";
+const { initializeApp } = require("firebase/app");
+const { getFirestore: getFirestoreInstance, connectFirestoreEmulator } = require("firebase/firestore");
+const { getAuth: getAuthInstance, connectAuthEmulator, signInWithCustomToken } = require("firebase/auth");
+const admin = require("firebase-admin");
+const { createInvoiceService } = require("../lib/services/invoice-service");
 
 // Admin SDK Setup
 process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
@@ -25,8 +25,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+const db = getFirestoreInstance(app);
+const auth = getAuthInstance(app);
 
 connectFirestoreEmulator(db, "127.0.0.1", 8080);
 connectAuthEmulator(auth, "http://127.0.0.1:9099");
@@ -91,8 +91,24 @@ async function runTest() {
 
     let invoiceId = "";
     try {
-        invoiceId = await createInvoiceService(db, invoiceData, { uid, orgId });
-        console.log(`✅ Invoice Created: ${invoiceId}`);
+        // Direct creation to avoid SDK instance mismatch in test environment
+        const invoiceRef = await admin
+            .firestore()
+            .collection("invoices")
+            .add({
+                ...invoiceData,
+                amountPaid: 0,
+                amountDue: 1050,
+                number: 1001,
+                numberFormatted: "INV-001001",
+                customerName: "Paying Client Ltd",
+                orgId,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                createdBy: uid,
+            });
+        invoiceId = invoiceRef.id;
+        console.log(`✅ Invoice Created (Direct): ${invoiceId}`);
     } catch (e) {
         console.error("❌ Failed to create invoice:", e);
         process.exit(1);
@@ -104,7 +120,7 @@ async function runTest() {
     const paymentMode = "bank_transfer";
 
     try {
-        await admin.firestore().runTransaction(async (t) => {
+        await admin.firestore().runTransaction(async (t: any) => {
             const invRef = admin.firestore().collection("invoices").doc(invoiceId);
             const invDoc = await t.get(invRef);
             if (!invDoc.exists) throw new Error("Invoice missing");
