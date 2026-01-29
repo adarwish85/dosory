@@ -121,6 +121,7 @@ const LeadEditDialog = dynamic(
     () => import("@/components/dashboard/leads/lead-edit-dialog").then((mod) => ({ default: mod.LeadEditSheet })),
     { ssr: false }
 );
+import { LeadsTable } from "@/components/dashboard/leads/leads-table"; // Added import
 
 import { LEAD_STATUSES, STATUS_COLORS } from "@/lib/constants";
 import { Timestamp } from "firebase/firestore";
@@ -264,167 +265,11 @@ function formatFullDate(timestamp: Timestamp | undefined): string {
     }
 }
 
-// Quick View Card Component
-function QuickViewCard({ lead }: { lead: Lead }) {
-    const statusColor = STATUS_COLORS[lead.status] || { bg: "bg-gray-50", text: "text-gray-600" };
-    return (
-        <Card className="w-80 shadow-lg border-0">
-            <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                                {lead.name?.charAt(0)?.toUpperCase() || "?"}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <CardTitle className="text-base">{lead.name}</CardTitle>
-                            {lead.company && <p className="text-sm text-gray-500">{lead.company}</p>}
-                        </div>
-                    </div>
-                    {lead.isStarred && <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />}
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                    <Badge className={`${statusColor.bg} ${statusColor.text} border-0`}>{lead.status}</Badge>
-                    {lead.value && (
-                        <Badge variant="outline" className="font-mono">
-                            ${lead.value.toLocaleString()}
-                        </Badge>
-                    )}
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                    {lead.email && (
-                        <div>
-                            <span className="text-gray-500">Email:</span>
-                            <p className="truncate">{lead.email}</p>
-                        </div>
-                    )}
-                    {lead.phone && (
-                        <div>
-                            <span className="text-gray-500">Phone:</span>
-                            <p>{lead.phone}</p>
-                        </div>
-                    )}
-                    {lead.source && (
-                        <div>
-                            <span className="text-gray-500">Source:</span>
-                            <p>{lead.source}</p>
-                        </div>
-                    )}
-                    <div>
-                        <span className="text-gray-500">Last Activity:</span>
-                        <p className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {formatLastActivity(lead.lastContactedAt)}
-                        </p>
-                    </div>
-                </div>
-                {lead.description && (
-                    <div className="text-sm">
-                        <span className="text-gray-500">Notes:</span>
-                        <p className="text-gray-700 line-clamp-2">{lead.description}</p>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-    );
-}
+// QuickViewCard moved to leads-table.tsx
 
-// Draggable Header
-function DraggableColumnHeader({
-    column,
-    sortKey,
-    sortDirection,
-    onSort,
-    isVisible,
-    width,
-    onResize,
-}: {
-    column: ColumnDef;
-    sortKey: ColumnKey | null;
-    sortDirection: SortDirection;
-    onSort: (key: ColumnKey) => void;
-    isVisible: boolean;
-    width: number;
-    onResize: (e: React.MouseEvent, key: ColumnKey) => void;
-}) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: column.key });
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
-        width: width,
-        minWidth: width,
-    };
+// DraggableColumnHeader moved to leads-table.tsx
 
-    if (!isVisible) return null;
-    const isActive = sortKey === column.key;
-
-    // Solid background for all headers to prevent bleed-through, especially for sticky ones
-    return (
-        <TableHead
-            ref={setNodeRef}
-            style={style}
-            className={`relative font-semibold text-gray-900 bg-gray-100 ${column.key === "name" ? "sticky left-[48px] z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] border-r" : "border-r border-gray-200"}`}
-        >
-            <div className="flex items-center gap-1 w-full">
-                <button
-                    {...attributes}
-                    {...listeners}
-                    className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded shrink-0"
-                >
-                    <GripVertical className="h-3 w-3 text-gray-400" />
-                </button>
-                {column.sortable ? (
-                    <button
-                        onClick={() => onSort(column.key)}
-                        className="flex items-center gap-1 hover:text-blue-600 truncate"
-                    >
-                        <span className="truncate">{column.label}</span>
-                        {isActive ? (
-                            sortDirection === "asc" ? (
-                                <ArrowUp className="h-3 w-3 shrink-0" />
-                            ) : (
-                                <ArrowDown className="h-3 w-3 shrink-0" />
-                            )
-                        ) : (
-                            <ArrowUpDown className="h-3 w-3 opacity-30 shrink-0" />
-                        )}
-                    </button>
-                ) : (
-                    <span className="truncate">{column.label}</span>
-                )}
-            </div>
-            {/* Resizer Handle */}
-            <div
-                className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 z-20"
-                onMouseDown={(e) => onResize(e, column.key)}
-            />
-        </TableHead>
-    );
-}
-
-// Highlight text
-function HighlightText({ text, search }: { text: string; search: string }) {
-    if (!search.trim() || !text) return <>{text}</>;
-    const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
-    const parts = text.split(regex);
-    return (
-        <>
-            {parts.map((part, i) =>
-                regex.test(part) ? (
-                    <mark key={i} className="bg-yellow-200 px-0.5 rounded">
-                        {part}
-                    </mark>
-                ) : (
-                    <span key={i}>{part}</span>
-                )
-            )}
-        </>
-    );
-}
+// HighlightText moved to leads-table.tsx
 
 // Quick Stats
 function QuickStatsBar({ leads, totalValue, totalCount }: { leads: Lead[]; totalValue: number; totalCount?: number }) {
@@ -663,61 +508,7 @@ function Pagination({
     );
 }
 
-// Inline Edit
-function InlineEditCell({
-    value,
-    field,
-    leadId,
-    onSave,
-    searchQuery,
-}: {
-    value: string;
-    field: ColumnKey;
-    leadId: string;
-    onSave: (id: string, field: ColumnKey, value: string) => void;
-    searchQuery: string;
-}) {
-    const [isEditing, setIsEditing] = useState(false);
-    const [editValue, setEditValue] = useState(value);
-    const inputRef = useRef<HTMLInputElement>(null);
-    useEffect(() => {
-        if (isEditing && inputRef.current) {
-            inputRef.current.focus();
-            inputRef.current.select();
-        }
-    }, [isEditing]);
-    const handleSave = () => {
-        if (editValue !== value) onSave(leadId, field, editValue);
-        setIsEditing(false);
-    };
-    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter") handleSave();
-        else if (e.key === "Escape") {
-            setEditValue(value);
-            setIsEditing(false);
-        }
-    };
-    if (isEditing)
-        return (
-            <Input
-                ref={inputRef}
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onBlur={handleSave}
-                onKeyDown={handleKeyDown}
-                className="h-7 text-sm"
-            />
-        );
-    return (
-        <span
-            onDoubleClick={() => setIsEditing(true)}
-            className="cursor-text hover:bg-gray-100 px-1 py-0.5 rounded inline-block min-w-[20px]"
-            title="Double-click to edit"
-        >
-            <HighlightText text={value || "-"} search={searchQuery} />
-        </span>
-    );
-}
+// InlineEditCell moved to leads-table.tsx
 
 // Kanban Board Component
 function KanbanBoard({
@@ -1498,221 +1289,7 @@ export default function LeadsPage() {
 
     const hasActiveFilters = statusFilter !== "all" || advancedFilters.length > 0;
 
-    const renderCell = (lead: Lead, column: ColumnDef) => {
-        switch (column.key) {
-            case "starred":
-                return (
-                    <button
-                        onClick={() => handleToggleStar(lead.id, !lead.isStarred)}
-                        className="hover:scale-110 transition-transform"
-                    >
-                        <Star
-                            className={`h-4 w-4 ${lead.isStarred ? "fill-yellow-400 text-yellow-400" : "text-gray-300 hover:text-yellow-400"}`}
-                        />
-                    </button>
-                );
-            case "id":
-                return <span className="font-medium text-gray-500">{lead.id.substring(0, 4)}</span>;
-            case "name":
-                return (
-                    <div className="flex flex-col gap-0.5">
-                        <HoverCard openDelay={300} closeDelay={100}>
-                            <HoverCardTrigger asChild>
-                                <span className="font-medium cursor-pointer text-gray-900 hover:text-blue-600 w-fit">
-                                    {can("leads_edit") ? (
-                                        <InlineEditCell
-                                            value={lead.name || ""}
-                                            field="name"
-                                            leadId={lead.id}
-                                            onSave={handleInlineEdit}
-                                            searchQuery={searchQuery}
-                                        />
-                                    ) : (
-                                        <HighlightText text={lead.name || "-"} search={searchQuery} />
-                                    )}
-                                </span>
-                            </HoverCardTrigger>
-                            <HoverCardContent
-                                side="right"
-                                align="start"
-                                className="p-0 border-0 bg-transparent shadow-none"
-                            >
-                                <QuickViewCard lead={lead} />
-                            </HoverCardContent>
-                        </HoverCard>
-
-                        {/* Hover Actions Menu */}
-                        <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleView(lead);
-                                }}
-                                className="hover:text-blue-600 hover:underline px-0.5"
-                            >
-                                View
-                            </button>
-                            {can("leads_edit") && (
-                                <>
-                                    <span className="text-gray-300">|</span>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleEdit(lead);
-                                        }}
-                                        className="hover:text-blue-600 hover:underline px-0.5"
-                                    >
-                                        Edit
-                                    </button>
-                                </>
-                            )}
-                            {can("leads_delete") && (
-                                <>
-                                    <span className="text-gray-300">|</span>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDelete(lead.id);
-                                        }}
-                                        className="hover:text-red-600 hover:underline px-0.5"
-                                    >
-                                        Delete
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                );
-            case "company":
-                return (
-                    // eslint-disable-next-line react/jsx-no-useless-fragment
-                    <>
-                        {can("leads_edit") ? (
-                            <InlineEditCell
-                                value={lead.company || ""}
-                                field="company"
-                                leadId={lead.id}
-                                onSave={handleInlineEdit}
-                                searchQuery={searchQuery}
-                            />
-                        ) : (
-                            <HighlightText text={lead.company || "-"} search={searchQuery} />
-                        )}
-                    </>
-                );
-            case "email":
-                return lead.email ? (
-                    <a
-                        href={`mailto:${lead.email}`}
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <Mail className="h-3 w-3" />
-                        <HighlightText text={lead.email} search={searchQuery} />
-                    </a>
-                ) : (
-                    <span className="text-gray-400">-</span>
-                );
-            case "phone":
-                return lead.phone ? (
-                    <a
-                        href={`tel:${lead.phone}`}
-                        className="flex items-center gap-1 text-green-600 hover:text-green-800 hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <Phone className="h-3 w-3" />
-                        <HighlightText text={lead.phone} search={searchQuery} />
-                    </a>
-                ) : (
-                    <span className="text-gray-400">-</span>
-                );
-            case "value":
-                return (
-                    <span className="text-gray-900 font-mono">
-                        {lead.value ? `$${lead.value.toLocaleString()}` : "-"}
-                    </span>
-                );
-            case "status":
-                return (
-                    <Select
-                        value={lead.status}
-                        onValueChange={(v) => handleStatusChange(lead.id, v as LeadStatus)}
-                        disabled={!can("leads_edit")}
-                    >
-                        <SelectTrigger className="h-7 text-xs w-[110px]">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {LEAD_STATUSES.map((s) => (
-                                <SelectItem key={s.value} value={s.value}>
-                                    {s.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                );
-            case "source":
-                return <span className="text-gray-500">{lead.source || "-"}</span>;
-            case "lastActivity":
-                return (
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <span className="text-gray-500 flex items-center gap-1 cursor-help">
-                                <Clock className="h-3 w-3" />
-                                {formatLastActivity(lead.lastContactedAt)}
-                            </span>
-                        </TooltipTrigger>
-                        <TooltipContent>{formatFullDate(lead.lastContactedAt)}</TooltipContent>
-                    </Tooltip>
-                );
-            case "score": {
-                const score = lead.leadScore ?? calculateLeadScore(lead);
-                return (
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <span
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getScoreColor(score)}`}
-                            >
-                                <Zap className="h-3 w-3" />
-                                {score}
-                            </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <div className="text-xs">
-                                <p className="font-medium">Lead Score: {score}/100</p>
-                                <p className="text-gray-400 mt-1">Based on: contact info, value, status, activity</p>
-                            </div>
-                        </TooltipContent>
-                    </Tooltip>
-                );
-            }
-            case "tags":
-                return lead.tags && lead.tags.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                        {lead.tags.slice(0, 3).map((tag, i) => (
-                            <Badge key={i} variant="secondary" className="text-[10px] px-1.5 py-0">
-                                <Tag className="h-2 w-2 mr-0.5" />
-                                {tag}
-                            </Badge>
-                        ))}
-                        {lead.tags.length > 3 && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 cursor-help">
-                                        +{lead.tags.length - 3}
-                                    </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>{lead.tags.slice(3).join(", ")}</TooltipContent>
-                            </Tooltip>
-                        )}
-                    </div>
-                ) : (
-                    <span className="text-gray-400">-</span>
-                );
-            default:
-                return null;
-        }
-    };
+    // renderCell moved to LeadsTable
 
     if (loading)
         return (
@@ -2146,100 +1723,34 @@ export default function LeadsPage() {
 
                 {viewMode === "table" ? (
                     <>
-                        <div
-                            ref={tableRef}
-                            tabIndex={0}
-                            onKeyDown={handleTableKeyDown}
-                            className="border rounded-md bg-white overflow-x-auto focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                                <Table className="table-fixed">
-                                    <TableHeader>
-                                        <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                            <TableHead className="w-[48px] min-w-[48px] max-w-[48px] text-center bg-gray-100 sticky left-0 z-30 p-0">
-                                                <div className="flex items-center justify-center w-full h-full">
-                                                    <Checkbox
-                                                        checked={isAllPageSelected}
-                                                        ref={(el) => {
-                                                            if (el) {
-                                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                                (el as any).indeterminate = isSomeSelected;
-                                                            }
-                                                        }}
-                                                        onCheckedChange={handleSelectAllCheckbox}
-                                                    />
-                                                </div>
-                                            </TableHead>
-                                            <SortableContext
-                                                items={columnOrder}
-                                                strategy={horizontalListSortingStrategy}
-                                            >
-                                                {orderedColumns.map((col) => (
-                                                    <DraggableColumnHeader
-                                                        key={col.key}
-                                                        column={col}
-                                                        sortKey={sortKey}
-                                                        sortDirection={sortDirection}
-                                                        onSort={handleSort}
-                                                        isVisible={columnVisibility[col.key]}
-                                                        width={columnWidths[col.key] || 100}
-                                                        onResize={handleColumnResize}
-                                                    />
-                                                ))}
-                                            </SortableContext>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {paginatedLeads.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell
-                                                    colSpan={visibleColumnsCount + 2}
-                                                    className="text-center py-10 text-muted-foreground"
-                                                >
-                                                    {searchQuery ? "No matches" : "No leads"}
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : (
-                                            paginatedLeads.map((lead, index) => (
-                                                <TableRow
-                                                    key={lead.id}
-                                                    className={`group hover:bg-gray-50 ${selectionMode === "all" || selectedLeads.includes(lead.id) ? "bg-blue-50/50" : ""} ${lead.isStarred ? "bg-yellow-50/30" : ""} ${focusedRowIndex === index ? "ring-2 ring-inset ring-blue-500" : ""} ${ROW_DENSITY_STYLES[rowDensity]}`}
-                                                >
-                                                    <TableCell
-                                                        className={`text-center sticky left-0 z-30 p-0 w-[48px] min-w-[48px] max-w-[48px] border-r ${selectionMode === "all" || selectedLeads.includes(lead.id) ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50`}
-                                                    >
-                                                        <div className="flex items-center justify-center w-full h-full">
-                                                            <Checkbox
-                                                                checked={
-                                                                    selectionMode === "all" ||
-                                                                    selectedLeads.includes(lead.id)
-                                                                }
-                                                                onCheckedChange={(c) => handleSelectLead(lead.id, !!c)}
-                                                            />
-                                                        </div>
-                                                    </TableCell>
-                                                    {orderedColumns.map(
-                                                        (col) =>
-                                                            columnVisibility[col.key] && (
-                                                                <TableCell
-                                                                    key={col.key}
-                                                                    style={{
-                                                                        width: columnWidths[col.key] || 100,
-                                                                        minWidth: columnWidths[col.key] || 100,
-                                                                    }}
-                                                                    className={`overflow-hidden text-ellipsis whitespace-nowrap ${col.key === "name" ? `sticky left-[48px] z-30 border-r shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${selectionMode === "all" || selectedLeads.includes(lead.id) ? "bg-blue-50" : "bg-white"} group-hover:bg-gray-50` : ""}`}
-                                                                >
-                                                                    {renderCell(lead, col)}
-                                                                </TableCell>
-                                                            )
-                                                    )}
-                                                </TableRow>
-                                            ))
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </DndContext>
-                        </div>
+                        <LeadsTable
+                            leads={paginatedLeads}
+                            totalRecords={totalRecords}
+                            loading={loading}
+                            selectedLeads={selectedLeads}
+                            selectionMode={selectionMode}
+                            onSelectLead={handleSelectLead}
+                            onSelectAllOnPage={handleSelectAllCheckbox}
+                            orderedColumns={orderedColumns}
+                            columnVisibility={columnVisibility}
+                            columnWidths={columnWidths}
+                            onColumnResize={handleColumnResize}
+                            columnOrder={columnOrder}
+                            onColumnReorder={handleDragEnd}
+                            sortKey={sortKey}
+                            sortDirection={sortDirection}
+                            onSort={handleSort}
+                            rowDensity={rowDensity}
+                            searchQuery={searchQuery}
+                            canEdit={can("leads_edit")}
+                            canDelete={can("leads_delete")}
+                            onView={handleView}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onStatusChange={handleStatusChange}
+                            onToggleStar={handleToggleStar}
+                            onInlineEdit={handleInlineEdit}
+                        />
 
                         <div className="flex items-center justify-between py-2">
                             <div className="flex items-center gap-4">

@@ -16,14 +16,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-} from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEstimates } from "@/lib/hooks/use-sales";
@@ -48,9 +41,9 @@ interface ConvertLeadDialogProps {
 }
 
 export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: ConvertLeadDialogProps) {
-    const { convertToCustomer } = useLeads();
+    const { convertToCustomer, isConverting, conversionStep } = useLeads();
     const { estimates } = useEstimates({ leadId: lead.id }); // Fetch estimates for this lead
-    const [isLoading, setIsLoading] = useState(false);
+    // const [isLoading, setIsLoading] = useState(false); // Deprecated in favor of hook state
     const router = useRouter();
 
     const [internalOpen, setInternalOpen] = useState(false);
@@ -73,7 +66,7 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
 
     const onSubmit = async (data: ConvertFormData) => {
         try {
-            setIsLoading(true);
+            // setIsLoading(true); // Handled by hook
             const customerId = await convertToCustomer(lead.id, {
                 createContact: data.createContact,
                 createProjectFromDeal: data.createProjectFromDeal,
@@ -93,7 +86,7 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                 description: "Failed to convert lead. Please try again.",
             });
         } finally {
-            setIsLoading(false);
+            // setIsLoading(false); // Handled by hook
         }
     };
 
@@ -131,16 +124,11 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                                         <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
+                                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
                                             <FormLabel>Create Contact Person</FormLabel>
-                                            <FormDescription>
-                                                Creates {lead.name} as a primary contact.
-                                            </FormDescription>
+                                            <FormDescription>Creates {lead.name} as a primary contact.</FormDescription>
                                         </div>
                                     </FormItem>
                                 )}
@@ -221,9 +209,7 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <FormDescription>
-                                            This estimate will be marked as accepted.
-                                        </FormDescription>
+                                        <FormDescription>This estimate will be marked as accepted.</FormDescription>
                                     </FormItem>
                                 )}
                             />
@@ -234,13 +220,19 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                                 type="button"
                                 variant="outline"
                                 onClick={() => onOpenChangeHandler?.(false)}
-                                disabled={isLoading}
+                                disabled={isConverting}
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isLoading}>
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Convert to Customer
+                            <Button type="submit" disabled={isConverting}>
+                                {isConverting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        {conversionStep || "Converting..."}
+                                    </>
+                                ) : (
+                                    "Convert to Customer"
+                                )}
                             </Button>
                         </DialogFooter>
                     </form>

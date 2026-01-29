@@ -39,3 +39,6 @@ export {
     monthlyAnalyticsSummary,
     recalculateAnalytics
 } from "./analytics";
+
+// Export leads automation
+export { bulkDeleteLeads } from "./leads";
