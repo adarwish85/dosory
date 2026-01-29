@@ -112,8 +112,10 @@ export function LeadProvider({ children }: LeadProviderProps) {
                     return;
                 }
 
-                console.log(`[LeadProvider] Redirecting to canonical URL: ${canonicalUrl} (was ${currentPath})`);
-                router.replace(canonicalUrl);
+                console.log(
+                    `[LeadProvider] WOULD Redirect to canonical URL: ${canonicalUrl} (was ${currentPath}) - Redirect Disabled`
+                );
+                // router.replace(canonicalUrl);
             }
         }
     }, [rawId, lead, router]);
