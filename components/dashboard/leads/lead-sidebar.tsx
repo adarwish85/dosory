@@ -21,13 +21,64 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { useActivities } from "@/lib/hooks/use-activities";
+import { useFiles } from "@/lib/hooks/use-files";
+import { useTasks } from "@/lib/hooks/use-projects";
+import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const LEAD_SIDEBAR_KEY = "lead_sidebar_collapsed";
 
 export function LeadSidebar() {
     const pathname = usePathname();
-    const { leadId } = useLead();
+    const { leadId, lead } = useLead();
+    const { profile } = useUserProfile();
     const [collapsed, setCollapsed] = useState(true); // Default collapsed
+
+    // Local state for counts of items not covered by standard hooks or that require specific sub-collections
+    const [remindersCount, setRemindersCount] = useState(0);
+    const [notesCount, setNotesCount] = useState(0);
+
+    // Fetch counts using correct hook signatures
+    const { activities } = useActivities({ relatedToType: "lead", relatedToId: leadId || "" });
+    const { files } = useFiles({ relatedTo: { type: "lead", id: leadId || "" } });
+    const { tasks } = useTasks({ relatedTo: { type: "lead", id: leadId || "" } });
+
+    // Fetch reminders count (from leadReminders collection)
+    useEffect(() => {
+        if (!leadId || !profile?.orgId) return;
+
+        const q = query(
+            collection(db, "leadReminders"),
+            where("leadId", "==", leadId),
+            where("orgId", "==", profile.orgId)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setRemindersCount(snapshot.docs.length);
+        });
+
+        return () => unsubscribe();
+    }, [leadId, profile?.orgId]);
+
+    // Fetch notes count (from leadNotes collection)
+    useEffect(() => {
+        if (!leadId || !profile?.orgId) return;
+
+        const q = query(
+            collection(db, "leadNotes"),
+            where("leadId", "==", leadId),
+            where("orgId", "==", profile.orgId)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setNotesCount(snapshot.docs.length);
+        });
+
+        return () => unsubscribe();
+    }, [leadId, profile?.orgId]);
 
     // Load preference from localStorage on mount
     useEffect(() => {
@@ -46,15 +97,20 @@ export function LeadSidebar() {
     };
 
     const menuItems = [
-        { icon: LayoutDashboard, label: "Overview", href: `/dashboard/leads/${leadId}` },
-        { icon: User, label: "Profile", href: `/dashboard/leads/${leadId}/profile` },
-        { icon: Phone, label: "Activities", href: `/dashboard/leads/${leadId}/activities` },
-        { icon: Briefcase, label: "Deal", href: `/dashboard/leads/${leadId}/deal` },
-        { icon: Calculator, label: "Estimates", href: `/dashboard/leads/${leadId}/estimates` },
-        { icon: CheckSquare, label: "Tasks", href: `/dashboard/leads/${leadId}/tasks` },
-        { icon: Bell, label: "Reminders", href: `/dashboard/leads/${leadId}/reminders` },
-        { icon: Paperclip, label: "Files", href: `/dashboard/leads/${leadId}/files` },
-        { icon: StickyNote, label: "Notes", href: `/dashboard/leads/${leadId}/notes` },
+        { icon: LayoutDashboard, label: "Overview", href: `/dashboard/leads/${leadId}`, count: 0 },
+        { icon: User, label: "Profile", href: `/dashboard/leads/${leadId}/profile`, count: 0 },
+        {
+            icon: Phone,
+            label: "Activities",
+            href: `/dashboard/leads/${leadId}/activities`,
+            count: activities?.length || 0,
+        },
+        { icon: Briefcase, label: "Deal", href: `/dashboard/leads/${leadId}/deal`, count: lead?.deal ? 1 : 0 },
+        { icon: Calculator, label: "Estimates", href: `/dashboard/leads/${leadId}/estimates`, count: 0 }, // Tasks: Estimates not yet implemented
+        { icon: CheckSquare, label: "Tasks", href: `/dashboard/leads/${leadId}/tasks`, count: tasks?.length || 0 },
+        { icon: Bell, label: "Reminders", href: `/dashboard/leads/${leadId}/reminders`, count: remindersCount },
+        { icon: Paperclip, label: "Files", href: `/dashboard/leads/${leadId}/files`, count: files?.length || 0 },
+        { icon: StickyNote, label: "Notes", href: `/dashboard/leads/${leadId}/notes`, count: notesCount },
     ];
 
     return (
@@ -123,9 +179,17 @@ export function LeadSidebar() {
                                             )}
                                         >
                                             <item.icon className="h-5 w-5" />
+                                            {item.count > 0 && (
+                                                <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+                                                </span>
+                                            )}
                                         </Link>
                                     </TooltipTrigger>
-                                    <TooltipContent side="right">{item.label}</TooltipContent>
+                                    <TooltipContent side="right">
+                                        {item.label} {item.count > 0 && `(${item.count})`}
+                                    </TooltipContent>
                                 </Tooltip>
                             );
                         }
@@ -145,6 +209,14 @@ export function LeadSidebar() {
                                     <item.icon className="h-4 w-4" />
                                     {item.label}
                                 </div>
+                                {item.count > 0 && (
+                                    <Badge
+                                        variant="secondary"
+                                        className="text-[10px] h-5 px-1.5 min-w-[20px] justify-center"
+                                    >
+                                        {item.count}
+                                    </Badge>
+                                )}
                             </Link>
                         );
                     })}

@@ -38,8 +38,11 @@ import {
     Briefcase,
     Calendar as CalendarIcon,
     DollarSign,
+    Download,
 } from "lucide-react";
-import type { Lead } from "@/lib/types";
+import { toast } from "sonner";
+import { formatBytes } from "@/lib/utils";
+import type { Lead, FileDoc } from "@/lib/types";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useProposals, useEstimates } from "@/lib/hooks/use-sales";
@@ -107,11 +110,7 @@ const STATUS_PIPELINE = [
 ] as const;
 
 // Shared scoring logic
-import {
-    calculateLeadScoreWithBreakdown,
-    calculateLeadCompleteness,
-    COMPLETENESS_FIELDS,
-} from "@/lib/utils/lead-score";
+import { calculateLeadScoreWithBreakdown, COMPLETENESS_FIELDS } from "@/lib/utils/lead-score";
 import { estimateFormSchema } from "@/lib/schemas";
 import * as z from "zod";
 
@@ -153,7 +152,12 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     const { convertToCustomer } = useLeads();
     const { staff } = useStaff();
     const { activities } = useActivities({ relatedToType: "lead", relatedToId: lead?.id });
-    const { files } = useFiles({ relatedTo: lead?.id ? { type: "lead", id: lead.id } : undefined });
+    const {
+        files,
+        uploadFile,
+        uploading: uploadingFile,
+        deleteFile,
+    } = useFiles({ relatedTo: lead?.id ? { type: "lead", id: lead.id } : undefined });
 
     // Filter tasks related to this lead
     const relatedTasks = tasks.filter((t) => t.relatedTo?.type === "lead" && t.relatedTo?.id === lead?.id);
@@ -320,14 +324,41 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
         }
     };
 
-    // File upload handler (placeholder - would need Firebase Storage setup)
+    // File upload handler
     const fileInputRef = useRef<HTMLInputElement>(null);
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
+        const fileList = e.target.files;
+        if (!fileList || fileList.length === 0) return;
 
-        // TODO: Implement Firebase Storage upload
-        alert("File upload requires Firebase Storage setup. Files selected: " + files.length);
+        // Upload each file
+        for (let i = 0; i < fileList.length; i++) {
+            const file = fileList[i];
+            try {
+                await uploadFile(file);
+                toast.success(`File uploaded: ${file.name}`);
+            } catch (error) {
+                console.error("File upload error:", error);
+                const msg = error instanceof Error ? error.message : "Details unavailable";
+                toast.error(`Failed to upload ${file.name}: ${msg}`);
+            }
+        }
+
+        // Reset input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
+    const handleDeleteFile = async (file: FileDoc) => {
+        if (confirm(`Are you sure you want to delete ${file.name}?`)) {
+            try {
+                await deleteFile(file);
+                toast.success("File deleted");
+            } catch (error) {
+                console.error(error);
+                toast.error("Failed to delete file");
+            }
+        }
     };
 
     if (!lead) return null;
@@ -1209,25 +1240,109 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
 
                                 {/* Attachments Tab */}
                                 <TabsContent value="attachments" className="m-0 text-center py-10">
-                                    <div className="border-2 border-dashed rounded-lg p-10 flex flex-col items-center justify-center">
-                                        <Paperclip className="h-10 w-10 text-gray-300 mb-2" />
-                                        <p className="text-sm text-gray-500 mb-4">No files attached</p>
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            className="hidden"
-                                            onChange={handleFileUpload}
-                                            multiple
-                                        />
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => fileInputRef.current?.click()}
-                                        >
-                                            <Upload className="h-4 w-4 mr-2" /> Upload File
-                                        </Button>
-                                        <p className="text-xs text-gray-400 mt-2">Firebase Storage setup required</p>
-                                    </div>
+                                    {files.length === 0 ? (
+                                        <div className="border-2 border-dashed rounded-lg p-10 flex flex-col items-center justify-center">
+                                            <Paperclip className="h-10 w-10 text-gray-300 mb-2" />
+                                            <p className="text-sm text-gray-500 mb-4">No files attached</p>
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                className="hidden"
+                                                onChange={handleFileUpload}
+                                                multiple
+                                            />
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => fileInputRef.current?.click()}
+                                                disabled={uploadingFile}
+                                            >
+                                                {uploadingFile ? (
+                                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                ) : (
+                                                    <Upload className="h-4 w-4 mr-2" />
+                                                )}
+                                                Upload File
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div className="flex justify-end">
+                                                <input
+                                                    type="file"
+                                                    ref={fileInputRef}
+                                                    className="hidden"
+                                                    onChange={handleFileUpload}
+                                                    multiple
+                                                />
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    disabled={uploadingFile}
+                                                >
+                                                    {uploadingFile ? (
+                                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                                    ) : (
+                                                        <Upload className="h-4 w-4 mr-1" />
+                                                    )}
+                                                    Upload
+                                                </Button>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {files.map((file) => (
+                                                    <div
+                                                        key={file.id}
+                                                        className="p-3 bg-white border rounded-lg shadow-sm flex justify-between items-center group hover:border-blue-200 transition-colors"
+                                                    >
+                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                            <div className="h-10 w-10 bg-blue-50 rounded flex items-center justify-center shrink-0">
+                                                                <FileText className="h-5 w-5 text-blue-600" />
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <a
+                                                                    href={file.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="font-medium text-sm truncate block hover:text-blue-600 hover:underline"
+                                                                >
+                                                                    {file.name}
+                                                                </a>
+                                                                <div className="text-xs text-gray-500">
+                                                                    {formatBytes(file.size)} •{" "}
+                                                                    {file.createdAt
+                                                                        ? format(file.createdAt.toDate(), "MMM d, yyyy")
+                                                                        : "Unknown"}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <a
+                                                                href={file.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                            >
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-gray-500"
+                                                                >
+                                                                    <Download className="h-4 w-4" />
+                                                                </Button>
+                                                            </a>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                                                onClick={() => handleDeleteFile(file)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </TabsContent>
 
                                 {/* Reminders Tab */}
