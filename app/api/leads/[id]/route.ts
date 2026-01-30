@@ -24,7 +24,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         }
 
         const currentData = docSnap.data();
+
+        console.log(`[API] PATCH /leads/${id} - Auth Org: ${auth.orgId}, Lead Org: ${currentData?.orgId}`);
+
         if (currentData?.orgId !== auth.orgId) {
+            console.error(`[API] Org mismatch: Auth(${auth.orgId}) !== Lead(${currentData?.orgId})`);
             return NextResponse.json({ error: "Unauthorized access to resource" }, { status: 403 });
         }
 
