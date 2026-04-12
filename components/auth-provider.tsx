@@ -37,80 +37,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         sessionStorage.removeItem("claims_synced_time");
                     }
 
-                    // Force refresh token to get latest custom claims (like orgId)
-                    let tokenResult = await firebaseUser.getIdTokenResult(true);
+                    // Use CACHED token first (instant) — no network round-trip
+                    let tokenResult = await firebaseUser.getIdTokenResult(false);
                     let currentClaims = tokenResult.claims;
-
-                    // Always log current claims for debugging
-                    console.log("🔑 Token claims:", {
-                        orgId: currentClaims.orgId || "MISSING",
-                        role: currentClaims.role || "MISSING",
-                        isSuperAdmin: currentClaims.isSuperAdmin || false,
-                        email: firebaseUser.email,
-                    });
 
                     // If orgId claim is missing, try to sync from Firestore
                     if (!currentClaims.orgId && !currentClaims.isSuperAdmin) {
-                        console.log("🔄 Token missing orgId claim, syncing from Firestore...");
-
-                        try {
-                            // Fetch user profile from Firestore
-                            const { doc, getDoc } = await import("firebase/firestore");
-                            const { db } = await import("@/lib/firebase");
-                            const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-
-                            if (userDoc.exists()) {
-                                const userData = userDoc.data();
-                                const profileOrgId = userData.orgId || userData.organizationId;
-                                const profileRole = userData.role || "staff";
-
-                                if (profileOrgId) {
-                                    console.log(`   Found orgId=${profileOrgId}, role=${profileRole} in Firestore`);
-
-                                    // Call API to set claims
-                                    const response = await fetch("/api/auth/set-claims", {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({
-                                            uid: firebaseUser.uid,
-                                            orgId: profileOrgId,
-                                            role: profileRole,
-                                        }),
-                                    });
-
-                                    if (response.ok) {
-                                        console.log("✅ Claims set, refreshing token...");
-                                        // Force another token refresh to get the new claims
-                                        tokenResult = await firebaseUser.getIdTokenResult(true);
-                                        currentClaims = tokenResult.claims;
-                                        console.log("✅ Token refreshed with claims:", {
-                                            orgId: currentClaims.orgId,
-                                            role: currentClaims.role,
-                                        });
-
-                                        // Force page reload to restart Firestore listeners with new token
-                                        // Use sessionStorage flag to prevent infinite reload loop
-                                        if (!sessionStorage.getItem("claims_synced")) {
-                                            sessionStorage.setItem("claims_synced", "true");
-                                            sessionStorage.setItem("claims_synced_time", Date.now().toString());
-                                            console.log("🔄 Reloading page to apply new claims...");
-                                            window.location.reload();
-                                            return; // Exit early, page will reload
-                                        }
-                                    } else {
-                                        console.warn("⚠️ Failed to set claims:", await response.text());
-                                    }
-                                }
-                            }
-                        } catch (syncError) {
-                            console.error("Error syncing claims:", syncError);
-                            // Continue anyway - user may still be able to access some features
-                        }
+                        // Only now force-refresh to check if server has newer claims
+                        tokenResult = await firebaseUser.getIdTokenResult(true);
+                        currentClaims = tokenResult.claims;
                     }
 
+                    // Set user + claims immediately so downstream providers can start
                     setClaims(currentClaims);
+                    setUser(firebaseUser);
+                    setLoading(false);
+
+                    // Background: If still missing claims, sync from Firestore (non-blocking)
+                    if (!currentClaims.orgId && !currentClaims.isSuperAdmin) {
+                        syncClaimsFromFirestore(firebaseUser).catch((err) =>
+                            console.error("Background claims sync failed:", err)
+                        );
+                    }
+
+                    return; // Skip the bottom setUser/setLoading (already done above)
                 } catch (e) {
-                    console.error("Failed to refresh token", e);
+                    console.error("Failed to read token", e);
                 }
             } else {
                 setClaims({});
@@ -122,6 +74,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Cleanup subscription on unmount
         return () => unsubscribe();
     }, []);
+
+    // Non-blocking claims sync — runs in background, reloads only if needed
+    const syncClaimsFromFirestore = async (firebaseUser: User) => {
+        try {
+            const { doc, getDoc } = await import("firebase/firestore");
+            const { db } = await import("@/lib/firebase");
+            const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const profileOrgId = userData.orgId || userData.organizationId;
+                const profileRole = userData.role || "staff";
+
+                if (profileOrgId) {
+                    const response = await fetch("/api/auth/set-claims", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            uid: firebaseUser.uid,
+                            orgId: profileOrgId,
+                            role: profileRole,
+                        }),
+                    });
+
+                    if (response.ok) {
+                        const tokenResult = await firebaseUser.getIdTokenResult(true);
+                        setClaims(tokenResult.claims);
+
+                        // Reload only once to apply new claims to Firestore listeners
+                        if (!sessionStorage.getItem("claims_synced")) {
+                            sessionStorage.setItem("claims_synced", "true");
+                            sessionStorage.setItem("claims_synced_time", Date.now().toString());
+                            window.location.reload();
+                        }
+                    }
+                }
+            }
+        } catch (syncError) {
+            console.error("Error syncing claims:", syncError);
+        }
+    };
 
     // Helper to force refresh claims manually (e.g. after role change)
     const refreshClaims = async () => {

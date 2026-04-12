@@ -20,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Employee, EmployeeStatus, HRAuditLog } from "@/lib/types/hr-types";
 import type { EmployeeFormData } from "@/lib/schemas";
 
@@ -46,8 +47,13 @@ export function useEmployees(options: UseEmployeesOptions = {}) {
         limit: queryLimit = 100,
     } = options;
     const { profile } = useUserProfile();
-    const [employees, setEmployees] = useState<Employee[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Cache key for stale-while-revalidate
+    const cacheKey = buildCacheKey("employees", profile?.orgId, status, departmentId, managerId, orderByField, orderDirection, queryLimit);
+    const cached = getCachedData<Employee>(cacheKey);
+
+    const [employees, setEmployees] = useState<Employee[]>(cached || []);
+    const [loading, setLoading] = useState(!cached);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
@@ -85,6 +91,7 @@ export function useEmployees(options: UseEmployeesOptions = {}) {
                     ...doc.data(),
                 })) as Employee[];
                 setEmployees(data);
+                setCachedData(cacheKey, data);
                 setLoading(false);
             },
             (err) => {

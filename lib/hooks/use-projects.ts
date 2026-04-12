@@ -26,6 +26,7 @@ import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
 import { createBulkNotifications } from "@/lib/hooks/use-notifications";
+import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Project, ProjectStatus, ProjectHealthStatus, Task, TaskStatus } from "@/lib/types";
 import type { ProjectFormData, TaskFormData } from "@/lib/schemas";
 
@@ -87,8 +88,13 @@ export function useProjects(options: UseProjectsOptions = {}) {
     } = options;
     const { profile, loading: profileLoading } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Cache key for stale-while-revalidate
+    const cacheKey = buildCacheKey("projects", profile?.orgId, status, customerId, orderByField, orderDirection, queryLimit);
+    const cached = getCachedData<Project>(cacheKey);
+
+    const [projects, setProjects] = useState<Project[]>(cached || []);
+    const [loading, setLoading] = useState(!cached);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
@@ -124,6 +130,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
                     ...doc.data(),
                 })) as Project[];
                 setProjects(data);
+                setCachedData(cacheKey, data);
                 setLoading(false);
             },
             (err) => {
@@ -452,8 +459,13 @@ export function useTasks(options: UseTasksOptions = {}) {
     } = options;
     const { profile, loading: profileLoading } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
-    const [tasks, setTasks] = useState<Task[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Cache key for stale-while-revalidate
+    const taskCacheKey = buildCacheKey("tasks", profile?.orgId, status, projectId, customerId, assignee, orderByField, orderDirection, queryLimit, relatedTo?.id, relatedTo?.type);
+    const cachedTasks = getCachedData<Task>(taskCacheKey);
+
+    const [tasks, setTasks] = useState<Task[]>(cachedTasks || []);
+    const [loading, setLoading] = useState(!cachedTasks);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
@@ -504,6 +516,7 @@ export function useTasks(options: UseTasksOptions = {}) {
                     ...doc.data(),
                 })) as Task[];
                 setTasks(data);
+                setCachedData(taskCacheKey, data);
                 setLoading(false);
             },
             (err) => {

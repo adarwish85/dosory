@@ -21,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Estimate, EstimateStatus, Proposal, ProposalStatus } from "@/lib/types";
 import type { EstimateFormData, ProposalFormData } from "@/lib/schemas";
 
@@ -37,8 +38,13 @@ interface UseEstimatesOptions {
 export function useEstimates(options: UseEstimatesOptions = {}) {
     const { status = "all", customerId, leadId } = options;
     const { profile } = useUserProfile();
-    const [estimates, setEstimates] = useState<Estimate[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Cache key for stale-while-revalidate
+    const cacheKey = buildCacheKey("estimates", profile?.orgId, status, customerId, leadId);
+    const cached = getCachedData<Estimate>(cacheKey);
+
+    const [estimates, setEstimates] = useState<Estimate[]>(cached || []);
+    const [loading, setLoading] = useState(!cached);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
@@ -74,6 +80,7 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
                     ...doc.data(),
                 })) as Estimate[];
                 setEstimates(data);
+                setCachedData(cacheKey, data);
                 setLoading(false);
             },
             (err) => {
@@ -112,48 +119,29 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
     };
 
     const createEstimate = async (data: EstimateFormData): Promise<string> => {
-        console.log("🔍 Step 1: Checking orgId...");
         if (!profile?.orgId) throw new Error("No organization");
-        console.log("✅ Step 1: orgId present:", profile.orgId);
 
         // Get client name (Customer or Lead)
         let customerName = "Unknown Client";
-        try {
-            console.log("🔍 Step 2: Fetching customer/lead name...");
-            if (data.customerId) {
-                const customerDoc = await getDoc(doc(db, "customers", data.customerId));
-                if (customerDoc.exists()) {
-                    customerName = customerDoc.data().company;
-                }
-            } else if (data.leadId) {
-                console.log("🔍 Step 2a: Fetching lead document:", data.leadId);
-                const leadDoc = await getDoc(doc(db, "leads", data.leadId));
-                console.log("✅ Step 2a: Lead document fetched successfully");
-                if (leadDoc.exists()) {
-                    const leadData = leadDoc.data();
-                    console.log("📋 Lead data fields:", Object.keys(leadData));
-                    console.log("📋 Full lead data:", leadData);
-                    // Try various common field names for lead title/name
-                    customerName = leadData.title || leadData.company || leadData.name || leadData.companyName || leadData.contactName || "Unknown Client";
-                }
+        if (data.customerId) {
+            const customerDoc = await getDoc(doc(db, "customers", data.customerId));
+            if (customerDoc.exists()) {
+                customerName = customerDoc.data().company;
             }
-            console.log("✅ Step 2: Customer name:", customerName);
-        } catch (error) {
-            console.error("❌ Step 2 FAILED: Error fetching customer/lead:", error);
-            throw error;
+        } else if (data.leadId) {
+            const leadDoc = await getDoc(doc(db, "leads", data.leadId));
+            if (leadDoc.exists()) {
+                const leadData = leadDoc.data();
+                customerName = leadData.title || leadData.company || leadData.name || leadData.companyName || leadData.contactName || "Unknown Client";
+            }
         }
 
         // Generate estimate number
-        console.log("🔍 Step 3: Generating estimate number...");
         const estNumber = `EST-${Date.now().toString().slice(-6).padStart(6, "0")}`;
-        console.log("✅ Step 3: Estimate number:", estNumber);
 
         // Calculate totals
-        console.log("🔍 Step 4: Calculating totals...");
         const { subtotal, taxTotal, total } = calculateTotals(data.items, data.discount);
-        console.log("✅ Step 4: Totals calculated:", { subtotal, taxTotal, total });
 
-        console.log("🔍 Step 5: Creating estimate document in Firestore...");
         const docRef = await addDoc(collection(db, "estimates"), {
             ...data,
             number: estNumber,
@@ -169,7 +157,6 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
             updatedAt: serverTimestamp(),
             createdBy: profile.uid,
         });
-        console.log("✅ Step 5: Estimate created successfully! ID:", docRef.id);
 
         return docRef.id;
     };
@@ -309,8 +296,13 @@ interface UseProposalsOptions {
 export function useProposals(options: UseProposalsOptions = {}) {
     const { status = "all", customerId, leadId } = options;
     const { profile } = useUserProfile();
-    const [proposals, setProposals] = useState<Proposal[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Cache key for stale-while-revalidate
+    const propCacheKey = buildCacheKey("proposals", profile?.orgId, status, customerId, leadId);
+    const cachedProps = getCachedData<Proposal>(propCacheKey);
+
+    const [proposals, setProposals] = useState<Proposal[]>(cachedProps || []);
+    const [loading, setLoading] = useState(!cachedProps);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
@@ -346,6 +338,7 @@ export function useProposals(options: UseProposalsOptions = {}) {
                     ...doc.data(),
                 })) as Proposal[];
                 setProposals(data);
+                setCachedData(propCacheKey, data);
                 setLoading(false);
             },
             (err) => {

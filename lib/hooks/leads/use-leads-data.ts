@@ -21,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Lead, LeadStatus } from "@/lib/types";
 
 export interface UseLeadsOptions {
@@ -47,9 +48,13 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
     } = options;
     const { profile, loading: profileLoading } = useUserProfile();
 
-    // Data State
-    const [leads, setLeads] = useState<Lead[]>([]);
-    const [loading, setLoading] = useState(true);
+    // Cache key for stale-while-revalidate
+    const cacheKey = buildCacheKey("leads", profile?.orgId, status, assignedTo, source, orderByField, orderDirection, pageSize, page, searchQuery);
+    const cached = getCachedData<Lead>(cacheKey);
+
+    // Data State — initialize from cache if available
+    const [leads, setLeads] = useState<Lead[]>(cached || []);
+    const [loading, setLoading] = useState(!cached);
     const [error, setError] = useState<Error | null>(null);
 
     // Pagination State
@@ -142,22 +147,9 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
         // Increment version to invalidate previous listeners
         const currentVersion = ++listenerVersionRef.current;
 
-        console.log("📊 useLeads effect v" + currentVersion + ":", {
-            profileLoading,
-            orgId: profile?.orgId,
-            page,
-            pageSize,
-            orderByField,
-            orderDirection,
-        });
-
-        if (profileLoading) {
-            console.log("📊 useLeads v" + currentVersion + ": Waiting for profile...");
-            return;
-        }
+        if (profileLoading) return;
 
         if (!profile?.orgId) {
-            console.log("📊 useLeads v" + currentVersion + ": No orgId, skipping");
             setLoading(false);
             return;
         }
@@ -172,32 +164,19 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
             const prevCursor = cursors[page - 1];
             if (prevCursor) {
                 constraints.push(startAfter(prevCursor));
-            } else {
-                console.warn("useLeads v" + currentVersion + ": Missing cursor for page " + page);
             }
         }
 
         constraints.push(limit(pageSize));
 
         const q = query(collection(db, "leads"), ...constraints);
-        console.log("📊 useLeads v" + currentVersion + ": Setting up listener for orgId:", profile.orgId);
 
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
                 // Check if this is still the active listener
-                if (listenerVersionRef.current !== currentVersion) {
-                    console.log(
-                        "📊 useLeads v" +
-                            currentVersion +
-                            ": STALE - ignoring (current is v" +
-                            listenerVersionRef.current +
-                            ")"
-                    );
-                    return;
-                }
+                if (listenerVersionRef.current !== currentVersion) return;
 
-                console.log("📊 useLeads v" + currentVersion + ": Received", snapshot.docs.length, "leads");
                 const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Lead[];
 
                 // Update Cursor for the NEXT page
@@ -207,25 +186,18 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
                 }
 
                 setLeads(data);
+                setCachedData(cacheKey, data);
                 setLoading(false);
             },
             (err) => {
-                // Check if this is still the active listener
-                if (listenerVersionRef.current !== currentVersion) {
-                    console.log("📊 useLeads v" + currentVersion + ": STALE error - ignoring");
-                    return;
-                }
-
-                console.error("📊 useLeads v" + currentVersion + ": Error:", err);
+                if (listenerVersionRef.current !== currentVersion) return;
+                console.error("useLeads error:", err);
                 setError(err);
                 setLoading(false);
             }
         );
 
-        return () => {
-            console.log("📊 useLeads v" + currentVersion + ": Cleaning up");
-            unsubscribe();
-        };
+        return () => unsubscribe();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [profile?.orgId, profileLoading, getBaseConstraints, orderByField, orderDirection, pageSize, page]);
 

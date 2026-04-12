@@ -24,6 +24,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
+import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Customer, Contact } from "@/lib/types";
 import type { CustomerFormData, ContactFormData } from "@/lib/schemas";
 
@@ -50,9 +51,13 @@ export function useCustomers(options: UseCustomersOptions = {}) {
     const { profile } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
 
-    // Data State
-    const [customers, setCustomers] = useState<Customer[]>([]);
-    const [loading, setLoading] = useState(true);
+    // Cache key for stale-while-revalidate
+    const cacheKey = buildCacheKey("customers", profile?.orgId, status, orderByField, orderDirection, pageSize, page);
+    const cached = getCachedData<Customer>(cacheKey);
+
+    // Data State — initialize from cache if available (instant, no skeleton)
+    const [customers, setCustomers] = useState<Customer[]>(cached || []);
+    const [loading, setLoading] = useState(!cached);
     const [error, setError] = useState<Error | null>(null);
 
     // Pagination State
@@ -122,6 +127,7 @@ export function useCustomers(options: UseCustomersOptions = {}) {
                 }
 
                 setCustomers(data);
+                setCachedData(cacheKey, data);
                 setLoading(false);
             },
             (err) => {

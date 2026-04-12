@@ -73,6 +73,7 @@ import { usePermissions, canAccessModule } from "@/lib/hooks/use-permissions";
 import { SystemBanners } from "@/components/dashboard/system-banners";
 import { useNotifications } from "@/lib/hooks/use-notifications";
 import { useUnreadMessages } from "@/lib/hooks/use-chat";
+import { clearCollectionCache } from "@/lib/cache/collection-cache";
 
 interface StaffProfile {
     firstName?: string;
@@ -206,7 +207,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const displayEmail = staffProfile?.email || user?.email;
     const displayInitial = staffProfile?.firstName?.charAt(0) || user?.email?.charAt(0).toUpperCase() || "U";
 
-    if (loading || settingsLoading)
+    // Only block on auth loading — settings/profile load in parallel, modules show their own skeletons
+    if (loading)
         return <div className="flex h-screen items-center justify-center bg-[#F3F2EF]">Loading...</div>;
 
     if (!user) {
@@ -232,6 +234,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     const handleLogout = async () => {
+        clearCollectionCache(); // Clear stale data cache
         await signOut(auth);
         router.push("/");
     };

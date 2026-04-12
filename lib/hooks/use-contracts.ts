@@ -24,6 +24,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
+import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Contract, ContractStatus } from "@/lib/types";
 import type { ContractFormData } from "@/lib/schemas";
 
@@ -115,9 +116,13 @@ export function useContracts(options: UseContractsOptions = {}) {
     const { profile } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
 
-    // Data State
-    const [contracts, setContracts] = useState<Contract[]>([]);
-    const [loading, setLoading] = useState(true);
+    // Cache key for stale-while-revalidate
+    const cacheKey = buildCacheKey("contracts", profile?.orgId, status, customerId, projectId, pageSize, page, orderByField, orderDirection);
+    const cached = getCachedData<Contract>(cacheKey);
+
+    // Data State — initialize from cache if available
+    const [contracts, setContracts] = useState<Contract[]>(cached || []);
+    const [loading, setLoading] = useState(!cached);
     const [error, setError] = useState<Error | null>(null);
 
     // Pagination State
@@ -198,6 +203,7 @@ export function useContracts(options: UseContractsOptions = {}) {
                 }
 
                 setContracts(data);
+                setCachedData(cacheKey, data);
                 setLoading(false);
             },
             (err) => {

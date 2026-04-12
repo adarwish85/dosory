@@ -21,6 +21,7 @@ import { useUserProfile } from "@/components/hooks/use-user-profile";
 import type { Expense, ExpenseCategory, Subscription, SubscriptionStatus } from "@/lib/types";
 import type { ExpenseFormData, SubscriptionFormData } from "@/lib/schemas";
 import { useFinance } from "@/lib/hooks/use-finance";
+import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import { Timestamp as FirestoreTimestamp } from "firebase/firestore";
 
 // ============================================
@@ -40,8 +41,13 @@ export function useExpenses(options: UseExpensesOptions = {}) {
     const { categoryId, customerId, projectId, billable, orderByField = "date", orderDirection = "desc" } = options;
     const { profile } = useUserProfile();
     const { recordJournalEntry, accounts } = useFinance(); // Finance Integration
-    const [expenses, setExpenses] = useState<Expense[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Cache key for stale-while-revalidate
+    const cacheKey = buildCacheKey("expenses", profile?.orgId, categoryId, customerId, projectId, String(billable), orderByField, orderDirection);
+    const cached = getCachedData<Expense>(cacheKey);
+
+    const [expenses, setExpenses] = useState<Expense[]>(cached || []);
+    const [loading, setLoading] = useState(!cached);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
@@ -81,6 +87,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
                     ...doc.data(),
                 })) as Expense[];
                 setExpenses(data);
+                setCachedData(cacheKey, data);
                 setLoading(false);
             },
             (err) => {
@@ -255,8 +262,13 @@ interface UseSubscriptionsOptions {
 export function useSubscriptions(options: UseSubscriptionsOptions = {}) {
     const { status = "all", customerId } = options;
     const { profile } = useUserProfile();
-    const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Cache key for stale-while-revalidate
+    const subCacheKey = buildCacheKey("subscriptions", profile?.orgId, status, customerId);
+    const cachedSubs = getCachedData<Subscription>(subCacheKey);
+
+    const [subscriptions, setSubscriptions] = useState<Subscription[]>(cachedSubs || []);
+    const [loading, setLoading] = useState(!cachedSubs);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
@@ -288,6 +300,7 @@ export function useSubscriptions(options: UseSubscriptionsOptions = {}) {
                     ...doc.data(),
                 })) as Subscription[];
                 setSubscriptions(data);
+                setCachedData(subCacheKey, data);
                 setLoading(false);
             },
             (err) => {

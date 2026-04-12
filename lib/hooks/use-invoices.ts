@@ -26,6 +26,7 @@ import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
 import { createNotification } from "@/lib/hooks/use-notifications";
+import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Invoice, InvoiceStatus, LineItem } from "@/lib/types";
 import type { InvoiceFormData } from "@/lib/schemas";
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -175,9 +176,13 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
     const { profile } = useUserProfile();
     const { logActivity } = useActivity({ enabled: false });
 
-    // Data State
-    const [invoices, setInvoices] = useState<Invoice[]>([]);
-    const [loading, setLoading] = useState(true);
+    // Cache key for stale-while-revalidate
+    const cacheKey = buildCacheKey("invoices", profile?.orgId, status, customerId, projectId, orderByField, orderDirection, pageSize, page);
+    const cached = getCachedData<Invoice>(cacheKey);
+
+    // Data State — initialize from cache if available (instant, no skeleton)
+    const [invoices, setInvoices] = useState<Invoice[]>(cached || []);
+    const [loading, setLoading] = useState(!cached);
     const [error, setError] = useState<Error | null>(null);
 
     // Pagination State
@@ -210,13 +215,9 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
-            console.log("useInvoices: No orgId yet, skipping query");
-
             setLoading(false);
             return;
         }
-
-        console.log("useInvoices: Building query with orgId:", profile.orgId);
 
         const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
@@ -246,7 +247,6 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
-                console.log("useInvoices: Snapshot received", snapshot.size);
                 const data = snapshot.docs.map((doc) => ({
                     id: doc.id,
                     ...doc.data(),
@@ -259,6 +259,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
                 }
 
                 setInvoices(data);
+                setCachedData(cacheKey, data);
                 setLoading(false);
             },
             (err) => {
