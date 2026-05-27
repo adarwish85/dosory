@@ -30,7 +30,7 @@ env:
     value: AVrV1_jTzj4roCuVIwDV8llyW-QIsArn0dKYW2fTkVX4OpTYjGobynSsJuNe4y2BLdV4az8hureO9y3S
     availability: [BUILD, RUNTIME]
   - variable: PAYPAL_CLIENT_SECRET
-    value: ***REDACTED-PAYPAL-SECRET***
+    secret: paypal-client-secret
     availability: [BUILD, RUNTIME]
   - variable: PAYPAL_MODE
     value: live
