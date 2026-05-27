@@ -39,5 +39,5 @@ env:
     value: https://dosory.com
     availability: [BUILD, RUNTIME]
   - variable: FIREBASE_SERVICE_ACCOUNT_KEY
-    value: '{REDACTED-FIREBASE-SERVICE-ACCOUNT-JSON}'
+    secret: firebase-service-account-key
     availability: [BUILD, RUNTIME]
