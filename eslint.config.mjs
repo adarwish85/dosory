@@ -19,6 +19,8 @@ const eslintConfig = defineConfig([
         "*.tsbuildinfo",
         "coverage/**",
         "scripts/**",
+        // macOS resource-fork sidecar files (AppleDouble metadata). Not real source files.
+        "**/._*",
     ]),
 ]);
 
