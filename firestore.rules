@@ -142,51 +142,63 @@ service cloud.firestore {
     // Create: SuperAdmin OR OrgMember (where newItem.orgId == claim.orgId)
     
     match /leads/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging
-      allow read, write: if request.auth != null;
-      
-      // Allow access to subcollections (e.g. notes)
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
+
+      // Notes subcollection — note docs do not carry their own orgId, gate on parent lead's orgId
       match /notes/{noteId} {
-        allow read, write: if request.auth != null;
+        allow read, write: if isSuperAdmin() ||
+          get(/databases/$(database)/documents/leads/$(docId)).data.orgId == request.auth.token.orgId;
       }
 
+      // Catchall for any other subcollection — same parent-lead orgId gate
       match /{document=**} {
-        allow read, write: if request.auth != null;
+        allow read, write: if isSuperAdmin() ||
+          get(/databases/$(database)/documents/leads/$(docId)).data.orgId == request.auth.token.orgId;
       }
     }
 
     match /customers/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging
-      allow read, write: if request.auth != null;
-      
-      // Allow access to subcollections (e.g. notes)
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
+
+      // Notes subcollection — note docs do not carry their own orgId, gate on parent customer's orgId
       match /notes/{noteId} {
-        allow read, write: if request.auth != null;
+        allow read, write: if isSuperAdmin() ||
+          get(/databases/$(database)/documents/customers/$(docId)).data.orgId == request.auth.token.orgId;
       }
 
+      // Catchall for any other subcollection — same parent-customer orgId gate
       match /{document=**} {
-        allow read, write: if request.auth != null;
+        allow read, write: if isSuperAdmin() ||
+          get(/databases/$(database)/documents/customers/$(docId)).data.orgId == request.auth.token.orgId;
       }
     }
     
     match /customer_files/{docId} {
-       // TEMPORARY: Ultra-permissive for debugging
-       allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
 
     match /contacts/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging
-      allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
 
     match /projects/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging
-      allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
     
     match /tasks/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging
-      allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
 
     match /employees/{docId} {
@@ -195,18 +207,21 @@ service cloud.firestore {
     }
 
     match /files/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging
-      allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
 
     match /activities/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging
-      allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
     
     match /invoices/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging
-      allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
     
     match /payments/{docId} {
@@ -220,19 +235,22 @@ service cloud.firestore {
     }
     
     match /proposals/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging
-      allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
     
     
     match /estimates/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging - allow any authenticated user
-      allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
 
     match /reminders/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging
-      allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
     
     match /contracts/{docId} {
@@ -256,8 +274,9 @@ service cloud.firestore {
     
     // Notifications
     match /notifications/{docId} {
-       // TEMPORARY: Ultra-permissive for debugging
-       allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
 
     // ============================================
@@ -295,8 +314,9 @@ service cloud.firestore {
     }
     
     match /settings/{docId} {
-      // TEMPORARY: Ultra-permissive for debugging
-      allow read, write: if request.auth != null;
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
     }
     
     match /dashboard_layouts/{docId} {
