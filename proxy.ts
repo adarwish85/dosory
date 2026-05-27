@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { getSetupRedirect, getSettingsTabRedirect } from '@/lib/setup-redirects';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getSetupRedirect, getSettingsTabRedirect } from "@/lib/setup-redirects";
 
 export const config = {
     matcher: [
@@ -27,9 +27,7 @@ export default async function middleware(req: NextRequest) {
     // OR explicitly check for endsWith
 
     const isLocal = hostname.includes("localhost");
-    const rootDomain = isLocal
-        ? "localhost:3000"
-        : (process.env.NEXT_PUBLIC_ROOT_DOMAIN || "dosory.com");
+    const rootDomain = isLocal ? "localhost:3000" : process.env.NEXT_PUBLIC_ROOT_DOMAIN || "dosory.com";
 
     // Extract subdomain:
     // e.g. acme.dosory.com -> acme
@@ -44,7 +42,7 @@ export default async function middleware(req: NextRequest) {
     // Handle Subdomains
     if (subdomain) {
         // Allow specific subdomains like 'www', 'app' to act as root if needed
-        if (subdomain === 'www' || subdomain === 'app') {
+        if (subdomain === "www" || subdomain === "app") {
             return NextResponse.next();
         }
 
@@ -54,7 +52,7 @@ export default async function middleware(req: NextRequest) {
         // unless we want to map subdomains to specific page folders like /_sites/[site]
 
         const requestHeaders = new Headers(req.headers);
-        requestHeaders.set('x-tenant-subdomain', subdomain);
+        requestHeaders.set("x-tenant-subdomain", subdomain);
 
         return NextResponse.next({
             request: {
@@ -64,7 +62,7 @@ export default async function middleware(req: NextRequest) {
     }
 
     // Handle Setup menu redirects for backward compatibility
-    if (url.pathname.startsWith('/dashboard/setup')) {
+    if (url.pathname.startsWith("/dashboard/setup")) {
         // Check for direct URL redirects
         const redirect = getSetupRedirect(url.pathname);
         if (redirect) {
@@ -72,8 +70,8 @@ export default async function middleware(req: NextRequest) {
         }
 
         // Check for settings tab redirects (?tab=xxx)
-        if (url.pathname === '/dashboard/setup/settings') {
-            const tab = url.searchParams.get('tab');
+        if (url.pathname === "/dashboard/setup/settings") {
+            const tab = url.searchParams.get("tab");
             const settingsRedirect = getSettingsTabRedirect(tab);
             return NextResponse.redirect(new URL(settingsRedirect, req.url));
         }
@@ -82,7 +80,7 @@ export default async function middleware(req: NextRequest) {
     // Super Admin Route Protection
     // Note: Detailed permission checks happen in the layout/page via AuthContext
     // But we can add a basic layer here if cookies are present
-    if (url.pathname.startsWith('/sa')) {
+    if (url.pathname.startsWith("/sa")) {
         // For now, let the layout handle the redirect based on user claims
         // checking cookies here would require firebase-admin which is edge-incompatible without hacks
         return NextResponse.next();

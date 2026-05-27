@@ -124,10 +124,6 @@ service cloud.firestore {
     function isOrgMember(orgId) {
        return isAuthenticated() && request.auth.token.orgId == orgId;
     }
-    
-    function isOrgAdmin(orgId) {
-       return isOrgMember(orgId) && request.auth.token.role == 'admin';
-    }
 
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
