@@ -12,12 +12,10 @@
  *   --dry-run  Preview what would be cleaned up without making changes
  *
  * Requirements:
- *   - FIREBASE_SERVICE_ACCOUNT_KEY env var or service-account.json in project root
+ *   - FIREBASE_SERVICE_ACCOUNT_KEY env var (JSON contents of a Firebase service-account key)
  */
 
-import * as admin from "firebase-admin";
-import * as path from "path";
-import * as fs from "fs";
+import { admin, db, auth } from "./_admin";
 
 async function main() {
     const isDryRun = process.argv.includes("--dry-run");
@@ -25,49 +23,6 @@ async function main() {
     if (isDryRun) {
         console.log("🔍 DRY RUN MODE - No changes will be made\n");
     }
-
-    // Initialize Firebase Admin SDK
-    try {
-        let serviceAccount: admin.ServiceAccount | undefined;
-
-        if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-            try {
-                serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
-            } catch {
-                const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-                if (fs.existsSync(keyPath)) {
-                    serviceAccount = JSON.parse(fs.readFileSync(keyPath, "utf8"));
-                }
-            }
-        }
-
-        if (!serviceAccount) {
-            const defaultPath = path.join(process.cwd(), "service-account.json");
-            if (fs.existsSync(defaultPath)) {
-                serviceAccount = JSON.parse(fs.readFileSync(defaultPath, "utf8"));
-            }
-        }
-
-        if (!serviceAccount) {
-            console.error("Firebase service account not found.");
-            console.error(
-                "Please set FIREBASE_SERVICE_ACCOUNT_KEY env var or place service-account.json in project root."
-            );
-            process.exit(1);
-        }
-
-        if (!admin.apps.length) {
-            admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-            });
-        }
-    } catch (error) {
-        console.error("Failed to initialize Firebase Admin SDK:", error);
-        process.exit(1);
-    }
-
-    const db = admin.firestore();
-    const auth = admin.auth();
 
     console.log("📊 Fetching all organizations...");
     const orgsSnap = await db.collection("organizations").get();

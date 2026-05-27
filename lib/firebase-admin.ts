@@ -1,28 +1,28 @@
 import * as admin from "firebase-admin";
 
-// Initialize Firebase Admin SDK
 if (!admin.apps.length) {
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-
-    if (serviceAccount) {
-        try {
-            admin.initializeApp({
-                credential: admin.credential.cert(JSON.parse(serviceAccount)),
-                projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-            });
-        } catch (error) {
-            console.error("Error initializing Firebase Admin:", error);
-            // Fallback to default credentials (works in Firebase environment)
-            admin.initializeApp({
-                projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-            });
-        }
-    } else {
-        // For local development or if credentials not set
-        admin.initializeApp({
-            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        });
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (!raw) {
+        throw new Error(
+            "FIREBASE_SERVICE_ACCOUNT_KEY is required to initialize Firebase Admin. " +
+                "Set it in .env.local or your deployment environment to the JSON contents of a Firebase service-account key."
+        );
     }
+
+    let serviceAccount: admin.ServiceAccount;
+    try {
+        serviceAccount = JSON.parse(raw);
+    } catch {
+        throw new Error(
+            "FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON. " +
+                "Expected the full contents of a Firebase service-account JSON key."
+        );
+    }
+
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    });
 }
 
 export const adminAuth = admin.auth();

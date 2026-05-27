@@ -1,15 +1,4 @@
-const admin = require("firebase-admin");
-const serviceAccount = require("../service-account.json");
-
-// Initialize Firebase Admin if not already initialized
-if (admin.apps.length === 0) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-    });
-}
-
-const db = admin.firestore();
-const auth = admin.auth();
+import { admin, db, auth } from "./_admin";
 
 const ORG_ID = "org_verify_users_test_" + Date.now();
 const TEST_EMAIL = `verify_user_${Date.now()}@example.com`;
