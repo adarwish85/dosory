@@ -194,4 +194,18 @@ export const PERMISSION_MODULES = [
             { id: "delete", label: "Delete" },
         ],
     },
-];
+] as const;
+
+/**
+ * Canonical Permission type derived from PERMISSION_MODULES.
+ *
+ * Each permission is `${module.id}-${action.id}` — dash-separated, scope-aware
+ * (e.g. "customers-view-own", "customers-view-global", "tickets-reply"). This
+ * matches the string format that role-form.tsx persists to staff.permissions[]
+ * in Firestore and that hasPermission() reads back via Array.includes().
+ *
+ * Use this type for can() arguments to catch wrong-format strings at compile time.
+ */
+export type Permission = {
+    [M in (typeof PERMISSION_MODULES)[number] as M["id"]]: `${M["id"]}-${M["actions"][number]["id"]}`;
+}[(typeof PERMISSION_MODULES)[number]["id"]];

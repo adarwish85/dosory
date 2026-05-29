@@ -622,72 +622,10 @@ export interface Role extends BaseEntity {
     permissions: string[];
 }
 
-export type Permission =
-    // Customers
-    | "customers_view"
-    | "customers_create"
-    | "customers_edit"
-    | "customers_delete"
-    // Leads
-    | "leads_view"
-    | "leads_create"
-    | "leads_edit"
-    | "leads_delete"
-    // Invoices
-    | "invoices_view"
-    | "invoices_create"
-    | "invoices_edit"
-    | "invoices_delete"
-    // Estimates
-    | "estimates_view"
-    | "estimates_create"
-    | "estimates_edit"
-    | "estimates_delete"
-    // Proposals
-    | "proposals_view"
-    | "proposals_create"
-    | "proposals_edit"
-    | "proposals_delete"
-    // Projects
-    | "projects_view"
-    | "projects_create"
-    | "projects_edit"
-    | "projects_delete"
-    // Tasks
-    | "tasks_view"
-    | "tasks_create"
-    | "tasks_edit"
-    | "tasks_delete"
-    // Expenses
-    | "expenses_view"
-    | "expenses_create"
-    | "expenses_edit"
-    | "expenses_delete"
-    // Contracts
-    | "contracts_view"
-    | "contracts_create"
-    | "contracts_edit"
-    | "contracts_delete"
-    // Support
-    | "tickets_view"
-    | "tickets_create"
-    | "tickets_edit"
-    | "tickets_delete"
-    // Knowledge Base
-    | "knowledge_view"
-    | "knowledge_create"
-    | "knowledge_edit"
-    | "knowledge_delete"
-    // Staff
-    | "staff_view"
-    | "staff_create"
-    | "staff_edit"
-    | "staff_delete"
-    // Reports
-    | "reports_view"
-    // Settings
-    | "settings_view"
-    | "settings_edit";
+// Permission type union removed in Phase 1.5 — canonical Permission type now
+// derived from PERMISSION_MODULES in lib/rbac/definitions.ts (dash-format strings
+// matching what role-form.tsx persists to staff.permissions). The old union here
+// was zero-consumer dead code that used a different (underscore) format.
 
 // ============================================
 // Settings & Configuration

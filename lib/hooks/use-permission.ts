@@ -1,23 +1,24 @@
 "use client";
 
 import { usePermissions, hasPermission } from "./use-permissions";
+import type { Permission } from "@/lib/rbac/definitions";
 
 /**
  * Hook to check permissions in React components.
  * Thin wrapper over usePermissions() that exposes a can() helper.
  *
- * Permission strings use the flat underscore format (e.g. "invoices_create",
- * "leads_edit", "tickets_close") — matching lib/types.ts Permission union and
- * the values stored on the staff document.
+ * Permission codes are the dash-format strings derived from PERMISSION_MODULES
+ * (e.g. "invoices-create", "leads-view-own", "tickets-reply"). These match what
+ * role-form.tsx persists to staff.permissions and what hasPermission() checks.
  *
  * @example
  *   const { can } = usePermission();
- *   if (can("invoices_create")) { ... }
+ *   if (can("invoices-create")) { ... }
  */
 export function usePermission() {
     const { permissions, isAdmin, roleId, loading } = usePermissions();
 
-    const can = (permissionCode: string) => {
+    const can = (permissionCode: Permission) => {
         if (loading) return false;
         return hasPermission(permissions, isAdmin, permissionCode);
     };
