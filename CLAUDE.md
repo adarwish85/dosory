@@ -118,20 +118,9 @@ component guards → hooks. Rules are currently the weak link (see §6).
 
 ---
 
-## 6. 🚨 Security State (read before any work)
+## 6. Security State
 
-1. **Leaked admin key.** `service-account.json` committed with a real private key for
-   `goalo-6a269`. Treat as compromised. Rotation in Firebase console is **Ahmed's
-   manual step**; code-side removal + history scrub is ours.
-2. **Ultra-permissive Firestore rules.** `leads, customers, invoices, estimates,
-proposals, projects, tasks, contacts, customer_files, files, activities,
-reminders, notifications, settings` all use `allow read, write: if request.auth
-!= null` — labelled "TEMPORARY for debugging". Any authenticated user can
-   read/write ANY tenant's data, including per-tenant Stripe/PayPal secrets stored in
-   `organizations/{orgId}`. The correct `orgId`-scoped pattern already exists in the
-   same file for other collections — copy it.
-
-Until Phase 0 closes both, the platform is not safe for real tenant data.
+Phase 0 closed: both leaked Firebase keys revoked + scrubbed from history; PayPal live secret revoked + scrubbed; `apphosting.yaml` uses Secret Manager refs (secrets to be created via `firebase apphosting:secrets:set` before next live deploy); 14 Firestore collections tenant-scoped with 167-test emulator suite deployed to `goalo-6a269` prod. All multi-tenant data isolation enforced at rules layer.
 
 ---
 
@@ -153,12 +142,9 @@ Gaps:
 
 ## 8. Build & Test
 
-- `npm run build` → **passes** (Next 16, 182 pages, exit 0). One warning: rename
-  `middleware.ts` → `proxy.ts`.
-- `npm run lint` → **fails**: 461 errors / 637 warnings. Composition:
-  49 parse errors from macOS `._*` files (delete them → instant -49),
-  319 `no-explicit-any`, 113 react-hooks/React-Compiler issues.
-- Tests: Jest under `tests/`, Cypress under `cypress/`. Run per-task as touched.
+- `npm run build` → **passes** (Next 16, 182 pages, exit 0). The `middleware.ts → proxy.ts` deprecation warning cleared in 1.3.
+- `npm run lint` → **1045 problems / 412 errors / 633 warnings** (down from 1098 / 461 / 637 at Phase 0 start). The 49 macOS `._*` parse errors are gone (1.1). The 412 remaining cluster around `no-explicit-any` (319) and `react-hooks` / React Compiler regressions (113) — Phase 2.4 work.
+- Tests: Jest under `tests/`, Cypress under `cypress/`. Tenant-isolation rules suite at `tests/firestore-rules/tenant-isolation.test.ts` (167 tests); RBAC drift test at `tests/unit/rbac/permission-codes.test.ts`. Run per-task as touched.
 
 **Definition of done for every task:** `npm run build` clean, no _new_ lint errors,
 relevant tests pass, change verified before moving on.
@@ -170,6 +156,7 @@ relevant tests pass, change verified before moving on.
 - Phased order is fixed: **Phase 0 (security) → Phase 1 (stabilize) → Phase 2
   (gaps) → Phase 3+ (features)**. Do not start features early.
 - One task at a time. Test before advancing. Report blockers immediately.
+- Phase 2 tasks are independent — paced execution is the default; one task per session is fine.
 - Destructive/irreversible ops (history force-push, key rotation, rules deploy to
   prod) are surfaced to Ahmed for the actual trigger — never silently executed.
 - Secrets never get committed. Credentials load from env / secret manager only.
@@ -179,32 +166,28 @@ relevant tests pass, change verified before moving on.
 
 ## 10. Task List
 
-### Phase 0 — Stop the bleeding
+### Phase 0 — Stop the bleeding ✅ COMPLETE
 
-0.1 Ahmed rotates the leaked service-account key in Firebase console (MANUAL).
-0.2 Add `service-account.json` to `.gitignore`; switch `lib/firebase-admin.ts` to
-load credentials from env only; verify build still passes.
-0.3 Scrub `service-account.json` from git history (filter-repo/BFG); Ahmed runs the
-destructive force-push.
-0.4 Replace ultra-permissive Firestore rules with `orgId`-scoped rules using the
-file's existing correct pattern; deploy.
-0.5 Verify tenant isolation with a cross-tenant read/write test.
+0.1 ✅ Manual: Firebase Admin keys revoked (2 keys: original + apphosting.yaml inlined)
+0.2 ✅ Commit `f0d218e6` — load admin SDK from env only; untrack `service-account.json`
+0.3 ✅ Commits `c1feb3ed`, `b3b3a787` — apphosting.yaml secret refs; 3-pass filter-repo history scrub for both Firebase keys + PayPal live secret; force-pushed
+0.4 ✅ Commit `993004ea` — 14 collections tenant-scoped + 167 emulator tests + deployed to `goalo-6a269` prod
 
-### Phase 1 — Stabilize
+### Phase 1 — Stabilize ✅ COMPLETE
 
-1.1 Delete macOS `._*` files (outside node*modules) + add `\*\*/.*\*`to ESLint ignore.
-1.2  Delete the stray`components `directory (trailing space).
-1.3  Rename`middleware.ts`→`proxy.ts`.
-1.4  Resolve RBAC `can()`in`lib/rbac/access.ts` (implement real check or remove).
-1.5  Reconcile the two permission catalogs (`types.ts`vs`rbac/definitions.ts`).
+1.1 ✅ Commit `ad983d74` — macOS `._*` cleanup + ESLint ignore (49 parse errors eliminated)
+1.2 ✅ Commit `2224e191` — stray `components ` dir deleted
+1.3 ✅ Commit `b8bdc1a9` — `middleware.ts`→`proxy.ts` + `isOrgAdmin` removed from rules
+1.4 ✅ Commit `ecb74486` — broken `can()` removed; `lib/hooks/use-permissions.ts` is single source of truth
+1.5 ✅ Commits `67720d14` + `3859bd0f` — `PERMISSION_MODULES` canonical, `Permission` type derived (89 codes), 22 underscore→dash call sites fixed, leads module catalog completed, drift test in place
 
 ### Phase 2 — Close functional gaps
 
-2.1 Rip out Proposals: types, schemas, Firestore rule, Cloud Functions, settings UI.
-2.2 Real Firestore aggregations in `reports-service.ts` (replace all 6 mocks).
-2.3 Triage `no-explicit-any` cluster + React Compiler regressions
-(`use-support.ts`, `use-task-lists.ts`, `use-tickets.ts`).
+2.1 Proposals removal — types, schemas, Firestore rule, Cloud Functions, settings UI.
+2.2 View-scope data-layer enforcement — the catalog/UI offer `view-own` vs `view-global` but hooks don't filter by ownership; per-module design needed (estimated 9 modules).
+2.3 Real Firestore aggregations in `lib/services/reports-service.ts` — replace 6 mock TODOs (Business Health, Sales Pipeline, Invoices, Revenue Summary, Cash Flow, Profit-Loss).
+2.4 Lint cluster triage — 319 `no-explicit-any` + 113 React Compiler regressions; triage by cluster (`billing-service`, `entitlement-service`, `types/billing`, `types/super-admin`, `types/website`).
 
 ### Phase 3+ — Features
 
-TBD — defined once the foundation is safe.
+TBD once foundation is functional-gap-closed.
