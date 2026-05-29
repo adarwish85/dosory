@@ -55,19 +55,18 @@ app/                  App Router: pages + API routes
   sa/                 Super Admin surface
   login/ signup/ pay/[invoiceId]/ setup-superadmin/
 components/           Feature components + ui/ (shadcn primitives)
-"components "/        ⚠ STRAY dir with trailing space — DELETE (Phase 1)
 lib/
   hooks/              54 hook files; barrel in index.ts
   services/           e.g. reports-service.ts (currently mock)
   auth/               claims, requireSuperAdmin, getAuthenticatedUser, verify-admin
-  rbac/               access, definitions, registry, super-admin, types
+  rbac/               definitions, registry, super-admin, types
   entitlements/ email/ cache/ contexts/ i18n/ impersonation/ stores/ validations/ types/
   schemas.ts types.ts firebase.ts firebase-admin.ts utils.ts paypal.ts quotas.ts
 functions/src/        Cloud Functions (separate package.json)
 public/ cypress/ tests/ scripts/ docs/
-firestore.rules       Security rules (CURRENTLY PARTIALLY BYPASSED)
-middleware.ts         ⚠ rename to proxy.ts (Next 16 deprecation)
-service-account.json  🚨 LEAKED KEY — remove + gitignore + scrub history
+firestore.rules       Security rules (tenant-scoped across all collections; 167 emulator tests)
+proxy.ts              (renamed from middleware.ts in Next 16)
+service-account.json  (gitignored; not tracked; scrubbed from history in 0.3)
 ```
 
 ---
@@ -106,15 +105,10 @@ via `components/permission-guard.tsx`.
 SupportAgent, BillingAdmin, SecurityAdmin). Server enforcement in
 `lib/auth/requireSuperAdmin.ts` (verifies Bearer token, checks `isSuperAdmin`).
 
-**Known RBAC debt (Phase 1):**
-
-- `lib/rbac/access.ts` universal `can()` has its real logic commented out — returns
-  `false` for all non-admins. Must be implemented or removed.
-- Two drifting permission catalogs: flat union in `types.ts` vs action-rich modules
-  in `rbac/definitions.ts`. Must be reconciled.
-
 **Enforcement layers:** Firestore rules (last line of defense) → API route guards →
-component guards → hooks. Rules are currently the weak link (see §6).
+component guards → hooks. Rules enforce tenant isolation across all root collections
+
+- customers/leads subcollections via parent-orgId `get()` (see §6).
 
 ---
 
@@ -134,7 +128,6 @@ Gaps:
 
 - **Reports** — `lib/services/reports-service.ts` is 100% mock (6 TODO markers).
 - **Proposals** — stub; being removed.
-- **RBAC `can()`** — stubbed to false.
 - Minor TODOs: journal vendor hook, expense currency hard-coded "USD",
   payroll→accounting expense records, chat participant creation.
 
