@@ -107,8 +107,7 @@ SupportAgent, BillingAdmin, SecurityAdmin). Server enforcement in
 
 **Enforcement layers:** Firestore rules (last line of defense) → API route guards →
 component guards → hooks. Rules enforce tenant isolation across all root collections
-
-- customers/leads subcollections via parent-orgId `get()` (see §6).
+and customers/leads subcollections via parent-orgId `get()` (see §6).
 
 ---
 
