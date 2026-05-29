@@ -96,7 +96,7 @@ export default function SupportPage() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold tracking-tight">Support Tickets</h1>
                 <div className="flex items-center gap-2">
-                    {can("tickets_create") && (
+                    {can("tickets-create") && (
                         <Link href="/dashboard/support/new">
                             <Button>
                                 <Plus className="mr-2 h-4 w-4" /> New Ticket
@@ -274,10 +274,10 @@ export default function SupportPage() {
                                                     <Link href={`/dashboard/support/${ticket.id}`}>
                                                         <DropdownMenuItem>View Details</DropdownMenuItem>
                                                     </Link>
-                                                    {can("tickets_edit") && (
+                                                    {can("tickets-edit") && (
                                                         <DropdownMenuItem>Edit Properties</DropdownMenuItem>
                                                     )}
-                                                    {can("tickets_close") && ticket.status !== "closed" && (
+                                                    {can("tickets-close") && ticket.status !== "closed" && (
                                                         <DropdownMenuItem className="text-red-600">
                                                             Close Ticket
                                                         </DropdownMenuItem>

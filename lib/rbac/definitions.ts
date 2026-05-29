@@ -92,7 +92,10 @@ export const PERMISSION_MODULES = [
         id: "leads",
         label: "Leads",
         actions: [
+            { id: "view-own", label: "View (Own)" },
             { id: "view-global", label: "View (Global)" },
+            { id: "create", label: "Create" },
+            { id: "edit", label: "Edit" },
             { id: "delete", label: "Delete" },
         ],
     },

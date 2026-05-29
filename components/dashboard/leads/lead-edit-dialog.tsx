@@ -320,7 +320,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                                 size="icon"
                                                                 className="h-9 w-9 shrink-0"
                                                                 onClick={() => setShowAddStatusDialog(true)}
-                                                                disabled={!can("leads_edit")}
+                                                                disabled={!can("leads-edit")}
                                                             >
                                                                 <Plus className="h-4 w-4" />
                                                             </Button>
@@ -355,7 +355,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                                 size="icon"
                                                                 className="h-9 w-9 shrink-0"
                                                                 onClick={() => setShowAddSourceDialog(true)}
-                                                                disabled={!can("leads_edit")}
+                                                                disabled={!can("leads-edit")}
                                                             >
                                                                 <Plus className="h-4 w-4" />
                                                             </Button>
@@ -537,7 +537,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                             size="sm"
                             onClick={form.handleSubmit(handleSubmit)}
                             className="bg-gray-900 text-white hover:bg-gray-800"
-                            disabled={!can("leads_edit")}
+                            disabled={!can("leads-edit")}
                         >
                             Save Changes
                         </Button>

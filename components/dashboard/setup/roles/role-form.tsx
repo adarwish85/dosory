@@ -167,7 +167,7 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
     };
 
     // Toggle all actions for a module
-    const toggleModule = (moduleId: string, actions: { id: string }[]) => {
+    const toggleModule = (moduleId: string, actions: readonly { id: string }[]) => {
         const modulePerms = actions.map((a) => `${moduleId}-${a.id}`);
         const allSelected = modulePerms.every((p) => permissions.includes(p));
 
@@ -179,12 +179,12 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
     };
 
     // Check if all actions for a module are selected
-    const isModuleFullySelected = (moduleId: string, actions: { id: string }[]) => {
+    const isModuleFullySelected = (moduleId: string, actions: readonly { id: string }[]) => {
         return actions.every((a) => permissions.includes(`${moduleId}-${a.id}`));
     };
 
     // Check selection count for module
-    const getModuleSelectionCount = (moduleId: string, actions: { id: string }[]) => {
+    const getModuleSelectionCount = (moduleId: string, actions: readonly { id: string }[]) => {
         return actions.filter((a) => permissions.includes(`${moduleId}-${a.id}`)).length;
     };
 

@@ -235,7 +235,7 @@ function TicketDetailContent({ ticketId }: { ticketId: string }) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {can("tickets_close") && ticket.status !== "closed" && (
+                    {can("tickets-close") && ticket.status !== "closed" && (
                         <Button variant="outline" onClick={() => updateStatus("closed")}>
                             Close Ticket
                         </Button>

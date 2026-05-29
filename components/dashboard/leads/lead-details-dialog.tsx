@@ -383,7 +383,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                         <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2 text-gray-600">
                             <Printer className="h-4 w-4" /> Print
                         </Button>
-                        {can("leads_edit") && (
+                        {can("leads-edit") && (
                             <Button variant="ghost" size="icon" onClick={() => onEdit(lead)} className="text-gray-600">
                                 <Pencil className="h-4 w-4" />
                             </Button>
@@ -634,7 +634,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 <ArrowRight className="h-5 w-5 text-blue-600" />
                                                 <h3 className="font-semibold text-gray-900">Conversion Pipeline</h3>
                                             </div>
-                                            {can("leads_edit") && (
+                                            {can("leads-edit") && (
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
@@ -756,11 +756,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                                 {field.label}
                                                                             </span>
                                                                         </span>
-                                                                        {!hasValue && can("leads_edit") && (
+                                                                        {!hasValue && can("leads-edit") && (
                                                                             <button
                                                                                 onClick={() => onEdit(lead)}
                                                                                 className="text-blue-600 hover:underline text-[10px]"
-                                                                                disabled={!can("leads_edit")}
+                                                                                disabled={!can("leads-edit")}
                                                                             >
                                                                                 Add
                                                                             </button>

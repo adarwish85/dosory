@@ -1308,7 +1308,7 @@ export default function LeadsPage() {
                 {/* Header Actions Row */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-2 flex-wrap">
-                        {can("leads_create") && (
+                        {can("leads-create") && (
                             <Link href="/dashboard/leads/new">
                                 <Button className="bg-gray-900 text-white hover:bg-gray-800">
                                     <Plus className="mr-2 h-4 w-4" /> New Lead
@@ -1322,7 +1322,7 @@ export default function LeadsPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
-                                {can("leads_create") && (
+                                {can("leads-create") && (
                                     <DropdownMenuItem onClick={() => setShowImportWizard(true)}>
                                         <Upload className="mr-2 h-4 w-4" /> Import
                                     </DropdownMenuItem>
@@ -1353,7 +1353,7 @@ export default function LeadsPage() {
                                         With {selectionMode === "all" ? totalRecords : selectedLeads.length} selected
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    {can("leads_edit") && (
+                                    {can("leads-edit") && (
                                         <>
                                             <DropdownMenuLabel className="text-xs text-gray-500">
                                                 Change Status To
@@ -1375,13 +1375,13 @@ export default function LeadsPage() {
                                     <DropdownMenuItem onClick={openBulkEmailCompose}>
                                         <Mail className="mr-2 h-4 w-4" /> Compose Email...
                                     </DropdownMenuItem>
-                                    {selectedLeads.length === 2 && can("leads_edit") && (
+                                    {selectedLeads.length === 2 && can("leads-edit") && (
                                         <DropdownMenuItem onClick={openMergeDialog}>
                                             <GitMerge className="mr-2 h-4 w-4" /> Merge Selected
                                         </DropdownMenuItem>
                                     )}
                                     <DropdownMenuSeparator />
-                                    {can("leads_delete") && (
+                                    {can("leads-delete") && (
                                         <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
                                             <Trash2 className="mr-2 h-4 w-4" /> Delete
                                         </DropdownMenuItem>
@@ -1742,8 +1742,8 @@ export default function LeadsPage() {
                             onSort={handleSort}
                             rowDensity={rowDensity}
                             searchQuery={searchQuery}
-                            canEdit={can("leads_edit")}
-                            canDelete={can("leads_delete")}
+                            canEdit={can("leads-edit")}
+                            canDelete={can("leads-delete")}
                             onView={handleView}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
@@ -1796,7 +1796,7 @@ export default function LeadsPage() {
                         onStatusChange={handleStatusChange}
                         onView={handleView}
                         onEdit={handleEdit}
-                        canEdit={can("leads_edit")}
+                        canEdit={can("leads-edit")}
                     />
                 )}
 
