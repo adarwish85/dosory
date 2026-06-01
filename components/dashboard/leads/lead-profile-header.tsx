@@ -102,15 +102,6 @@ export function LeadProfileHeader() {
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant="outline" size="icon" className="shrink-0">
-                                <FileText className="h-4 w-4 text-orange-600" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Create Proposal</TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="shrink-0">
                                 <CheckSquare className="h-4 w-4 text-teal-600" />
                             </Button>
                         </TooltipTrigger>

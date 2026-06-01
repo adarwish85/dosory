@@ -12,7 +12,7 @@ const RULES_PATH = "firestore.rules";
 const TENANT_A = "tenantA";
 const TENANT_B = "tenantB";
 
-// 14 root collections that Task 0.4 just scoped from "ultra-permissive" → orgId-scoped.
+// 13 root collections scoped to orgId (proposals dropped in Phase 2.1).
 const COLLECTIONS = [
     "leads",
     "customers",
@@ -23,7 +23,6 @@ const COLLECTIONS = [
     "files",
     "activities",
     "invoices",
-    "proposals",
     "estimates",
     "reminders",
     "notifications",

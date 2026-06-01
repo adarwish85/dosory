@@ -239,7 +239,6 @@ export async function convertLeadToCustomerService(
     };
 
     await Promise.all([
-        transferRelated("proposals", "leadId"),
         transferRelated("estimates", "leadId"),
         transferRelated("tasks", "relatedTo.id"),
     ]);

@@ -96,15 +96,6 @@ export default function EmailTemplatesPage() {
             ],
         },
         {
-            title: "Proposals",
-            templates: [
-                "Customer Action - Accepted (Sent to Staff)",
-                "Send Proposal to Customer",
-                "Customer Action - Declined (Sent to Staff)",
-                "Thank You Email (Sent to Customer After Accept)",
-            ],
-        },
-        {
             title: "Projects",
             templates: [
                 "New Project Discussion (Sent to Project Members)",

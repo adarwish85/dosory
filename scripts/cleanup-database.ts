@@ -55,7 +55,6 @@ const COLLECTIONS_TO_CLEAR = [
     "tasks",
     "tickets",
     "contracts",
-    "proposals",
     "activities",
     "audit_logs",
     "impersonation_sessions",

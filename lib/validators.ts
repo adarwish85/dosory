@@ -89,28 +89,6 @@ export function canConvertLead(lead: Lead): ValidationResult {
     return { valid: true };
 }
 
-// Proposal validation
-interface Proposal {
-    status: string;
-    openTill: Date;
-}
-
-export function canAcceptProposal(proposal: Proposal): ValidationResult {
-    if (proposal.status === "accepted") {
-        return { valid: false, error: "Proposal already accepted" };
-    }
-
-    if (proposal.status === "declined") {
-        return { valid: false, error: "Proposal was declined" };
-    }
-
-    if (new Date() > proposal.openTill) {
-        return { valid: false, error: "Proposal has expired" };
-    }
-
-    return { valid: true };
-}
-
 // Contract validation
 export function isContractActive(startDate: Date, endDate: Date): boolean {
     const now = new Date();

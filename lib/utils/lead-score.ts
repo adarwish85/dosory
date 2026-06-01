@@ -80,8 +80,8 @@ export function calculateLeadScore(lead: Lead): number {
     // Tags (+5)
     if (lead.tags && lead.tags.length > 0) score += 5;
 
-    // Status progression (+10 for qualified/proposal/negotiation)
-    if (["qualified", "proposal", "negotiation"].includes(lead.status || "")) {
+    // Status progression (+10 for qualified/offer-sent/negotiation)
+    if (["qualified", "offer-sent", "negotiation"].includes(lead.status || "")) {
         score += 10;
     }
 
@@ -135,7 +135,7 @@ export function calculateLeadScoreWithBreakdown(lead: Lead): {
     if (hasSource) score += 10;
 
     // Status progression (+10)
-    const hasStatus = ["qualified", "proposal", "negotiation"].includes(lead.status || "");
+    const hasStatus = ["qualified", "offer-sent", "negotiation"].includes(lead.status || "");
     breakdown.push({ label: "Status qualified+", earned: hasStatus, points: 10 });
     if (hasStatus) score += 10;
 

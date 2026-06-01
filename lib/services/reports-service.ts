@@ -87,7 +87,7 @@ export class ReportsService {
             const series = [
                 { stage: "Lead", value: 50, amount: 500000 },
                 { stage: "Qualified", value: 30, amount: 600000 },
-                { stage: "Proposal", value: 15, amount: 300000 },
+                { stage: "Offer Sent", value: 15, amount: 300000 },
                 { stage: "Negotiation", value: 8, amount: 100000 },
                 { stage: "Closed Won", value: 12, amount: 40000 },
             ];

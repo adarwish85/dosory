@@ -5,15 +5,16 @@ A comprehensive CRM/ERP SaaS platform built with Next.js and Firebase, designed 
 ## 🚀 Features
 
 ### Core Modules
+
 - **Customers** - Full customer lifecycle management with contacts, notes, and activity tracking
 - **Leads** - Lead capture, scoring, pipeline management, and conversion to customers
 - **Invoices** - Create, send, and track invoices with payment recording
 - **Estimates** - Generate estimates and convert to invoices
-- **Proposals** - Create professional proposals for prospects
 - **Projects** - Project management with task tracking
 - **Support** - Customer support ticketing system
 
 ### Platform Features
+
 - **Multi-tenant Architecture** - Organization-based data isolation
 - **Role-based Access Control** - Granular permissions system
 - **Real-time Updates** - Firestore-powered live data synchronization
@@ -24,22 +25,22 @@ A comprehensive CRM/ERP SaaS platform built with Next.js and Firebase, designed 
 
 ## 🛠 Technology Stack
 
-| Layer | Technology |
-|-------|------------|
-| **Framework** | Next.js 16 (App Router) |
-| **UI** | React 19, Tailwind CSS 4, Radix UI |
-| **Backend** | Firebase (Firestore, Auth, Functions) |
-| **State** | React Hooks, Zustand |
-| **Forms** | React Hook Form + Zod |
-| **Charts** | Recharts |
-| **PDF** | @react-pdf/renderer |
-| **Testing** | Jest, Cypress |
+| Layer         | Technology                            |
+| ------------- | ------------------------------------- |
+| **Framework** | Next.js 16 (App Router)               |
+| **UI**        | React 19, Tailwind CSS 4, Radix UI    |
+| **Backend**   | Firebase (Firestore, Auth, Functions) |
+| **State**     | React Hooks, Zustand                  |
+| **Forms**     | React Hook Form + Zod                 |
+| **Charts**    | Recharts                              |
+| **PDF**       | @react-pdf/renderer                   |
+| **Testing**   | Jest, Cypress                         |
 
 ---
 
 ## 📋 Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Firebase project with Firestore and Authentication enabled
 
@@ -48,17 +49,20 @@ A comprehensive CRM/ERP SaaS platform built with Next.js and Firebase, designed 
 ## 🔧 Setup & Installation
 
 ### 1. Clone the repository
+
 ```bash
 git clone <repository-url>
 cd platform
 ```
 
 ### 2. Install dependencies
+
 ```bash
 npm install
 ```
 
 ### 3. Configure environment variables
+
 Create a `.env.local` file with your Firebase configuration:
 
 ```env
@@ -86,11 +90,13 @@ NEXT_PUBLIC_PAYPAL_CLIENT_ID=your_paypal_client_id
 ```
 
 ### 4. Deploy Firestore rules and indexes
+
 ```bash
 firebase deploy --only firestore
 ```
 
 ### 5. Start development server
+
 ```bash
 npm run dev
 ```
@@ -127,16 +133,19 @@ platform/
 ## 🧪 Testing
 
 ### Run unit tests
+
 ```bash
 npm run test
 ```
 
 ### Run E2E tests
+
 ```bash
 npm run test:e2e
 ```
 
 ### Open Cypress UI
+
 ```bash
 npm run cypress
 ```
@@ -146,17 +155,20 @@ npm run cypress
 ## 🚢 Deployment
 
 ### Deploy to Firebase Hosting
+
 ```bash
 npm run build
 firebase deploy
 ```
 
 ### Deploy only functions
+
 ```bash
 firebase deploy --only functions
 ```
 
 ### Deploy only Firestore rules
+
 ```bash
 firebase deploy --only firestore:rules
 ```
@@ -165,15 +177,15 @@ firebase deploy --only firestore:rules
 
 ## 📝 Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run test` | Run Jest tests |
-| `npm run test:e2e` | Run Cypress E2E tests |
-| `npm run cypress` | Open Cypress UI |
+| Script             | Description              |
+| ------------------ | ------------------------ |
+| `npm run dev`      | Start development server |
+| `npm run build`    | Build for production     |
+| `npm run start`    | Start production server  |
+| `npm run lint`     | Run ESLint               |
+| `npm run test`     | Run Jest tests           |
+| `npm run test:e2e` | Run Cypress E2E tests    |
+| `npm run cypress`  | Open Cypress UI          |
 
 ---
 

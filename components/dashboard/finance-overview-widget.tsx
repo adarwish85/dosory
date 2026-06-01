@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { FileText, File, FileCode } from "lucide-react";
+import { FileText, File } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StatusItem {
@@ -55,11 +55,9 @@ function OverviewColumn({ title, icon, items }: OverviewColumnProps) {
 export function FinanceOverviewWidget({
     invoiceStats,
     estimateStats,
-    proposalStats,
 }: {
     invoiceStats?: any;
     estimateStats?: any;
-    proposalStats?: any;
 }) {
     const getPerc = (val: number, total: number) => (total > 0 ? (val / total) * 100 : 0);
 
@@ -147,39 +145,6 @@ export function FinanceOverviewWidget({
         },
     ];
 
-    const proposalItems = [
-        {
-            label: "Draft",
-            count: proposalStats?.draft || 0,
-            percentage: getPerc(proposalStats?.draft || 0, proposalStats?.total || 1),
-            color: "text-gray-500",
-        },
-        {
-            label: "Sent",
-            count: proposalStats?.open || 0,
-            percentage: getPerc(proposalStats?.open || 0, proposalStats?.total || 1),
-            color: "text-blue-600",
-        },
-        {
-            label: "Revised",
-            count: proposalStats?.revised || 0,
-            percentage: getPerc(proposalStats?.revised || 0, proposalStats?.total || 1),
-            color: "text-blue-400",
-        },
-        {
-            label: "Declined",
-            count: proposalStats?.declined || 0,
-            percentage: getPerc(proposalStats?.declined || 0, proposalStats?.total || 1),
-            color: "text-red-500",
-        },
-        {
-            label: "Accepted",
-            count: proposalStats?.accepted || 0,
-            percentage: getPerc(proposalStats?.accepted || 0, proposalStats?.total || 1),
-            color: "text-green-500",
-        },
-    ];
-
     // Calculate Amounts
     const amounts = invoiceStats?.amountsByStatus || {};
     const outstandingAmount =
@@ -194,7 +159,7 @@ export function FinanceOverviewWidget({
     return (
         <Card className="rounded-xl border border-gray-100 shadow-sm py-0 gap-0 bg-white">
             <CardContent className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     <OverviewColumn
                         title="Invoice overview"
                         icon={<FileText className="h-5 w-5" />}
@@ -204,11 +169,6 @@ export function FinanceOverviewWidget({
                         title="Estimate overview"
                         icon={<File className="h-5 w-5" />}
                         items={estimateItems}
-                    />
-                    <OverviewColumn
-                        title="Proposal overview"
-                        icon={<FileCode className="h-5 w-5" />}
-                        items={proposalItems}
                     />
                 </div>
 

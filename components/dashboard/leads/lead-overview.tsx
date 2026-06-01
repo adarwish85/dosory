@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { calculateLeadScore, calculateDealValue, getScoreDescription } from "@/lib/utils/lead-score";
 
-const STATUS_ORDER = ["new", "contacted", "qualified", "proposal", "negotiation", "won"];
+const STATUS_ORDER = ["new", "contacted", "qualified", "offer-sent", "negotiation", "won"];
 
 export function LeadOverview() {
     const { lead, loading } = useLead();
@@ -119,12 +119,12 @@ export function LeadOverview() {
                         <span>Status</span>
                         <Badge
                             variant={
-                                ["qualified", "proposal", "negotiation"].includes(lead.status || "")
+                                ["qualified", "offer-sent", "negotiation"].includes(lead.status || "")
                                     ? "default"
                                     : "secondary"
                             }
                         >
-                            {["qualified", "proposal", "negotiation"].includes(lead.status || "") ? "+10" : "0"}
+                            {["qualified", "offer-sent", "negotiation"].includes(lead.status || "") ? "+10" : "0"}
                         </Badge>
                     </div>
                 </div>

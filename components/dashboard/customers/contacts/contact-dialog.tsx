@@ -26,7 +26,6 @@ interface ContactFormData {
         invoices: boolean;
         estimates: boolean;
         contracts: boolean;
-        proposals: boolean;
         support: boolean;
         projects: boolean;
     };
@@ -55,7 +54,6 @@ const defaultFormData: ContactFormData = {
         invoices: true,
         estimates: true,
         contracts: true,
-        proposals: true,
         support: true,
         projects: true,
     },
@@ -195,7 +193,6 @@ export function ContactDialog({
                 | "invoices"
                 | "estimates"
                 | "contracts"
-                | "proposals"
                 | "support"
                 | "projects"
             )[];
@@ -462,7 +459,6 @@ export function ContactDialog({
                                             "invoices",
                                             "estimates",
                                             "contracts",
-                                            "proposals",
                                             "support",
                                             "projects",
                                         ] as const

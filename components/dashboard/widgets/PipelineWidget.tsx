@@ -12,7 +12,7 @@ const PIPELINE_STAGES = [
     { key: "new", label: "New", color: "bg-gray-400" },
     { key: "contacted", label: "Contacted", color: "bg-blue-400" },
     { key: "qualified", label: "Qualified", color: "bg-purple-400" },
-    { key: "proposal", label: "Proposal", color: "bg-amber-400" },
+    { key: "offer-sent", label: "Offer Sent", color: "bg-amber-400" },
     { key: "won", label: "Won", color: "bg-green-500" },
 ];
 

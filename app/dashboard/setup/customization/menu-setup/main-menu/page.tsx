@@ -70,7 +70,6 @@ export default function MainMenuPage() {
         { id: "1", name: "Dashboard", hasChildren: false },
         { id: "2", name: "Customers", hasChildren: false },
         { id: "3", name: "Sales", hasChildren: true },
-        { id: "4", name: "Proposals", hasChildren: false },
         { id: "5", name: "Estimates", hasChildren: false },
         { id: "6", name: "Invoices", hasChildren: false },
         { id: "7", name: "Payments", hasChildren: false },

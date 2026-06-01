@@ -230,13 +230,6 @@ service cloud.firestore {
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
     
-    match /proposals/{docId} {
-      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
-      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
-      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
-    }
-    
-    
     match /estimates/{docId} {
       // Tenant-scoped: any user in the same orgId can read/write; SA bypass
       allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);

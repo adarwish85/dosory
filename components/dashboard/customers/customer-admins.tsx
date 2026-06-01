@@ -148,7 +148,7 @@ export function CustomerAdmins() {
                         <div>
                             <label className="text-sm font-medium mb-2 block">Allowed Modules</label>
                             <div className="space-y-2 border rounded-md p-3 max-h-[200px] overflow-y-auto">
-                                {["invoices", "projects", "tickets", "contracts", "proposals"].map((mod) => (
+                                {["invoices", "projects", "tickets", "contracts"].map((mod) => (
                                     <div key={mod} className="flex items-center space-x-2">
                                         <input
                                             type="checkbox"

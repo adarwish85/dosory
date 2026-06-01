@@ -29,7 +29,6 @@ const MODULES: ModuleConfig[] = [
 
     // Sales Modules
     { id: "leads", name: "Leads", description: "Lead tracking and conversion pipeline", icon: <TrendingUp className="h-5 w-5" />, category: "sales" },
-    { id: "proposals", name: "Proposals", description: "Create and send proposals to clients", icon: <FileText className="h-5 w-5" />, category: "sales" },
     { id: "estimates", name: "Estimates", description: "Generate cost estimates for projects", icon: <FileCheck className="h-5 w-5" />, category: "sales" },
     { id: "contracts", name: "Contracts", description: "Contract management and e-signatures", icon: <ClipboardList className="h-5 w-5" />, category: "sales" },
 

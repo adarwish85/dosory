@@ -31,11 +31,9 @@ export default function PdfSettingsPage() {
         pdfShowSignatureEstimate: false,
         pdfShowSignatureCreditNote: false,
         pdfShowSignatureContract: false,
-        pdfShowSignatureProposal: false,
         pdfSignatureImage: "",
         pdfFormatInvoice: "A4 Portrait",
         pdfFormatEstimate: "A4 Portrait",
-        pdfFormatProposal: "A4 Portrait",
         pdfFormatPayment: "A4 Portrait",
         pdfFormatCreditNote: "A4 Portrait",
         pdfFormatContract: "A4 Portrait",
@@ -60,11 +58,9 @@ export default function PdfSettingsPage() {
                 pdfShowSignatureEstimate: settings.pdfShowSignatureEstimate ?? false,
                 pdfShowSignatureCreditNote: settings.pdfShowSignatureCreditNote ?? false,
                 pdfShowSignatureContract: settings.pdfShowSignatureContract ?? false,
-                pdfShowSignatureProposal: settings.pdfShowSignatureProposal ?? false,
                 pdfSignatureImage: settings.pdfSignatureImage ?? "",
                 pdfFormatInvoice: settings.pdfFormatInvoice ?? "A4 Portrait",
                 pdfFormatEstimate: settings.pdfFormatEstimate ?? "A4 Portrait",
-                pdfFormatProposal: settings.pdfFormatProposal ?? "A4 Portrait",
                 pdfFormatPayment: settings.pdfFormatPayment ?? "A4 Portrait",
                 pdfFormatCreditNote: settings.pdfFormatCreditNote ?? "A4 Portrait",
                 pdfFormatContract: settings.pdfFormatContract ?? "A4 Portrait",
@@ -156,7 +152,6 @@ export default function PdfSettingsPage() {
                 {[
                     { key: "pdfFormatInvoice", label: "Invoice Format" },
                     { key: "pdfFormatEstimate", label: "Estimate Format" },
-                    { key: "pdfFormatProposal", label: "Proposal Format" },
                     { key: "pdfFormatCreditNote", label: "Credit Note Format" },
                     { key: "pdfFormatContract", label: "Contract Format" },
                     { key: "pdfFormatPayment", label: "Payment Receipt Format" },
@@ -223,7 +218,6 @@ export default function PdfSettingsPage() {
                     { key: "pdfShowSignatureEstimate", label: "Estimate" },
                     { key: "pdfShowSignatureCreditNote", label: "Credit Note" },
                     { key: "pdfShowSignatureContract", label: "Contract" },
-                    { key: "pdfShowSignatureProposal", label: "Proposal" },
                 ].map((item) => (
                     <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                         <Label className="block text-sm font-medium text-gray-700">{item.label}</Label>

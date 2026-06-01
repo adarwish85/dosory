@@ -171,7 +171,7 @@ describe("Lead Conversion", () => {
         it("should transfer files from lead to customer", async () => {
             // Arrange
             const mockFiles = [
-                { id: "file-1", name: "proposal.pdf", url: "https://...", leadId: "lead-123" },
+                { id: "file-1", name: "estimate.pdf", url: "https://...", leadId: "lead-123" },
             ];
 
             (getDocs as jest.Mock).mockResolvedValueOnce({
@@ -191,7 +191,7 @@ describe("Lead Conversion", () => {
             // Assert
             expect(transferredFiles).toHaveLength(1);
             expect(transferredFiles[0].customerId).toBe("customer-new-123");
-            expect(transferredFiles[0].name).toBe("proposal.pdf");
+            expect(transferredFiles[0].name).toBe("estimate.pdf");
         });
 
         it("should delete original lead data after successful transfer", async () => {

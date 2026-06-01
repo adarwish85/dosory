@@ -37,24 +37,23 @@ The application is organized into distinct feature modules:
 
 ### Core CRM Modules
 
-| Module | Path | Description |
-|--------|------|-------------|
-| **Customers** | `/dashboard/customers` | Customer management, contacts, notes |
-| **Leads** | `/dashboard/leads` | Lead capture, scoring, conversion |
-| **Invoices** | `/dashboard/sales/invoices` | Invoice creation and payment tracking |
-| **Estimates** | `/dashboard/sales/estimates` | Quote generation |
-| **Proposals** | `/dashboard/sales/proposals` | Proposal management |
-| **Projects** | `/dashboard/projects` | Project and task management |
-| **Support** | `/dashboard/support` | Customer support tickets |
+| Module        | Path                         | Description                           |
+| ------------- | ---------------------------- | ------------------------------------- |
+| **Customers** | `/dashboard/customers`       | Customer management, contacts, notes  |
+| **Leads**     | `/dashboard/leads`           | Lead capture, scoring, conversion     |
+| **Invoices**  | `/dashboard/sales/invoices`  | Invoice creation and payment tracking |
+| **Estimates** | `/dashboard/sales/estimates` | Quote generation                      |
+| **Projects**  | `/dashboard/projects`        | Project and task management           |
+| **Support**   | `/dashboard/support`         | Customer support tickets              |
 
 ### Platform Modules
 
-| Module | Path | Description |
-|--------|------|-------------|
-| **Dashboard** | `/dashboard` | Home with widgets and quick stats |
-| **Setup** | `/dashboard/setup` | Organization settings, staff, roles |
-| **Finance** | `/dashboard/finance` | Expenses, payments, categories |
-| **Marketing** | `/dashboard/marketing` | Campaigns, email templates |
+| Module        | Path                   | Description                         |
+| ------------- | ---------------------- | ----------------------------------- |
+| **Dashboard** | `/dashboard`           | Home with widgets and quick stats   |
+| **Setup**     | `/dashboard/setup`     | Organization settings, staff, roles |
+| **Finance**   | `/dashboard/finance`   | Expenses, payments, categories      |
+| **Marketing** | `/dashboard/marketing` | Campaigns, email templates          |
 
 ---
 
@@ -70,6 +69,7 @@ const { customers, loading, error, createCustomer, updateCustomer } = useCustome
 ```
 
 **Key hooks:**
+
 - `useCustomers` - Customer CRUD operations
 - `useLeads` - Lead management + conversion
 - `useInvoices` - Invoice operations + payments
@@ -89,7 +89,6 @@ firestore/
 │   └── {id}/notes/    # Lead notes (subcollection)
 ├── invoices/           # Invoice records
 ├── estimates/          # Estimate records
-├── proposals/          # Proposal records
 ├── projects/           # Project records
 ├── tasks/              # Task records
 ├── support_tickets/    # Support tickets
@@ -127,10 +126,7 @@ All data is isolated by organization:
 
 ```typescript
 // Every collection query includes orgId filter
-const q = query(
-  collection(db, "customers"),
-  where("orgId", "==", profile.orgId)
-);
+const q = query(collection(db, "customers"), where("orgId", "==", profile.orgId));
 ```
 
 Firestore rules enforce this at the database level:
@@ -150,14 +146,17 @@ function canReadByOrg() {
 ## State Management
 
 ### Local State
+
 - React `useState` and `useReducer` for component state
 - Form state managed by React Hook Form
 
 ### Server State
+
 - Firestore `onSnapshot` for real-time subscriptions
 - Data cached in hook state with loading/error states
 
 ### Global State
+
 - `Zustand` for cross-component state (e.g., impersonation)
 - Auth context for user session
 
@@ -167,29 +166,34 @@ function canReadByOrg() {
 
 Located in `app/api/`:
 
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/send-email` | POST | Send emails via Nodemailer/Resend |
-| `/api/verify-email` | POST | Email verification flow |
-| `/api/webhook/paypal` | POST | PayPal IPN webhook handler |
+| Route                 | Method | Description                       |
+| --------------------- | ------ | --------------------------------- |
+| `/api/send-email`     | POST   | Send emails via Nodemailer/Resend |
+| `/api/verify-email`   | POST   | Email verification flow           |
+| `/api/webhook/paypal` | POST   | PayPal IPN webhook handler        |
 
 ---
 
 ## Key Design Decisions
 
 ### 1. App Router over Pages Router
+
 **Why:** Leverages React Server Components, better layouts, and improved performance.
 
 ### 2. Firestore over REST API
+
 **Why:** Real-time subscriptions, offline support, and simpler client-side code.
 
 ### 3. Custom Hooks for Data
+
 **Why:** Encapsulates Firestore logic, provides consistent loading/error states, enables reuse.
 
 ### 4. Shadcn/ui Components
+
 **Why:** Accessible, customizable, copy-paste ownership (not a dependency).
 
 ### 5. Zod for Validation
+
 **Why:** TypeScript-first validation, works with React Hook Form, runtime safety.
 
 ---
@@ -197,15 +201,17 @@ Located in `app/api/`:
 ## Technical Debt
 
 ### Large Hooks
+
 These hooks have grown large and may benefit from splitting:
 
-| Hook | Size | Recommendation |
-|------|------|----------------|
-| `use-leads.ts` | 25KB | Consider splitting conversion logic |
-| `use-organization-settings.ts` | 25KB | Consider splitting billing logic |
-| `use-invoices.ts` | 21KB | Consider splitting payment logic |
+| Hook                           | Size | Recommendation                      |
+| ------------------------------ | ---- | ----------------------------------- |
+| `use-leads.ts`                 | 25KB | Consider splitting conversion logic |
+| `use-organization-settings.ts` | 25KB | Consider splitting billing logic    |
+| `use-invoices.ts`              | 21KB | Consider splitting payment logic    |
 
 ### Missing Tests
+
 - Unit test coverage is minimal
 - E2E tests not yet implemented
 - See `tests/TEST_PLAN.md` for test strategy
@@ -215,11 +221,13 @@ These hooks have grown large and may benefit from splitting:
 ## Performance Considerations
 
 ### Query Optimization
+
 - All Firestore queries use appropriate indexes
 - `orderBy` clauses moved to client-side sorting where possible
 - Pagination not yet implemented (consider for large datasets)
 
 ### Bundle Size
+
 - Dynamic imports used for heavy components (PDF, charts)
 - Radix UI components are tree-shakeable
 
@@ -251,6 +259,7 @@ These hooks have grown large and may benefit from splitting:
 ```
 
 Deployment is managed via Firebase:
+
 ```bash
 firebase deploy           # Deploy all
 firebase deploy --only hosting  # Deploy Next.js app

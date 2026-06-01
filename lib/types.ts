@@ -57,7 +57,7 @@ export interface Contact extends BaseEntity {
     };
 }
 
-export type ContactPermission = "invoices" | "estimates" | "contracts" | "proposals" | "support" | "projects";
+export type ContactPermission = "invoices" | "estimates" | "contracts" | "support" | "projects";
 
 export interface Address {
     street?: string;
@@ -106,7 +106,7 @@ export interface Deal {
     products?: LineItem[];
 }
 
-export type LeadStatus = "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "won" | "lost" | "junk";
+export type LeadStatus = "new" | "contacted" | "qualified" | "offer-sent" | "negotiation" | "won" | "lost" | "junk";
 
 // ============================================
 // Activity (for Leads & Customers)
@@ -219,36 +219,6 @@ export interface Estimate extends BaseEntity {
 }
 
 export type EstimateStatus = "draft" | "sent" | "viewed" | "accepted" | "declined" | "expired";
-
-// ============================================
-// Proposal
-// ============================================
-
-export interface Proposal extends BaseEntity {
-    number: string;
-    subject: string;
-    customerId?: string;
-    leadId?: string;
-    date: Timestamp;
-    openTill: Timestamp;
-    status: ProposalStatus;
-    currency: string;
-    subtotal: number;
-    discount?: DiscountInfo;
-    taxTotal: number;
-    total: number;
-    items: LineItem[];
-    content?: string; // Rich text content
-    allowComments: boolean;
-    assignedTo?: string;
-    sentAt?: Timestamp;
-    acceptedAt?: Timestamp;
-    declinedAt?: Timestamp;
-    convertedToEstimateId?: string;
-    convertedToInvoiceId?: string;
-}
-
-export type ProposalStatus = "draft" | "sent" | "open" | "revised" | "declined" | "accepted";
 
 // ============================================
 // Credit Note
@@ -418,7 +388,7 @@ export interface TaskRepeat {
 }
 
 export interface TaskRelation {
-    type: "customer" | "lead" | "invoice" | "estimate" | "proposal" | "contract";
+    type: "customer" | "lead" | "invoice" | "estimate" | "contract";
     id: string;
 }
 
@@ -676,7 +646,6 @@ export type CustomFieldEntity =
     | "leads"
     | "invoices"
     | "estimates"
-    | "proposals"
     | "projects"
     | "tasks"
     | "expenses"
@@ -711,7 +680,6 @@ export interface EmailTemplate extends BaseEntity {
 export type EmailTemplateType =
     | "invoice"
     | "estimate"
-    | "proposal"
     | "contract"
     | "ticket"
     | "lead"
@@ -768,7 +736,6 @@ export interface Organization {
     fiscalYearStart: number; // Month 1-12
     invoicePrefix?: string;
     estimatePrefix?: string;
-    proposalPrefix?: string;
     creditNotePrefix?: string;
     contractPrefix?: string;
     smtpSettings?: SmtpSettings;

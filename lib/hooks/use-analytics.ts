@@ -30,22 +30,12 @@ interface CustomerMetrics {
     customerGrowthRate: number;
 }
 
-interface ProposalMetrics {
-    totalProposals: number;
-    acceptedProposals: number;
-    pendingProposals: number;
-    declinedProposals: number;
-    acceptanceRate: number;
-    totalValue: number;
-}
-
 export function useAnalytics() {
     const { user } = useAuth();
     const { profile } = useUserProfile();
     const [loading, setLoading] = useState(true);
     const [salesMetrics, setSalesMetrics] = useState<SalesMetrics | null>(null);
     const [customerMetrics, setCustomerMetrics] = useState<CustomerMetrics | null>(null);
-    const [proposalMetrics, setProposalMetrics] = useState<ProposalMetrics | null>(null);
     const [revenueByMonth, setRevenueByMonth] = useState<RevenueData[]>([]);
 
     useEffect(() => {
@@ -152,37 +142,6 @@ export function useAnalytics() {
                     activeCustomers: customersSnap.size, // Could filter by recent activity
                     customerGrowthRate: customersSnap.size > 0 ? (newThisMonth / customersSnap.size) * 100 : 0,
                 });
-
-                // Fetch Proposals (limit to recent 100)
-                const proposalsRef = collection(db, "proposals");
-                const proposalsQuery = query(
-                    proposalsRef,
-                    where("orgId", "==", orgId),
-                    orderBy("createdAt", "desc"),
-                    limit(100)
-                );
-                const proposalsSnap = await getDocs(proposalsQuery);
-
-                let accepted = 0,
-                    pending = 0,
-                    declined = 0,
-                    proposalValue = 0;
-                proposalsSnap.docs.forEach((doc) => {
-                    const prop = doc.data();
-                    proposalValue += prop.total || 0;
-                    if (prop.status === "accepted") accepted++;
-                    else if (prop.status === "declined") declined++;
-                    else pending++;
-                });
-
-                setProposalMetrics({
-                    totalProposals: proposalsSnap.size,
-                    acceptedProposals: accepted,
-                    pendingProposals: pending,
-                    declinedProposals: declined,
-                    acceptanceRate: proposalsSnap.size > 0 ? (accepted / proposalsSnap.size) * 100 : 0,
-                    totalValue: proposalValue,
-                });
             } catch (error) {
                 console.error("Error fetching analytics:", error);
             } finally {
@@ -200,7 +159,6 @@ export function useAnalytics() {
         loading,
         salesMetrics,
         customerMetrics,
-        proposalMetrics,
         revenueByMonth,
     };
 }

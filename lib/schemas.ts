@@ -66,7 +66,7 @@ export const contactFormSchema = z.object({
     position: z.string().optional(),
     isPrimary: z.boolean().default(false),
     portalAccess: z.boolean().default(false),
-    permissions: z.array(z.enum(["invoices", "estimates", "contracts", "proposals", "support", "projects"])).optional(),
+    permissions: z.array(z.enum(["invoices", "estimates", "contracts", "support", "projects"])).optional(),
     status: entityStatusSchema.default("active"),
 });
 
@@ -78,7 +78,7 @@ export const leadStatusSchema = z.enum([
     "new",
     "contacted",
     "qualified",
-    "proposal",
+    "offer-sent",
     "negotiation",
     "won",
     "lost",
@@ -173,25 +173,6 @@ export const estimateFormSchema = z
         message: "Either Customer or Lead is required",
         path: ["customerId"],
     });
-
-// ============================================
-// Proposal Schema
-// ============================================
-
-export const proposalStatusSchema = z.enum(["draft", "sent", "open", "revised", "declined", "accepted"]);
-
-export const proposalFormSchema = z.object({
-    subject: z.string().min(1, "Subject is required"),
-    customerId: z.string().optional(),
-    leadId: z.string().optional(),
-    date: z.date(),
-    openTill: z.date(),
-    currency: z.string().min(1, "Currency is required"),
-    items: z.array(lineItemSchema).optional(),
-    content: z.string().optional(),
-    allowComments: z.boolean().default(true),
-    assignedTo: z.string().optional(),
-});
 
 // ============================================
 // Credit Note Schema
@@ -319,7 +300,7 @@ export const taskFormSchema = z.object({
     attachments: z.array(taskAttachmentSchema).optional(),
     relatedTo: z
         .object({
-            type: z.enum(["customer", "lead", "invoice", "estimate", "proposal", "contract"]),
+            type: z.enum(["customer", "lead", "invoice", "estimate", "contract"]),
             id: z.string(),
         })
         .optional(),
@@ -512,7 +493,6 @@ export const customFieldFormSchema = z.object({
         "leads",
         "invoices",
         "estimates",
-        "proposals",
         "projects",
         "tasks",
         "expenses",
@@ -546,7 +526,7 @@ export const customFieldFormSchema = z.object({
 
 export const emailTemplateFormSchema = z.object({
     name: z.string().min(1, "Template name is required"),
-    type: z.enum(["invoice", "estimate", "proposal", "contract", "ticket", "lead", "project", "task", "custom"]),
+    type: z.enum(["invoice", "estimate", "contract", "ticket", "lead", "project", "task", "custom"]),
     subject: z.string().min(1, "Subject is required"),
     content: z.string().min(1, "Content is required"),
     isActive: z.boolean().default(true),
@@ -592,7 +572,6 @@ export const organizationSettingsFormSchema = z.object({
     fiscalYearStart: z.number().min(1).max(12).default(1),
     invoicePrefix: z.string().optional(),
     estimatePrefix: z.string().optional(),
-    proposalPrefix: z.string().optional(),
     creditNotePrefix: z.string().optional(),
     contractPrefix: z.string().optional(),
 });
@@ -608,7 +587,7 @@ export const reminderFormSchema = z.object({
     sendEmail: z.boolean(),
     relatedTo: z
         .object({
-            type: z.enum(["customer", "lead", "invoice", "estimate", "proposal", "contract"]),
+            type: z.enum(["customer", "lead", "invoice", "estimate", "contract"]),
             id: z.string(),
         })
         .optional(),
@@ -623,7 +602,6 @@ export type ContactFormData = z.infer<typeof contactFormSchema>;
 export type LeadFormData = z.infer<typeof leadFormSchema>;
 export type InvoiceFormData = z.infer<typeof invoiceFormSchema>;
 export type EstimateFormData = z.infer<typeof estimateFormSchema>;
-export type ProposalFormData = z.infer<typeof proposalFormSchema>;
 export type CreditNoteFormData = z.infer<typeof creditNoteFormSchema>;
 export type PaymentFormData = z.infer<typeof paymentFormSchema>;
 export type ProductFormData = z.infer<typeof productFormSchema>;

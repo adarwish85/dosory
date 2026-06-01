@@ -167,11 +167,6 @@ export const SETUP_MENU_STRUCTURE: SetupMenuItem[] = [
                 ],
             },
             {
-                id: "proposals",
-                label: "Proposals",
-                href: "/dashboard/setup/sales-crm/proposals",
-            },
-            {
                 id: "estimates",
                 label: "Estimates",
                 href: "/dashboard/setup/sales-crm/estimates",

@@ -199,7 +199,7 @@ export function useLeadConversion(profile: UserProfile | null) {
                             updatedAt: serverTimestamp(),
                         };
                         if (coll === "tasks") update.relatedTo = { type: "customer", id: customerRef.id };
-                        else if (coll === "proposals" || coll === "estimates")
+                        else if (coll === "estimates")
                             update.leadId = null; // Clear leadId? No keep history, just add customerId.
                         else update.customerName = finalCompany;
 
@@ -209,7 +209,6 @@ export function useLeadConversion(profile: UserProfile | null) {
                 };
 
                 await Promise.all([
-                    transferRelated("proposals", "leadId"),
                     transferRelated("estimates", "leadId"),
                     transferRelated("tasks", "relatedTo.id"),
                 ]);

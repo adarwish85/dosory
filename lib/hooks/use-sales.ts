@@ -1,4 +1,4 @@
-// Firestore data hooks for Estimates and Proposals
+// Firestore data hooks for Estimates
 // Real-time listeners with CRUD operations
 
 "use client";
@@ -22,8 +22,8 @@ import {
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
-import type { Estimate, EstimateStatus, Proposal, ProposalStatus } from "@/lib/types";
-import type { EstimateFormData, ProposalFormData } from "@/lib/schemas";
+import type { Estimate, EstimateStatus } from "@/lib/types";
+import type { EstimateFormData } from "@/lib/schemas";
 
 // ============================================
 // useEstimates Hook
@@ -283,146 +283,3 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
     };
 }
 
-// ============================================
-// useProposals Hook
-// ============================================
-
-interface UseProposalsOptions {
-    status?: ProposalStatus | "all";
-    customerId?: string;
-    leadId?: string;
-}
-
-export function useProposals(options: UseProposalsOptions = {}) {
-    const { status = "all", customerId, leadId } = options;
-    const { profile } = useUserProfile();
-
-    // Cache key for stale-while-revalidate
-    const propCacheKey = buildCacheKey("proposals", profile?.orgId, status, customerId, leadId);
-    const cachedProps = getCachedData<Proposal>(propCacheKey);
-
-    const [proposals, setProposals] = useState<Proposal[]>(cachedProps || []);
-    const [loading, setLoading] = useState(!cachedProps);
-    const [error, setError] = useState<Error | null>(null);
-
-    useEffect(() => {
-        if (!profile?.orgId) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setLoading(false);
-            return;
-        }
-
-        const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
-
-        if (status !== "all") {
-            constraints.push(where("status", "==", status));
-        }
-
-        if (customerId) {
-            constraints.push(where("customerId", "==", customerId));
-        }
-
-        if (leadId) {
-            constraints.push(where("leadId", "==", leadId));
-        }
-
-        constraints.push(orderBy("createdAt", "desc"));
-
-        const q = query(collection(db, "proposals"), ...constraints);
-
-        const unsubscribe = onSnapshot(
-            q,
-            (snapshot) => {
-                const data = snapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                })) as Proposal[];
-                setProposals(data);
-                setCachedData(propCacheKey, data);
-                setLoading(false);
-            },
-            (err) => {
-                console.error("Error fetching proposals:", err);
-                setError(err);
-                setLoading(false);
-            }
-        );
-
-        return () => unsubscribe();
-    }, [profile?.orgId, status, customerId, leadId]);
-
-    const createProposal = async (data: ProposalFormData): Promise<string> => {
-        if (!profile?.orgId) throw new Error("No organization");
-
-        // Generate proposal number
-        const propNumber = `PRO-${Date.now().toString().slice(-6).padStart(6, "0")}`;
-
-        // Calculate total if items provided
-        let total = 0;
-        if (data.items) {
-            total = data.items.reduce((sum, item) => sum + item.quantity * item.rate, 0);
-        }
-
-        const docRef = await addDoc(collection(db, "proposals"), {
-            ...data,
-            number: propNumber,
-            total,
-            status: "draft",
-            date: Timestamp.fromDate(data.date),
-            openTill: Timestamp.fromDate(data.openTill),
-            orgId: profile.orgId,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            createdBy: profile.uid,
-        });
-
-        return docRef.id;
-    };
-
-    const updateProposal = async (id: string, data: Partial<ProposalFormData>): Promise<void> => {
-        const updateData: Record<string, unknown> = { ...data, updatedAt: serverTimestamp() };
-        if (data.date) updateData.date = Timestamp.fromDate(data.date);
-        if (data.openTill) updateData.openTill = Timestamp.fromDate(data.openTill);
-        await updateDoc(doc(db, "proposals", id), updateData);
-    };
-
-    const deleteProposal = async (id: string): Promise<void> => {
-        await deleteDoc(doc(db, "proposals", id));
-    };
-
-    const markAsSent = async (id: string): Promise<void> => {
-        await updateDoc(doc(db, "proposals", id), { status: "sent", updatedAt: serverTimestamp() });
-    };
-
-    const markAsAccepted = async (id: string): Promise<void> => {
-        await updateDoc(doc(db, "proposals", id), { status: "accepted", updatedAt: serverTimestamp() });
-    };
-
-    const markAsDeclined = async (id: string): Promise<void> => {
-        await updateDoc(doc(db, "proposals", id), { status: "declined", updatedAt: serverTimestamp() });
-    };
-
-    // Calculate proposal stats
-    const proposalStats = proposals.reduce(
-        (acc, prop) => {
-            acc[prop.status] = (acc[prop.status] || 0) + 1;
-            acc.total++;
-            acc.totalAmount += prop.total || 0;
-            return acc;
-        },
-        { total: 0, totalAmount: 0 } as Record<string, number>
-    );
-
-    return {
-        proposals,
-        loading,
-        error,
-        proposalStats,
-        createProposal,
-        updateProposal,
-        deleteProposal,
-        markAsSent,
-        markAsAccepted,
-        markAsDeclined,
-    };
-}

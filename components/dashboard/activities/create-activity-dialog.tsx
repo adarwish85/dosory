@@ -172,7 +172,7 @@ export function CreateActivityDialog({
                                 <FormItem>
                                     <FormLabel>Subject *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g., Follow-up call about proposal" {...field} />
+                                        <Input placeholder="e.g., Follow-up call about contract" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

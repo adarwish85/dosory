@@ -14,7 +14,6 @@ import { SettingsSaveButton } from "@/components/dashboard/setup/settings/Settin
 export default function ESignSettingsPage() {
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [esignForm, setEsignForm] = useState({
-        esignProposalRequireSignature: true,
         esignEstimateRequireSignature: true,
         esignLegalBoundText:
             'By clicking on "Sign", I consent to be legally bound by this electronic representation of my signature.',
@@ -23,7 +22,6 @@ export default function ESignSettingsPage() {
     useEffect(() => {
         if (!loading) {
             setEsignForm({
-                esignProposalRequireSignature: settings.esignProposalRequireSignature ?? true,
                 esignEstimateRequireSignature: settings.esignEstimateRequireSignature ?? true,
                 esignLegalBoundText:
                     settings.esignLegalBoundText ??
@@ -52,7 +50,6 @@ export default function ESignSettingsPage() {
 
             <SettingsSection title="Requirements" description="When signatures are required">
                 {[
-                    { key: "esignProposalRequireSignature", label: "Require digital signature on proposals" },
                     { key: "esignEstimateRequireSignature", label: "Require digital signature on estimates" },
                 ].map((item) => (
                     <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">

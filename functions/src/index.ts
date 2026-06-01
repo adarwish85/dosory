@@ -11,8 +11,6 @@ export { contractAutoExpiry, trialExpiryCheck } from "./contractExpiry";
 // Export email notification functions
 export {
     onInvoiceSent,
-    onProposalCreated,
-    onProposalStatusChange,
     onContractCreated
 } from "./emailNotifications";
 

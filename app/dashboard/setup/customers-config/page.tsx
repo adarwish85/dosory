@@ -227,7 +227,7 @@ export default function CustomersConfigPage() {
 
             <SettingsSection title="Default Permissions" description="Default permissions for new contacts">
                 <div className="space-y-2">
-                    {["Invoices", "Estimates", "Contracts", "Proposals", "Support", "Projects"].map(
+                    {["Invoices", "Estimates", "Contracts", "Support", "Projects"].map(
                         (perm) => (
                             <div key={perm} className="flex items-center space-x-2">
                                 <Checkbox

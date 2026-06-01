@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 export default function AnalyticsDashboard() {
-    const { loading, salesMetrics, customerMetrics, proposalMetrics, revenueByMonth } = useAnalytics();
+    const { loading, salesMetrics, customerMetrics, revenueByMonth } = useAnalytics();
 
     if (loading) {
         return (
@@ -115,26 +115,6 @@ export default function AnalyticsDashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Proposals */}
-                <Card className="bg-gradient-to-br from-purple-500 to-violet-600 text-white">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-purple-100 text-sm">Proposal Win Rate</p>
-                                <p className="text-3xl font-bold mt-1">
-                                    {(proposalMetrics?.acceptanceRate || 0).toFixed(0)}%
-                                </p>
-                            </div>
-                            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                                <TrendingUp className="h-6 w-6" />
-                            </div>
-                        </div>
-                        <div className="mt-4 text-sm text-purple-100">
-                            <span className="text-white font-medium">{proposalMetrics?.acceptedProposals || 0}</span> of{" "}
-                            {proposalMetrics?.totalProposals || 0} accepted
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
 
             {/* Charts Row */}
@@ -249,37 +229,6 @@ export default function AnalyticsDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <FileText className="h-6 w-6 text-purple-600" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Proposal Value</p>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    {formatCurrency(proposalMetrics?.totalValue || 0)}
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <Clock className="h-6 w-6 text-orange-600" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Pending Proposals</p>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    {proposalMetrics?.pendingProposals || 0}
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
         </div>
     );

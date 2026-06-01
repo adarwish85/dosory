@@ -159,7 +159,6 @@ export function AddFieldDialog() {
                                         <SelectItem value="invoices">Invoices</SelectItem>
                                         <SelectItem value="estimates">Estimates</SelectItem>
                                         <SelectItem value="contracts">Contracts</SelectItem>
-                                        <SelectItem value="proposals">Proposals</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

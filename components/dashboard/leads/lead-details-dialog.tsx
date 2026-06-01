@@ -45,7 +45,7 @@ import { formatBytes } from "@/lib/utils";
 import type { Lead, FileDoc } from "@/lib/types";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useProposals, useEstimates } from "@/lib/hooks/use-sales";
+import { useEstimates } from "@/lib/hooks/use-sales";
 import { useTasks } from "@/lib/hooks/use-projects";
 import { useLeads } from "@/lib/hooks/use-leads";
 import { useStaff } from "@/lib/hooks/use-staff";
@@ -104,7 +104,7 @@ const STATUS_PIPELINE = [
     { key: "new", label: "New", color: "bg-gray-400" },
     { key: "contacted", label: "Contacted", color: "bg-blue-400" },
     { key: "qualified", label: "Qualified", color: "bg-purple-500" },
-    { key: "proposal", label: "Proposal", color: "bg-yellow-500" },
+    { key: "offer-sent", label: "Offer Sent", color: "bg-yellow-500" },
     { key: "negotiation", label: "Negotiation", color: "bg-orange-500" },
     { key: "won", label: "Won", color: "bg-green-500" },
 ] as const;
@@ -146,7 +146,6 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     // Hooks
     const { profile } = useUserProfile();
     const { can } = usePermission();
-    const { proposals } = useProposals({ leadId: lead?.id });
     const { estimates } = useEstimates({ leadId: lead?.id });
     const { tasks } = useTasks();
     const { convertToCustomer } = useLeads();
@@ -438,18 +437,6 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     </Badge>
                                 </TabsTrigger>
                                 <TabsTrigger
-                                    value="proposals"
-                                    className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
-                                >
-                                    <FileText className="h-4 w-4" /> Proposals
-                                    <Badge
-                                        variant="secondary"
-                                        className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
-                                    >
-                                        {proposals.length}
-                                    </Badge>
-                                </TabsTrigger>
-                                <TabsTrigger
                                     value="tasks"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
@@ -681,7 +668,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         {lead.status === "qualified" && (
                                             <p className="mt-3 text-sm text-yellow-600 flex items-center gap-1">
                                                 <AlertTriangle className="h-4 w-4" /> Suggested action:{" "}
-                                                <strong>Send a proposal</strong>
+                                                <strong>Send an estimate</strong>
                                             </p>
                                         )}
                                     </div>
@@ -781,15 +768,6 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 <h3 className="font-semibold text-gray-900">Related Items</h3>
                                             </div>
                                             <div className="space-y-3">
-                                                <button
-                                                    onClick={() => setActiveTab("proposals")}
-                                                    className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                                                >
-                                                    <span className="flex items-center gap-2 text-sm">
-                                                        <FileText className="h-4 w-4 text-blue-500" /> Proposals
-                                                    </span>
-                                                    <Badge variant="secondary">{proposals.length}</Badge>
-                                                </button>
                                                 <button
                                                     onClick={() => setActiveTab("tasks")}
                                                     className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -1080,49 +1058,6 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             ))
                                         )}
                                     </div>
-                                </TabsContent>
-
-                                {/* Proposals Tab */}
-                                <TabsContent value="proposals" className="m-0">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-lg font-semibold">Proposals</h3>
-                                        <Button size="sm">
-                                            <Plus className="h-4 w-4 mr-1" /> New Proposal
-                                        </Button>
-                                    </div>
-                                    {proposals.length === 0 ? (
-                                        <div className="text-center py-12 border-2 border-dashed rounded-lg bg-gray-50">
-                                            <FileText className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                                            <p className="text-gray-500 font-medium">No proposals created yet</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            {proposals.map((prop) => (
-                                                <div
-                                                    key={prop.id}
-                                                    className="p-3 border rounded-md bg-white hover:shadow-sm transition-shadow flex justify-between items-center"
-                                                >
-                                                    <div className="flex flex-col">
-                                                        <span className="font-medium text-sm">{prop.number}</span>
-                                                        <span className="text-xs text-gray-500">
-                                                            {format(prop.date.toDate(), "MMM d, yyyy")}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="font-bold text-sm">
-                                                            {new Intl.NumberFormat("en-US", {
-                                                                style: "currency",
-                                                                currency: prop.currency,
-                                                            }).format(prop.total)}
-                                                        </span>
-                                                        <Badge variant="outline" className="capitalize text-xs">
-                                                            {prop.status}
-                                                        </Badge>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
                                 </TabsContent>
 
                                 {/* Tasks Tab */}

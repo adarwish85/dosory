@@ -82,8 +82,6 @@ export const SETTINGS_TAB_REDIRECTS: Record<string, string> = {
     finance: "/dashboard/setup/finance-billing/general",
     invoice: "/dashboard/setup/finance-billing/invoices",
     invoices: "/dashboard/setup/finance-billing/invoices",
-    proposal: "/dashboard/setup/sales-crm/proposals",
-    proposals: "/dashboard/setup/sales-crm/proposals",
     estimate: "/dashboard/setup/sales-crm/estimates",
     estimates: "/dashboard/setup/sales-crm/estimates",
     "credit-note": "/dashboard/setup/finance-billing/credit-notes",

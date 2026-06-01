@@ -72,18 +72,6 @@ export interface OrganizationSettings {
     amountToWordsEnable?: boolean;
     amountToWordsLowercase?: boolean;
 
-    // Finance Proposals
-    proposalNumberPrefix?: string;
-    proposalDueAfterDays?: number;
-    proposalPipelineLimit?: number;
-    proposalPipelineSort?: "pipeline_order" | "date";
-    proposalPipelineSortOrder?: "asc" | "desc";
-    proposalShowProjectName?: boolean;
-    proposalExcludeDrafts?: boolean;
-    proposalAutoConvert?: boolean;
-    proposalAllowStaffViewAssigned?: boolean;
-    proposalInfoFormat?: string;
-
     // Finance Estimates
     estimateNumberPrefix?: string;
     estimateNextNumber?: string;
@@ -212,8 +200,6 @@ export interface OrganizationSettings {
     calendarShowCustomerReminders?: boolean;
     calendarShowEstimates?: boolean;
     calendarShowEstimateReminders?: boolean;
-    calendarShowProposals?: boolean;
-    calendarShowProposalReminders?: boolean;
     calendarShowContracts?: boolean;
     calendarShowInvoiceReminders?: boolean;
     calendarShowTasks?: boolean;
@@ -224,7 +210,6 @@ export interface OrganizationSettings {
     calendarShowCreditNoteReminders?: boolean;
     calendarInvoiceColor?: string;
     calendarEstimateColor?: string;
-    calendarProposalColor?: string;
     calendarReminderColor?: string;
     calendarContractColor?: string;
     calendarProjectColor?: string;
@@ -245,18 +230,15 @@ export interface OrganizationSettings {
     pdfShowSignatureEstimate?: boolean;
     pdfShowSignatureCreditNote?: boolean;
     pdfShowSignatureContract?: boolean;
-    pdfShowSignatureProposal?: boolean;
     pdfSignatureImage?: string;
     pdfFormatInvoice?: string;
     pdfFormatEstimate?: string;
-    pdfFormatProposal?: string;
     pdfFormatPayment?: string;
     pdfFormatCreditNote?: string;
     pdfFormatContract?: string;
     pdfFormatStatement?: string;
 
     // E-Sign Settings
-    esignProposalRequireSignature?: boolean;
     esignEstimateRequireSignature?: boolean;
     esignLegalBoundText?: string;
 
@@ -333,18 +315,6 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     amountToWordsEnable: true,
     amountToWordsLowercase: false,
 
-    // Finance Proposals Defaults
-    proposalNumberPrefix: "PRO-",
-    proposalDueAfterDays: 7,
-    proposalPipelineLimit: 50,
-    proposalPipelineSort: "pipeline_order",
-    proposalPipelineSortOrder: "asc",
-    proposalShowProjectName: true,
-    proposalExcludeDrafts: true,
-    proposalAutoConvert: false,
-    proposalAllowStaffViewAssigned: true,
-    proposalInfoFormat: "{proposal_to}\n{address}\n{city} {state}\n{country_code} {zip_code}\n{phone}\n{email}",
-
     // Finance Estimates Defaults
     estimateNumberPrefix: "EST-",
     estimateNextNumber: "000001",
@@ -405,7 +375,7 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     customerUseKnowledgeBase: true,
     customerAllowKnowledgeBaseWithoutRegistration: true,
     customerShowEstimateRequestLink: true,
-    customerDefaultContactPermissions: ["invoices", "estimates", "contracts", "proposals", "support", "projects"],
+    customerDefaultContactPermissions: ["invoices", "estimates", "contracts", "support", "projects"],
     customerInfoFormat: "{company_name}\n{street}\n{city} {state}\n{country_code} {zip_code}\n{vat_number_with_label}",
 
     // Feature - Tasks Defaults
@@ -470,8 +440,6 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     calendarShowCustomerReminders: true,
     calendarShowEstimates: true,
     calendarShowEstimateReminders: true,
-    calendarShowProposals: true,
-    calendarShowProposalReminders: true,
     calendarShowContracts: true,
     calendarShowInvoiceReminders: true,
     calendarShowTasks: true,
@@ -482,7 +450,6 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     calendarShowCreditNoteReminders: true,
     calendarInvoiceColor: "#ff6f00",
     calendarEstimateColor: "#ff6f00",
-    calendarProposalColor: "#84c529",
     calendarReminderColor: "#03a9f4",
     calendarContractColor: "#b72974",
     calendarProjectColor: "#b72974",
@@ -503,18 +470,15 @@ const DEFAULT_SETTINGS: OrganizationSettings = {
     pdfShowSignatureEstimate: false,
     pdfShowSignatureCreditNote: false,
     pdfShowSignatureContract: false,
-    pdfShowSignatureProposal: false,
     pdfSignatureImage: "",
     pdfFormatInvoice: "A4 Portrait",
     pdfFormatEstimate: "A4 Portrait",
-    pdfFormatProposal: "A4 Portrait",
     pdfFormatPayment: "A4 Portrait",
     pdfFormatCreditNote: "A4 Portrait",
     pdfFormatContract: "A4 Portrait",
     pdfFormatStatement: "A4 Portrait",
 
     // E-Sign Defaults
-    esignProposalRequireSignature: true,
     esignEstimateRequireSignature: true,
     esignLegalBoundText:
         'By clicking on "Sign", I consent to be legally bound by this electronic representation of my signature.',

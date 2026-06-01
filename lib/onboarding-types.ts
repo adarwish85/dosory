@@ -56,7 +56,7 @@ export const STAFF_STEPS = [
 ];
 
 export const USE_CASE_OPTIONS = [
-    { value: "sales", label: "Sales & CRM", description: "Manage leads, proposals, and customers", icon: "🎯" },
+    { value: "sales", label: "Sales & CRM", description: "Manage leads, estimates, and customers", icon: "🎯" },
     { value: "billing", label: "Invoicing & Billing", description: "Create invoices and track payments", icon: "💰" },
     { value: "projects", label: "Project Management", description: "Manage projects and tasks", icon: "📋" },
     { value: "full", label: "Full Suite", description: "Use all features", icon: "🚀" },
