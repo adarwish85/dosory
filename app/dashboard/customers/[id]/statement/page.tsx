@@ -23,7 +23,7 @@ export default function StatementPage() {
     const dateRange = useMemo(() => {
         const now = new Date();
         let start: Date | undefined;
-        let end: Date | undefined = endOfDay(now);
+        const end: Date | undefined = endOfDay(now);
 
         switch (period) {
             case "month":

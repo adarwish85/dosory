@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json().catch(() => ({}));
         const headerSessionId = req.headers.get("x-impersonation-session-id");
 
-        let sessionId = body.sessionId || headerSessionId;
+        const sessionId = body.sessionId || headerSessionId;
 
         if (!sessionId) {
             return NextResponse.json({ error: "Session ID required" }, { status: 400 });

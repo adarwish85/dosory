@@ -266,7 +266,7 @@ export function useCustomerFiles(options: UseCustomerFilesOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+             
             setLoading(false);
             return;
         }
