@@ -110,19 +110,11 @@ export type BlockData =
     | { type: "text"; data: TextBlockData }
     | { type: "pricing"; data: PricingBlockData };
 
-export interface Block {
-    id: string;
-    type: BlockType;
-    data:
-        | HeroBlockData
-        | FeaturesBlockData
-        | StatsBlockData
-        | TestimonialBlockData
-        | FaqBlockData
-        | CtaBlockData
-        | TextBlockData
-        | PricingBlockData;
-}
+export type Block = BlockData & { id: string };
+
+// Map each BlockType literal to its specific payload type.
+// Lets defaultBlockData / createBlock preserve the tag↔payload pairing that BlockData encodes.
+type BlockDataFor<T extends BlockType> = Extract<BlockData, { type: T }>["data"];
 
 // ============================================
 // Page Definition
@@ -160,7 +152,7 @@ export interface SiteDesign {
 // Default Block Templates
 // ============================================
 
-export const defaultBlockData: Record<BlockType, Block["data"]> = {
+export const defaultBlockData: { [K in BlockType]: BlockDataFor<K> } = {
     hero: {
         badge: "",
         headline: "Your Headline Here",
@@ -171,7 +163,7 @@ export const defaultBlockData: Record<BlockType, Block["data"]> = {
         ctaSecondaryText: "Learn More",
         ctaSecondaryLink: "#features",
         showSocialProof: true,
-    } as HeroBlockData,
+    },
 
     features: {
         sectionTitle: "Features",
@@ -182,7 +174,7 @@ export const defaultBlockData: Record<BlockType, Block["data"]> = {
             { icon: "BarChart3", title: "Feature 3", description: "Description here" },
         ],
         columns: 3,
-    } as FeaturesBlockData,
+    },
 
     stats: {
         items: [
@@ -191,7 +183,7 @@ export const defaultBlockData: Record<BlockType, Block["data"]> = {
             { value: "$1M+", label: "Revenue", icon: "TrendingUp" },
         ],
         backgroundColor: "primary",
-    } as StatsBlockData,
+    },
 
     testimonial: {
         quote: "This product changed everything for our business.",
@@ -199,7 +191,7 @@ export const defaultBlockData: Record<BlockType, Block["data"]> = {
         role: "CEO",
         company: "Acme Inc.",
         rating: 5,
-    } as TestimonialBlockData,
+    },
 
     faq: {
         sectionTitle: "Frequently Asked Questions",
@@ -207,7 +199,7 @@ export const defaultBlockData: Record<BlockType, Block["data"]> = {
             { question: "How does it work?", answer: "It's simple..." },
             { question: "What's included?", answer: "Everything you need..." },
         ],
-    } as FaqBlockData,
+    },
 
     cta: {
         headline: "Ready to get started?",
@@ -215,26 +207,29 @@ export const defaultBlockData: Record<BlockType, Block["data"]> = {
         ctaText: "Start Free Trial",
         ctaLink: "/signup",
         backgroundColor: "gray",
-    } as CtaBlockData,
+    },
 
     text: {
         content: "Add your content here...",
         alignment: "left",
         maxWidth: "lg",
-    } as TextBlockData,
+    },
 
     pricing: {
         sectionTitle: "Pricing",
         sectionSubtitle: "Choose the plan that's right for you",
         showAnnualToggle: true,
-    } as PricingBlockData,
+    },
 };
 
 // Helper to create a new block with a unique ID
-export function createBlock(type: BlockType): Block {
+export function createBlock<T extends BlockType>(type: T): Extract<Block, { type: T }> {
     return {
         id: crypto.randomUUID(),
         type,
-        data: { ...defaultBlockData[type] },
-    };
+        data: { ...defaultBlockData[type] } as BlockDataFor<T>,
+        // Outer cast is unavoidable: TS does not distribute Extract<Block, {type: T}>
+        // over generic T, so it cannot recognise the assembled literal as the right variant.
+        // The inner `data` cast and the function signature carry the real type safety.
+    } as unknown as Extract<Block, { type: T }>;
 }

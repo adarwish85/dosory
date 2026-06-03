@@ -24,13 +24,25 @@ import {
     ChevronDown,
     Check,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { Block, SiteDesign } from "@/lib/types/site-builder";
+import type {
+    Block,
+    SiteDesign,
+    HeroBlockData,
+    FeaturesBlockData,
+    StatsBlockData,
+    TestimonialBlockData,
+    FaqBlockData,
+    CtaBlockData,
+    TextBlockData,
+    PricingBlockData,
+} from "@/lib/types/site-builder";
 
 // Icon mapping
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, LucideIcon> = {
     Users,
     FileText,
     BarChart3,
@@ -54,21 +66,21 @@ interface BlockRendererProps {
 export function BlockRenderer({ block, design }: BlockRendererProps) {
     switch (block.type) {
         case "hero":
-            return <HeroBlock data={block.data as any} design={design} />;
+            return <HeroBlock data={block.data} design={design} />;
         case "features":
-            return <FeaturesBlock data={block.data as any} design={design} />;
+            return <FeaturesBlock data={block.data} design={design} />;
         case "stats":
-            return <StatsBlock data={block.data as any} design={design} />;
+            return <StatsBlock data={block.data} design={design} />;
         case "testimonial":
-            return <TestimonialBlock data={block.data as any} design={design} />;
+            return <TestimonialBlock data={block.data} design={design} />;
         case "faq":
-            return <FaqBlock data={block.data as any} design={design} />;
+            return <FaqBlock data={block.data} design={design} />;
         case "cta":
-            return <CtaBlock data={block.data as any} design={design} />;
+            return <CtaBlock data={block.data} design={design} />;
         case "text":
-            return <TextBlock data={block.data as any} design={design} />;
+            return <TextBlock data={block.data} design={design} />;
         case "pricing":
-            return <PricingBlock data={block.data as any} design={design} />;
+            return <PricingBlock data={block.data} design={design} />;
         default:
             return null;
     }
@@ -78,7 +90,7 @@ export function BlockRenderer({ block, design }: BlockRendererProps) {
 // Hero Block
 // ============================================
 
-function HeroBlock({ data, design }: { data: any; design: SiteDesign }) {
+function HeroBlock({ data, design }: { data: HeroBlockData; design: SiteDesign }) {
     return (
         <section className="pt-32 pb-20 relative overflow-hidden">
             <div
@@ -181,7 +193,7 @@ function HeroBlock({ data, design }: { data: any; design: SiteDesign }) {
 // Features Block
 // ============================================
 
-function FeaturesBlock({ data, design }: { data: any; design: SiteDesign }) {
+function FeaturesBlock({ data, design }: { data: FeaturesBlockData; design: SiteDesign }) {
     const columns = data.columns || 3;
     const gridClass = columns === 2 ? "md:grid-cols-2" : columns === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3";
 
@@ -205,7 +217,7 @@ function FeaturesBlock({ data, design }: { data: any; design: SiteDesign }) {
                 )}
 
                 <div className={`grid md:grid-cols-2 ${gridClass} gap-8`}>
-                    {(data.items || []).map((feature: any, i: number) => {
+                    {(data.items || []).map((feature, i) => {
                         const Icon = iconMap[feature.icon] || Zap;
                         return (
                             <div
@@ -233,7 +245,7 @@ function FeaturesBlock({ data, design }: { data: any; design: SiteDesign }) {
 // Stats Block
 // ============================================
 
-function StatsBlock({ data, design }: { data: any; design: SiteDesign }) {
+function StatsBlock({ data, design }: { data: StatsBlockData; design: SiteDesign }) {
     const bgStyles: Record<string, React.CSSProperties> = {
         primary: { background: `linear-gradient(to bottom right, ${design.primaryColor}, ${design.secondaryColor})` },
         secondary: { backgroundColor: design.secondaryColor },
@@ -250,8 +262,8 @@ function StatsBlock({ data, design }: { data: any; design: SiteDesign }) {
         <section className="py-24" style={bgStyles[data.backgroundColor || "primary"]}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid md:grid-cols-4 gap-8">
-                    {(data.items || []).map((stat: any, i: number) => {
-                        const Icon = iconMap[stat.icon] || TrendingUp;
+                    {(data.items || []).map((stat, i) => {
+                        const Icon = (stat.icon && iconMap[stat.icon]) || TrendingUp;
                         return (
                             <div key={i} className="text-center">
                                 <div
@@ -274,7 +286,7 @@ function StatsBlock({ data, design }: { data: any; design: SiteDesign }) {
 // Testimonial Block
 // ============================================
 
-function TestimonialBlock({ data, design }: { data: any; design: SiteDesign }) {
+function TestimonialBlock({ data, design }: { data: TestimonialBlockData; design: SiteDesign }) {
     return (
         <section className="py-24 bg-white">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -317,7 +329,7 @@ function TestimonialBlock({ data, design }: { data: any; design: SiteDesign }) {
 // FAQ Block
 // ============================================
 
-function FaqBlock({ data, design }: { data: any; design: SiteDesign }) {
+function FaqBlock({ data, design }: { data: FaqBlockData; design: SiteDesign }) {
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
     return (
@@ -333,7 +345,7 @@ function FaqBlock({ data, design }: { data: any; design: SiteDesign }) {
                 )}
 
                 <div className="space-y-4">
-                    {(data.items || []).map((faq: any, i: number) => (
+                    {(data.items || []).map((faq, i) => (
                         <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
                             <button
                                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -357,7 +369,7 @@ function FaqBlock({ data, design }: { data: any; design: SiteDesign }) {
 // CTA Block
 // ============================================
 
-function CtaBlock({ data, design }: { data: any; design: SiteDesign }) {
+function CtaBlock({ data, design }: { data: CtaBlockData; design: SiteDesign }) {
     const bgStyles: Record<string, string> = {
         primary: design.primaryColor,
         secondary: design.secondaryColor,
@@ -407,7 +419,7 @@ function CtaBlock({ data, design }: { data: any; design: SiteDesign }) {
 // Text Block
 // ============================================
 
-function TextBlock({ data, design }: { data: any; design: SiteDesign }) {
+function TextBlock({ data, design }: { data: TextBlockData; design: SiteDesign }) {
     const maxWidthClasses: Record<string, string> = {
         sm: "max-w-xl",
         md: "max-w-2xl",
@@ -450,7 +462,7 @@ interface SubscriptionPlan {
     sortOrder: number;
 }
 
-function PricingBlock({ data, design }: { data: any; design: SiteDesign }) {
+function PricingBlock({ data, design }: { data: PricingBlockData; design: SiteDesign }) {
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
     const [loading, setLoading] = useState(true);
 
