@@ -64,7 +64,7 @@ lib/
   schemas.ts types.ts firebase.ts firebase-admin.ts utils.ts paypal.ts quotas.ts
 functions/src/        Cloud Functions (separate package.json)
 public/ cypress/ tests/ scripts/ docs/
-firestore.rules       Security rules (tenant-scoped across all collections; 167 emulator tests)
+firestore.rules       Security rules (tenant-scoped across all collections; 156 emulator tests)
 proxy.ts              (renamed from middleware.ts in Next 16)
 service-account.json  (gitignored; not tracked; scrubbed from history in 0.3)
 ```
@@ -135,8 +135,8 @@ Gaps:
 ## 8. Build & Test
 
 - `npm run build` → **passes** (Next 16, 182 pages, exit 0). The `middleware.ts → proxy.ts` deprecation warning cleared in 1.3.
-- `npm run lint` → **1040 problems / 407 errors / 633 warnings** (down from 1098 / 461 / 637 at Phase 0 start; 5 errors closed by 2.1's dead-code removal). The 49 macOS `._*` parse errors are gone (1.1). The 407 remaining cluster around `no-explicit-any` (~315) and `react-hooks` / React Compiler regressions (~113) — Phase 2.2 work (re-sequenced ahead of functional gaps because the pre-commit hook now activates on every multi-file commit).
-- Tests: Jest under `tests/`, Cypress under `cypress/`. Tenant-isolation rules suite at `tests/firestore-rules/tenant-isolation.test.ts` (167 tests); RBAC drift test at `tests/unit/rbac/permission-codes.test.ts`. Run per-task as touched.
+- `npm run lint` → **1015 problems / 382 errors / 633 warnings** (down from 1098 / 461 / 637 at Phase 0 start; 5 errors closed by 2.1's dead-code removal). The 49 macOS `._*` parse errors are gone (1.1). The 382 remaining cluster around `no-explicit-any` (295) and `react-hooks` / React Compiler regressions (~113) — Phase 2.2 work (re-sequenced ahead of functional gaps because the pre-commit hook now activates on every multi-file commit).
+- Tests: Jest under `tests/`, Cypress under `cypress/`. Tenant-isolation rules suite at `tests/firestore-rules/tenant-isolation.test.ts` (156 tests); RBAC drift test at `tests/unit/rbac/permission-codes.test.ts`. Run per-task as touched.
 
 **Definition of done for every task:** `npm run build` clean, no _new_ lint errors,
 relevant tests pass, change verified before moving on.
@@ -152,6 +152,7 @@ relevant tests pass, change verified before moving on.
 - Phase 2 was re-sequenced on 2026-06-01: lint cluster triage promoted to 2.2 because the pre-commit hook activated on the 2.1 commit and makes per-task `--no-verify` decisions necessary until the cluster is cleared.
 - Destructive/irreversible ops (history force-push, key rotation, rules deploy to
   prod) are surfaced to Ahmed for the actual trigger — never silently executed.
+- Pre-commit hook bypass: `--no-verify` requires Ahmed's explicit approval per commit AND a posted check that the hook's failures are all pre-existing — zero new rule IDs and zero count increase vs the §8 baseline. Bypass is justified per-commit, never standing; the day a non-baseline ID appears, fix in-batch instead of bypassing.
 - Secrets never get committed. Credentials load from env / secret manager only.
 - Preserve existing patterns ("service as a hook", orgId isolation, barrel exports).
 
@@ -165,6 +166,7 @@ relevant tests pass, change verified before moving on.
 0.2 ✅ Commit `f0d218e6` — load admin SDK from env only; untrack `service-account.json`
 0.3 ✅ Commits `c1feb3ed`, `b3b3a787` — apphosting.yaml secret refs; 3-pass filter-repo history scrub for both Firebase keys + PayPal live secret; force-pushed
 0.4 ✅ Commit `993004ea` — 14 collections tenant-scoped + 167 emulator tests + deployed to `goalo-6a269` prod
+0.6 ✅ Incident response (2026-06-02 stolen-OAuth-credential intrusion) — 39 malicious `.github/workflows/ci-*.yml` commits stripped from history via filter-repo + pinned-lease force-push; `origin/main` clean at `4c148120` (verified by `ls-remote`); forensic tag `incident/malicious-tip-20260602` (`4840fdb0`, local-only) + evidence bundle retained; backup `backup/pre-incident-cleanup-20260602` held ≥7 days. Outstanding incident-tail (not cleanup): re-enable Actions, delete `ci-290443` run record, GitHub Support unreachable-object GC ticket, fork check.
 
 ### Phase 1 — Stabilize ✅ COMPLETE
 
@@ -177,7 +179,10 @@ relevant tests pass, change verified before moving on.
 ### Phase 2 — Close functional gaps
 
 2.1 ✅ Commit `030d01ac` — Proposals entity removed (types, schemas, Firestore rule, Cloud Functions undeployed from prod, 16 org-settings fields, 35+ UI touchpoints); LeadStatus `"proposal"` → `"offer-sent"` with prod data migration (0 docs found); rules redeployed to `goalo-6a269`; 156/156 tenant-isolation tests pass
-2.2 Lint cluster triage — 407 errors (319 `no-explicit-any` + 113 React Compiler regressions − some closed by 2.1's dead-code removal); promoted from original position 2.4 because the pre-commit hook activated on the 2.1 commit and now blocks every push until the cluster is worked down. Sub-tasks: the `no-explicit-any` cluster (mostly mechanical type-tightening) and the React Compiler regressions (correctness work) treated as separate sub-tasks.
+Lint cluster triage — 407 errors (319 `no-explicit-any` + 113 React Compiler regressions − some closed by 2.1's dead-code removal); promoted from original position 2.4 because the pre-commit hook activated on the 2.1 commit and now blocks every push until the cluster is worked down. Sub-tasks: the `no-explicit-any` cluster (mostly mechanical type-tightening) and the React Compiler regressions (correctness work) treated as separate sub-tasks.
+
+2.2.a ✅ Commit `4c148120` — auto-fixable lint cluster closed (prefer-const, stale eslint-disable, no-require-imports).
+2.2.b-i ✅ Commit `2ac6800a` — `Block` typed as discriminated union (`BlockData & {id}`); BlockRenderer.tsx closed 20 `no-explicit-any`; `createBlock<T>`/`defaultBlockData` made DU-aware via `BlockDataFor<T>`; one documented `as unknown as` bridging TS generic-`Extract` limitation; iconMap → `LucideIcon`. Landed with `--no-verify`: hook tripped on 4 pre-existing cluster items (2 `no-unescaped-entities`, 2 unused `design`), zero new rule IDs vs baseline.
 2.3 Real Firestore aggregations in `lib/services/reports-service.ts` — replace 6 mock TODOs (Business Health, Sales Pipeline, Invoices, Revenue Summary, Cash Flow, Profit-Loss).
 2.4 View-scope data-layer enforcement — the catalog/UI offer `view-own` vs `view-global` but hooks don't filter by ownership; per-module design across ~9 modules.
 
