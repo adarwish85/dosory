@@ -25,8 +25,8 @@ export function PasswordResetEmail({ userName, resetUrl }: PasswordResetEmailPro
             <Hr style={hr} />
 
             <Text style={footerNote}>
-                This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email -
-                your password won't be changed.
+                This link expires in 1 hour. If you didn&apos;t request a password reset, you can safely ignore this email -
+                your password won&apos;t be changed.
             </Text>
         </BaseLayout>
     );

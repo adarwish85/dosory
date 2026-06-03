@@ -86,7 +86,7 @@ function TestimonialsRenderer({ data }: { data: any }) {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 {testimonials.map((t: any, i: number) => (
                     <div key={i} className="p-6 bg-background rounded-lg border shadow-sm italic">
-                        <p className="mb-6 text-lg">"{t.quote}"</p>
+                        <p className="mb-6 text-lg">&quot;{t.quote}&quot;</p>
                         <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold">
                                 {t.name[0]}

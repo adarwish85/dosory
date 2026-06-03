@@ -202,7 +202,7 @@ export default function AttendancePage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
-                        Today's Attendance Log
+                        Today&apos;s Attendance Log
                     </CardTitle>
                 </CardHeader>
                 <CardContent>

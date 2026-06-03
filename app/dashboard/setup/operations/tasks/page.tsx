@@ -163,7 +163,7 @@ export default function TasksSettingsPage() {
                             <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="no_round">Don't round off</SelectItem>
+                            <SelectItem value="no_round">Don&apos;t round off</SelectItem>
                             <SelectItem value="round_up">Round up</SelectItem>
                             <SelectItem value="round_down">Round down</SelectItem>
                         </SelectContent>

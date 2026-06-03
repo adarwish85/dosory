@@ -166,7 +166,7 @@ export default function HelpPage() {
                     <div className="bg-white rounded-lg border p-6 max-w-2xl">
                         <h2 className="text-lg font-semibold mb-4">Report an Issue</h2>
                         <p className="text-gray-500 text-sm mb-6">
-                            Having trouble with the platform? Let us know and we'll help you out.
+                            Having trouble with the platform? Let us know and we&apos;ll help you out.
                         </p>
 
                         <form onSubmit={handleSubmit} className="space-y-5">
@@ -274,7 +274,7 @@ export default function HelpPage() {
                         <div className="bg-white rounded-lg border p-10 text-center">
                             <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                             <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets yet</h3>
-                            <p className="text-gray-500 mb-4">You haven't submitted any support tickets.</p>
+                            <p className="text-gray-500 mb-4">You haven&apos;t submitted any support tickets.</p>
                             <Button onClick={() => setActiveTab("submit")}>
                                 <Plus className="mr-2 h-4 w-4" />
                                 Submit Ticket

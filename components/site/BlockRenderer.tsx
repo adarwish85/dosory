@@ -312,7 +312,7 @@ function TestimonialBlock({ data, design }: { data: TestimonialBlockData; design
                                     ))}
                                 </div>
                             )}
-                            <p className="text-gray-700 text-lg mb-4">"{data.quote}"</p>
+                            <p className="text-gray-700 text-lg mb-4">&quot;{data.quote}&quot;</p>
                             <div>
                                 <div className="font-semibold text-gray-900">{data.author}</div>
                                 {data.role && <div className="text-gray-500">{data.role}</div>}

@@ -296,7 +296,7 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">To all contacts with notifications enabled</SelectItem>
-                                        <SelectItem value="none">Don't send notifications</SelectItem>
+                                        <SelectItem value="none">Don&apos;t send notifications</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

@@ -12,7 +12,7 @@ interface TeamInviteEmailProps {
 export function TeamInviteEmail({ inviterName, orgName, role, inviteUrl }: TeamInviteEmailProps) {
     return (
         <BaseLayout previewText={`You've been invited to join ${orgName}`}>
-            <Heading style={heading}>You're Invited! 🤝</Heading>
+            <Heading style={heading}>You&apos;re Invited! 🤝</Heading>
 
             <Text style={paragraph}>
                 {inviterName} has invited you to join <strong>{orgName}</strong> as a <strong>{role}</strong>.
@@ -27,7 +27,7 @@ export function TeamInviteEmail({ inviterName, orgName, role, inviteUrl }: TeamI
             <Hr style={hr} />
 
             <Text style={footerNote}>
-                This invitation expires in 7 days. If you didn't expect this invitation, you can safely ignore this
+                This invitation expires in 7 days. If you didn&apos;t expect this invitation, you can safely ignore this
                 email.
             </Text>
         </BaseLayout>

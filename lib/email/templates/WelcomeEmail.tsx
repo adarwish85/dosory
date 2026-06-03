@@ -16,10 +16,10 @@ export function WelcomeEmail({ userName, orgName, loginUrl }: WelcomeEmailProps)
             <Text style={paragraph}>Hi {userName},</Text>
 
             <Text style={paragraph}>
-                Your account has been successfully created. We're excited to have you on board!
+                Your account has been successfully created. We&apos;re excited to have you on board!
             </Text>
 
-            <Text style={paragraph}>Here's what you can do next:</Text>
+            <Text style={paragraph}>Here&apos;s what you can do next:</Text>
 
             <ul style={list}>
                 <li style={listItem}>Set up your company profile</li>

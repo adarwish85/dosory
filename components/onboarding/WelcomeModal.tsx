@@ -62,7 +62,7 @@ export default function WelcomeModal() {
                                 </div>
                                 <div>
                                     <h3 className="font-medium text-gray-900">Choose your path</h3>
-                                    <p className="text-sm text-gray-500">Tell us what you'll use most</p>
+                                    <p className="text-sm text-gray-500">Tell us what you&apos;ll use most</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">

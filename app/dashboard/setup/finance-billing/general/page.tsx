@@ -98,7 +98,7 @@ export default function FinanceGeneralPage() {
                                 <SelectItem value=".">. (Dot)</SelectItem>
                                 <SelectItem value="none">None</SelectItem>
                                 <SelectItem value="space">Space</SelectItem>
-                                <SelectItem value="'">' (Apostrophe)</SelectItem>
+                                <SelectItem value="'">&apos; (Apostrophe)</SelectItem>
                             </SelectContent>
                         </Select>
                     </SettingsField>

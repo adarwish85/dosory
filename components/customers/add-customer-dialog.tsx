@@ -63,7 +63,7 @@ export function AddCustomerDialog({ onSuccess }: { onSuccess?: () => void }) {
                     <DialogHeader>
                         <DialogTitle>Add Customer</DialogTitle>
                         <DialogDescription>
-                            Add a new customer to your organization. Click save when you're done.
+                            Add a new customer to your organization. Click save when you&apos;re done.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">

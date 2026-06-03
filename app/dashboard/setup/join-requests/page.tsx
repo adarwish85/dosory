@@ -233,7 +233,7 @@ export default function JoinRequestsPage() {
                                                 <Clock className="h-3 w-3" />
                                                 {formatDistanceToNow(request.createdAt.toDate(), { addSuffix: true })}
                                                 {request.message && (
-                                                    <span className="ml-2 text-gray-600">"{request.message}"</span>
+                                                    <span className="ml-2 text-gray-600">&quot;{request.message}&quot;</span>
                                                 )}
                                             </div>
                                         </div>

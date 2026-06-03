@@ -308,7 +308,7 @@ function TemplateEditorContent() {
                     {category === "Tickets" && (
                         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-6 text-sm">
                             If ticket is imported with email piping and the contact does not exists in the CRM the
-                            fields won't be replaced.
+                            fields won&apos;t be replaced.
                         </div>
                     )}
 

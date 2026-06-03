@@ -166,7 +166,7 @@ export default function CustomerPortalSettingsPage() {
                 <CardHeader>
                     <CardTitle>Module Visibility (Global)</CardTitle>
                     <CardDescription>
-                        Control which modules are visible to this customer's contacts by default. (Can be overridden per
+                        Control which modules are visible to this customer&apos;s contacts by default. (Can be overridden per
                         contact).
                     </CardDescription>
                 </CardHeader>

@@ -170,7 +170,7 @@ export default function EditTaskPage() {
             <div className="max-w-3xl mx-auto py-8 px-4">
                 <div className="text-center py-20">
                     <h2 className="text-xl font-semibold text-gray-900">Task not found</h2>
-                    <p className="text-gray-500 mt-2">The task you're looking for doesn't exist or was deleted.</p>
+                    <p className="text-gray-500 mt-2">The task you&apos;re looking for doesn&apos;t exist or was deleted.</p>
                     <Link href="/dashboard/tasks">
                         <Button className="mt-4">Back to Tasks</Button>
                     </Link>

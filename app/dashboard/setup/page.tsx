@@ -23,7 +23,7 @@ export default function SetupPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>General Settings</CardTitle>
-                            <CardDescription>Manage your platform's base settings.</CardDescription>
+                            <CardDescription>Manage your platform&apos;s base settings.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid gap-2">
