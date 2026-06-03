@@ -253,3 +253,145 @@ describe("Mirror sanity (tenantB user)", () => {
         await assertFails(bob().firestore().collection("leads").doc("fromA").get());
     });
 });
+
+// ============================================
+// Phase 3.0.1 — conversations.messages tenant gate
+// ============================================
+// Live chat path is conversations/{convId}/messages/{msgId}; the message subcollection
+// has no orgId field of its own, so it gates on parent conv's orgId via get().
+describe("Conversation messages subcollection — parent-orgId gate", () => {
+    beforeEach(async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+            const db = ctx.firestore();
+            await db
+                .collection("conversations")
+                .doc("conv_a")
+                .set({
+                    orgId: TENANT_A,
+                    participants: ["alice", "alice2"],
+                    unreadCounts: { alice: 0, alice2: 0 },
+                });
+            await db
+                .collection("conversations")
+                .doc("conv_b")
+                .set({
+                    orgId: TENANT_B,
+                    participants: ["bob"],
+                    unreadCounts: { bob: 0 },
+                });
+            await db
+                .collection("conversations")
+                .doc("conv_a")
+                .collection("messages")
+                .doc("msgA")
+                .set({ content: "hello A", senderId: "alice" });
+            await db
+                .collection("conversations")
+                .doc("conv_b")
+                .collection("messages")
+                .doc("msgB")
+                .set({ content: "hello B", senderId: "bob" });
+        });
+    });
+
+    it("tenantA CAN read message under own conversation", async () => {
+        await assertSucceeds(
+            alice().firestore().collection("conversations").doc("conv_a").collection("messages").doc("msgA").get()
+        );
+    });
+
+    it("tenantA CANNOT read message under tenantB conversation", async () => {
+        await assertFails(
+            alice().firestore().collection("conversations").doc("conv_b").collection("messages").doc("msgB").get()
+        );
+    });
+
+    it("tenantA CANNOT write message into tenantB conversation", async () => {
+        await assertFails(
+            alice()
+                .firestore()
+                .collection("conversations")
+                .doc("conv_b")
+                .collection("messages")
+                .doc("hack")
+                .set({ content: "ouch", senderId: "alice" })
+        );
+    });
+
+    it("tenantA CAN write a new message under own conversation", async () => {
+        await assertSucceeds(
+            alice()
+                .firestore()
+                .collection("conversations")
+                .doc("conv_a")
+                .collection("messages")
+                .doc("fresh")
+                .set({ content: "fresh msg", senderId: "alice" })
+        );
+    });
+
+    it("unauthenticated CANNOT read any message", async () => {
+        await assertFails(
+            anon().firestore().collection("conversations").doc("conv_a").collection("messages").doc("msgA").get()
+        );
+    });
+
+    it("superadmin CAN read tenantB message", async () => {
+        await assertSucceeds(
+            sa().firestore().collection("conversations").doc("conv_b").collection("messages").doc("msgB").get()
+        );
+    });
+});
+
+// Regression coverage for use-chat.ts sendMessage(): a single batch that writes the
+// message AND updates the parent conversation (unreadCounts, lastMessage). A rule
+// gap on either leg fails the whole batch — this asserts the real send path.
+describe("Conversation batched send (regression for use-chat sendMessage)", () => {
+    beforeEach(async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+            const db = ctx.firestore();
+            await db
+                .collection("conversations")
+                .doc("conv_a")
+                .set({
+                    orgId: TENANT_A,
+                    participants: ["alice", "alice2"],
+                    unreadCounts: { alice: 0, alice2: 0 },
+                });
+            await db
+                .collection("conversations")
+                .doc("conv_b")
+                .set({
+                    orgId: TENANT_B,
+                    participants: ["bob"],
+                    unreadCounts: { bob: 0 },
+                });
+        });
+    });
+
+    it("org member CAN batch: write message + update parent conv (own org)", async () => {
+        const db = alice().firestore();
+        const batch = db.batch();
+        const msgRef = db.collection("conversations").doc("conv_a").collection("messages").doc();
+        batch.set(msgRef, { content: "hi", senderId: "alice" });
+        const convRef = db.collection("conversations").doc("conv_a");
+        batch.update(convRef, {
+            lastMessage: { content: "hi", senderId: "alice" },
+            "unreadCounts.alice2": 1,
+        });
+        await assertSucceeds(batch.commit());
+    });
+
+    it("cross-tenant member CANNOT batch: write message + update parent conv (other org)", async () => {
+        const db = alice().firestore();
+        const batch = db.batch();
+        const msgRef = db.collection("conversations").doc("conv_b").collection("messages").doc();
+        batch.set(msgRef, { content: "infiltrate", senderId: "alice" });
+        const convRef = db.collection("conversations").doc("conv_b");
+        batch.update(convRef, {
+            lastMessage: { content: "infiltrate", senderId: "alice" },
+            "unreadCounts.bob": 99,
+        });
+        await assertFails(batch.commit());
+    });
+});

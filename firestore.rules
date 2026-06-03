@@ -343,16 +343,21 @@ service cloud.firestore {
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
     
-    match /chats/{docId} {
-      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
-      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
-      
-      // Messages subcollection
+    // Conversations — the live chat data path used by lib/hooks/use-chat.ts.
+    // Root doc carries an orgId field; messages subcollection does not, so it
+    // gates on parent-conversation orgId via get() (mirrors leads/notes pattern).
+    match /conversations/{docId} {
+      // Tenant-scoped: any user in the same orgId can read/write; SA bypass
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
+
+      // Messages subcollection — message docs do not carry their own orgId, gate on parent conversation's orgId
       match /messages/{messageId} {
-        allow read, write: if isSuperAdmin() || request.auth != null;
+        allow read, write: if isSuperAdmin() ||
+          get(/databases/$(database)/documents/conversations/$(docId)).data.orgId == request.auth.token.orgId;
       }
     }
-    
+
     match /support_tickets/{docId} {
       allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
