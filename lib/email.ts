@@ -1,16 +1,6 @@
 import nodemailer from "nodemailer";
 import { adminDb } from "@/lib/firebase-admin";
 
-interface SmtpSettings {
-    host: string;
-    port: number;
-    encryption: "ssl" | "tls" | "none";
-    username: string;
-    password: string;
-    fromName: string;
-    fromEmail: string;
-}
-
 interface EmailBranding {
     logoUrl?: string;
     primaryColor?: string;
@@ -99,17 +89,26 @@ function applyBranding(html: string, branding: EmailBranding): string {
 }
 
 // Core email sending function
+//
+// SMTP credentials are read from process.env (Stage 3.0.4 — migrated out of
+// platform/settings.smtpSettings, which was world-readable in Firestore).
+// SMTP_PASSWORD comes from Secret Manager via apphosting.yaml; the other six
+// SMTP_* vars are inline non-secrets.
 export async function sendEmail(to: string, subject: string, html: string) {
-    // Fetch settings
-    const settingsDoc = await adminDb.collection("platform").doc("settings").get();
-    const settings = settingsDoc.data();
+    const host = process.env.SMTP_HOST;
+    const port = process.env.SMTP_PORT;
+    const username = process.env.SMTP_USERNAME;
+    const password = process.env.SMTP_PASSWORD;
+    const encryption = process.env.SMTP_ENCRYPTION;
+    const fromEmail = process.env.SMTP_FROM_EMAIL;
+    const fromName = process.env.SMTP_FROM_NAME;
 
-    if (!settings?.smtpSettings) {
-        console.warn("SMTP settings not configured in platform/settings");
+    if (!host || !port || !username || !password || !fromEmail) {
+        console.warn(
+            "SMTP env vars not configured (SMTP_HOST/SMTP_PORT/SMTP_USERNAME/SMTP_PASSWORD/SMTP_FROM_EMAIL required)"
+        );
         return false;
     }
-
-    const { host, port, username, password, encryption, fromEmail, fromName } = settings.smtpSettings as SmtpSettings;
 
     // Create transporter
     const transporter = nodemailer.createTransport({

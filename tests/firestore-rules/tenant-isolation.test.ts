@@ -395,3 +395,169 @@ describe("Conversation batched send (regression for use-chat sendMessage)", () =
         await assertFails(batch.commit());
     });
 });
+
+// ============================================
+// Stage 3.0.4 — platform/{docId} read scope (split: named-public vs SA-only catchall)
+// ============================================
+// platform/settings, platform/landing, platform/siteDesign read by anonymous landing/signup pages → stay public
+// any OTHER platform/* doc (e.g. emailTemplates parent, future docs) → admin-only catchall
+describe("Platform docs read scope — named public vs SA-only catchall", () => {
+    beforeEach(async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+            const db = ctx.firestore();
+            await db
+                .collection("platform")
+                .doc("settings")
+                .set({ allowSignups: true, maintenanceMode: false, platformName: "Dosory" });
+            await db
+                .collection("platform")
+                .doc("landing")
+                .set({ hero: { headline: "Welcome" } });
+            await db.collection("platform").doc("siteDesign").set({ primaryColor: "#9b8cff" });
+            // Sensitive catch-all example: should NOT be readable by anon/auth, only SA
+            await db.collection("platform").doc("emailTemplates").set({ defaultSubject: "Hi" });
+        });
+    });
+
+    it("anonymous CAN read platform/settings (signup needs it)", async () => {
+        await assertSucceeds(anon().firestore().collection("platform").doc("settings").get());
+    });
+
+    it("anonymous CAN read platform/landing (legacy + public)", async () => {
+        await assertSucceeds(anon().firestore().collection("platform").doc("landing").get());
+    });
+
+    it("anonymous CAN read platform/siteDesign (public landing renders this)", async () => {
+        await assertSucceeds(anon().firestore().collection("platform").doc("siteDesign").get());
+    });
+
+    it("anonymous CANNOT read platform/emailTemplates (catch-all SA-only)", async () => {
+        await assertFails(anon().firestore().collection("platform").doc("emailTemplates").get());
+    });
+
+    it("authenticated tenant user CANNOT read platform/emailTemplates", async () => {
+        await assertFails(alice().firestore().collection("platform").doc("emailTemplates").get());
+    });
+
+    it("superadmin CAN read platform/emailTemplates", async () => {
+        await assertSucceeds(sa().firestore().collection("platform").doc("emailTemplates").get());
+    });
+
+    it("anonymous CANNOT write any platform/* doc (write stays SA-only)", async () => {
+        await assertFails(anon().firestore().collection("platform").doc("settings").set({ hacked: true }));
+    });
+
+    it("tenant user CANNOT write any platform/* doc", async () => {
+        await assertFails(alice().firestore().collection("platform").doc("settings").update({ hacked: true }));
+    });
+
+    it("superadmin CAN write platform/settings", async () => {
+        await assertSucceeds(sa().firestore().collection("platform").doc("settings").update({ touched: true }));
+    });
+});
+
+// ============================================
+// Stage 3.0.3 — analytics/{cat}/events orgId gate on create
+// ============================================
+describe("Analytics events — orgId gate on create", () => {
+    it("authenticated user CAN create event for own org", async () => {
+        await assertSucceeds(
+            alice()
+                .firestore()
+                .collection("analytics")
+                .doc("onboarding")
+                .collection("events")
+                .doc("ev1")
+                .set({ orgId: TENANT_A, event: "started", userId: "alice" })
+        );
+    });
+
+    it("authenticated user CANNOT create event claiming other tenant's orgId", async () => {
+        await assertFails(
+            alice()
+                .firestore()
+                .collection("analytics")
+                .doc("onboarding")
+                .collection("events")
+                .doc("ev_spoof")
+                .set({ orgId: TENANT_B, event: "fake", userId: "alice" })
+        );
+    });
+
+    it("authenticated user CANNOT create event WITHOUT orgId field", async () => {
+        await assertFails(
+            alice()
+                .firestore()
+                .collection("analytics")
+                .doc("onboarding")
+                .collection("events")
+                .doc("ev_noorg")
+                .set({ event: "missing-org", userId: "alice" })
+        );
+    });
+
+    it("unauthenticated CANNOT create event", async () => {
+        await assertFails(
+            anon()
+                .firestore()
+                .collection("analytics")
+                .doc("onboarding")
+                .collection("events")
+                .doc("ev_anon")
+                .set({ orgId: TENANT_A, event: "x" })
+        );
+    });
+});
+
+// ============================================
+// Stage 3.0.5 — staff/{docId} create: middle clause now requires owning the org
+// ============================================
+// Self-signup case: a user creating their own admin staff doc must own the org they claim
+// (the signup flow creates organizations/{orgId} with ownerId=user.uid in step 2, BEFORE the staff doc in step 4)
+describe("Staff create — middle clause requires org ownership", () => {
+    beforeEach(async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+            const db = ctx.firestore();
+            // Self-signup precondition: org exists with alice as owner
+            await db
+                .collection("organizations")
+                .doc("alice_org")
+                .set({ orgId: "alice_org", ownerId: "alice", name: "Alice's Co" });
+            // Other org owned by bob (used for cross-tenant spoof test)
+            await db
+                .collection("organizations")
+                .doc("bob_org")
+                .set({ orgId: "bob_org", ownerId: "bob", name: "Bob's Co" });
+        });
+    });
+
+    it("self-signup: user CAN create own staff doc claiming an org they OWN", async () => {
+        await assertSucceeds(
+            alice()
+                .firestore()
+                .collection("staff")
+                .doc("alice@example.com")
+                .set({ authUid: "alice", orgId: "alice_org", email: "alice@example.com", isAdmin: true })
+        );
+    });
+
+    it("cross-tenant spoof: user CANNOT create staff doc claiming an org they DO NOT own", async () => {
+        await assertFails(
+            alice()
+                .firestore()
+                .collection("staff")
+                .doc("spoof@example.com")
+                .set({ authUid: "alice", orgId: "bob_org", email: "spoof@example.com", isAdmin: true })
+        );
+    });
+
+    it("user CANNOT create staff doc with someone else's authUid", async () => {
+        await assertFails(
+            alice()
+                .firestore()
+                .collection("staff")
+                .doc("evil@example.com")
+                .set({ authUid: "bob", orgId: "alice_org", email: "evil@example.com" })
+        );
+    });
+});

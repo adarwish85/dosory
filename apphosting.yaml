@@ -41,3 +41,27 @@ env:
   - variable: FIREBASE_SERVICE_ACCOUNT_KEY
     secret: firebase-service-account-key
     availability: [BUILD, RUNTIME]
+  # SMTP transactional-email credentials (Stage 3.0.4 — migrated out of
+  # platform/settings.smtpSettings which was world-readable in Firestore).
+  # SMTP_PASSWORD lives in Secret Manager; the rest are inline non-secrets.
+  - variable: SMTP_HOST
+    value: smtp.resend.com
+    availability: [BUILD, RUNTIME]
+  - variable: SMTP_PORT
+    value: "587"
+    availability: [BUILD, RUNTIME]
+  - variable: SMTP_USERNAME
+    value: resend
+    availability: [BUILD, RUNTIME]
+  - variable: SMTP_PASSWORD
+    secret: smtp-password
+    availability: [BUILD, RUNTIME]
+  - variable: SMTP_ENCRYPTION
+    value: tls
+    availability: [BUILD, RUNTIME]
+  - variable: SMTP_FROM_EMAIL
+    value: noreply@dosory.com
+    availability: [BUILD, RUNTIME]
+  - variable: SMTP_FROM_NAME
+    value: Dosory Support
+    availability: [BUILD, RUNTIME]
