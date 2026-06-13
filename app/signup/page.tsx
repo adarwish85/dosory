@@ -185,7 +185,10 @@ export default function SignupPage() {
             // 5. Set custom claims for Firestore security rules
             const claimsResponse = await fetch("/api/auth/set-claims", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${await user.getIdToken()}`,
+                },
                 body: JSON.stringify({
                     uid: user.uid,
                     orgId: orgId,

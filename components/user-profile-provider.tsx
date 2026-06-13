@@ -173,7 +173,10 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
                 if (needsSync) {
                     const response = await fetch("/api/auth/set-claims", {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${await user.getIdToken()}`,
+                        },
                         body: JSON.stringify({
                             uid: user.uid,
                             orgId: profile.actualOrgId || profile.orgId,

@@ -90,7 +90,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 if (profileOrgId) {
                     const response = await fetch("/api/auth/set-claims", {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${await firebaseUser.getIdToken()}`,
+                        },
                         body: JSON.stringify({
                             uid: firebaseUser.uid,
                             orgId: profileOrgId,
