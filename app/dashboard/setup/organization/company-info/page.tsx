@@ -8,14 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
 import { toast } from "sonner";
 import { Check, X, Loader2 } from "lucide-react";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useAuth } from "@/components/auth-provider";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
 
 export default function CompanyInfoPage() {
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
+    const { user } = useAuth();
 
     // General Settings State
     const [localSubdomain, setLocalSubdomain] = useState("");
@@ -76,18 +76,34 @@ export default function CompanyInfoPage() {
         const checkAvailability = async () => {
             setAvailability("loading");
             try {
-                const q = query(collection(db, "organizations"), where("subdomain", "==", localSubdomain));
-                const snapshot = await getDocs(q);
-                setAvailability(snapshot.empty ? "available" : "unavailable");
-                setCheckError(snapshot.empty ? "" : "Subdomain is already taken");
-            } catch (error) {
+                // Runs server-side via the Admin SDK: the tenant-isolated `organizations`
+                // rule denies a client-side cross-org subdomain query.
+                const token = await user?.getIdToken();
+                const res = await fetch("/api/organizations/check-subdomain", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ subdomain: localSubdomain }),
+                });
+                if (!res.ok) throw new Error("check failed");
+                const data: { available: boolean; reason?: string } = await res.json();
+                setAvailability(data.available ? "available" : "unavailable");
+                setCheckError(
+                    data.available
+                        ? ""
+                        : data.reason === "invalid"
+                          ? "Use 2–32 lowercase letters, numbers, or hyphens"
+                          : data.reason === "reserved"
+                            ? "That subdomain is reserved"
+                            : "Subdomain is already taken"
+                );
+            } catch {
                 setCheckError("Error checking availability");
                 setAvailability("unavailable");
             }
         };
         const timeoutId = setTimeout(checkAvailability, 500);
         return () => clearTimeout(timeoutId);
-    }, [localSubdomain, settings.subdomain]);
+    }, [localSubdomain, settings.subdomain, user]);
 
     const handleSaveGeneral = async () => {
         if (availability === "unavailable") {
@@ -120,24 +136,17 @@ export default function CompanyInfoPage() {
         <div className="space-y-6">
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Company Information</h1>
-                <p className="text-gray-500 mt-1">
-                    Manage your company details and general configuration
-                </p>
+                <p className="text-gray-500 mt-1">Manage your company details and general configuration</p>
             </div>
 
             {/* General Configuration */}
             <SettingsSection title="General Configuration" description="Configure subdomain and RTL settings">
-                <SettingsField
-                    label="Subdomain"
-                    description="This will change your dashboard URL"
-                >
+                <SettingsField label="Subdomain" description="This will change your dashboard URL">
                     <div className="flex items-center gap-2">
                         <span className="text-gray-500 font-medium">https://</span>
                         <Input
                             value={localSubdomain}
-                            onChange={(e) =>
-                                setLocalSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
-                            }
+                            onChange={(e) => setLocalSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                             placeholder="my-org"
                             className="max-w-[200px]"
                         />
@@ -266,8 +275,7 @@ export default function CompanyInfoPage() {
                     label="Company Information Format (PDF and HTML)"
                     description={
                         <>
-                            Available variables:{" "}
-                            <span className="text-blue-600">{"{company_name}"}</span>,{" "}
+                            Available variables: <span className="text-blue-600">{"{company_name}"}</span>,{" "}
                             <span className="text-blue-600">{"{address}"}</span>,{" "}
                             <span className="text-blue-600">{"{city}"}</span>,{" "}
                             <span className="text-blue-600">{"{state}"}</span>,{" "}
@@ -282,9 +290,7 @@ export default function CompanyInfoPage() {
                     <Textarea
                         className="min-h-[150px] font-mono text-sm"
                         value={companyInfo.companyInfoFormat}
-                        onChange={(e) =>
-                            setCompanyInfo((prev) => ({ ...prev, companyInfoFormat: e.target.value }))
-                        }
+                        onChange={(e) => setCompanyInfo((prev) => ({ ...prev, companyInfoFormat: e.target.value }))}
                     />
                 </SettingsField>
 
