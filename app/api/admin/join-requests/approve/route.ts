@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import admin from "@/lib/firebase-admin";
+import { getAuthenticatedUser } from "@/lib/auth/getAuthenticatedUser";
+import { setTenantClaims } from "@/lib/auth/claims";
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const { requestId, roleId, isAdmin, permissions, reviewerId } = body;
+        // A1: require a verified caller (reviewer identity comes from the token, not the body).
+        const auth = await getAuthenticatedUser(request);
+        if (!auth.isAuthenticated || !auth.userId) {
+            return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.status || 401 });
+        }
 
-        if (!requestId || !reviewerId) {
-            return NextResponse.json({ error: "Request ID and Reviewer ID are required" }, { status: 400 });
+        const body = await request.json();
+        const { requestId, roleId, isAdmin, permissions } = body;
+
+        if (!requestId) {
+            return NextResponse.json({ error: "Request ID is required" }, { status: 400 });
         }
 
         // Get the request document
@@ -23,6 +31,23 @@ export async function POST(request: NextRequest) {
         if (!requestData) throw new Error("No data in request");
 
         const { userId, userEmail, orgId } = requestData;
+
+        // A1: caller must be an admin of the org this request belongs to. orgId match blocks
+        // cross-tenant approval; admin check (role claim, with a staff-doc fallback for stale
+        // tokens) blocks a regular member from minting staff.
+        if (auth.orgId !== orgId) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+        let callerIsAdmin = auth.role === "admin";
+        if (!callerIsAdmin) {
+            const callerStaff = await adminDb.collection("staff").where("authUid", "==", auth.userId).limit(1).get();
+            callerIsAdmin = !callerStaff.empty && callerStaff.docs[0].data().isAdmin === true;
+        }
+        if (!callerIsAdmin) {
+            return NextResponse.json({ error: "Forbidden: admin access required" }, { status: 403 });
+        }
+
+        const reviewerId = auth.userId; // derived from the verified token, never the body
 
         // Perform atomic updates using a batch
         const batch = adminDb.batch();
@@ -65,6 +90,12 @@ export async function POST(request: NextRequest) {
         // Commit DB changes
         await batch.commit();
 
+        // A4: set the approved user's tenant claims server-side, deterministically — don't
+        // rely on the client self-heal. They are a different session; they pick this up on
+        // their next token refresh (auth-provider / user-profile-provider force a refresh
+        // when the orgId claim is missing).
+        await setTenantClaims(userId, orgId, isAdmin ? "admin" : "staff");
+
         // 4. Send Email (after successful DB commit)
         let emailSent = false;
         try {
@@ -94,8 +125,8 @@ export async function POST(request: NextRequest) {
             emailSent,
             message: "Request approved successfully",
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error("Error approving request:", error);
-        return NextResponse.json({ error: error.message || "Failed to approve request" }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message || "Failed to approve request" }, { status: 500 });
     }
 }

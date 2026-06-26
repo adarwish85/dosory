@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import admin from "@/lib/firebase-admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
+import { provisionTenant } from "@/lib/provisioning/seed-tenant-defaults";
 
 export async function POST(request: NextRequest) {
     try {
+        // A1: minting a tenant + admin is a Super Admin operation only.
+        const authResult = await requireSuperAdmin(request);
+        if (!authResult.success) return authResult.response;
+
         const body = await request.json();
         const {
             email,
@@ -124,6 +130,9 @@ export async function POST(request: NextRequest) {
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 createdBy: userId,
             });
+
+        // Provision subscription + default settings (A2 + A3) so the new tenant can transact.
+        await provisionTenant(tenantId, userId);
 
         // If sendPasswordReset is true, send password reset email
         if (sendPasswordReset) {

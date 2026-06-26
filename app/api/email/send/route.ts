@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email/resend";
+import { getAuthenticatedUser } from "@/lib/auth/getAuthenticatedUser";
 import { WelcomeEmail } from "@/lib/email/templates/WelcomeEmail";
 import { TeamInviteEmail } from "@/lib/email/templates/TeamInviteEmail";
 import { PasswordResetEmail } from "@/lib/email/templates/PasswordResetEmail";
-
-type EmailType = "welcome" | "team-invite" | "password-reset";
 
 interface WelcomePayload {
     type: "welcome";
@@ -34,6 +33,12 @@ type EmailPayload = WelcomePayload | TeamInvitePayload | PasswordResetPayload;
 
 export async function POST(request: NextRequest) {
     try {
+        // A1: require a verified caller — this route is an email relay; do not leave it open.
+        const auth = await getAuthenticatedUser(request);
+        if (!auth.isAuthenticated) {
+            return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.status || 401 });
+        }
+
         const body = (await request.json()) as EmailPayload;
 
         // Validate required fields
@@ -75,7 +80,10 @@ export async function POST(request: NextRequest) {
             }
 
             default:
-                return NextResponse.json({ error: `Unknown email type: ${(body as any).type}` }, { status: 400 });
+                return NextResponse.json(
+                    { error: `Unknown email type: ${(body as { type?: string }).type}` },
+                    { status: 400 }
+                );
         }
 
         if (!result.success) {

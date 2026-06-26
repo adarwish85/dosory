@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -107,13 +107,15 @@ export default function JoinRequestsPage() {
         try {
             const response = await fetch("/api/admin/join-requests/approve", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${await auth.currentUser?.getIdToken()}`,
+                },
                 body: JSON.stringify({
                     requestId: selectedRequest.id,
                     roleId: selectedRole,
                     isAdmin: isAdmin,
                     permissions: selectedPermissions,
-                    reviewerId: profile.uid,
                 }),
             });
 
@@ -129,9 +131,9 @@ export default function JoinRequestsPage() {
             setApproveDialogOpen(false);
 
             // Note: Snapshot listener will automatically update the list
-        } catch (error: any) {
+        } catch (error) {
             console.error("Error approving request:", error);
-            toast.error(error.message || "Failed to approve request");
+            toast.error((error as Error).message || "Failed to approve request");
         } finally {
             setProcessing(false);
         }
@@ -144,10 +146,12 @@ export default function JoinRequestsPage() {
         try {
             const response = await fetch("/api/admin/join-requests/reject", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${await auth.currentUser?.getIdToken()}`,
+                },
                 body: JSON.stringify({
                     requestId: request.id,
-                    reviewerId: profile.uid,
                 }),
             });
 
@@ -160,9 +164,9 @@ export default function JoinRequestsPage() {
             toast.success(
                 `Request from ${request.userEmail} has been rejected. ${data.emailSent ? "(Email sent)" : "(Email failed)"}`
             );
-        } catch (error: any) {
+        } catch (error) {
             console.error("Error rejecting request:", error);
-            toast.error(error.message || "Failed to reject request");
+            toast.error((error as Error).message || "Failed to reject request");
         } finally {
             setProcessing(false);
         }
@@ -233,7 +237,9 @@ export default function JoinRequestsPage() {
                                                 <Clock className="h-3 w-3" />
                                                 {formatDistanceToNow(request.createdAt.toDate(), { addSuffix: true })}
                                                 {request.message && (
-                                                    <span className="ml-2 text-gray-600">&quot;{request.message}&quot;</span>
+                                                    <span className="ml-2 text-gray-600">
+                                                        &quot;{request.message}&quot;
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>

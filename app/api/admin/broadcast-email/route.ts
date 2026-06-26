@@ -1,9 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { sendEmail } from "@/lib/email";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
+        // A1: blasts every tenant across all orgs — Super Admin only.
+        const authResult = await requireSuperAdmin(req);
+        if (!authResult.success) return authResult.response;
+
         const body = await req.json();
         const { subject, html, targetAudience } = body;
 
@@ -15,7 +20,7 @@ export async function POST(req: Request) {
         let query = adminDb.collection("organizations");
 
         if (targetAudience !== "all") {
-            // @ts-expect-error
+            // @ts-expect-error - reassigning a CollectionReference to a narrowed Query type
             query = query.where("status", "==", targetAudience);
         }
 

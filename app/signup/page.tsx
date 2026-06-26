@@ -203,6 +203,22 @@ export default function SignupPage() {
             // 6. Force token refresh to pick up new claims
             await user.getIdToken(true);
 
+            // 6b. Provision subscription + default settings server-side (A2 + A3).
+            // Runs AFTER set-claims + token refresh so the bearer token carries the orgId
+            // claim. Without the subscription doc every write 403s ("No subscription found");
+            // without the seed the tenant lands bare. A throw here triggers the rollback below.
+            const provisionResponse = await fetch("/api/tenants/provision", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${await user.getIdToken()}`,
+                },
+                body: JSON.stringify({ orgId }),
+            });
+            if (!provisionResponse.ok) {
+                throw new Error("Provisioning failed: " + (await provisionResponse.text()));
+            }
+
             // 7. Send Welcome Email (fire-and-forget)
             const protocol = window.location.protocol;
             const host = window.location.host;
@@ -212,7 +228,10 @@ export default function SignupPage() {
 
             fetch("/api/email/send", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${await user.getIdToken()}`,
+                },
                 body: JSON.stringify({
                     type: "welcome",
                     to: user.email,

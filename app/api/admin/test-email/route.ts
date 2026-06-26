@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 
 export async function POST(request: NextRequest) {
     try {
+        // A1: arbitrary subject/HTML to any address — Super Admin only (was an open relay).
+        const authResult = await requireSuperAdmin(request);
+        if (!authResult.success) return authResult.response;
+
         const body = await request.json();
         const { to, subject, html } = body;
 
@@ -23,8 +28,8 @@ export async function POST(request: NextRequest) {
         } else {
             return NextResponse.json({ error: "Failed to send email. Check SMTP settings." }, { status: 500 });
         }
-    } catch (error: any) {
+    } catch (error) {
         console.error("Error sending test email:", error);
-        return NextResponse.json({ error: error.message || "Failed to send test email" }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message || "Failed to send test email" }, { status: 500 });
     }
 }

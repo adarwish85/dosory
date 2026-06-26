@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin"; // Assuming this exists or similar
+import { adminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 
 export async function GET(req: NextRequest) {
+    // A1: a GET that injects fake fixture data into the first tenant it finds — Super Admin
+    // only. (Candidate for deletion: it writes the "Acme Corp" demo data the audit flagged.)
+    const authResult = await requireSuperAdmin(req);
+    if (!authResult.success) return authResult.response;
+
     const { searchParams } = new URL(req.url);
     let userId = searchParams.get("userId");
 
@@ -99,8 +105,8 @@ export async function GET(req: NextRequest) {
         }
 
         return NextResponse.json({ success: true, message: "Data seeded successfully" });
-    } catch (error: any) {
+    } catch (error) {
         console.error("Seeding error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
