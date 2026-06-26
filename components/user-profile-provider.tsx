@@ -38,7 +38,7 @@ const UserProfileContext = createContext<UserProfileContextType>({
 });
 
 export function UserProfileProvider({ children }: { children: ReactNode }) {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, orgId: claimOrgId } = useAuth();
     const { isImpersonating, impersonatedOrgId } = useImpersonation();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -64,9 +64,11 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
                     const actualOrgId = orgId;
                     const actualRole = data.role;
 
-                    // If orgId missing, use uid as fallback (self-heal in background)
+                    // If orgId missing, prefer the authoritative token claim; only fall back
+                    // to the uid when no claim exists either. Falling back to uid for tenants
+                    // that have no organizations doc corrupted orgId and blanked the whole app.
                     if (!orgId) {
-                        orgId = user.uid;
+                        orgId = claimOrgId || user.uid;
                         // Fire-and-forget: repair orgId in background
                         repairMissingOrgId(user.uid, docRef).catch(console.error);
                     }
@@ -88,7 +90,7 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
                     // Auto-create profile for authenticated users without one
                     const newProfile = {
                         email: user.email || "",
-                        orgId: user.uid,
+                        orgId: claimOrgId || user.uid,
                         role: "admin" as const,
                         createdAt: serverTimestamp(),
                     };
@@ -104,7 +106,7 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
         );
 
         return () => unsubscribe();
-    }, [user, authLoading, isImpersonating, impersonatedOrgId]);
+    }, [user, authLoading, isImpersonating, impersonatedOrgId, claimOrgId]);
 
     // Background: Repair missing orgId
     const repairMissingOrgId = async (uid: string, userDocRef: ReturnType<typeof doc>) => {
@@ -113,7 +115,9 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
         const q = query(orgsRef, where("ownerId", "==", uid), limit(1));
 
         const orgSnap = await getDocs(q);
-        const orgId = orgSnap.empty ? uid : orgSnap.docs[0].id;
+        // Prefer an owned organizations doc, then the authoritative token claim's orgId;
+        // never silently overwrite the profile orgId with the uid when a real orgId is known.
+        const orgId = !orgSnap.empty ? orgSnap.docs[0].id : claimOrgId || uid;
         await updateDoc(userDocRef, { orgId });
     };
 
