@@ -461,7 +461,12 @@ service cloud.firestore {
     match /organizations/{orgId}/userSettings/{userId} {
       allow read, write: if isSuperAdmin() || (isOrgMember(orgId) && isOwner(userId));
     }
-    
+
+    // Organization Activity Log Subcollection (use-activity.ts writes here; tenant-scoped by path orgId)
+    match /organizations/{orgId}/activities/{docId} {
+      allow read, write: if isSuperAdmin() || isOrgMember(orgId);
+    }
+
     // User Onboarding State Subcollection
     match /users/{userId}/onboarding/{docId} {
       allow read, write: if isSuperAdmin() || isOwner(userId);
