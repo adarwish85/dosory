@@ -65,3 +65,13 @@ env:
   - variable: SMTP_FROM_NAME
     value: Dosory Support
     availability: [BUILD, RUNTIME]
+  # Observability — Sentry error tracking (A6). The DSN is a public client key (safe to
+  # inline, like NEXT_PUBLIC_FIREBASE_API_KEY). Uncomment and set the value from your Sentry
+  # project (Settings -> Client Keys / DSN) to turn capture on; until then it is a no-op.
+  # The server reuses NEXT_PUBLIC_SENTRY_DSN, so this one variable is enough.
+  # - variable: NEXT_PUBLIC_SENTRY_DSN
+  #   value: https://<key>@<orgId>.ingest.sentry.io/<projectId>
+  #   availability: [BUILD, RUNTIME]
+  # - variable: NEXT_PUBLIC_SENTRY_ENV
+  #   value: production
+  #   availability: [BUILD, RUNTIME]

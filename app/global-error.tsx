@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { AlertCircle, RefreshCw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -10,7 +11,8 @@ import { Button } from "@/components/ui/button";
  */
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
     useEffect(() => {
-        // Log error to monitoring service (e.g., Sentry)
+        // Report to Sentry (no-op until a DSN is configured) + keep the console log.
+        Sentry.captureException(error);
         console.error("Global error:", error);
     }, [error]);
 

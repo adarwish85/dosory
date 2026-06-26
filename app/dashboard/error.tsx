@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -13,7 +14,8 @@ export default function DashboardError({ error, reset }: { error: Error & { dige
     const router = useRouter();
 
     useEffect(() => {
-        // Log error to monitoring service
+        // Report to Sentry (no-op until a DSN is configured) + keep the console log.
+        Sentry.captureException(error);
         console.error("Dashboard error:", error);
     }, [error]);
 
