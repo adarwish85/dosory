@@ -67,7 +67,7 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
     const onSubmit = async (data: ConvertFormData) => {
         try {
             // setIsLoading(true); // Handled by hook
-            const customerId = await convertToCustomer(lead.id, {
+            const customerId = await convertToCustomer(lead, {
                 createContact: data.createContact,
                 createProjectFromDeal: data.createProjectFromDeal,
                 createInvoiceFromEstimate: data.createInvoiceFromEstimate,

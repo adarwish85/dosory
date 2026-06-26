@@ -24,7 +24,7 @@ export function useLeadConversion(profile: UserProfile | null) {
     const [conversionStep, setConversionStep] = useState<string | null>(null);
 
     const convertToCustomer = useCallback(
-        async (leadId: string, options: ConvertLeadOptions = {}): Promise<string> => {
+        async (lead: Lead, options: ConvertLeadOptions = {}): Promise<string> => {
             if (!profile?.orgId) throw new Error("No organization");
 
             setIsConverting(true);
@@ -40,13 +40,11 @@ export function useLeadConversion(profile: UserProfile | null) {
                     selectedEstimateId,
                 } = options;
 
-                // Get lead data
-                setConversionStep("Fetching lead data...");
-                const leadDocRef = doc(db, "leads", leadId);
-                const leadSnap = await getDoc(leadDocRef);
-
-                if (!leadSnap.exists()) throw new Error("Lead not found");
-                const leadDoc = { id: leadSnap.id, ...leadSnap.data() } as Lead;
+                // Use the already-loaded lead the caller passed in. Previously this re-fetched
+                // the lead with getDoc ("Fetching lead data..."), which could hang indefinitely
+                // and freeze the dialog at that step before any write happened.
+                const leadId = lead.id;
+                const leadDoc = lead;
 
                 if (leadDoc.convertedToCustomerId) {
                     throw new Error("Lead already converted to customer: " + leadDoc.convertedToCustomerId);
@@ -208,10 +206,7 @@ export function useLeadConversion(profile: UserProfile | null) {
                     if (snap.docs.length > 0) await batch.commit();
                 };
 
-                await Promise.all([
-                    transferRelated("estimates", "leadId"),
-                    transferRelated("tasks", "relatedTo.id"),
-                ]);
+                await Promise.all([transferRelated("estimates", "leadId"), transferRelated("tasks", "relatedTo.id")]);
 
                 // 6. Transfer lead notes
                 setConversionStep("Transferring notes...");

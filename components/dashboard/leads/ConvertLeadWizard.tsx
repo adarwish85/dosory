@@ -20,7 +20,7 @@ interface ConvertLeadWizardProps {
     open: boolean;
     onClose: () => void;
     lead: Lead | null;
-    onConvert: (leadId: string, overrides: { company?: string; email?: string }) => Promise<string>;
+    onConvert: (lead: Lead, overrides: { company?: string; email?: string }) => Promise<string>;
 }
 
 export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLeadWizardProps) {
@@ -42,16 +42,17 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
     };
 
     const handleConvert = async () => {
+        if (!lead) return;
         setLoading(true);
         setError(null);
         try {
-            await onConvert(lead.id, {
+            await onConvert(lead, {
                 company: company || lead.company || lead.name, // Fallback logic handled in hook too, but explicit here
                 email: email || lead.email,
             });
             onClose();
-        } catch (err: any) {
-            setError(err.message || "Failed to convert lead.");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to convert lead.");
         } finally {
             setLoading(false);
         }
