@@ -292,13 +292,15 @@ export function useUnreadMessages() {
     useEffect(() => {
         if (!profile?.uid || !profile?.orgId) return;
 
-        // We can query conversations where unreadCounts.uid > 0
-        // Firestore queries on map fields can be tricky if we don't know the key,
-        // but here we know the key is `unreadCounts.{uid}`.
+        // Query the user's own conversations (reuses the conversations list index:
+        // orgId + participants[] + updatedAt) and sum unread counts client-side.
+        // Previously this used where(`unreadCounts.{uid}` > 0), a per-user map-field
+        // inequality that requires a per-user composite index (impossible to pre-create),
+        // so it threw failed-precondition on every page.
         const q = query(
             collection(db, "conversations"),
             where("orgId", "==", profile.orgId),
-            where(`unreadCounts.${profile.uid}`, ">", 0)
+            where("participants", "array-contains", profile.uid)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {

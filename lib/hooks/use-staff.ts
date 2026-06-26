@@ -39,11 +39,23 @@ export function useStaff() {
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
-                const data = snapshot.docs.map((doc) => ({
+                const raw = snapshot.docs.map((doc) => ({
                     id: doc.id,
                     ...doc.data(),
                 })) as Staff[];
-                setStaff(data);
+                // A person can have both a uid-keyed and an email-keyed staff doc, which
+                // surfaced as duplicate entries (e.g. in the Assigned-To dropdown). Dedup by
+                // the effective uid (authUid for email-keyed docs, else the doc id), preferring
+                // the uid-keyed record so the assignee id stays stable.
+                const byUid = new Map<string, Staff>();
+                for (const s of raw) {
+                    const key = (s as Staff & { authUid?: string }).authUid || s.id;
+                    const existing = byUid.get(key);
+                    if (!existing || (!s.id.includes("@") && existing.id.includes("@"))) {
+                        byUid.set(key, s);
+                    }
+                }
+                setStaff(Array.from(byUid.values()));
                 setLoading(false);
             },
             (err) => {
