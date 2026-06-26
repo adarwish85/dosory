@@ -373,6 +373,18 @@ service cloud.firestore {
       allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
     }
+
+    // Support tickets (ticket-service.ts writes here, tenant-scoped by `tenantId`).
+    // NOTE: this collection uses `tenantId` while the rest of the platform uses `orgId`;
+    // unifying the field is a separate migration. Rule matches the existing data field.
+    match /tickets/{docId} {
+      allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.tenantId);
+      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.tenantId);
+      match /messages/{msgId} {
+        allow read, write: if isSuperAdmin() ||
+          isOrgMember(get(/databases/$(database)/documents/tickets/$(docId)).data.tenantId);
+      }
+    }
     
     match /credit_notes/{docId} {
       allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
