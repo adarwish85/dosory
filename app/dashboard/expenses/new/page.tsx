@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { expenseFormSchema, type ExpenseFormData } from "@/lib/schemas";
 import { useExpenses, useExpenseCategories } from "@/lib/hooks/use-expenses";
 import { useCustomers } from "@/lib/hooks/use-customers";
+import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,7 @@ export default function CreateExpensePage() {
     const { createExpense } = useExpenses();
     const { categories, loading: categoriesLoading } = useExpenseCategories();
     const { customers, loading: customersLoading } = useCustomers({ status: "active" });
+    const { settings } = useOrganizationSettings();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,15 +41,27 @@ export default function CreateExpensePage() {
             categoryId: "",
             customerId: customerIdParam || "",
             amount: 0,
-            currency: "USD", // TODO: Get from settings
+            currency: settings.currency || "USD",
             date: new Date(),
             billable: false,
             note: "",
         },
     });
 
-    const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        setValue,
+        watch,
+    } = form;
     const date = watch("date");
+
+    // Default the currency to the org's configured currency once settings load
+    // (defaultValues are captured at mount, before settings are available).
+    useEffect(() => {
+        if (settings.currency) setValue("currency", settings.currency);
+    }, [settings.currency, setValue]);
 
     useEffect(() => {
         if (customerIdParam) {
@@ -100,7 +114,9 @@ export default function CreateExpensePage() {
                         {/* Date & Category */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
-                                <Label>Date <span className="text-red-500">*</span></Label>
+                                <Label>
+                                    Date <span className="text-red-500">*</span>
+                                </Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -127,7 +143,9 @@ export default function CreateExpensePage() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="categoryId">Category <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="categoryId">
+                                    Category <span className="text-red-500">*</span>
+                                </Label>
                                 <Select
                                     value={watch("categoryId")}
                                     onValueChange={(val) => setValue("categoryId", val, { shouldValidate: true })}
@@ -140,19 +158,25 @@ export default function CreateExpensePage() {
                                             <div className="p-2 text-xs text-center">Loading...</div>
                                         ) : (
                                             categories.map((c) => (
-                                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                                <SelectItem key={c.id} value={c.id}>
+                                                    {c.name}
+                                                </SelectItem>
                                             ))
                                         )}
                                     </SelectContent>
                                 </Select>
-                                {errors.categoryId && <p className="text-red-500 text-xs">{errors.categoryId.message}</p>}
+                                {errors.categoryId && (
+                                    <p className="text-red-500 text-xs">{errors.categoryId.message}</p>
+                                )}
                             </div>
                         </div>
 
                         {/* Amount & Currency */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="amount">Amount <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="amount">
+                                    Amount <span className="text-red-500">*</span>
+                                </Label>
                                 <Input
                                     type="number"
                                     min="0"
@@ -164,11 +188,10 @@ export default function CreateExpensePage() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="currency">Currency <span className="text-red-500">*</span></Label>
-                                <Select
-                                    value={watch("currency")}
-                                    onValueChange={(val) => setValue("currency", val)}
-                                >
+                                <Label htmlFor="currency">
+                                    Currency <span className="text-red-500">*</span>
+                                </Label>
+                                <Select value={watch("currency")} onValueChange={(val) => setValue("currency", val)}>
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
@@ -195,7 +218,9 @@ export default function CreateExpensePage() {
                                 <SelectContent>
                                     <SelectItem value="none">None</SelectItem>
                                     {customers.map((c) => (
-                                        <SelectItem key={c.id} value={c.id}>{c.company}</SelectItem>
+                                        <SelectItem key={c.id} value={c.id}>
+                                            {c.company}
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -220,7 +245,6 @@ export default function CreateExpensePage() {
                             />
                             <Label htmlFor="billable">Billable to Customer</Label>
                         </div>
-
                     </CardContent>
                     <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
                         <Button type="button" variant="ghost" className="mr-2" onClick={() => router.back()}>
