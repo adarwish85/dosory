@@ -41,6 +41,7 @@ import {
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
 import { saFetch, saPatch, saDelete, saPost } from "@/lib/api/saFetch";
+import { useTranslation } from "@/lib/i18n";
 
 const statusColors: Record<string, string> = {
     active: "bg-green-100 text-green-800",
@@ -50,6 +51,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function TenantsPage() {
+    const { t } = useTranslation();
     const { user: currentUser } = useAuth();
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [loading, setLoading] = useState(true);
@@ -84,9 +86,9 @@ export default function TenantsPage() {
         try {
             await saPatch(`/api/sa/tenants/${tenantId}`, { status: newStatus, actorId: currentUser.uid });
             setTenants((prev) => prev.map((t) => (t.id === tenantId ? { ...t, status: newStatus } : t)));
-            toast.success(`Tenant status changed to ${newStatus}`);
+            toast.success(t("sa.tenants.statusChanged", { status: newStatus }));
         } catch {
-            toast.error("Failed to update tenant status");
+            toast.error(t("sa.tenants.statusUpdateFailed"));
         }
     };
 
@@ -107,10 +109,10 @@ export default function TenantsPage() {
                         : t
                 )
             );
-            toast.success("Tenant updated");
+            toast.success(t("sa.tenants.tenantUpdated"));
             setEditTenant(null);
         } catch {
-            toast.error("Failed to update tenant");
+            toast.error(t("sa.tenants.tenantUpdateFailed"));
         }
     };
 
@@ -119,10 +121,10 @@ export default function TenantsPage() {
         try {
             await saDelete(`/api/sa/tenants/${deleteTenant.id}?actorId=${currentUser.uid}`);
             setTenants((prev) => prev.filter((t) => t.id !== deleteTenant.id));
-            toast.success("Tenant deleted");
+            toast.success(t("sa.tenants.tenantDeleted"));
             setDeleteTenant(null);
         } catch {
-            toast.error("Failed to delete tenant");
+            toast.error(t("sa.tenants.tenantDeleteFailed"));
         }
     };
 
@@ -154,11 +156,11 @@ export default function TenantsPage() {
                 );
             }
 
-            toast.success(`Bulk action completed: ${data.processed} tenants affected`);
+            toast.success(t("sa.tenants.bulkCompleted", { count: data.processed }));
             setSelectedIds(new Set());
             setBulkAction(null);
         } catch {
-            toast.error("Bulk action failed");
+            toast.error(t("sa.tenants.bulkFailed"));
         }
     };
 
@@ -205,11 +207,11 @@ export default function TenantsPage() {
     };
 
     const bulkActionLabels: Record<string, string> = {
-        delete: "Delete Selected",
-        activate: "Activate Selected",
-        suspend: "Suspend Selected",
-        trial: "Set to Trial",
-        cancel: "Cancel Selected",
+        delete: t("sa.tenants.bulkDeleteSelected"),
+        activate: t("sa.tenants.bulkActivateSelected"),
+        suspend: t("sa.tenants.bulkSuspendSelected"),
+        trial: t("sa.tenants.bulkSetToTrial"),
+        cancel: t("sa.tenants.bulkCancelSelected"),
     };
 
     return (
@@ -217,8 +219,8 @@ export default function TenantsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Tenants</h1>
-                    <p className="text-muted-foreground">Manage all platform tenants</p>
+                    <h1 className="text-3xl font-bold tracking-tight">{t("sa.tenants.title")}</h1>
+                    <p className="text-muted-foreground">{t("sa.tenants.subtitle")}</p>
                 </div>
             </div>
 
@@ -227,7 +229,7 @@ export default function TenantsPage() {
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search tenants..."
+                        placeholder={t("sa.tenants.searchPlaceholder")}
                         className="pl-9"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
@@ -236,34 +238,34 @@ export default function TenantsPage() {
 
                 {selectedIds.size > 0 && (
                     <div className="flex gap-2 items-center bg-muted px-4 py-2 rounded-lg">
-                        <span className="text-sm font-medium">{selectedIds.size} selected</span>
+                        <span className="text-sm font-medium">{t("common.selectedCount", { count: selectedIds.size })}</span>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm">
-                                    Bulk Actions
+                                    {t("common.bulkActions")}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuItem onClick={() => setBulkAction("activate")}>
-                                    <CheckCircle className="mr-2 h-4 w-4" /> Activate
+                                    <CheckCircle className="mr-2 h-4 w-4" /> {t("sa.tenants.activate")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setBulkAction("trial")}>
-                                    <Pause className="mr-2 h-4 w-4" /> Set to Trial
+                                    <Pause className="mr-2 h-4 w-4" /> {t("sa.tenants.setToTrial")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setBulkAction("suspend")}>
-                                    <Ban className="mr-2 h-4 w-4" /> Suspend
+                                    <Ban className="mr-2 h-4 w-4" /> {t("sa.tenants.suspend")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setBulkAction("cancel")}>
-                                    <XCircle className="mr-2 h-4 w-4" /> Cancel
+                                    <XCircle className="mr-2 h-4 w-4" /> {t("common.cancel")}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => setBulkAction("delete")} className="text-red-600">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
-                            Clear
+                            {t("common.clear")}
                         </Button>
                     </div>
                 )}
@@ -290,11 +292,11 @@ export default function TenantsPage() {
                                         onCheckedChange={toggleSelectAll}
                                     />
                                 </TableHead>
-                                <TableHead>Tenant</TableHead>
-                                <TableHead>Subdomain</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Plan</TableHead>
-                                <TableHead>Created</TableHead>
+                                <TableHead>{t("sa.tenants.colTenant")}</TableHead>
+                                <TableHead>{t("sa.tenants.colSubdomain")}</TableHead>
+                                <TableHead>{t("sa.tenants.colStatus")}</TableHead>
+                                <TableHead>{t("sa.tenants.colPlan")}</TableHead>
+                                <TableHead>{t("sa.tenants.colCreated")}</TableHead>
                                 <TableHead className="w-12"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -328,7 +330,7 @@ export default function TenantsPage() {
                                     <TableCell colSpan={7} className="h-24 text-center">
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                             <Building2 className="h-8 w-8 opacity-50" />
-                                            <p>No tenants found</p>
+                                            <p>{t("sa.tenants.noTenants")}</p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -364,43 +366,43 @@ export default function TenantsPage() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => setViewTenant(tenant)}>
-                                                        <Eye className="mr-2 h-4 w-4" /> View Details
+                                                        <Eye className="mr-2 h-4 w-4" /> {t("sa.tenants.viewDetails")}
                                                     </DropdownMenuItem>
                                                     <Link href={`/sa/tenants/${tenant.id}`}>
                                                         <DropdownMenuItem>
-                                                            <Building2 className="mr-2 h-4 w-4" /> Full Details Page
+                                                            <Building2 className="mr-2 h-4 w-4" /> {t("sa.tenants.fullDetailsPage")}
                                                         </DropdownMenuItem>
                                                     </Link>
                                                     <DropdownMenuItem onClick={() => openEdit(tenant)}>
-                                                        <Edit className="mr-2 h-4 w-4" /> Edit Tenant
+                                                        <Edit className="mr-2 h-4 w-4" /> {t("sa.tenants.editTenant")}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     {tenant.status !== "active" && (
                                                         <DropdownMenuItem
                                                             onClick={() => handleStatusChange(tenant.id, "active")}
                                                         >
-                                                            <CheckCircle className="mr-2 h-4 w-4" /> Activate
+                                                            <CheckCircle className="mr-2 h-4 w-4" /> {t("sa.tenants.activate")}
                                                         </DropdownMenuItem>
                                                     )}
                                                     {tenant.status !== "trial" && (
                                                         <DropdownMenuItem
                                                             onClick={() => handleStatusChange(tenant.id, "trial")}
                                                         >
-                                                            <Pause className="mr-2 h-4 w-4" /> Set to Trial
+                                                            <Pause className="mr-2 h-4 w-4" /> {t("sa.tenants.setToTrial")}
                                                         </DropdownMenuItem>
                                                     )}
                                                     {tenant.status !== "suspended" && (
                                                         <DropdownMenuItem
                                                             onClick={() => handleStatusChange(tenant.id, "suspended")}
                                                         >
-                                                            <Ban className="mr-2 h-4 w-4" /> Suspend
+                                                            <Ban className="mr-2 h-4 w-4" /> {t("sa.tenants.suspend")}
                                                         </DropdownMenuItem>
                                                     )}
                                                     {tenant.status !== "cancelled" && (
                                                         <DropdownMenuItem
                                                             onClick={() => handleStatusChange(tenant.id, "cancelled")}
                                                         >
-                                                            <XCircle className="mr-2 h-4 w-4" /> Cancel
+                                                            <XCircle className="mr-2 h-4 w-4" /> {t("common.cancel")}
                                                         </DropdownMenuItem>
                                                     )}
                                                     <DropdownMenuSeparator />
@@ -408,7 +410,7 @@ export default function TenantsPage() {
                                                         onClick={() => setDeleteTenant(tenant)}
                                                         className="text-red-600"
                                                     >
-                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Tenant
+                                                        <Trash2 className="mr-2 h-4 w-4" /> {t("sa.tenants.deleteTenant")}
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -425,39 +427,39 @@ export default function TenantsPage() {
             <Dialog open={!!viewTenant} onOpenChange={() => setViewTenant(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Tenant Details</DialogTitle>
+                        <DialogTitle>{t("sa.tenants.tenantDetails")}</DialogTitle>
                     </DialogHeader>
                     {viewTenant && (
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <strong>ID:</strong>
+                                    <strong>{t("sa.tenants.fieldId")}</strong>
                                 </div>
                                 <div className="font-mono text-xs">{viewTenant.id}</div>
                                 <div>
-                                    <strong>Name:</strong>
+                                    <strong>{t("sa.tenants.fieldName")}</strong>
                                 </div>
                                 <div>{viewTenant.name}</div>
                                 <div>
-                                    <strong>Subdomain:</strong>
+                                    <strong>{t("sa.tenants.fieldSubdomain")}</strong>
                                 </div>
                                 <div>{viewTenant.subdomain || "—"}</div>
                                 <div>
-                                    <strong>Status:</strong>
+                                    <strong>{t("sa.tenants.fieldStatus")}</strong>
                                 </div>
                                 <div>
                                     <Badge className={statusColors[viewTenant.status]}>{viewTenant.status}</Badge>
                                 </div>
                                 <div>
-                                    <strong>Plan:</strong>
+                                    <strong>{t("sa.tenants.fieldPlan")}</strong>
                                 </div>
                                 <div>{viewTenant.planId || "—"}</div>
                                 <div>
-                                    <strong>Owner:</strong>
+                                    <strong>{t("sa.tenants.fieldOwner")}</strong>
                                 </div>
                                 <div className="font-mono text-xs">{viewTenant.ownerUserId || "—"}</div>
                                 <div>
-                                    <strong>Created:</strong>
+                                    <strong>{t("sa.tenants.fieldCreated")}</strong>
                                 </div>
                                 <div>{formatDate(viewTenant.createdAt)}</div>
                             </div>
@@ -465,7 +467,7 @@ export default function TenantsPage() {
                     )}
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setViewTenant(null)}>
-                            Close
+                            {t("common.close")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -475,26 +477,26 @@ export default function TenantsPage() {
             <Dialog open={!!editTenant} onOpenChange={() => setEditTenant(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit Tenant</DialogTitle>
-                        <DialogDescription>Update tenant information</DialogDescription>
+                        <DialogTitle>{t("sa.tenants.editTenant")}</DialogTitle>
+                        <DialogDescription>{t("sa.tenants.editTenantDesc")}</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Tenant Name</Label>
+                            <Label>{t("sa.tenants.labelTenantName")}</Label>
                             <Input
                                 value={editForm.name}
                                 onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Subdomain</Label>
+                            <Label>{t("sa.tenants.labelSubdomain")}</Label>
                             <Input
                                 value={editForm.subdomain}
                                 onChange={(e) => setEditForm((prev) => ({ ...prev, subdomain: e.target.value }))}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Status</Label>
+                            <Label>{t("sa.tenants.labelStatus")}</Label>
                             <Select
                                 value={editForm.status}
                                 onValueChange={(val) => setEditForm((prev) => ({ ...prev, status: val }))}
@@ -503,27 +505,27 @@ export default function TenantsPage() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="trial">Trial</SelectItem>
-                                    <SelectItem value="suspended">Suspended</SelectItem>
-                                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                                    <SelectItem value="active">{t("sa.tenants.statusActive")}</SelectItem>
+                                    <SelectItem value="trial">{t("sa.tenants.statusTrial")}</SelectItem>
+                                    <SelectItem value="suspended">{t("sa.tenants.statusSuspended")}</SelectItem>
+                                    <SelectItem value="cancelled">{t("sa.tenants.statusCancelled")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Plan ID</Label>
+                            <Label>{t("sa.tenants.labelPlanId")}</Label>
                             <Input
                                 value={editForm.planId}
                                 onChange={(e) => setEditForm((prev) => ({ ...prev, planId: e.target.value }))}
-                                placeholder="e.g., starter, pro, enterprise"
+                                placeholder={t("sa.tenants.planIdPlaceholder")}
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setEditTenant(null)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
-                        <Button onClick={handleEditTenant}>Save Changes</Button>
+                        <Button onClick={handleEditTenant}>{t("common.saveChanges")}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -532,16 +534,15 @@ export default function TenantsPage() {
             <AlertDialog open={!!deleteTenant} onOpenChange={() => setDeleteTenant(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Tenant</AlertDialogTitle>
+                        <AlertDialogTitle>{t("sa.tenants.deleteTenant")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete <strong>{deleteTenant?.name}</strong>? This will permanently
-                            remove the tenant and all associated data. This action cannot be undone.
+                            {t("sa.tenants.deleteConfirmPrefix")} <strong>{deleteTenant?.name}</strong>{t("sa.tenants.deleteConfirmSuffix")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleDeleteTenant} className="bg-red-600 hover:bg-red-700">
-                            Delete
+                            {t("common.delete")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -551,21 +552,21 @@ export default function TenantsPage() {
             <AlertDialog open={!!bulkAction} onOpenChange={() => setBulkAction(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm Bulk Action</AlertDialogTitle>
+                        <AlertDialogTitle>{t("common.confirmBulkAction")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to{" "}
-                            <strong>{bulkActionLabels[bulkAction || ""]?.toLowerCase()}</strong> for {selectedIds.size}{" "}
-                            tenants?
-                            {bulkAction === "delete" && " This action cannot be undone."}
+                            {t("sa.tenants.bulkConfirmPrefix")}{" "}
+                            <strong>{bulkActionLabels[bulkAction || ""]?.toLowerCase()}</strong>{" "}
+                            {t("sa.tenants.bulkConfirmSuffix", { count: selectedIds.size })}
+                            {bulkAction === "delete" && ` ${t("common.actionCannotBeUndone")}`}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleBulkAction}
                             className={bulkAction === "delete" ? "bg-red-600 hover:bg-red-700" : ""}
                         >
-                            Confirm
+                            {t("common.confirm")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

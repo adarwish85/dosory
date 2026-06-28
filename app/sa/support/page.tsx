@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { SupportIssue } from "@/lib/types/super-admin";
 import { LifeBuoy, AlertCircle } from "lucide-react";
 import { saFetch } from "@/lib/api/saFetch";
+import { useTranslation } from "@/lib/i18n";
 
 const priorityColors: Record<string, string> = {
     low: "bg-gray-100 text-gray-800",
@@ -24,6 +25,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function SupportPage() {
+    const { t } = useTranslation();
     const [issues, setIssues] = useState<SupportIssue[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -46,15 +48,17 @@ export default function SupportPage() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Support Center</h1>
-                <p className="text-muted-foreground">Manage tenant support issues and escalations</p>
+                <h1 className="text-3xl font-bold tracking-tight">{t("sa.support.title")}</h1>
+                <p className="text-muted-foreground">{t("sa.support.subtitle")}</p>
             </div>
 
             {/* Stats */}
             <div className="grid gap-4 md:grid-cols-4">
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Open Issues</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                            {t("sa.support.stats.openIssues")}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{issues.filter((i) => i.status === "open").length}</div>
@@ -62,7 +66,9 @@ export default function SupportPage() {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                            {t("sa.support.stats.inProgress")}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
@@ -72,7 +78,9 @@ export default function SupportPage() {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Critical</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                            {t("sa.support.stats.critical")}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-red-600">
@@ -82,7 +90,9 @@ export default function SupportPage() {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Resolved Today</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                            {t("sa.support.stats.resolvedToday")}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-green-600">0</div>
@@ -100,17 +110,17 @@ export default function SupportPage() {
             {/* Issues Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Active Issues</CardTitle>
+                    <CardTitle>{t("sa.support.activeIssues")}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Subject</TableHead>
-                                <TableHead>Tenant</TableHead>
-                                <TableHead>Priority</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Created</TableHead>
+                                <TableHead>{t("sa.support.col.subject")}</TableHead>
+                                <TableHead>{t("sa.support.col.tenant")}</TableHead>
+                                <TableHead>{t("sa.support.col.priority")}</TableHead>
+                                <TableHead>{t("sa.support.col.status")}</TableHead>
+                                <TableHead>{t("sa.support.col.created")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -140,8 +150,8 @@ export default function SupportPage() {
                                         <div className="flex flex-col items-center gap-3 text-muted-foreground">
                                             <LifeBuoy className="h-10 w-10 opacity-50" />
                                             <div>
-                                                <p className="font-medium">No active incidents</p>
-                                                <p className="text-sm">All systems operating normally</p>
+                                                <p className="font-medium">{t("sa.support.empty.title")}</p>
+                                                <p className="text-sm">{t("sa.support.empty.description")}</p>
                                             </div>
                                         </div>
                                     </TableCell>
@@ -154,11 +164,13 @@ export default function SupportPage() {
                                             {issue.tenantName || issue.tenantId}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge className={priorityColors[issue.priority]}>{issue.priority}</Badge>
+                                            <Badge className={priorityColors[issue.priority]}>
+                                                {t(`sa.support.priority.${issue.priority}`)}
+                                            </Badge>
                                         </TableCell>
                                         <TableCell>
                                             <Badge className={statusColors[issue.status]}>
-                                                {issue.status.replace("_", " ")}
+                                                {t(`sa.support.status.${issue.status}`)}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground text-sm">

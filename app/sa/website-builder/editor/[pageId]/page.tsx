@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Monitor, Smartphone, Tablet, ChevronLeft, Save, Globe } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 // Sub-components (mocked for now, will extract)
 import { EditorSidebar } from "../_components/sidebar";
@@ -22,10 +23,11 @@ export default function EditorPage({ params }: { params: Promise<{ pageId: strin
 }
 
 function EditorShell() {
+    const { t } = useTranslation();
     const { page, deviceMode, setDeviceMode, savePage, publishPage, isLoading, isSaving } = useEditor();
 
     if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
-    if (!page) return <div>Page not found</div>;
+    if (!page) return <div>{t("sa.websiteBuilder.pageNotFound")}</div>;
 
     return (
         <div className="h-screen flex flex-col overflow-hidden bg-background">
@@ -65,10 +67,10 @@ function EditorShell() {
 
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => savePage()} disabled={isSaving}>
-                        <Save className="mr-2 h-3.5 w-3.5" /> Save
+                        <Save className="mr-2 h-3.5 w-3.5" /> {t("common.save")}
                     </Button>
                     <Button size="sm" onClick={() => publishPage()} disabled={isSaving}>
-                        <Globe className="mr-2 h-3.5 w-3.5" /> Publish
+                        <Globe className="mr-2 h-3.5 w-3.5" /> {t("sa.websiteBuilder.publish")}
                     </Button>
                 </div>
             </header>

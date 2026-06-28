@@ -9,17 +9,19 @@ import {
     GripVertical, Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 const SECTIONS = [
-    { type: "hero", label: "Hero Banner", icon: Layout },
-    { type: "features", label: "Features Grid", icon: AlignJustify },
-    { type: "text", label: "Rich Text", icon: Type },
-    { type: "cta", label: "Call to Action", icon: Layout },
-    { type: "testimonials", label: "Testimonials", icon: Layout },
-    { type: "faq", label: "FAQ Accordion", icon: AlignJustify },
+    { type: "hero", labelKey: "sa.websiteBuilder.sidebar.heroBanner", icon: Layout },
+    { type: "features", labelKey: "sa.websiteBuilder.sidebar.featuresGrid", icon: AlignJustify },
+    { type: "text", labelKey: "sa.websiteBuilder.sidebar.richText", icon: Type },
+    { type: "cta", labelKey: "sa.websiteBuilder.sidebar.callToAction", icon: Layout },
+    { type: "testimonials", labelKey: "sa.websiteBuilder.sidebar.testimonials", icon: Layout },
+    { type: "faq", labelKey: "sa.websiteBuilder.sidebar.faqAccordion", icon: AlignJustify },
 ];
 
 export function EditorSidebar() {
+    const { t } = useTranslation();
     const {
         sections, selectedSectionId, selectSection,
         addSection, deleteSection, reorderSections
@@ -31,7 +33,7 @@ export function EditorSidebar() {
     return (
         <div className="flex flex-col h-full bg-muted/10">
             <div className="p-4 border-b">
-                <h2 className="font-semibold text-sm mb-2">Add Content</h2>
+                <h2 className="font-semibold text-sm mb-2">{t("sa.websiteBuilder.sidebar.addContent")}</h2>
                 <div className="grid grid-cols-2 gap-2">
                     {SECTIONS.map(item => (
                         <Button
@@ -42,7 +44,7 @@ export function EditorSidebar() {
                             onClick={() => addSection(item.type as any)}
                         >
                             <item.icon className="mr-2 h-3 w-3" />
-                            {item.label}
+                            {t(item.labelKey)}
                         </Button>
                     ))}
                 </div>
@@ -50,13 +52,13 @@ export function EditorSidebar() {
 
             <div className="flex-1 overflow-hidden flex flex-col">
                 <div className="p-2 bg-muted/20 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Layers ({sections.length})
+                    {t("sa.websiteBuilder.sidebar.layers", { count: sections.length })}
                 </div>
                 <ScrollArea className="flex-1">
                     <div className="p-2 space-y-1">
                         {sections.length === 0 && (
                             <div className="text-xs text-center p-4 text-muted-foreground">
-                                Page is empty. Add a section above.
+                                {t("sa.websiteBuilder.sidebar.emptyLayers")}
                             </div>
                         )}
                         {sections.map((section, index) => (
@@ -73,7 +75,7 @@ export function EditorSidebar() {
                                 <span className="text-xs text-muted-foreground w-4 text-center">{index + 1}</span>
                                 <GripVertical className="h-3 w-3 text-muted-foreground/50" />
                                 <span className="flex-1 truncate font-medium capitalize">
-                                    {section.type} Section
+                                    {t("sa.websiteBuilder.sidebar.sectionLabel", { type: section.type })}
                                 </span>
                                 <Button
                                     variant="ghost"

@@ -17,8 +17,10 @@ import { useAuth } from "@/components/auth-provider";
 import { format } from "date-fns";
 import { Plus, Edit, Globe, Trash2, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 export default function WebsiteBuilderPage() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const router = useRouter();
     const [pages, setPages] = useState<WebsitePage[]>([]);
@@ -40,7 +42,7 @@ export default function WebsiteBuilderPage() {
             const data = await WebsiteService.getPages(WEBSITE_ID);
             setPages(data);
         } catch (error) {
-            toast.error("Failed to load pages");
+            toast.error(t("sa.websiteBuilder.toast.loadPagesFailed"));
             console.error(error);
         } finally {
             setLoading(false);
@@ -56,7 +58,7 @@ export default function WebsiteBuilderPage() {
                 seo: { title: newPage.title, description: "" }
             }, user.uid);
 
-            toast.success("Page created");
+            toast.success(t("sa.websiteBuilder.toast.pageCreated"));
             setIsCreateOpen(false);
             setNewPage({ title: "", slug: "" });
             loadPages();
@@ -64,18 +66,18 @@ export default function WebsiteBuilderPage() {
             // Optionally redirect detailed editor
             // router.push(`/sa/website-builder/editor/${pageId}`);
         } catch (error) {
-            toast.error("Failed to create page");
+            toast.error(t("sa.websiteBuilder.toast.createPageFailed"));
         }
     };
 
     const handleDelete = async (pageId: string) => {
-        if (!confirm("Are you sure? This cannot be undone.")) return;
+        if (!confirm(t("sa.websiteBuilder.confirm.deletePage"))) return;
         try {
             await WebsiteService.deletePage(WEBSITE_ID, pageId);
-            toast.success("Page deleted");
+            toast.success(t("sa.websiteBuilder.toast.pageDeleted"));
             loadPages();
         } catch (error) {
-            toast.error("Failed to delete page");
+            toast.error(t("sa.websiteBuilder.toast.deletePageFailed"));
         }
     };
 
@@ -83,46 +85,46 @@ export default function WebsiteBuilderPage() {
         <div className="space-y-6 max-w-6xl mx-auto">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Website Builder</h1>
-                    <p className="text-muted-foreground">Manage pages and content for {WEBSITE_ID}</p>
+                    <h1 className="text-2xl font-bold tracking-tight">{t("sa.websiteBuilder.title")}</h1>
+                    <p className="text-muted-foreground">{t("sa.websiteBuilder.subtitle", { websiteId: WEBSITE_ID })}</p>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" asChild>
                         <a href="https://dosory.com" target="_blank" rel="noopener noreferrer">
-                            <Globe className="mr-2 h-4 w-4" /> View Live Site
+                            <Globe className="mr-2 h-4 w-4" /> {t("sa.websiteBuilder.viewLiveSite")}
                         </a>
                     </Button>
                     <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                         <DialogTrigger asChild>
                             <Button>
-                                <Plus className="mr-2 h-4 w-4" /> Create Page
+                                <Plus className="mr-2 h-4 w-4" /> {t("sa.websiteBuilder.createPage")}
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Create New Page</DialogTitle>
-                                <DialogDescription>Add a new page to your website with a unique slug.</DialogDescription>
+                                <DialogTitle>{t("sa.websiteBuilder.dialog.createTitle")}</DialogTitle>
+                                <DialogDescription>{t("sa.websiteBuilder.dialog.createDescription")}</DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="space-y-2">
-                                    <Label>Page Title</Label>
+                                    <Label>{t("sa.websiteBuilder.dialog.pageTitleLabel")}</Label>
                                     <Input
-                                        placeholder="e.g. Pricing"
+                                        placeholder={t("sa.websiteBuilder.dialog.pageTitlePlaceholder")}
                                         value={newPage.title}
                                         onChange={(e) => setNewPage({ ...newPage, title: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Slug</Label>
+                                    <Label>{t("sa.websiteBuilder.dialog.slugLabel")}</Label>
                                     <Input
-                                        placeholder="e.g. /pricing"
+                                        placeholder={t("sa.websiteBuilder.dialog.slugPlaceholder")}
                                         value={newPage.slug}
                                         onChange={(e) => setNewPage({ ...newPage, slug: e.target.value })}
                                     />
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button onClick={handleCreatePage} disabled={!newPage.title || !newPage.slug}>Create</Button>
+                                <Button onClick={handleCreatePage} disabled={!newPage.title || !newPage.slug}>{t("common.create")}</Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -131,28 +133,28 @@ export default function WebsiteBuilderPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Pages</CardTitle>
-                    <CardDescription>All pages in this website.</CardDescription>
+                    <CardTitle>{t("sa.websiteBuilder.pagesCard.title")}</CardTitle>
+                    <CardDescription>{t("sa.websiteBuilder.pagesCard.description")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
-                        <div className="text-center py-4">Loading pages...</div>
+                        <div className="text-center py-4">{t("sa.websiteBuilder.loadingPages")}</div>
                     ) : (
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Title</TableHead>
-                                    <TableHead>Slug</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Last Updated</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead>{t("sa.websiteBuilder.table.title")}</TableHead>
+                                    <TableHead>{t("sa.websiteBuilder.table.slug")}</TableHead>
+                                    <TableHead>{t("sa.websiteBuilder.table.status")}</TableHead>
+                                    <TableHead>{t("sa.websiteBuilder.table.lastUpdated")}</TableHead>
+                                    <TableHead className="text-right">{t("sa.websiteBuilder.table.actions")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {pages.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                                            No pages found. Create one to get started.
+                                            {t("sa.websiteBuilder.emptyState")}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -173,7 +175,7 @@ export default function WebsiteBuilderPage() {
                                                     size="sm"
                                                     onClick={() => router.push(`/sa/website-builder/editor/${page.id}`)}
                                                 >
-                                                    <Edit className="mr-2 h-4 w-4" /> Editor
+                                                    <Edit className="mr-2 h-4 w-4" /> {t("sa.websiteBuilder.editor")}
                                                 </Button>
                                                 <Button
                                                     variant="ghost"

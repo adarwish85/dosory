@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AuditLogEntry } from "@/lib/types/super-admin";
 import { Shield, Search, Filter } from "lucide-react";
 import { saFetch } from "@/lib/api/saFetch";
+import { useTranslation } from "@/lib/i18n";
 
 const actionColors: Record<string, string> = {
     create: "bg-green-100 text-green-800",
@@ -19,6 +20,7 @@ const actionColors: Record<string, string> = {
 };
 
 export default function SecurityAuditPage() {
+    const { t } = useTranslation();
     const [logs, setLogs] = useState<AuditLogEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -52,8 +54,8 @@ export default function SecurityAuditPage() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Security & Audit</h1>
-                <p className="text-muted-foreground">View platform-wide audit logs and security events</p>
+                <h1 className="text-3xl font-bold tracking-tight">{t("sa.securityAudit.title")}</h1>
+                <p className="text-muted-foreground">{t("sa.securityAudit.subtitle")}</p>
             </div>
 
             {/* Filters */}
@@ -61,7 +63,7 @@ export default function SecurityAuditPage() {
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search logs..."
+                        placeholder={t("sa.securityAudit.searchPlaceholder")}
                         className="pl-9"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
@@ -69,14 +71,14 @@ export default function SecurityAuditPage() {
                 </div>
                 <Select value={actionFilter} onValueChange={setActionFilter}>
                     <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Filter by action" />
+                        <SelectValue placeholder={t("sa.securityAudit.filterByAction")} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Actions</SelectItem>
-                        <SelectItem value="create">Create</SelectItem>
-                        <SelectItem value="update">Update</SelectItem>
-                        <SelectItem value="delete">Delete</SelectItem>
-                        <SelectItem value="toggle">Toggle</SelectItem>
+                        <SelectItem value="all">{t("sa.securityAudit.action.all")}</SelectItem>
+                        <SelectItem value="create">{t("sa.securityAudit.action.create")}</SelectItem>
+                        <SelectItem value="update">{t("sa.securityAudit.action.update")}</SelectItem>
+                        <SelectItem value="delete">{t("sa.securityAudit.action.delete")}</SelectItem>
+                        <SelectItem value="toggle">{t("sa.securityAudit.action.toggle")}</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -91,18 +93,18 @@ export default function SecurityAuditPage() {
             {/* Logs Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Audit Log</CardTitle>
-                    <CardDescription>Recent administrative actions</CardDescription>
+                    <CardTitle>{t("sa.securityAudit.cardTitle")}</CardTitle>
+                    <CardDescription>{t("sa.securityAudit.cardDesc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Action</TableHead>
-                                <TableHead>Target</TableHead>
-                                <TableHead>Actor</TableHead>
-                                <TableHead>Timestamp</TableHead>
-                                <TableHead>Details</TableHead>
+                                <TableHead>{t("sa.securityAudit.col.action")}</TableHead>
+                                <TableHead>{t("sa.securityAudit.col.target")}</TableHead>
+                                <TableHead>{t("sa.securityAudit.col.actor")}</TableHead>
+                                <TableHead>{t("sa.securityAudit.col.timestamp")}</TableHead>
+                                <TableHead>{t("sa.securityAudit.col.details")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -132,8 +134,8 @@ export default function SecurityAuditPage() {
                                         <div className="flex flex-col items-center gap-3 text-muted-foreground">
                                             <Shield className="h-10 w-10 opacity-50" />
                                             <div>
-                                                <p className="font-medium">No audit logs found</p>
-                                                <p className="text-sm">Actions will appear here as they occur</p>
+                                                <p className="font-medium">{t("sa.securityAudit.empty.title")}</p>
+                                                <p className="text-sm">{t("sa.securityAudit.empty.description")}</p>
                                             </div>
                                         </div>
                                     </TableCell>

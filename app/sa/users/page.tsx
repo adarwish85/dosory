@@ -39,8 +39,10 @@ import {
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
 import { saFetch, saPatch, saDelete, saPost } from "@/lib/api/saFetch";
+import { useTranslation } from "@/lib/i18n";
 
 export default function UsersPage() {
+    const { t } = useTranslation();
     const { user: currentUser } = useAuth();
     const [users, setUsers] = useState<GlobalUser[]>([]);
     const [loading, setLoading] = useState(true);
@@ -75,9 +77,9 @@ export default function UsersPage() {
         try {
             await saPatch(`/api/sa/users/${userId}/status`, { status: newStatus, actorId: currentUser.uid });
             setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status: newStatus } : u)));
-            toast.success(`User ${newStatus === "blocked" ? "blocked" : "activated"}`);
+            toast.success(newStatus === "blocked" ? t("sa.users.userBlocked") : t("sa.users.userActivated"));
         } catch {
-            toast.error("Failed to update user");
+            toast.error(t("sa.users.userUpdateFailed"));
         }
     };
 
@@ -86,9 +88,9 @@ export default function UsersPage() {
         try {
             await saPatch(`/api/sa/users/${userId}/super-admin`, { isSuperAdmin, actorId: currentUser.uid });
             setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isSuperAdmin } : u)));
-            toast.success(isSuperAdmin ? "User granted super admin" : "Super admin revoked");
+            toast.success(isSuperAdmin ? t("sa.users.superAdminGranted") : t("sa.users.superAdminRevoked"));
         } catch {
-            toast.error("Failed to update super admin status");
+            toast.error(t("sa.users.superAdminUpdateFailed"));
         }
     };
 
@@ -97,10 +99,10 @@ export default function UsersPage() {
         try {
             await saPatch(`/api/sa/users/${editUser.id}`, { ...editForm, actorId: currentUser.uid });
             setUsers((prev) => prev.map((u) => (u.id === editUser.id ? { ...u, ...editForm } : u)));
-            toast.success("User updated");
+            toast.success(t("sa.users.userUpdated"));
             setEditUser(null);
         } catch {
-            toast.error("Failed to update user");
+            toast.error(t("sa.users.userUpdateFailed"));
         }
     };
 
@@ -109,10 +111,10 @@ export default function UsersPage() {
         try {
             await saDelete(`/api/sa/users/${deleteUser.id}?actorId=${currentUser.uid}`);
             setUsers((prev) => prev.filter((u) => u.id !== deleteUser.id));
-            toast.success("User deleted");
+            toast.success(t("sa.users.userDeleted"));
             setDeleteUser(null);
         } catch {
-            toast.error("Failed to delete user");
+            toast.error(t("sa.users.userDeleteFailed"));
         }
     };
 
@@ -138,11 +140,11 @@ export default function UsersPage() {
                 setUsers((prev) => prev.map((u) => (selectedIds.has(u.id) ? { ...u, isSuperAdmin: false } : u)));
             }
 
-            toast.success(`Bulk action completed: ${data.processed} users affected`);
+            toast.success(t("sa.users.bulkCompleted", { count: data.processed }));
             setSelectedIds(new Set());
             setBulkAction(null);
         } catch {
-            toast.error("Bulk action failed");
+            toast.error(t("sa.tenants.bulkFailed"));
         }
     };
 
@@ -180,19 +182,19 @@ export default function UsersPage() {
     );
 
     const bulkActionLabels: Record<string, string> = {
-        delete: "Delete Selected",
-        block: "Block Selected",
-        activate: "Activate Selected",
-        grant_super_admin: "Grant Super Admin",
-        revoke_super_admin: "Revoke Super Admin",
+        delete: t("sa.tenants.bulkDeleteSelected"),
+        block: t("sa.users.bulkBlockSelected"),
+        activate: t("sa.tenants.bulkActivateSelected"),
+        grant_super_admin: t("sa.users.grantSuperAdmin"),
+        revoke_super_admin: t("sa.users.revokeSuperAdmin"),
     };
 
     return (
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-                <p className="text-muted-foreground">Manage all platform users across tenants</p>
+                <h1 className="text-3xl font-bold tracking-tight">{t("sa.users.title")}</h1>
+                <p className="text-muted-foreground">{t("sa.users.subtitle")}</p>
             </div>
 
             {/* Search & Bulk Actions */}
@@ -200,7 +202,7 @@ export default function UsersPage() {
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search users..."
+                        placeholder={t("sa.users.searchPlaceholder")}
                         className="pl-9"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
@@ -209,35 +211,35 @@ export default function UsersPage() {
 
                 {selectedIds.size > 0 && (
                     <div className="flex gap-2 items-center bg-muted px-4 py-2 rounded-lg">
-                        <span className="text-sm font-medium">{selectedIds.size} selected</span>
+                        <span className="text-sm font-medium">{t("common.selectedCount", { count: selectedIds.size })}</span>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm">
-                                    Bulk Actions
+                                    {t("common.bulkActions")}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuItem onClick={() => setBulkAction("activate")}>
-                                    <CheckCircle className="mr-2 h-4 w-4" /> Activate
+                                    <CheckCircle className="mr-2 h-4 w-4" /> {t("sa.users.activate")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setBulkAction("block")}>
-                                    <Ban className="mr-2 h-4 w-4" /> Block
+                                    <Ban className="mr-2 h-4 w-4" /> {t("sa.users.block")}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => setBulkAction("grant_super_admin")}>
-                                    <Shield className="mr-2 h-4 w-4" /> Grant Super Admin
+                                    <Shield className="mr-2 h-4 w-4" /> {t("sa.users.grantSuperAdmin")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setBulkAction("revoke_super_admin")}>
-                                    <ShieldOff className="mr-2 h-4 w-4" /> Revoke Super Admin
+                                    <ShieldOff className="mr-2 h-4 w-4" /> {t("sa.users.revokeSuperAdmin")}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => setBulkAction("delete")} className="text-red-600">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
-                            Clear
+                            {t("common.clear")}
                         </Button>
                     </div>
                 )}
@@ -262,11 +264,11 @@ export default function UsersPage() {
                                         onCheckedChange={toggleSelectAll}
                                     />
                                 </TableHead>
-                                <TableHead>User</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Super Admin</TableHead>
-                                <TableHead>Tenants</TableHead>
+                                <TableHead>{t("sa.users.colUser")}</TableHead>
+                                <TableHead>{t("sa.users.colEmail")}</TableHead>
+                                <TableHead>{t("sa.users.colStatus")}</TableHead>
+                                <TableHead>{t("sa.users.colSuperAdmin")}</TableHead>
+                                <TableHead>{t("sa.users.colTenants")}</TableHead>
                                 <TableHead className="w-12"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -300,7 +302,7 @@ export default function UsersPage() {
                                     <TableCell colSpan={7} className="h-24 text-center">
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                             <Users className="h-8 w-8 opacity-50" />
-                                            <p>No users found</p>
+                                            <p>{t("sa.users.noUsers")}</p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -326,7 +328,7 @@ export default function UsersPage() {
                                                     variant="outline"
                                                     className="bg-purple-50 text-purple-700 border-purple-300"
                                                 >
-                                                    <Shield className="h-3 w-3 mr-1" /> Yes
+                                                    <Shield className="h-3 w-3 mr-1" /> {t("common.yes")}
                                                 </Badge>
                                             ) : (
                                                 "—"
@@ -342,36 +344,36 @@ export default function UsersPage() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => setViewUser(u)}>
-                                                        <Eye className="mr-2 h-4 w-4" /> View Details
+                                                        <Eye className="mr-2 h-4 w-4" /> {t("sa.users.viewDetails")}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => openEdit(u)}>
-                                                        <Edit className="mr-2 h-4 w-4" /> Edit User
+                                                        <Edit className="mr-2 h-4 w-4" /> {t("sa.users.editUser")}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     {u.status === "blocked" ? (
                                                         <DropdownMenuItem
                                                             onClick={() => handleStatusChange(u.id, "active")}
                                                         >
-                                                            <CheckCircle className="mr-2 h-4 w-4" /> Activate
+                                                            <CheckCircle className="mr-2 h-4 w-4" /> {t("sa.users.activate")}
                                                         </DropdownMenuItem>
                                                     ) : (
                                                         <DropdownMenuItem
                                                             onClick={() => handleStatusChange(u.id, "blocked")}
                                                         >
-                                                            <Ban className="mr-2 h-4 w-4" /> Block User
+                                                            <Ban className="mr-2 h-4 w-4" /> {t("sa.users.blockUser")}
                                                         </DropdownMenuItem>
                                                     )}
                                                     {u.isSuperAdmin ? (
                                                         <DropdownMenuItem
                                                             onClick={() => handleToggleSuperAdmin(u.id, false)}
                                                         >
-                                                            <ShieldOff className="mr-2 h-4 w-4" /> Revoke Super Admin
+                                                            <ShieldOff className="mr-2 h-4 w-4" /> {t("sa.users.revokeSuperAdmin")}
                                                         </DropdownMenuItem>
                                                     ) : (
                                                         <DropdownMenuItem
                                                             onClick={() => handleToggleSuperAdmin(u.id, true)}
                                                         >
-                                                            <Shield className="mr-2 h-4 w-4" /> Grant Super Admin
+                                                            <Shield className="mr-2 h-4 w-4" /> {t("sa.users.grantSuperAdmin")}
                                                         </DropdownMenuItem>
                                                     )}
                                                     <DropdownMenuSeparator />
@@ -379,7 +381,7 @@ export default function UsersPage() {
                                                         onClick={() => setDeleteUser(u)}
                                                         className="text-red-600"
                                                     >
-                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete User
+                                                        <Trash2 className="mr-2 h-4 w-4" /> {t("sa.users.deleteUser")}
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -396,29 +398,29 @@ export default function UsersPage() {
             <Dialog open={!!viewUser} onOpenChange={() => setViewUser(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>User Details</DialogTitle>
+                        <DialogTitle>{t("sa.users.userDetails")}</DialogTitle>
                     </DialogHeader>
                     {viewUser && (
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <strong>ID:</strong>
+                                    <strong>{t("sa.users.fieldId")}</strong>
                                 </div>
                                 <div className="font-mono text-xs">{viewUser.id}</div>
                                 <div>
-                                    <strong>Display Name:</strong>
+                                    <strong>{t("sa.users.fieldDisplayName")}</strong>
                                 </div>
                                 <div>{viewUser.displayName || "—"}</div>
                                 <div>
-                                    <strong>Email:</strong>
+                                    <strong>{t("sa.users.fieldEmail")}</strong>
                                 </div>
                                 <div>{viewUser.email}</div>
                                 <div>
-                                    <strong>Role:</strong>
+                                    <strong>{t("sa.users.fieldRole")}</strong>
                                 </div>
                                 <div>{viewUser.role || "—"}</div>
                                 <div>
-                                    <strong>Status:</strong>
+                                    <strong>{t("sa.users.fieldStatus")}</strong>
                                 </div>
                                 <div>
                                     <Badge variant={viewUser.status === "active" ? "default" : "destructive"}>
@@ -426,15 +428,15 @@ export default function UsersPage() {
                                     </Badge>
                                 </div>
                                 <div>
-                                    <strong>Super Admin:</strong>
+                                    <strong>{t("sa.users.fieldSuperAdmin")}</strong>
                                 </div>
-                                <div>{viewUser.isSuperAdmin ? "Yes" : "No"}</div>
+                                <div>{viewUser.isSuperAdmin ? t("common.yes") : t("common.no")}</div>
                                 <div>
-                                    <strong>Organization:</strong>
+                                    <strong>{t("sa.users.fieldOrganization")}</strong>
                                 </div>
                                 <div className="font-mono text-xs">{viewUser.orgId || "—"}</div>
                                 <div>
-                                    <strong>Created:</strong>
+                                    <strong>{t("sa.users.fieldCreated")}</strong>
                                 </div>
                                 <div>
                                     {viewUser.createdAt
@@ -446,7 +448,7 @@ export default function UsersPage() {
                     )}
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setViewUser(null)}>
-                            Close
+                            {t("common.close")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -456,19 +458,19 @@ export default function UsersPage() {
             <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit User</DialogTitle>
-                        <DialogDescription>Update user information</DialogDescription>
+                        <DialogTitle>{t("sa.users.editUser")}</DialogTitle>
+                        <DialogDescription>{t("sa.users.editUserDesc")}</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Display Name</Label>
+                            <Label>{t("sa.users.labelDisplayName")}</Label>
                             <Input
                                 value={editForm.displayName}
                                 onChange={(e) => setEditForm((prev) => ({ ...prev, displayName: e.target.value }))}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Email</Label>
+                            <Label>{t("sa.users.labelEmail")}</Label>
                             <Input
                                 type="email"
                                 value={editForm.email}
@@ -476,19 +478,19 @@ export default function UsersPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Role</Label>
+                            <Label>{t("sa.users.labelRole")}</Label>
                             <Input
                                 value={editForm.role}
                                 onChange={(e) => setEditForm((prev) => ({ ...prev, role: e.target.value }))}
-                                placeholder="admin, member, etc."
+                                placeholder={t("sa.users.rolePlaceholder")}
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setEditUser(null)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
-                        <Button onClick={handleEditUser}>Save Changes</Button>
+                        <Button onClick={handleEditUser}>{t("common.saveChanges")}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -497,16 +499,15 @@ export default function UsersPage() {
             <AlertDialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete User</AlertDialogTitle>
+                        <AlertDialogTitle>{t("sa.users.deleteUser")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete <strong>{deleteUser?.email}</strong>? This action cannot be
-                            undone.
+                            {t("sa.users.deleteConfirmPrefix")} <strong>{deleteUser?.email}</strong>{t("sa.users.deleteConfirmSuffix")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleDeleteUser} className="bg-red-600 hover:bg-red-700">
-                            Delete
+                            {t("common.delete")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -516,21 +517,21 @@ export default function UsersPage() {
             <AlertDialog open={!!bulkAction} onOpenChange={() => setBulkAction(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm Bulk Action</AlertDialogTitle>
+                        <AlertDialogTitle>{t("common.confirmBulkAction")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to{" "}
-                            <strong>{bulkActionLabels[bulkAction || ""]?.toLowerCase()}</strong> for {selectedIds.size}{" "}
-                            users?
-                            {bulkAction === "delete" && " This action cannot be undone."}
+                            {t("sa.users.bulkConfirmPrefix")}{" "}
+                            <strong>{bulkActionLabels[bulkAction || ""]?.toLowerCase()}</strong>{" "}
+                            {t("sa.users.bulkConfirmSuffix", { count: selectedIds.size })}
+                            {bulkAction === "delete" && ` ${t("common.actionCannotBeUndone")}`}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleBulkAction}
                             className={bulkAction === "delete" ? "bg-red-600 hover:bg-red-700" : ""}
                         >
-                            Confirm
+                            {t("common.confirm")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

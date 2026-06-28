@@ -13,6 +13,7 @@ import { useAuth } from "@/components/auth-provider";
 import { useImpersonation } from "@/lib/contexts/ImpersonationContext";
 import { toast } from "sonner";
 import { saFetch, saGet, saPatch } from "@/lib/api/saFetch";
+import { useTranslation } from "@/lib/i18n";
 
 const statusColors: Record<string, string> = {
     active: "bg-green-100 text-green-800",
@@ -38,6 +39,7 @@ type BillingStatus = "active" | "past_due" | "suspended" | "canceled";
 
 export default function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
+    const { t } = useTranslation();
     const { user } = useAuth();
     const { startImpersonation } = useImpersonation();
     const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -94,9 +96,9 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
         try {
             await saPatch(`/api/sa/tenants/${id}`, { status: newStatus, actorId: user.uid });
             setTenant((prev) => (prev ? { ...prev, status: newStatus } : null));
-            toast.success(`Tenant status updated to ${newStatus}`);
+            toast.success(t("sa.tenantDetail.statusUpdated", { status: newStatus }));
         } catch {
-            toast.error("Failed to update status");
+            toast.error(t("sa.tenantDetail.statusUpdateFailed"));
         } finally {
             setUpdating(false);
         }
@@ -104,7 +106,7 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
 
     const handleSubscriptionUpdate = async (status: BillingStatus) => {
         if (!selectedPlan) {
-            toast.error("Select a published plan first");
+            toast.error(t("sa.tenantDetail.selectPlanFirst"));
             return;
         }
         setSubBusy(true);
@@ -117,9 +119,9 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                 status,
             });
             setSubscription(res.subscription);
-            toast.success(`Subscription set to ${status}`);
+            toast.success(t("sa.tenantDetail.subscriptionSet", { status }));
         } catch (e: unknown) {
-            toast.error("Failed to update subscription: " + ((e as Error).message || "Unknown error"));
+            toast.error(t("sa.tenantDetail.subscriptionUpdateFailed", { message: (e as Error).message || t("common.unknownError") }));
         } finally {
             setSubBusy(false);
         }
@@ -139,12 +141,12 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                 }),
             });
 
-            toast.info("Starting impersonation session...");
+            toast.info(t("sa.tenantDetail.startingImpersonation"));
 
             // Switch context
             startImpersonation(result.sessionId, id);
         } catch (e: unknown) {
-            toast.error("Failed to start impersonation: " + ((e as Error).message || "Unknown error"));
+            toast.error(t("sa.tenantDetail.impersonationFailed", { message: (e as Error).message || t("common.unknownError") }));
             setImpersonating(false);
         }
     };
@@ -169,11 +171,11 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
             <div className="space-y-6">
                 <Link href="/sa/tenants">
                     <Button variant="ghost">
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tenants
+                        <ArrowLeft className="mr-2 h-4 w-4" /> {t("sa.tenantDetail.backToTenants")}
                     </Button>
                 </Link>
                 <Card className="border-red-500">
-                    <CardContent className="pt-6 text-center text-red-600">{error || "Tenant not found"}</CardContent>
+                    <CardContent className="pt-6 text-center text-red-600">{error || t("sa.tenantDetail.tenantNotFound")}</CardContent>
                 </Card>
             </div>
         );
@@ -206,22 +208,22 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                 {/* Details Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Tenant Details</CardTitle>
+                        <CardTitle>{t("sa.tenantDetail.tenantDetails")}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex items-center gap-3">
                             <Globe className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">Subdomain:</span>
+                            <span className="text-sm font-medium">{t("sa.tenantDetail.subdomainLabel")}</span>
                             <span className="text-sm text-muted-foreground">{tenant.subdomain}</span>
                         </div>
                         <div className="flex items-center gap-3">
                             <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">Owner ID:</span>
+                            <span className="text-sm font-medium">{t("sa.tenantDetail.ownerIdLabel")}</span>
                             <span className="text-sm text-muted-foreground font-mono">{tenant.ownerUserId}</span>
                         </div>
                         <div className="flex items-center gap-3">
                             <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">Created:</span>
+                            <span className="text-sm font-medium">{t("sa.tenantDetail.createdLabel")}</span>
                             <span className="text-sm text-muted-foreground">
                                 {tenant.createdAt?.toDate?.()?.toLocaleDateString() || "—"}
                             </span>
@@ -229,7 +231,7 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                         {tenant.planId && (
                             <div className="flex items-center gap-3">
                                 <Palette className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm font-medium">Plan:</span>
+                                <span className="text-sm font-medium">{t("sa.tenantDetail.planLabel")}</span>
                                 <span className="text-sm text-muted-foreground">{tenant.planId}</span>
                             </div>
                         )}
@@ -239,12 +241,12 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                 {/* Actions Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Actions</CardTitle>
-                        <CardDescription>Manage tenant status and settings</CardDescription>
+                        <CardTitle>{t("sa.tenantDetail.actions")}</CardTitle>
+                        <CardDescription>{t("sa.tenantDetail.actionsDesc")}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <p className="text-sm font-medium">Change Status</p>
+                            <p className="text-sm font-medium">{t("sa.tenantDetail.changeStatus")}</p>
                             <div className="flex flex-wrap gap-2">
                                 {(["active", "trial", "suspended", "cancelled"] as const).map((status) => (
                                     <Button
@@ -261,7 +263,7 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                         </div>
                         <Separator />
                         <div className="space-y-2">
-                            <p className="text-sm font-medium">Impersonation</p>
+                            <p className="text-sm font-medium">{t("sa.tenantDetail.impersonation")}</p>
                             <Button
                                 variant="secondary"
                                 disabled={impersonating || tenant.status === "cancelled"}
@@ -269,10 +271,10 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                                 className="w-full sm:w-auto"
                             >
                                 <LockKeyhole className="mr-2 h-4 w-4" />
-                                {impersonating ? "Starting Session..." : "Impersonate Tenant Admin"}
+                                {impersonating ? t("sa.tenantDetail.startingSession") : t("sa.tenantDetail.impersonateAdmin")}
                             </Button>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Caution: You will be logged in as an admin of this tenant. All actions are audited.
+                                {t("sa.tenantDetail.impersonationCaution")}
                             </p>
                         </div>
                     </CardContent>
@@ -282,15 +284,15 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <CreditCard className="h-5 w-5" /> Subscription (Billing)
+                            <CreditCard className="h-5 w-5" /> {t("sa.tenantDetail.subscriptionBilling")}
                         </CardTitle>
-                        <CardDescription>Activate or change the tenant&apos;s billing plan and status</CardDescription>
+                        <CardDescription>{t("sa.tenantDetail.subscriptionDesc")}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex items-center gap-2 text-sm">
-                            <span className="font-medium">Current:</span>
+                            <span className="font-medium">{t("sa.tenantDetail.currentLabel")}</span>
                             <Badge className={statusColors[subscription?.status ?? ""] || "bg-gray-100 text-gray-800"}>
-                                {subscription?.status ?? "none"}
+                                {subscription?.status ?? t("sa.tenantDetail.none")}
                             </Badge>
                             {subscription?.planId && (
                                 <span className="text-muted-foreground font-mono text-xs">{subscription.planId}</span>
@@ -299,12 +301,12 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
 
                         {plans.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
-                                No published plans. Publish a plan in Billing Plans first.
+                                {t("sa.tenantDetail.noPublishedPlans")}
                             </p>
                         ) : (
                             <>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Plan</label>
+                                    <label className="text-sm font-medium">{t("sa.tenantDetail.planSelectLabel")}</label>
                                     <select
                                         className="w-full border rounded-md h-9 px-2 text-sm bg-background"
                                         value={selectedPlan}
@@ -318,14 +320,14 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Billing cycle</label>
+                                    <label className="text-sm font-medium">{t("sa.tenantDetail.billingCycle")}</label>
                                     <select
                                         className="w-full border rounded-md h-9 px-2 text-sm bg-background"
                                         value={billingCycle}
                                         onChange={(e) => setBillingCycle(e.target.value as "monthly" | "annual")}
                                     >
-                                        <option value="monthly">Monthly</option>
-                                        <option value="annual">Annual</option>
+                                        <option value="monthly">{t("sa.tenantDetail.monthly")}</option>
+                                        <option value="annual">{t("sa.tenantDetail.annual")}</option>
                                     </select>
                                 </div>
                                 <Button
@@ -333,11 +335,11 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                                     disabled={subBusy || !selectedPlan}
                                     onClick={() => handleSubscriptionUpdate("active")}
                                 >
-                                    {subBusy ? "Working…" : "Activate (mark paid)"}
+                                    {subBusy ? t("sa.tenantDetail.working") : t("sa.tenantDetail.activateMarkPaid")}
                                 </Button>
                                 <Separator />
                                 <div className="space-y-2">
-                                    <p className="text-sm font-medium">Lifecycle</p>
+                                    <p className="text-sm font-medium">{t("sa.tenantDetail.lifecycle")}</p>
                                     <div className="flex flex-wrap gap-2">
                                         <Button
                                             variant="outline"
@@ -345,7 +347,7 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                                             disabled={subBusy}
                                             onClick={() => handleSubscriptionUpdate("past_due")}
                                         >
-                                            Past due
+                                            {t("sa.tenantDetail.pastDue")}
                                         </Button>
                                         <Button
                                             variant="outline"
@@ -353,7 +355,7 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                                             disabled={subBusy}
                                             onClick={() => handleSubscriptionUpdate("suspended")}
                                         >
-                                            Suspend
+                                            {t("sa.tenantDetail.suspend")}
                                         </Button>
                                         <Button
                                             variant="outline"
@@ -361,11 +363,11 @@ export default function TenantDetailPage({ params }: { params: Promise<{ id: str
                                             disabled={subBusy}
                                             onClick={() => handleSubscriptionUpdate("canceled")}
                                         >
-                                            Cancel
+                                            {t("common.cancel")}
                                         </Button>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        Suspended / canceled / past-due block tenant writes. Activate restores access.
+                                        {t("sa.tenantDetail.lifecycleHint")}
                                     </p>
                                 </div>
                             </>

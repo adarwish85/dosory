@@ -8,8 +8,10 @@ import { Separator } from "@/components/ui/separator";
 import { MediaLibrary } from "@/components/sa/media-library";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export function EditorProperties() {
+    const { t } = useTranslation();
     const { sections, selectedSectionId, updateSection } = useEditor();
 
     const selectedSection = sections.find(s => s.id === selectedSectionId);
@@ -17,7 +19,7 @@ export function EditorProperties() {
     if (!selectedSectionId || !selectedSection) {
         return (
             <div className="p-8 text-center text-muted-foreground text-sm">
-                Select a section to edit its properties.
+                {t("sa.websiteBuilder.properties.noSelection")}
             </div>
         );
     }
@@ -33,43 +35,43 @@ export function EditorProperties() {
     return (
         <div className="flex flex-col h-full">
             <div className="p-4 border-b bg-muted/10">
-                <h2 className="font-semibold text-sm capitalize">{type} Properties</h2>
-                <p className="text-xs text-muted-foreground truncate">ID: {selectedSectionId}</p>
+                <h2 className="font-semibold text-sm capitalize">{t("sa.websiteBuilder.properties.headerTitle", { type })}</h2>
+                <p className="text-xs text-muted-foreground truncate">{t("sa.websiteBuilder.properties.idLabel", { id: selectedSectionId })}</p>
             </div>
 
             <div className="p-4 space-y-6 flex-1 overflow-auto">
                 {type === "hero" && (
                     <>
                         <div className="space-y-2">
-                            <Label>Headline</Label>
+                            <Label>{t("sa.websiteBuilder.properties.headline")}</Label>
                             <Input
                                 value={config.headline || ""}
                                 onChange={(e) => handleChange("headline", e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Subheadline</Label>
+                            <Label>{t("sa.websiteBuilder.properties.subheadline")}</Label>
                             <Textarea
                                 value={config.subheadline || ""}
                                 onChange={(e) => handleChange("subheadline", e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>CTA Text</Label>
+                            <Label>{t("sa.websiteBuilder.properties.ctaText")}</Label>
                             <Input
                                 value={config.ctaText || ""}
                                 onChange={(e) => handleChange("ctaText", e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>CTA Link</Label>
+                            <Label>{t("sa.websiteBuilder.properties.ctaLink")}</Label>
                             <Input
                                 value={config.ctaLink || ""}
                                 onChange={(e) => handleChange("ctaLink", e.target.value)}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Background Image</Label>
+                            <Label>{t("sa.websiteBuilder.properties.backgroundImage")}</Label>
                             <div className="flex gap-2">
                                 <Input
                                     value={config.backgroundImage || ""}
@@ -88,18 +90,18 @@ export function EditorProperties() {
                 {type === "features" && (
                     <>
                         <div className="space-y-2">
-                            <Label>Section Title</Label>
+                            <Label>{t("sa.websiteBuilder.properties.sectionTitle")}</Label>
                             <Input
                                 value={config.title || ""}
                                 onChange={(e) => handleChange("title", e.target.value)}
                             />
                         </div>
                         <div className="space-y-4 pt-4">
-                            <Label>Features List</Label>
+                            <Label>{t("sa.websiteBuilder.properties.featuresList")}</Label>
                             {(config.features || []).map((f: any, i: number) => (
                                 <div key={i} className="p-3 border rounded-md space-y-2 bg-muted/20">
                                     <Input
-                                        placeholder="Feature Title"
+                                        placeholder={t("sa.websiteBuilder.properties.featureTitlePlaceholder")}
                                         value={f.title}
                                         onChange={(e) => {
                                             const newFeatures = [...(config.features || [])];
@@ -108,7 +110,7 @@ export function EditorProperties() {
                                         }}
                                     />
                                     <Textarea
-                                        placeholder="Description"
+                                        placeholder={t("sa.websiteBuilder.properties.descriptionPlaceholder")}
                                         value={f.description}
                                         onChange={(e) => {
                                             const newFeatures = [...(config.features || [])];
@@ -126,7 +128,7 @@ export function EditorProperties() {
                                     handleChange("features", newFeatures);
                                 }}
                             >
-                                + Add Feature
+                                {t("sa.websiteBuilder.properties.addFeature")}
                             </button>
                         </div>
                     </>
@@ -134,7 +136,7 @@ export function EditorProperties() {
 
                 {type === "text" && (
                     <div className="space-y-2">
-                        <Label>Content (HTML)</Label>
+                        <Label>{t("sa.websiteBuilder.properties.contentHtml")}</Label>
                         <Textarea
                             className="font-mono text-xs h-60"
                             value={config.content || ""}
@@ -146,15 +148,15 @@ export function EditorProperties() {
                 {type === "cta" && (
                     <>
                         <div className="space-y-2">
-                            <Label>Headline</Label>
+                            <Label>{t("sa.websiteBuilder.properties.headline")}</Label>
                             <Input value={config.headline || ""} onChange={(e) => handleChange("headline", e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label>Subheadline</Label>
+                            <Label>{t("sa.websiteBuilder.properties.subheadline")}</Label>
                             <Textarea value={config.subheadline || ""} onChange={(e) => handleChange("subheadline", e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label>Button Text</Label>
+                            <Label>{t("sa.websiteBuilder.properties.buttonText")}</Label>
                             <Input value={config.buttonText || ""} onChange={(e) => handleChange("buttonText", e.target.value)} />
                         </div>
                     </>
@@ -163,11 +165,11 @@ export function EditorProperties() {
                 {type === "pricing" && (
                     <>
                         <div className="space-y-2">
-                            <Label>Title</Label>
+                            <Label>{t("sa.websiteBuilder.properties.title")}</Label>
                             <Input value={config.title || ""} onChange={(e) => handleChange("title", e.target.value)} />
                         </div>
                         <div className="space-y-4 pt-4">
-                            <Label>Plans (JSON)</Label>
+                            <Label>{t("sa.websiteBuilder.properties.plansJson")}</Label>
                             <Textarea
                                 className="font-mono text-xs h-40"
                                 placeholder='[{"name": "Pro", "price": "$10"}]'
@@ -180,7 +182,7 @@ export function EditorProperties() {
                                     }
                                 }}
                             />
-                            <p className="text-[10px] text-muted-foreground">Edit as JSON for V1. Visual list builder coming soon.</p>
+                            <p className="text-[10px] text-muted-foreground">{t("sa.websiteBuilder.properties.jsonHint")}</p>
                         </div>
                     </>
                 )}
@@ -188,11 +190,11 @@ export function EditorProperties() {
                 {type === "testimonials" && (
                     <>
                         <div className="space-y-2">
-                            <Label>Title</Label>
+                            <Label>{t("sa.websiteBuilder.properties.title")}</Label>
                             <Input value={config.title || ""} onChange={(e) => handleChange("title", e.target.value)} />
                         </div>
                         <div className="space-y-4 pt-4">
-                            <Label>Testimonials (JSON)</Label>
+                            <Label>{t("sa.websiteBuilder.properties.testimonialsJson")}</Label>
                             <Textarea
                                 className="font-mono text-xs h-40"
                                 value={JSON.stringify(config.testimonials || [], null, 2)}
@@ -207,11 +209,11 @@ export function EditorProperties() {
                 {type === "faq" && (
                     <>
                         <div className="space-y-2">
-                            <Label>Title</Label>
+                            <Label>{t("sa.websiteBuilder.properties.title")}</Label>
                             <Input value={config.title || ""} onChange={(e) => handleChange("title", e.target.value)} />
                         </div>
                         <div className="space-y-4 pt-4">
-                            <Label>FAQ Items (JSON)</Label>
+                            <Label>{t("sa.websiteBuilder.properties.faqItemsJson")}</Label>
                             <Textarea
                                 className="font-mono text-xs h-40"
                                 value={JSON.stringify(config.items || [], null, 2)}
@@ -226,16 +228,16 @@ export function EditorProperties() {
                 {/* Fallback for other types */}
                 {!["hero", "features", "text", "cta", "pricing", "testimonials", "faq"].includes(type) && (
                     <div className="text-sm text-muted-foreground p-4 border border-dashed rounded bg-muted/10">
-                        Generic Config Editor coming soon.
+                        {t("sa.websiteBuilder.properties.genericEditorComingSoon")}
                     </div>
                 )}
 
                 <Separator />
 
                 <div className="space-y-2">
-                    <Label>Styles (CSS Class)</Label>
+                    <Label>{t("sa.websiteBuilder.properties.stylesCssClass")}</Label>
                     <Input
-                        placeholder="e.g. bg-blue-50"
+                        placeholder={t("sa.websiteBuilder.properties.stylesPlaceholder")}
                         value={config.className || ""}
                         onChange={(e) => handleChange("className", e.target.value)}
                     />

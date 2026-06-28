@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { ModuleCatalog } from "@/lib/types/super-admin";
 import { Settings, Package, Zap, Crown } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { useTranslation } from "@/lib/i18n";
 import { toast } from "sonner";
 import { saFetch, saPatch } from "@/lib/api/saFetch";
 
@@ -25,6 +26,7 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function ModulesPage() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [modules, setModules] = useState<ModuleCatalog[]>([]);
     const [loading, setLoading] = useState(true);
@@ -49,9 +51,9 @@ export default function ModulesPage() {
         try {
             await saPatch("/api/sa/modules", { moduleKey, isEnabled, actorId: user.uid });
             setModules((prev) => prev.map((m) => (m.moduleKey === moduleKey ? { ...m, isEnabled } : m)));
-            toast.success(`Module ${isEnabled ? "enabled" : "disabled"}`);
+            toast.success(isEnabled ? t("sa.modules.toast.enabled") : t("sa.modules.toast.disabled"));
         } catch {
-            toast.error("Failed to update module");
+            toast.error(t("sa.modules.toast.updateFailed"));
         }
     };
 
@@ -59,8 +61,8 @@ export default function ModulesPage() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Modules</h1>
-                <p className="text-muted-foreground">Manage platform modules and feature toggles</p>
+                <h1 className="text-3xl font-bold tracking-tight">{t("sa.modules.title")}</h1>
+                <p className="text-muted-foreground">{t("sa.modules.subtitle")}</p>
             </div>
 
             {/* Error */}
@@ -85,8 +87,8 @@ export default function ModulesPage() {
                     <Card className="md:col-span-3">
                         <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                             <Settings className="h-12 w-12 mb-4 opacity-50" />
-                            <p className="text-lg font-medium">No modules configured</p>
-                            <p className="text-sm">Modules will be seeded automatically on first API call</p>
+                            <p className="text-lg font-medium">{t("sa.modules.empty.title")}</p>
+                            <p className="text-sm">{t("sa.modules.empty.description")}</p>
                         </CardContent>
                     </Card>
                 ) : (
@@ -103,7 +105,7 @@ export default function ModulesPage() {
                                             <div>
                                                 <CardTitle className="text-base">{mod.name}</CardTitle>
                                                 <Badge className={categoryColors[mod.category]} variant="secondary">
-                                                    {mod.category}
+                                                    {t(`sa.modules.category.${mod.category}`)}
                                                 </Badge>
                                             </div>
                                         </div>

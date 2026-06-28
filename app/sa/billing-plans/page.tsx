@@ -37,6 +37,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/components/auth-provider";
+import { useTranslation } from "@/lib/i18n";
 import { toast } from "sonner";
 import { saGet, saPost, saPatch } from "@/lib/api/saFetch";
 import { Plan, Addon, Subscription, UsageExceeded, PlanStatus } from "@/lib/types/billing";
@@ -63,28 +64,29 @@ import {
 } from "lucide-react";
 
 export default function BillingPlansPage() {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState("plans");
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Billing & Plans</h1>
-                <p className="text-muted-foreground">Manage subscription plans, addons, and tenant billing</p>
+                <h1 className="text-3xl font-bold tracking-tight">{t("sa.billingPlans.title")}</h1>
+                <p className="text-muted-foreground">{t("sa.billingPlans.subtitle")}</p>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid grid-cols-4 w-full max-w-2xl">
                     <TabsTrigger value="plans" className="flex gap-2">
-                        <CreditCard className="h-4 w-4" /> Plans
+                        <CreditCard className="h-4 w-4" /> {t("sa.billingPlans.tabs.plans")}
                     </TabsTrigger>
                     <TabsTrigger value="addons" className="flex gap-2">
-                        <Package className="h-4 w-4" /> Addons
+                        <Package className="h-4 w-4" /> {t("sa.billingPlans.tabs.addons")}
                     </TabsTrigger>
                     <TabsTrigger value="subscriptions" className="flex gap-2">
-                        <Users className="h-4 w-4" /> Subscriptions
+                        <Users className="h-4 w-4" /> {t("sa.billingPlans.tabs.subscriptions")}
                     </TabsTrigger>
                     <TabsTrigger value="usage" className="flex gap-2">
-                        <BarChart3 className="h-4 w-4" /> Usage
+                        <BarChart3 className="h-4 w-4" /> {t("sa.billingPlans.tabs.usage")}
                     </TabsTrigger>
                 </TabsList>
 
@@ -109,6 +111,7 @@ export default function BillingPlansPage() {
 // PLANS TAB
 // ============================================
 function PlansTab() {
+    const { t } = useTranslation();
     const [plans, setPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -140,7 +143,7 @@ function PlansTab() {
     const handlePublish = async (plan: Plan) => {
         try {
             await saPost(`/api/sa/billing/plans/${plan.id}/publish`, {});
-            toast.success("Plan published");
+            toast.success(t("sa.billingPlans.toast.planPublished"));
             fetchPlans();
             setConfirmAction(null);
         } catch (err: unknown) {
@@ -151,7 +154,7 @@ function PlansTab() {
     const handleArchive = async (plan: Plan) => {
         try {
             await saPost(`/api/sa/billing/plans/${plan.id}/archive`, {});
-            toast.success("Plan archived");
+            toast.success(t("sa.billingPlans.toast.planArchived"));
             fetchPlans();
             setConfirmAction(null);
         } catch (err: unknown) {
@@ -162,7 +165,7 @@ function PlansTab() {
     const handleDuplicate = async (plan: Plan) => {
         try {
             await saPost(`/api/sa/billing/plans/${plan.id}/duplicate-version`, {});
-            toast.success("Plan duplicated as new draft");
+            toast.success(t("sa.billingPlans.toast.planDuplicated"));
             fetchPlans();
         } catch (err: unknown) {
             toast.error((err as Error).message || String(err));
@@ -179,7 +182,7 @@ function PlansTab() {
             published: "bg-green-100 text-green-800",
             archived: "bg-gray-100 text-gray-600",
         };
-        return <Badge className={colors[status]}>{status}</Badge>;
+        return <Badge className={colors[status]}>{t(`sa.billingPlans.status.${status}`)}</Badge>;
     };
 
     return (
@@ -188,27 +191,27 @@ function PlansTab() {
                 <div className="flex gap-4 items-center">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                         <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Status" />
+                            <SelectValue placeholder={t("sa.billingPlans.filter.status")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Status</SelectItem>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="published">Published</SelectItem>
-                            <SelectItem value="archived">Archived</SelectItem>
+                            <SelectItem value="all">{t("sa.billingPlans.filter.allStatus")}</SelectItem>
+                            <SelectItem value="draft">{t("sa.billingPlans.status.draft")}</SelectItem>
+                            <SelectItem value="published">{t("sa.billingPlans.status.published")}</SelectItem>
+                            <SelectItem value="archived">{t("sa.billingPlans.status.archived")}</SelectItem>
                         </SelectContent>
                     </Select>
                     <Input
-                        placeholder="Search plans..."
+                        placeholder={t("sa.billingPlans.searchPlaceholder")}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-64"
                     />
                     <Button variant="outline" size="sm" onClick={fetchPlans}>
-                        Search
+                        {t("common.search")}
                     </Button>
                 </div>
                 <Button onClick={() => setShowCreate(true)}>
-                    <Plus className="h-4 w-4 mr-2" /> Create Plan
+                    <Plus className="h-4 w-4 mr-2" /> {t("sa.billingPlans.createPlan")}
                 </Button>
             </div>
 
@@ -217,13 +220,13 @@ function PlansTab() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Plan</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Monthly</TableHead>
-                                <TableHead>Annual</TableHead>
-                                <TableHead>Trial</TableHead>
-                                <TableHead>Limits</TableHead>
-                                <TableHead>Modules</TableHead>
+                                <TableHead>{t("sa.billingPlans.col.plan")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.col.status")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.col.monthly")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.col.annual")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.col.trial")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.col.limits")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.col.modules")}</TableHead>
                                 <TableHead className="w-12"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -260,9 +263,9 @@ function PlansTab() {
                                     <TableCell colSpan={8} className="h-32 text-center">
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                             <CreditCard className="h-8 w-8 opacity-50" />
-                                            <p>No plans found</p>
+                                            <p>{t("sa.billingPlans.empty.noPlans")}</p>
                                             <Button variant="outline" size="sm" onClick={() => setShowCreate(true)}>
-                                                Create your first plan
+                                                {t("sa.billingPlans.empty.createFirst")}
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -286,7 +289,9 @@ function PlansTab() {
                                         <TableCell>{statusBadge(plan.status)}</TableCell>
                                         <TableCell>
                                             {plan.isFree ? (
-                                                <span className="text-green-600 font-medium">Free</span>
+                                                <span className="text-green-600 font-medium">
+                                                    {t("sa.billingPlans.free")}
+                                                </span>
                                             ) : (
                                                 formatPrice(plan.billing?.monthlyPrice || 0)
                                             )}
@@ -296,7 +301,9 @@ function PlansTab() {
                                         </TableCell>
                                         <TableCell>
                                             {plan.trial?.enabled ? (
-                                                <span className="text-blue-600">{plan.trial.days} days</span>
+                                                <span className="text-blue-600">
+                                                    {t("sa.billingPlans.daysCount", { count: plan.trial.days })}
+                                                </span>
                                             ) : (
                                                 "—"
                                             )}
@@ -304,11 +311,16 @@ function PlansTab() {
                                         <TableCell>
                                             <div className="text-sm">
                                                 <span>
-                                                    {plan.limits?.maxUsers === -1 ? "∞" : plan.limits?.maxUsers} users
+                                                    {t("sa.billingPlans.usersCount", {
+                                                        count: plan.limits?.maxUsers === -1 ? "∞" : plan.limits?.maxUsers,
+                                                    })}
                                                 </span>
                                                 <span className="text-muted-foreground mx-1">•</span>
                                                 <span>
-                                                    {plan.limits?.storageGB === -1 ? "∞" : plan.limits?.storageGB} GB
+                                                    {t("sa.billingPlans.storageGb", {
+                                                        count:
+                                                            plan.limits?.storageGB === -1 ? "∞" : plan.limits?.storageGB,
+                                                    })}
                                                 </span>
                                             </div>
                                         </TableCell>
@@ -324,10 +336,11 @@ function PlansTab() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => setEditPlan(plan)}>
-                                                        <Edit className="mr-2 h-4 w-4" /> Edit
+                                                        <Edit className="mr-2 h-4 w-4" /> {t("common.edit")}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => handleDuplicate(plan)}>
-                                                        <Copy className="mr-2 h-4 w-4" /> Duplicate as Version
+                                                        <Copy className="mr-2 h-4 w-4" />{" "}
+                                                        {t("sa.billingPlans.action.duplicate")}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     {plan.status === "draft" && (
@@ -336,7 +349,8 @@ function PlansTab() {
                                                                 setConfirmAction({ plan, action: "publish" })
                                                             }
                                                         >
-                                                            <Send className="mr-2 h-4 w-4" /> Publish
+                                                            <Send className="mr-2 h-4 w-4" />{" "}
+                                                            {t("sa.billingPlans.action.publish")}
                                                         </DropdownMenuItem>
                                                     )}
                                                     {plan.status !== "archived" && (
@@ -346,7 +360,8 @@ function PlansTab() {
                                                             }
                                                             className="text-red-600"
                                                         >
-                                                            <Archive className="mr-2 h-4 w-4" /> Archive
+                                                            <Archive className="mr-2 h-4 w-4" />{" "}
+                                                            {t("sa.billingPlans.action.archive")}
                                                         </DropdownMenuItem>
                                                     )}
                                                 </DropdownMenuContent>
@@ -376,16 +391,18 @@ function PlansTab() {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
-                            {confirmAction?.action === "publish" ? "Publish Plan" : "Archive Plan"}
+                            {confirmAction?.action === "publish"
+                                ? t("sa.billingPlans.confirm.publishTitle")
+                                : t("sa.billingPlans.confirm.archiveTitle")}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                             {confirmAction?.action === "publish"
-                                ? `Publishing "${confirmAction?.plan.name}" will make it available for new subscriptions. This action creates an immutable version.`
-                                : `Are you sure you want to archive "${confirmAction?.plan.name}"? Archived plans cannot be assigned to new subscriptions.`}
+                                ? t("sa.billingPlans.confirm.publishDesc", { name: confirmAction?.plan.name ?? "" })
+                                : t("sa.billingPlans.confirm.archiveDesc", { name: confirmAction?.plan.name ?? "" })}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => {
                                 if (confirmAction?.action === "publish") {
@@ -396,7 +413,9 @@ function PlansTab() {
                             }}
                             className={confirmAction?.action === "archive" ? "bg-red-600 hover:bg-red-700" : ""}
                         >
-                            {confirmAction?.action === "publish" ? "Publish" : "Archive"}
+                            {confirmAction?.action === "publish"
+                                ? t("sa.billingPlans.action.publish")
+                                : t("sa.billingPlans.action.archive")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -419,6 +438,7 @@ function PlanEditorDialog({
     onClose: () => void;
     onSave: () => void;
 }) {
+    const { t } = useTranslation();
     const [form, setForm] = useState({
         name: "",
         description: "",
@@ -477,7 +497,7 @@ function PlanEditorDialog({
 
     const handleSave = async () => {
         if (!form.name.trim()) {
-            toast.error("Plan name is required");
+            toast.error(t("sa.billingPlans.toast.nameRequired"));
             return;
         }
 
@@ -513,10 +533,10 @@ function PlanEditorDialog({
 
             if (plan) {
                 await saPatch(`/api/sa/billing/plans/${plan.id}`, payload);
-                toast.success("Plan updated");
+                toast.success(t("sa.billingPlans.toast.planUpdated"));
             } else {
                 await saPost("/api/sa/billing/plans", payload);
-                toast.success("Plan created");
+                toast.success(t("sa.billingPlans.toast.planCreated"));
             }
             onSave();
             onClose();
@@ -540,60 +560,66 @@ function PlanEditorDialog({
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{plan ? "Edit Plan" : "Create Plan"}</DialogTitle>
+                    <DialogTitle>
+                        {plan ? t("sa.billingPlans.editor.editTitle") : t("sa.billingPlans.editor.createTitle")}
+                    </DialogTitle>
                     <DialogDescription>
                         {plan
-                            ? "Modify plan details. Published plans cannot be edited."
-                            : "Create a new subscription plan."}
+                            ? t("sa.billingPlans.editor.editDesc")
+                            : t("sa.billingPlans.editor.createDesc")}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
                     {/* Basic Info */}
                     <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">Basic Information</h4>
+                        <h4 className="font-medium text-sm text-muted-foreground">
+                            {t("sa.billingPlans.editor.basicInfo")}
+                        </h4>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Plan Name *</Label>
+                                <Label>{t("sa.billingPlans.editor.planName")}</Label>
                                 <Input
                                     value={form.name}
                                     onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                                    placeholder="e.g., Professional"
+                                    placeholder={t("sa.billingPlans.editor.planNamePlaceholder")}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Badge</Label>
+                                <Label>{t("sa.billingPlans.editor.badge")}</Label>
                                 <Input
                                     value={form.badge}
                                     onChange={(e) => setForm((p) => ({ ...p, badge: e.target.value }))}
-                                    placeholder="e.g., Most Popular"
+                                    placeholder={t("sa.billingPlans.editor.badgePlaceholder")}
                                 />
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label>Description</Label>
+                            <Label>{t("sa.billingPlans.editor.description")}</Label>
                             <Input
                                 value={form.description}
                                 onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                                placeholder="Brief description of this plan"
+                                placeholder={t("sa.billingPlans.editor.descriptionPlaceholder")}
                             />
                         </div>
                     </div>
 
                     {/* Pricing */}
                     <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">Pricing</h4>
+                        <h4 className="font-medium text-sm text-muted-foreground">
+                            {t("sa.billingPlans.editor.pricing")}
+                        </h4>
                         <div className="flex items-center gap-2">
                             <Switch
                                 checked={form.isFree}
                                 onCheckedChange={(c) => setForm((p) => ({ ...p, isFree: c }))}
                             />
-                            <Label>Free Plan</Label>
+                            <Label>{t("sa.billingPlans.editor.freePlan")}</Label>
                         </div>
                         {!form.isFree && (
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Monthly Price (cents)</Label>
+                                    <Label>{t("sa.billingPlans.editor.monthlyPrice")}</Label>
                                     <Input
                                         type="number"
                                         value={form.monthlyPrice}
@@ -604,7 +630,7 @@ function PlanEditorDialog({
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Annual Price (cents)</Label>
+                                    <Label>{t("sa.billingPlans.editor.annualPrice")}</Label>
                                     <Input
                                         type="number"
                                         value={form.annualPrice}
@@ -620,18 +646,20 @@ function PlanEditorDialog({
 
                     {/* Trial */}
                     <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">Trial Settings</h4>
+                        <h4 className="font-medium text-sm text-muted-foreground">
+                            {t("sa.billingPlans.editor.trialSettings")}
+                        </h4>
                         <div className="flex items-center gap-2">
                             <Switch
                                 checked={form.trialEnabled}
                                 onCheckedChange={(c) => setForm((p) => ({ ...p, trialEnabled: c }))}
                             />
-                            <Label>Enable Trial</Label>
+                            <Label>{t("sa.billingPlans.editor.enableTrial")}</Label>
                         </div>
                         {form.trialEnabled && (
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Trial Days</Label>
+                                    <Label>{t("sa.billingPlans.editor.trialDays")}</Label>
                                     <Input
                                         type="number"
                                         value={form.trialDays}
@@ -641,7 +669,7 @@ function PlanEditorDialog({
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Eligibility</Label>
+                                    <Label>{t("sa.billingPlans.editor.eligibility")}</Label>
                                     <Select
                                         value={form.trialEligibility}
                                         onValueChange={(v) =>
@@ -655,8 +683,12 @@ function PlanEditorDialog({
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="new_customers_only">New Customers Only</SelectItem>
-                                            <SelectItem value="all">All Customers</SelectItem>
+                                            <SelectItem value="new_customers_only">
+                                                {t("sa.billingPlans.editor.newCustomersOnly")}
+                                            </SelectItem>
+                                            <SelectItem value="all">
+                                                {t("sa.billingPlans.editor.allCustomers")}
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -666,10 +698,12 @@ function PlanEditorDialog({
 
                     {/* Limits */}
                     <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">Limits</h4>
+                        <h4 className="font-medium text-sm text-muted-foreground">
+                            {t("sa.billingPlans.editor.limits")}
+                        </h4>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Max Users (-1 = unlimited)</Label>
+                                <Label>{t("sa.billingPlans.editor.maxUsers")}</Label>
                                 <Input
                                     type="number"
                                     value={form.maxUsers}
@@ -679,7 +713,7 @@ function PlanEditorDialog({
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Storage GB (-1 = unlimited)</Label>
+                                <Label>{t("sa.billingPlans.editor.storageGb")}</Label>
                                 <Input
                                     type="number"
                                     value={form.storageGB}
@@ -693,7 +727,9 @@ function PlanEditorDialog({
 
                     {/* Modules */}
                     <div className="space-y-4">
-                        <h4 className="font-medium text-sm text-muted-foreground">Included Modules</h4>
+                        <h4 className="font-medium text-sm text-muted-foreground">
+                            {t("sa.billingPlans.editor.includedModules")}
+                        </h4>
                         <div className="grid grid-cols-3 gap-2">
                             {MODULE_FEATURES_SCHEMA.map((mod) => (
                                 <div
@@ -706,7 +742,9 @@ function PlanEditorDialog({
                                     }`}
                                 >
                                     <div className="font-medium text-sm">{mod.moduleName}</div>
-                                    <div className="text-xs text-muted-foreground">{mod.features.length} features</div>
+                                    <div className="text-xs text-muted-foreground">
+                                        {t("sa.billingPlans.featuresCount", { count: mod.features.length })}
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -715,10 +753,14 @@ function PlanEditorDialog({
 
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button onClick={handleSave} disabled={saving}>
-                        {saving ? "Saving..." : plan ? "Save Changes" : "Create Plan"}
+                        {saving
+                            ? t("common.saving")
+                            : plan
+                              ? t("common.saveChanges")
+                              : t("sa.billingPlans.createPlan")}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -730,6 +772,7 @@ function PlanEditorDialog({
 // ADDONS TAB
 // ============================================
 function AddonsTab() {
+    const { t } = useTranslation();
     const [addons, setAddons] = useState<Addon[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
@@ -754,7 +797,7 @@ function AddonsTab() {
     const handleDeactivate = async (addon: Addon) => {
         try {
             await saPost(`/api/sa/billing/addons/${addon.id}/deactivate`, {});
-            toast.success("Addon deactivated");
+            toast.success(t("sa.billingPlans.toast.addonDeactivated"));
             fetchAddons();
         } catch (err: unknown) {
             toast.error((err as Error).message || String(err));
@@ -762,20 +805,18 @@ function AddonsTab() {
     };
 
     const typeLabels: Record<string, string> = {
-        extra_users: "Extra Users",
-        extra_storage: "Extra Storage",
-        feature_pack: "Feature Pack",
-        module_pack: "Module Pack",
+        extra_users: t("sa.billingPlans.addonType.extra_users"),
+        extra_storage: t("sa.billingPlans.addonType.extra_storage"),
+        feature_pack: t("sa.billingPlans.addonType.feature_pack"),
+        module_pack: t("sa.billingPlans.addonType.module_pack"),
     };
 
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <div className="text-sm text-muted-foreground">
-                    Addons can be attached to subscriptions to increase limits or enable features.
-                </div>
+                <div className="text-sm text-muted-foreground">{t("sa.billingPlans.addons.intro")}</div>
                 <Button onClick={() => setShowCreate(true)}>
-                    <Plus className="h-4 w-4 mr-2" /> Create Addon
+                    <Plus className="h-4 w-4 mr-2" /> {t("sa.billingPlans.addons.create")}
                 </Button>
             </div>
 
@@ -784,11 +825,11 @@ function AddonsTab() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Addon</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Monthly</TableHead>
-                                <TableHead>Effect</TableHead>
+                                <TableHead>{t("sa.billingPlans.addons.col.addon")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.addons.col.type")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.col.status")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.col.monthly")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.addons.col.effect")}</TableHead>
                                 <TableHead className="w-12"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -819,9 +860,9 @@ function AddonsTab() {
                                     <TableCell colSpan={6} className="h-32 text-center">
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                             <Package className="h-8 w-8 opacity-50" />
-                                            <p>No addons created</p>
+                                            <p>{t("sa.billingPlans.addons.empty.none")}</p>
                                             <Button variant="outline" size="sm" onClick={() => setShowCreate(true)}>
-                                                Create your first addon
+                                                {t("sa.billingPlans.addons.empty.createFirst")}
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -846,18 +887,32 @@ function AddonsTab() {
                                                         : "bg-gray-100 text-gray-600"
                                                 }
                                             >
-                                                {addon.status}
+                                                {t(`sa.billingPlans.addonStatus.${addon.status}`)}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>${((addon.pricing?.monthlyPrice || 0) / 100).toFixed(2)}</TableCell>
                                         <TableCell>
                                             <div className="text-sm">
-                                                {addon.effect?.addUsers && <div>+{addon.effect.addUsers} users</div>}
+                                                {addon.effect?.addUsers && (
+                                                    <div>
+                                                        {t("sa.billingPlans.effect.addUsers", {
+                                                            count: addon.effect.addUsers,
+                                                        })}
+                                                    </div>
+                                                )}
                                                 {addon.effect?.addStorageGB && (
-                                                    <div>+{addon.effect.addStorageGB} GB</div>
+                                                    <div>
+                                                        {t("sa.billingPlans.effect.addStorage", {
+                                                            count: addon.effect.addStorageGB,
+                                                        })}
+                                                    </div>
                                                 )}
                                                 {addon.effect?.enableModules?.length && (
-                                                    <div>+{addon.effect.enableModules.length} modules</div>
+                                                    <div>
+                                                        {t("sa.billingPlans.effect.addModules", {
+                                                            count: addon.effect.enableModules.length,
+                                                        })}
+                                                    </div>
                                                 )}
                                             </div>
                                         </TableCell>
@@ -870,14 +925,15 @@ function AddonsTab() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => setEditAddon(addon)}>
-                                                        <Edit className="mr-2 h-4 w-4" /> Edit
+                                                        <Edit className="mr-2 h-4 w-4" /> {t("common.edit")}
                                                     </DropdownMenuItem>
                                                     {addon.status === "active" && (
                                                         <DropdownMenuItem
                                                             onClick={() => handleDeactivate(addon)}
                                                             className="text-red-600"
                                                         >
-                                                            <XCircle className="mr-2 h-4 w-4" /> Deactivate
+                                                            <XCircle className="mr-2 h-4 w-4" />{" "}
+                                                            {t("sa.billingPlans.action.deactivate")}
                                                         </DropdownMenuItem>
                                                     )}
                                                 </DropdownMenuContent>
@@ -918,6 +974,7 @@ function AddonEditorDialog({
     onClose: () => void;
     onSave: () => void;
 }) {
+    const { t } = useTranslation();
     const [form, setForm] = useState({
         name: "",
         description: "",
@@ -955,7 +1012,7 @@ function AddonEditorDialog({
 
     const handleSave = async () => {
         if (!form.name.trim()) {
-            toast.error("Addon name is required");
+            toast.error(t("sa.billingPlans.toast.addonNameRequired"));
             return;
         }
 
@@ -978,10 +1035,10 @@ function AddonEditorDialog({
 
             if (addon) {
                 await saPatch(`/api/sa/billing/addons/${addon.id}`, payload);
-                toast.success("Addon updated");
+                toast.success(t("sa.billingPlans.toast.addonUpdated"));
             } else {
                 await saPost("/api/sa/billing/addons", payload);
-                toast.success("Addon created");
+                toast.success(t("sa.billingPlans.toast.addonCreated"));
             }
             onSave();
             onClose();
@@ -996,27 +1053,31 @@ function AddonEditorDialog({
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{addon ? "Edit Addon" : "Create Addon"}</DialogTitle>
+                    <DialogTitle>
+                        {addon
+                            ? t("sa.billingPlans.addonEditor.editTitle")
+                            : t("sa.billingPlans.addonEditor.createTitle")}
+                    </DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label>Addon Name *</Label>
+                        <Label>{t("sa.billingPlans.addonEditor.name")}</Label>
                         <Input
                             value={form.name}
                             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                            placeholder="e.g., Extra 5 Users"
+                            placeholder={t("sa.billingPlans.addonEditor.namePlaceholder")}
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Description</Label>
+                        <Label>{t("sa.billingPlans.editor.description")}</Label>
                         <Input
                             value={form.description}
                             onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Type</Label>
+                        <Label>{t("sa.billingPlans.addonEditor.type")}</Label>
                         <Select
                             value={form.type}
                             onValueChange={(v) => setForm((p) => ({ ...p, type: v as Addon["type"] }))}
@@ -1025,16 +1086,24 @@ function AddonEditorDialog({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="extra_users">Extra Users</SelectItem>
-                                <SelectItem value="extra_storage">Extra Storage</SelectItem>
-                                <SelectItem value="feature_pack">Feature Pack</SelectItem>
-                                <SelectItem value="module_pack">Module Pack</SelectItem>
+                                <SelectItem value="extra_users">
+                                    {t("sa.billingPlans.addonType.extra_users")}
+                                </SelectItem>
+                                <SelectItem value="extra_storage">
+                                    {t("sa.billingPlans.addonType.extra_storage")}
+                                </SelectItem>
+                                <SelectItem value="feature_pack">
+                                    {t("sa.billingPlans.addonType.feature_pack")}
+                                </SelectItem>
+                                <SelectItem value="module_pack">
+                                    {t("sa.billingPlans.addonType.module_pack")}
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>Monthly Price (cents)</Label>
+                            <Label>{t("sa.billingPlans.editor.monthlyPrice")}</Label>
                             <Input
                                 type="number"
                                 value={form.monthlyPrice}
@@ -1044,7 +1113,7 @@ function AddonEditorDialog({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Annual Price (cents)</Label>
+                            <Label>{t("sa.billingPlans.editor.annualPrice")}</Label>
                             <Input
                                 type="number"
                                 value={form.annualPrice}
@@ -1054,7 +1123,7 @@ function AddonEditorDialog({
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>Add Users</Label>
+                            <Label>{t("sa.billingPlans.addonEditor.addUsers")}</Label>
                             <Input
                                 type="number"
                                 value={form.addUsers}
@@ -1062,7 +1131,7 @@ function AddonEditorDialog({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Add Storage GB</Label>
+                            <Label>{t("sa.billingPlans.addonEditor.addStorage")}</Label>
                             <Input
                                 type="number"
                                 value={form.addStorageGB}
@@ -1076,10 +1145,10 @@ function AddonEditorDialog({
 
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button onClick={handleSave} disabled={saving}>
-                        {saving ? "Saving..." : addon ? "Save" : "Create"}
+                        {saving ? t("common.saving") : addon ? t("common.save") : t("common.create")}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -1091,6 +1160,7 @@ function AddonEditorDialog({
 // SUBSCRIPTIONS TAB
 // ============================================
 function SubscriptionsTab() {
+    const { t } = useTranslation();
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState("all");
@@ -1127,15 +1197,15 @@ function SubscriptionsTab() {
             <div className="flex gap-4 items-center">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Status" />
+                        <SelectValue placeholder={t("sa.billingPlans.filter.status")} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="trialing">Trialing</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="past_due">Past Due</SelectItem>
-                        <SelectItem value="suspended">Suspended</SelectItem>
-                        <SelectItem value="canceled">Canceled</SelectItem>
+                        <SelectItem value="all">{t("sa.billingPlans.filter.allStatus")}</SelectItem>
+                        <SelectItem value="trialing">{t("sa.billingPlans.subStatus.trialing")}</SelectItem>
+                        <SelectItem value="active">{t("sa.billingPlans.subStatus.active")}</SelectItem>
+                        <SelectItem value="past_due">{t("sa.billingPlans.subStatus.past_due")}</SelectItem>
+                        <SelectItem value="suspended">{t("sa.billingPlans.subStatus.suspended")}</SelectItem>
+                        <SelectItem value="canceled">{t("sa.billingPlans.subStatus.canceled")}</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -1145,12 +1215,12 @@ function SubscriptionsTab() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Tenant</TableHead>
-                                <TableHead>Plan</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Cycle</TableHead>
-                                <TableHead>Addons</TableHead>
-                                <TableHead>Period End</TableHead>
+                                <TableHead>{t("sa.billingPlans.subs.col.tenant")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.col.plan")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.col.status")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.subs.col.cycle")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.tabs.addons")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.subs.col.periodEnd")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -1182,7 +1252,7 @@ function SubscriptionsTab() {
                                     <TableCell colSpan={6} className="h-32 text-center">
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                             <Users className="h-8 w-8 opacity-50" />
-                                            <p>No subscriptions found</p>
+                                            <p>{t("sa.billingPlans.subs.empty")}</p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -1192,7 +1262,9 @@ function SubscriptionsTab() {
                                         <TableCell className="font-mono text-sm">{sub.tenantId}</TableCell>
                                         <TableCell>{sub.planId}</TableCell>
                                         <TableCell>
-                                            <Badge className={statusColors[sub.status]}>{sub.status}</Badge>
+                                            <Badge className={statusColors[sub.status]}>
+                                                {t(`sa.billingPlans.subStatus.${sub.status}`)}
+                                            </Badge>
                                         </TableCell>
                                         <TableCell>{sub.billingCycle}</TableCell>
                                         <TableCell>
@@ -1221,6 +1293,7 @@ function SubscriptionsTab() {
 // USAGE TAB
 // ============================================
 function UsageTab() {
+    const { t } = useTranslation();
     const [exceeded, setExceeded] = useState<UsageExceeded[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -1242,20 +1315,18 @@ function UsageTab() {
 
     return (
         <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-                Tenants exceeding their plan limits. Consider reaching out for upsell opportunities.
-            </div>
+            <div className="text-sm text-muted-foreground">{t("sa.billingPlans.usage.intro")}</div>
 
             <Card>
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Tenant</TableHead>
-                                <TableHead>Severity</TableHead>
-                                <TableHead>Users</TableHead>
-                                <TableHead>Storage</TableHead>
-                                <TableHead>Actions</TableHead>
+                                <TableHead>{t("sa.billingPlans.subs.col.tenant")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.usage.col.severity")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.usage.col.users")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.usage.col.storage")}</TableHead>
+                                <TableHead>{t("sa.billingPlans.usage.col.actions")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -1284,7 +1355,7 @@ function UsageTab() {
                                     <TableCell colSpan={5} className="h-32 text-center">
                                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                             <CheckCircle className="h-8 w-8 text-green-500" />
-                                            <p>No tenants exceeding limits</p>
+                                            <p>{t("sa.billingPlans.usage.empty")}</p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -1309,11 +1380,13 @@ function UsageTab() {
                                             >
                                                 {item.severity === "critical" ? (
                                                     <>
-                                                        <AlertTriangle className="h-3 w-3 mr-1" /> Critical
+                                                        <AlertTriangle className="h-3 w-3 mr-1" />{" "}
+                                                        {t("sa.billingPlans.usage.critical")}
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Clock className="h-3 w-3 mr-1" /> Warning
+                                                        <Clock className="h-3 w-3 mr-1" />{" "}
+                                                        {t("sa.billingPlans.usage.warning")}
                                                     </>
                                                 )}
                                             </Badge>
@@ -1330,8 +1403,10 @@ function UsageTab() {
                                         <TableCell>
                                             {item.exceeded.storage ? (
                                                 <span className="text-red-600">
-                                                    {item.exceeded.storage.current.toFixed(1)}/
-                                                    {item.exceeded.storage.limit} GB
+                                                    {t("sa.billingPlans.usage.gbValue", {
+                                                        current: item.exceeded.storage.current.toFixed(1),
+                                                        limit: item.exceeded.storage.limit,
+                                                    })}
                                                 </span>
                                             ) : (
                                                 "—"
@@ -1339,7 +1414,8 @@ function UsageTab() {
                                         </TableCell>
                                         <TableCell>
                                             <Button variant="outline" size="sm">
-                                                <DollarSign className="h-3 w-3 mr-1" /> Upsell
+                                                <DollarSign className="h-3 w-3 mr-1" />{" "}
+                                                {t("sa.billingPlans.usage.upsell")}
                                             </Button>
                                         </TableCell>
                                     </TableRow>

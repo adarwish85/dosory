@@ -21,8 +21,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Shield, Plus, Lock, UserX, UserCheck, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/lib/i18n";
 
 export default function SecurityUsersPage() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [users, setUsers] = useState<SuperAdminUser[]>([]);
     const [loading, setLoading] = useState(true);
@@ -56,7 +58,7 @@ export default function SecurityUsersPage() {
             const data = await saGet<{ users: SuperAdminUser[] }>("/api/sa/security/users");
             setUsers(data.users || []);
         } catch (err: unknown) {
-            toast.error((err as Error).message || "Failed to load users");
+            toast.error((err as Error).message || t("sa.securityUsers.toast.loadFailed"));
         } finally {
             setLoading(false);
         }
@@ -64,7 +66,7 @@ export default function SecurityUsersPage() {
 
     const handleAddUser = async () => {
         if (!newUserEmail) {
-            toast.error("Email is required");
+            toast.error(t("sa.securityUsers.toast.emailRequired"));
             return;
         }
         try {
@@ -73,7 +75,7 @@ export default function SecurityUsersPage() {
                 email: newUserEmail,
                 role: newUserRole,
             });
-            toast.success("Super Admin added successfully");
+            toast.success(t("sa.securityUsers.toast.added"));
             setShowAdd(false);
             setNewUserEmail("");
             fetchUsers();
@@ -86,11 +88,11 @@ export default function SecurityUsersPage() {
 
     const handleRoleChange = async (uid: string, newRole: SuperAdminRole) => {
         // Confirmation?
-        if (!confirm(`Are you sure you want to change role to ${newRole}? User will need to re-login.`)) return;
+        if (!confirm(t("sa.securityUsers.confirm.changeRole", { role: newRole }))) return;
 
         try {
             await saPatch(`/api/sa/security/users/${uid}/role`, { role: newRole });
-            toast.success("Role updated");
+            toast.success(t("sa.securityUsers.toast.roleUpdated"));
             fetchUsers();
         } catch (err: unknown) {
             toast.error((err as Error).message);
@@ -99,13 +101,20 @@ export default function SecurityUsersPage() {
 
     const handleToggleStatus = async (uid: string, currentStatus: string) => {
         const newStatus = currentStatus === "active" ? "disabled" : "active";
-        const action = newStatus === "disabled" ? "DISABLE" : "ENABLE";
+        const action =
+            newStatus === "disabled"
+                ? t("sa.securityUsers.confirm.disableUser")
+                : t("sa.securityUsers.confirm.enableUser");
 
-        if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+        if (!confirm(action)) return;
 
         try {
             await saPatch(`/api/sa/security/users/${uid}/disable`, { status: newStatus });
-            toast.success(`User ${newStatus}`);
+            toast.success(
+                newStatus === "disabled"
+                    ? t("sa.securityUsers.toast.userDisabled")
+                    : t("sa.securityUsers.toast.userEnabled")
+            );
             fetchUsers();
         } catch (err: unknown) {
             toast.error((err as Error).message);
@@ -124,26 +133,24 @@ export default function SecurityUsersPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Super Admin Security</h1>
-                    <p className="text-muted-foreground">Manage internal staff access and roles.</p>
+                    <h1 className="text-3xl font-bold tracking-tight">{t("sa.securityUsers.title")}</h1>
+                    <p className="text-muted-foreground">{t("sa.securityUsers.subtitle")}</p>
                 </div>
                 {isPlatformAdmin && (
                     <Dialog open={showAdd} onOpenChange={setShowAdd}>
                         <DialogTrigger asChild>
                             <Button>
-                                <Plus className="h-4 w-4 mr-2" /> Add Admin
+                                <Plus className="h-4 w-4 mr-2" /> {t("sa.securityUsers.addAdmin")}
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Add New Super Admin</DialogTitle>
-                                <DialogDescription>
-                                    Enter the email of the existing Firebase user to grant Super Admin access.
-                                </DialogDescription>
+                                <DialogTitle>{t("sa.securityUsers.dialog.title")}</DialogTitle>
+                                <DialogDescription>{t("sa.securityUsers.dialog.description")}</DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Email</label>
+                                    <label className="text-sm font-medium">{t("sa.securityUsers.email")}</label>
                                     <Input
                                         placeholder="user@dosory.com"
                                         value={newUserEmail}
@@ -151,7 +158,7 @@ export default function SecurityUsersPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Role</label>
+                                    <label className="text-sm font-medium">{t("sa.securityUsers.role")}</label>
                                     <Select
                                         value={newUserRole}
                                         onValueChange={(v) => setNewUserRole(v as SuperAdminRole)}
@@ -171,10 +178,10 @@ export default function SecurityUsersPage() {
                             </div>
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => setShowAdd(false)}>
-                                    Cancel
+                                    {t("common.cancel")}
                                 </Button>
                                 <Button onClick={handleAddUser} disabled={submitting}>
-                                    {submitting ? "Adding..." : "Add Admin"}
+                                    {submitting ? t("sa.securityUsers.adding") : t("sa.securityUsers.addAdmin")}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
@@ -186,10 +193,10 @@ export default function SecurityUsersPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>User</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Joined</TableHead>
+                            <TableHead>{t("sa.securityUsers.col.user")}</TableHead>
+                            <TableHead>{t("sa.securityUsers.role")}</TableHead>
+                            <TableHead>{t("sa.securityUsers.col.status")}</TableHead>
+                            <TableHead>{t("sa.securityUsers.col.joined")}</TableHead>
                             <TableHead className="w-[100px]"></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -215,7 +222,7 @@ export default function SecurityUsersPage() {
                         ) : users.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                                    No super admins found.
+                                    {t("sa.securityUsers.empty")}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -258,13 +265,13 @@ export default function SecurityUsersPage() {
                                     </TableCell>
                                     <TableCell>
                                         {adminUser.status === "disabled" ? (
-                                            <Badge variant="destructive">Disabled</Badge>
+                                            <Badge variant="destructive">{t("sa.securityUsers.status.disabled")}</Badge>
                                         ) : (
                                             <Badge
                                                 variant="outline"
                                                 className="text-green-600 border-green-200 bg-green-50"
                                             >
-                                                Active
+                                                {t("sa.securityUsers.status.active")}
                                             </Badge>
                                         )}
                                     </TableCell>
@@ -280,7 +287,11 @@ export default function SecurityUsersPage() {
                                                 onClick={() =>
                                                     handleToggleStatus(adminUser.uid, adminUser.status || "active")
                                                 }
-                                                title={adminUser.status === "disabled" ? "Enable User" : "Disable User"}
+                                                title={
+                                                    adminUser.status === "disabled"
+                                                        ? t("sa.securityUsers.action.enableUser")
+                                                        : t("sa.securityUsers.action.disableUser")
+                                                }
                                             >
                                                 {adminUser.status === "disabled" ? (
                                                     <UserCheck className="h-4 w-4 text-green-600" />
@@ -300,12 +311,8 @@ export default function SecurityUsersPage() {
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex gap-3 text-sm text-yellow-800">
                 <Lock className="h-5 w-5 shrink-0" />
                 <div>
-                    <p className="font-medium">Security Note</p>
-                    <p>
-                        Changes to roles or permissions may take up to 1 hour to propagate to the user&apos;s session
-                        unless they sign out and sign back in. Disabled users are blocked immediately upon token
-                        refresh.
-                    </p>
+                    <p className="font-medium">{t("sa.securityUsers.note.title")}</p>
+                    <p>{t("sa.securityUsers.note.body")}</p>
                 </div>
             </div>
         </div>

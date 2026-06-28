@@ -8,6 +8,7 @@ import { Loader2, ShieldAlert, RefreshCw, CheckCircle2, XCircle } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Super Admin Layout Guard
@@ -44,6 +45,7 @@ export default function SuperAdminLayout({
 }) {
     const { user, loading } = useAuth();
     const router = useRouter();
+    const { t } = useTranslation();
 
     // Auth state
     const [isAuthorized, setIsAuthorized] = useState(false);
@@ -99,7 +101,7 @@ export default function SuperAdminLayout({
 
             if (!response.ok) {
                 const err = await response.json();
-                throw new Error(err.error || "Failed to verify token");
+                throw new Error(err.error || t("sa.layout.failedToVerifyToken"));
             }
 
             const claims = await response.json() as TokenClaims;
@@ -120,17 +122,17 @@ export default function SuperAdminLayout({
 
             // Not authorized
             console.warn(`[SA Layout] Access denied for ${user.email}`);
-            setAuthError("Your account does not have Super Admin access.");
+            setAuthError(t("sa.layout.noAccess"));
             setIsAuthorized(false);
 
         } catch (error: any) {
             console.error("[SA Layout] Error:", error);
-            setAuthError(`Verification failed: ${error.message}`);
+            setAuthError(t("sa.layout.verificationFailed", { message: error.message }));
             setIsAuthorized(false);
         } finally {
             setChecking(false);
         }
-    }, [user, router]);
+    }, [user, router, t]);
 
     /**
      * Dev-only: Grant Super Admin access to an email
@@ -161,7 +163,7 @@ export default function SuperAdminLayout({
 
             setGrantResult({
                 success: true,
-                message: `Claims set for ${grantEmail}. Click "Refresh Access" to apply.`
+                message: t("sa.layout.claimsSet", { email: grantEmail })
             });
 
         } catch (error: any) {
@@ -201,7 +203,7 @@ export default function SuperAdminLayout({
             <div className="h-screen w-full flex flex-col items-center justify-center bg-background gap-2">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">
-                    {loading ? "Loading..." : "Verifying super admin access..."}
+                    {loading ? t("common.loading") : t("sa.layout.verifyingAccess")}
                 </span>
             </div>
         );
@@ -217,9 +219,9 @@ export default function SuperAdminLayout({
                 <Card className="w-full max-w-lg">
                     <CardHeader className="text-center">
                         <ShieldAlert className="h-12 w-12 text-red-500 mx-auto mb-2" />
-                        <CardTitle className="text-red-600">Access Denied</CardTitle>
+                        <CardTitle className="text-red-600">{t("sa.layout.accessDenied")}</CardTitle>
                         <CardDescription>
-                            {authError || "You do not have Super Admin access."}
+                            {authError || t("sa.layout.noAccess")}
                         </CardDescription>
                     </CardHeader>
 
@@ -228,16 +230,16 @@ export default function SuperAdminLayout({
                         <div className="flex gap-3 justify-center">
                             <Button onClick={handleRefreshAccess} disabled={checking}>
                                 <RefreshCw className={`mr-2 h-4 w-4 ${checking ? 'animate-spin' : ''}`} />
-                                Refresh Access
+                                {t("sa.layout.refreshAccess")}
                             </Button>
                             <Button onClick={handleSignOut} variant="outline">
-                                Sign Out
+                                {t("sa.layout.signOut")}
                             </Button>
                         </div>
 
                         {/* Claims Debug Info */}
                         <div className="bg-muted rounded-lg p-3 text-xs font-mono space-y-1">
-                            <p className="font-semibold text-foreground">Token Claims:</p>
+                            <p className="font-semibold text-foreground">{t("sa.layout.tokenClaims")}</p>
                             {serverClaims ? (
                                 <>
                                     <p>uid: {serverClaims.uid}</p>
@@ -257,7 +259,7 @@ export default function SuperAdminLayout({
                                     <p>superRole: {String(clientClaims.superRole) || "none"}</p>
                                 </>
                             ) : (
-                                <p className="text-muted-foreground">No claims data available</p>
+                                <p className="text-muted-foreground">{t("sa.layout.noClaimsData")}</p>
                             )}
                         </div>
 
@@ -265,12 +267,12 @@ export default function SuperAdminLayout({
                         {isDev && (
                             <div className="border-t pt-4 mt-4">
                                 <p className="text-sm font-medium mb-2 flex items-center gap-1">
-                                    <span className="text-yellow-600">[DEV]</span> Grant Super Admin
+                                    <span className="text-yellow-600">[DEV]</span> {t("sa.layout.grantSuperAdmin")}
                                 </p>
                                 <div className="flex gap-2">
                                     <Input
                                         type="email"
-                                        placeholder="user@example.com"
+                                        placeholder={t("sa.layout.emailPlaceholder")}
                                         value={grantEmail}
                                         onChange={(e) => setGrantEmail(e.target.value)}
                                         className="flex-1"
@@ -280,7 +282,7 @@ export default function SuperAdminLayout({
                                         disabled={granting || !grantEmail}
                                         size="sm"
                                     >
-                                        {granting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Grant"}
+                                        {granting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sa.layout.grant")}
                                     </Button>
                                 </div>
                                 {grantResult && (
@@ -294,8 +296,7 @@ export default function SuperAdminLayout({
 
                         {/* Help Text */}
                         <p className="text-xs text-muted-foreground text-center">
-                            If you just received access, click &quot;Refresh Access&quot;.
-                            Firebase tokens cache for up to 1 hour.
+                            {t("sa.layout.tokenCacheHelp")}
                         </p>
                     </CardContent>
                 </Card>
@@ -311,10 +312,10 @@ export default function SuperAdminLayout({
             <SuperAdminSidebar />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <header className="h-14 border-b flex items-center px-6 bg-background/50 backdrop-blur justify-between">
-                    <div className="font-medium text-sm">Dashboard</div>
+                    <div className="font-medium text-sm">{t("sa.layout.dashboard")}</div>
                     <div className="text-xs text-muted-foreground flex items-center gap-2">
                         <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-medium">
-                            {serverClaims?.superRole || "Admin"}
+                            {serverClaims?.superRole || t("sa.layout.adminBadge")}
                         </span>
                         {user?.email}
                     </div>

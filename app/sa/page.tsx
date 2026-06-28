@@ -8,6 +8,7 @@ import { OverviewStats } from "@/lib/types/super-admin";
 import { saFetch } from "@/lib/api/saFetch";
 import { Building2, Users, FileText, DollarSign, Activity, ExternalLink, Settings, LayoutTemplate } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 function StatCard({
     title,
@@ -34,6 +35,7 @@ function StatCard({
 }
 
 export default function SAOverviewPage() {
+    const { t } = useTranslation();
     const [stats, setStats] = useState<OverviewStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -62,25 +64,25 @@ export default function SAOverviewPage() {
         <div className="space-y-8">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Platform Overview</h1>
-                <p className="text-muted-foreground">Monitor your SaaS platform health and metrics</p>
+                <h1 className="text-3xl font-bold tracking-tight">{t("sa.overview.title")}</h1>
+                <p className="text-muted-foreground">{t("sa.overview.subtitle")}</p>
             </div>
 
             {/* Error State */}
             {error && (
                 <Card className="border-red-500 bg-red-50 dark:bg-red-950">
                     <CardContent className="pt-6">
-                        <p className="text-red-600">Error loading stats: {error}</p>
+                        <p className="text-red-600">{t("sa.overview.errorLoadingStats", { error })}</p>
                     </CardContent>
                 </Card>
             )}
 
             {/* KPI Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard title="Total Tenants" value={stats?.totalTenants ?? 0} icon={Building2} loading={loading} />
-                <StatCard title="Active Tenants" value={stats?.activeTenants ?? 0} icon={Building2} loading={loading} />
-                <StatCard title="Total Users" value={stats?.totalUsers ?? 0} icon={Users} loading={loading} />
-                <StatCard title="Website Pages" value={stats?.totalPages ?? 0} icon={FileText} loading={loading} />
+                <StatCard title={t("sa.overview.totalTenants")} value={stats?.totalTenants ?? 0} icon={Building2} loading={loading} />
+                <StatCard title={t("sa.overview.activeTenants")} value={stats?.activeTenants ?? 0} icon={Building2} loading={loading} />
+                <StatCard title={t("sa.overview.totalUsers")} value={stats?.totalUsers ?? 0} icon={Users} loading={loading} />
+                <StatCard title={t("sa.overview.websitePages")} value={stats?.totalPages ?? 0} icon={FileText} loading={loading} />
             </div>
 
             {/* Secondary Row */}
@@ -89,7 +91,7 @@ export default function SAOverviewPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Monthly Recurring Revenue
+                            {t("sa.overview.mrr")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -106,7 +108,7 @@ export default function SAOverviewPage() {
                 {/* System Health Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm font-medium text-muted-foreground">System Health</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">{t("sa.overview.systemHealth")}</CardTitle>
                     </CardHeader>
                     <CardContent className="flex items-center gap-3">
                         {loading ? (
@@ -115,7 +117,7 @@ export default function SAOverviewPage() {
                             <>
                                 <div className={`h-4 w-4 rounded-full ${healthColor}`} />
                                 <span className="text-xl font-semibold capitalize">
-                                    {stats?.systemHealth || "Unknown"}
+                                    {stats?.systemHealth || t("sa.overview.unknown")}
                                 </span>
                             </>
                         )}
@@ -125,14 +127,14 @@ export default function SAOverviewPage() {
                 {/* Website Builder Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Website Builder</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">{t("sa.overview.websiteBuilder")}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                        <p className="text-sm">Dosory Main Website</p>
+                        <p className="text-sm">{t("sa.overview.mainWebsite")}</p>
                         <Link href="/sa/website-builder">
                             <Button size="sm">
                                 <LayoutTemplate className="mr-2 h-4 w-4" />
-                                Open Builder
+                                {t("sa.overview.openBuilder")}
                             </Button>
                         </Link>
                     </CardContent>
@@ -142,33 +144,33 @@ export default function SAOverviewPage() {
             {/* Quick Actions */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                    <CardDescription>Common administrative tasks</CardDescription>
+                    <CardTitle>{t("sa.overview.quickActions")}</CardTitle>
+                    <CardDescription>{t("sa.overview.quickActionsDesc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-3">
                     <Link href="/sa/tenants">
                         <Button variant="outline">
-                            <Building2 className="mr-2 h-4 w-4" /> Manage Tenants
+                            <Building2 className="mr-2 h-4 w-4" /> {t("sa.overview.manageTenants")}
                         </Button>
                     </Link>
                     <Link href="/sa/users">
                         <Button variant="outline">
-                            <Users className="mr-2 h-4 w-4" /> Manage Users
+                            <Users className="mr-2 h-4 w-4" /> {t("sa.overview.manageUsers")}
                         </Button>
                     </Link>
                     <Link href="/sa/billing-plans">
                         <Button variant="outline">
-                            <DollarSign className="mr-2 h-4 w-4" /> Billing Plans
+                            <DollarSign className="mr-2 h-4 w-4" /> {t("sa.overview.billingPlans")}
                         </Button>
                     </Link>
                     <Link href="/sa/modules">
                         <Button variant="outline">
-                            <Settings className="mr-2 h-4 w-4" /> Modules
+                            <Settings className="mr-2 h-4 w-4" /> {t("sa.overview.modules")}
                         </Button>
                     </Link>
                     <Link href="/sa/security-audit">
                         <Button variant="outline">
-                            <Activity className="mr-2 h-4 w-4" /> Audit Logs
+                            <Activity className="mr-2 h-4 w-4" /> {t("sa.overview.auditLogs")}
                         </Button>
                     </Link>
                 </CardContent>

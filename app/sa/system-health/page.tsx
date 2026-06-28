@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { saFetch } from "@/lib/api/saFetch";
+import { useTranslation } from "@/lib/i18n";
 
 const statusConfig: Record<string, { color: string; icon: React.ElementType; bg: string }> = {
     healthy: { color: "text-green-600", icon: CheckCircle, bg: "bg-green-100" },
@@ -35,6 +36,7 @@ const serviceIcons: Record<string, React.ElementType> = {
 };
 
 export default function SystemHealthPage() {
+    const { t } = useTranslation();
     const [services, setServices] = useState<SystemHealthStatus[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -74,12 +76,12 @@ export default function SystemHealthPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">System Health</h1>
-                    <p className="text-muted-foreground">Monitor platform services and infrastructure</p>
+                    <h1 className="text-3xl font-bold tracking-tight">{t("sa.systemHealth.title")}</h1>
+                    <p className="text-muted-foreground">{t("sa.systemHealth.subtitle")}</p>
                 </div>
                 <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
                     <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-                    Refresh
+                    {t("common.refresh")}
                 </Button>
             </div>
 
@@ -103,14 +105,14 @@ export default function SystemHealthPage() {
                             </div>
                             <div>
                                 <h2 className={`text-xl font-bold ${overallConfig.color}`}>
-                                    System {overallStatus.charAt(0).toUpperCase() + overallStatus.slice(1)}
+                                    {t(`sa.systemHealth.overall.${overallStatus}`)}
                                 </h2>
                                 <p className="text-muted-foreground">
                                     {overallStatus === "healthy"
-                                        ? "All services operational"
+                                        ? t("sa.systemHealth.overallDesc.healthy")
                                         : overallStatus === "degraded"
-                                          ? "Some services experiencing issues"
-                                          : "Critical services down"}
+                                          ? t("sa.systemHealth.overallDesc.degraded")
+                                          : t("sa.systemHealth.overallDesc.down")}
                                 </p>
                             </div>
                         </>
@@ -142,7 +144,7 @@ export default function SystemHealthPage() {
                     <Card className="md:col-span-3">
                         <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                             <Activity className="h-12 w-12 mb-4 opacity-50" />
-                            <p className="text-lg font-medium">No health data available</p>
+                            <p className="text-lg font-medium">{t("sa.systemHealth.empty")}</p>
                         </CardContent>
                     </Card>
                 ) : (
@@ -162,7 +164,9 @@ export default function SystemHealthPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex items-center justify-between">
-                                        <Badge className={config.bg + " " + config.color}>{service.status}</Badge>
+                                        <Badge className={config.bg + " " + config.color}>
+                                            {t(`sa.systemHealth.status.${service.status}`)}
+                                        </Badge>
                                         {service.latencyMs !== undefined && (
                                             <span className="text-sm text-muted-foreground">{service.latencyMs}ms</span>
                                         )}
@@ -179,7 +183,9 @@ export default function SystemHealthPage() {
 
             {/* Last Checked */}
             <p className="text-sm text-muted-foreground text-center">
-                Last checked: {services[0]?.lastChecked?.toLocaleString() || "—"}
+                {t("sa.systemHealth.lastChecked", {
+                    time: services[0]?.lastChecked?.toLocaleString() || "—",
+                })}
             </p>
         </div>
     );

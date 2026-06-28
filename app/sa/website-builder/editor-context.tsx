@@ -5,6 +5,7 @@ import { WebsiteSection, WebsitePage } from "@/lib/types/website";
 import { WebsiteService } from "@/lib/services/website-service";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
+import { useTranslation } from "@/lib/i18n";
 
 interface EditorContextType {
     page: WebsitePage | null;
@@ -36,6 +37,7 @@ export function EditorProvider({
     websiteId?: string;
     children: React.ReactNode;
 }) {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [page, setPage] = useState<WebsitePage | null>(null);
     const [sections, setSections] = useState<WebsiteSection[]>([]);
@@ -58,7 +60,7 @@ export function EditorProvider({
             setPage(p);
             setSections(s);
         } catch (error) {
-            toast.error("Failed to load editor");
+            toast.error(t("sa.websiteBuilder.toast.loadEditorFailed"));
             console.error(error);
         } finally {
             setIsLoading(false);
@@ -88,7 +90,7 @@ export function EditorProvider({
             const created = s[s.length - 1]; // Assumption: appended
             if (created) setSelectedSectionId(created.id);
         } catch (error) {
-            toast.error("Failed to add section");
+            toast.error(t("sa.websiteBuilder.toast.addSectionFailed"));
             setSections(sections); // Revert
         }
     };
@@ -113,7 +115,7 @@ export function EditorProvider({
     };
 
     const deleteSection = async (id: string) => {
-        if (!confirm("Delete section?")) return;
+        if (!confirm(t("sa.websiteBuilder.confirm.deleteSection"))) return;
         const previous = [...sections];
         setSections(sections.filter(s => s.id !== id));
         setSelectedSectionId(null);
@@ -121,7 +123,7 @@ export function EditorProvider({
         try {
             await WebsiteService.deleteSection(websiteId, pageId, id);
         } catch (e) {
-            toast.error("Failed to delete");
+            toast.error(t("sa.websiteBuilder.toast.deleteSectionFailed"));
             setSections(previous);
         }
     };
@@ -131,7 +133,7 @@ export function EditorProvider({
         try {
             await WebsiteService.updateSectionsOrder(websiteId, pageId, newOrder);
         } catch (e) {
-            toast.error("Failed to reorder");
+            toast.error(t("sa.websiteBuilder.toast.reorderFailed"));
         }
     };
 
@@ -140,19 +142,19 @@ export function EditorProvider({
         setIsSaving(true);
         await new Promise(r => setTimeout(r, 500)); // Fake delay
         setIsSaving(false);
-        toast.success("All changes saved");
+        toast.success(t("sa.websiteBuilder.toast.allChangesSaved"));
     };
 
     const publishPage = async () => {
         if (!user) return;
-        if (!confirm("Publish this page live?")) return;
+        if (!confirm(t("sa.websiteBuilder.confirm.publishPage"))) return;
         setIsSaving(true);
         try {
             await WebsiteService.publishPage(websiteId, pageId, user.uid);
-            toast.success("Page published successfully!");
+            toast.success(t("sa.websiteBuilder.toast.pagePublished"));
             loadData(); // Reload status
         } catch (e) {
-            toast.error("Publish failed");
+            toast.error(t("sa.websiteBuilder.toast.publishFailed"));
         } finally {
             setIsSaving(false);
         }
