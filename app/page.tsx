@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SiteLogo } from "@/components/site/site-logo";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import {
     ArrowRight,
@@ -193,8 +194,16 @@ export default function Home() {
                         className="flex items-baseline gap-[2px] text-[22px] tracking-tight text-[#16171B]"
                         style={serif}
                     >
-                        Dosory
-                        <span className="text-[#0A66C2]">.</span>
+                        <SiteLogo
+                            variant="dark"
+                            className="h-8 w-auto"
+                            fallback={
+                                <>
+                                    Dosory
+                                    <span className="text-[#0A66C2]">.</span>
+                                </>
+                            }
+                        />
                     </Link>
                     <nav className="hidden items-center gap-9 text-[14px] text-[#5B5D64] md:flex">
                         <a href="#product" className="transition-colors hover:text-[#16171B]">
@@ -528,7 +537,15 @@ export default function Home() {
                     <div className="grid gap-10 md:grid-cols-4">
                         <div>
                             <div className="flex items-baseline gap-[2px] text-[22px]" style={serif}>
-                                Dosory<span className="text-[#4d9bef]">.</span>
+                                <SiteLogo
+                                    variant="light"
+                                    className="h-8 w-auto"
+                                    fallback={
+                                        <>
+                                            Dosory<span className="text-[#4d9bef]">.</span>
+                                        </>
+                                    }
+                                />
                             </div>
                             <p className="mt-3 max-w-[14rem] text-[13px] leading-relaxed text-[#8A8C93]">
                                 The all-in-one CRM &amp; ERP platform for modern businesses.
