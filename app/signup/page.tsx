@@ -67,9 +67,7 @@ export default function SignupPage() {
                         <CardDescription>{t("auth.signup.disabledDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-gray-500">
-                            {t("auth.signup.disabledBody")}
-                        </p>
+                        <p className="text-sm text-gray-500">{t("auth.signup.disabledBody")}</p>
                     </CardContent>
                     <CardFooter className="flex justify-center">
                         <Link href="/login" className="text-blue-500 hover:underline">
@@ -109,20 +107,24 @@ export default function SignupPage() {
         checkSubdomainAvailability(cleaned);
     };
 
-    // Check if subdomain is available (using doc ID since subdomain = orgId)
+    // Check if subdomain is available. Must go server-side: the `organizations` rules are
+    // tenant-isolated, so an anonymous client read was denied and the old catch path wrongly
+    // reported every subdomain "available" (letting users pick a taken one → cryptic error).
     const checkSubdomainAvailability = async (sub: string) => {
         setCheckingSubdomain(true);
         setSubdomainAvailable(null);
         try {
-            // Since we use subdomain as org document ID, just check if doc exists
-            const { getDoc } = await import("firebase/firestore");
-            const orgRef = doc(db, "organizations", sub);
-            const orgSnap = await getDoc(orgRef);
-            setSubdomainAvailable(!orgSnap.exists());
+            const res = await fetch("/api/organizations/check-subdomain", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ subdomain: sub }),
+            });
+            const data = await res.json().catch(() => ({}));
+            setSubdomainAvailable(res.ok ? data.available === true : false);
         } catch (err) {
             console.error("Error checking subdomain:", err);
-            // On error, allow submission (will fail if taken)
-            setSubdomainAvailable(true);
+            // Fail closed: never claim available on error.
+            setSubdomainAvailable(false);
         } finally {
             setCheckingSubdomain(false);
         }
@@ -140,6 +142,22 @@ export default function SignupPage() {
 
         setSubmitting(true);
         try {
+            // 0. Re-check availability server-side right before creating (the UI flag can be
+            // stale / racing). Prevents creating an auth user and then failing the org write
+            // with a confusing "Missing or insufficient permissions" when the subdomain is taken.
+            const availRes = await fetch("/api/organizations/check-subdomain", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ subdomain }),
+            });
+            const availData = await availRes.json().catch(() => ({}));
+            if (!availRes.ok || availData.available !== true) {
+                setSubdomainAvailable(false);
+                setError(t("auth.signup.chooseAvailableSubdomain"));
+                setSubmitting(false);
+                return;
+            }
+
             // 1. Create Auth User
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
@@ -342,9 +360,7 @@ export default function SignupPage() {
                             </div>
                             <div>
                                 <h3 className="font-semibold text-gray-900">{t("auth.signup.joinExistingOrg")}</h3>
-                                <p className="text-sm text-gray-500">
-                                    {t("auth.signup.joinExistingOrgDesc")}
-                                </p>
+                                <p className="text-sm text-gray-500">{t("auth.signup.joinExistingOrgDesc")}</p>
                             </div>
                         </button>
                     </CardContent>
@@ -404,7 +420,8 @@ export default function SignupPage() {
                                 </div>
                                 {checkingSubdomain && (
                                     <p className="text-sm text-gray-500 flex items-center gap-1">
-                                        <Loader2 className="h-3 w-3 animate-spin" /> {t("auth.signup.checkingAvailability")}
+                                        <Loader2 className="h-3 w-3 animate-spin" />{" "}
+                                        {t("auth.signup.checkingAvailability")}
                                     </p>
                                 )}
                                 {subdomainError && <p className="text-sm text-red-500">{subdomainError}</p>}
@@ -491,9 +508,7 @@ export default function SignupPage() {
                                         .dosory.com
                                     </span>
                                 </div>
-                                <p className="text-xs text-gray-500">
-                                    {t("auth.signup.askAdminSubdomain")}
-                                </p>
+                                <p className="text-xs text-gray-500">{t("auth.signup.askAdminSubdomain")}</p>
                             </div>
 
                             <div className="space-y-2">
@@ -558,9 +573,7 @@ export default function SignupPage() {
                         <CardDescription>{t("auth.signup.requestSubmittedDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent className="text-center">
-                        <p className="text-sm text-gray-500 mb-4">
-                            {t("auth.signup.requestSubmittedBody")}
-                        </p>
+                        <p className="text-sm text-gray-500 mb-4">{t("auth.signup.requestSubmittedBody")}</p>
                         <p className="text-sm text-gray-600">{t("auth.signup.checkEmailUpdates")}</p>
                     </CardContent>
                     <CardFooter className="flex justify-center">
