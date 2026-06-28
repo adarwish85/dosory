@@ -28,6 +28,7 @@ import type { LucideIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useTranslation } from "@/lib/i18n";
 import type {
     Block,
     SiteDesign,
@@ -91,6 +92,7 @@ export function BlockRenderer({ block, design }: BlockRendererProps) {
 // ============================================
 
 function HeroBlock({ data, design }: { data: HeroBlockData; design: SiteDesign }) {
+    const { t } = useTranslation();
     return (
         <section className="pt-32 pb-20 relative overflow-hidden">
             <div
@@ -173,13 +175,13 @@ function HeroBlock({ data, design }: { data: HeroBlockData; design: SiteDesign }
                                         </div>
                                     ))}
                                 </div>
-                                <span className="ml-2">10K+ users</span>
+                                <span className="ml-2">{t("site.hero.usersCount")}</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 {[...Array(5)].map((_, i) => (
                                     <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                                 ))}
-                                <span className="ml-1">4.9/5 rating</span>
+                                <span className="ml-1">{t("site.hero.rating")}</span>
                             </div>
                         </div>
                     )}
@@ -463,6 +465,7 @@ interface SubscriptionPlan {
 }
 
 function PricingBlock({ data, design }: { data: PricingBlockData; design: SiteDesign }) {
+    const { t } = useTranslation();
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -485,7 +488,7 @@ function PricingBlock({ data, design }: { data: PricingBlockData; design: SiteDe
     if (loading) {
         return (
             <section className="py-24 bg-[#F3F2EF]">
-                <div className="text-center text-gray-500">Loading plans...</div>
+                <div className="text-center text-gray-500">{t("site.pricing.loading")}</div>
             </section>
         );
     }
@@ -532,7 +535,7 @@ function PricingBlock({ data, design }: { data: PricingBlockData; design: SiteDe
                                     className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 text-white text-sm font-medium rounded-full flex items-center gap-1"
                                     style={{ backgroundColor: design.primaryColor }}
                                 >
-                                    <Star className="h-3 w-3 fill-white" /> Most Popular
+                                    <Star className="h-3 w-3 fill-white" /> {t("site.pricing.mostPopular")}
                                 </div>
                             )}
 
@@ -544,14 +547,14 @@ function PricingBlock({ data, design }: { data: PricingBlockData; design: SiteDe
                             <div className="mb-6">
                                 <span className="text-4xl font-bold text-gray-900">${plan.price}</span>
                                 <span className="text-gray-500">
-                                    /{plan.billingPeriod === "monthly" ? "month" : "year"}
+                                    /{plan.billingPeriod === "monthly" ? t("site.pricing.month") : t("site.pricing.year")}
                                 </span>
                             </div>
 
                             <ul className="space-y-3 mb-8">
                                 <li className="flex items-center gap-2 text-gray-600">
                                     <Check className="h-5 w-5 flex-shrink-0" style={{ color: design.primaryColor }} />
-                                    {plan.maxUsers === -1 ? "Unlimited users" : `Up to ${plan.maxUsers} users`}
+                                    {plan.maxUsers === -1 ? t("site.pricing.unlimitedUsers") : t("site.pricing.upToUsers", { count: plan.maxUsers })}
                                 </li>
                                 {plan.features.map((feature, i) => (
                                     <li key={i} className="flex items-center gap-2 text-gray-600">
@@ -570,7 +573,7 @@ function PricingBlock({ data, design }: { data: PricingBlockData; design: SiteDe
                                     style={plan.isPopular ? { backgroundColor: design.primaryColor } : undefined}
                                     variant={plan.isPopular ? "default" : "outline"}
                                 >
-                                    Get Started
+                                    {t("site.pricing.getStarted")}
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
                             </Link>

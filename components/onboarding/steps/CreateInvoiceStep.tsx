@@ -9,6 +9,7 @@ import { useWizard } from "../OnboardingWizard";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useTranslation } from "@/lib/i18n";
 
 interface LineItem {
     description: string;
@@ -18,6 +19,7 @@ interface LineItem {
 
 export default function CreateInvoiceStep() {
     const { goNext, useDummyData, createdCustomerId, setCreatedInvoiceId } = useWizard();
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const orgId = profile?.orgId;
     const userId = profile?.uid;
@@ -109,16 +111,16 @@ export default function CreateInvoiceStep() {
                 <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Receipt className="h-6 w-6" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">Create Your First Invoice</h2>
-                <p className="text-sm text-gray-500 mt-1">Add line items to your invoice</p>
+                <h2 className="text-xl font-semibold text-gray-900">{t("onboarding.invoice.title")}</h2>
+                <p className="text-sm text-gray-500 mt-1">{t("onboarding.invoice.subtitle")}</p>
             </div>
 
             {/* Line Items */}
             <div className="space-y-3">
                 <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 px-1">
-                    <div className="col-span-6">Description</div>
-                    <div className="col-span-2 text-center">Qty</div>
-                    <div className="col-span-3 text-right">Price</div>
+                    <div className="col-span-6">{t("onboarding.invoice.descriptionHeader")}</div>
+                    <div className="col-span-2 text-center">{t("onboarding.invoice.qtyHeader")}</div>
+                    <div className="col-span-3 text-right">{t("onboarding.invoice.priceHeader")}</div>
                     <div className="col-span-1"></div>
                 </div>
 
@@ -128,7 +130,7 @@ export default function CreateInvoiceStep() {
                             className="col-span-6"
                             value={item.description}
                             onChange={(e) => updateLineItem(index, "description", e.target.value)}
-                            placeholder="Item description"
+                            placeholder={t("onboarding.invoice.itemPlaceholder")}
                         />
                         <Input
                             className="col-span-2 text-center"
@@ -160,13 +162,13 @@ export default function CreateInvoiceStep() {
 
                 <Button variant="outline" size="sm" onClick={addLineItem} className="gap-1 text-gray-600">
                     <Plus className="h-4 w-4" />
-                    Add Line Item
+                    {t("onboarding.invoice.addLineItem")}
                 </Button>
             </div>
 
             {/* Total */}
             <div className="flex justify-end items-center gap-4 pt-4 border-t">
-                <span className="text-sm text-gray-500">Total:</span>
+                <span className="text-sm text-gray-500">{t("onboarding.invoice.total")}</span>
                 <span className="text-2xl font-bold text-gray-900">
                     ${calculateTotal().toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </span>
@@ -182,11 +184,11 @@ export default function CreateInvoiceStep() {
                     {isSaving ? (
                         <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Creating...
+                            {t("onboarding.common.creating")}
                         </>
                     ) : (
                         <>
-                            Create Invoice
+                            {t("onboarding.invoice.createButton")}
                             <ArrowRight className="h-4 w-4" />
                         </>
                     )}

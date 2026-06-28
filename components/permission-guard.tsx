@@ -5,6 +5,7 @@ import { Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 
 interface PermissionGuardProps {
     module: string; // e.g., 'customers', 'invoices'
@@ -14,6 +15,7 @@ interface PermissionGuardProps {
 
 export function PermissionGuard({ module, children, requireAdmin = false }: PermissionGuardProps) {
     const { permissions, isAdmin, loading } = usePermissions();
+    const { t } = useTranslation();
 
     if (loading) {
         return (
@@ -30,28 +32,29 @@ export function PermissionGuard({ module, children, requireAdmin = false }: Perm
 
     // If requireAdmin is true and user is not admin (checked above), deny
     if (requireAdmin) {
-        return <AccessDenied message="This area requires administrator access." />;
+        return <AccessDenied message={t("permissionGuard.requireAdmin")} />;
     }
 
     // Check specific module permission
     if (!canAccessModule(permissions, isAdmin, module)) {
-        return <AccessDenied message={`You do not have permission to access the ${module} module.`} />;
+        return <AccessDenied message={t("permissionGuard.noModuleAccess", { module })} />;
     }
 
     return <>{children}</>;
 }
 
 function AccessDenied({ message }: { message: string }) {
+    const { t } = useTranslation();
     return (
         <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center p-8">
             <div className="bg-red-50 p-4 rounded-full mb-4">
                 <ShieldAlert className="h-12 w-12 text-red-500" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Access Restricted</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">{t("permissionGuard.accessRestricted")}</h2>
             <p className="text-gray-500 max-w-md mb-8">{message}</p>
             <div className="flex gap-4">
                 <Button variant="outline" asChild>
-                    <Link href="/dashboard">Go Home</Link>
+                    <Link href="/dashboard">{t("permissionGuard.goHome")}</Link>
                 </Button>
             </div>
         </div>

@@ -7,6 +7,7 @@ import { Download, Loader2 } from "lucide-react";
 import InvoicePDF, { PDFSettings } from "@/components/pdf/InvoicePDF";
 import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
 import { useFormatters } from "@/lib/hooks/use-formatters";
+import { useTranslation } from "@/lib/i18n";
 
 interface DownloadPDFButtonProps {
     type: "invoice";
@@ -28,6 +29,7 @@ export default function DownloadPDFButton({
     const [generating, setGenerating] = useState(false);
     const { settings } = useOrganizationSettings();
     const { formatDate } = useFormatters();
+    const { t } = useTranslation();
 
     const handleDownload = async () => {
         setGenerating(true);
@@ -95,12 +97,12 @@ export default function DownloadPDFButton({
             {generating ? (
                 <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
+                    {t("pdf.generating")}
                 </>
             ) : (
                 <>
                     <Download className="mr-2 h-4 w-4" />
-                    Download PDF
+                    {t("pdf.downloadPdf")}
                 </>
             )}
         </Button>

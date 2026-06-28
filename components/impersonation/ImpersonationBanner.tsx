@@ -2,9 +2,11 @@
 
 import { useImpersonation } from "@/lib/contexts/ImpersonationContext";
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 export function ImpersonationBanner() {
     const { isImpersonating, impersonatedTenantId, endImpersonation } = useImpersonation();
+    const { t } = useTranslation();
     const [elapsed, setElapsed] = useState(0);
 
     // Simple timer for display
@@ -20,22 +22,22 @@ export function ImpersonationBanner() {
         <div className="bg-orange-600 text-white px-4 py-2 flex items-center justify-between shadow-md z-50 relative">
             <div className="flex items-center gap-4 text-sm font-medium">
                 <span className="bg-white/20 px-2 py-0.5 rounded text-xs uppercase tracking-wider">
-                    Impersonation Mode
+                    {t("impersonation.mode")}
                 </span>
                 <span>
-                    Viewing as Tenant: <strong>{impersonatedTenantId}</strong>
+                    {t("impersonation.viewingAs")} <strong>{impersonatedTenantId}</strong>
                 </span>
             </div>
 
             <div className="flex items-center gap-4">
                 <span className="text-xs opacity-80">
-                    Session active
+                    {t("impersonation.sessionActive")}
                 </span>
                 <button
                     onClick={() => endImpersonation()}
                     className="bg-white text-orange-700 hover:bg-orange-50 px-3 py-1 rounded text-xs font-bold transition-colors"
                 >
-                    Exit Impersonation
+                    {t("impersonation.exit")}
                 </button>
             </div>
         </div>

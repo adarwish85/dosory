@@ -9,9 +9,11 @@ import { useWizard } from "../OnboardingWizard";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useTranslation } from "@/lib/i18n";
 
 export default function AddCustomerStep() {
     const { goNext, useDummyData, setCreatedCustomerId } = useWizard();
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const orgId = profile?.orgId;
     const userId = profile?.uid;
@@ -65,11 +67,11 @@ export default function AddCustomerStep() {
                 <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
                     <User className="h-6 w-6" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">Add Your First Customer</h2>
+                <h2 className="text-xl font-semibold text-gray-900">{t("onboarding.addCustomer.title")}</h2>
                 <p className="text-sm text-gray-500 mt-1">
                     {useDummyData
-                        ? "We've pre-filled demo data for you. Feel free to edit!"
-                        : "Enter your first customer's details"}
+                        ? t("onboarding.addCustomer.subtitleDemo")
+                        : t("onboarding.addCustomer.subtitle")}
                 </p>
             </div>
 
@@ -77,13 +79,13 @@ export default function AddCustomerStep() {
                 <div>
                     <Label htmlFor="customerName" className="flex items-center gap-2">
                         <User className="h-4 w-4 text-gray-400" />
-                        Customer Name *
+                        {t("onboarding.addCustomer.nameLabel")}
                     </Label>
                     <Input
                         id="customerName"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="John Doe"
+                        placeholder={t("onboarding.addCustomer.namePlaceholder")}
                         className="mt-1"
                         required
                     />
@@ -92,14 +94,14 @@ export default function AddCustomerStep() {
                 <div>
                     <Label htmlFor="customerEmail" className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-gray-400" />
-                        Email
+                        {t("onboarding.addCustomer.emailLabel")}
                     </Label>
                     <Input
                         id="customerEmail"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="john@example.com"
+                        placeholder={t("onboarding.addCustomer.emailPlaceholder")}
                         className="mt-1"
                     />
                 </div>
@@ -107,13 +109,13 @@ export default function AddCustomerStep() {
                 <div>
                     <Label htmlFor="customerPhone" className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-gray-400" />
-                        Phone
+                        {t("onboarding.addCustomer.phoneLabel")}
                     </Label>
                     <Input
                         id="customerPhone"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+1 (555) 000-0000"
+                        placeholder={t("onboarding.common.phonePlaceholder")}
                         className="mt-1"
                     />
                 </div>
@@ -121,13 +123,13 @@ export default function AddCustomerStep() {
                 <div>
                     <Label htmlFor="customerCompany" className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-gray-400" />
-                        Company
+                        {t("onboarding.addCustomer.companyLabel")}
                     </Label>
                     <Input
                         id="customerCompany"
                         value={company}
                         onChange={(e) => setCompany(e.target.value)}
-                        placeholder="Acme Inc."
+                        placeholder={t("onboarding.addCustomer.companyPlaceholder")}
                         className="mt-1"
                     />
                 </div>
@@ -143,11 +145,11 @@ export default function AddCustomerStep() {
                     {isSaving ? (
                         <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Creating...
+                            {t("onboarding.common.creating")}
                         </>
                     ) : (
                         <>
-                            Create Customer
+                            {t("onboarding.addCustomer.createButton")}
                             <ArrowRight className="h-4 w-4" />
                         </>
                     )}

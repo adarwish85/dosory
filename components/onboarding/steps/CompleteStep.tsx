@@ -9,9 +9,11 @@ import { useOnboardingContext } from "../OnboardingProvider";
 import { doc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import confetti from "canvas-confetti";
+import { useTranslation } from "@/lib/i18n";
 
 export default function CompleteStep() {
     const { useDummyData, createdCustomerId, createdInvoiceId, completeWizard } = useWizard();
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const { skipOnboarding } = useOnboardingContext();
     const orgId = profile?.orgId;
@@ -104,27 +106,27 @@ export default function CompleteStep() {
             </div>
 
             <div>
-                <h2 className="text-2xl font-bold text-gray-900">You&apos;re All Set! 🎉</h2>
-                <p className="text-gray-500 mt-2">Your workspace is ready to go. Here&apos;s what you accomplished:</p>
+                <h2 className="text-2xl font-bold text-gray-900">{t("onboarding.complete.title")}</h2>
+                <p className="text-gray-500 mt-2">{t("onboarding.complete.subtitle")}</p>
             </div>
 
             {/* Accomplishments */}
             <div className="bg-gray-50 rounded-xl p-5 max-w-md mx-auto text-left space-y-3">
                 <div className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-                    <span className="text-sm text-gray-700">Company profile configured</span>
+                    <span className="text-sm text-gray-700">{t("onboarding.complete.taskCompany")}</span>
                 </div>
                 <div className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-                    <span className="text-sm text-gray-700">First customer added</span>
+                    <span className="text-sm text-gray-700">{t("onboarding.complete.taskCustomer")}</span>
                 </div>
                 <div className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-                    <span className="text-sm text-gray-700">Invoice created</span>
+                    <span className="text-sm text-gray-700">{t("onboarding.complete.taskInvoice")}</span>
                 </div>
                 <div className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-                    <span className="text-sm text-gray-700">Team invitations sent</span>
+                    <span className="text-sm text-gray-700">{t("onboarding.complete.taskTeam")}</span>
                 </div>
             </div>
 
@@ -132,7 +134,7 @@ export default function CompleteStep() {
             {useDummyData && !resetComplete && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 max-w-md mx-auto">
                     <p className="text-sm text-amber-800 mb-3">
-                        You used demo data. Want to start fresh with a clean account?
+                        {t("onboarding.complete.demoPrompt")}
                     </p>
                     <Button
                         variant="outline"
@@ -143,12 +145,12 @@ export default function CompleteStep() {
                         {isResetting ? (
                             <>
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                Resetting...
+                                {t("onboarding.complete.resetting")}
                             </>
                         ) : (
                             <>
                                 <RotateCcw className="h-4 w-4" />
-                                Reset Demo Data
+                                {t("onboarding.complete.resetButton")}
                             </>
                         )}
                     </Button>
@@ -159,14 +161,14 @@ export default function CompleteStep() {
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 max-w-md mx-auto">
                     <p className="text-sm text-green-800 flex items-center justify-center gap-2">
                         <CheckCircle2 className="h-4 w-4" />
-                        Demo data has been cleared. Your account is clean!
+                        {t("onboarding.complete.resetDone")}
                     </p>
                 </div>
             )}
 
             {/* Go to Dashboard */}
             <Button onClick={handleFinish} size="lg" className="bg-blue-600 hover:bg-blue-700 gap-2">
-                Go to Dashboard
+                {t("onboarding.complete.goToDashboard")}
                 <ArrowRight className="h-4 w-4" />
             </Button>
         </div>

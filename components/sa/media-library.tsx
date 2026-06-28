@@ -10,6 +10,7 @@ import { Image as ImageIcon, Upload, Loader2, Search } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface MediaLibraryProps {
     onSelect: (url: string) => void;
@@ -17,6 +18,7 @@ interface MediaLibraryProps {
 }
 
 export function MediaLibrary({ onSelect, trigger }: MediaLibraryProps) {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [assets, setAssets] = useState<WebsiteAsset[]>([]);
     const [loading, setLoading] = useState(false);
@@ -65,10 +67,10 @@ export function MediaLibrary({ onSelect, trigger }: MediaLibraryProps) {
                 dimensions: { width: 600, height: 400 }
             }, user.uid);
 
-            toast.success("Image uploaded!");
+            toast.success(t("sa.media.uploadSuccess"));
             loadAssets();
         } catch (error) {
-            toast.error("Upload failed");
+            toast.error(t("sa.media.uploadFailed"));
         } finally {
             setUploading(false);
         }
@@ -79,18 +81,18 @@ export function MediaLibrary({ onSelect, trigger }: MediaLibraryProps) {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                {trigger || <Button variant="outline"><ImageIcon className="mr-2 h-4 w-4" /> Select Image</Button>}
+                {trigger || <Button variant="outline"><ImageIcon className="mr-2 h-4 w-4" /> {t("sa.media.selectImage")}</Button>}
             </DialogTrigger>
             <DialogContent className="max-w-3xl h-[600px] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Media Library</DialogTitle>
+                    <DialogTitle>{t("sa.media.title")}</DialogTitle>
                 </DialogHeader>
 
                 <div className="flex items-center gap-4 py-4">
                     <div className="relative flex-1">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search files..."
+                            placeholder={t("sa.media.searchPlaceholder")}
                             className="pl-8"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -99,7 +101,7 @@ export function MediaLibrary({ onSelect, trigger }: MediaLibraryProps) {
                     <div className="relative">
                         <Button disabled={uploading}>
                             {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                            Upload
+                            {t("sa.media.upload")}
                         </Button>
                         <Input
                             type="file"
@@ -117,7 +119,7 @@ export function MediaLibrary({ onSelect, trigger }: MediaLibraryProps) {
                     ) : filteredAssets.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                             <ImageIcon className="h-10 w-10 mb-2 opacity-20" />
-                            <p>No images found.</p>
+                            <p>{t("sa.media.noImages")}</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-3 md:grid-cols-4 gap-4">

@@ -30,6 +30,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTranslation } from "@/lib/i18n";
 
 interface ImportWizardProps {
     open: boolean;
@@ -42,6 +43,7 @@ type WizardStep = "upload" | "mapping" | "preview" | "importing" | "complete";
 
 export default function ImportWizard({ open, onClose, module, onSuccess }: ImportWizardProps) {
     const { profile } = useUserProfile();
+    const { t } = useTranslation();
     const moduleConfig = MODULE_CONFIGS[module];
 
     const [step, setStep] = useState<WizardStep>("upload");
@@ -69,10 +71,10 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                 setStep("mapping");
             } catch (error) {
                 console.error("Error parsing file:", error);
-                alert("Failed to parse file. Please ensure it's a valid CSV.");
+                alert(t("import.errors.parseFailed"));
             }
         },
-        [moduleConfig]
+        [moduleConfig, t]
     );
 
     const handleMappingChange = (sourceColumn: string, targetField: string) => {
@@ -187,8 +189,8 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900">Import {moduleConfig.name}</h2>
-                        <p className="text-sm text-gray-500 mt-1">Upload a CSV file to import records</p>
+                        <h2 className="text-xl font-bold text-gray-900">{t("import.title", { module: moduleConfig.name })}</h2>
+                        <p className="text-sm text-gray-500 mt-1">{t("import.subtitle")}</p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={handleClose}>
                         <X className="h-5 w-5" />
@@ -223,8 +225,8 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                         <div className="space-y-6">
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-500 transition-colors">
                                 <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">Drop your CSV file here</h3>
-                                <p className="text-sm text-gray-500 mb-4">or click to browse files</p>
+                                <h3 className="text-lg font-medium text-gray-900 mb-2">{t("import.upload.dropHere")}</h3>
+                                <p className="text-sm text-gray-500 mb-4">{t("import.upload.orBrowse")}</p>
                                 <input
                                     type="file"
                                     accept=".csv"
@@ -236,7 +238,7 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                                     <Button asChild variant="outline">
                                         <span>
                                             <Upload className="mr-2 h-4 w-4" />
-                                            Select CSV File
+                                            {t("import.upload.selectFile")}
                                         </span>
                                     </Button>
                                 </label>
@@ -249,7 +251,7 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                                     className="text-blue-600"
                                 >
                                     <Download className="mr-2 h-4 w-4" />
-                                    Download Template CSV
+                                    {t("import.upload.downloadTemplate")}
                                 </Button>
                             </div>
                         </div>
@@ -260,8 +262,8 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                         <div className="space-y-4">
                             <div className="bg-blue-50 p-4 rounded-lg">
                                 <p className="text-sm text-blue-800">
-                                    <strong>{parsedData.totalRows}</strong> records found. Map your CSV columns to the{" "}
-                                    {moduleConfig.name} fields below.
+                                    <strong>{parsedData.totalRows}</strong>{" "}
+                                    {t("import.mapping.instructions", { module: moduleConfig.name })}
                                 </p>
                             </div>
 
@@ -283,10 +285,10 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                                                     onValueChange={(value) => handleMappingChange(value, field.field)}
                                                 >
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select column..." />
+                                                        <SelectValue placeholder={t("import.mapping.selectColumn")} />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        <SelectItem value="ignore">-- Skip --</SelectItem>
+                                                        <SelectItem value="ignore">{t("import.mapping.skip")}</SelectItem>
                                                         {parsedData.headers.map((header) => (
                                                             <SelectItem key={header} value={header}>
                                                                 {header}
@@ -309,21 +311,21 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                                 <div className="bg-yellow-50 p-4 rounded-lg">
                                     <div className="flex items-center gap-2 text-yellow-800 mb-2">
                                         <AlertCircle className="h-5 w-5" />
-                                        <strong>{errors.length} validation warnings</strong>
+                                        <strong>{t("import.preview.validationWarnings", { count: errors.length })}</strong>
                                     </div>
                                     <div className="max-h-32 overflow-y-auto text-sm text-yellow-700">
                                         {errors.slice(0, 10).map((err, i) => (
                                             <div key={i}>
-                                                Row {err.row}: {err.message}
+                                                {t("import.preview.rowError", { row: err.row, message: err.message })}
                                             </div>
                                         ))}
-                                        {errors.length > 10 && <div>...and {errors.length - 10} more</div>}
+                                        {errors.length > 10 && <div>{t("import.preview.andMore", { count: errors.length - 10 })}</div>}
                                     </div>
                                 </div>
                             ) : (
                                 <div className="bg-green-50 p-4 rounded-lg flex items-center gap-2 text-green-800">
                                     <CheckCircle className="h-5 w-5" />
-                                    <span>All {parsedData.totalRows} records are valid and ready to import</span>
+                                    <span>{t("import.preview.allValid", { count: parsedData.totalRows })}</span>
                                 </div>
                             )}
 
@@ -366,7 +368,7 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                                 </div>
                                 {parsedData.totalRows > 5 && (
                                     <div className="bg-gray-50 px-4 py-2 text-sm text-gray-500 border-t">
-                                        Showing 5 of {parsedData.totalRows} records
+                                        {t("import.preview.showingCount", { total: parsedData.totalRows })}
                                     </div>
                                 )}
                             </div>
@@ -377,9 +379,9 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                     {step === "importing" && (
                         <div className="flex flex-col items-center justify-center py-12">
                             <Loader2 className="h-12 w-12 text-blue-600 animate-spin mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">Importing records...</h3>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">{t("import.importing.title")}</h3>
                             <p className="text-sm text-gray-500 mb-4">
-                                {importProgress.current} of {importProgress.total} records
+                                {t("import.importing.progress", { current: importProgress.current, total: importProgress.total })}
                             </p>
                             <div className="w-64 bg-gray-200 rounded-full h-2">
                                 <div
@@ -394,14 +396,14 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                     {step === "complete" && (
                         <div className="flex flex-col items-center justify-center py-12">
                             <CheckCircle className="h-16 w-16 text-green-600 mb-4" />
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">Import Complete!</h3>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">{t("import.complete.title")}</h3>
                             <p className="text-gray-600 mb-4">
-                                Successfully imported <strong>{importResult.success}</strong> records
+                                {t("import.complete.successPrefix")} <strong>{importResult.success}</strong> {t("import.complete.successSuffix")}
                                 {importResult.failed > 0 && (
-                                    <span className="text-red-600"> ({importResult.failed} failed)</span>
+                                    <span className="text-red-600"> {t("import.complete.failedCount", { count: importResult.failed })}</span>
                                 )}
                             </p>
-                            <Button onClick={handleClose}>Done</Button>
+                            <Button onClick={handleClose}>{t("common.done")}</Button>
                         </div>
                     )}
                 </div>
@@ -418,21 +420,21 @@ export default function ImportWizard({ open, onClose, module, onSuccess }: Impor
                             disabled={step === "upload"}
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
-                            Back
+                            {t("common.back")}
                         </Button>
                         <div className="flex gap-2">
                             <Button variant="outline" onClick={handleClose}>
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             {step === "mapping" && (
                                 <Button onClick={validateData}>
-                                    Continue
+                                    {t("common.continue")}
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
                             )}
                             {step === "preview" && (
                                 <Button onClick={handleImport} className="bg-green-600 hover:bg-green-700">
-                                    Import {parsedData?.totalRows} Records
+                                    {t("import.preview.importButton", { count: parsedData?.totalRows ?? 0 })}
                                 </Button>
                             )}
                         </div>

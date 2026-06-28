@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 import { useOnboardingContext } from "./OnboardingProvider";
 
 // Step components (will be created next)
@@ -15,12 +16,12 @@ import InviteTeamStep from "./steps/InviteTeamStep";
 import CompleteStep from "./steps/CompleteStep";
 
 const STEPS = [
-    { key: "welcome", title: "Welcome", component: WelcomeStep },
-    { key: "companyProfile", title: "Company Profile", component: CompanyProfileStep },
-    { key: "addCustomer", title: "Add Customer", component: AddCustomerStep },
-    { key: "createInvoice", title: "Create Invoice", component: CreateInvoiceStep },
-    { key: "inviteTeam", title: "Invite Team", component: InviteTeamStep },
-    { key: "complete", title: "Complete", component: CompleteStep },
+    { key: "welcome", titleKey: "onboarding.wizard.step.welcome", component: WelcomeStep },
+    { key: "companyProfile", titleKey: "onboarding.wizard.step.companyProfile", component: CompanyProfileStep },
+    { key: "addCustomer", titleKey: "onboarding.wizard.step.addCustomer", component: AddCustomerStep },
+    { key: "createInvoice", titleKey: "onboarding.wizard.step.createInvoice", component: CreateInvoiceStep },
+    { key: "inviteTeam", titleKey: "onboarding.wizard.step.inviteTeam", component: InviteTeamStep },
+    { key: "complete", titleKey: "onboarding.wizard.step.complete", component: CompleteStep },
 ];
 
 interface WizardContextType {
@@ -47,6 +48,7 @@ export function useWizard() {
 }
 
 export default function OnboardingWizard() {
+    const { t } = useTranslation();
     const { state, showWelcome, skipOnboarding, completeStep } = useOnboardingContext();
     const [currentStep, setCurrentStep] = useState(0);
     const [useDummyData, setUseDummyData] = useState(false);
@@ -133,9 +135,9 @@ export default function OnboardingWizard() {
                     <div className="flex items-center justify-between px-6 py-4 border-b">
                         <div className="flex items-center gap-3">
                             <span className="text-sm text-gray-500">
-                                Step {currentStep + 1} of {totalSteps}
+                                {t("onboarding.wizard.stepCounter", { current: currentStep + 1, total: totalSteps })}
                             </span>
-                            <span className="text-sm font-medium text-gray-900">{STEPS[currentStep].title}</span>
+                            <span className="text-sm font-medium text-gray-900">{t(STEPS[currentStep].titleKey)}</span>
                         </div>
                         <button
                             onClick={handleClose}
@@ -155,7 +157,7 @@ export default function OnboardingWizard() {
                         <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50">
                             <Button variant="ghost" onClick={goPrev} disabled={currentStep === 0} className="gap-2">
                                 <ChevronLeft className="h-4 w-4" />
-                                Previous
+                                {t("onboarding.wizard.previous")}
                             </Button>
 
                             <div className="flex items-center gap-2">
@@ -178,7 +180,7 @@ export default function OnboardingWizard() {
                             <div className="flex items-center gap-2">
                                 {currentStep > 0 && currentStep < totalSteps - 1 && (
                                     <Button variant="ghost" onClick={skipStep} className="text-gray-500">
-                                        Skip
+                                        {t("onboarding.wizard.skip")}
                                     </Button>
                                 )}
                             </div>

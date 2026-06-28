@@ -4,9 +4,11 @@ import { useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { db } from "@/lib/firebase";
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
+import { useTranslation } from "@/lib/i18n";
 
 export default function FixProfilePage() {
     const { user } = useAuth();
+    const { t } = useTranslation();
 
     useEffect(() => {
         async function fixProfile() {
@@ -26,7 +28,7 @@ export default function FixProfilePage() {
 
                 if (data.orgId || data.organizationId) {
                     console.log("Profile already has orgId:", data.orgId || data.organizationId);
-                    alert(`Your profile already has orgId: ${data.orgId || data.organizationId}`);
+                    alert(t("auth.fixProfile.alreadyHasOrg", { orgId: data.orgId || data.organizationId }));
                     return;
                 }
 
@@ -47,21 +49,21 @@ export default function FixProfilePage() {
                 // Update profile
                 await updateDoc(userRef, { orgId });
                 console.log("✅ Profile fixed with orgId:", orgId);
-                alert(`✅ Profile fixed! orgId set to: ${orgId}\n\nPlease refresh the page.`);
+                alert(t("auth.fixProfile.fixedSuccess", { orgId }));
             } catch (error) {
                 console.error("Error fixing profile:", error);
-                alert(`❌ Error: ${error instanceof Error ? error.message : String(error)}`);
+                alert(t("auth.fixProfile.error", { message: error instanceof Error ? error.message : String(error) }));
             }
         }
 
         fixProfile();
-    }, [user]);
+    }, [user, t]);
 
     return (
         <div className="flex items-center justify-center min-h-screen">
             <div className="text-center">
-                <h1 className="text-2xl font-bold mb-4">Fixing Your Profile...</h1>
-                <p>Check the browser console for details.</p>
+                <h1 className="text-2xl font-bold mb-4">{t("auth.fixProfile.heading")}</h1>
+                <p>{t("auth.fixProfile.checkConsole")}</p>
             </div>
         </div>
     );

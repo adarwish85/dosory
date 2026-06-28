@@ -12,10 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlatformLogo, usePlatformSettings } from "@/lib/hooks/use-platform-settings";
 import { Building2, Users, Loader2, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 type SignupStep = "choice" | "create-org" | "join-org" | "join-submitted";
 
 export default function SignupPage() {
+    const { t } = useTranslation();
     const { settings, loading } = usePlatformSettings();
     const [step, setStep] = useState<SignupStep>("choice");
     const [email, setEmail] = useState("");
@@ -31,7 +33,7 @@ export default function SignupPage() {
     const [submitting, setSubmitting] = useState(false);
 
     if (loading) {
-        return <div className="flex h-screen items-center justify-center bg-gray-100">Loading...</div>;
+        return <div className="flex h-screen items-center justify-center bg-gray-100">{t("common.loading")}</div>;
     }
 
     if (settings.maintenanceMode) {
@@ -42,11 +44,11 @@ export default function SignupPage() {
                 </div>
                 <Card className="w-full max-w-md">
                     <CardHeader>
-                        <CardTitle>Under Maintenance</CardTitle>
-                        <CardDescription>We are currently performing scheduled maintenance.</CardDescription>
+                        <CardTitle>{t("auth.signup.maintenanceTitle")}</CardTitle>
+                        <CardDescription>{t("auth.signup.maintenanceDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-gray-500">Please check back later.</p>
+                        <p className="text-sm text-gray-500">{t("auth.signup.maintenanceBody")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -61,17 +63,17 @@ export default function SignupPage() {
                 </div>
                 <Card className="w-full max-w-md">
                     <CardHeader>
-                        <CardTitle>Signups Disabled</CardTitle>
-                        <CardDescription>New account registration is currently disabled.</CardDescription>
+                        <CardTitle>{t("auth.signup.disabledTitle")}</CardTitle>
+                        <CardDescription>{t("auth.signup.disabledDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-gray-500">
-                            Please contact support for assistance or if you have an invitation.
+                            {t("auth.signup.disabledBody")}
                         </p>
                     </CardContent>
                     <CardFooter className="flex justify-center">
                         <Link href="/login" className="text-blue-500 hover:underline">
-                            Return to Login
+                            {t("auth.signup.returnToLogin")}
                         </Link>
                     </CardFooter>
                 </Card>
@@ -85,12 +87,12 @@ export default function SignupPage() {
         setSubdomain(cleaned);
 
         if (cleaned.length < 3) {
-            setSubdomainError("Subdomain must be at least 3 characters");
+            setSubdomainError(t("auth.signup.subdomainTooShort"));
             setSubdomainAvailable(null);
             return;
         }
         if (cleaned.startsWith("-") || cleaned.endsWith("-")) {
-            setSubdomainError("Subdomain cannot start or end with a hyphen");
+            setSubdomainError(t("auth.signup.subdomainHyphen"));
             setSubdomainAvailable(null);
             return;
         }
@@ -98,7 +100,7 @@ export default function SignupPage() {
         // Reserved subdomains
         const reserved = ["www", "app", "api", "admin", "mail", "ftp", "localhost", "test", "staging", "dev", "sa"];
         if (reserved.includes(cleaned)) {
-            setSubdomainError("This subdomain is reserved");
+            setSubdomainError(t("auth.signup.subdomainReserved"));
             setSubdomainAvailable(null);
             return;
         }
@@ -132,7 +134,7 @@ export default function SignupPage() {
         setError("");
 
         if (!subdomainAvailable) {
-            setError("Please choose an available subdomain");
+            setError(t("auth.signup.chooseAvailableSubdomain"));
             return;
         }
 
@@ -266,7 +268,7 @@ export default function SignupPage() {
             const orgSnap = await getDoc(orgRef);
 
             if (!orgSnap.exists()) {
-                setError("Organization not found. Please check the subdomain.");
+                setError(t("auth.signup.orgNotFound"));
                 setSubmitting(false);
                 return;
             }
@@ -314,8 +316,8 @@ export default function SignupPage() {
             {step === "choice" && (
                 <Card className="w-full max-w-lg">
                     <CardHeader className="text-center">
-                        <CardTitle className="text-2xl">Get Started</CardTitle>
-                        <CardDescription>How would you like to join?</CardDescription>
+                        <CardTitle className="text-2xl">{t("auth.signup.getStarted")}</CardTitle>
+                        <CardDescription>{t("auth.signup.howToJoin")}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <button
@@ -326,8 +328,8 @@ export default function SignupPage() {
                                 <Building2 className="h-6 w-6 text-blue-600" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900">Create New Organization</h3>
-                                <p className="text-sm text-gray-500">Start fresh with your own company workspace</p>
+                                <h3 className="font-semibold text-gray-900">{t("auth.signup.createNewOrg")}</h3>
+                                <p className="text-sm text-gray-500">{t("auth.signup.createNewOrgDesc")}</p>
                             </div>
                         </button>
 
@@ -339,18 +341,18 @@ export default function SignupPage() {
                                 <Users className="h-6 w-6 text-green-600" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900">Join Existing Organization</h3>
+                                <h3 className="font-semibold text-gray-900">{t("auth.signup.joinExistingOrg")}</h3>
                                 <p className="text-sm text-gray-500">
-                                    Request to join a company that&apos;s already using the platform
+                                    {t("auth.signup.joinExistingOrgDesc")}
                                 </p>
                             </div>
                         </button>
                     </CardContent>
                     <CardFooter className="flex justify-center">
                         <p className="text-sm text-gray-500">
-                            Already have an account?{" "}
+                            {t("auth.signup.alreadyHaveAccount")}{" "}
                             <Link href="/login" className="text-blue-500 hover:underline">
-                                Login
+                                {t("auth.signup.loginLink")}
                             </Link>
                         </p>
                     </CardFooter>
@@ -365,19 +367,19 @@ export default function SignupPage() {
                             onClick={() => setStep("choice")}
                             className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
                         >
-                            <ArrowLeft className="h-4 w-4" /> Back
+                            <ArrowLeft className="h-4 w-4" /> {t("common.back")}
                         </button>
-                        <CardTitle>Create Your Organization</CardTitle>
-                        <CardDescription>Set up your company workspace</CardDescription>
+                        <CardTitle>{t("auth.signup.createOrgTitle")}</CardTitle>
+                        <CardDescription>{t("auth.signup.createOrgDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleCreateOrg} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="orgName">Organization Name</Label>
+                                <Label htmlFor="orgName">{t("auth.signup.orgNameLabel")}</Label>
                                 <Input
                                     id="orgName"
                                     type="text"
-                                    placeholder="Acme Corporation"
+                                    placeholder={t("auth.signup.orgNamePlaceholder")}
                                     value={orgName}
                                     onChange={(e) => setOrgName(e.target.value)}
                                     required
@@ -385,7 +387,7 @@ export default function SignupPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="subdomain">Subdomain</Label>
+                                <Label htmlFor="subdomain">{t("auth.signup.subdomainLabel")}</Label>
                                 <div className="flex items-center">
                                     <Input
                                         id="subdomain"
@@ -402,28 +404,28 @@ export default function SignupPage() {
                                 </div>
                                 {checkingSubdomain && (
                                     <p className="text-sm text-gray-500 flex items-center gap-1">
-                                        <Loader2 className="h-3 w-3 animate-spin" /> Checking availability...
+                                        <Loader2 className="h-3 w-3 animate-spin" /> {t("auth.signup.checkingAvailability")}
                                     </p>
                                 )}
                                 {subdomainError && <p className="text-sm text-red-500">{subdomainError}</p>}
                                 {subdomainAvailable === true && !subdomainError && (
                                     <p className="text-sm text-green-600 flex items-center gap-1">
-                                        <CheckCircle2 className="h-3 w-3" /> Available!
+                                        <CheckCircle2 className="h-3 w-3" /> {t("auth.signup.subdomainAvailable")}
                                     </p>
                                 )}
                                 {subdomainAvailable === false && (
                                     <p className="text-sm text-red-500 flex items-center gap-1">
-                                        <XCircle className="h-3 w-3" /> Already taken
+                                        <XCircle className="h-3 w-3" /> {t("auth.signup.subdomainTaken")}
                                     </p>
                                 )}
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="email">Your Email</Label>
+                                <Label htmlFor="email">{t("auth.signup.yourEmailLabel")}</Label>
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="you@example.com"
+                                    placeholder={t("auth.signup.yourEmailPlaceholder")}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
@@ -431,7 +433,7 @@ export default function SignupPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">{t("auth.signup.passwordLabel")}</Label>
                                 <Input
                                     id="password"
                                     type="password"
@@ -451,7 +453,7 @@ export default function SignupPage() {
                                 style={{ backgroundColor: settings.primaryColor }}
                             >
                                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Create Organization
+                                {t("auth.signup.createOrgButton")}
                             </Button>
                         </form>
                     </CardContent>
@@ -466,15 +468,15 @@ export default function SignupPage() {
                             onClick={() => setStep("choice")}
                             className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
                         >
-                            <ArrowLeft className="h-4 w-4" /> Back
+                            <ArrowLeft className="h-4 w-4" /> {t("common.back")}
                         </button>
-                        <CardTitle>Join an Organization</CardTitle>
-                        <CardDescription>Request access to an existing company</CardDescription>
+                        <CardTitle>{t("auth.signup.joinOrgTitle")}</CardTitle>
+                        <CardDescription>{t("auth.signup.joinOrgDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleJoinOrg} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="joinSubdomain">Organization Subdomain</Label>
+                                <Label htmlFor="joinSubdomain">{t("auth.signup.joinSubdomainLabel")}</Label>
                                 <div className="flex items-center">
                                     <Input
                                         id="joinSubdomain"
@@ -490,16 +492,16 @@ export default function SignupPage() {
                                     </span>
                                 </div>
                                 <p className="text-xs text-gray-500">
-                                    Ask your administrator for the organization subdomain
+                                    {t("auth.signup.askAdminSubdomain")}
                                 </p>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="email">Your Email</Label>
+                                <Label htmlFor="email">{t("auth.signup.yourEmailLabel")}</Label>
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="you@example.com"
+                                    placeholder={t("auth.signup.yourEmailPlaceholder")}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
@@ -507,7 +509,7 @@ export default function SignupPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">{t("auth.signup.passwordLabel")}</Label>
                                 <Input
                                     id="password"
                                     type="password"
@@ -519,11 +521,11 @@ export default function SignupPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="message">Message to Admin (Optional)</Label>
+                                <Label htmlFor="message">{t("auth.signup.messageToAdminLabel")}</Label>
                                 <Input
                                     id="message"
                                     type="text"
-                                    placeholder="I'm the new sales manager..."
+                                    placeholder={t("auth.signup.messageToAdminPlaceholder")}
                                     value={joinMessage}
                                     onChange={(e) => setJoinMessage(e.target.value)}
                                 />
@@ -538,7 +540,7 @@ export default function SignupPage() {
                                 style={{ backgroundColor: settings.primaryColor }}
                             >
                                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Submit Request
+                                {t("auth.signup.submitRequest")}
                             </Button>
                         </form>
                     </CardContent>
@@ -552,15 +554,14 @@ export default function SignupPage() {
                         <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
                             <CheckCircle2 className="h-8 w-8 text-green-600" />
                         </div>
-                        <CardTitle>Request Submitted!</CardTitle>
-                        <CardDescription>Your join request has been sent to the organization admin</CardDescription>
+                        <CardTitle>{t("auth.signup.requestSubmittedTitle")}</CardTitle>
+                        <CardDescription>{t("auth.signup.requestSubmittedDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent className="text-center">
                         <p className="text-sm text-gray-500 mb-4">
-                            You&apos;ll be able to access the platform once your request is approved. The admin will
-                            assign your role and permissions.
+                            {t("auth.signup.requestSubmittedBody")}
                         </p>
-                        <p className="text-sm text-gray-600">Check your email for updates.</p>
+                        <p className="text-sm text-gray-600">{t("auth.signup.checkEmailUpdates")}</p>
                     </CardContent>
                     <CardFooter className="flex justify-center">
                         <Button
@@ -574,7 +575,7 @@ export default function SignupPage() {
                                 window.location.href = `${protocol}//${joinSubdomain}.${rootDomain}/login`;
                             }}
                         >
-                            Go to Login
+                            {t("auth.signup.goToLogin")}
                         </Button>
                     </CardFooter>
                 </Card>

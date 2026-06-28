@@ -10,9 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Shield } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export function RoleManager() {
     const { profile } = useUserProfile();
+    const { t } = useTranslation();
     const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -45,36 +47,36 @@ export function RoleManager() {
     }, [profile?.orgId]);
 
     const handleDelete = async (roleId: string) => {
-        if (!confirm("Are you sure? Users with this role may lose access.")) return;
+        if (!confirm(t("settings.rbac.deleteConfirm"))) return;
         if (!profile?.orgId) return;
 
         try {
             await deleteDoc(doc(db, "organizations", profile.orgId, "roles", roleId));
             fetchRoles();
         } catch (err) {
-            alert("Failed to delete role");
+            alert(t("settings.rbac.deleteFailed"));
         }
     };
 
-    if (loading) return <div>Loading access control...</div>;
+    if (loading) return <div>{t("settings.rbac.loading")}</div>;
 
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Roles & Permissions</CardTitle>
+                <CardTitle>{t("settings.rbac.title")}</CardTitle>
                 <Button>
-                    <Plus className="w-4 h-4 mr-2" /> Create Role
+                    <Plus className="w-4 h-4 mr-2" /> {t("settings.rbac.createRole")}
                 </Button>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Role Name</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Permissions</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead>{t("settings.rbac.col.name")}</TableHead>
+                            <TableHead>{t("settings.rbac.col.description")}</TableHead>
+                            <TableHead>{t("settings.rbac.col.type")}</TableHead>
+                            <TableHead>{t("settings.rbac.col.permissions")}</TableHead>
+                            <TableHead className="text-right">{t("settings.rbac.col.actions")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -85,15 +87,15 @@ export function RoleManager() {
                                 <TableCell>
                                     {role.isSystemRole ? (
                                         <Badge variant="secondary">
-                                            <Shield className="w-3 h-3 mr-1" /> System
+                                            <Shield className="w-3 h-3 mr-1" /> {t("settings.rbac.systemRole")}
                                         </Badge>
                                     ) : (
-                                        <Badge variant="outline">Custom</Badge>
+                                        <Badge variant="outline">{t("settings.rbac.customRole")}</Badge>
                                     )}
                                 </TableCell>
                                 <TableCell>
                                     <span className="text-xs text-muted-foreground">
-                                        {role.permissions.length} capabilities
+                                        {t("settings.rbac.capabilities", { count: role.permissions.length })}
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-right">
@@ -108,7 +110,7 @@ export function RoleManager() {
                         {roles.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                    No roles defined correctly. Run seed script.
+                                    {t("settings.rbac.empty")}
                                 </TableCell>
                             </TableRow>
                         )}

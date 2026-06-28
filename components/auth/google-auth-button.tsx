@@ -7,6 +7,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 // Google SVG Icon
 const GoogleIcon = () => (
@@ -38,6 +39,7 @@ interface GoogleAuthButtonProps {
 }
 
 export function GoogleAuthButton({ mode, onSuccess, onError, className }: GoogleAuthButtonProps) {
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -90,7 +92,7 @@ export function GoogleAuthButton({ mode, onSuccess, onError, className }: Google
             className={`w-full flex items-center justify-center ${className || ""}`}
         >
             {loading ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <GoogleIcon />}
-            {mode === "signin" ? "Sign in with Google" : "Sign up with Google"}
+            {mode === "signin" ? t("auth.google.signIn") : t("auth.google.signUp")}
         </Button>
     );
 }

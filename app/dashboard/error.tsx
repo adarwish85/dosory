@@ -5,6 +5,7 @@ import * as Sentry from "@sentry/nextjs";
 import { AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Dashboard error boundary
@@ -12,6 +13,7 @@ import { useRouter } from "next/navigation";
  */
 export default function DashboardError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
     const router = useRouter();
+    const { t } = useTranslation();
 
     useEffect(() => {
         // Report to Sentry (no-op until a DSN is configured) + keep the console log.
@@ -29,9 +31,9 @@ export default function DashboardError({ error, reset }: { error: Error & { dige
 
                 {/* Error message */}
                 <div className="space-y-2">
-                    <h2 className="text-xl font-semibold text-foreground">Unable to load this page</h2>
+                    <h2 className="text-xl font-semibold text-foreground">{t("errors.dashboard.title")}</h2>
                     <p className="text-muted-foreground text-sm">
-                        Something went wrong while loading this section. This could be a temporary issue.
+                        {t("errors.dashboard.description")}
                     </p>
                 </div>
 
@@ -46,11 +48,11 @@ export default function DashboardError({ error, reset }: { error: Error & { dige
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Button onClick={reset} variant="default" size="sm" className="gap-2">
                         <RefreshCw className="h-4 w-4" />
-                        Retry
+                        {t("errors.retry")}
                     </Button>
                     <Button onClick={() => router.push("/dashboard")} variant="outline" size="sm" className="gap-2">
                         <ArrowLeft className="h-4 w-4" />
-                        Back to Dashboard
+                        {t("errors.backToDashboard")}
                     </Button>
                 </div>
             </div>

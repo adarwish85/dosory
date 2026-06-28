@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 // Use existing window.paypal type if available, otherwise define minimal shape
 // This prevents 'Subsequent property declarations must have the same type' error
@@ -47,6 +48,7 @@ export default function PayPalButton({
     onCancel,
     disabled = false,
 }: PayPalButtonProps) {
+    const { t } = useTranslation();
     const paypalRef = useRef<HTMLDivElement>(null);
     const [sdkLoaded, setSdkLoaded] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -57,7 +59,7 @@ export default function PayPalButton({
         const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
         if (!clientId) {
-            setError("PayPal not configured");
+            setError(t("pay.paypal.notConfigured"));
             setLoading(false);
             return;
         }
@@ -79,7 +81,7 @@ export default function PayPalButton({
         };
 
         script.onerror = () => {
-            setError("Failed to load PayPal");
+            setError(t("pay.paypal.loadFailed"));
             setLoading(false);
         };
 
@@ -88,7 +90,7 @@ export default function PayPalButton({
         return () => {
             // Cleanup if needed
         };
-    }, [currency]);
+    }, [currency, t]);
 
     // Render PayPal buttons
     useEffect(() => {
@@ -114,7 +116,7 @@ export default function PayPalButton({
                     const data = await response.json();
 
                     if (!response.ok) {
-                        throw new Error(data.error || "Failed to create order");
+                        throw new Error(data.error || t("pay.paypal.createOrderFailed"));
                     }
 
                     return data.orderId;
@@ -138,7 +140,7 @@ export default function PayPalButton({
                     const result = await response.json();
 
                     if (!response.ok) {
-                        throw new Error(result.error || "Payment failed");
+                        throw new Error(result.error || t("pay.paypal.paymentFailed"));
                     }
 
                     onSuccess({
@@ -168,12 +170,12 @@ export default function PayPalButton({
         return () => {
             buttons.close();
         };
-    }, [sdkLoaded, invoiceId, disabled, onSuccess, onError, onCancel]);
+    }, [sdkLoaded, invoiceId, disabled, onSuccess, onError, onCancel, t]);
 
     if (loading) {
         return (
             <div className="h-12 bg-gray-100 rounded animate-pulse flex items-center justify-center text-gray-500">
-                Loading PayPal...
+                {t("pay.paypal.loading")}
             </div>
         );
     }
@@ -187,7 +189,7 @@ export default function PayPalButton({
     if (disabled) {
         return (
             <div className="h-12 bg-gray-100 rounded flex items-center justify-center text-gray-500">
-                Payment unavailable
+                {t("pay.paypal.unavailable")}
             </div>
         );
     }
@@ -196,7 +198,7 @@ export default function PayPalButton({
         <div className="space-y-2">
             <div ref={paypalRef} className="min-h-[45px]" />
             <p className="text-xs text-gray-500 text-center">
-                Pay {currency} {amount.toFixed(2)} securely with PayPal
+                {t("pay.paypal.secureCaption", { amount: `${currency} ${amount.toFixed(2)}` })}
             </p>
         </div>
     );

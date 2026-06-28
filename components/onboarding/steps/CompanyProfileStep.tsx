@@ -11,9 +11,11 @@ import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
+import { useTranslation } from "@/lib/i18n";
 
 export default function CompanyProfileStep() {
     const { goNext, useDummyData } = useWizard();
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const orgId = profile?.orgId;
 
@@ -97,8 +99,8 @@ export default function CompanyProfileStep() {
     return (
         <div className="space-y-6">
             <div className="text-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Set Up Your Company</h2>
-                <p className="text-sm text-gray-500 mt-1">Add your business details (you can update these later)</p>
+                <h2 className="text-xl font-semibold text-gray-900">{t("onboarding.company.title")}</h2>
+                <p className="text-sm text-gray-500 mt-1">{t("onboarding.company.subtitle")}</p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
@@ -107,13 +109,13 @@ export default function CompanyProfileStep() {
                     <div>
                         <Label htmlFor="companyName" className="flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-gray-400" />
-                            Company Name
+                            {t("onboarding.company.nameLabel")}
                         </Label>
                         <Input
                             id="companyName"
                             value={companyName}
                             onChange={(e) => setCompanyName(e.target.value)}
-                            placeholder="Your Company Ltd."
+                            placeholder={t("onboarding.company.namePlaceholder")}
                             className="mt-1"
                         />
                     </div>
@@ -121,13 +123,13 @@ export default function CompanyProfileStep() {
                     <div>
                         <Label htmlFor="phone" className="flex items-center gap-2">
                             <Phone className="h-4 w-4 text-gray-400" />
-                            Phone Number
+                            {t("onboarding.company.phoneLabel")}
                         </Label>
                         <Input
                             id="phone"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
-                            placeholder="+1 (555) 000-0000"
+                            placeholder={t("onboarding.common.phonePlaceholder")}
                             className="mt-1"
                         />
                     </div>
@@ -135,13 +137,13 @@ export default function CompanyProfileStep() {
                     <div>
                         <Label htmlFor="address" className="flex items-center gap-2">
                             <MapPin className="h-4 w-4 text-gray-400" />
-                            Address
+                            {t("onboarding.company.addressLabel")}
                         </Label>
                         <Textarea
                             id="address"
                             value={address}
                             onChange={(e) => setAddress(e.target.value)}
-                            placeholder="123 Main Street&#10;City, State 12345"
+                            placeholder={t("onboarding.company.addressPlaceholder")}
                             className="mt-1 min-h-[80px]"
                         />
                     </div>
@@ -149,7 +151,7 @@ export default function CompanyProfileStep() {
 
                 {/* Right Column - Logo Upload */}
                 <div className="space-y-4">
-                    <Label>Company Logo</Label>
+                    <Label>{t("onboarding.company.logoLabel")}</Label>
                     <div
                         onClick={() => fileInputRef.current?.click()}
                         className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
@@ -158,7 +160,7 @@ export default function CompanyProfileStep() {
                             <div className="relative inline-block">
                                 <img
                                     src={logoPreview}
-                                    alt="Logo preview"
+                                    alt={t("onboarding.company.logoPreviewAlt")}
                                     className="max-h-32 max-w-full mx-auto rounded-lg"
                                 />
                                 <button
@@ -174,8 +176,8 @@ export default function CompanyProfileStep() {
                         ) : (
                             <>
                                 <Upload className="h-10 w-10 text-gray-400 mx-auto mb-2" />
-                                <p className="text-sm text-gray-600">Click to upload logo</p>
-                                <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 2MB</p>
+                                <p className="text-sm text-gray-600">{t("onboarding.company.logoUploadPrompt")}</p>
+                                <p className="text-xs text-gray-400 mt-1">{t("onboarding.company.logoUploadHint")}</p>
                             </>
                         )}
                     </div>
@@ -195,11 +197,11 @@ export default function CompanyProfileStep() {
                     {isSaving ? (
                         <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Saving...
+                            {t("onboarding.common.saving")}
                         </>
                     ) : (
                         <>
-                            Continue
+                            {t("onboarding.common.continue")}
                             <ArrowRight className="h-4 w-4" />
                         </>
                     )}

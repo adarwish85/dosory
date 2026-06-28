@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { X, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 import { useOnboardingContext } from "./OnboardingProvider";
 import { USE_CASE_OPTIONS } from "@/lib/onboarding-types";
 import type { OnboardingUseCase } from "@/lib/onboarding-types";
 import { cn } from "@/lib/utils";
 
 export default function WelcomeModal() {
+    const { t } = useTranslation();
     const { showWelcome, setShowWelcome, setUseCase, skipOnboarding, state } = useOnboardingContext();
     const [selected, setSelected] = useState<OnboardingUseCase | null>(null);
     const [step, setStep] = useState<"welcome" | "usecase">("welcome");
@@ -41,13 +43,13 @@ export default function WelcomeModal() {
                     </div>
                     {step === "welcome" ? (
                         <>
-                            <h1 className="text-2xl font-bold mb-2">Welcome to Dosory! 🎉</h1>
-                            <p className="text-blue-100">Let&apos;s get your workspace set up in just a few steps.</p>
+                            <h1 className="text-2xl font-bold mb-2">{t("onboarding.welcome.title")}</h1>
+                            <p className="text-blue-100">{t("onboarding.welcome.subtitle")}</p>
                         </>
                     ) : (
                         <>
-                            <h1 className="text-2xl font-bold mb-2">What will you use most?</h1>
-                            <p className="text-blue-100">We&apos;ll personalize your experience based on your needs.</p>
+                            <h1 className="text-2xl font-bold mb-2">{t("onboarding.welcome.useCaseTitle")}</h1>
+                            <p className="text-blue-100">{t("onboarding.welcome.useCaseSubtitle")}</p>
                         </>
                     )}
                 </div>
@@ -61,8 +63,8 @@ export default function WelcomeModal() {
                                     1
                                 </div>
                                 <div>
-                                    <h3 className="font-medium text-gray-900">Choose your path</h3>
-                                    <p className="text-sm text-gray-500">Tell us what you&apos;ll use most</p>
+                                    <h3 className="font-medium text-gray-900">{t("onboarding.welcome.step1.title")}</h3>
+                                    <p className="text-sm text-gray-500">{t("onboarding.welcome.step1.desc")}</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
@@ -70,8 +72,8 @@ export default function WelcomeModal() {
                                     2
                                 </div>
                                 <div>
-                                    <h3 className="font-medium text-gray-900">Set up your profile</h3>
-                                    <p className="text-sm text-gray-500">Add your company details</p>
+                                    <h3 className="font-medium text-gray-900">{t("onboarding.welcome.step2.title")}</h3>
+                                    <p className="text-sm text-gray-500">{t("onboarding.welcome.step2.desc")}</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
@@ -79,8 +81,8 @@ export default function WelcomeModal() {
                                     3
                                 </div>
                                 <div>
-                                    <h3 className="font-medium text-gray-900">Add your first record</h3>
-                                    <p className="text-sm text-gray-500">Get started with real data</p>
+                                    <h3 className="font-medium text-gray-900">{t("onboarding.welcome.step3.title")}</h3>
+                                    <p className="text-sm text-gray-500">{t("onboarding.welcome.step3.desc")}</p>
                                 </div>
                             </div>
                         </div>
@@ -109,14 +111,14 @@ export default function WelcomeModal() {
                 {/* Footer */}
                 <div className="flex items-center justify-between p-6 border-t bg-gray-50">
                     <Button variant="ghost" onClick={handleSkip} className="text-gray-500">
-                        Skip for now
+                        {t("onboarding.welcome.skipForNow")}
                     </Button>
                     <Button
                         onClick={handleContinue}
                         disabled={step === "usecase" && !selected}
                         className="bg-blue-600 hover:bg-blue-700"
                     >
-                        {step === "welcome" ? "Get Started" : "Continue"}
+                        {step === "welcome" ? t("onboarding.welcome.getStarted") : t("common.continue")}
                         <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                 </div>

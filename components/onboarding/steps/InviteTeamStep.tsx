@@ -10,6 +10,7 @@ import { useWizard } from "../OnboardingWizard";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useTranslation } from "@/lib/i18n";
 
 interface TeamMember {
     email: string;
@@ -18,6 +19,7 @@ interface TeamMember {
 
 export default function InviteTeamStep() {
     const { goNext, skipStep, useDummyData } = useWizard();
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const orgId = profile?.orgId;
     const userId = profile?.uid;
@@ -96,8 +98,8 @@ export default function InviteTeamStep() {
                 <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Users className="h-6 w-6" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">Invite Your Team</h2>
-                <p className="text-sm text-gray-500 mt-1">Add team members to collaborate with you</p>
+                <h2 className="text-xl font-semibold text-gray-900">{t("onboarding.team.title")}</h2>
+                <p className="text-sm text-gray-500 mt-1">{t("onboarding.team.subtitle")}</p>
             </div>
 
             {/* Team Members */}
@@ -109,7 +111,7 @@ export default function InviteTeamStep() {
                                 type="email"
                                 value={member.email}
                                 onChange={(e) => updateMember(index, "email", e.target.value)}
-                                placeholder="colleague@company.com"
+                                placeholder={t("onboarding.team.emailPlaceholder")}
                             />
                         </div>
                         <Select value={member.role} onValueChange={(value) => updateMember(index, "role", value)}>
@@ -117,9 +119,9 @@ export default function InviteTeamStep() {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="admin">Admin</SelectItem>
-                                <SelectItem value="staff">Staff</SelectItem>
-                                <SelectItem value="viewer">Viewer</SelectItem>
+                                <SelectItem value="admin">{t("onboarding.team.roleAdmin")}</SelectItem>
+                                <SelectItem value="staff">{t("onboarding.team.roleStaff")}</SelectItem>
+                                <SelectItem value="viewer">{t("onboarding.team.roleViewer")}</SelectItem>
                             </SelectContent>
                         </Select>
                         <Button
@@ -136,29 +138,29 @@ export default function InviteTeamStep() {
 
                 <Button variant="outline" size="sm" onClick={addMember} className="gap-1 text-gray-600">
                     <Mail className="h-4 w-4" />
-                    Add Another
+                    {t("onboarding.team.addAnother")}
                 </Button>
             </div>
 
             {/* Note */}
             <p className="text-xs text-center text-gray-400 max-w-md mx-auto">
-                Team members will receive an email invitation to join your workspace.
+                {t("onboarding.team.note")}
             </p>
 
             {/* Action Buttons */}
             <div className="flex justify-between pt-4">
                 <Button variant="ghost" onClick={skipStep} className="text-gray-500">
-                    Skip for now
+                    {t("onboarding.team.skipForNow")}
                 </Button>
                 <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 gap-2">
                     {isSaving ? (
                         <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Sending...
+                            {t("onboarding.team.sending")}
                         </>
                     ) : (
                         <>
-                            Send Invites
+                            {t("onboarding.team.sendInvites")}
                             <ArrowRight className="h-4 w-4" />
                         </>
                     )}

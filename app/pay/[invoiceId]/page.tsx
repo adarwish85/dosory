@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useTranslation } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PayPalButton from "@/components/payments/PayPalButton";
 import { FileText, Calendar, Building2, CheckCircle, AlertTriangle, DollarSign, Mail } from "lucide-react";
@@ -29,6 +30,7 @@ interface Invoice {
 }
 
 export default function InvoicePaymentPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const router = useRouter();
     const invoiceId = params.invoiceId as string;
@@ -52,11 +54,11 @@ export default function InvoicePaymentPage() {
                         dueDate: data.dueDate?.toDate?.()?.toISOString() || new Date().toISOString(),
                     } as Invoice);
                 } else {
-                    setError("Invoice not found");
+                    setError(t("pay.error.notFound"));
                 }
             } catch (err) {
                 console.error("Error fetching invoice:", err);
-                setError("Failed to load invoice");
+                setError(t("pay.error.loadFailed"));
             } finally {
                 setLoading(false);
             }
@@ -65,7 +67,7 @@ export default function InvoicePaymentPage() {
         if (invoiceId) {
             fetchInvoice();
         }
-    }, [invoiceId]);
+    }, [invoiceId, t]);
 
     const handlePaymentSuccess = (details: { amountPaid: number; status: string }) => {
         setPaymentSuccess(true);
@@ -85,7 +87,7 @@ export default function InvoicePaymentPage() {
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading invoice...</p>
+                    <p className="mt-4 text-gray-600">{t("pay.loading")}</p>
                 </div>
             </div>
         );
@@ -97,9 +99,9 @@ export default function InvoicePaymentPage() {
                 <Card className="max-w-md">
                     <CardContent className="p-8 text-center">
                         <AlertTriangle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
-                        <h1 className="text-xl font-bold mb-2">Invoice Not Found</h1>
+                        <h1 className="text-xl font-bold mb-2">{t("pay.notFound.title")}</h1>
                         <p className="text-gray-600">
-                            {error || "This invoice may have been removed or the link is invalid."}
+                            {error || t("pay.notFound.description")}
                         </p>
                     </CardContent>
                 </Card>
@@ -117,9 +119,9 @@ export default function InvoicePaymentPage() {
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-center gap-3">
                         <CheckCircle className="h-6 w-6 text-green-600" />
                         <div>
-                            <p className="font-medium text-green-800">Payment Successful!</p>
+                            <p className="font-medium text-green-800">{t("pay.success.title")}</p>
                             <p className="text-sm text-green-700">
-                                Thank you for your payment. A receipt has been sent to your email.
+                                {t("pay.success.description")}
                             </p>
                         </div>
                     </div>
@@ -132,7 +134,7 @@ export default function InvoicePaymentPage() {
                             <div>
                                 <div className="flex items-center gap-2 text-blue-100 text-sm mb-1">
                                     <FileText className="h-4 w-4" />
-                                    Invoice #{invoice.number}
+                                    {t("pay.invoiceNumber", { number: invoice.number })}
                                 </div>
                                 <CardTitle className="text-2xl">
                                     {invoice.currency} {invoice.total.toFixed(2)}
@@ -143,7 +145,11 @@ export default function InvoicePaymentPage() {
                                     isPaid ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
                                 }`}
                             >
-                                {isPaid ? "Paid" : invoice.status === "partial" ? "Partially Paid" : "Due"}
+                                {isPaid
+                                    ? t("pay.status.paid")
+                                    : invoice.status === "partial"
+                                      ? t("pay.status.partial")
+                                      : t("pay.status.due")}
                             </div>
                         </div>
                     </CardHeader>
@@ -163,11 +169,13 @@ export default function InvoicePaymentPage() {
                             )}
                             <div className="flex items-center gap-2 text-gray-600">
                                 <Calendar className="h-4 w-4" />
-                                Due: {new Date(invoice.dueDate).toLocaleDateString()}
+                                {t("pay.dueLabel", { date: new Date(invoice.dueDate).toLocaleDateString() })}
                             </div>
                             <div className="flex items-center gap-2 text-gray-600">
                                 <DollarSign className="h-4 w-4" />
-                                Paid: {invoice.currency} {invoice.amountPaid.toFixed(2)}
+                                {t("pay.paidLabel", {
+                                    amount: `${invoice.currency} ${invoice.amountPaid.toFixed(2)}`,
+                                })}
                             </div>
                         </div>
 
@@ -177,8 +185,8 @@ export default function InvoicePaymentPage() {
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="text-gray-500">
-                                            <th className="text-left pb-2">Description</th>
-                                            <th className="text-right pb-2">Amount</th>
+                                            <th className="text-left pb-2">{t("pay.table.description")}</th>
+                                            <th className="text-right pb-2">{t("pay.table.amount")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -198,7 +206,7 @@ export default function InvoicePaymentPage() {
                         {/* Amount Due */}
                         <div className="bg-gray-50 rounded-lg p-4 mb-6">
                             <div className="flex justify-between items-center">
-                                <span className="text-lg font-medium text-gray-700">Amount Due</span>
+                                <span className="text-lg font-medium text-gray-700">{t("pay.amountDue")}</span>
                                 <span className="text-2xl font-bold text-gray-900">
                                     {invoice.currency} {invoice.amountDue.toFixed(2)}
                                 </span>
@@ -220,7 +228,7 @@ export default function InvoicePaymentPage() {
                         {isPaid && (
                             <div className="bg-green-50 rounded-lg p-4 text-center">
                                 <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                                <p className="text-green-800 font-medium">This invoice has been paid in full</p>
+                                <p className="text-green-800 font-medium">{t("pay.paidInFull")}</p>
                             </div>
                         )}
                     </CardContent>
@@ -228,7 +236,7 @@ export default function InvoicePaymentPage() {
 
                 {/* Footer */}
                 <div className="text-center text-gray-500 text-sm">
-                    <p>Questions about this invoice? Contact us at support@dosory.com</p>
+                    <p>{t("pay.footer", { email: "support@dosory.com" })}</p>
                 </div>
             </div>
         </div>

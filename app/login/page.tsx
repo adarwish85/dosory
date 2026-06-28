@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlatformLogo } from "@/lib/hooks/use-platform-settings";
+import { useTranslation } from "@/lib/i18n";
 
 export default function LoginPage() {
+    const { t } = useTranslation();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -28,7 +30,7 @@ export default function LoginPage() {
             router.push("/dashboard");
         } catch {
             // Friendly + non-enumerating: don't reveal whether the email exists.
-            setError("Invalid email or password.");
+            setError(t("auth.login.invalidCredentials"));
         }
     };
 
@@ -36,7 +38,7 @@ export default function LoginPage() {
         setError("");
         setInfo("");
         if (!email) {
-            setError('Enter your email above, then click "Forgot password?".');
+            setError(t("auth.login.enterEmailFirst"));
             return;
         }
         setResetting(true);
@@ -45,14 +47,14 @@ export default function LoginPage() {
         } catch (err: unknown) {
             const code = (err as { code?: string }).code;
             if (code === "auth/invalid-email") {
-                setError("Please enter a valid email address.");
+                setError(t("auth.login.invalidEmail"));
                 setResetting(false);
                 return;
             }
             // For anything else (incl. user-not-found) fall through to the generic
             // success message so we don't reveal whether the account exists.
         }
-        setInfo(`If an account exists for ${email}, a password reset link is on its way.`);
+        setInfo(t("auth.login.resetLinkSent", { email }));
         setResetting(false);
     };
 
@@ -65,13 +67,13 @@ export default function LoginPage() {
 
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle>Login</CardTitle>
-                    <CardDescription>Enter your credential to access your account.</CardDescription>
+                    <CardTitle>{t("auth.login.title")}</CardTitle>
+                    <CardDescription>{t("auth.login.description")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email">{t("auth.login.emailLabel")}</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -83,14 +85,14 @@ export default function LoginPage() {
                         </div>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">{t("auth.login.passwordLabel")}</Label>
                                 <button
                                     type="button"
                                     onClick={handleForgotPassword}
                                     disabled={resetting}
                                     className="text-sm text-blue-500 hover:underline disabled:opacity-50"
                                 >
-                                    {resetting ? "Sending…" : "Forgot password?"}
+                                    {resetting ? t("auth.login.sending") : t("auth.login.forgotPassword")}
                                 </button>
                             </div>
                             <Input
@@ -104,15 +106,15 @@ export default function LoginPage() {
                         {error && <p className="text-sm text-red-500">{error}</p>}
                         {info && <p className="text-sm text-green-600">{info}</p>}
                         <Button type="submit" className="w-full">
-                            Login
+                            {t("auth.login.submit")}
                         </Button>
                     </form>
                 </CardContent>
                 <CardFooter className="flex justify-center">
                     <p className="text-sm text-gray-500">
-                        Don&apos;t have an account?{" "}
+                        {t("auth.login.noAccount")}{" "}
                         <Link href="/signup" className="text-blue-500 hover:underline">
-                            Sign up
+                            {t("auth.login.signUpLink")}
                         </Link>
                     </p>
                 </CardFooter>
