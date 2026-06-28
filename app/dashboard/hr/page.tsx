@@ -7,8 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, UserCheck, Clock, CalendarDays } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 export default function HRDashboardPage() {
+    const { t } = useTranslation();
     const { employees, employeeStats, loading: employeesLoading } = useEmployees();
     const { departments, loading: departmentsLoading } = useDepartments();
     const { pendingCount, loading: leavesLoading } = useLeaveRequests({ status: "pending" });
@@ -31,36 +33,36 @@ export default function HRDashboardPage() {
 
     const stats = [
         {
-            name: "Total Employees",
+            name: t("hr.stats.totalEmployees"),
             value: employeeStats.total,
             icon: Users,
             href: "/dashboard/hr/employees",
             color: "bg-blue-500",
-            description: `${employeeStats.active} active, ${employeeStats.onLeave} on leave`,
+            description: t("hr.stats.activeOnLeave", { active: employeeStats.active, onLeave: employeeStats.onLeave }),
         },
         {
-            name: "Departments",
+            name: t("hr.stats.departments"),
             value: departments.length,
             icon: UserCheck,
             href: "/dashboard/hr/settings/departments",
             color: "bg-green-500",
-            description: "Organization structure",
+            description: t("hr.stats.organizationStructure"),
         },
         {
-            name: "Pending Leaves",
+            name: t("hr.stats.pendingLeaves"),
             value: pendingCount,
             icon: CalendarDays,
             href: "/dashboard/hr/leaves",
             color: "bg-amber-500",
-            description: "Awaiting approval",
+            description: t("hr.stats.awaitingApproval"),
         },
         {
-            name: "Today's Attendance",
+            name: t("hr.stats.todaysAttendance"),
             value: "-",
             icon: Clock,
             href: "/dashboard/hr/attendance",
             color: "bg-purple-500",
-            description: "Check daily logs",
+            description: t("hr.stats.checkDailyLogs"),
         },
     ];
 
@@ -95,18 +97,18 @@ export default function HRDashboardPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <Card>
                     <CardContent className="p-6">
-                        <h3 className="font-semibold mb-4">Employees by Type</h3>
+                        <h3 className="font-semibold mb-4">{t("hr.byType.title")}</h3>
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600">Full-time</span>
+                                <span className="text-sm text-gray-600">{t("hr.employmentType.fullTime")}</span>
                                 <span className="font-medium">{employeeStats.fullTime}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600">Part-time</span>
+                                <span className="text-sm text-gray-600">{t("hr.employmentType.partTime")}</span>
                                 <span className="font-medium">{employeeStats.partTime}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600">Contractor</span>
+                                <span className="text-sm text-gray-600">{t("hr.employmentType.contractor")}</span>
                                 <span className="font-medium">{employeeStats.contractor}</span>
                             </div>
                         </div>
@@ -115,26 +117,26 @@ export default function HRDashboardPage() {
 
                 <Card>
                     <CardContent className="p-6">
-                        <h3 className="font-semibold mb-4">Employee Status</h3>
+                        <h3 className="font-semibold mb-4">{t("hr.status.title")}</h3>
                         <div className="space-y-3">
                             <div className="flex justify-between items-center">
                                 <span className="flex items-center gap-2">
                                     <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                    <span className="text-sm text-gray-600">Active</span>
+                                    <span className="text-sm text-gray-600">{t("hr.status.active")}</span>
                                 </span>
                                 <span className="font-medium">{employeeStats.active}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="flex items-center gap-2">
                                     <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                                    <span className="text-sm text-gray-600">On Leave</span>
+                                    <span className="text-sm text-gray-600">{t("hr.status.onLeave")}</span>
                                 </span>
                                 <span className="font-medium">{employeeStats.onLeave}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="flex items-center gap-2">
                                     <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                    <span className="text-sm text-gray-600">Terminated</span>
+                                    <span className="text-sm text-gray-600">{t("hr.status.terminated")}</span>
                                 </span>
                                 <span className="font-medium">{employeeStats.terminated}</span>
                             </div>
@@ -144,18 +146,18 @@ export default function HRDashboardPage() {
 
                 <Card>
                     <CardContent className="p-6">
-                        <h3 className="font-semibold mb-4">Departments</h3>
+                        <h3 className="font-semibold mb-4">{t("hr.departments.title")}</h3>
                         <div className="space-y-2">
                             {departments.slice(0, 5).map((dept) => (
                                 <div key={dept.id} className="flex justify-between items-center">
                                     <span className="text-sm text-gray-600">{dept.name}</span>
                                     <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                        {dept.employeeCount || 0} employees
+                                        {t("hr.departments.employeeCount", { count: dept.employeeCount || 0 })}
                                     </span>
                                 </div>
                             ))}
                             {departments.length === 0 && (
-                                <p className="text-sm text-gray-400">No departments yet</p>
+                                <p className="text-sm text-gray-400">{t("hr.departments.empty")}</p>
                             )}
                         </div>
                     </CardContent>

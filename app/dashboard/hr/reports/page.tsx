@@ -18,8 +18,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Clock, CalendarDays, DollarSign, Building2, TrendingUp } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 
 export default function HRReportsPage() {
+    const { t } = useTranslation();
     const { employees, employeeStats, loading: employeesLoading } = useEmployees();
     const { departments } = useDepartments();
     const { logs: attendanceLogs, loading: attendanceLoading } = useAttendance({
@@ -69,8 +71,8 @@ export default function HRReportsPage() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h2 className="text-xl font-semibold">HR Reports</h2>
-                <p className="text-gray-500">Overview of workforce metrics and analytics</p>
+                <h2 className="text-xl font-semibold">{t("hr.reports.title")}</h2>
+                <p className="text-gray-500">{t("hr.reports.subtitle")}</p>
             </div>
 
             {/* Summary Cards */}
@@ -82,7 +84,7 @@ export default function HRReportsPage() {
                                 <Users className="h-6 w-6 text-blue-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Total Workforce</p>
+                                <p className="text-sm text-gray-500">{t("hr.reports.totalWorkforce")}</p>
                                 <p className="text-2xl font-bold">{employeeStats.total}</p>
                             </div>
                         </div>
@@ -95,7 +97,7 @@ export default function HRReportsPage() {
                                 <Clock className="h-6 w-6 text-green-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Attendance Rate</p>
+                                <p className="text-sm text-gray-500">{t("hr.reports.attendanceRate")}</p>
                                 <p className="text-2xl font-bold">
                                     {employeeStats.total > 0
                                         ? Math.round((attendanceStats.totalClockIns / employeeStats.total) * 100)
@@ -113,7 +115,7 @@ export default function HRReportsPage() {
                                 <CalendarDays className="h-6 w-6 text-amber-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Leave Requests</p>
+                                <p className="text-sm text-gray-500">{t("hr.reports.leaveRequests")}</p>
                                 <p className="text-2xl font-bold">{leaveStats.total}</p>
                             </div>
                         </div>
@@ -126,7 +128,7 @@ export default function HRReportsPage() {
                                 <DollarSign className="h-6 w-6 text-purple-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Monthly Payroll</p>
+                                <p className="text-sm text-gray-500">{t("hr.reports.monthlyPayroll")}</p>
                                 <p className="text-2xl font-bold">{formatCurrency(totalPayrollCost)}</p>
                             </div>
                         </div>
@@ -137,10 +139,10 @@ export default function HRReportsPage() {
             {/* Report Tabs */}
             <Tabs defaultValue="headcount">
                 <TabsList>
-                    <TabsTrigger value="headcount">Headcount</TabsTrigger>
-                    <TabsTrigger value="attendance">Attendance</TabsTrigger>
-                    <TabsTrigger value="leaves">Leaves</TabsTrigger>
-                    <TabsTrigger value="payroll">Payroll</TabsTrigger>
+                    <TabsTrigger value="headcount">{t("hr.reports.headcount")}</TabsTrigger>
+                    <TabsTrigger value="attendance">{t("hr.reports.attendance")}</TabsTrigger>
+                    <TabsTrigger value="leaves">{t("hr.reports.leaves")}</TabsTrigger>
+                    <TabsTrigger value="payroll">{t("hr.reports.payroll")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="headcount" className="mt-4">
@@ -149,15 +151,15 @@ export default function HRReportsPage() {
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
                                     <Building2 className="h-5 w-5" />
-                                    Employees by Department
+                                    {t("hr.reports.employeesByDept")}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Department</TableHead>
-                                            <TableHead className="text-right">Count</TableHead>
+                                            <TableHead>{t("hr.reports.department")}</TableHead>
+                                            <TableHead className="text-right">{t("hr.reports.count")}</TableHead>
                                             <TableHead className="text-right">%</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -183,7 +185,7 @@ export default function HRReportsPage() {
                             <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
                                     <TrendingUp className="h-5 w-5" />
-                                    Employee Status Breakdown
+                                    {t("hr.reports.statusBreakdown")}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -191,21 +193,21 @@ export default function HRReportsPage() {
                                     <div className="flex justify-between items-center">
                                         <span className="flex items-center gap-2">
                                             <span className="w-3 h-3 rounded-full bg-green-500" />
-                                            Active
+                                            {t("hr.reports.statusActive")}
                                         </span>
                                         <span className="font-medium">{employeeStats.active}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="flex items-center gap-2">
                                             <span className="w-3 h-3 rounded-full bg-amber-500" />
-                                            On Leave
+                                            {t("hr.reports.statusOnLeave")}
                                         </span>
                                         <span className="font-medium">{employeeStats.onLeave}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="flex items-center gap-2">
                                             <span className="w-3 h-3 rounded-full bg-red-500" />
-                                            Terminated
+                                            {t("hr.reports.statusTerminated")}
                                         </span>
                                         <span className="font-medium">{employeeStats.terminated}</span>
                                     </div>
@@ -213,21 +215,21 @@ export default function HRReportsPage() {
                                     <div className="flex justify-between items-center">
                                         <span className="flex items-center gap-2">
                                             <span className="w-3 h-3 rounded-full bg-blue-500" />
-                                            Full-time
+                                            {t("hr.reports.fullTime")}
                                         </span>
                                         <span className="font-medium">{employeeStats.fullTime}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="flex items-center gap-2">
                                             <span className="w-3 h-3 rounded-full bg-purple-500" />
-                                            Part-time
+                                            {t("hr.reports.partTime")}
                                         </span>
                                         <span className="font-medium">{employeeStats.partTime}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="flex items-center gap-2">
                                             <span className="w-3 h-3 rounded-full bg-gray-500" />
-                                            Contractor
+                                            {t("hr.reports.contractor")}
                                         </span>
                                         <span className="font-medium">{employeeStats.contractor}</span>
                                     </div>
@@ -241,7 +243,7 @@ export default function HRReportsPage() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-base">
-                                {format(new Date(), "MMMM yyyy")} Attendance Summary
+                                {t("hr.reports.attendanceSummaryFor", { month: format(new Date(), "MMMM yyyy") })}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -250,19 +252,19 @@ export default function HRReportsPage() {
                                     <p className="text-3xl font-bold text-green-600">
                                         {attendanceStats.totalClockIns}
                                     </p>
-                                    <p className="text-sm text-green-600">Total Clock-ins</p>
+                                    <p className="text-sm text-green-600">{t("hr.reports.totalClockIns")}</p>
                                 </div>
                                 <div className="p-4 bg-amber-50 rounded-lg text-center">
                                     <p className="text-3xl font-bold text-amber-600">
                                         {attendanceStats.totalLateArrivals}
                                     </p>
-                                    <p className="text-sm text-amber-600">Late Arrivals</p>
+                                    <p className="text-sm text-amber-600">{t("hr.reports.lateArrivals")}</p>
                                 </div>
                                 <div className="p-4 bg-purple-50 rounded-lg text-center">
                                     <p className="text-3xl font-bold text-purple-600">
                                         {Math.round(attendanceStats.totalOvertime / 60)}h
                                     </p>
-                                    <p className="text-sm text-purple-600">Total Overtime</p>
+                                    <p className="text-sm text-purple-600">{t("hr.reports.totalOvertime")}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -272,25 +274,25 @@ export default function HRReportsPage() {
                 <TabsContent value="leaves" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base">Leave Request Summary</CardTitle>
+                            <CardTitle className="text-base">{t("hr.reports.leaveRequestSummary")}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="grid gap-4 md:grid-cols-4">
                                 <div className="p-4 bg-blue-50 rounded-lg text-center">
                                     <p className="text-3xl font-bold text-blue-600">{leaveStats.total}</p>
-                                    <p className="text-sm text-blue-600">Total Requests</p>
+                                    <p className="text-sm text-blue-600">{t("hr.reports.totalRequests")}</p>
                                 </div>
                                 <div className="p-4 bg-green-50 rounded-lg text-center">
                                     <p className="text-3xl font-bold text-green-600">{leaveStats.approved}</p>
-                                    <p className="text-sm text-green-600">Approved</p>
+                                    <p className="text-sm text-green-600">{t("hr.reports.approved")}</p>
                                 </div>
                                 <div className="p-4 bg-amber-50 rounded-lg text-center">
                                     <p className="text-3xl font-bold text-amber-600">{leaveStats.pending}</p>
-                                    <p className="text-sm text-amber-600">Pending</p>
+                                    <p className="text-sm text-amber-600">{t("hr.reports.pending")}</p>
                                 </div>
                                 <div className="p-4 bg-red-50 rounded-lg text-center">
                                     <p className="text-3xl font-bold text-red-600">{leaveStats.rejected}</p>
-                                    <p className="text-sm text-red-600">Rejected</p>
+                                    <p className="text-sm text-red-600">{t("hr.reports.rejected")}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -300,17 +302,17 @@ export default function HRReportsPage() {
                 <TabsContent value="payroll" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base">Payroll Summary</CardTitle>
+                            <CardTitle className="text-base">{t("hr.reports.payrollSummary")}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Employee</TableHead>
-                                        <TableHead className="text-right">Base Salary</TableHead>
-                                        <TableHead className="text-right">Allowances</TableHead>
-                                        <TableHead className="text-right">Deductions</TableHead>
-                                        <TableHead className="text-right">Net Salary</TableHead>
+                                        <TableHead>{t("hr.reports.employee")}</TableHead>
+                                        <TableHead className="text-right">{t("hr.reports.baseSalary")}</TableHead>
+                                        <TableHead className="text-right">{t("hr.reports.allowances")}</TableHead>
+                                        <TableHead className="text-right">{t("hr.reports.deductions")}</TableHead>
+                                        <TableHead className="text-right">{t("hr.reports.netSalary")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -332,7 +334,7 @@ export default function HRReportsPage() {
                                         </TableRow>
                                     ))}
                                     <TableRow className="bg-gray-50 font-semibold">
-                                        <TableCell>Total</TableCell>
+                                        <TableCell>{t("hr.reports.total")}</TableCell>
                                         <TableCell className="text-right">
                                             {formatCurrency(
                                                 payrollInputs.reduce((sum, p) => sum + p.baseSalary, 0)

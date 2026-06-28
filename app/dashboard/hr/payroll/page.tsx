@@ -36,9 +36,11 @@ import { DollarSign, Plus, FileDown, Calculator, Users } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { nanoid } from "nanoid";
+import { useTranslation } from "@/lib/i18n";
 import type { PayrollAllowance, PayrollDeduction } from "@/lib/types/hr-types";
 
 export default function PayrollPage() {
+    const { t } = useTranslation();
     const { payrollInputs, loading, totalPayrollCost, createPayrollInput } = usePayrollInputs();
     const { summaries, generateSummary, exportToAccounting } = usePayrollSummary();
     const { employees } = useEmployees({ status: "active" });
@@ -62,7 +64,7 @@ export default function PayrollPage() {
 
     const handleAddPayroll = async () => {
         if (!formData.employeeId || formData.baseSalary <= 0) {
-            toast.error("Please fill in all required fields");
+            toast.error(t("hr.payroll.fillRequired"));
             return;
         }
 
@@ -78,11 +80,11 @@ export default function PayrollPage() {
                 },
                 `${employee.firstName} ${employee.lastName}`
             );
-            toast.success("Payroll input created");
+            toast.success(t("hr.payroll.inputCreated"));
             setShowAddDialog(false);
             resetForm();
         } catch (error) {
-            toast.error("Failed to create payroll input");
+            toast.error(t("hr.payroll.createFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -90,16 +92,16 @@ export default function PayrollPage() {
 
     const handleGenerateSummary = async () => {
         if (!selectedPeriod) {
-            toast.error("Please select a period");
+            toast.error(t("hr.payroll.selectPeriod"));
             return;
         }
         setIsSubmitting(true);
         try {
             await generateSummary(selectedPeriod);
-            toast.success("Payroll summary generated");
+            toast.success(t("hr.payroll.summaryGenerated"));
             setShowSummaryDialog(false);
         } catch (error) {
-            toast.error("Failed to generate summary");
+            toast.error(t("hr.payroll.generateFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -108,9 +110,9 @@ export default function PayrollPage() {
     const handleExport = async (summaryId: string) => {
         try {
             await exportToAccounting(summaryId);
-            toast.success("Exported to accounting");
+            toast.success(t("hr.payroll.exported"));
         } catch (error) {
-            toast.error("Failed to export");
+            toast.error(t("hr.payroll.exportFailed"));
         }
     };
 
@@ -172,17 +174,17 @@ export default function PayrollPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold">Payroll Inputs</h2>
-                    <p className="text-gray-500">Manage salary, allowances, and deductions</p>
+                    <h2 className="text-xl font-semibold">{t("hr.payroll.title")}</h2>
+                    <p className="text-gray-500">{t("hr.payroll.subtitle")}</p>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => setShowSummaryDialog(true)}>
                         <Calculator className="h-4 w-4 mr-2" />
-                        Generate Summary
+                        {t("hr.payroll.generateSummary")}
                     </Button>
                     <Button onClick={() => setShowAddDialog(true)}>
                         <Plus className="h-4 w-4 mr-2" />
-                        Add Payroll
+                        {t("hr.payroll.addPayroll")}
                     </Button>
                 </div>
             </div>
@@ -196,7 +198,7 @@ export default function PayrollPage() {
                                 <DollarSign className="h-6 w-6 text-green-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Total Monthly Cost</p>
+                                <p className="text-sm text-gray-500">{t("hr.payroll.totalMonthlyCost")}</p>
                                 <p className="text-2xl font-bold">{formatCurrency(totalPayrollCost)}</p>
                             </div>
                         </div>
@@ -209,7 +211,7 @@ export default function PayrollPage() {
                                 <Users className="h-6 w-6 text-blue-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Active Payrolls</p>
+                                <p className="text-sm text-gray-500">{t("hr.payroll.activePayrolls")}</p>
                                 <p className="text-2xl font-bold">{payrollInputs.length}</p>
                             </div>
                         </div>
@@ -222,7 +224,7 @@ export default function PayrollPage() {
                                 <Calculator className="h-6 w-6 text-purple-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Generated Summaries</p>
+                                <p className="text-sm text-gray-500">{t("hr.payroll.generatedSummaries")}</p>
                                 <p className="text-2xl font-bold">{summaries.length}</p>
                             </div>
                         </div>
@@ -233,8 +235,8 @@ export default function PayrollPage() {
             {/* Tabs */}
             <Tabs defaultValue="inputs">
                 <TabsList>
-                    <TabsTrigger value="inputs">Payroll Inputs</TabsTrigger>
-                    <TabsTrigger value="summaries">Summaries</TabsTrigger>
+                    <TabsTrigger value="inputs">{t("hr.payroll.title")}</TabsTrigger>
+                    <TabsTrigger value="summaries">{t("hr.payroll.summariesTab")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="inputs" className="mt-4">
@@ -242,9 +244,9 @@ export default function PayrollPage() {
                         <Card>
                             <CardContent className="py-12 text-center">
                                 <DollarSign className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                                <p className="text-gray-500">No payroll records yet</p>
+                                <p className="text-gray-500">{t("hr.payroll.noRecords")}</p>
                                 <Button className="mt-4" onClick={() => setShowAddDialog(true)}>
-                                    Add First Payroll
+                                    {t("hr.payroll.addFirst")}
                                 </Button>
                             </CardContent>
                         </Card>
@@ -253,13 +255,13 @@ export default function PayrollPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Employee</TableHead>
-                                        <TableHead>Base Salary</TableHead>
-                                        <TableHead>Allowances</TableHead>
-                                        <TableHead>Deductions</TableHead>
-                                        <TableHead>Gross</TableHead>
-                                        <TableHead>Net</TableHead>
-                                        <TableHead>Status</TableHead>
+                                        <TableHead>{t("hr.payroll.employee")}</TableHead>
+                                        <TableHead>{t("hr.payroll.baseSalary")}</TableHead>
+                                        <TableHead>{t("hr.payroll.allowances")}</TableHead>
+                                        <TableHead>{t("hr.payroll.deductions")}</TableHead>
+                                        <TableHead>{t("hr.payroll.gross")}</TableHead>
+                                        <TableHead>{t("hr.payroll.net")}</TableHead>
+                                        <TableHead>{t("common.status")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -279,9 +281,9 @@ export default function PayrollPage() {
                                             </TableCell>
                                             <TableCell>
                                                 {payroll.isActive ? (
-                                                    <Badge className="bg-green-100 text-green-800">Active</Badge>
+                                                    <Badge className="bg-green-100 text-green-800">{t("hr.payroll.active")}</Badge>
                                                 ) : (
-                                                    <Badge className="bg-gray-100 text-gray-800">Inactive</Badge>
+                                                    <Badge className="bg-gray-100 text-gray-800">{t("hr.payroll.inactive")}</Badge>
                                                 )}
                                             </TableCell>
                                         </TableRow>
@@ -297,9 +299,9 @@ export default function PayrollPage() {
                         <Card>
                             <CardContent className="py-12 text-center">
                                 <Calculator className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                                <p className="text-gray-500">No payroll summaries generated yet</p>
+                                <p className="text-gray-500">{t("hr.payroll.noSummaries")}</p>
                                 <Button className="mt-4" onClick={() => setShowSummaryDialog(true)}>
-                                    Generate Summary
+                                    {t("hr.payroll.generateSummary")}
                                 </Button>
                             </CardContent>
                         </Card>
@@ -310,15 +312,17 @@ export default function PayrollPage() {
                                     <CardContent className="p-4">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <h3 className="font-semibold">Payroll Summary - {summary.period}</h3>
+                                                <h3 className="font-semibold">{t("hr.payroll.summaryFor", { period: summary.period })}</h3>
                                                 <p className="text-sm text-gray-500">
-                                                    {summary.totalEmployees} employees • Generated{" "}
-                                                    {format(summary.generatedAt.toDate(), "MMM d, yyyy")}
+                                                    {t("hr.payroll.employeesGenerated", {
+                                                        count: summary.totalEmployees,
+                                                        date: format(summary.generatedAt.toDate(), "MMM d, yyyy"),
+                                                    })}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
-                                                    <p className="text-sm text-gray-500">Total Net</p>
+                                                    <p className="text-sm text-gray-500">{t("hr.payroll.totalNet")}</p>
                                                     <p className="text-xl font-bold">{formatCurrency(summary.totalNet)}</p>
                                                 </div>
                                                 <div className="flex gap-2">
@@ -329,11 +333,11 @@ export default function PayrollPage() {
                                                             onClick={() => handleExport(summary.id)}
                                                         >
                                                             <FileDown className="h-4 w-4 mr-1" />
-                                                            Export to Accounting
+                                                            {t("hr.payroll.exportToAccounting")}
                                                         </Button>
                                                     )}
                                                     {summary.exportedToAccounting && (
-                                                        <Badge className="bg-green-100 text-green-800">Exported</Badge>
+                                                        <Badge className="bg-green-100 text-green-800">{t("hr.payroll.exportedBadge")}</Badge>
                                                     )}
                                                 </div>
                                             </div>
@@ -350,17 +354,17 @@ export default function PayrollPage() {
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Add Payroll Input</DialogTitle>
+                        <DialogTitle>{t("hr.payroll.addInputTitle")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Employee *</Label>
+                            <Label>{t("hr.payroll.employeeRequired")}</Label>
                             <Select
                                 value={formData.employeeId}
                                 onValueChange={(v) => setFormData({ ...formData, employeeId: v })}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select employee" />
+                                    <SelectValue placeholder={t("hr.payroll.selectEmployee")} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {employees.map((emp) => (
@@ -373,7 +377,7 @@ export default function PayrollPage() {
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <div className="space-y-2">
-                                <Label>Base Salary *</Label>
+                                <Label>{t("hr.payroll.baseSalaryRequired")}</Label>
                                 <Input
                                     type="number"
                                     value={formData.baseSalary}
@@ -381,7 +385,7 @@ export default function PayrollPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Currency</Label>
+                                <Label>{t("hr.payroll.currency")}</Label>
                                 <Select
                                     value={formData.currency}
                                     onValueChange={(v) => setFormData({ ...formData, currency: v })}
@@ -398,7 +402,7 @@ export default function PayrollPage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Effective From</Label>
+                                <Label>{t("hr.payroll.effectiveFrom")}</Label>
                                 <Input
                                     type="date"
                                     value={formData.effectiveFrom}
@@ -410,16 +414,16 @@ export default function PayrollPage() {
                         {/* Allowances */}
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label>Allowances</Label>
+                                <Label>{t("hr.payroll.allowances")}</Label>
                                 <Button type="button" variant="outline" size="sm" onClick={addAllowance}>
                                     <Plus className="h-3 w-3 mr-1" />
-                                    Add
+                                    {t("common.add")}
                                 </Button>
                             </div>
                             {formData.allowances.map((allowance, index) => (
                                 <div key={allowance.id} className="flex gap-2">
                                     <Input
-                                        placeholder="Name"
+                                        placeholder={t("common.name")}
                                         value={allowance.name}
                                         onChange={(e) => {
                                             const updated = [...formData.allowances];
@@ -429,7 +433,7 @@ export default function PayrollPage() {
                                     />
                                     <Input
                                         type="number"
-                                        placeholder="Amount"
+                                        placeholder={t("hr.payroll.amount")}
                                         value={allowance.amount}
                                         onChange={(e) => {
                                             const updated = [...formData.allowances];
@@ -444,16 +448,16 @@ export default function PayrollPage() {
                         {/* Deductions */}
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label>Deductions</Label>
+                                <Label>{t("hr.payroll.deductions")}</Label>
                                 <Button type="button" variant="outline" size="sm" onClick={addDeduction}>
                                     <Plus className="h-3 w-3 mr-1" />
-                                    Add
+                                    {t("common.add")}
                                 </Button>
                             </div>
                             {formData.deductions.map((deduction, index) => (
                                 <div key={deduction.id} className="flex gap-2">
                                     <Input
-                                        placeholder="Name"
+                                        placeholder={t("common.name")}
                                         value={deduction.name}
                                         onChange={(e) => {
                                             const updated = [...formData.deductions];
@@ -463,7 +467,7 @@ export default function PayrollPage() {
                                     />
                                     <Input
                                         type="number"
-                                        placeholder="Amount"
+                                        placeholder={t("hr.payroll.amount")}
                                         value={deduction.amount}
                                         onChange={(e) => {
                                             const updated = [...formData.deductions];
@@ -477,10 +481,10 @@ export default function PayrollPage() {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button onClick={handleAddPayroll} disabled={isSubmitting}>
-                            {isSubmitting ? "Creating..." : "Create Payroll"}
+                            {isSubmitting ? t("hr.payroll.creating") : t("hr.payroll.createPayroll")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -490,13 +494,13 @@ export default function PayrollPage() {
             <Dialog open={showSummaryDialog} onOpenChange={setShowSummaryDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Generate Payroll Summary</DialogTitle>
+                        <DialogTitle>{t("hr.payroll.generateSummaryTitle")}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        <Label>Select Period</Label>
+                        <Label>{t("hr.payroll.selectPeriodLabel")}</Label>
                         <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
                             <SelectTrigger className="mt-2">
-                                <SelectValue placeholder="Select period" />
+                                <SelectValue placeholder={t("hr.payroll.selectPeriodPlaceholder")} />
                             </SelectTrigger>
                             <SelectContent>
                                 {periodOptions.map((period) => (
@@ -509,10 +513,10 @@ export default function PayrollPage() {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowSummaryDialog(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button onClick={handleGenerateSummary} disabled={isSubmitting}>
-                            {isSubmitting ? "Generating..." : "Generate"}
+                            {isSubmitting ? t("hr.payroll.generating") : t("hr.payroll.generate")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

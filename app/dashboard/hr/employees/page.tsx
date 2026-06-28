@@ -30,8 +30,10 @@ import type { Employee, EmployeeStatus } from "@/lib/types/hr-types";
 import type { EmployeeFormData } from "@/lib/schemas";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 export default function EmployeesPage() {
+    const { t } = useTranslation();
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<EmployeeStatus | "all">("all");
     const [departmentFilter, setDepartmentFilter] = useState<string>("all");
@@ -68,14 +70,14 @@ export default function EmployeesPage() {
 
     const handleAddEmployee = async () => {
         if (!formData.firstName || !formData.lastName || !formData.email || !formData.departmentId || !formData.jobTitleId) {
-            toast.error("Please fill in all required fields");
+            toast.error(t("hr.toast.fillRequired"));
             return;
         }
 
         setIsSubmitting(true);
         try {
             await createEmployee(formData as EmployeeFormData);
-            toast.success("Employee added successfully");
+            toast.success(t("hr.toast.employeeAdded"));
             setShowAddDialog(false);
             setFormData({
                 firstName: "",
@@ -91,7 +93,7 @@ export default function EmployeesPage() {
                 hrRole: "employee",
             });
         } catch (error) {
-            toast.error("Failed to add employee");
+            toast.error(t("hr.toast.employeeAddFailed"));
             console.error(error);
         } finally {
             setIsSubmitting(false);
@@ -135,7 +137,7 @@ export default function EmployeesPage() {
                     <div className="relative flex-1 max-w-sm">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
-                            placeholder="Search employees..."
+                            placeholder={t("hr.employees.searchPlaceholder")}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="pl-10"
@@ -143,21 +145,21 @@ export default function EmployeesPage() {
                     </div>
                     <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as EmployeeStatus | "all")}>
                         <SelectTrigger className="w-[140px]">
-                            <SelectValue placeholder="Status" />
+                            <SelectValue placeholder={t("common.status")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Status</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="on_leave">On Leave</SelectItem>
-                            <SelectItem value="terminated">Terminated</SelectItem>
+                            <SelectItem value="all">{t("hr.employees.allStatus")}</SelectItem>
+                            <SelectItem value="active">{t("hr.status.active")}</SelectItem>
+                            <SelectItem value="on_leave">{t("hr.status.onLeave")}</SelectItem>
+                            <SelectItem value="terminated">{t("hr.status.terminated")}</SelectItem>
                         </SelectContent>
                     </Select>
                     <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                         <SelectTrigger className="w-[160px]">
-                            <SelectValue placeholder="Department" />
+                            <SelectValue placeholder={t("hr.fields.department")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Departments</SelectItem>
+                            <SelectItem value="all">{t("hr.employees.allDepartments")}</SelectItem>
                             {departments.map((dept) => (
                                 <SelectItem key={dept.id} value={dept.id}>
                                     {dept.name}
@@ -168,7 +170,7 @@ export default function EmployeesPage() {
                 </div>
                 <Button onClick={() => setShowAddDialog(true)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Employee
+                    {t("hr.employees.addEmployee")}
                 </Button>
             </div>
 
@@ -176,28 +178,28 @@ export default function EmployeesPage() {
             <div className="grid grid-cols-4 gap-4">
                 <div className="bg-blue-50 rounded-lg p-3 text-center">
                     <p className="text-2xl font-bold text-blue-600">{employeeStats.total}</p>
-                    <p className="text-xs text-blue-600">Total</p>
+                    <p className="text-xs text-blue-600">{t("hr.stats.total")}</p>
                 </div>
                 <div className="bg-green-50 rounded-lg p-3 text-center">
                     <p className="text-2xl font-bold text-green-600">{employeeStats.active}</p>
-                    <p className="text-xs text-green-600">Active</p>
+                    <p className="text-xs text-green-600">{t("hr.status.active")}</p>
                 </div>
                 <div className="bg-amber-50 rounded-lg p-3 text-center">
                     <p className="text-2xl font-bold text-amber-600">{employeeStats.onLeave}</p>
-                    <p className="text-xs text-amber-600">On Leave</p>
+                    <p className="text-xs text-amber-600">{t("hr.status.onLeave")}</p>
                 </div>
                 <div className="bg-red-50 rounded-lg p-3 text-center">
                     <p className="text-2xl font-bold text-red-600">{employeeStats.terminated}</p>
-                    <p className="text-xs text-red-600">Terminated</p>
+                    <p className="text-xs text-red-600">{t("hr.status.terminated")}</p>
                 </div>
             </div>
 
             {/* Employee Grid */}
             {filteredEmployees.length === 0 ? (
                 <div className="text-center py-12">
-                    <p className="text-gray-500">No employees found</p>
+                    <p className="text-gray-500">{t("hr.employees.empty")}</p>
                     <Button variant="outline" className="mt-4" onClick={() => setShowAddDialog(true)}>
-                        Add your first employee
+                        {t("hr.employees.addFirst")}
                     </Button>
                 </div>
             ) : (
@@ -220,7 +222,7 @@ export default function EmployeesPage() {
                                                     {employee.firstName} {employee.lastName}
                                                 </h3>
                                                 <Badge className={getStatusColor(employee.status)}>
-                                                    {employee.status.replace("_", " ")}
+                                                    {t(`hr.employeeStatus.${employee.status}`)}
                                                 </Badge>
                                             </div>
                                             <p className="text-sm text-gray-500 truncate">{employee.jobTitleName}</p>
@@ -229,7 +231,7 @@ export default function EmployeesPage() {
                                     <div className="mt-4 space-y-2 text-sm text-gray-600">
                                         <div className="flex items-center gap-2">
                                             <Building2 className="h-4 w-4 text-gray-400" />
-                                            <span className="truncate">{employee.departmentName || "No department"}</span>
+                                            <span className="truncate">{employee.departmentName || t("hr.employees.noDepartment")}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Mail className="h-4 w-4 text-gray-400" />
@@ -243,7 +245,7 @@ export default function EmployeesPage() {
                                         )}
                                     </div>
                                     <div className="mt-3 pt-3 border-t text-xs text-gray-400">
-                                        Hired: {format(employee.hireDate.toDate(), "MMM d, yyyy")}
+                                        {t("hr.employees.hired", { date: format(employee.hireDate.toDate(), "MMM d, yyyy") })}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -256,12 +258,12 @@ export default function EmployeesPage() {
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Add New Employee</DialogTitle>
+                        <DialogTitle>{t("hr.employees.addDialogTitle")}</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="firstName">First Name *</Label>
+                                <Label htmlFor="firstName">{t("hr.fields.firstNameRequired")}</Label>
                                 <Input
                                     id="firstName"
                                     value={formData.firstName}
@@ -269,7 +271,7 @@ export default function EmployeesPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="lastName">Last Name *</Label>
+                                <Label htmlFor="lastName">{t("hr.fields.lastNameRequired")}</Label>
                                 <Input
                                     id="lastName"
                                     value={formData.lastName}
@@ -279,7 +281,7 @@ export default function EmployeesPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email *</Label>
+                                <Label htmlFor="email">{t("hr.fields.emailRequired")}</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -288,7 +290,7 @@ export default function EmployeesPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="phone">Phone</Label>
+                                <Label htmlFor="phone">{t("common.phone")}</Label>
                                 <Input
                                     id="phone"
                                     value={formData.phone}
@@ -298,13 +300,13 @@ export default function EmployeesPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Department *</Label>
+                                <Label>{t("hr.fields.departmentRequired")}</Label>
                                 <Select
                                     value={formData.departmentId}
                                     onValueChange={(v) => setFormData({ ...formData, departmentId: v })}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select department" />
+                                        <SelectValue placeholder={t("hr.fields.selectDepartment")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {departments.map((dept) => (
@@ -316,13 +318,13 @@ export default function EmployeesPage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Job Title *</Label>
+                                <Label>{t("hr.fields.jobTitleRequired")}</Label>
                                 <Select
                                     value={formData.jobTitleId}
                                     onValueChange={(v) => setFormData({ ...formData, jobTitleId: v })}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select job title" />
+                                        <SelectValue placeholder={t("hr.fields.selectJobTitle")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {jobTitles.map((job) => (
@@ -336,7 +338,7 @@ export default function EmployeesPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Employment Type</Label>
+                                <Label>{t("hr.fields.employmentType")}</Label>
                                 <Select
                                     value={formData.employmentType}
                                     onValueChange={(v) => setFormData({ ...formData, employmentType: v as any })}
@@ -345,14 +347,14 @@ export default function EmployeesPage() {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="full_time">Full-time</SelectItem>
-                                        <SelectItem value="part_time">Part-time</SelectItem>
-                                        <SelectItem value="contractor">Contractor</SelectItem>
+                                        <SelectItem value="full_time">{t("hr.employmentType.fullTime")}</SelectItem>
+                                        <SelectItem value="part_time">{t("hr.employmentType.partTime")}</SelectItem>
+                                        <SelectItem value="contractor">{t("hr.employmentType.contractor")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Work Location</Label>
+                                <Label>{t("hr.fields.workLocation")}</Label>
                                 <Select
                                     value={formData.workLocation}
                                     onValueChange={(v) => setFormData({ ...formData, workLocation: v as any })}
@@ -361,16 +363,16 @@ export default function EmployeesPage() {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="office">Office</SelectItem>
-                                        <SelectItem value="remote">Remote</SelectItem>
-                                        <SelectItem value="hybrid">Hybrid</SelectItem>
+                                        <SelectItem value="office">{t("hr.workLocation.office")}</SelectItem>
+                                        <SelectItem value="remote">{t("hr.workLocation.remote")}</SelectItem>
+                                        <SelectItem value="hybrid">{t("hr.workLocation.hybrid")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="hireDate">Hire Date</Label>
+                                <Label htmlFor="hireDate">{t("hr.fields.hireDate")}</Label>
                                 <Input
                                     id="hireDate"
                                     type="date"
@@ -379,7 +381,7 @@ export default function EmployeesPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>HR Role</Label>
+                                <Label>{t("hr.fields.hrRole")}</Label>
                                 <Select
                                     value={formData.hrRole}
                                     onValueChange={(v) => setFormData({ ...formData, hrRole: v as any })}
@@ -388,9 +390,9 @@ export default function EmployeesPage() {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="employee">Employee</SelectItem>
-                                        <SelectItem value="manager">Manager</SelectItem>
-                                        <SelectItem value="hr_admin">HR Admin</SelectItem>
+                                        <SelectItem value="employee">{t("hr.hrRole.employee")}</SelectItem>
+                                        <SelectItem value="manager">{t("hr.hrRole.manager")}</SelectItem>
+                                        <SelectItem value="hr_admin">{t("hr.hrRole.hrAdmin")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -398,10 +400,10 @@ export default function EmployeesPage() {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button onClick={handleAddEmployee} disabled={isSubmitting}>
-                            {isSubmitting ? "Adding..." : "Add Employee"}
+                            {isSubmitting ? t("hr.employees.adding") : t("hr.employees.addEmployee")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -30,8 +30,10 @@ import { Calendar, Plus, Check, X, Clock, CalendarDays } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 import type { LeaveRequestStatus } from "@/lib/types/hr-types";
+import { useTranslation } from "@/lib/i18n";
 
 export default function LeavesPage() {
+    const { t } = useTranslation();
     const { employee: currentEmployee, loading: employeeLoading } = useCurrentEmployee();
     const { leaveTypes, loading: typesLoading } = useLeaveTypes();
     const { requests, loading, pendingCount, submitRequest, approveRequest, rejectRequest, cancelRequest } = useLeaveRequests();
@@ -56,7 +58,7 @@ export default function LeavesPage() {
 
     const handleSubmitRequest = async () => {
         if (!currentEmployee || !requestForm.leaveTypeId || !requestForm.startDate || !requestForm.endDate) {
-            toast.error("Please fill in all required fields");
+            toast.error(t("hr.toast.fillRequired"));
             return;
         }
 
@@ -78,11 +80,11 @@ export default function LeavesPage() {
                 currentEmployee.departmentId,
                 leaveType.name
             );
-            toast.success("Leave request submitted");
+            toast.success(t("hr.leaves.requestSubmitted"));
             setShowRequestDialog(false);
             setRequestForm({ leaveTypeId: "", startDate: "", endDate: "", reason: "", isHalfDay: false });
         } catch (error: any) {
-            toast.error(error.message || "Failed to submit request");
+            toast.error(error.message || t("hr.leaves.submitFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -91,47 +93,47 @@ export default function LeavesPage() {
     const handleApprove = async (requestId: string) => {
         try {
             await approveRequest(requestId);
-            toast.success("Leave request approved");
+            toast.success(t("hr.leaves.requestApproved"));
         } catch (error) {
-            toast.error("Failed to approve request");
+            toast.error(t("hr.leaves.approveFailed"));
         }
     };
 
     const handleReject = async () => {
         if (!selectedRequest || !rejectReason) {
-            toast.error("Please provide a rejection reason");
+            toast.error(t("hr.leaves.provideRejectReason"));
             return;
         }
         try {
             await rejectRequest(selectedRequest, rejectReason);
-            toast.success("Leave request rejected");
+            toast.success(t("hr.leaves.requestRejected"));
             setShowRejectDialog(false);
             setSelectedRequest(null);
             setRejectReason("");
         } catch (error) {
-            toast.error("Failed to reject request");
+            toast.error(t("hr.leaves.rejectFailed"));
         }
     };
 
     const handleCancel = async (requestId: string) => {
         try {
             await cancelRequest(requestId);
-            toast.success("Leave request cancelled");
+            toast.success(t("hr.leaves.requestCancelled"));
         } catch (error) {
-            toast.error("Failed to cancel request");
+            toast.error(t("hr.leaves.cancelFailed"));
         }
     };
 
     const getStatusBadge = (status: LeaveRequestStatus) => {
         switch (status) {
             case "pending":
-                return <Badge className="bg-amber-100 text-amber-800">Pending</Badge>;
+                return <Badge className="bg-amber-100 text-amber-800">{t("hr.leaveStatus.pending")}</Badge>;
             case "approved":
-                return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
+                return <Badge className="bg-green-100 text-green-800">{t("hr.leaveStatus.approved")}</Badge>;
             case "rejected":
-                return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+                return <Badge className="bg-red-100 text-red-800">{t("hr.leaveStatus.rejected")}</Badge>;
             case "cancelled":
-                return <Badge className="bg-gray-100 text-gray-800">Cancelled</Badge>;
+                return <Badge className="bg-gray-100 text-gray-800">{t("hr.leaveStatus.cancelled")}</Badge>;
         }
     };
 
@@ -153,12 +155,12 @@ export default function LeavesPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold">Leave Management</h2>
-                    <p className="text-gray-500">Request and manage leaves</p>
+                    <h2 className="text-xl font-semibold">{t("hr.leaves.title")}</h2>
+                    <p className="text-gray-500">{t("hr.leaves.subtitle")}</p>
                 </div>
                 <Button onClick={() => setShowRequestDialog(true)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Request Leave
+                    {t("hr.leaves.requestLeave")}
                 </Button>
             </div>
 
@@ -172,12 +174,12 @@ export default function LeavesPage() {
                                     <div>
                                         <p className="text-sm text-gray-500">{balance.leaveTypeName}</p>
                                         <p className="text-2xl font-bold">{balance.remaining}</p>
-                                        <p className="text-xs text-gray-400">days remaining</p>
+                                        <p className="text-xs text-gray-400">{t("hr.leaves.daysRemaining")}</p>
                                     </div>
                                     <div className="text-right text-sm text-gray-500">
-                                        <p>Entitled: {balance.entitled}</p>
-                                        <p>Used: {balance.used}</p>
-                                        {balance.pending > 0 && <p className="text-amber-600">Pending: {balance.pending}</p>}
+                                        <p>{t("hr.leaves.entitled", { count: balance.entitled })}</p>
+                                        <p>{t("hr.leaves.used", { count: balance.used })}</p>
+                                        {balance.pending > 0 && <p className="text-amber-600">{t("hr.leaves.pending", { count: balance.pending })}</p>}
                                     </div>
                                 </div>
                             </CardContent>
@@ -189,10 +191,10 @@ export default function LeavesPage() {
             {/* Tabs */}
             <Tabs defaultValue="my-leaves">
                 <TabsList>
-                    <TabsTrigger value="my-leaves">My Leaves</TabsTrigger>
+                    <TabsTrigger value="my-leaves">{t("hr.leaves.tabMyLeaves")}</TabsTrigger>
                     {isManager && (
                         <TabsTrigger value="approvals" className="relative">
-                            Pending Approvals
+                            {t("hr.leaves.tabPendingApprovals")}
                             {pendingApprovals.length > 0 && (
                                 <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold bg-red-500 text-white rounded-full">
                                     {pendingApprovals.length}
@@ -200,7 +202,7 @@ export default function LeavesPage() {
                             )}
                         </TabsTrigger>
                     )}
-                    <TabsTrigger value="all">All Requests</TabsTrigger>
+                    <TabsTrigger value="all">{t("hr.leaves.tabAllRequests")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="my-leaves" className="mt-4">
@@ -208,9 +210,9 @@ export default function LeavesPage() {
                         <Card>
                             <CardContent className="py-12 text-center">
                                 <CalendarDays className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                                <p className="text-gray-500">No leave requests yet</p>
+                                <p className="text-gray-500">{t("hr.leaves.noRequests")}</p>
                                 <Button className="mt-4" onClick={() => setShowRequestDialog(true)}>
-                                    Request Leave
+                                    {t("hr.leaves.requestLeave")}
                                 </Button>
                             </CardContent>
                         </Card>
@@ -228,7 +230,7 @@ export default function LeavesPage() {
                                                 <p className="text-sm text-gray-500 mt-1">
                                                     {format(request.startDate.toDate(), "MMM d, yyyy")} -{" "}
                                                     {format(request.endDate.toDate(), "MMM d, yyyy")}
-                                                    <span className="ml-2">({request.totalDays} days)</span>
+                                                    <span className="ml-2">({t("hr.leaves.daysCount", { count: request.totalDays })})</span>
                                                 </p>
                                                 {request.reason && (
                                                     <p className="text-sm text-gray-400 mt-1">{request.reason}</p>
@@ -240,7 +242,7 @@ export default function LeavesPage() {
                                                     size="sm"
                                                     onClick={() => handleCancel(request.id)}
                                                 >
-                                                    Cancel
+                                                    {t("common.cancel")}
                                                 </Button>
                                             )}
                                         </div>
@@ -257,7 +259,7 @@ export default function LeavesPage() {
                             <Card>
                                 <CardContent className="py-12 text-center">
                                     <Check className="h-12 w-12 mx-auto mb-4 text-green-300" />
-                                    <p className="text-gray-500">No pending approvals</p>
+                                    <p className="text-gray-500">{t("hr.leaves.noPendingApprovals")}</p>
                                 </CardContent>
                             </Card>
                         ) : (
@@ -272,7 +274,7 @@ export default function LeavesPage() {
                                                         {request.leaveTypeName} •{" "}
                                                         {format(request.startDate.toDate(), "MMM d")} -{" "}
                                                         {format(request.endDate.toDate(), "MMM d, yyyy")}
-                                                        <span className="ml-2">({request.totalDays} days)</span>
+                                                        <span className="ml-2">({t("hr.leaves.daysCount", { count: request.totalDays })})</span>
                                                     </p>
                                                     {request.reason && (
                                                         <p className="text-sm text-gray-400 mt-1">{request.reason}</p>
@@ -289,7 +291,7 @@ export default function LeavesPage() {
                                                         }}
                                                     >
                                                         <X className="h-4 w-4 mr-1" />
-                                                        Reject
+                                                        {t("hr.leaves.reject")}
                                                     </Button>
                                                     <Button
                                                         size="sm"
@@ -297,7 +299,7 @@ export default function LeavesPage() {
                                                         onClick={() => handleApprove(request.id)}
                                                     >
                                                         <Check className="h-4 w-4 mr-1" />
-                                                        Approve
+                                                        {t("hr.leaves.approve")}
                                                     </Button>
                                                 </div>
                                             </div>
@@ -326,7 +328,7 @@ export default function LeavesPage() {
                                                 {format(request.endDate.toDate(), "MMM d, yyyy")}
                                             </p>
                                         </div>
-                                        <p className="text-sm text-gray-400">{request.totalDays} days</p>
+                                        <p className="text-sm text-gray-400">{t("hr.leaves.daysCount", { count: request.totalDays })}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -339,17 +341,17 @@ export default function LeavesPage() {
             <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Request Leave</DialogTitle>
+                        <DialogTitle>{t("hr.leaves.requestLeave")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Leave Type *</Label>
+                            <Label>{t("hr.leaves.leaveTypeRequired")}</Label>
                             <Select
                                 value={requestForm.leaveTypeId}
                                 onValueChange={(v) => setRequestForm({ ...requestForm, leaveTypeId: v })}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select leave type" />
+                                    <SelectValue placeholder={t("hr.leaves.selectLeaveType")} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {leaveTypes.map((type) => (
@@ -362,7 +364,7 @@ export default function LeavesPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Start Date *</Label>
+                                <Label>{t("hr.leaves.startDateRequired")}</Label>
                                 <Input
                                     type="date"
                                     value={requestForm.startDate}
@@ -370,7 +372,7 @@ export default function LeavesPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>End Date *</Label>
+                                <Label>{t("hr.leaves.endDateRequired")}</Label>
                                 <Input
                                     type="date"
                                     value={requestForm.endDate}
@@ -379,20 +381,20 @@ export default function LeavesPage() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label>Reason (Optional)</Label>
+                            <Label>{t("hr.leaves.reasonOptional")}</Label>
                             <Textarea
                                 value={requestForm.reason}
                                 onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
-                                placeholder="Briefly describe the reason for leave..."
+                                placeholder={t("hr.leaves.reasonPlaceholder")}
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowRequestDialog(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button onClick={handleSubmitRequest} disabled={isSubmitting}>
-                            {isSubmitting ? "Submitting..." : "Submit Request"}
+                            {isSubmitting ? t("hr.leaves.submitting") : t("hr.leaves.submitRequest")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -402,23 +404,23 @@ export default function LeavesPage() {
             <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Reject Leave Request</DialogTitle>
+                        <DialogTitle>{t("hr.leaves.rejectDialogTitle")}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        <Label>Rejection Reason *</Label>
+                        <Label>{t("hr.leaves.rejectionReasonRequired")}</Label>
                         <Textarea
                             value={rejectReason}
                             onChange={(e) => setRejectReason(e.target.value)}
-                            placeholder="Please provide a reason for rejection..."
+                            placeholder={t("hr.leaves.rejectionPlaceholder")}
                             className="mt-2"
                         />
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button variant="destructive" onClick={handleReject}>
-                            Reject Request
+                            {t("hr.leaves.rejectRequest")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

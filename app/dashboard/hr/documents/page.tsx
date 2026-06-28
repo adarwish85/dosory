@@ -35,19 +35,21 @@ import {
 import { FileText, Upload, Download, Trash2, AlertTriangle, Search, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 import type { DocumentType } from "@/lib/types/hr-types";
 
-const documentTypeLabels: Record<DocumentType, string> = {
-    contract: "Employment Contract",
-    id_proof: "ID Proof",
-    resume: "Resume",
-    certification: "Certification",
-    tax_form: "Tax Form",
-    review: "Performance Review",
-    other: "Other",
+const documentTypeKeys: Record<DocumentType, string> = {
+    contract: "hr.documents.type.contract",
+    id_proof: "hr.documents.type.idProof",
+    resume: "hr.documents.type.resume",
+    certification: "hr.documents.type.certification",
+    tax_form: "hr.documents.type.taxForm",
+    review: "hr.documents.type.review",
+    other: "hr.documents.type.other",
 };
 
 export default function DocumentsPage() {
+    const { t } = useTranslation();
     const { documents, loading, expiringDocuments, uploadDocument, deleteDocument } = useEmployeeDocuments();
     const { employees } = useEmployees({ status: "active" });
 
@@ -76,7 +78,7 @@ export default function DocumentsPage() {
 
     const handleUpload = async () => {
         if (!formData.employeeId || !formData.name || !formData.fileUrl) {
-            toast.error("Please fill in all required fields");
+            toast.error(t("hr.documents.fillRequired"));
             return;
         }
 
@@ -92,7 +94,7 @@ export default function DocumentsPage() {
                 description: formData.description,
                 expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : undefined,
             });
-            toast.success("Document uploaded");
+            toast.success(t("hr.documents.uploaded"));
             setShowUploadDialog(false);
             setFormData({
                 employeeId: "",
@@ -103,19 +105,19 @@ export default function DocumentsPage() {
                 expiryDate: "",
             });
         } catch (error) {
-            toast.error("Failed to upload document");
+            toast.error(t("hr.documents.uploadFailed"));
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this document?")) return;
+        if (!confirm(t("hr.documents.confirmDelete"))) return;
         try {
             await deleteDocument(id);
-            toast.success("Document deleted");
+            toast.success(t("hr.documents.deleted"));
         } catch (error) {
-            toast.error("Failed to delete document");
+            toast.error(t("hr.documents.deleteFailed"));
         }
     };
 
@@ -133,12 +135,12 @@ export default function DocumentsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold">Employee Documents</h2>
-                    <p className="text-gray-500">Manage contracts, certifications, and files</p>
+                    <h2 className="text-xl font-semibold">{t("hr.documents.title")}</h2>
+                    <p className="text-gray-500">{t("hr.documents.subtitle")}</p>
                 </div>
                 <Button onClick={() => setShowUploadDialog(true)}>
                     <Upload className="h-4 w-4 mr-2" />
-                    Upload Document
+                    {t("hr.documents.uploadDocument")}
                 </Button>
             </div>
 
@@ -150,10 +152,10 @@ export default function DocumentsPage() {
                             <AlertTriangle className="h-5 w-5 text-amber-600" />
                             <div>
                                 <p className="font-medium text-amber-800">
-                                    {expiringDocuments.length} document(s) expiring soon
+                                    {t("hr.documents.expiringSoon", { count: expiringDocuments.length })}
                                 </p>
                                 <p className="text-sm text-amber-600">
-                                    Review and renew the following documents within 30 days
+                                    {t("hr.documents.reviewRenew")}
                                 </p>
                             </div>
                         </div>
@@ -166,7 +168,7 @@ export default function DocumentsPage() {
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
-                        placeholder="Search documents..."
+                        placeholder={t("hr.documents.searchPlaceholder")}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-10"
@@ -174,13 +176,13 @@ export default function DocumentsPage() {
                 </div>
                 <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as DocumentType | "all")}>
                     <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Document Type" />
+                        <SelectValue placeholder={t("hr.documents.documentType")} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        {Object.entries(documentTypeLabels).map(([value, label]) => (
+                        <SelectItem value="all">{t("hr.documents.allTypes")}</SelectItem>
+                        {Object.entries(documentTypeKeys).map(([value, key]) => (
                             <SelectItem key={value} value={value}>
-                                {label}
+                                {t(key)}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -192,9 +194,9 @@ export default function DocumentsPage() {
                 <Card>
                     <CardContent className="py-12 text-center">
                         <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <p className="text-gray-500">No documents found</p>
+                        <p className="text-gray-500">{t("hr.documents.noDocuments")}</p>
                         <Button className="mt-4" onClick={() => setShowUploadDialog(true)}>
-                            Upload First Document
+                            {t("hr.documents.uploadFirst")}
                         </Button>
                     </CardContent>
                 </Card>
@@ -203,12 +205,12 @@ export default function DocumentsPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Document</TableHead>
-                                <TableHead>Employee</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Uploaded</TableHead>
-                                <TableHead>Expiry</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead>{t("hr.documents.document")}</TableHead>
+                                <TableHead>{t("hr.documents.employee")}</TableHead>
+                                <TableHead>{t("hr.documents.type")}</TableHead>
+                                <TableHead>{t("hr.documents.uploaded")}</TableHead>
+                                <TableHead>{t("hr.documents.expiry")}</TableHead>
+                                <TableHead className="text-right">{t("common.actions")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -230,7 +232,7 @@ export default function DocumentsPage() {
                                         </TableCell>
                                         <TableCell>{doc.employeeName}</TableCell>
                                         <TableCell>
-                                            <Badge variant="outline">{documentTypeLabels[doc.documentType]}</Badge>
+                                            <Badge variant="outline">{t(documentTypeKeys[doc.documentType])}</Badge>
                                         </TableCell>
                                         <TableCell className="text-sm text-gray-500">
                                             {format(doc.createdAt.toDate(), "MMM d, yyyy")}
@@ -282,17 +284,17 @@ export default function DocumentsPage() {
             <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Upload Document</DialogTitle>
+                        <DialogTitle>{t("hr.documents.uploadDocument")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Employee *</Label>
+                            <Label>{t("hr.documents.employeeRequired")}</Label>
                             <Select
                                 value={formData.employeeId}
                                 onValueChange={(v) => setFormData({ ...formData, employeeId: v })}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select employee" />
+                                    <SelectValue placeholder={t("hr.documents.selectEmployee")} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {employees.map((emp) => (
@@ -304,7 +306,7 @@ export default function DocumentsPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Document Type</Label>
+                            <Label>{t("hr.documents.documentType")}</Label>
                             <Select
                                 value={formData.documentType}
                                 onValueChange={(v) => setFormData({ ...formData, documentType: v as DocumentType })}
@@ -313,35 +315,35 @@ export default function DocumentsPage() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {Object.entries(documentTypeLabels).map(([value, label]) => (
+                                    {Object.entries(documentTypeKeys).map(([value, key]) => (
                                         <SelectItem key={value} value={value}>
-                                            {label}
+                                            {t(key)}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Document Name *</Label>
+                            <Label>{t("hr.documents.documentNameRequired")}</Label>
                             <Input
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                placeholder="e.g., Employment Contract 2024"
+                                placeholder={t("hr.documents.documentNamePlaceholder")}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>File URL *</Label>
+                            <Label>{t("hr.documents.fileUrlRequired")}</Label>
                             <Input
                                 value={formData.fileUrl}
                                 onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
                                 placeholder="https://..."
                             />
                             <p className="text-xs text-gray-500">
-                                Upload your file to cloud storage and paste the URL here
+                                {t("hr.documents.fileUrlHint")}
                             </p>
                         </div>
                         <div className="space-y-2">
-                            <Label>Expiry Date (Optional)</Label>
+                            <Label>{t("hr.documents.expiryDateOptional")}</Label>
                             <Input
                                 type="date"
                                 value={formData.expiryDate}
@@ -349,20 +351,20 @@ export default function DocumentsPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Description (Optional)</Label>
+                            <Label>{t("hr.documents.descriptionOptional")}</Label>
                             <Textarea
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                placeholder="Additional notes..."
+                                placeholder={t("hr.documents.descriptionPlaceholder")}
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button onClick={handleUpload} disabled={isSubmitting}>
-                            {isSubmitting ? "Uploading..." : "Upload"}
+                            {isSubmitting ? t("hr.documents.uploading") : t("hr.documents.upload")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -12,8 +12,10 @@ import { Clock, LogIn, LogOut, Calendar, Plus, AlertTriangle } from "lucide-reac
 import { format, startOfDay, endOfDay } from "date-fns";
 import { toast } from "sonner";
 import type { AttendanceStatus } from "@/lib/types/hr-types";
+import { useTranslation } from "@/lib/i18n";
 
 export default function AttendancePage() {
+    const { t } = useTranslation();
     const { employee: currentEmployee, loading: employeeLoading } = useCurrentEmployee();
     const { employees } = useEmployees({ status: "active" });
     const today = new Date();
@@ -31,9 +33,9 @@ export default function AttendancePage() {
         setClockingIn(true);
         try {
             await clockIn(currentEmployee.id, `${currentEmployee.firstName} ${currentEmployee.lastName}`);
-            toast.success("Clocked in successfully!");
+            toast.success(t("hr.attendance.clockInSuccess"));
         } catch (error) {
-            toast.error("Failed to clock in");
+            toast.error(t("hr.attendance.clockInFailed"));
             console.error(error);
         } finally {
             setClockingIn(false);
@@ -45,9 +47,9 @@ export default function AttendancePage() {
         setClockingOut(true);
         try {
             await clockOut(currentEmployee.id);
-            toast.success("Clocked out successfully!");
+            toast.success(t("hr.attendance.clockOutSuccess"));
         } catch (error) {
-            toast.error("Failed to clock out");
+            toast.error(t("hr.attendance.clockOutFailed"));
             console.error(error);
         } finally {
             setClockingOut(false);
@@ -61,17 +63,17 @@ export default function AttendancePage() {
     const getStatusBadge = (status: AttendanceStatus) => {
         switch (status) {
             case "present":
-                return <Badge className="bg-green-100 text-green-800">Present</Badge>;
+                return <Badge className="bg-green-100 text-green-800">{t("hr.attendanceStatus.present")}</Badge>;
             case "late":
-                return <Badge className="bg-amber-100 text-amber-800">Late</Badge>;
+                return <Badge className="bg-amber-100 text-amber-800">{t("hr.attendanceStatus.late")}</Badge>;
             case "early_leave":
-                return <Badge className="bg-orange-100 text-orange-800">Early Leave</Badge>;
+                return <Badge className="bg-orange-100 text-orange-800">{t("hr.attendanceStatus.earlyLeave")}</Badge>;
             case "absent":
-                return <Badge className="bg-red-100 text-red-800">Absent</Badge>;
+                return <Badge className="bg-red-100 text-red-800">{t("hr.attendanceStatus.absent")}</Badge>;
             case "on_leave":
-                return <Badge className="bg-blue-100 text-blue-800">On Leave</Badge>;
+                return <Badge className="bg-blue-100 text-blue-800">{t("hr.attendanceStatus.onLeave")}</Badge>;
             case "holiday":
-                return <Badge className="bg-purple-100 text-purple-800">Holiday</Badge>;
+                return <Badge className="bg-purple-100 text-purple-800">{t("hr.attendanceStatus.holiday")}</Badge>;
             default:
                 return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
         }
@@ -98,22 +100,23 @@ export default function AttendancePage() {
                                     {format(today, "EEEE, MMMM d, yyyy")}
                                 </h3>
                                 <p className="text-gray-600">
-                                    Welcome, {currentEmployee.firstName}! {hasClockedIn && !hasClockedOut && "You're currently clocked in."}
-                                    {hasClockedOut && "You've completed your shift for today."}
-                                    {!hasClockedIn && "Don't forget to clock in."}
+                                    {t("hr.attendance.welcome", { name: currentEmployee.firstName })}{" "}
+                                    {hasClockedIn && !hasClockedOut && t("hr.attendance.currentlyClockedIn")}
+                                    {hasClockedOut && t("hr.attendance.shiftCompleted")}
+                                    {!hasClockedIn && t("hr.attendance.dontForgetClockIn")}
                                 </p>
                                 {myTodayAttendance && (
                                     <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
                                         {myTodayAttendance.clockIn && (
                                             <span className="flex items-center gap-1">
                                                 <LogIn className="h-4 w-4" />
-                                                In: {format(myTodayAttendance.clockIn.toDate(), "hh:mm a")}
+                                                {t("hr.attendance.inLabel", { time: format(myTodayAttendance.clockIn.toDate(), "hh:mm a") })}
                                             </span>
                                         )}
                                         {myTodayAttendance.clockOut && (
                                             <span className="flex items-center gap-1">
                                                 <LogOut className="h-4 w-4" />
-                                                Out: {format(myTodayAttendance.clockOut.toDate(), "hh:mm a")}
+                                                {t("hr.attendance.outLabel", { time: format(myTodayAttendance.clockOut.toDate(), "hh:mm a") })}
                                             </span>
                                         )}
                                         {myTodayAttendance.workedMinutes && (
@@ -135,7 +138,7 @@ export default function AttendancePage() {
                                         disabled={clockingIn}
                                     >
                                         <LogIn className="h-5 w-5 mr-2" />
-                                        {clockingIn ? "Clocking In..." : "Clock In"}
+                                        {clockingIn ? t("hr.attendance.clockingIn") : t("hr.attendance.clockIn")}
                                     </Button>
                                 )}
                                 {hasClockedIn && !hasClockedOut && (
@@ -146,13 +149,13 @@ export default function AttendancePage() {
                                         disabled={clockingOut}
                                     >
                                         <LogOut className="h-5 w-5 mr-2" />
-                                        {clockingOut ? "Clocking Out..." : "Clock Out"}
+                                        {clockingOut ? t("hr.attendance.clockingOut") : t("hr.attendance.clockOut")}
                                     </Button>
                                 )}
                                 {hasClockedOut && (
                                     <Button size="lg" disabled className="bg-gray-400">
                                         <Clock className="h-5 w-5 mr-2" />
-                                        Shift Complete
+                                        {t("hr.attendance.shiftComplete")}
                                     </Button>
                                 )}
                             </div>
@@ -168,7 +171,7 @@ export default function AttendancePage() {
                         <p className="text-3xl font-bold text-green-600">
                             {logs.filter((l) => l.status === "present").length}
                         </p>
-                        <p className="text-sm text-gray-500">Present</p>
+                        <p className="text-sm text-gray-500">{t("hr.attendanceStatus.present")}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -176,7 +179,7 @@ export default function AttendancePage() {
                         <p className="text-3xl font-bold text-amber-600">
                             {logs.filter((l) => l.isLate).length}
                         </p>
-                        <p className="text-sm text-gray-500">Late</p>
+                        <p className="text-sm text-gray-500">{t("hr.attendanceStatus.late")}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -184,7 +187,7 @@ export default function AttendancePage() {
                         <p className="text-3xl font-bold text-blue-600">
                             {logs.filter((l) => l.status === "on_leave").length}
                         </p>
-                        <p className="text-sm text-gray-500">On Leave</p>
+                        <p className="text-sm text-gray-500">{t("hr.attendanceStatus.onLeave")}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -192,7 +195,7 @@ export default function AttendancePage() {
                         <p className="text-3xl font-bold text-red-600">
                             {employees.length - logs.length}
                         </p>
-                        <p className="text-sm text-gray-500">Not Clocked</p>
+                        <p className="text-sm text-gray-500">{t("hr.attendance.notClocked")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -202,14 +205,14 @@ export default function AttendancePage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
-                        Today&apos;s Attendance Log
+                        {t("hr.attendance.todaysLog")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     {logs.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
                             <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                            <p>No attendance records for today yet</p>
+                            <p>{t("hr.attendance.noRecords")}</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -248,13 +251,13 @@ export default function AttendancePage() {
                                     <div className="flex items-center gap-3">
                                         {log.hasOvertime && (
                                             <Badge className="bg-purple-100 text-purple-800">
-                                                +{Math.floor((log.overtimeMinutes || 0) / 60)}h OT
+                                                {t("hr.attendance.overtime", { hours: Math.floor((log.overtimeMinutes || 0) / 60) })}
                                             </Badge>
                                         )}
                                         {log.isLate && (
                                             <Badge className="bg-amber-100 text-amber-800">
                                                 <AlertTriangle className="h-3 w-3 mr-1" />
-                                                Late
+                                                {t("hr.attendanceStatus.late")}
                                             </Badge>
                                         )}
                                         {getStatusBadge(log.status)}

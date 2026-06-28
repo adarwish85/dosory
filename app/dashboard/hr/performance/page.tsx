@@ -29,9 +29,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Star, Plus, TrendingUp, AlertTriangle, MessageSquare, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 import type { PerformanceRating, PerformanceFlag } from "@/lib/types/hr-types";
 
 export default function PerformancePage() {
+    const { t } = useTranslation();
     const { employee: currentEmployee, loading: employeeLoading } = useCurrentEmployee();
     const { employees } = useEmployees({ status: "active" });
     const { notes, loading, performanceStats, createNote } = usePerformanceNotes();
@@ -54,7 +56,7 @@ export default function PerformancePage() {
 
     const handleAddNote = async () => {
         if (!formData.employeeId || !formData.notes) {
-            toast.error("Please fill in all required fields");
+            toast.error(t("hr.performance.fillRequired"));
             return;
         }
 
@@ -75,7 +77,7 @@ export default function PerformancePage() {
                 },
                 `${employee.firstName} ${employee.lastName}`
             );
-            toast.success("Performance note added");
+            toast.success(t("hr.performance.noteAdded"));
             setShowAddDialog(false);
             setFormData({
                 employeeId: "",
@@ -87,7 +89,7 @@ export default function PerformancePage() {
                 isConfidential: false,
             });
         } catch (error) {
-            toast.error("Failed to add note");
+            toast.error(t("hr.performance.addFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -126,13 +128,13 @@ export default function PerformancePage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold">Performance Notes</h2>
-                    <p className="text-gray-500">Track employee performance and feedback</p>
+                    <h2 className="text-xl font-semibold">{t("hr.performance.title")}</h2>
+                    <p className="text-gray-500">{t("hr.performance.subtitle")}</p>
                 </div>
                 {isManager && (
                     <Button onClick={() => setShowAddDialog(true)}>
                         <Plus className="h-4 w-4 mr-2" />
-                        Add Note
+                        {t("hr.performance.addNote")}
                     </Button>
                 )}
             </div>
@@ -143,7 +145,7 @@ export default function PerformancePage() {
                     <CardContent className="p-4 text-center">
                         <MessageSquare className="h-6 w-6 mx-auto mb-2 text-blue-500" />
                         <p className="text-2xl font-bold">{performanceStats.totalNotes}</p>
-                        <p className="text-sm text-gray-500">Total Notes</p>
+                        <p className="text-sm text-gray-500">{t("hr.performance.totalNotes")}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -152,21 +154,21 @@ export default function PerformancePage() {
                         <p className="text-2xl font-bold">
                             {performanceStats.averageRating?.toFixed(1) || "-"}
                         </p>
-                        <p className="text-sm text-gray-500">Avg Rating</p>
+                        <p className="text-sm text-gray-500">{t("hr.performance.avgRating")}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4 text-center">
                         <TrendingUp className="h-6 w-6 mx-auto mb-2 text-green-500" />
                         <p className="text-2xl font-bold">{performanceStats.promotionCandidates}</p>
-                        <p className="text-sm text-gray-500">Promotion Candidates</p>
+                        <p className="text-sm text-gray-500">{t("hr.performance.promotionCandidates")}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="p-4 text-center">
                         <AlertTriangle className="h-6 w-6 mx-auto mb-2 text-red-500" />
                         <p className="text-2xl font-bold">{performanceStats.performanceConcerns}</p>
-                        <p className="text-sm text-gray-500">Performance Concerns</p>
+                        <p className="text-sm text-gray-500">{t("hr.performance.performanceConcerns")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -176,10 +178,10 @@ export default function PerformancePage() {
                 <Card>
                     <CardContent className="py-12 text-center">
                         <Star className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <p className="text-gray-500">No performance notes yet</p>
+                        <p className="text-gray-500">{t("hr.performance.noNotes")}</p>
                         {isManager && (
                             <Button className="mt-4" onClick={() => setShowAddDialog(true)}>
-                                Add First Note
+                                {t("hr.performance.addFirst")}
                             </Button>
                         )}
                     </CardContent>
@@ -215,7 +217,7 @@ export default function PerformancePage() {
                                                 )}
                                                 {note.isConfidential && (
                                                     <Badge variant="outline" className="text-xs">
-                                                        Confidential
+                                                        {t("hr.performance.confidential")}
                                                     </Badge>
                                                 )}
                                             </div>
@@ -227,7 +229,7 @@ export default function PerformancePage() {
                                         {note.rating && <div className="mt-2">{renderRating(note.rating)}</div>}
                                         <p className="text-gray-700 mt-3">{note.notes}</p>
                                         <div className="mt-3 pt-3 border-t text-xs text-gray-400">
-                                            By {note.authorName} •{" "}
+                                            {t("hr.performance.byAuthor", { author: note.authorName })} •{" "}
                                             {format(note.createdAt.toDate(), "MMM d, yyyy")}
                                         </div>
                                     </div>
@@ -242,17 +244,17 @@ export default function PerformancePage() {
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Add Performance Note</DialogTitle>
+                        <DialogTitle>{t("hr.performance.addNoteTitle")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Employee *</Label>
+                            <Label>{t("hr.performance.employeeRequired")}</Label>
                             <Select
                                 value={formData.employeeId}
                                 onValueChange={(v) => setFormData({ ...formData, employeeId: v })}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select employee" />
+                                    <SelectValue placeholder={t("hr.performance.selectEmployee")} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {employees.map((emp) => (
@@ -266,7 +268,7 @@ export default function PerformancePage() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Month</Label>
+                                <Label>{t("hr.performance.month")}</Label>
                                 <Select
                                     value={formData.month.toString()}
                                     onValueChange={(v) => setFormData({ ...formData, month: parseInt(v) })}
@@ -284,7 +286,7 @@ export default function PerformancePage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Year</Label>
+                                <Label>{t("hr.performance.year")}</Label>
                                 <Input
                                     type="number"
                                     value={formData.year}
@@ -294,7 +296,7 @@ export default function PerformancePage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Rating (Optional)</Label>
+                            <Label>{t("hr.performance.ratingOptional")}</Label>
                             <Select
                                 value={formData.rating?.toString() || ""}
                                 onValueChange={(v) =>
@@ -302,7 +304,7 @@ export default function PerformancePage() {
                                 }
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select rating" />
+                                    <SelectValue placeholder={t("hr.performance.selectRating")} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {[1, 2, 3, 4, 5].map((r) => (
@@ -315,7 +317,7 @@ export default function PerformancePage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Flag</Label>
+                            <Label>{t("hr.performance.flag")}</Label>
                             <Select
                                 value={formData.flag}
                                 onValueChange={(v) => setFormData({ ...formData, flag: v as PerformanceFlag })}
@@ -324,19 +326,19 @@ export default function PerformancePage() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="none">No Flag</SelectItem>
-                                    <SelectItem value="promotion_candidate">Promotion Candidate</SelectItem>
-                                    <SelectItem value="performance_concern">Performance Concern</SelectItem>
+                                    <SelectItem value="none">{t("hr.performance.flagNone")}</SelectItem>
+                                    <SelectItem value="promotion_candidate">{t("hr.performance.flagPromotion")}</SelectItem>
+                                    <SelectItem value="performance_concern">{t("hr.performance.flagConcern")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Notes *</Label>
+                            <Label>{t("hr.performance.notesRequired")}</Label>
                             <Textarea
                                 value={formData.notes}
                                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                placeholder="Write your performance notes here..."
+                                placeholder={t("hr.performance.notesPlaceholder")}
                                 rows={4}
                             />
                         </div>
@@ -350,16 +352,16 @@ export default function PerformancePage() {
                                 }
                             />
                             <Label htmlFor="confidential" className="text-sm">
-                                Mark as confidential (visible only to HR)
+                                {t("hr.performance.markConfidential")}
                             </Label>
                         </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button onClick={handleAddNote} disabled={isSubmitting}>
-                            {isSubmitting ? "Adding..." : "Add Note"}
+                            {isSubmitting ? t("hr.performance.adding") : t("hr.performance.addNote")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

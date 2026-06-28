@@ -27,8 +27,10 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, Building2, Briefcase, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 export default function HRSettingsPage() {
+    const { t } = useTranslation();
     const { departments, loading: deptsLoading, createDepartment, updateDepartment, deleteDepartment } = useDepartments();
     const { jobTitles, loading: titlesLoading, createJobTitle, updateJobTitle, deleteJobTitle } = useJobTitles();
     const { leaveTypes, loading: typesLoading, createLeaveType, updateLeaveType, deleteLeaveType } = useLeaveTypes();
@@ -60,23 +62,23 @@ export default function HRSettingsPage() {
     // Department handlers
     const handleSaveDept = async () => {
         if (!deptForm.name) {
-            toast.error("Department name is required");
+            toast.error(t("hr.settings.deptNameRequired"));
             return;
         }
         setIsSubmitting(true);
         try {
             if (editingId) {
                 await updateDepartment(editingId, deptForm);
-                toast.success("Department updated");
+                toast.success(t("hr.settings.deptUpdated"));
             } else {
                 await createDepartment(deptForm);
-                toast.success("Department created");
+                toast.success(t("hr.settings.deptCreated"));
             }
             setShowDeptDialog(false);
             setDeptForm({ name: "", description: "" });
             setEditingId(null);
         } catch (error) {
-            toast.error("Failed to save department");
+            toast.error(t("hr.settings.deptSaveFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -89,35 +91,35 @@ export default function HRSettingsPage() {
     };
 
     const handleDeleteDept = async (id: string) => {
-        if (!confirm("Delete this department?")) return;
+        if (!confirm(t("hr.settings.confirmDeleteDept"))) return;
         try {
             await deleteDepartment(id);
-            toast.success("Department deleted");
+            toast.success(t("hr.settings.deptDeleted"));
         } catch (error) {
-            toast.error("Failed to delete department");
+            toast.error(t("hr.settings.deptDeleteFailed"));
         }
     };
 
     // Job Title handlers
     const handleSaveTitle = async () => {
         if (!titleForm.name) {
-            toast.error("Job title name is required");
+            toast.error(t("hr.settings.titleNameRequired"));
             return;
         }
         setIsSubmitting(true);
         try {
             if (editingId) {
                 await updateJobTitle(editingId, titleForm);
-                toast.success("Job title updated");
+                toast.success(t("hr.settings.titleUpdated"));
             } else {
                 await createJobTitle(titleForm);
-                toast.success("Job title created");
+                toast.success(t("hr.settings.titleCreated"));
             }
             setShowTitleDialog(false);
             setTitleForm({ name: "", description: "", departmentId: "" });
             setEditingId(null);
         } catch (error) {
-            toast.error("Failed to save job title");
+            toast.error(t("hr.settings.titleSaveFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -130,35 +132,35 @@ export default function HRSettingsPage() {
     };
 
     const handleDeleteTitle = async (id: string) => {
-        if (!confirm("Delete this job title?")) return;
+        if (!confirm(t("hr.settings.confirmDeleteTitle"))) return;
         try {
             await deleteJobTitle(id);
-            toast.success("Job title deleted");
+            toast.success(t("hr.settings.titleDeleted"));
         } catch (error) {
-            toast.error("Failed to delete job title");
+            toast.error(t("hr.settings.titleDeleteFailed"));
         }
     };
 
     // Leave Type handlers
     const handleSaveLeave = async () => {
         if (!leaveForm.name || !leaveForm.code) {
-            toast.error("Leave type name and code are required");
+            toast.error(t("hr.settings.leaveNameCodeRequired"));
             return;
         }
         setIsSubmitting(true);
         try {
             if (editingId) {
                 await updateLeaveType(editingId, leaveForm);
-                toast.success("Leave type updated");
+                toast.success(t("hr.settings.leaveUpdated"));
             } else {
                 await createLeaveType(leaveForm);
-                toast.success("Leave type created");
+                toast.success(t("hr.settings.leaveCreated"));
             }
             setShowLeaveDialog(false);
             resetLeaveForm();
             setEditingId(null);
         } catch (error) {
-            toast.error("Failed to save leave type");
+            toast.error(t("hr.settings.leaveSaveFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -182,12 +184,12 @@ export default function HRSettingsPage() {
     };
 
     const handleDeleteLeave = async (id: string) => {
-        if (!confirm("Delete this leave type?")) return;
+        if (!confirm(t("hr.settings.confirmDeleteLeave"))) return;
         try {
             await deleteLeaveType(id);
-            toast.success("Leave type deleted");
+            toast.success(t("hr.settings.leaveDeleted"));
         } catch (error) {
-            toast.error("Failed to delete leave type");
+            toast.error(t("hr.settings.leaveDeleteFailed"));
         }
     };
 
@@ -196,7 +198,7 @@ export default function HRSettingsPage() {
         for (const type of defaults) {
             await createLeaveType(type);
         }
-        toast.success("Default leave types created");
+        toast.success(t("hr.settings.defaultsCreated"));
     };
 
     const resetLeaveForm = () => {
@@ -227,8 +229,8 @@ export default function HRSettingsPage() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h2 className="text-xl font-semibold">HR Settings</h2>
-                <p className="text-gray-500">Configure departments, job titles, and leave policies</p>
+                <h2 className="text-xl font-semibold">{t("hr.settings.title")}</h2>
+                <p className="text-gray-500">{t("hr.settings.subtitle")}</p>
             </div>
 
             {/* Tabs */}
@@ -236,15 +238,15 @@ export default function HRSettingsPage() {
                 <TabsList>
                     <TabsTrigger value="departments" className="flex items-center gap-2">
                         <Building2 className="h-4 w-4" />
-                        Departments
+                        {t("hr.settings.departments")}
                     </TabsTrigger>
                     <TabsTrigger value="job-titles" className="flex items-center gap-2">
                         <Briefcase className="h-4 w-4" />
-                        Job Titles
+                        {t("hr.settings.jobTitles")}
                     </TabsTrigger>
                     <TabsTrigger value="leave-types" className="flex items-center gap-2">
                         <CalendarDays className="h-4 w-4" />
-                        Leave Types
+                        {t("hr.settings.leaveTypes")}
                     </TabsTrigger>
                 </TabsList>
 
@@ -253,22 +255,22 @@ export default function HRSettingsPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Departments</CardTitle>
-                                <CardDescription>Organization structure and departments</CardDescription>
+                                <CardTitle>{t("hr.settings.departments")}</CardTitle>
+                                <CardDescription>{t("hr.settings.departmentsDesc")}</CardDescription>
                             </div>
                             <Button onClick={() => { setDeptForm({ name: "", description: "" }); setEditingId(null); setShowDeptDialog(true); }}>
                                 <Plus className="h-4 w-4 mr-2" />
-                                Add Department
+                                {t("hr.settings.addDepartment")}
                             </Button>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Employees</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        <TableHead>{t("common.name")}</TableHead>
+                                        <TableHead>{t("common.description")}</TableHead>
+                                        <TableHead>{t("hr.settings.employees")}</TableHead>
+                                        <TableHead className="text-right">{t("common.actions")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -290,7 +292,7 @@ export default function HRSettingsPage() {
                                     {departments.length === 0 && (
                                         <TableRow>
                                             <TableCell colSpan={4} className="text-center text-gray-500 py-8">
-                                                No departments yet
+                                                {t("hr.settings.noDepartments")}
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -305,21 +307,21 @@ export default function HRSettingsPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Job Titles</CardTitle>
-                                <CardDescription>Define roles and positions</CardDescription>
+                                <CardTitle>{t("hr.settings.jobTitles")}</CardTitle>
+                                <CardDescription>{t("hr.settings.jobTitlesDesc")}</CardDescription>
                             </div>
                             <Button onClick={() => { setTitleForm({ name: "", description: "", departmentId: "" }); setEditingId(null); setShowTitleDialog(true); }}>
                                 <Plus className="h-4 w-4 mr-2" />
-                                Add Job Title
+                                {t("hr.settings.addJobTitle")}
                             </Button>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        <TableHead>{t("common.name")}</TableHead>
+                                        <TableHead>{t("common.description")}</TableHead>
+                                        <TableHead className="text-right">{t("common.actions")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -340,7 +342,7 @@ export default function HRSettingsPage() {
                                     {jobTitles.length === 0 && (
                                         <TableRow>
                                             <TableCell colSpan={3} className="text-center text-gray-500 py-8">
-                                                No job titles yet
+                                                {t("hr.settings.noJobTitles")}
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -355,18 +357,18 @@ export default function HRSettingsPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Leave Types</CardTitle>
-                                <CardDescription>Define leave policies and entitlements</CardDescription>
+                                <CardTitle>{t("hr.settings.leaveTypes")}</CardTitle>
+                                <CardDescription>{t("hr.settings.leaveTypesDesc")}</CardDescription>
                             </div>
                             <div className="flex gap-2">
                                 {leaveTypes.length === 0 && (
                                     <Button variant="outline" onClick={handleSeedDefaults}>
-                                        Seed Defaults
+                                        {t("hr.settings.seedDefaults")}
                                     </Button>
                                 )}
                                 <Button onClick={() => { resetLeaveForm(); setEditingId(null); setShowLeaveDialog(true); }}>
                                     <Plus className="h-4 w-4 mr-2" />
-                                    Add Leave Type
+                                    {t("hr.settings.addLeaveType")}
                                 </Button>
                             </div>
                         </CardHeader>
@@ -374,12 +376,12 @@ export default function HRSettingsPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Days/Year</TableHead>
-                                        <TableHead>Paid</TableHead>
-                                        <TableHead>Approval</TableHead>
-                                        <TableHead>Carry Over</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        <TableHead>{t("common.name")}</TableHead>
+                                        <TableHead>{t("hr.settings.daysPerYear")}</TableHead>
+                                        <TableHead>{t("hr.settings.paid")}</TableHead>
+                                        <TableHead>{t("hr.settings.approval")}</TableHead>
+                                        <TableHead>{t("hr.settings.carryOver")}</TableHead>
+                                        <TableHead className="text-right">{t("common.actions")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -387,9 +389,9 @@ export default function HRSettingsPage() {
                                         <TableRow key={type.id}>
                                             <TableCell className="font-medium">{type.name}</TableCell>
                                             <TableCell>{type.defaultDaysPerYear}</TableCell>
-                                            <TableCell>{type.isPaid ? "Yes" : "No"}</TableCell>
-                                            <TableCell>{type.requiresApproval ? "Required" : "Auto"}</TableCell>
-                                            <TableCell>{type.allowsCarryOver ? `Max ${type.maxCarryOverDays}` : "No"}</TableCell>
+                                            <TableCell>{type.isPaid ? t("common.yes") : t("common.no")}</TableCell>
+                                            <TableCell>{type.requiresApproval ? t("hr.settings.required") : t("hr.settings.auto")}</TableCell>
+                                            <TableCell>{type.allowsCarryOver ? t("hr.settings.maxDays", { days: type.maxCarryOverDays || 0 }) : t("common.no")}</TableCell>
                                             <TableCell className="text-right">
                                                 <Button size="icon" variant="ghost" onClick={() => handleEditLeave(type)}>
                                                     <Pencil className="h-4 w-4" />
@@ -403,7 +405,7 @@ export default function HRSettingsPage() {
                                     {leaveTypes.length === 0 && (
                                         <TableRow>
                                             <TableCell colSpan={6} className="text-center text-gray-500 py-8">
-                                                No leave types yet. Click &quot;Seed Defaults&quot; to add common leave types.
+                                                {t("hr.settings.noLeaveTypes")}
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -418,21 +420,21 @@ export default function HRSettingsPage() {
             <Dialog open={showDeptDialog} onOpenChange={setShowDeptDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{editingId ? "Edit Department" : "Add Department"}</DialogTitle>
+                        <DialogTitle>{editingId ? t("hr.settings.editDepartment") : t("hr.settings.addDepartment")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Name *</Label>
+                            <Label>{t("hr.settings.nameRequired")}</Label>
                             <Input value={deptForm.name} onChange={(e) => setDeptForm({ ...deptForm, name: e.target.value })} />
                         </div>
                         <div className="space-y-2">
-                            <Label>Description</Label>
+                            <Label>{t("common.description")}</Label>
                             <Textarea value={deptForm.description} onChange={(e) => setDeptForm({ ...deptForm, description: e.target.value })} />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowDeptDialog(false)}>Cancel</Button>
-                        <Button onClick={handleSaveDept} disabled={isSubmitting}>{isSubmitting ? "Saving..." : "Save"}</Button>
+                        <Button variant="outline" onClick={() => setShowDeptDialog(false)}>{t("common.cancel")}</Button>
+                        <Button onClick={handleSaveDept} disabled={isSubmitting}>{isSubmitting ? t("common.saving") : t("common.save")}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -441,21 +443,21 @@ export default function HRSettingsPage() {
             <Dialog open={showTitleDialog} onOpenChange={setShowTitleDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{editingId ? "Edit Job Title" : "Add Job Title"}</DialogTitle>
+                        <DialogTitle>{editingId ? t("hr.settings.editJobTitle") : t("hr.settings.addJobTitle")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Name *</Label>
+                            <Label>{t("hr.settings.nameRequired")}</Label>
                             <Input value={titleForm.name} onChange={(e) => setTitleForm({ ...titleForm, name: e.target.value })} />
                         </div>
                         <div className="space-y-2">
-                            <Label>Description</Label>
+                            <Label>{t("common.description")}</Label>
                             <Textarea value={titleForm.description} onChange={(e) => setTitleForm({ ...titleForm, description: e.target.value })} />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowTitleDialog(false)}>Cancel</Button>
-                        <Button onClick={handleSaveTitle} disabled={isSubmitting}>{isSubmitting ? "Saving..." : "Save"}</Button>
+                        <Button variant="outline" onClick={() => setShowTitleDialog(false)}>{t("common.cancel")}</Button>
+                        <Button onClick={handleSaveTitle} disabled={isSubmitting}>{isSubmitting ? t("common.saving") : t("common.save")}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -464,53 +466,53 @@ export default function HRSettingsPage() {
             <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{editingId ? "Edit Leave Type" : "Add Leave Type"}</DialogTitle>
+                        <DialogTitle>{editingId ? t("hr.settings.editLeaveType") : t("hr.settings.addLeaveType")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Name *</Label>
+                            <Label>{t("hr.settings.nameRequired")}</Label>
                             <Input value={leaveForm.name} onChange={(e) => setLeaveForm({ ...leaveForm, name: e.target.value })} />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Code *</Label>
-                                <Input value={leaveForm.code} onChange={(e) => setLeaveForm({ ...leaveForm, code: e.target.value.toLowerCase().replace(/\s/g, "_") })} placeholder="e.g., annual" />
+                                <Label>{t("hr.settings.codeRequired")}</Label>
+                                <Input value={leaveForm.code} onChange={(e) => setLeaveForm({ ...leaveForm, code: e.target.value.toLowerCase().replace(/\s/g, "_") })} placeholder={t("hr.settings.codePlaceholder")} />
                             </div>
                             <div className="space-y-2">
-                                <Label>Color</Label>
+                                <Label>{t("hr.settings.color")}</Label>
                                 <Input type="color" value={leaveForm.color} onChange={(e) => setLeaveForm({ ...leaveForm, color: e.target.value })} className="h-10" />
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label>Default Days/Year</Label>
+                            <Label>{t("hr.settings.defaultDaysPerYear")}</Label>
                             <Input type="number" value={leaveForm.defaultDaysPerYear} onChange={(e) => setLeaveForm({ ...leaveForm, defaultDaysPerYear: parseInt(e.target.value) || 0 })} />
                         </div>
                         <div className="flex items-center justify-between">
-                            <Label>Paid Leave</Label>
+                            <Label>{t("hr.settings.paidLeave")}</Label>
                             <Switch checked={leaveForm.isPaid} onCheckedChange={(v) => setLeaveForm({ ...leaveForm, isPaid: v })} />
                         </div>
                         <div className="flex items-center justify-between">
-                            <Label>Requires Approval</Label>
+                            <Label>{t("hr.settings.requiresApproval")}</Label>
                             <Switch checked={leaveForm.requiresApproval} onCheckedChange={(v) => setLeaveForm({ ...leaveForm, requiresApproval: v })} />
                         </div>
                         <div className="flex items-center justify-between">
-                            <Label>Allow Half Day</Label>
+                            <Label>{t("hr.settings.allowHalfDay")}</Label>
                             <Switch checked={leaveForm.allowsHalfDay} onCheckedChange={(v) => setLeaveForm({ ...leaveForm, allowsHalfDay: v })} />
                         </div>
                         <div className="flex items-center justify-between">
-                            <Label>Allow Carry Over</Label>
+                            <Label>{t("hr.settings.allowCarryOver")}</Label>
                             <Switch checked={leaveForm.allowsCarryOver} onCheckedChange={(v) => setLeaveForm({ ...leaveForm, allowsCarryOver: v })} />
                         </div>
                         {leaveForm.allowsCarryOver && (
                             <div className="space-y-2">
-                                <Label>Max Carry Over Days</Label>
+                                <Label>{t("hr.settings.maxCarryOverDays")}</Label>
                                 <Input type="number" value={leaveForm.maxCarryOverDays} onChange={(e) => setLeaveForm({ ...leaveForm, maxCarryOverDays: parseInt(e.target.value) || 0 })} />
                             </div>
                         )}
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowLeaveDialog(false)}>Cancel</Button>
-                        <Button onClick={handleSaveLeave} disabled={isSubmitting}>{isSubmitting ? "Saving..." : "Save"}</Button>
+                        <Button variant="outline" onClick={() => setShowLeaveDialog(false)}>{t("common.cancel")}</Button>
+                        <Button onClick={handleSaveLeave} disabled={isSubmitting}>{isSubmitting ? t("common.saving") : t("common.save")}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
