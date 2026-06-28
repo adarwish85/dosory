@@ -172,6 +172,19 @@ service cloud.firestore {
           get(/databases/$(database)/documents/customers/$(docId)).data.orgId == request.auth.token.orgId;
       }
     }
+
+    // Join requests (A9). A prospective member self-creates a PENDING request for an org
+    // they don't yet belong to (no orgId claim at this point), so create is gated on the
+    // caller owning the request rather than on orgId. Org members (admins, via the
+    // auth-gated approve/reject API) read + manage their org's requests; the requester can
+    // read their own. Approve/reject also write via the Admin SDK (which bypasses rules).
+    match /join_requests/{docId} {
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == "pending";
+      allow read: if isSuperAdmin() || isOwner(resource.data.userId) || isOrgMember(resource.data.orgId);
+      allow update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
+    }
     
     match /customer_files/{docId} {
       // Tenant-scoped: any user in the same orgId can read/write; SA bypass

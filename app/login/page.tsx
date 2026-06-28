@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,17 +15,45 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [info, setInfo] = useState("");
+    const [resetting, setResetting] = useState(false);
     const router = useRouter();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+        setInfo("");
         try {
             await signInWithEmailAndPassword(auth, email, password);
             router.push("/dashboard");
-        } catch (err: any) {
-            setError(err.message);
+        } catch {
+            // Friendly + non-enumerating: don't reveal whether the email exists.
+            setError("Invalid email or password.");
         }
+    };
+
+    const handleForgotPassword = async () => {
+        setError("");
+        setInfo("");
+        if (!email) {
+            setError('Enter your email above, then click "Forgot password?".');
+            return;
+        }
+        setResetting(true);
+        try {
+            await sendPasswordResetEmail(auth, email);
+        } catch (err: unknown) {
+            const code = (err as { code?: string }).code;
+            if (code === "auth/invalid-email") {
+                setError("Please enter a valid email address.");
+                setResetting(false);
+                return;
+            }
+            // For anything else (incl. user-not-found) fall through to the generic
+            // success message so we don't reveal whether the account exists.
+        }
+        setInfo(`If an account exists for ${email}, a password reset link is on its way.`);
+        setResetting(false);
     };
 
     return (
@@ -54,7 +82,17 @@ export default function LoginPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password">Password</Label>
+                                <button
+                                    type="button"
+                                    onClick={handleForgotPassword}
+                                    disabled={resetting}
+                                    className="text-sm text-blue-500 hover:underline disabled:opacity-50"
+                                >
+                                    {resetting ? "Sending…" : "Forgot password?"}
+                                </button>
+                            </div>
                             <Input
                                 id="password"
                                 type="password"
@@ -64,6 +102,7 @@ export default function LoginPage() {
                             />
                         </div>
                         {error && <p className="text-sm text-red-500">{error}</p>}
+                        {info && <p className="text-sm text-green-600">{info}</p>}
                         <Button type="submit" className="w-full">
                             Login
                         </Button>
