@@ -13,8 +13,10 @@ import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import { db, storage, auth } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 export default function ProfilePage() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const { profile, loading: profileLoading } = useUserProfile();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -53,13 +55,13 @@ export default function ProfilePage() {
 
         // Validate file type
         if (!file.type.startsWith("image/")) {
-            alert("Please select an image file");
+            alert(t("profile.alert.selectImage"));
             return;
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert("Image must be less than 5MB");
+            alert(t("profile.alert.imageTooLarge"));
             return;
         }
 
@@ -81,11 +83,11 @@ export default function ProfilePage() {
             });
 
             setPhotoURL(url);
-            setSuccessMessage("Profile picture updated!");
+            setSuccessMessage(t("profile.toast.pictureUpdated"));
             setTimeout(() => setSuccessMessage(""), 3000);
         } catch (error) {
             console.error("Error uploading avatar:", error);
-            alert("Failed to upload image. Please try again.");
+            alert(t("profile.alert.uploadFailed"));
         } finally {
             setUploading(false);
         }
@@ -109,11 +111,11 @@ export default function ProfilePage() {
                 updatedAt: serverTimestamp(),
             });
 
-            setSuccessMessage("Profile updated successfully!");
+            setSuccessMessage(t("profile.toast.updated"));
             setTimeout(() => setSuccessMessage(""), 3000);
         } catch (error) {
             console.error("Error saving profile:", error);
-            alert("Failed to save profile. Please try again.");
+            alert(t("profile.alert.saveFailed"));
         } finally {
             setSaving(false);
         }
@@ -129,7 +131,7 @@ export default function ProfilePage() {
 
     return (
         <div className="max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Profile Settings</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-6">{t("profile.title")}</h1>
 
             {/* Success Message */}
             {successMessage && (
@@ -170,33 +172,33 @@ export default function ProfilePage() {
                             className="hidden"
                         />
                     </div>
-                    <p className="mt-3 text-sm text-gray-500">Click the camera icon to upload a profile picture</p>
+                    <p className="mt-3 text-sm text-gray-500">{t("profile.avatarHint")}</p>
                 </div>
 
                 {/* Profile Form */}
                 <div className="space-y-5">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <Label htmlFor="displayName">Full Name</Label>
+                            <Label htmlFor="displayName">{t("profile.fullName")}</Label>
                             <Input
                                 id="displayName"
                                 value={formData.displayName}
                                 onChange={(e) => setFormData((prev) => ({ ...prev, displayName: e.target.value }))}
-                                placeholder="Your full name"
+                                placeholder={t("profile.fullNamePlaceholder")}
                                 className="mt-1.5"
                             />
                         </div>
 
                         <div>
-                            <Label htmlFor="email">Email Address</Label>
+                            <Label htmlFor="email">{t("profile.emailAddress")}</Label>
                             <Input id="email" value={formData.email} disabled className="mt-1.5 bg-gray-50" />
-                            <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+                            <p className="text-xs text-gray-400 mt-1">{t("profile.emailLocked")}</p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <Label htmlFor="phone">Phone Number</Label>
+                            <Label htmlFor="phone">{t("profile.phoneNumber")}</Label>
                             <Input
                                 id="phone"
                                 value={formData.phone}
@@ -207,12 +209,12 @@ export default function ProfilePage() {
                         </div>
 
                         <div>
-                            <Label htmlFor="jobTitle">Job Title</Label>
+                            <Label htmlFor="jobTitle">{t("profile.jobTitle")}</Label>
                             <Input
                                 id="jobTitle"
                                 value={formData.jobTitle}
                                 onChange={(e) => setFormData((prev) => ({ ...prev, jobTitle: e.target.value }))}
-                                placeholder="e.g. Sales Manager"
+                                placeholder={t("profile.jobTitlePlaceholder")}
                                 className="mt-1.5"
                             />
                         </div>
@@ -225,12 +227,12 @@ export default function ProfilePage() {
                         {saving ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving...
+                                {t("common.saving")}
                             </>
                         ) : (
                             <>
                                 <Save className="mr-2 h-4 w-4" />
-                                Save Changes
+                                {t("common.saveChanges")}
                             </>
                         )}
                     </Button>

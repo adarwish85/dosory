@@ -22,6 +22,7 @@ import {
 import { useNotifications, NotificationType } from "@/lib/hooks/use-notifications";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 
 // Icon mapping for notification types
 const getNotificationIcon = (type: NotificationType) => {
@@ -38,6 +39,7 @@ const getNotificationIcon = (type: NotificationType) => {
 };
 
 export default function NotificationsPage() {
+    const { t } = useTranslation();
     const { notifications, loading, unreadCount, markAsRead, markAllAsRead } = useNotifications();
     const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
     const [markingAll, setMarkingAll] = useState(false);
@@ -73,8 +75,10 @@ export default function NotificationsPage() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Bell className="h-6 w-6 text-blue-600" />
-                    <h1 className="text-2xl font-semibold text-gray-900">Notifications</h1>
-                    {unreadCount > 0 && <Badge className="bg-red-500 text-white">{unreadCount} new</Badge>}
+                    <h1 className="text-2xl font-semibold text-gray-900">{t("notifications.title")}</h1>
+                    {unreadCount > 0 && (
+                        <Badge className="bg-red-500 text-white">{t("notifications.newCount", { count: unreadCount })}</Badge>
+                    )}
                 </div>
                 {unreadCount > 0 && (
                     <Button variant="outline" size="sm" onClick={handleMarkAllRead} disabled={markingAll}>
@@ -83,16 +87,16 @@ export default function NotificationsPage() {
                         ) : (
                             <CheckCheck className="mr-2 h-4 w-4" />
                         )}
-                        Mark all as read
+                        {t("notifications.markAllAsRead")}
                     </Button>
                 )}
             </div>
 
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "unread")}>
                 <TabsList>
-                    <TabsTrigger value="all">All</TabsTrigger>
+                    <TabsTrigger value="all">{t("notifications.tabAll")}</TabsTrigger>
                     <TabsTrigger value="unread" className="gap-1">
-                        Unread
+                        {t("notifications.tabUnread")}
                         {unreadCount > 0 && (
                             <Badge variant="secondary" className="ml-1 h-5 min-w-[20px] px-1.5">
                                 {unreadCount}
@@ -106,12 +110,14 @@ export default function NotificationsPage() {
                         <div className="bg-white rounded-lg border p-10 text-center">
                             <Bell className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                             <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                {activeTab === "unread" ? "All caught up!" : "No notifications yet"}
+                                {activeTab === "unread"
+                                    ? t("notifications.emptyUnreadTitle")
+                                    : t("notifications.emptyAllTitle")}
                             </h3>
                             <p className="text-gray-500">
                                 {activeTab === "unread"
-                                    ? "You've read all your notifications."
-                                    : "When you have notifications, they'll appear here."}
+                                    ? t("notifications.emptyUnreadDescription")
+                                    : t("notifications.emptyAllDescription")}
                             </p>
                         </div>
                     ) : (

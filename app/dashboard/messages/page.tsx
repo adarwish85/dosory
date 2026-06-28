@@ -29,8 +29,10 @@ import {
 } from "@/lib/hooks/use-chat";
 import { useStaff, useRoles } from "@/lib/hooks";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function MessagesPage() {
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const { conversations, loading: conversationsLoading } = useConversations();
     const { staff } = useStaff();
@@ -137,7 +139,7 @@ export default function MessagesPage() {
                 {/* Header */}
                 <div className="p-3 border-b border-gray-200">
                     <div className="flex items-center justify-between mb-3">
-                        <div className="text-sm font-semibold text-gray-900">Messaging</div>
+                        <div className="text-sm font-semibold text-gray-900">{t("messages.title")}</div>
                         <div className="flex items-center gap-1 text-gray-600">
                             <Button size="icon" variant="ghost" className="h-8 w-8">
                                 <MoreHorizontal className="h-5 w-5" />
@@ -151,13 +153,13 @@ export default function MessagesPage() {
                                 </DialogTrigger>
                                 <DialogContent className="sm:max-w-md">
                                     <DialogHeader>
-                                        <DialogTitle>New Message</DialogTitle>
+                                        <DialogTitle>{t("messages.newMessage")}</DialogTitle>
                                     </DialogHeader>
                                     <div className="p-4 space-y-4">
                                         <div className="relative">
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                             <Input
-                                                placeholder="Search people..."
+                                                placeholder={t("messages.searchPeople")}
                                                 value={searchTerm}
                                                 onChange={(e) => setSearchTerm(e.target.value)}
                                                 className="pl-9"
@@ -180,16 +182,16 @@ export default function MessagesPage() {
                                                         </div>
                                                         <div className="text-xs text-gray-500">
                                                             {person.isAdmin
-                                                                ? "Administrator"
+                                                                ? t("messages.role.administrator")
                                                                 : roles.find((r) => r.id === person.roleId)?.name ||
-                                                                  "Staff"}
+                                                                  t("messages.role.staff")}
                                                         </div>
                                                     </div>
                                                 </div>
                                             ))}
                                             {filteredStaff.length === 0 && (
                                                 <div className="text-center text-sm text-gray-500 py-4">
-                                                    No people found
+                                                    {t("messages.noPeopleFound")}
                                                 </div>
                                             )}
                                         </div>
@@ -201,7 +203,7 @@ export default function MessagesPage() {
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search messages"
+                            placeholder={t("messages.searchMessages")}
                             className="pl-9 bg-[#EEF3F8] border-none placeholder:text-gray-600 h-9"
                         />
                     </div>
@@ -215,9 +217,9 @@ export default function MessagesPage() {
                         </div>
                     ) : conversations.length === 0 ? (
                         <div className="p-8 text-center text-gray-500">
-                            <p>No conversations yet.</p>
+                            <p>{t("messages.noConversations")}</p>
                             <Button variant="outline" className="mt-4" onClick={() => setNewChatOpen(true)}>
-                                Start a conversation
+                                {t("messages.startConversation")}
                             </Button>
                         </div>
                     ) : (
@@ -266,8 +268,8 @@ export default function MessagesPage() {
                                                     unreadCount > 0 ? "font-semibold text-gray-900" : "text-gray-600"
                                                 )}
                                             >
-                                                {convo.lastMessage?.senderId === profile?.uid && "You: "}
-                                                {convo.lastMessage?.content || "No messages yet"}
+                                                {convo.lastMessage?.senderId === profile?.uid && t("messages.youPrefix")}
+                                                {convo.lastMessage?.content || t("messages.noMessagesYet")}
                                             </p>
                                             {unreadCount > 0 && (
                                                 <span className="bg-[#01754F] text-white text-xs font-bold rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center">
@@ -293,7 +295,7 @@ export default function MessagesPage() {
                                 {otherParticipant.name}
                             </div>
                             <div className="text-xs text-gray-500 mt-1 line-clamp-1">
-                                {otherParticipant.role || "Staff Member"}
+                                {otherParticipant.role || t("messages.staffMember")}
                             </div>
                         </div>
                         <div className="flex items-center gap-1 text-gray-600">
@@ -314,10 +316,11 @@ export default function MessagesPage() {
                         </Avatar>
                         <div>
                             <div className="font-semibold text-sm text-gray-900 flex items-center gap-2">
-                                {otherParticipant.name} <span className="font-normal text-gray-500 text-xs">• 1st</span>
+                                {otherParticipant.name}{" "}
+                                <span className="font-normal text-gray-500 text-xs">• {t("messages.firstDegree")}</span>
                             </div>
                             <div className="text-xs text-gray-600 line-clamp-1">
-                                {otherParticipant.role || "Staff Member"}
+                                {otherParticipant.role || t("messages.staffMember")}
                             </div>
                         </div>
                     </div>
@@ -332,7 +335,7 @@ export default function MessagesPage() {
                             </Avatar>
                             <div className="font-bold text-lg text-gray-900">{otherParticipant.name}</div>
                             <div className="text-sm text-gray-600 text-center max-w-sm">
-                                {otherParticipant.role || "Staff Member"}
+                                {otherParticipant.role || t("messages.staffMember")}
                             </div>
                         </div>
 
@@ -384,7 +387,7 @@ export default function MessagesPage() {
                                                     <div className="flex items-baseline gap-2 mb-1">
                                                         <span className="font-bold text-sm text-gray-900">
                                                             {msg.senderId === profile?.uid
-                                                                ? "You"
+                                                                ? t("messages.you")
                                                                 : otherParticipant.name}
                                                         </span>
                                                         <span className="text-xs text-gray-500">
@@ -411,7 +414,7 @@ export default function MessagesPage() {
                                 value={messageInput}
                                 onChange={(e) => setMessageInput(e.target.value)}
                                 onKeyDown={handleKeyPress}
-                                placeholder="Write a message..."
+                                placeholder={t("messages.writeMessage")}
                                 className="w-full bg-transparent border-none resize-none outline-none text-sm min-h-[80px] placeholder:text-gray-600"
                             />
                         </div>
@@ -439,7 +442,7 @@ export default function MessagesPage() {
                                     className="h-8 px-4 rounded-full bg-[#E8E8E8] hover:bg-[#D0D0D0] text-gray-400 font-semibold text-sm disabled:opacity-100 data-[enabled=true]:bg-[#0A66C2] data-[enabled=true]:text-white"
                                     data-enabled={!!messageInput.trim()}
                                 >
-                                    Send
+                                    {t("messages.send")}
                                 </Button>
                                 <Button
                                     size="icon"
@@ -455,10 +458,12 @@ export default function MessagesPage() {
             ) : (
                 <div className="hidden md:flex flex-1 items-center justify-center bg-white rounded-lg border border-gray-300">
                     <div className="text-center text-gray-500">
-                        {conversations.length > 0 ? "Select a message to start reading" : "No selected conversation"}
+                        {conversations.length > 0
+                            ? t("messages.selectToRead")
+                            : t("messages.noSelectedConversation")}
                         <div className="mt-4">
                             <Button variant="outline" onClick={() => setNewChatOpen(true)}>
-                                Start a conversation
+                                {t("messages.startConversation")}
                             </Button>
                         </div>
                     </div>

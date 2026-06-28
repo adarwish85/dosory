@@ -4,24 +4,26 @@ import { PageHeader } from "@/components/dashboard/shared/page-header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wrench, Database, Activity, Lock } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export default function UtilitiesPage() {
+    const { t } = useTranslation();
     return (
         <div className="p-6">
-            <PageHeader title="Utilities" />
+            <PageHeader title={t("utilities.title")} />
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Database className="h-5 w-5" />
-                            Database Backup
+                            {t("utilities.databaseBackup.title")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-muted-foreground mb-4">Create a full backup of your system data.</p>
+                        <p className="text-sm text-muted-foreground mb-4">{t("utilities.databaseBackup.description")}</p>
                         <Button variant="outline" className="w-full">
-                            Run Backup
+                            {t("utilities.databaseBackup.action")}
                         </Button>
                     </CardContent>
                 </Card>
@@ -30,13 +32,13 @@ export default function UtilitiesPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Activity className="h-5 w-5" />
-                            System Status
+                            {t("utilities.systemStatus.title")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-sm text-muted-foreground mb-4">View system health and logs.</p>
+                        <p className="text-sm text-muted-foreground mb-4">{t("utilities.systemStatus.description")}</p>
                         <Button variant="outline" className="w-full">
-                            View Logs
+                            {t("utilities.systemStatus.action")}
                         </Button>
                     </CardContent>
                 </Card>
@@ -45,15 +47,15 @@ export default function UtilitiesPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Lock className="h-5 w-5" />
-                            Security Audit
+                            {t("utilities.securityAudit.title")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground mb-4">
-                            Scan for potential security vulnerabilities.
+                            {t("utilities.securityAudit.description")}
                         </p>
                         <Button variant="outline" className="w-full">
-                            Run Scan
+                            {t("utilities.securityAudit.action")}
                         </Button>
                     </CardContent>
                 </Card>
