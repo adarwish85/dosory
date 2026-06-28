@@ -53,6 +53,7 @@ import { collection, addDoc, deleteDoc, doc, updateDoc, onSnapshot, Timestamp } 
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 // Types
 type SortDirection = "asc" | "desc" | null;
@@ -76,9 +77,9 @@ interface ColumnDef {
 }
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
-    { key: "description", label: "Description", defaultVisible: true, sortable: true, width: 400 },
-    { key: "addedFrom", label: "Added From", defaultVisible: true, sortable: true, width: 200 },
-    { key: "dateAdded", label: "Date Added", defaultVisible: true, sortable: true, width: 180 },
+    { key: "description", label: "customers.col.description", defaultVisible: true, sortable: true, width: 400 },
+    { key: "addedFrom", label: "customers.notes.col.addedFrom", defaultVisible: true, sortable: true, width: 200 },
+    { key: "dateAdded", label: "customers.notes.col.dateAdded", defaultVisible: true, sortable: true, width: 180 },
 ];
 
 const ROW_DENSITY_STYLES: Record<RowDensity, string> = { compact: "py-1 text-xs", comfortable: "py-3 text-sm" };
@@ -119,10 +120,11 @@ function Pagination({
     startRecord: number;
     endRecord: number;
 }) {
+    const { t } = useTranslation();
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
-                Showing {startRecord} to {endRecord} of {totalRecords}
+                {t("customers.pagination.showing", { start: startRecord, end: endRecord, total: totalRecords })}
             </span>
             <div className="flex items-center gap-1">
                 <Button
@@ -170,6 +172,7 @@ function Pagination({
 }
 
 export default function NotesPage() {
+    const { t } = useTranslation();
     const { customerId, loading: customerLoading } = useCustomer();
     const { user } = useAuth();
     const tableRef = useRef<HTMLDivElement>(null);
@@ -239,10 +242,10 @@ export default function NotesPage() {
             });
             setNewNoteText("");
             setShowNewNote(false);
-            toast.success("Note added successfully");
+            toast.success(t("customers.notes.toast.added"));
         } catch (error) {
             console.error("Error saving note:", error);
-            toast.error("Failed to save note");
+            toast.error(t("customers.notes.toast.saveFailed"));
         } finally {
             setSaving(false);
         }
@@ -254,10 +257,10 @@ export default function NotesPage() {
             const noteRef = doc(db, "customers", customerId, "notes", id);
             await updateDoc(noteRef, { description: editText });
             setEditingId(null);
-            toast.success("Note updated");
+            toast.success(t("customers.notes.toast.updated"));
         } catch (error) {
             console.error("Error updating note:", error);
-            toast.error("Failed to update note");
+            toast.error(t("customers.notes.toast.updateFailed"));
         }
     };
 
@@ -267,10 +270,10 @@ export default function NotesPage() {
             const noteRef = doc(db, "customers", customerId, "notes", id);
             await deleteDoc(noteRef);
             setSelectedIds((prev) => prev.filter((i) => i !== id));
-            toast.success("Note deleted");
+            toast.success(t("customers.notes.toast.deleted"));
         } catch (error) {
             console.error("Error deleting note:", error);
-            toast.error("Failed to delete note");
+            toast.error(t("customers.notes.toast.deleteFailed"));
         }
     };
 
@@ -279,9 +282,9 @@ export default function NotesPage() {
         try {
             await Promise.all(selectedIds.map((id) => deleteDoc(doc(db, "customers", customerId, "notes", id))));
             setSelectedIds([]);
-            toast.success(`Deleted ${selectedIds.length} notes`);
+            toast.success(t("customers.notes.toast.bulkDeleted", { count: selectedIds.length }));
         } catch (error) {
-            toast.error("Failed to delete notes");
+            toast.error(t("customers.notes.toast.bulkDeleteFailed"));
         }
     };
 
@@ -299,7 +302,7 @@ export default function NotesPage() {
         a.download = "notes-export.csv";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Exported successfully");
+        toast.success(t("customers.toast.exportSuccess"));
     };
 
     // Sort handler
@@ -413,7 +416,7 @@ export default function NotesPage() {
         return (
             <div className="p-8 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading notes...
+                {t("customers.notes.loading")}
             </div>
         );
     }
@@ -422,13 +425,13 @@ export default function NotesPage() {
         <TooltipProvider>
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Notes</h1>
+                    <h1 className="text-2xl font-bold">{t("customers.notes.title")}</h1>
                     <Button
                         className="bg-gray-900 text-white hover:bg-gray-800"
                         onClick={() => setShowNewNote(!showNewNote)}
                     >
                         <Plus className="mr-2 h-4 w-4" />
-                        {showNewNote ? "Cancel" : "New Note"}
+                        {showNewNote ? t("common.cancel") : t("customers.notes.new")}
                     </Button>
                 </div>
 
@@ -436,7 +439,7 @@ export default function NotesPage() {
                 {showNewNote && (
                     <div className="bg-white rounded-lg border p-4 space-y-3">
                         <Textarea
-                            placeholder="Enter note description..."
+                            placeholder={t("customers.notes.descriptionPlaceholder")}
                             className="min-h-[100px]"
                             value={newNoteText}
                             onChange={(e) => setNewNoteText(e.target.value)}
@@ -449,7 +452,7 @@ export default function NotesPage() {
                                     setNewNoteText("");
                                 }}
                             >
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button
                                 className="bg-gray-900 text-white hover:bg-gray-800"
@@ -459,10 +462,10 @@ export default function NotesPage() {
                                 {saving ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Saving...
+                                        {t("customers.notes.saving")}
                                     </>
                                 ) : (
-                                    "Save Note"
+                                    t("customers.notes.save")
                                 )}
                             </Button>
                         </div>
@@ -476,20 +479,22 @@ export default function NotesPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <MoreVertical className="h-4 w-4 mr-1" />
-                                Actions
+                                {t("common.actions")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                             <DropdownMenuItem onClick={handleExport}>
                                 <Download className="h-4 w-4 mr-2" />
-                                Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                {selectedIds.length > 0
+                                    ? t("customers.toolbar.exportCount", { count: selectedIds.length })
+                                    : t("customers.toolbar.exportAll")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {selectedIds.length > 0 && (
                                 <DropdownMenuItem onClick={handleBulkDelete} className="text-red-600">
                                     <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete Selected ({selectedIds.length})
+                                    {t("customers.notes.deleteSelected", { count: selectedIds.length })}
                                 </DropdownMenuItem>
                             )}
                         </DropdownMenuContent>
@@ -500,28 +505,28 @@ export default function NotesPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <LayoutList className="h-4 w-4 mr-1" />
-                                Display
+                                {t("customers.toolbar.display")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-48">
-                            <DropdownMenuLabel>Density</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.toolbar.density")}</DropdownMenuLabel>
                             <DropdownMenuRadioGroup
                                 value={rowDensity}
                                 onValueChange={(v) => setRowDensity(v as RowDensity)}
                             >
-                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="compact">{t("customers.toolbar.compact")}</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="comfortable">{t("customers.toolbar.comfortable")}</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.toolbar.columns")}</DropdownMenuLabel>
                             {DEFAULT_COLUMNS.map((col) => (
                                 <DropdownMenuCheckboxItem
                                     key={col.key}
                                     checked={columnVisibility[col.key]}
                                     onCheckedChange={() => toggleColumn(col.key)}
                                 >
-                                    {col.label}
+                                    {t(col.label)}
                                 </DropdownMenuCheckboxItem>
                             ))}
                         </DropdownMenuContent>
@@ -543,7 +548,7 @@ export default function NotesPage() {
                                 <RotateCcw className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Reset filters</TooltipContent>
+                        <TooltipContent>{t("customers.toolbar.resetFilters")}</TooltipContent>
                     </Tooltip>
 
                     <div className="flex-1" />
@@ -571,7 +576,7 @@ export default function NotesPage() {
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search..."
+                            placeholder={t("common.search")}
                             className="pl-9"
                             autoComplete="new-password"
                             name="notes-search-nofill"
@@ -599,14 +604,16 @@ export default function NotesPage() {
                 {selectedIds.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
                         <span className="text-blue-800 text-sm font-medium">
-                            {selectedIds.length} note{selectedIds.length > 1 ? "s" : ""} selected
+                            {selectedIds.length > 1
+                                ? t("customers.notes.selectedPlural", { count: selectedIds.length })
+                                : t("customers.notes.selectedSingular", { count: selectedIds.length })}
                         </span>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                                Select All ({processedNotes.length})
+                                {t("customers.selection.selectAll", { count: processedNotes.length })}
                             </Button>
                             <Button variant="outline" size="sm" onClick={handleClearSelection}>
-                                Clear
+                                {t("customers.selection.clear")}
                             </Button>
                         </div>
                     </div>
@@ -641,7 +648,7 @@ export default function NotesPage() {
                                                 className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200"
                                                 onClick={() => handleSort(col.key)}
                                             >
-                                                {col.label}
+                                                {t(col.label)}
                                                 {sortKey === col.key ? (
                                                     sortDirection === "asc" ? (
                                                         <ArrowUp className="ml-1 h-4 w-4" />
@@ -653,12 +660,12 @@ export default function NotesPage() {
                                                 )}
                                             </Button>
                                         ) : (
-                                            col.label
+                                            t(col.label)
                                         )}
                                     </TableHead>
                                 ))}
                                 <TableHead className="w-24 font-semibold text-gray-900 bg-gray-100/50">
-                                    Actions
+                                    {t("common.actions")}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -670,8 +677,8 @@ export default function NotesPage() {
                                         className="text-center py-8 text-gray-500"
                                     >
                                         {searchQuery
-                                            ? "No notes match your search."
-                                            : "No notes found. Add a note to get started."}
+                                            ? t("customers.notes.emptySearch")
+                                            : t("customers.notes.empty")}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -707,14 +714,14 @@ export default function NotesPage() {
                                                                     size="sm"
                                                                     onClick={() => setEditingId(null)}
                                                                 >
-                                                                    Cancel
+                                                                    {t("common.cancel")}
                                                                 </Button>
                                                                 <Button
                                                                     size="sm"
                                                                     className="bg-gray-900 hover:bg-gray-800 text-white"
                                                                     onClick={() => saveEdit(note.id)}
                                                                 >
-                                                                    Save
+                                                                    {t("common.save")}
                                                                 </Button>
                                                             </div>
                                                         </div>
@@ -755,7 +762,7 @@ export default function NotesPage() {
                                                             <SquarePen className="h-4 w-4 text-gray-500" />
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Edit</TooltipContent>
+                                                    <TooltipContent>{t("common.edit")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -768,7 +775,7 @@ export default function NotesPage() {
                                                             <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Delete</TooltipContent>
+                                                    <TooltipContent>{t("common.delete")}</TooltipContent>
                                                 </Tooltip>
                                             </div>
                                         </TableCell>
@@ -795,13 +802,13 @@ export default function NotesPage() {
                 <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Note?</AlertDialogTitle>
+                            <AlertDialogTitle>{t("customers.notes.deleteDialog.title")}</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this note.
+                                {t("customers.notes.deleteDialog.description")}
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                             <AlertDialogAction
                                 className="bg-red-600 hover:bg-red-700"
                                 onClick={() => {
@@ -809,7 +816,7 @@ export default function NotesPage() {
                                     setDeletingId(null);
                                 }}
                             >
-                                Delete
+                                {t("common.delete")}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>

@@ -9,10 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Loader2, Bell, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { CreateReminderDialog } from "@/components/dashboard/reminders/create-reminder-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function LeadRemindersPage() {
     const params = useParams();
     const leadId = params?.id as string;
+    const { t } = useTranslation();
 
     // Fetch reminders related to this lead
     const { reminders, loading, deleteReminder } = useReminders({
@@ -43,11 +45,11 @@ export default function LeadRemindersPage() {
 
     const getStaffName = (id: string) => {
         const member = staff.find(s => s.id === id);
-        return member ? `${member.firstName} ${member.lastName}` : "Unknown";
+        return member ? `${member.firstName} ${member.lastName}` : t("leads.reminders.unknown");
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm("Are you sure you want to delete this reminder?")) {
+        if (confirm(t("leads.reminders.deleteConfirm"))) {
             await deleteReminder(id);
         }
     };
@@ -55,9 +57,9 @@ export default function LeadRemindersPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold">Reminders</h2>
+                <h2 className="text-xl font-bold">{t("leads.reminders.title")}</h2>
                 <Button onClick={() => setIsCreateOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" /> Set Lead Reminder
+                    <Plus className="mr-2 h-4 w-4" /> {t("leads.reminders.setReminder")}
                 </Button>
             </div>
 
@@ -65,10 +67,10 @@ export default function LeadRemindersPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-50 hover:bg-gray-50">
-                            <TableHead className="font-semibold text-gray-900">Description</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Date & Time</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Assigned To</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Created By</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.reminders.table.description")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.reminders.table.dateTime")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.reminders.table.assignedTo")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.reminders.table.createdBy")}</TableHead>
                             <TableHead className="w-[100px]"></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -78,7 +80,7 @@ export default function LeadRemindersPage() {
                                 <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
                                     <div className="flex flex-col items-center gap-2">
                                         <Bell className="h-8 w-8 text-gray-300" />
-                                        <p>No reminders found for this lead.</p>
+                                        <p>{t("leads.reminders.empty")}</p>
                                     </div>
                                 </TableCell>
                             </TableRow>

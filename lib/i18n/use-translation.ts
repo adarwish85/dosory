@@ -27,6 +27,11 @@ const translations: Record<SupportedLocale, TranslationDictionary> = {
  * e.g., getNestedValue(obj, "invoices.status.paid")
  */
 function getNestedValue(obj: Record<string, unknown>, path: string): string | undefined {
+    // Exact flat-key match first — module keys added by the i18n migration are stored flat
+    // (e.g. "customers.list.title") so many translators can merge into one file safely.
+    const direct = obj[path];
+    if (typeof direct === "string") return direct;
+
     const keys = path.split(".");
     let current: unknown = obj;
 

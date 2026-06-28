@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef, KeyboardEvent } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { useTasks } from "@/lib/hooks/use-projects";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -107,10 +108,11 @@ function Pagination({
     startRecord: number;
     endRecord: number;
 }) {
+    const { t } = useTranslation();
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
-                Showing {startRecord} to {endRecord} of {totalRecords}
+                {t("customers.pagination.showing", { start: startRecord, end: endRecord, total: totalRecords })}
             </span>
             <div className="flex items-center gap-1">
                 <Button
@@ -160,6 +162,7 @@ function Pagination({
 export default function TasksPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { tasks, loading: tasksLoading, taskStats } = useTasks({ customerId: customerId || undefined });
+    const { t } = useTranslation();
     const tableRef = useRef<HTMLDivElement>(null);
 
     // UI State
@@ -306,8 +309,10 @@ export default function TasksPage() {
         a.download = "tasks-export.csv";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Exported successfully");
+        toast.success(t("customers.toast.exported"));
     };
+
+    const columnLabel = (key: ColumnKey) => t(`customers.tasks.columns.${key}`);
 
     // Keyboard navigation
     const handleKeyDown = useCallback(
@@ -337,7 +342,7 @@ export default function TasksPage() {
         return (
             <div className="p-8 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading tasks...
+                {t("customers.tasks.loading")}
             </div>
         );
     }
@@ -346,11 +351,11 @@ export default function TasksPage() {
         <TooltipProvider>
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Tasks</h1>
+                    <h1 className="text-2xl font-bold">{t("customers.tasks.title")}</h1>
                     <Link href={`/dashboard/tasks/new?customerId=${customerId}`}>
                         <Button className="bg-gray-900 text-white hover:bg-gray-800">
                             <Plus className="mr-2 h-4 w-4" />
-                            New Task
+                            {t("customers.tasks.new")}
                         </Button>
                     </Link>
                 </div>
@@ -360,21 +365,21 @@ export default function TasksPage() {
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-blue-600 mb-1">
                             <ListTodo className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">Total</span>
+                            <span className="text-xs font-medium uppercase">{t("customers.stats.total")}</span>
                         </div>
                         <div className="text-2xl font-bold text-blue-900">{taskStats.total}</div>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-green-600 mb-1">
                             <CheckCircle2 className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">Completed</span>
+                            <span className="text-xs font-medium uppercase">{t("customers.tasks.completed")}</span>
                         </div>
                         <div className="text-2xl font-bold text-green-900">{taskStats["complete"] || 0}</div>
                     </div>
                     <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-orange-600 mb-1">
                             <CircleDot className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">Open</span>
+                            <span className="text-xs font-medium uppercase">{t("customers.tasks.open")}</span>
                         </div>
                         <div className="text-2xl font-bold text-orange-900">
                             {taskStats.total - (taskStats["complete"] || 0)}
@@ -389,14 +394,15 @@ export default function TasksPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <MoreVertical className="h-4 w-4 mr-1" />
-                                Actions
+                                {t("common.actions")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                             <DropdownMenuItem onClick={handleExport}>
                                 <Download className="h-4 w-4 mr-2" />
-                                Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                {t("common.export")}{" "}
+                                {selectedIds.length > 0 ? `(${selectedIds.length})` : t("common.all")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -406,28 +412,32 @@ export default function TasksPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <LayoutList className="h-4 w-4 mr-1" />
-                                Display
+                                {t("customers.toolbar.display")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-48">
-                            <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.toolbar.rowDensity")}</DropdownMenuLabel>
                             <DropdownMenuRadioGroup
                                 value={rowDensity}
                                 onValueChange={(v) => setRowDensity(v as RowDensity)}
                             >
-                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="compact">
+                                    {t("customers.toolbar.compact")}
+                                </DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="comfortable">
+                                    {t("customers.toolbar.comfortable")}
+                                </DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.toolbar.columns")}</DropdownMenuLabel>
                             {DEFAULT_COLUMNS.map((col) => (
                                 <DropdownMenuCheckboxItem
                                     key={col.key}
                                     checked={columnVisibility[col.key]}
                                     onCheckedChange={() => toggleColumn(col.key)}
                                 >
-                                    {col.label}
+                                    {columnLabel(col.key)}
                                 </DropdownMenuCheckboxItem>
                             ))}
                         </DropdownMenuContent>
@@ -449,7 +459,7 @@ export default function TasksPage() {
                                 <RotateCcw className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Reset filters</TooltipContent>
+                        <TooltipContent>{t("customers.toolbar.resetFilters")}</TooltipContent>
                     </Tooltip>
 
                     <div className="flex-1" />
@@ -477,7 +487,7 @@ export default function TasksPage() {
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search..."
+                            placeholder={t("common.search")}
                             className="pl-9"
                             autoComplete="new-password"
                             name="tasks-search-nofill"
@@ -505,14 +515,14 @@ export default function TasksPage() {
                 {selectedIds.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
                         <span className="text-blue-800 text-sm font-medium">
-                            {selectedIds.length} task{selectedIds.length > 1 ? "s" : ""} selected
+                            {t("customers.tasks.selected", { count: selectedIds.length })}
                         </span>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                                Select All ({processedTasks.length})
+                                {t("customers.selection.selectAll", { count: processedTasks.length })}
                             </Button>
                             <Button variant="outline" size="sm" onClick={handleClearSelection}>
-                                Clear
+                                {t("customers.selection.clear")}
                             </Button>
                         </div>
                     </div>
@@ -547,7 +557,7 @@ export default function TasksPage() {
                                                 className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200"
                                                 onClick={() => handleSort(col.key)}
                                             >
-                                                {col.label}
+                                                {columnLabel(col.key)}
                                                 {sortKey === col.key ? (
                                                     sortDirection === "asc" ? (
                                                         <ArrowUp className="ml-1 h-4 w-4" />
@@ -559,12 +569,12 @@ export default function TasksPage() {
                                                 )}
                                             </Button>
                                         ) : (
-                                            col.label
+                                            columnLabel(col.key)
                                         )}
                                     </TableHead>
                                 ))}
                                 <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">
-                                    Actions
+                                    {t("common.actions")}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -576,8 +586,10 @@ export default function TasksPage() {
                                         className="text-center py-8 text-gray-500"
                                     >
                                         {searchQuery
-                                            ? "No tasks match your search."
-                                            : `No tasks found for ${customer?.company || "this customer"}.`}
+                                            ? t("customers.tasks.emptySearch")
+                                            : t("customers.tasks.empty", {
+                                                  customer: customer?.company || t("customers.thisCustomer"),
+                                              })}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -631,7 +643,7 @@ export default function TasksPage() {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>View</TooltipContent>
+                                                    <TooltipContent>{t("common.view")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -641,7 +653,7 @@ export default function TasksPage() {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Edit</TooltipContent>
+                                                    <TooltipContent>{t("common.edit")}</TooltipContent>
                                                 </Tooltip>
                                             </div>
                                         </TableCell>

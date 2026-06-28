@@ -28,19 +28,13 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 const statusColors: Record<TaskStatus, { bg: string; text: string; border: string }> = {
     to_do: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
     in_progress: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200" },
     blocked: { bg: "bg-red-50", text: "text-red-600", border: "border-red-200" },
     done: { bg: "bg-green-50", text: "text-green-600", border: "border-green-200" },
-};
-
-const statusLabels: Record<TaskStatus, string> = {
-    to_do: "To Do",
-    in_progress: "In Progress",
-    blocked: "Blocked",
-    done: "Done",
 };
 
 const priorityColors: Record<TaskPriority, { text: string }> = {
@@ -54,6 +48,7 @@ export default function LeadTasksPage() {
     const params = useParams();
     const leadId = params?.id as string;
     const { lead } = useLead(leadId);
+    const { t } = useTranslation();
 
     // Fetch tasks related to this lead
     const { tasks, loading, deleteTask, updateTask } = useTasks({
@@ -85,9 +80,9 @@ export default function LeadTasksPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold">Tasks</h2>
+                <h2 className="text-xl font-bold">{t("leads.tasks.title")}</h2>
                 <Button onClick={() => setIsCreateOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" /> Create Task
+                    <Plus className="mr-2 h-4 w-4" /> {t("leads.tasks.createTask")}
                 </Button>
             </div>
 
@@ -95,11 +90,11 @@ export default function LeadTasksPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-50 hover:bg-gray-50">
-                            <TableHead className="font-semibold text-gray-900">Task</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Due Date</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Priority</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Status</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Assignees</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.tasks.table.task")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.tasks.table.dueDate")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.tasks.table.priority")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.tasks.table.status")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.tasks.table.assignees")}</TableHead>
                             <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -109,7 +104,7 @@ export default function LeadTasksPage() {
                                 <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                                     <div className="flex flex-col items-center gap-2">
                                         <CheckSquare className="h-8 w-8 text-gray-300" />
-                                        <p>No tasks found for this lead.</p>
+                                        <p>{t("leads.tasks.empty")}</p>
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -131,16 +126,16 @@ export default function LeadTasksPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-gray-500">{formatDate(task.dueDate)}</TableCell>
-                                        <TableCell className={`capitalize font-medium ${priorityColor.text}`}>
-                                            {task.priority}
+                                        <TableCell className={`font-medium ${priorityColor.text}`}>
+                                            {t(`leads.tasks.priority.${task.priority}`)}
                                         </TableCell>
                                         <TableCell>
                                             <Badge className={`${statusColor.bg} ${statusColor.text} ${statusColor.border} border`}>
-                                                {statusLabels[task.status] || task.status}
+                                                {t(`leads.tasks.status.${task.status}`)}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-gray-500 text-sm">
-                                            {task.assignees?.length || 0} users
+                                            {t("leads.tasks.usersCount", { count: task.assignees?.length || 0 })}
                                         </TableCell>
                                         <TableCell>
                                             <DropdownMenu>
@@ -152,14 +147,14 @@ export default function LeadTasksPage() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => setEditingTask(task)}>
                                                         <Pencil className="mr-2 h-4 w-4" />
-                                                        Edit
+                                                        {t("common.edit")}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
                                                         className="text-red-600"
                                                         onClick={() => setDeletingTaskId(task.id)}
                                                     >
                                                         <Trash2 className="mr-2 h-4 w-4" />
-                                                        Delete
+                                                        {t("common.delete")}
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -195,28 +190,28 @@ export default function LeadTasksPage() {
             <AlertDialog open={!!deletingTaskId} onOpenChange={(open) => !open && setDeletingTaskId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                        <AlertDialogTitle>{t("leads.tasks.deleteTitle")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete this task? This action cannot be undone.
+                            {t("leads.tasks.deleteDescription")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                             className="bg-red-600 hover:bg-red-700"
                             onClick={async () => {
                                 if (deletingTaskId) {
                                     try {
                                         await deleteTask(deletingTaskId);
-                                        toast.success("Task deleted successfully");
+                                        toast.success(t("leads.tasks.deleteSuccess"));
                                         setDeletingTaskId(null);
                                     } catch (error: any) {
-                                        toast.error("Failed to delete task", { description: error.message });
+                                        toast.error(t("leads.tasks.deleteError"), { description: error.message });
                                     }
                                 }
                             }}
                         >
-                            Delete
+                            {t("common.delete")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

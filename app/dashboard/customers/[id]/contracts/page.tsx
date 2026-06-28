@@ -109,10 +109,11 @@ function Pagination({
     startRecord: number;
     endRecord: number;
 }) {
+    const { t } = useTranslation();
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
-                Showing {startRecord} to {endRecord} of {totalRecords}
+                {t("customers.pagination.showing", { start: startRecord, end: endRecord, total: totalRecords })}
             </span>
             <div className="flex items-center gap-1">
                 <Button
@@ -306,8 +307,10 @@ export default function ContractsPage() {
         a.download = "contracts-export.csv";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Exported successfully");
+        toast.success(t("customers.toast.exported"));
     };
+
+    const columnLabel = (key: ColumnKey) => t(`customers.contracts.columns.${key}`);
 
     // Keyboard navigation
     const handleKeyDown = useCallback(
@@ -337,7 +340,7 @@ export default function ContractsPage() {
         return (
             <div className="p-8 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading contracts...
+                {t("customers.contracts.loading")}
             </div>
         );
     }
@@ -351,7 +354,7 @@ export default function ContractsPage() {
                         <Link href={`/dashboard/contracts/new?customerId=${customerId}`}>
                             <Button className="bg-gray-900 text-white hover:bg-gray-800">
                                 <Plus className="mr-2 h-4 w-4" />
-                                New Contract
+                                {t("customers.contracts.new")}
                             </Button>
                         </Link>
                         <DropdownMenu>
@@ -363,15 +366,18 @@ export default function ContractsPage() {
                             <DropdownMenuContent align="start">
                                 <DropdownMenuItem onClick={handleExport}>
                                     <Download className="h-4 w-4 mr-2" />
-                                    Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                    {t("common.export")}{" "}
+                                    {selectedIds.length > 0 ? `(${selectedIds.length})` : t("common.all")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                         {selectedIds.length > 0 && (
                             <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-1.5 flex items-center gap-2">
-                                <span className="text-blue-800 text-sm font-medium">{selectedIds.length} selected</span>
+                                <span className="text-blue-800 text-sm font-medium">
+                                    {t("customers.selection.count", { count: selectedIds.length })}
+                                </span>
                                 <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={handleSelectAll}>
-                                    All ({processedContracts.length})
+                                    {t("customers.selection.all", { count: processedContracts.length })}
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -379,7 +385,7 @@ export default function ContractsPage() {
                                     className="h-6 text-xs"
                                     onClick={handleClearSelection}
                                 >
-                                    Clear
+                                    {t("customers.selection.clear")}
                                 </Button>
                             </div>
                         )}
@@ -389,7 +395,7 @@ export default function ContractsPage() {
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Search contracts..."
+                                placeholder={t("customers.contracts.searchPlaceholder")}
                                 className="pl-9"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -402,28 +408,32 @@ export default function ContractsPage() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline">
                                     <LayoutList className="h-4 w-4 mr-1" />
-                                    Display
+                                    {t("customers.toolbar.display")}
                                     <ChevronDown className="ml-1 h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-48">
-                                <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.toolbar.rowDensity")}</DropdownMenuLabel>
                                 <DropdownMenuRadioGroup
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">
+                                        {t("customers.toolbar.compact")}
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">
+                                        {t("customers.toolbar.comfortable")}
+                                    </DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.toolbar.columns")}</DropdownMenuLabel>
                                 {DEFAULT_COLUMNS.map((col) => (
                                     <DropdownMenuCheckboxItem
                                         key={col.key}
                                         checked={columnVisibility[col.key]}
                                         onCheckedChange={() => toggleColumn(col.key)}
                                     >
-                                        {col.label}
+                                        {columnLabel(col.key)}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
@@ -443,7 +453,7 @@ export default function ContractsPage() {
                                     <RotateCcw className="h-4 w-4" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Reset</TooltipContent>
+                            <TooltipContent>{t("customers.toolbar.reset")}</TooltipContent>
                         </Tooltip>
                     </div>
                 </div>
@@ -477,7 +487,7 @@ export default function ContractsPage() {
                                                 className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200"
                                                 onClick={() => handleSort(col.key)}
                                             >
-                                                {col.label}
+                                                {columnLabel(col.key)}
                                                 {sortKey === col.key ? (
                                                     sortDirection === "asc" ? (
                                                         <ArrowUp className="ml-1 h-4 w-4" />
@@ -489,12 +499,12 @@ export default function ContractsPage() {
                                                 )}
                                             </Button>
                                         ) : (
-                                            col.label
+                                            columnLabel(col.key)
                                         )}
                                     </TableHead>
                                 ))}
                                 <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">
-                                    Actions
+                                    {t("common.actions")}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -506,8 +516,10 @@ export default function ContractsPage() {
                                         className="text-center py-8 text-gray-500"
                                     >
                                         {searchQuery
-                                            ? "No contracts match your search."
-                                            : `No contracts found for ${customer?.company || "this customer"}.`}
+                                            ? t("customers.contracts.emptySearch")
+                                            : t("customers.contracts.empty", {
+                                                  customer: customer?.company || t("customers.thisCustomer"),
+                                              })}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -565,7 +577,7 @@ export default function ContractsPage() {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>View</TooltipContent>
+                                                    <TooltipContent>{t("common.view")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -575,7 +587,7 @@ export default function ContractsPage() {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Edit</TooltipContent>
+                                                    <TooltipContent>{t("common.edit")}</TooltipContent>
                                                 </Tooltip>
                                             </div>
                                         </TableCell>
@@ -589,9 +601,11 @@ export default function ContractsPage() {
                 {/* Footer */}
                 <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-4">
-                        <span className="text-sm text-gray-600 font-medium">Total: {processedContracts.length}</span>
+                        <span className="text-sm text-gray-600 font-medium">
+                            {t("customers.footer.total", { count: processedContracts.length })}
+                        </span>
                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">Rows:</span>
+                            <span className="text-xs text-gray-500">{t("customers.footer.rows")}</span>
                             <Select
                                 value={recordsPerPage.toString()}
                                 onValueChange={(v) => {

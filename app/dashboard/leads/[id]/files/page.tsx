@@ -9,10 +9,12 @@ import { Plus, Loader2, File as FileIcon, Trash2, Download, UploadCloud } from "
 import { format } from "date-fns";
 import { formatBytes } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 export default function LeadFilesPage() {
     const params = useParams();
     const leadId = params?.id as string;
+    const { t } = useTranslation();
 
     const { files, loading, uploading, uploadFile, deleteFile } = useFiles({
         relatedTo: { type: "lead", id: leadId }
@@ -43,11 +45,11 @@ export default function LeadFilesPage() {
             const file = e.target.files[0];
             try {
                 await uploadFile(file);
-                toast.success("File uploaded successfully");
+                toast.success(t("leads.files.uploadSuccess"));
             } catch (error: any) {
                 console.error("File upload error:", error);
-                toast.error("Failed to upload file", {
-                    description: error.message || "Please check your permissions and try again."
+                toast.error(t("leads.files.uploadError"), {
+                    description: error.message || t("leads.files.uploadErrorDesc")
                 });
             } finally {
                 if (fileInputRef.current) {
@@ -58,7 +60,7 @@ export default function LeadFilesPage() {
     };
 
     const handleDelete = async (file: any) => { // Type as any for simplicity or define FileDoc
-        if (confirm(`Are you sure you want to delete ${file.name}?`)) {
+        if (confirm(t("leads.files.deleteConfirm", { name: file.name }))) {
             await deleteFile(file);
         }
     };
@@ -66,7 +68,7 @@ export default function LeadFilesPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold">Files</h2>
+                <h2 className="text-xl font-bold">{t("leads.files.title")}</h2>
                 <div>
                     <input
                         type="file"
@@ -80,7 +82,7 @@ export default function LeadFilesPage() {
                         ) : (
                             <UploadCloud className="mr-2 h-4 w-4" />
                         )}
-                        Upload File
+                        {t("leads.files.uploadFile")}
                     </Button>
                 </div>
             </div>
@@ -89,9 +91,9 @@ export default function LeadFilesPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-50 hover:bg-gray-50">
-                            <TableHead className="font-semibold text-gray-900">Name</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Size</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Date Uploaded</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.files.table.name")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.files.table.size")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("leads.files.table.dateUploaded")}</TableHead>
                             <TableHead className="w-[100px]"></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -101,7 +103,7 @@ export default function LeadFilesPage() {
                                 <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
                                     <div className="flex flex-col items-center gap-2">
                                         <FileIcon className="h-8 w-8 text-gray-300" />
-                                        <p>No files uploaded for this lead.</p>
+                                        <p>{t("leads.files.empty")}</p>
                                     </div>
                                 </TableCell>
                             </TableRow>

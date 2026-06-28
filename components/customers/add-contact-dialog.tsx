@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "@/lib/i18n";
 
 interface AddContactDialogProps {
     customerId: string;
@@ -22,6 +23,7 @@ interface AddContactDialogProps {
 }
 
 export function AddContactDialog({ customerId, onSuccess }: AddContactDialogProps) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -58,18 +60,18 @@ export function AddContactDialog({ customerId, onSuccess }: AddContactDialogProp
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button size="sm">Add Contact</Button>
+                <Button size="sm">{t("customers.contactDialog.addContact")}</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add Contact</DialogTitle>
-                        <DialogDescription>Add a new contact for this customer.</DialogDescription>
+                        <DialogTitle>{t("customers.contactDialog.addContact")}</DialogTitle>
+                        <DialogDescription>{t("customers.contactDialog.description")}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="firstName" className="text-right">
-                                First Name
+                                {t("customers.field.firstName")}
                             </Label>
                             <Input
                                 id="firstName"
@@ -81,7 +83,7 @@ export function AddContactDialog({ customerId, onSuccess }: AddContactDialogProp
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="lastName" className="text-right">
-                                Last Name
+                                {t("customers.field.lastName")}
                             </Label>
                             <Input
                                 id="lastName"
@@ -93,7 +95,7 @@ export function AddContactDialog({ customerId, onSuccess }: AddContactDialogProp
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="email" className="text-right">
-                                Email
+                                {t("common.email")}
                             </Label>
                             <Input
                                 id="email"
@@ -106,14 +108,14 @@ export function AddContactDialog({ customerId, onSuccess }: AddContactDialogProp
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="phone" className="text-right">
-                                Phone
+                                {t("common.phone")}
                             </Label>
                             <Input id="phone" value={formData.phone} onChange={handleChange} className="col-span-3" />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={loading}>
-                            {loading ? "Saving..." : "Save contact"}
+                            {loading ? t("common.saving") : t("customers.contactDialog.saveContact")}
                         </Button>
                     </DialogFooter>
                 </form>

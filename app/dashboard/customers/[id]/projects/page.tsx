@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef, KeyboardEvent } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
 import { useProjects } from "@/lib/hooks/use-projects";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -100,6 +101,7 @@ function Pagination({
     totalRecords,
     startRecord,
     endRecord,
+    t,
 }: {
     currentPage: number;
     totalPages: number;
@@ -107,11 +109,16 @@ function Pagination({
     totalRecords: number;
     startRecord: number;
     endRecord: number;
+    t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
-                Showing {startRecord} to {endRecord} of {totalRecords}
+                {t("customers.pagination.showing", {
+                    start: startRecord,
+                    end: endRecord,
+                    total: totalRecords,
+                })}
             </span>
             <div className="flex items-center gap-1">
                 <Button
@@ -159,6 +166,7 @@ function Pagination({
 }
 
 export default function ProjectsPage() {
+    const { t } = useTranslation();
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { projects, loading: projectsLoading, projectStats } = useProjects({ customerId: customerId || undefined });
     const tableRef = useRef<HTMLDivElement>(null);
@@ -203,6 +211,15 @@ export default function ProjectsPage() {
     };
 
     const formatStatus = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    const STATUS_LABEL_KEYS: Record<string, string> = {
+        to_do: "customers.projects.status.to_do",
+        in_progress: "customers.projects.status.in_progress",
+        on_hold: "customers.projects.status.on_hold",
+        cancelled: "customers.projects.status.cancelled",
+        finished: "customers.projects.status.finished",
+    };
+    const statusLabel = (status: string) =>
+        STATUS_LABEL_KEYS[status] ? t(STATUS_LABEL_KEYS[status]) : formatStatus(status);
 
     // Sort handler
     const handleSort = (key: ColumnKey) => {
@@ -296,7 +313,7 @@ export default function ProjectsPage() {
         a.download = "projects-export.csv";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Exported successfully");
+        toast.success(t("customers.toast.exportSuccess"));
     };
 
     // Keyboard navigation
@@ -321,13 +338,16 @@ export default function ProjectsPage() {
         [focusedRowIndex, paginatedProjects]
     );
 
-    const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]);
+    const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]).map((c) => ({
+        ...c,
+        label: t(`customers.projects.columns.${c.key}`),
+    }));
 
     if (customerLoading || projectsLoading) {
         return (
             <div className="p-8 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading projects...
+                {t("customers.projects.loading")}
             </div>
         );
     }
@@ -336,11 +356,11 @@ export default function ProjectsPage() {
         <TooltipProvider>
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Projects</h1>
+                    <h1 className="text-2xl font-bold">{t("customers.projects.title")}</h1>
                     <Link href={`/dashboard/projects/new?customerId=${customerId}`}>
                         <Button className="bg-gray-900 text-white hover:bg-gray-800">
                             <Plus className="mr-2 h-4 w-4" />
-                            New Project
+                            {t("customers.projects.newProject")}
                         </Button>
                     </Link>
                 </div>
@@ -350,21 +370,25 @@ export default function ProjectsPage() {
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-blue-600 mb-1">
                             <FolderKanban className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">Total</span>
+                            <span className="text-xs font-medium uppercase">{t("customers.projects.stats.total")}</span>
                         </div>
                         <div className="text-2xl font-bold text-blue-900">{projectStats.total}</div>
                     </div>
                     <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-orange-600 mb-1">
                             <PlayCircle className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">In Progress</span>
+                            <span className="text-xs font-medium uppercase">
+                                {t("customers.projects.stats.inProgress")}
+                            </span>
                         </div>
                         <div className="text-2xl font-bold text-orange-900">{projectStats["in_progress"] || 0}</div>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-green-600 mb-1">
                             <CheckCircle2 className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">Completed</span>
+                            <span className="text-xs font-medium uppercase">
+                                {t("customers.projects.stats.completed")}
+                            </span>
                         </div>
                         <div className="text-2xl font-bold text-green-900">{projectStats["completed"] || 0}</div>
                     </div>
@@ -377,14 +401,16 @@ export default function ProjectsPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <MoreVertical className="h-4 w-4 mr-1" />
-                                Actions
+                                {t("common.actions")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                             <DropdownMenuItem onClick={handleExport}>
                                 <Download className="h-4 w-4 mr-2" />
-                                Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                {selectedIds.length > 0
+                                    ? t("customers.export.withCount", { count: selectedIds.length })
+                                    : t("customers.export.all")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -394,28 +420,32 @@ export default function ProjectsPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <LayoutList className="h-4 w-4 mr-1" />
-                                Display
+                                {t("customers.display.label")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-48">
-                            <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.display.rowDensity")}</DropdownMenuLabel>
                             <DropdownMenuRadioGroup
                                 value={rowDensity}
                                 onValueChange={(v) => setRowDensity(v as RowDensity)}
                             >
-                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="compact">
+                                    {t("customers.display.compact")}
+                                </DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="comfortable">
+                                    {t("customers.display.comfortable")}
+                                </DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.display.columns")}</DropdownMenuLabel>
                             {DEFAULT_COLUMNS.map((col) => (
                                 <DropdownMenuCheckboxItem
                                     key={col.key}
                                     checked={columnVisibility[col.key]}
                                     onCheckedChange={() => toggleColumn(col.key)}
                                 >
-                                    {col.label}
+                                    {t(`customers.projects.columns.${col.key}`)}
                                 </DropdownMenuCheckboxItem>
                             ))}
                         </DropdownMenuContent>
@@ -428,7 +458,7 @@ export default function ProjectsPage() {
                                 <RefreshCw className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Refresh</TooltipContent>
+                        <TooltipContent>{t("customers.refresh")}</TooltipContent>
                     </Tooltip>
 
                     <div className="flex-1" />
@@ -456,7 +486,7 @@ export default function ProjectsPage() {
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search..."
+                            placeholder={t("common.search")}
                             className="pl-9"
                             autoComplete="new-password"
                             name="projects-search-nofill"
@@ -477,6 +507,7 @@ export default function ProjectsPage() {
                         totalRecords={processedProjects.length}
                         startRecord={startRecord}
                         endRecord={endRecord}
+                        t={t}
                     />
                 )}
 
@@ -484,14 +515,14 @@ export default function ProjectsPage() {
                 {selectedIds.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
                         <span className="text-blue-800 text-sm font-medium">
-                            {selectedIds.length} project{selectedIds.length > 1 ? "s" : ""} selected
+                            {t("customers.projects.selectedCount", { count: selectedIds.length })}
                         </span>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                                Select All ({processedProjects.length})
+                                {t("customers.selectAllCount", { count: processedProjects.length })}
                             </Button>
                             <Button variant="outline" size="sm" onClick={handleClearSelection}>
-                                Clear
+                                {t("customers.selection.clear")}
                             </Button>
                         </div>
                     </div>
@@ -543,7 +574,7 @@ export default function ProjectsPage() {
                                     </TableHead>
                                 ))}
                                 <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">
-                                    Actions
+                                    {t("common.actions")}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -555,8 +586,10 @@ export default function ProjectsPage() {
                                         className="text-center py-8 text-gray-500"
                                     >
                                         {searchQuery
-                                            ? "No projects match your search."
-                                            : `No projects found for ${customer?.company || "this customer"}.`}
+                                            ? t("customers.projects.empty.search")
+                                            : t("customers.projects.empty.none", {
+                                                  customer: customer?.company || t("customers.thisCustomer"),
+                                              })}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -595,7 +628,7 @@ export default function ProjectsPage() {
                                                 {col.key === "status" && (
                                                     <Badge className={`${getStatusBadge(project.status)} font-normal`}>
                                                         <HighlightText
-                                                            text={formatStatus(project.status)}
+                                                            text={statusLabel(project.status)}
                                                             search={searchQuery}
                                                         />
                                                     </Badge>
@@ -612,7 +645,7 @@ export default function ProjectsPage() {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>View</TooltipContent>
+                                                    <TooltipContent>{t("customers.view")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -622,7 +655,7 @@ export default function ProjectsPage() {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Edit</TooltipContent>
+                                                    <TooltipContent>{t("common.edit")}</TooltipContent>
                                                 </Tooltip>
                                             </div>
                                         </TableCell>
@@ -642,6 +675,7 @@ export default function ProjectsPage() {
                         totalRecords={processedProjects.length}
                         startRecord={startRecord}
                         endRecord={endRecord}
+                        t={t}
                     />
                 )}
             </div>

@@ -106,17 +106,18 @@ function Pagination({
     recordsPerPage: number;
     onRecordsPerPageChange: (value: number) => void;
 }) {
+    const { t } = useTranslation();
     return (
         <div className="flex items-center justify-between text-sm text-gray-600 border-t pt-4">
             {/* LEFT: Total */}
             <div className="flex items-center gap-2">
-                <span className="font-medium">Total</span>
+                <span className="font-medium">{t("customers.pagination.total")}</span>
                 <Badge variant="secondary">{totalRecords}</Badge>
             </div>
 
             {/* CENTER: Rows per page */}
             <div className="flex items-center gap-2">
-                <span className="text-gray-500">Rows</span>
+                <span className="text-gray-500">{t("customers.pagination.rows")}</span>
                 <Select value={String(recordsPerPage)} onValueChange={(v) => onRecordsPerPageChange(Number(v))}>
                     <SelectTrigger className="w-[70px] h-8">
                         <SelectValue />
@@ -283,8 +284,10 @@ export default function PaymentsPage() {
         a.download = "payments-export.csv";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Exported successfully");
+        toast.success(t("customers.toast.exported"));
     };
+
+    const columnLabel = (key: ColumnKey) => t(`customers.payments.columns.${key}`);
 
     // Keyboard navigation
     const handleKeyDown = useCallback(
@@ -314,7 +317,7 @@ export default function PaymentsPage() {
         return (
             <div className="p-8 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading payments...
+                {t("customers.payments.loading")}
             </div>
         );
     }
@@ -326,16 +329,16 @@ export default function PaymentsPage() {
                     open={showPaymentDialog}
                     onOpenChange={setShowPaymentDialog}
                     customerId={customerId || ""}
-                    customerName={customer?.company || "Customer"}
+                    customerName={customer?.company || t("customers.payments.defaultCustomer")}
                 />
 
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Payments</h1>
+                    <h1 className="text-2xl font-bold">{t("customers.payments.title")}</h1>
                 </div>
 
                 {/* Total Summary */}
                 <div className="bg-white rounded-lg border p-4 inline-block">
-                    <div className="text-sm text-gray-500">Total Payments Received</div>
+                    <div className="text-sm text-gray-500">{t("customers.payments.totalReceived")}</div>
                     <div className="text-2xl font-bold text-green-600">{formatPaymentCurrency(totalPayments)}</div>
                 </div>
 
@@ -348,7 +351,7 @@ export default function PaymentsPage() {
                             onClick={() => setShowPaymentDialog(true)}
                         >
                             <Plus className="mr-2 h-4 w-4" />
-                            Record Payment
+                            {t("customers.payments.record")}
                         </Button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -359,7 +362,8 @@ export default function PaymentsPage() {
                             <DropdownMenuContent align="start">
                                 <DropdownMenuItem onClick={handleExport}>
                                     <Download className="h-4 w-4 mr-2" />
-                                    Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                    {t("common.export")}{" "}
+                                    {selectedIds.length > 0 ? `(${selectedIds.length})` : t("common.all")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -370,7 +374,7 @@ export default function PaymentsPage() {
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Search payments..."
+                                placeholder={t("customers.payments.searchPlaceholder")}
                                 className="pl-9"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -384,27 +388,31 @@ export default function PaymentsPage() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline">
                                     <LayoutList className="h-4 w-4 mr-2" />
-                                    Display
+                                    {t("customers.toolbar.display")}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.toolbar.rowDensity")}</DropdownMenuLabel>
                                 <DropdownMenuRadioGroup
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">
+                                        {t("customers.toolbar.compact")}
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">
+                                        {t("customers.toolbar.comfortable")}
+                                    </DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.toolbar.columns")}</DropdownMenuLabel>
                                 {DEFAULT_COLUMNS.map((col) => (
                                     <DropdownMenuCheckboxItem
                                         key={col.key}
                                         checked={columnVisibility[col.key]}
                                         onCheckedChange={() => toggleColumn(col.key)}
                                     >
-                                        {col.label}
+                                        {columnLabel(col.key)}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
@@ -424,7 +432,7 @@ export default function PaymentsPage() {
                                     <RotateCcw className="h-4 w-4" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Reset filters</TooltipContent>
+                            <TooltipContent>{t("customers.toolbar.resetFilters")}</TooltipContent>
                         </Tooltip>
                     </div>
                 </div>
@@ -433,14 +441,14 @@ export default function PaymentsPage() {
                 {selectedIds.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
                         <span className="text-blue-800 text-sm font-medium">
-                            {selectedIds.length} payment{selectedIds.length > 1 ? "s" : ""} selected
+                            {t("customers.payments.selected", { count: selectedIds.length })}
                         </span>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                                Select All ({processedPayments.length})
+                                {t("customers.selection.selectAll", { count: processedPayments.length })}
                             </Button>
                             <Button variant="outline" size="sm" onClick={handleClearSelection}>
-                                Clear
+                                {t("customers.selection.clear")}
                             </Button>
                         </div>
                     </div>
@@ -475,7 +483,7 @@ export default function PaymentsPage() {
                                                 className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200"
                                                 onClick={() => handleSort(col.key)}
                                             >
-                                                {col.label}
+                                                {columnLabel(col.key)}
                                                 {sortKey === col.key ? (
                                                     sortDirection === "asc" ? (
                                                         <ArrowUp className="ml-1 h-4 w-4" />
@@ -487,12 +495,12 @@ export default function PaymentsPage() {
                                                 )}
                                             </Button>
                                         ) : (
-                                            col.label
+                                            columnLabel(col.key)
                                         )}
                                     </TableHead>
                                 ))}
                                 <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">
-                                    Actions
+                                    {t("common.actions")}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -504,8 +512,10 @@ export default function PaymentsPage() {
                                         className="text-center py-8 text-gray-500"
                                     >
                                         {searchQuery
-                                            ? "No payments match your search."
-                                            : `No payments found for ${customer?.company || "this customer"}.`}
+                                            ? t("customers.payments.emptySearch")
+                                            : t("customers.payments.empty", {
+                                                  customer: customer?.company || t("customers.thisCustomer"),
+                                              })}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -570,7 +580,7 @@ export default function PaymentsPage() {
                                                             <Eye className="h-4 w-4 text-gray-500" />
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>View</TooltipContent>
+                                                    <TooltipContent>{t("common.view")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -578,7 +588,7 @@ export default function PaymentsPage() {
                                                             <Pencil className="h-4 w-4 text-gray-500" />
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Edit</TooltipContent>
+                                                    <TooltipContent>{t("common.edit")}</TooltipContent>
                                                 </Tooltip>
                                             </div>
                                         </TableCell>

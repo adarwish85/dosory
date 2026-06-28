@@ -122,6 +122,7 @@ const AddCustomerPanel = dynamic(() => import("@/components/dashboard/customers/
 import { CUSTOMER_STATUSES } from "@/lib/constants";
 import { Timestamp } from "firebase/firestore";
 import { formatDistanceToNow, format } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 
 // Types
 type SelectionMode = "none" | "page" | "all";
@@ -282,6 +283,7 @@ function DraggableColumnHeader({
     width: number;
     onResize: (e: React.MouseEvent, key: ColumnKey) => void;
 }) {
+    const { t } = useTranslation();
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: column.key });
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -313,7 +315,7 @@ function DraggableColumnHeader({
                         onClick={() => onSort(column.key)}
                         className="flex items-center gap-1 hover:text-blue-600 truncate"
                     >
-                        <span className="truncate">{column.label}</span>
+                        <span className="truncate">{t(`customers.column.${column.key}`)}</span>
                         {isActive ? (
                             sortDirection === "asc" ? (
                                 <ArrowUp className="h-3 w-3 shrink-0" />
@@ -325,7 +327,7 @@ function DraggableColumnHeader({
                         )}
                     </button>
                 ) : (
-                    <span className="truncate">{column.label}</span>
+                    <span className="truncate">{t(`customers.column.${column.key}`)}</span>
                 )}
             </div>
             {/* Resizer Handle */}
@@ -373,6 +375,7 @@ function SelectionBanner({
     onSelectAll: () => void;
     onClearSelection: () => void;
 }) {
+    const { t } = useTranslation();
     if (selectionMode === "none" || selectedCount === 0) return null;
     return (
         <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-2 flex items-center justify-center gap-2 text-sm">
@@ -380,21 +383,23 @@ function SelectionBanner({
             {selectionMode === "page" ? (
                 <>
                     <span className="text-blue-800">
-                        All <strong>{selectedCount}</strong> on page selected.
+                        {t("customers.selection.allOnPagePrefix")} <strong>{selectedCount}</strong>{" "}
+                        {t("customers.selection.allOnPageSuffix")}
                     </span>
                     {totalCount > pageCount && (
                         <button onClick={onSelectAll} className="text-blue-600 font-medium hover:underline">
-                            Select all {totalCount}
+                            {t("customers.selection.selectAll", { count: totalCount })}
                         </button>
                     )}
                 </>
             ) : (
                 <>
                     <span className="text-blue-800">
-                        All <strong>{totalCount}</strong> selected.
+                        {t("customers.selection.allSelectedPrefix")} <strong>{totalCount}</strong>{" "}
+                        {t("customers.selection.allSelectedSuffix")}
                     </span>
                     <button onClick={onClearSelection} className="text-blue-600 font-medium hover:underline">
-                        Clear
+                        {t("customers.selection.clear")}
                     </button>
                 </>
             )}
@@ -420,13 +425,18 @@ function Pagination({
     endRecord: number;
     compact?: boolean;
 }) {
+    const { t } = useTranslation();
     const canPrev = currentPage > 1,
         canNext = currentPage < totalPages;
     return (
         <div className={`flex items-center ${compact ? "gap-1" : "justify-between gap-4"}`}>
             {!compact && (
                 <div className="text-sm text-gray-500">
-                    Showing {startRecord} to {endRecord} of {totalRecords}
+                    {t("customers.pagination.showing", {
+                        start: startRecord,
+                        end: endRecord,
+                        total: totalRecords,
+                    })}
                 </div>
             )}
             <div className="flex items-center gap-1">
@@ -449,9 +459,9 @@ function Pagination({
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center gap-1 px-2 text-sm">
-                    <span className="text-gray-700">Page</span>
+                    <span className="text-gray-700">{t("customers.pagination.page")}</span>
                     <span className="font-medium">{currentPage}</span>
-                    <span className="text-gray-700">of {totalPages}</span>
+                    <span className="text-gray-700">{t("customers.pagination.of", { total: totalPages })}</span>
                 </div>
                 <Button
                     variant="outline"
@@ -478,6 +488,7 @@ function Pagination({
 
 // Customer Stats Bar
 function CustomerStatsBar({ customers }: { customers: Customer[] }) {
+    const { t } = useTranslation();
     const totalCount = customers.length;
     const activeCount = customers.filter((c) => c.status === "active").length;
     const inactiveCount = customers.filter((c) => c.status === "inactive").length;
@@ -488,28 +499,36 @@ function CustomerStatsBar({ customers }: { customers: Customer[] }) {
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex flex-col">
                 <div className="flex items-center gap-2 text-blue-600 mb-2">
                     <Users className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Total Customers</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider">
+                        {t("customers.stats.totalCustomers")}
+                    </span>
                 </div>
                 <div className="text-2xl font-bold text-blue-900">{totalCount}</div>
             </div>
             <div className="bg-green-50 border border-green-100 rounded-lg p-4 flex flex-col">
                 <div className="flex items-center gap-2 text-green-600 mb-2">
                     <CheckSquare className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Active</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider">
+                        {t("customers.stats.active")}
+                    </span>
                 </div>
                 <div className="text-2xl font-bold text-green-900">{activeCount}</div>
             </div>
             <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 flex flex-col">
                 <div className="flex items-center gap-2 text-yellow-600 mb-2">
                     <Clock className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Inactive</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider">
+                        {t("customers.stats.inactive")}
+                    </span>
                 </div>
                 <div className="text-2xl font-bold text-yellow-900">{inactiveCount}</div>
             </div>
             <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 flex flex-col">
                 <div className="flex items-center gap-2 text-purple-600 mb-2">
                     <Globe className="h-4 w-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">Portal Users</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider">
+                        {t("customers.stats.portalUsers")}
+                    </span>
                 </div>
                 <div className="text-2xl font-bold text-purple-900">{portalCount}</div>
             </div>
@@ -518,6 +537,7 @@ function CustomerStatsBar({ customers }: { customers: Customer[] }) {
 }
 
 export default function CustomersPage() {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
     const [selectionMode, setSelectionMode] = useState<SelectionMode>("none");
@@ -727,7 +747,13 @@ export default function CustomersPage() {
 
     // Bulk Actions Handlers
     const handleBulkDelete = async () => {
-        if (!window.confirm(`Delete ${selectionMode === "all" ? totalRecords : selectedCustomers.length} customers?`))
+        if (
+            !window.confirm(
+                t("customers.bulk.confirmDelete", {
+                    count: selectionMode === "all" ? totalRecords : selectedCustomers.length,
+                })
+            )
+        )
             return;
         try {
             // If selectionMode is "all", we might need a backend bulk delete.
@@ -739,19 +765,20 @@ export default function CustomersPage() {
             setSelectionMode("none");
         } catch (e) {
             console.error("Bulk delete failed", e);
-            alert("Failed to delete some customers.");
+            alert(t("customers.bulk.deleteFailed"));
         }
     };
 
     const handleBulkStatusUpdate = async (status: EntityStatus) => {
-        if (!window.confirm(`Update status of ${selectedCustomers.length} customers to "${status}"?`)) return;
+        if (!window.confirm(t("customers.bulk.confirmStatusUpdate", { count: selectedCustomers.length, status })))
+            return;
         try {
             await Promise.all(selectedCustomers.map((id) => updateCustomer(id, { status })));
             setSelectedCustomers([]);
             setSelectionMode("none");
         } catch (e) {
             console.error("Bulk status update failed", e);
-            alert("Failed to update status.");
+            alert(t("customers.bulk.statusUpdateFailed"));
         }
     };
 
@@ -913,7 +940,9 @@ export default function CustomersPage() {
                             </Badge>
                             {customer.createdAt && (
                                 <span>
-                                    Joined {formatDistanceToNow(customer.createdAt.toDate(), { addSuffix: true })}
+                                    {t("customers.quickView.joined", {
+                                        time: formatDistanceToNow(customer.createdAt.toDate(), { addSuffix: true }),
+                                    })}
                                 </span>
                             )}
                         </div>
@@ -962,7 +991,9 @@ export default function CustomersPage() {
                             </Badge>
                         ))}
                         {customer.groups.length > 3 && (
-                            <span className="text-[10px] text-gray-400">+{customer.groups.length - 3} more</span>
+                            <span className="text-[10px] text-gray-400">
+                                {t("customers.quickView.moreGroups", { count: customer.groups.length - 3 })}
+                            </span>
                         )}
                     </div>
                 )}
@@ -1000,25 +1031,25 @@ export default function CustomersPage() {
                                 href={`/dashboard/customers/${customer.id}`}
                                 className="hover:text-blue-600 hover:underline px-0.5"
                             >
-                                View
+                                {t("customers.action.view")}
                             </Link>
                             <span className="text-gray-300">|</span>
                             <Link
                                 href={`/dashboard/customers/${customer.id}/profile`}
                                 className="hover:text-blue-600 hover:underline px-0.5"
                             >
-                                Edit
+                                {t("common.edit")}
                             </Link>
                             <span className="text-gray-300">|</span>
                             <button
                                 onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    if (confirm("Delete?")) deleteCustomer(customer.id);
+                                    if (confirm(t("customers.action.confirmDeleteSingle"))) deleteCustomer(customer.id);
                                 }}
                                 className="hover:text-red-600 hover:underline px-0.5"
                             >
-                                Delete
+                                {t("common.delete")}
                             </button>
                         </div>
                     </div>
@@ -1053,7 +1084,7 @@ export default function CustomersPage() {
                         rel="noreferrer"
                         className="flex items-center gap-1 text-blue-500 hover:underline"
                     >
-                        <Globe className="h-3 w-3" /> Visit
+                        <Globe className="h-3 w-3" /> {t("customers.cell.visit")}
                     </a>
                 ) : (
                     <span className="text-gray-400">-</span>
@@ -1098,7 +1129,7 @@ export default function CustomersPage() {
                         {primaryContact.firstName} {primaryContact.lastName}
                     </span>
                 ) : (
-                    <span className="text-gray-400 italic text-xs">No primary contact</span>
+                    <span className="text-gray-400 italic text-xs">{t("customers.cell.noPrimaryContact")}</span>
                 );
             case "primaryContactEmail":
                 return primaryContact ? (
@@ -1138,7 +1169,7 @@ export default function CustomersPage() {
                             className="bg-gray-900 text-white hover:bg-gray-800"
                             onClick={() => setShowAddPanel(true)}
                         >
-                            <Plus className="mr-2 h-4 w-4" /> New Customer
+                            <Plus className="mr-2 h-4 w-4" /> {t("customers.toolbar.newCustomer")}
                         </Button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -1148,7 +1179,7 @@ export default function CustomersPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuItem onClick={() => setShowImportWizard(true)}>
-                                    <Upload className="mr-2 h-4 w-4" /> Import Customers
+                                    <Upload className="mr-2 h-4 w-4" /> {t("customers.toolbar.importCustomers")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -1160,17 +1191,18 @@ export default function CustomersPage() {
                                         <Badge className="mr-2 bg-blue-600">
                                             {selectionMode === "all" ? totalRecords : selectedCustomers.length}
                                         </Badge>
-                                        Bulk <ChevronDown className="ml-2 h-4 w-4" />
+                                        {t("customers.toolbar.bulk")} <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start">
                                     <DropdownMenuLabel>
-                                        With {selectionMode === "all" ? totalRecords : selectedCustomers.length}{" "}
-                                        selected
+                                        {t("customers.bulk.withSelected", {
+                                            count: selectionMode === "all" ? totalRecords : selectedCustomers.length,
+                                        })}
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuLabel className="text-xs text-gray-500">
-                                        Change Status To
+                                        {t("customers.bulk.changeStatusTo")}
                                     </DropdownMenuLabel>
                                     {CUSTOMER_STATUSES.map((s) => (
                                         <DropdownMenuItem
@@ -1182,7 +1214,7 @@ export default function CustomersPage() {
                                     ))}
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                        <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -1193,7 +1225,7 @@ export default function CustomersPage() {
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                             <Input
-                                placeholder="Search customers..."
+                                placeholder={t("customers.toolbar.searchPlaceholder")}
                                 className="pl-9 bg-white"
                                 value={localSearch}
                                 onChange={(e) => setLocalSearch(e.target.value)}
@@ -1205,17 +1237,20 @@ export default function CustomersPage() {
                                     variant="outline"
                                     className={`gap-2 ${statusFilter !== "all" ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-white"}`}
                                 >
-                                    <Filter className="h-4 w-4" /> {statusFilter === "all" ? "Status" : statusFilter}
+                                    <Filter className="h-4 w-4" />{" "}
+                                    {statusFilter === "all" ? t("common.status") : statusFilter}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.filter.byStatus")}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuRadioGroup
                                     value={statusFilter}
                                     onValueChange={(v) => setStatusFilter(v as EntityStatus | "all")}
                                 >
-                                    <DropdownMenuRadioItem value="all">All Statuses</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="all">
+                                        {t("customers.filter.allStatuses")}
+                                    </DropdownMenuRadioItem>
                                     {CUSTOMER_STATUSES.map((s) => (
                                         <DropdownMenuRadioItem key={s.value} value={s.value}>
                                             {s.label}
@@ -1234,7 +1269,7 @@ export default function CustomersPage() {
                                     variant="outline"
                                     className="gap-2 bg-white text-purple-600 border-purple-200 hover:bg-purple-50"
                                 >
-                                    <LayoutList className="h-4 w-4" /> Display{" "}
+                                    <LayoutList className="h-4 w-4" /> {t("customers.display.label")}{" "}
                                     <Badge
                                         variant="secondary"
                                         className="ml-1 px-1 py-0 h-4 bg-purple-100 text-purple-700"
@@ -1244,23 +1279,30 @@ export default function CustomersPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-64">
-                                <DropdownMenuLabel>Density</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.display.density")}</DropdownMenuLabel>
                                 <DropdownMenuRadioGroup
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">
+                                        {t("customers.display.comfortable")}
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">
+                                        {t("customers.display.compact")}
+                                    </DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                                 <DropdownMenuSeparator />
 
                                 <DropdownMenuSub>
                                     <DropdownMenuSubTrigger>
-                                        <Columns className="h-4 w-4 mr-2" /> Columns ({visibleColumnsCount})
+                                        <Columns className="h-4 w-4 mr-2" />{" "}
+                                        {t("customers.display.columns", { count: visibleColumnsCount })}
                                     </DropdownMenuSubTrigger>
                                     <DropdownMenuPortal>
                                         <DropdownMenuSubContent className="w-48">
-                                            <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                                            <DropdownMenuLabel>
+                                                {t("customers.display.toggleColumns")}
+                                            </DropdownMenuLabel>
                                             <DropdownMenuSeparator />
                                             {DEFAULT_COLUMNS.map((col) => (
                                                 <DropdownMenuCheckboxItem
@@ -1269,7 +1311,7 @@ export default function CustomersPage() {
                                                     onCheckedChange={() => toggleColumn(col.key)}
                                                     disabled={col.required}
                                                 >
-                                                    {col.label}
+                                                    {t(`customers.column.${col.key}`)}
                                                 </DropdownMenuCheckboxItem>
                                             ))}
                                             <DropdownMenuSeparator />
@@ -1286,7 +1328,7 @@ export default function CustomersPage() {
                                                         )
                                                     }
                                                 >
-                                                    All
+                                                    {t("customers.display.all")}
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -1294,7 +1336,7 @@ export default function CustomersPage() {
                                                     className="flex-1 text-xs"
                                                     onClick={() => setColumnVisibility(getDefaultVisibleColumns())}
                                                 >
-                                                    Reset
+                                                    {t("customers.display.reset")}
                                                 </Button>
                                             </div>
                                         </DropdownMenuSubContent>
@@ -1302,7 +1344,7 @@ export default function CustomersPage() {
                                 </DropdownMenuSub>
                                 <DropdownMenuSeparator />
 
-                                <DropdownMenuLabel>Saved Views</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.views.savedViews")}</DropdownMenuLabel>
                                 {savedViews.length > 0 ? (
                                     savedViews.map((view) => (
                                         <div key={view.id} className="flex items-center group">
@@ -1311,11 +1353,13 @@ export default function CustomersPage() {
                                                 <span className="flex-1 truncate">{view.name}</span>
                                                 {view.isDefault && (
                                                     <Badge variant="secondary" className="text-[10px] ml-1">
-                                                        Default
+                                                        {t("customers.views.default")}
                                                     </Badge>
                                                 )}
                                                 {activeViewId === view.id && (
-                                                    <Badge className="bg-purple-600 text-[10px] ml-1">Active</Badge>
+                                                    <Badge className="bg-purple-600 text-[10px] ml-1">
+                                                        {t("customers.views.active")}
+                                                    </Badge>
                                                 )}
                                             </DropdownMenuItem>
                                             <DropdownMenu>
@@ -1331,20 +1375,24 @@ export default function CustomersPage() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => setViewAsDefault(view.id)}>
                                                         <Star className="mr-2 h-4 w-4" />{" "}
-                                                        {view.isDefault ? "Remove Default" : "Set as Default"}
+                                                        {view.isDefault
+                                                            ? t("customers.views.removeDefault")
+                                                            : t("customers.views.setAsDefault")}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
                                                         className="text-red-600"
                                                         onClick={() => deleteView(view.id)}
                                                     >
-                                                        <Trash className="mr-2 h-4 w-4" /> Delete
+                                                        <Trash className="mr-2 h-4 w-4" /> {t("common.delete")}
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="px-2 py-4 text-xs text-gray-400 text-center">No saved views</div>
+                                    <div className="px-2 py-4 text-xs text-gray-400 text-center">
+                                        {t("customers.views.noSavedViews")}
+                                    </div>
                                 )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -1353,7 +1401,7 @@ export default function CustomersPage() {
                                         setShowSaveViewDialog(true);
                                     }}
                                 >
-                                    <BookmarkPlus className="mr-2 h-4 w-4" /> Save Current View
+                                    <BookmarkPlus className="mr-2 h-4 w-4" /> {t("customers.views.saveCurrentView")}
                                 </DropdownMenuItem>
                                 {activeViewId && (
                                     <DropdownMenuItem
@@ -1363,7 +1411,7 @@ export default function CustomersPage() {
                                             setColumnOrder(DEFAULT_COLUMNS.map((c) => c.key));
                                         }}
                                     >
-                                        <X className="mr-2 h-4 w-4" /> Reset to Default
+                                        <X className="mr-2 h-4 w-4" /> {t("customers.views.resetToDefault")}
                                     </DropdownMenuItem>
                                 )}
                             </DropdownMenuContent>
@@ -1379,18 +1427,16 @@ export default function CustomersPage() {
                     <DialogContent className="sm:max-w-sm">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
-                                <Save className="h-5 w-5" /> Save Current View
+                                <Save className="h-5 w-5" /> {t("customers.views.saveCurrentView")}
                             </DialogTitle>
-                            <DialogDescription>
-                                Save your current filters, columns, and sort preferences.
-                            </DialogDescription>
+                            <DialogDescription>{t("customers.saveDialog.description")}</DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-2">
                             <div className="space-y-2">
-                                <Label htmlFor="view-name">View Name</Label>
+                                <Label htmlFor="view-name">{t("customers.saveDialog.viewName")}</Label>
                                 <Input
                                     id="view-name"
-                                    placeholder="e.g. Active Customers"
+                                    placeholder={t("customers.saveDialog.viewNamePlaceholder")}
                                     value={newViewName}
                                     onChange={(e) => setNewViewName(e.target.value)}
                                     onKeyDown={(e) => {
@@ -1407,11 +1453,11 @@ export default function CustomersPage() {
                                     disabled={!newViewName.trim()}
                                     onClick={() => saveCurrentView(newViewName.trim())}
                                 >
-                                    Save New
+                                    {t("customers.saveDialog.saveNew")}
                                 </Button>
                                 {activeViewId && (
                                     <Button variant="secondary" className="flex-1" onClick={updateCurrentView}>
-                                        Update Active
+                                        {t("customers.saveDialog.updateActive")}
                                     </Button>
                                 )}
                             </div>
@@ -1421,7 +1467,7 @@ export default function CustomersPage() {
                                 disabled={!newViewName.trim()}
                                 onClick={() => saveCurrentView(newViewName.trim(), true)}
                             >
-                                Save as Default View
+                                {t("customers.saveDialog.saveAsDefault")}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
@@ -1485,7 +1531,7 @@ export default function CustomersPage() {
                                             colSpan={visibleColumnsCount + 1}
                                             className="text-center py-10 text-muted-foreground"
                                         >
-                                            {searchQuery ? "No matches" : "No customers"}
+                                            {searchQuery ? t("customers.empty.noMatches") : t("customers.empty.noCustomers")}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -1533,9 +1579,11 @@ export default function CustomersPage() {
 
                 <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-4">
-                        <span className="text-sm text-gray-600 font-medium">Total: {totalRecords}</span>
+                        <span className="text-sm text-gray-600 font-medium">
+                            {t("customers.footer.total", { count: totalRecords })}
+                        </span>
                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">Rows:</span>
+                            <span className="text-xs text-gray-500">{t("customers.footer.rows")}</span>
                             <Select
                                 value={recordsPerPage.toString()}
                                 onValueChange={(v) => {
@@ -1565,7 +1613,7 @@ export default function CustomersPage() {
                         compact
                     />
                 </div>
-                <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Drag headers • Fix columns</div>
+                <div className="text-xs text-gray-400 text-center">{t("customers.footer.hint")}</div>
 
                 <ImportWizard
                     open={showImportWizard}

@@ -18,8 +18,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { Lead } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 export default function NewLeadPage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const { staff } = useStaff();
     const { createLead, leads } = useLeads();
@@ -100,7 +102,7 @@ export default function NewLeadPage() {
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                     </Link>
-                    <h1 className="text-2xl font-bold">New Lead</h1>
+                    <h1 className="text-2xl font-bold">{t("leads.new.title")}</h1>
                 </div>
                 <Button
                     onClick={form.handleSubmit(handleSubmit)}
@@ -112,7 +114,7 @@ export default function NewLeadPage() {
                     ) : (
                         <Save className="mr-2 h-4 w-4" />
                     )}
-                    Save Lead
+                    {t("leads.new.save")}
                 </Button>
             </div>
 
@@ -124,9 +126,11 @@ export default function NewLeadPage() {
                         {duplicateWarning && (
                             <Alert variant="destructive" className="bg-yellow-50 border-yellow-300 text-yellow-800">
                                 <AlertTriangle className="h-4 w-4" />
-                                <AlertTitle>Potential Duplicate Found!</AlertTitle>
+                                <AlertTitle>{t("leads.new.duplicate.title")}</AlertTitle>
                                 <AlertDescription>
-                                    A lead with this {duplicateWarning.type} already exists:{" "}
+                                    {duplicateWarning.type === "email"
+                                        ? t("leads.new.duplicate.descEmail")
+                                        : t("leads.new.duplicate.descPhone")}{" "}
                                     {duplicateWarning.duplicates.map((d, i) => (
                                         <span key={d.id}>
                                             {i > 0 && ", "}
@@ -140,16 +144,16 @@ export default function NewLeadPage() {
 
                         {/* Basic Information */}
                         <div className="space-y-4">
-                            <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
+                            <h3 className="text-lg font-semibold border-b pb-2">{t("leads.new.section.basic")}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="name"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Name *</FormLabel>
+                                            <FormLabel>{t("leads.new.field.name")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Contact name" {...field} />
+                                                <Input placeholder={t("leads.new.field.namePlaceholder")} {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -160,9 +164,9 @@ export default function NewLeadPage() {
                                     name="company"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Company</FormLabel>
+                                            <FormLabel>{t("leads.new.field.company")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Company name" {...field} />
+                                                <Input placeholder={t("leads.new.field.companyPlaceholder")} {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -173,7 +177,7 @@ export default function NewLeadPage() {
                                     name="email"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Email</FormLabel>
+                                            <FormLabel>{t("common.email")}</FormLabel>
                                             <FormControl>
                                                 <Input type="email" placeholder="email@example.com" {...field} />
                                             </FormControl>
@@ -186,7 +190,7 @@ export default function NewLeadPage() {
                                     name="phone"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Phone</FormLabel>
+                                            <FormLabel>{t("common.phone")}</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="+1 234 567 890" {...field} />
                                             </FormControl>
@@ -199,9 +203,9 @@ export default function NewLeadPage() {
                                     name="position"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Position</FormLabel>
+                                            <FormLabel>{t("leads.new.field.position")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Job title" {...field} />
+                                                <Input placeholder={t("leads.new.field.positionPlaceholder")} {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -212,7 +216,7 @@ export default function NewLeadPage() {
                                     name="website"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Website</FormLabel>
+                                            <FormLabel>{t("leads.new.field.website")}</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="https://example.com" {...field} />
                                             </FormControl>
@@ -225,18 +229,18 @@ export default function NewLeadPage() {
 
                         {/* Lead Details */}
                         <div className="space-y-4">
-                            <h3 className="text-lg font-semibold border-b pb-2">Lead Details</h3>
+                            <h3 className="text-lg font-semibold border-b pb-2">{t("leads.new.section.details")}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="status"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Status</FormLabel>
+                                            <FormLabel>{t("common.status")}</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select status" />
+                                                        <SelectValue placeholder={t("leads.new.field.statusPlaceholder")} />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -256,11 +260,11 @@ export default function NewLeadPage() {
                                     name="source"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Source</FormLabel>
+                                            <FormLabel>{t("leads.new.field.source")}</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value || ""}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select source" />
+                                                        <SelectValue placeholder={t("leads.new.field.sourcePlaceholder")} />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -280,7 +284,7 @@ export default function NewLeadPage() {
                                     name="value"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Value ($)</FormLabel>
+                                            <FormLabel>{t("leads.new.field.value")}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
@@ -303,11 +307,11 @@ export default function NewLeadPage() {
                                     name="assignedTo"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Assigned To</FormLabel>
+                                            <FormLabel>{t("leads.new.field.assignedTo")}</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value || ""}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select staff member" />
+                                                        <SelectValue placeholder={t("leads.new.field.assignedToPlaceholder")} />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -327,16 +331,16 @@ export default function NewLeadPage() {
 
                         {/* Address */}
                         <div className="space-y-4">
-                            <h3 className="text-lg font-semibold border-b pb-2">Address</h3>
+                            <h3 className="text-lg font-semibold border-b pb-2">{t("leads.new.section.address")}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="address.street"
                                     render={({ field }) => (
                                         <FormItem className="md:col-span-2">
-                                            <FormLabel>Street</FormLabel>
+                                            <FormLabel>{t("leads.new.field.street")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Street address" {...field} />
+                                                <Input placeholder={t("leads.new.field.streetPlaceholder")} {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -347,9 +351,9 @@ export default function NewLeadPage() {
                                     name="address.city"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>City</FormLabel>
+                                            <FormLabel>{t("leads.new.field.city")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="City" {...field} />
+                                                <Input placeholder={t("leads.new.field.city")} {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -360,9 +364,9 @@ export default function NewLeadPage() {
                                     name="address.state"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>State / Province</FormLabel>
+                                            <FormLabel>{t("leads.new.field.state")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="State" {...field} />
+                                                <Input placeholder={t("leads.new.field.statePlaceholder")} {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -373,9 +377,9 @@ export default function NewLeadPage() {
                                     name="address.zipCode"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Zip / Postal Code</FormLabel>
+                                            <FormLabel>{t("leads.new.field.zip")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Zip code" {...field} />
+                                                <Input placeholder={t("leads.new.field.zipPlaceholder")} {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -386,9 +390,9 @@ export default function NewLeadPage() {
                                     name="address.country"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Country</FormLabel>
+                                            <FormLabel>{t("leads.new.field.country")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Country" {...field} />
+                                                <Input placeholder={t("leads.new.field.country")} {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -399,16 +403,16 @@ export default function NewLeadPage() {
 
                         {/* Description */}
                         <div className="space-y-4">
-                            <h3 className="text-lg font-semibold border-b pb-2">Additional Information</h3>
+                            <h3 className="text-lg font-semibold border-b pb-2">{t("leads.new.section.additional")}</h3>
                             <FormField
                                 control={form.control}
                                 name="description"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Description</FormLabel>
+                                        <FormLabel>{t("leads.new.field.description")}</FormLabel>
                                         <FormControl>
                                             <Textarea
-                                                placeholder="Add notes about this lead..."
+                                                placeholder={t("leads.new.field.descriptionPlaceholder")}
                                                 className="min-h-[100px]"
                                                 {...field}
                                             />
@@ -426,9 +430,9 @@ export default function NewLeadPage() {
                                             <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
-                                            <FormLabel>Public Lead</FormLabel>
+                                            <FormLabel>{t("leads.new.field.public")}</FormLabel>
                                             <p className="text-sm text-gray-500">
-                                                Make this lead visible to all team members
+                                                {t("leads.new.field.publicHint")}
                                             </p>
                                         </div>
                                     </FormItem>

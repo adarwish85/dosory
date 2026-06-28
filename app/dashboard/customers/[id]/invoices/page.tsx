@@ -101,6 +101,7 @@ function Pagination({
     totalRecords,
     recordsPerPage,
     onRecordsPerPageChange,
+    t,
 }: {
     currentPage: number;
     totalPages: number;
@@ -108,18 +109,19 @@ function Pagination({
     totalRecords: number;
     recordsPerPage: number;
     onRecordsPerPageChange: (value: number) => void;
+    t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
     return (
         <div className="flex items-center justify-between text-sm text-gray-600 border-t pt-4">
             {/* LEFT: Total */}
             <div className="flex items-center gap-2">
-                <span className="font-medium">Total</span>
+                <span className="font-medium">{t("customers.pagination.total")}</span>
                 <Badge variant="secondary">{totalRecords}</Badge>
             </div>
 
             {/* CENTER: Rows per page */}
             <div className="flex items-center gap-2">
-                <span className="text-gray-500">Rows</span>
+                <span className="text-gray-500">{t("customers.pagination.rows")}</span>
                 <Select value={String(recordsPerPage)} onValueChange={(v) => onRecordsPerPageChange(Number(v))}>
                     <SelectTrigger className="w-[70px] h-8">
                         <SelectValue />
@@ -225,6 +227,16 @@ export default function InvoicesPage() {
     };
 
     const formatStatus = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    const STATUS_LABEL_KEYS: Record<string, string> = {
+        paid: "customers.invoices.status.paid",
+        unpaid: "customers.invoices.status.unpaid",
+        partially_paid: "customers.invoices.status.partially_paid",
+        overdue: "customers.invoices.status.overdue",
+        cancelled: "customers.invoices.status.cancelled",
+        draft: "customers.invoices.status.draft",
+    };
+    const statusLabel = (status: string) =>
+        STATUS_LABEL_KEYS[status] ? t(STATUS_LABEL_KEYS[status]) : formatStatus(status);
 
     // Sort handler
     const handleSort = (key: ColumnKey) => {
@@ -322,7 +334,7 @@ export default function InvoicesPage() {
         a.download = "invoices-export.csv";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Exported successfully");
+        toast.success(t("customers.toast.exportSuccess"));
     };
 
     // Keyboard navigation
@@ -351,13 +363,16 @@ export default function InvoicesPage() {
         [focusedRowIndex, paginatedInvoices]
     );
 
-    const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]);
+    const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]).map((c) => ({
+        ...c,
+        label: t(`customers.invoices.columns.${c.key}`),
+    }));
 
     if (customerLoading || invoicesLoading) {
         return (
             <div className="p-8 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading invoices...
+                {t("customers.invoices.loading")}
             </div>
         );
     }
@@ -405,11 +420,13 @@ export default function InvoicesPage() {
                             <DropdownMenuContent align="start">
                                 <DropdownMenuItem onClick={handleExport}>
                                     <Download className="h-4 w-4 mr-2" />
-                                    Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                    {selectedIds.length > 0
+                                        ? t("customers.export.withCount", { count: selectedIds.length })
+                                        : t("customers.export.all")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                     <FileDown className="h-4 w-4 mr-2" />
-                                    Zip Invoices
+                                    {t("customers.invoices.zip")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -420,7 +437,7 @@ export default function InvoicesPage() {
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Search invoices..."
+                                placeholder={t("customers.invoices.searchPlaceholder")}
                                 className="pl-9"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -434,27 +451,31 @@ export default function InvoicesPage() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline">
                                     <LayoutList className="h-4 w-4 mr-2" />
-                                    Display
+                                    {t("customers.display.label")}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.display.rowDensity")}</DropdownMenuLabel>
                                 <DropdownMenuRadioGroup
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">
+                                        {t("customers.display.compact")}
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">
+                                        {t("customers.display.comfortable")}
+                                    </DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.display.columns")}</DropdownMenuLabel>
                                 {DEFAULT_COLUMNS.map((col) => (
                                     <DropdownMenuCheckboxItem
                                         key={col.key}
                                         checked={columnVisibility[col.key]}
                                         onCheckedChange={() => toggleColumn(col.key)}
                                     >
-                                        {col.label}
+                                        {t(`customers.invoices.columns.${col.key}`)}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
@@ -474,7 +495,7 @@ export default function InvoicesPage() {
                                     <RotateCcw className="h-4 w-4" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Reset filters</TooltipContent>
+                            <TooltipContent>{t("customers.resetFilters")}</TooltipContent>
                         </Tooltip>
                     </div>
                 </div>
@@ -483,14 +504,14 @@ export default function InvoicesPage() {
                 {selectedIds.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
                         <span className="text-blue-800 text-sm font-medium">
-                            {selectedIds.length} invoice{selectedIds.length > 1 ? "s" : ""} selected
+                            {t("customers.invoices.selectedCount", { count: selectedIds.length })}
                         </span>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                                Select All ({processedInvoices.length})
+                                {t("customers.selectAllCount", { count: processedInvoices.length })}
                             </Button>
                             <Button variant="outline" size="sm" onClick={handleClearSelection}>
-                                Clear
+                                {t("customers.selection.clear")}
                             </Button>
                         </div>
                     </div>
@@ -542,7 +563,7 @@ export default function InvoicesPage() {
                                     </TableHead>
                                 ))}
                                 <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">
-                                    Actions
+                                    {t("common.actions")}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -554,8 +575,10 @@ export default function InvoicesPage() {
                                         className="text-center py-8 text-gray-500"
                                     >
                                         {searchQuery
-                                            ? "No invoices match your search."
-                                            : `No invoices found for ${customer?.company || "this customer"}.`}
+                                            ? t("customers.invoices.empty.search")
+                                            : t("customers.invoices.empty.none", {
+                                                  customer: customer?.company || t("customers.thisCustomer"),
+                                              })}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -598,7 +621,7 @@ export default function InvoicesPage() {
                                                 {col.key === "status" && (
                                                     <Badge className={`${getStatusBadge(invoice.status)} font-normal`}>
                                                         <HighlightText
-                                                            text={formatStatus(invoice.status)}
+                                                            text={statusLabel(invoice.status)}
                                                             search={searchQuery}
                                                         />
                                                     </Badge>
@@ -618,7 +641,7 @@ export default function InvoicesPage() {
                                                             <Eye className="h-4 w-4 text-gray-500" />
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>View</TooltipContent>
+                                                    <TooltipContent>{t("customers.view")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -631,7 +654,7 @@ export default function InvoicesPage() {
                                                             <Pencil className="h-4 w-4 text-gray-500" />
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Edit</TooltipContent>
+                                                    <TooltipContent>{t("common.edit")}</TooltipContent>
                                                 </Tooltip>
                                             </div>
                                         </TableCell>
@@ -654,6 +677,7 @@ export default function InvoicesPage() {
                             setRecordsPerPage(v);
                             setCurrentPage(1);
                         }}
+                        t={t}
                     />
                 )}
 

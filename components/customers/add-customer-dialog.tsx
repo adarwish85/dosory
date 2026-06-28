@@ -16,8 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "@/lib/i18n";
 
 export function AddCustomerDialog({ onSuccess }: { onSuccess?: () => void }) {
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -56,20 +58,18 @@ export function AddCustomerDialog({ onSuccess }: { onSuccess?: () => void }) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>Add Customer</Button>
+                <Button>{t("customers.dialog.addCustomer")}</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add Customer</DialogTitle>
-                        <DialogDescription>
-                            Add a new customer to your organization. Click save when you&apos;re done.
-                        </DialogDescription>
+                        <DialogTitle>{t("customers.dialog.addCustomer")}</DialogTitle>
+                        <DialogDescription>{t("customers.dialog.addCustomerDescription")}</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="companyName" className="text-right">
-                                Company
+                                {t("customers.field.company")}
                             </Label>
                             <Input
                                 id="companyName"
@@ -81,7 +81,7 @@ export function AddCustomerDialog({ onSuccess }: { onSuccess?: () => void }) {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="email" className="text-right">
-                                Email
+                                {t("common.email")}
                             </Label>
                             <Input
                                 id="email"
@@ -94,13 +94,13 @@ export function AddCustomerDialog({ onSuccess }: { onSuccess?: () => void }) {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="phone" className="text-right">
-                                Phone
+                                {t("common.phone")}
                             </Label>
                             <Input id="phone" value={formData.phone} onChange={handleChange} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="address" className="text-right">
-                                Address
+                                {t("customers.field.address")}
                             </Label>
                             <Input
                                 id="address"
@@ -112,7 +112,7 @@ export function AddCustomerDialog({ onSuccess }: { onSuccess?: () => void }) {
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={loading}>
-                            {loading ? "Saving..." : "Save changes"}
+                            {loading ? t("common.saving") : t("common.saveChanges")}
                         </Button>
                     </DialogFooter>
                 </form>

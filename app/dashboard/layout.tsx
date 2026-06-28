@@ -75,6 +75,7 @@ import { SystemBanners } from "@/components/dashboard/system-banners";
 import { useNotifications } from "@/lib/hooks/use-notifications";
 import { useUnreadMessages } from "@/lib/hooks/use-chat";
 import { clearCollectionCache } from "@/lib/cache/collection-cache";
+import { useTranslation } from "@/lib/i18n";
 
 interface StaffProfile {
     firstName?: string;
@@ -84,6 +85,7 @@ interface StaffProfile {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const { t } = useTranslation();
     const { user, loading } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
@@ -204,12 +206,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const displayName =
         staffProfile?.firstName && staffProfile?.lastName
             ? `${staffProfile.firstName} ${staffProfile.lastName}`
-            : user?.displayName || "User";
+            : user?.displayName || t("navigation.user.fallbackName");
     const displayEmail = staffProfile?.email || user?.email;
     const displayInitial = staffProfile?.firstName?.charAt(0) || user?.email?.charAt(0).toUpperCase() || "U";
 
     // Only block on auth loading — settings/profile load in parallel, modules show their own skeletons
-    if (loading) return <div className="flex h-screen items-center justify-center bg-[#F3F2EF]">Loading...</div>;
+    if (loading)
+        return (
+            <div className="flex h-screen items-center justify-center bg-[#F3F2EF]">{t("common.loading")}</div>
+        );
 
     if (!user) {
         router.push("/login");
@@ -223,11 +228,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Settings className="h-8 w-8 text-yellow-600" />
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Under Maintenance</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("navigation.maintenance.title")}</h1>
                     <p className="text-gray-600 mb-6">
-                        {settings.platformName} is currently undergoing scheduled maintenance. Please check back later.
+                        {t("navigation.maintenance.description", { platformName: settings.platformName ?? "" })}
                     </p>
-                    <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+                    <Button onClick={() => window.location.reload()}>{t("navigation.maintenance.refresh")}</Button>
                 </div>
             </div>
         );
@@ -240,68 +245,74 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
 
     const navItems = [
-        { href: "/dashboard", label: "Dashboard", icon: Home, module: "home" },
+        { href: "/dashboard", label: t("navigation.nav.dashboard"), icon: Home, module: "home" },
         {
-            label: "Sales",
+            label: t("navigation.nav.sales"),
             icon: Zap,
             module: "sales",
             children: [
-                { href: "/dashboard/leads", label: "Leads", module: "leads" },
-                { href: "/dashboard/customers", label: "Customers", module: "customers" },
-                { href: "/dashboard/sales/estimates", label: "Estimates", module: "invoices" },
-                { href: "/dashboard/contracts", label: "Contracts", module: "contracts" },
+                { href: "/dashboard/leads", label: t("navigation.nav.leads"), module: "leads" },
+                { href: "/dashboard/customers", label: t("navigation.nav.customers"), module: "customers" },
+                { href: "/dashboard/sales/estimates", label: t("navigation.nav.estimates"), module: "invoices" },
+                { href: "/dashboard/contracts", label: t("navigation.nav.contracts"), module: "contracts" },
             ],
         },
         {
-            label: "Marketing",
+            label: t("navigation.nav.marketing"),
             icon: Book,
             module: "marketing",
-            children: [{ href: "/dashboard/knowledge-base", label: "Knowledge Base", module: "knowledge" }],
+            children: [
+                { href: "/dashboard/knowledge-base", label: t("navigation.nav.knowledgeBase"), module: "knowledge" },
+            ],
         },
         {
-            label: "Operations",
+            label: t("navigation.nav.operations"),
             icon: FolderKanban,
             module: "projects",
             children: [
-                { href: "/dashboard/projects", label: "Projects", module: "projects" },
-                { href: "/dashboard/tasks", label: "Tasks", module: "tasks" },
+                { href: "/dashboard/projects", label: t("navigation.nav.projects"), module: "projects" },
+                { href: "/dashboard/tasks", label: t("navigation.nav.tasks"), module: "tasks" },
             ],
         },
         {
-            label: "Accounting",
+            label: t("navigation.nav.accounting"),
             icon: DollarSign,
             module: "accounting",
             children: [
-                { href: "/dashboard/invoices", label: "Invoices", module: "invoices" },
-                { href: "/dashboard/accounting/payments", label: "Payments", module: "invoices" },
-                { href: "/dashboard/accounting/credit-notes", label: "Credit Notes", module: "invoices" },
-                { href: "/dashboard/expenses", label: "Expenses", module: "expenses" },
+                { href: "/dashboard/invoices", label: t("navigation.nav.invoices"), module: "invoices" },
+                { href: "/dashboard/accounting/payments", label: t("navigation.nav.payments"), module: "invoices" },
+                {
+                    href: "/dashboard/accounting/credit-notes",
+                    label: t("navigation.nav.creditNotes"),
+                    module: "invoices",
+                },
+                { href: "/dashboard/expenses", label: t("navigation.nav.expenses"), module: "expenses" },
             ],
         },
         {
-            label: "Support",
+            label: t("navigation.nav.support"),
             icon: LifeBuoy,
             module: "support",
-            children: [{ href: "/dashboard/support", label: "Tickets", module: "support" }],
+            children: [{ href: "/dashboard/support", label: t("navigation.nav.tickets"), module: "support" }],
         },
         {
-            label: "Reports",
+            label: t("navigation.nav.reports"),
             icon: BarChart,
             module: "reports",
-            children: [{ href: "/dashboard/reports", label: "Reports", module: "reports" }],
+            children: [{ href: "/dashboard/reports", label: t("navigation.nav.reports"), module: "reports" }],
         },
         {
-            label: "HR",
+            label: t("navigation.nav.hr"),
             icon: Users,
             module: "hr",
             children: [
-                { href: "/dashboard/hr/employees", label: "Employees", module: "hr" },
-                { href: "/dashboard/hr/attendance", label: "Attendance", module: "hr" },
-                { href: "/dashboard/hr/leaves", label: "Leaves", module: "hr" },
-                { href: "/dashboard/hr/payroll", label: "Payroll", module: "hr" },
-                { href: "/dashboard/hr/performance", label: "Performance", module: "hr" },
-                { href: "/dashboard/hr/documents", label: "Documents", module: "hr" },
-                { href: "/dashboard/hr/reports", label: "HR Reports", module: "hr" },
+                { href: "/dashboard/hr/employees", label: t("navigation.nav.employees"), module: "hr" },
+                { href: "/dashboard/hr/attendance", label: t("navigation.nav.attendance"), module: "hr" },
+                { href: "/dashboard/hr/leaves", label: t("navigation.nav.leaves"), module: "hr" },
+                { href: "/dashboard/hr/payroll", label: t("navigation.nav.payroll"), module: "hr" },
+                { href: "/dashboard/hr/performance", label: t("navigation.nav.performance"), module: "hr" },
+                { href: "/dashboard/hr/documents", label: t("navigation.nav.documents"), module: "hr" },
+                { href: "/dashboard/hr/reports", label: t("navigation.nav.hrReports"), module: "hr" },
             ],
         },
     ];
@@ -337,13 +348,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {isImpersonating && (
                     <div className="fixed top-0 left-0 right-0 bg-orange-500 text-white py-2 px-4 z-[60] flex items-center justify-center gap-4">
                         <span className="text-sm font-medium">
-                            👤 You are viewing as: <strong>{impersonatedOrgName}</strong>
+                            👤 {t("navigation.impersonation.viewingAs")} <strong>{impersonatedOrgName}</strong>
                         </span>
                         <button
                             onClick={handleExitImpersonation}
                             className="bg-white text-orange-600 px-3 py-1 rounded text-sm font-medium hover:bg-orange-100"
                         >
-                            Exit & Return to Admin
+                            {t("navigation.impersonation.exit")}
                         </button>
                     </div>
                 )}
@@ -366,7 +377,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <Input
                                     type="search"
-                                    placeholder="Search customers, invoices, projects..."
+                                    placeholder={t("navigation.search.placeholder")}
                                     className="w-full pl-10 bg-[#F3F2EF] border border-gray-200 rounded-lg h-10 focus-visible:ring-1 focus-visible:ring-[#0A66C2]"
                                 />
                             </div>
@@ -455,13 +466,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                             className="cursor-pointer py-3"
                                         >
                                             <User className="h-5 w-5 mr-3" />
-                                            Profile Settings
+                                            {t("navigation.menu.profileSettings")}
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild className="rounded-lg">
                                         <Link href="/dashboard/setup/settings" className="cursor-pointer py-3">
                                             <Settings className="h-5 w-5 mr-3" />
-                                            Settings & Privacy
+                                            {t("navigation.menu.settingsPrivacy")}
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
@@ -470,7 +481,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         className="text-red-600 cursor-pointer rounded-lg py-3"
                                     >
                                         <LogOut className="h-5 w-5 mr-3" />
-                                        Log Out
+                                        {t("navigation.menu.logout")}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -591,7 +602,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 <div className="w-8 h-8 rounded-full bg-[#E4E6EB] flex items-center justify-center">
                                     <Settings className="h-4 w-4" />
                                 </div>
-                                <span className="font-medium text-sm">Setup</span>
+                                <span className="font-medium text-sm">{t("navigation.nav.setup")}</span>
                             </button>
                         </nav>
                     </aside>
@@ -621,7 +632,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 isImpersonating ? "top-28" : "top-[70px]",
                                 rightSidebarOpen ? "right-[220px]" : "right-0"
                             )}
-                            title={rightSidebarOpen ? "Hide panel" : "Show panel"}
+                            title={rightSidebarOpen ? t("navigation.panel.hide") : t("navigation.panel.show")}
                         >
                             {rightSidebarOpen ? (
                                 <PanelRightClose className="h-3 w-3 text-[#65676B]" />

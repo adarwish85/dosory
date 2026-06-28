@@ -54,6 +54,7 @@ import {
     Eye,
     EyeOff,
 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
     AlertDialog,
@@ -191,18 +192,21 @@ function HighlightText({ text, search }: { text: string; search: string }) {
 }
 
 // Format last activity timestamp
-function formatLastActivity(timestamp: any): string {
+function formatLastActivity(
+    timestamp: any,
+    t: (key: string, vars?: Record<string, string | number>) => string
+): string {
     if (!timestamp) return "-";
     try {
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (diffDays === 0) return "Today";
-        if (diffDays === 1) return "Yesterday";
-        if (diffDays < 7) return `${diffDays} days ago`;
-        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-        return `${Math.floor(diffDays / 30)} months ago`;
+        if (diffDays === 0) return t("customers.lastActivity.today");
+        if (diffDays === 1) return t("customers.lastActivity.yesterday");
+        if (diffDays < 7) return t("customers.lastActivity.daysAgo", { count: diffDays });
+        if (diffDays < 30) return t("customers.lastActivity.weeksAgo", { count: Math.floor(diffDays / 7) });
+        return t("customers.lastActivity.monthsAgo", { count: Math.floor(diffDays / 30) });
     } catch {
         return "-";
     }
@@ -213,10 +217,12 @@ function InlineEditCell({
     value,
     onSave,
     searchQuery,
+    t,
 }: {
     value: string;
     onSave: (value: string) => void;
     searchQuery: string;
+    t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(value);
@@ -253,7 +259,7 @@ function InlineEditCell({
         <span
             onDoubleClick={() => setIsEditing(true)}
             className="cursor-text hover:bg-gray-100 px-1 py-0.5 rounded inline-block min-w-[20px]"
-            title="Double-click to edit"
+            title={t("customers.inlineEdit.title")}
         >
             <HighlightText text={value || "-"} search={searchQuery} />
         </span>
@@ -339,6 +345,7 @@ function SelectionBanner({
     totalCount,
     onSelectAll,
     onClearSelection,
+    t,
 }: {
     selectionMode: SelectionMode;
     selectedCount: number;
@@ -346,6 +353,7 @@ function SelectionBanner({
     totalCount: number;
     onSelectAll: () => void;
     onClearSelection: () => void;
+    t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
     if (selectionMode === "none" || selectedCount === 0) return null;
     return (
@@ -354,21 +362,21 @@ function SelectionBanner({
             {selectionMode === "page" ? (
                 <>
                     <span className="text-blue-800">
-                        All <strong>{selectedCount}</strong> on page selected.
+                        {t("customers.selection.pageSelected", { count: selectedCount })}
                     </span>
                     {totalCount > pageCount && (
                         <button onClick={onSelectAll} className="text-blue-600 font-medium hover:underline">
-                            Select all {totalCount}
+                            {t("customers.selection.selectAllCount", { count: totalCount })}
                         </button>
                     )}
                 </>
             ) : (
                 <>
                     <span className="text-blue-800">
-                        All <strong>{totalCount}</strong> selected.
+                        {t("customers.selection.allSelected", { count: totalCount })}
                     </span>
                     <button onClick={onClearSelection} className="text-blue-600 font-medium hover:underline">
-                        Clear
+                        {t("customers.selection.clear")}
                     </button>
                 </>
             )}
@@ -384,6 +392,7 @@ function Pagination({
     totalRecords,
     startRecord,
     endRecord,
+    t,
 }: {
     currentPage: number;
     totalPages: number;
@@ -391,13 +400,18 @@ function Pagination({
     totalRecords: number;
     startRecord: number;
     endRecord: number;
+    t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
     const canPrev = currentPage > 1,
         canNext = currentPage < totalPages;
     return (
         <div className="flex items-center justify-between gap-4">
             <div className="text-sm text-gray-500">
-                Showing {startRecord} to {endRecord} of {totalRecords}
+                {t("customers.pagination.showing", {
+                    start: startRecord,
+                    end: endRecord,
+                    total: totalRecords,
+                })}
             </div>
             <div className="flex items-center gap-1">
                 <Button
@@ -419,9 +433,9 @@ function Pagination({
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center gap-1 px-2 text-sm">
-                    <span className="text-gray-700">Page</span>
+                    <span className="text-gray-700">{t("customers.pagination.page")}</span>
                     <span className="font-medium">{currentPage}</span>
-                    <span className="text-gray-700">of {totalPages}</span>
+                    <span className="text-gray-700">{t("customers.pagination.of", { total: totalPages })}</span>
                 </div>
                 <Button
                     variant="outline"
@@ -447,7 +461,13 @@ function Pagination({
 }
 
 // Quick View Card Component for Contact
-function QuickViewCard({ contact }: { contact: Contact }) {
+function QuickViewCard({
+    contact,
+    t,
+}: {
+    contact: Contact;
+    t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
     return (
         <Card className="w-72 shadow-lg border-0">
             <CardHeader className="pb-2">
@@ -466,13 +486,19 @@ function QuickViewCard({ contact }: { contact: Contact }) {
                             {contact.position && <p className="text-sm text-gray-500">{contact.position}</p>}
                         </div>
                     </div>
-                    {contact.isPrimary && <Badge className="bg-blue-100 text-blue-600 text-[10px]">Primary</Badge>}
+                    {contact.isPrimary && (
+                        <Badge className="bg-blue-100 text-blue-600 text-[10px]">
+                            {t("customers.contacts.primary")}
+                        </Badge>
+                    )}
                 </div>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                     <Badge variant={contact.portalAccess?.enabled ? "default" : "secondary"} className="text-[10px]">
-                        {contact.portalAccess?.enabled ? "Portal Active" : "No Portal"}
+                        {contact.portalAccess?.enabled
+                            ? t("customers.contacts.portalActive")
+                            : t("customers.contacts.noPortal")}
                     </Badge>
                 </div>
                 {contact.email && (
@@ -489,7 +515,7 @@ function QuickViewCard({ contact }: { contact: Contact }) {
                 )}
                 {contact.permissions && contact.permissions.length > 0 && (
                     <div>
-                        <span className="text-gray-500 text-xs">Permissions:</span>
+                        <span className="text-gray-500 text-xs">{t("customers.contacts.permissions")}</span>
                         <div className="flex flex-wrap gap-1 mt-1">
                             {contact.permissions.slice(0, 4).map((p: string) => (
                                 <Badge key={p} variant="outline" className="text-[9px] capitalize">
@@ -510,6 +536,7 @@ function QuickViewCard({ contact }: { contact: Contact }) {
 }
 
 export default function ContactsPage() {
+    const { t } = useTranslation();
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const {
         contacts,
@@ -791,11 +818,11 @@ export default function ContactsPage() {
         setDeletingId(contactId);
         try {
             await deleteContact(contactId);
-            toast.success("Contact deleted");
+            toast.success(t("customers.contacts.toast.deleted"));
             setSelectedIds((prev) => prev.filter((id) => id !== contactId));
         } catch (error) {
             console.error("Error deleting contact:", error);
-            toast.error("Failed to delete contact");
+            toast.error(t("customers.contacts.toast.deleteFailed"));
         } finally {
             setDeletingId(null);
         }
@@ -803,15 +830,15 @@ export default function ContactsPage() {
 
     // Bulk delete
     const handleBulkDelete = async () => {
-        if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} contacts?`)) return;
+        if (!window.confirm(t("customers.contacts.confirmBulkDelete", { count: selectedIds.length }))) return;
         try {
             await Promise.all(selectedIds.map((id) => deleteContact(id)));
-            toast.success("Contacts deleted");
+            toast.success(t("customers.contacts.toast.bulkDeleted"));
             setSelectedIds([]);
             setSelectionMode("none");
         } catch (error) {
             console.error("Bulk delete error:", error);
-            toast.error("Failed to delete contacts");
+            toast.error(t("customers.contacts.toast.bulkDeleteFailed"));
         }
     };
 
@@ -823,10 +850,10 @@ export default function ContactsPage() {
                 await updateContact(contact.id, {
                     portalAccess: { ...(contact.portalAccess || {}), enabled: false },
                 } as any);
-                toast.success("Portal access disabled");
+                toast.success(t("customers.contacts.toast.portalDisabled"));
             } catch (error) {
                 console.error("Error toggling portal access:", error);
-                toast.error("Failed to update portal access");
+                toast.error(t("customers.contacts.toast.portalUpdateFailed"));
             }
         } else {
             const hasPortalConfig =
@@ -837,10 +864,10 @@ export default function ContactsPage() {
                     await updateContact(contact.id, {
                         portalAccess: { ...(contact.portalAccess || {}), enabled: true },
                     } as any);
-                    toast.success("Portal access enabled");
+                    toast.success(t("customers.contacts.toast.portalEnabled"));
                 } catch (error) {
                     console.error("Error toggling portal access:", error);
-                    toast.error("Failed to update portal access");
+                    toast.error(t("customers.contacts.toast.portalUpdateFailed"));
                 }
             } else {
                 setPortalAccessContact(contact);
@@ -870,7 +897,7 @@ export default function ContactsPage() {
         a.download = `contacts_${customer?.company || "export"}.csv`;
         a.click();
         URL.revokeObjectURL(url);
-        toast.success(`Exported ${dataToExport.length} contacts`);
+        toast.success(t("customers.contacts.toast.exported", { count: dataToExport.length }));
     };
 
     // Keyboard navigation
@@ -904,14 +931,17 @@ export default function ContactsPage() {
     };
 
     // Ordered columns
-    const orderedColumns = columnOrder.map((key) => DEFAULT_COLUMNS.find((c) => c.key === key)!).filter(Boolean);
+    const orderedColumns = columnOrder
+        .map((key) => DEFAULT_COLUMNS.find((c) => c.key === key)!)
+        .filter(Boolean)
+        .map((c) => ({ ...c, label: t(`customers.contacts.columns.${c.key}`) }));
 
     const isLoading = customerLoading || contactsLoading;
 
     return (
         <TooltipProvider>
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
-                <h1 className="text-2xl font-bold">Contacts</h1>
+                <h1 className="text-2xl font-bold">{t("customers.contacts.title")}</h1>
 
                 {/* Compact Toolbar */}
                 <div className="flex flex-wrap items-center gap-2">
@@ -919,7 +949,7 @@ export default function ContactsPage() {
                     <ContactDialog customerId={customerId || undefined} customerName={customer?.company}>
                         <Button className="bg-gray-900 text-white hover:bg-gray-800">
                             <Plus className="mr-2 h-4 w-4" />
-                            New Contact
+                            {t("customers.contacts.newContact")}
                         </Button>
                     </ContactDialog>
 
@@ -928,20 +958,22 @@ export default function ContactsPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <MoreVertical className="h-4 w-4 mr-1" />
-                                Actions
+                                {t("common.actions")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                             <DropdownMenuItem onClick={handleExport}>
                                 <Download className="h-4 w-4 mr-2" />
-                                Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                {selectedIds.length > 0
+                                    ? t("customers.export.withCount", { count: selectedIds.length })
+                                    : t("customers.export.all")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {selectedIds.length > 0 && (
                                 <DropdownMenuItem onClick={handleBulkDelete} className="text-red-600">
                                     <Trash className="h-4 w-4 mr-2" />
-                                    Delete Selected ({selectedIds.length})
+                                    {t("customers.contacts.deleteSelected", { count: selectedIds.length })}
                                 </DropdownMenuItem>
                             )}
                         </DropdownMenuContent>
@@ -959,7 +991,7 @@ export default function ContactsPage() {
                                 }
                             >
                                 <Filter className="h-4 w-4 mr-1" />
-                                Filters
+                                {t("customers.filters.label")}
                                 {(portalFilter !== "all" || primaryFilter !== "all") && (
                                     <Badge variant="secondary" className="ml-1 text-[10px] px-1">
                                         {[portalFilter !== "all" ? 1 : 0, primaryFilter !== "all" ? 1 : 0].reduce(
@@ -972,24 +1004,32 @@ export default function ContactsPage() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-48">
-                            <DropdownMenuLabel>Portal Access</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.contacts.filters.portalAccess")}</DropdownMenuLabel>
                             <DropdownMenuRadioGroup
                                 value={portalFilter}
                                 onValueChange={(v) => setPortalFilter(v as any)}
                             >
-                                <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="enabled">Portal Enabled</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="disabled">No Portal</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="all">{t("customers.filters.all")}</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="enabled">
+                                    {t("customers.contacts.filters.portalEnabled")}
+                                </DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="disabled">
+                                    {t("customers.contacts.filters.noPortal")}
+                                </DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Contact Type</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.contacts.filters.contactType")}</DropdownMenuLabel>
                             <DropdownMenuRadioGroup
                                 value={primaryFilter}
                                 onValueChange={(v) => setPrimaryFilter(v as any)}
                             >
-                                <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="primary">Primary Only</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="regular">Regular Only</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="all">{t("customers.filters.all")}</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="primary">
+                                    {t("customers.contacts.filters.primaryOnly")}
+                                </DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="regular">
+                                    {t("customers.contacts.filters.regularOnly")}
+                                </DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             {(portalFilter !== "all" || primaryFilter !== "all") && (
                                 <>
@@ -1001,7 +1041,7 @@ export default function ContactsPage() {
                                         }}
                                     >
                                         <X className="h-4 w-4 mr-2" />
-                                        Clear All Filters
+                                        {t("customers.filters.clearAll")}
                                     </DropdownMenuItem>
                                 </>
                             )}
@@ -1013,21 +1053,25 @@ export default function ContactsPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <LayoutList className="h-4 w-4 mr-1" />
-                                Display
+                                {t("customers.display.label")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56">
-                            <DropdownMenuLabel>Density</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.display.density")}</DropdownMenuLabel>
                             <DropdownMenuRadioGroup
                                 value={rowDensity}
                                 onValueChange={(v) => setRowDensity(v as RowDensity)}
                             >
-                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="compact">
+                                    {t("customers.display.compact")}
+                                </DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="comfortable">
+                                    {t("customers.display.comfortable")}
+                                </DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.display.columns")}</DropdownMenuLabel>
                             {DEFAULT_COLUMNS.map((col) => (
                                 <DropdownMenuCheckboxItem
                                     key={col.key}
@@ -1035,11 +1079,11 @@ export default function ContactsPage() {
                                     onCheckedChange={() => toggleColumn(col.key)}
                                     disabled={col.required}
                                 >
-                                    {col.label}
+                                    {t(`customers.contacts.columns.${col.key}`)}
                                 </DropdownMenuCheckboxItem>
                             ))}
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Saved Views</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.savedViews.label")}</DropdownMenuLabel>
                             {savedViews.map((view) => (
                                 <DropdownMenuItem key={view.id} className="flex items-center justify-between">
                                     <button
@@ -1059,13 +1103,15 @@ export default function ContactsPage() {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
                                             <DropdownMenuItem onClick={() => setViewAsDefault(view.id)}>
-                                                {view.isDefault ? "Remove Default" : "Set as Default"}
+                                                {view.isDefault
+                                                    ? t("customers.savedViews.removeDefault")
+                                                    : t("customers.savedViews.setDefault")}
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
                                                 onClick={() => deleteView(view.id)}
                                                 className="text-red-600"
                                             >
-                                                Delete
+                                                {t("common.delete")}
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -1075,12 +1121,12 @@ export default function ContactsPage() {
                             {activeViewId && (
                                 <DropdownMenuItem onClick={updateCurrentView}>
                                     <Save className="h-4 w-4 mr-2" />
-                                    Update Active View
+                                    {t("customers.savedViews.updateActive")}
                                 </DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={() => setShowSaveViewDialog(true)}>
                                 <BookmarkPlus className="h-4 w-4 mr-2" />
-                                Save New View
+                                {t("customers.savedViews.saveNew")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -1112,7 +1158,7 @@ export default function ContactsPage() {
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search..."
+                            placeholder={t("common.search")}
                             className="pl-9"
                             autoComplete="new-password"
                             name="contacts-search-nofill"
@@ -1134,6 +1180,7 @@ export default function ContactsPage() {
                         totalRecords={processedContacts.length}
                         startRecord={startRecord}
                         endRecord={endRecord}
+                        t={t}
                     />
                 )}
 
@@ -1145,6 +1192,7 @@ export default function ContactsPage() {
                     totalCount={processedContacts.length}
                     onSelectAll={handleSelectAll}
                     onClearSelection={handleClearSelection}
+                    t={t}
                 />
 
                 {/* Table */}
@@ -1192,7 +1240,9 @@ export default function ContactsPage() {
                                             colSpan={orderedColumns.filter((c) => columnVisibility[c.key]).length + 1}
                                             className="text-center py-8 text-gray-500"
                                         >
-                                            {searchQuery ? "No contacts match your search." : "No contacts found."}
+                                            {searchQuery
+                                                ? t("customers.contacts.empty.search")
+                                                : t("customers.contacts.empty.none")}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -1239,7 +1289,7 @@ export default function ContactsPage() {
                                                                             </span>
                                                                         </HoverCardTrigger>
                                                                         <HoverCardContent side="right" className="p-0">
-                                                                            <QuickViewCard contact={contact} />
+                                                                            <QuickViewCard contact={contact} t={t} />
                                                                         </HoverCardContent>
                                                                     </HoverCard>
                                                                     {rowDensity === "comfortable" && (
@@ -1255,7 +1305,9 @@ export default function ContactsPage() {
                                                                                         <Pencil className="h-2.5 w-2.5" />
                                                                                     </button>
                                                                                 </TooltipTrigger>
-                                                                                <TooltipContent>Edit</TooltipContent>
+                                                                                <TooltipContent>
+                                                                                    {t("common.edit")}
+                                                                                </TooltipContent>
                                                                             </Tooltip>
                                                                             <AlertDialog>
                                                                                 <AlertDialogTrigger asChild>
@@ -1272,23 +1324,29 @@ export default function ContactsPage() {
                                                                                             </button>
                                                                                         </TooltipTrigger>
                                                                                         <TooltipContent>
-                                                                                            Delete
+                                                                                            {t("common.delete")}
                                                                                         </TooltipContent>
                                                                                     </Tooltip>
                                                                                 </AlertDialogTrigger>
                                                                                 <AlertDialogContent>
                                                                                     <AlertDialogHeader>
                                                                                         <AlertDialogTitle>
-                                                                                            Delete Contact
+                                                                                            {t(
+                                                                                                "customers.contacts.deleteDialog.title"
+                                                                                            )}
                                                                                         </AlertDialogTitle>
                                                                                         <AlertDialogDescription>
-                                                                                            Are you sure you want to
-                                                                                            delete {contact.firstName}?
+                                                                                            {t(
+                                                                                                "customers.contacts.deleteDialog.description",
+                                                                                                {
+                                                                                                    name: contact.firstName,
+                                                                                                }
+                                                                                            )}
                                                                                         </AlertDialogDescription>
                                                                                     </AlertDialogHeader>
                                                                                     <AlertDialogFooter>
                                                                                         <AlertDialogCancel>
-                                                                                            Cancel
+                                                                                            {t("common.cancel")}
                                                                                         </AlertDialogCancel>
                                                                                         <AlertDialogAction
                                                                                             className="bg-red-600 hover:bg-red-700"
@@ -1296,7 +1354,7 @@ export default function ContactsPage() {
                                                                                                 handleDelete(contact.id)
                                                                                             }
                                                                                         >
-                                                                                            Delete
+                                                                                            {t("common.delete")}
                                                                                         </AlertDialogAction>
                                                                                     </AlertDialogFooter>
                                                                                 </AlertDialogContent>
@@ -1351,14 +1409,14 @@ export default function ContactsPage() {
                                                         {col.key === "primary" &&
                                                             (contact.isPrimary ? (
                                                                 <Badge className="bg-blue-100 text-blue-600 text-[10px]">
-                                                                    Primary
+                                                                    {t("customers.contacts.primary")}
                                                                 </Badge>
                                                             ) : (
                                                                 <span className="text-gray-400">-</span>
                                                             ))}
                                                         {col.key === "lastActivity" && (
                                                             <span className="text-gray-500 text-xs">
-                                                                {formatLastActivity(contact.updatedAt)}
+                                                                {formatLastActivity(contact.updatedAt, t)}
                                                             </span>
                                                         )}
                                                     </TableCell>
@@ -1381,6 +1439,7 @@ export default function ContactsPage() {
                         totalRecords={processedContacts.length}
                         startRecord={startRecord}
                         endRecord={endRecord}
+                        t={t}
                     />
                 )}
 
@@ -1388,15 +1447,15 @@ export default function ContactsPage() {
                 <Dialog open={showSaveViewDialog} onOpenChange={setShowSaveViewDialog}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Save View</DialogTitle>
-                            <DialogDescription>Save your current settings as a reusable view.</DialogDescription>
+                            <DialogTitle>{t("customers.savedViews.dialog.title")}</DialogTitle>
+                            <DialogDescription>{t("customers.savedViews.dialog.description")}</DialogDescription>
                         </DialogHeader>
                         <div className="py-4">
-                            <Label>View Name</Label>
+                            <Label>{t("customers.savedViews.dialog.nameLabel")}</Label>
                             <Input
                                 value={newViewName}
                                 onChange={(e) => setNewViewName(e.target.value)}
-                                placeholder="My View"
+                                placeholder={t("customers.savedViews.dialog.namePlaceholder")}
                             />
                         </div>
                         <DialogFooter className="flex-col sm:flex-row gap-2">
@@ -1405,7 +1464,7 @@ export default function ContactsPage() {
                                 disabled={!newViewName.trim()}
                                 onClick={() => saveCurrentView(newViewName.trim())}
                             >
-                                Save New
+                                {t("customers.savedViews.dialog.saveNew")}
                             </Button>
                             <Button
                                 variant="outline"
@@ -1413,7 +1472,7 @@ export default function ContactsPage() {
                                 disabled={!newViewName.trim()}
                                 onClick={() => saveCurrentView(newViewName.trim(), true)}
                             >
-                                Save as Default
+                                {t("customers.savedViews.dialog.saveDefault")}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

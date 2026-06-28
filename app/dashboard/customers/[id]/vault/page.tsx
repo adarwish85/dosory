@@ -10,6 +10,7 @@ import { Plus, Search, RefreshCw, Loader2, Lock, Eye, EyeOff, Trash2, Users } fr
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useState } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 import { CreateVaultItemDialog } from "@/components/dashboard/customers/vault/create-vault-item-dialog";
 
@@ -20,6 +21,7 @@ export default function VaultPage() {
     const { vaultItems, loading: vaultLoading, deleteVaultItem } = useVault({ customerId: customerId || undefined });
     const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
     const [showCreateDialog, setShowCreateDialog] = useState(false);
+    const { t } = useTranslation();
 
     if (customerLoading || vaultLoading) {
         return (
@@ -61,15 +63,15 @@ export default function VaultPage() {
 
             <div className="flex items-center gap-2">
                 <Lock className="h-5 w-5 text-gray-700" />
-                <h2 className="text-xl font-bold text-gray-900">Vault</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t("customers.vault.title")}</h2>
             </div>
 
             <p className="text-sm text-gray-500">
-                Store sensitive customer information securely. All vault entries are encrypted.
+                {t("customers.vault.description")}
             </p>
 
             <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={() => setShowCreateDialog(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Add Entry
+                <Plus className="mr-2 h-4 w-4" /> {t("customers.vault.addEntry")}
             </Button>
 
             <div className="space-y-4">
@@ -89,7 +91,7 @@ export default function VaultPage() {
                     </div>
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search vault..." className="pl-9" />
+                        <Input placeholder={t("customers.vault.searchPlaceholder")} className="pl-9" />
                     </div>
                 </div>
 
@@ -97,12 +99,12 @@ export default function VaultPage() {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Title</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Content</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Visibility</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Created</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("customers.vault.col.title")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("customers.vault.col.content")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("customers.vault.col.visibility")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("customers.vault.col.created")}</TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50 text-right">
-                                    Actions
+                                    {t("common.actions")}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -110,7 +112,7 @@ export default function VaultPage() {
                             {vaultItems.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                                        No vault entries found for {customer?.company || "this customer"}
+                                        {t("customers.vault.empty", { company: customer?.company || t("customers.vault.thisCustomer") })}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -131,11 +133,11 @@ export default function VaultPage() {
                                             >
                                                 {item.visibility === "shared" ? (
                                                     <>
-                                                        <Users className="h-3 w-3 mr-1" /> Shared
+                                                        <Users className="h-3 w-3 mr-1" /> {t("customers.vault.shared")}
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Lock className="h-3 w-3 mr-1" /> Private
+                                                        <Lock className="h-3 w-3 mr-1" /> {t("customers.vault.private")}
                                                     </>
                                                 )}
                                             </Badge>

@@ -99,6 +99,7 @@ function Pagination({
     totalRecords,
     startRecord,
     endRecord,
+    t,
 }: {
     currentPage: number;
     totalPages: number;
@@ -106,11 +107,16 @@ function Pagination({
     totalRecords: number;
     startRecord: number;
     endRecord: number;
+    t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
-                Showing {startRecord} to {endRecord} of {totalRecords}
+                {t("customers.pagination.showing", {
+                    start: startRecord,
+                    end: endRecord,
+                    total: totalRecords,
+                })}
             </span>
             <div className="flex items-center gap-1">
                 <Button
@@ -204,6 +210,15 @@ export default function EstimatesPage() {
     };
 
     const formatStatus = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    const STATUS_LABEL_KEYS: Record<string, string> = {
+        draft: "customers.estimates.status.draft",
+        sent: "customers.estimates.status.sent",
+        expired: "customers.estimates.status.expired",
+        declined: "customers.estimates.status.declined",
+        accepted: "customers.estimates.status.accepted",
+    };
+    const statusLabel = (status: string) =>
+        STATUS_LABEL_KEYS[status] ? t(STATUS_LABEL_KEYS[status]) : formatStatus(status);
 
     // Sort handler
     const handleSort = (key: ColumnKey) => {
@@ -302,7 +317,7 @@ export default function EstimatesPage() {
         a.download = "estimates-export.csv";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Exported successfully");
+        toast.success(t("customers.toast.exportSuccess"));
     };
 
     // Keyboard navigation
@@ -327,13 +342,16 @@ export default function EstimatesPage() {
         [focusedRowIndex, paginatedEstimates]
     );
 
-    const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]);
+    const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]).map((c) => ({
+        ...c,
+        label: t(`customers.estimates.columns.${c.key}`),
+    }));
 
     if (customerLoading || estimatesLoading) {
         return (
             <div className="p-8 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading estimates...
+                {t("customers.estimates.loading")}
             </div>
         );
     }
@@ -347,7 +365,7 @@ export default function EstimatesPage() {
                         <Link href={`/dashboard/sales/estimates/new?customerId=${customerId}`}>
                             <Button className="bg-gray-900 text-white hover:bg-gray-800">
                                 <Plus className="mr-2 h-4 w-4" />
-                                New Estimate
+                                {t("customers.estimates.newEstimate")}
                             </Button>
                         </Link>
                         <DropdownMenu>
@@ -359,19 +377,23 @@ export default function EstimatesPage() {
                             <DropdownMenuContent align="start">
                                 <DropdownMenuItem onClick={handleExport}>
                                     <Download className="h-4 w-4 mr-2" />
-                                    Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                    {selectedIds.length > 0
+                                        ? t("customers.export.withCount", { count: selectedIds.length })
+                                        : t("customers.export.all")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                     <FileDown className="h-4 w-4 mr-2" />
-                                    Zip Estimates
+                                    {t("customers.estimates.zip")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                         {selectedIds.length > 0 && (
                             <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-1.5 flex items-center gap-2">
-                                <span className="text-blue-800 text-sm font-medium">{selectedIds.length} selected</span>
+                                <span className="text-blue-800 text-sm font-medium">
+                                    {t("customers.selectedCount", { count: selectedIds.length })}
+                                </span>
                                 <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={handleSelectAll}>
-                                    All ({processedEstimates.length})
+                                    {t("customers.estimates.allCount", { count: processedEstimates.length })}
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -379,7 +401,7 @@ export default function EstimatesPage() {
                                     className="h-6 text-xs"
                                     onClick={handleClearSelection}
                                 >
-                                    Clear
+                                    {t("customers.selection.clear")}
                                 </Button>
                             </div>
                         )}
@@ -389,7 +411,7 @@ export default function EstimatesPage() {
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Search estimates..."
+                                placeholder={t("customers.estimates.searchPlaceholder")}
                                 className="pl-9"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -402,28 +424,32 @@ export default function EstimatesPage() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline">
                                     <LayoutList className="h-4 w-4 mr-1" />
-                                    Display
+                                    {t("customers.display.label")}
                                     <ChevronDown className="ml-1 h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-48">
-                                <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.display.rowDensity")}</DropdownMenuLabel>
                                 <DropdownMenuRadioGroup
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">
+                                        {t("customers.display.compact")}
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">
+                                        {t("customers.display.comfortable")}
+                                    </DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.display.columns")}</DropdownMenuLabel>
                                 {DEFAULT_COLUMNS.map((col) => (
                                     <DropdownMenuCheckboxItem
                                         key={col.key}
                                         checked={columnVisibility[col.key]}
                                         onCheckedChange={() => toggleColumn(col.key)}
                                     >
-                                        {col.label}
+                                        {t(`customers.estimates.columns.${col.key}`)}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
@@ -443,7 +469,7 @@ export default function EstimatesPage() {
                                     <RotateCcw className="h-4 w-4" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Reset</TooltipContent>
+                            <TooltipContent>{t("customers.reset")}</TooltipContent>
                         </Tooltip>
                     </div>
                 </div>
@@ -494,7 +520,7 @@ export default function EstimatesPage() {
                                     </TableHead>
                                 ))}
                                 <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">
-                                    Actions
+                                    {t("common.actions")}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -506,8 +532,10 @@ export default function EstimatesPage() {
                                         className="text-center py-8 text-gray-500"
                                     >
                                         {searchQuery
-                                            ? "No estimates match your search."
-                                            : `No estimates found for ${customer?.company || "this customer"}.`}
+                                            ? t("customers.estimates.empty.search")
+                                            : t("customers.estimates.empty.none", {
+                                                  customer: customer?.company || t("customers.thisCustomer"),
+                                              })}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -551,7 +579,7 @@ export default function EstimatesPage() {
                                                 {col.key === "status" && (
                                                     <Badge className={`${getStatusBadge(estimate.status)} font-normal`}>
                                                         <HighlightText
-                                                            text={formatStatus(estimate.status)}
+                                                            text={statusLabel(estimate.status)}
                                                             search={searchQuery}
                                                         />
                                                     </Badge>
@@ -568,7 +596,7 @@ export default function EstimatesPage() {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>View</TooltipContent>
+                                                    <TooltipContent>{t("customers.view")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -578,7 +606,7 @@ export default function EstimatesPage() {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Edit</TooltipContent>
+                                                    <TooltipContent>{t("common.edit")}</TooltipContent>
                                                 </Tooltip>
                                             </div>
                                         </TableCell>
@@ -592,9 +620,11 @@ export default function EstimatesPage() {
                 {/* Footer */}
                 <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-4">
-                        <span className="text-sm text-gray-600 font-medium">Total: {processedEstimates.length}</span>
+                        <span className="text-sm text-gray-600 font-medium">
+                            {t("customers.estimates.footerTotal", { count: processedEstimates.length })}
+                        </span>
                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">Rows:</span>
+                            <span className="text-xs text-gray-500">{t("customers.pagination.rowsColon")}</span>
                             <Select
                                 value={recordsPerPage.toString()}
                                 onValueChange={(v) => {
@@ -621,6 +651,7 @@ export default function EstimatesPage() {
                         totalRecords={processedEstimates.length}
                         startRecord={startRecord}
                         endRecord={endRecord}
+                        t={t}
                     />
                 </div>
             </div>

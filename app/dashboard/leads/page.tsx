@@ -126,6 +126,7 @@ import { LeadsTable } from "@/components/dashboard/leads/leads-table"; // Added 
 import { LEAD_STATUSES, STATUS_COLORS } from "@/lib/constants";
 import { Timestamp } from "firebase/firestore";
 import { formatDistanceToNow, format } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 
 // Types
 type SelectionMode = "none" | "page" | "all";
@@ -273,6 +274,7 @@ function formatFullDate(timestamp: Timestamp | undefined): string {
 
 // Quick Stats
 function QuickStatsBar({ leads, totalValue, totalCount }: { leads: Lead[]; totalValue: number; totalCount?: number }) {
+    const { t } = useTranslation();
     const qualifiedCount = leads.filter((l) => l.status === "qualified").length;
     const starredCount = leads.filter((l) => l.isStarred).length;
     return (
@@ -280,7 +282,7 @@ function QuickStatsBar({ leads, totalValue, totalCount }: { leads: Lead[]; total
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-blue-600 mb-1">
                     <Users className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Total</span>
+                    <span className="text-xs font-medium uppercase">{t("leads.stats.total")}</span>
                 </div>
                 <div className="text-2xl font-bold text-blue-900">
                     {totalCount !== undefined ? totalCount : leads.length}
@@ -289,21 +291,21 @@ function QuickStatsBar({ leads, totalValue, totalCount }: { leads: Lead[]; total
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1">
                     <DollarSign className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Value</span>
+                    <span className="text-xs font-medium uppercase">{t("leads.stats.value")}</span>
                 </div>
                 <div className="text-2xl font-bold text-green-900">${totalValue.toLocaleString()}</div>
             </div>
             <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-yellow-600 mb-1">
                     <Star className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Starred</span>
+                    <span className="text-xs font-medium uppercase">{t("leads.stats.starred")}</span>
                 </div>
                 <div className="text-2xl font-bold text-yellow-900">{starredCount}</div>
             </div>
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-purple-600 mb-1">
                     <TrendingUp className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Qualified</span>
+                    <span className="text-xs font-medium uppercase">{t("leads.stats.qualified")}</span>
                 </div>
                 <div className="text-2xl font-bold text-purple-900">{qualifiedCount}</div>
             </div>
@@ -329,6 +331,7 @@ function FilterRow({
     logic: FilterLogic;
     onLogicChange: (l: FilterLogic) => void;
 }) {
+    const { t } = useTranslation();
     const needsValue = !["isEmpty", "isNotEmpty"].includes(filter.operator);
     return (
         <div className="flex items-center gap-2">
@@ -343,7 +346,7 @@ function FilterRow({
                     </SelectContent>
                 </Select>
             ) : (
-                <div className="w-[70px] text-xs text-gray-500 text-center">Where</div>
+                <div className="w-[70px] text-xs text-gray-500 text-center">{t("leads.filter.where")}</div>
             )}
             <Select value={filter.field} onValueChange={(v) => onUpdate(filter.id, { field: v as ColumnKey })}>
                 <SelectTrigger className="w-[100px] h-8 text-xs">
@@ -378,7 +381,7 @@ function FilterRow({
                 <Input
                     value={filter.value}
                     onChange={(e) => onUpdate(filter.id, { value: e.target.value })}
-                    placeholder="Value..."
+                    placeholder={t("leads.filter.valuePlaceholder")}
                     className="w-[120px] h-8 text-xs"
                 />
             )}
@@ -405,6 +408,7 @@ function SelectionBanner({
     onSelectAll: () => void;
     onClearSelection: () => void;
 }) {
+    const { t } = useTranslation();
     if (selectionMode === "none" || selectedCount === 0) return null;
     return (
         <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-2 flex items-center justify-center gap-2 text-sm">
@@ -412,21 +416,21 @@ function SelectionBanner({
             {selectionMode === "page" ? (
                 <>
                     <span className="text-blue-800">
-                        All <strong>{selectedCount}</strong> on page selected.
+                        {t("leads.selection.onPage", { count: selectedCount })}
                     </span>
                     {totalCount > pageCount && (
                         <button onClick={onSelectAll} className="text-blue-600 font-medium hover:underline">
-                            Select all {totalCount}
+                            {t("leads.selection.selectAll", { count: totalCount })}
                         </button>
                     )}
                 </>
             ) : (
                 <>
                     <span className="text-blue-800">
-                        All <strong>{totalCount}</strong> selected.
+                        {t("leads.selection.allSelected", { count: totalCount })}
                     </span>
                     <button onClick={onClearSelection} className="text-blue-600 font-medium hover:underline">
-                        Clear
+                        {t("leads.selection.clear")}
                     </button>
                 </>
             )}
@@ -452,13 +456,18 @@ function Pagination({
     endRecord: number;
     compact?: boolean;
 }) {
+    const { t } = useTranslation();
     const canPrev = currentPage > 1,
         canNext = currentPage < totalPages;
     return (
         <div className={`flex items-center ${compact ? "gap-1" : "justify-between gap-4"}`}>
             {!compact && (
                 <div className="text-sm text-gray-500">
-                    Showing {startRecord} to {endRecord} of {totalRecords}
+                    {t("leads.pagination.showing", {
+                        start: startRecord,
+                        end: endRecord,
+                        total: totalRecords,
+                    })}
                 </div>
             )}
             <div className="flex items-center gap-1">
@@ -481,9 +490,9 @@ function Pagination({
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center gap-1 px-2 text-sm">
-                    <span className="text-gray-700">Page</span>
+                    <span className="text-gray-700">{t("leads.pagination.page")}</span>
                     <span className="font-medium">{currentPage}</span>
-                    <span className="text-gray-700">of {totalPages}</span>
+                    <span className="text-gray-700">{t("leads.pagination.of", { total: totalPages })}</span>
                 </div>
                 <Button
                     variant="outline"
@@ -524,6 +533,7 @@ function KanbanBoard({
     onEdit: (lead: Lead) => void;
     canEdit?: boolean;
 }) {
+    const { t } = useTranslation();
     const statusColumns = LEAD_STATUSES.filter((s) => !["won", "lost", "junk"].includes(s.value));
     const closedStatuses = LEAD_STATUSES.filter((s) => ["won", "lost", "junk"].includes(s.value));
 
@@ -624,7 +634,7 @@ function KanbanBoard({
                             {statusLeads.map(renderLeadCard)}
                             {statusLeads.length === 0 && (
                                 <div className="text-center py-8 text-sm text-gray-400 border-2 border-dashed rounded-lg">
-                                    Drag leads here
+                                    {t("leads.kanban.dragHere")}
                                 </div>
                             )}
                         </div>
@@ -633,7 +643,7 @@ function KanbanBoard({
             })}
             {/* Closed columns - collapsed */}
             <div className="flex-shrink-0 w-48 bg-gray-100 rounded-lg p-3">
-                <div className="text-sm font-medium text-gray-600 mb-3">Closed</div>
+                <div className="text-sm font-medium text-gray-600 mb-3">{t("leads.kanban.closed")}</div>
                 {closedStatuses.map((status) => {
                     const statusLeads = getLeadsByStatus(status.value as LeadStatus);
                     return (
@@ -658,6 +668,7 @@ function KanbanBoard({
 }
 
 export default function LeadsPage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
@@ -723,7 +734,7 @@ export default function LeadsPage() {
 
     // Bulk email dialog state
     const [showBulkEmailDialog, setShowBulkEmailDialog] = useState(false);
-    const [emailSubject, setEmailSubject] = useState("Follow-up");
+    const [emailSubject, setEmailSubject] = useState(t("leads.email.defaultSubject"));
     const [emailBody, setEmailBody] = useState("");
 
     // Load saved views from localStorage on mount
@@ -928,20 +939,20 @@ export default function LeadsPage() {
                 ? processedLeads
                 : processedLeads.filter((l) => selectedLeads.includes(l.id));
             if (dataToExport.length === 0) {
-                alert("No leads to export");
+                alert(t("leads.export.none"));
                 return;
             }
 
             const headers = [
-                "Name",
-                "Company",
-                "Email",
-                "Phone",
-                "Value",
-                "Status",
-                "Source",
-                "Last Activity",
-                "Starred",
+                t("leads.export.header.name"),
+                t("leads.export.header.company"),
+                t("leads.export.header.email"),
+                t("leads.export.header.phone"),
+                t("leads.export.header.value"),
+                t("leads.export.header.status"),
+                t("leads.export.header.source"),
+                t("leads.export.header.lastActivity"),
+                t("leads.export.header.starred"),
             ];
             const csvContent = [
                 headers.join(","),
@@ -955,7 +966,7 @@ export default function LeadsPage() {
                         lead.status,
                         `"${lead.source || ""}"`,
                         lead.lastContactedAt ? `"${formatFullDate(lead.lastContactedAt)}"` : "",
-                        lead.isStarred ? "Yes" : "No",
+                        lead.isStarred ? t("common.yes") : t("common.no"),
                     ].join(",")
                 ),
             ].join("\n");
@@ -966,7 +977,7 @@ export default function LeadsPage() {
             link.download = `leads_export_${new Date().toISOString().split("T")[0]}.csv`;
             link.click();
         },
-        [processedLeads, selectedLeads]
+        [processedLeads, selectedLeads, t]
     );
 
     const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -1089,9 +1100,9 @@ export default function LeadsPage() {
     }, []);
     const handleDelete = useCallback(
         async (id: string) => {
-            if (window.confirm("Delete?")) await deleteLead(id);
+            if (window.confirm(t("leads.confirm.delete"))) await deleteLead(id);
         },
-        [deleteLead]
+        [deleteLead, t]
     );
     const handleBulkDelete = useCallback(async () => {
         if (selectedLeads.length === 0 && selectionMode !== "all") return;
@@ -1100,23 +1111,23 @@ export default function LeadsPage() {
         const isAll = selectionMode === "all";
         const count = isAll ? totalRecords : selectedLeads.length;
 
-        if (!window.confirm(`Are you sure you want to delete ${count} leads? This action cannot be undone.`)) {
+        if (!window.confirm(t("leads.confirm.bulkDelete", { count }))) {
             return;
         }
 
         try {
             if (isAll) {
                 await bulkDeleteAllMatches();
-                alert(`Successfully deleted ${count} leads.`);
+                alert(t("leads.bulkDelete.success", { count }));
             } else {
                 await bulkDeleteLeads(selectedLeads);
             }
             handleClearSelection();
         } catch (error) {
             console.error("Bulk delete failed:", error);
-            alert("Failed to delete leads. Please try again.");
+            alert(t("leads.bulkDelete.error"));
         }
-    }, [selectedLeads, selectionMode, totalRecords, bulkDeleteLeads, bulkDeleteAllMatches, handleClearSelection]);
+    }, [selectedLeads, selectionMode, totalRecords, bulkDeleteLeads, bulkDeleteAllMatches, handleClearSelection, t]);
     const handleInlineEdit = useCallback(
         async (id: string, field: ColumnKey, value: string) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1152,14 +1163,17 @@ export default function LeadsPage() {
             if (selectedLeads.length === 0) return;
             if (
                 window.confirm(
-                    `Update ${selectionMode === "all" ? totalRecords : selectedLeads.length} leads to "${newStatus}"?`
+                    t("leads.confirm.bulkStatus", {
+                        count: selectionMode === "all" ? totalRecords : selectedLeads.length,
+                        status: newStatus,
+                    })
                 )
             ) {
                 for (const id of selectedLeads) await updateLead(id, { status: newStatus });
                 handleClearSelection();
             }
         },
-        [selectedLeads, selectionMode, totalRecords, updateLead, handleClearSelection]
+        [selectedLeads, selectionMode, totalRecords, updateLead, handleClearSelection, t]
     );
 
     // Duplicate detection
@@ -1180,24 +1194,24 @@ export default function LeadsPage() {
         const selectedLeadData = processedLeads.filter((l) => selectedLeads.includes(l.id));
         const emails = selectedLeadData.filter((l) => l.email).map((l) => l.email);
         if (emails.length === 0) {
-            alert("No email addresses found in selected leads");
+            alert(t("leads.email.noAddresses"));
             return;
         }
-        const mailto = `mailto:${emails.join(",")}?subject=Follow-up with Leads`;
+        const mailto = `mailto:${emails.join(",")}?subject=${encodeURIComponent(t("leads.email.defaultSubject"))}`;
         window.open(mailto, "_blank");
-    }, [processedLeads, selectedLeads]);
+    }, [processedLeads, selectedLeads, t]);
 
     // Open bulk email compose dialog
     const openBulkEmailCompose = useCallback(() => {
         const selectedLeadData = processedLeads.filter((l) => selectedLeads.includes(l.id));
         const leadsWithEmail = selectedLeadData.filter((l) => l.email);
         if (leadsWithEmail.length === 0) {
-            alert("No email addresses found in selected leads");
+            alert(t("leads.email.noAddresses"));
             return;
         }
-        setEmailBody(`Dear Lead,\n\nThank you for your interest. We would like to follow up...\n\nBest regards`);
+        setEmailBody(t("leads.email.defaultBody"));
         setShowBulkEmailDialog(true);
-    }, [processedLeads, selectedLeads]);
+    }, [processedLeads, selectedLeads, t]);
 
     // Handle sending bulk email
     const handleSendBulkEmail = useCallback(() => {
@@ -1211,14 +1225,14 @@ export default function LeadsPage() {
     // Open merge dialog
     const openMergeDialog = useCallback(() => {
         if (selectedLeads.length !== 2) {
-            alert("Please select exactly 2 leads to merge");
+            alert(t("leads.merge.selectTwo"));
             return;
         }
         const selected = processedLeads.filter((l) => selectedLeads.includes(l.id));
         setMergeTargetLead(selected[0]);
         setMergeSourceLead(selected[1]);
         setShowMergeDialog(true);
-    }, [selectedLeads, processedLeads]);
+    }, [selectedLeads, processedLeads, t]);
 
     // Handle merge leads
     const handleMergeLeads = useCallback(async () => {
@@ -1294,7 +1308,7 @@ export default function LeadsPage() {
     if (loading)
         return (
             <div className="space-y-4">
-                <h1 className="text-2xl font-bold">Leads</h1>
+                <h1 className="text-2xl font-bold">{t("leads.title")}</h1>
                 <TableSkeleton rows={10} columns={6} />
             </div>
         );
@@ -1311,7 +1325,7 @@ export default function LeadsPage() {
                         {can("leads-create") && (
                             <Link href="/dashboard/leads/new">
                                 <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                                    <Plus className="mr-2 h-4 w-4" /> New Lead
+                                    <Plus className="mr-2 h-4 w-4" /> {t("leads.actions.newLead")}
                                 </Button>
                             </Link>
                         )}
@@ -1324,16 +1338,18 @@ export default function LeadsPage() {
                             <DropdownMenuContent align="start">
                                 {can("leads-create") && (
                                     <DropdownMenuItem onClick={() => setShowImportWizard(true)}>
-                                        <Upload className="mr-2 h-4 w-4" /> Import
+                                        <Upload className="mr-2 h-4 w-4" /> {t("leads.actions.import")}
                                     </DropdownMenuItem>
                                 )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => exportLeads(true)}>
-                                    <Download className="mr-2 h-4 w-4" /> Export All ({processedLeads.length})
+                                    <Download className="mr-2 h-4 w-4" />{" "}
+                                    {t("leads.actions.exportAll", { count: processedLeads.length })}
                                 </DropdownMenuItem>
                                 {selectedLeads.length > 0 && (
                                     <DropdownMenuItem onClick={() => exportLeads(false)}>
-                                        <FileDown className="mr-2 h-4 w-4" /> Export Selected ({selectedLeads.length})
+                                        <FileDown className="mr-2 h-4 w-4" />{" "}
+                                        {t("leads.actions.exportSelected", { count: selectedLeads.length })}
                                     </DropdownMenuItem>
                                 )}
                             </DropdownMenuContent>
@@ -1345,18 +1361,20 @@ export default function LeadsPage() {
                                         <Badge className="mr-2 bg-blue-600">
                                             {selectionMode === "all" ? totalRecords : selectedLeads.length}
                                         </Badge>
-                                        Bulk <ChevronDown className="ml-2 h-4 w-4" />
+                                        {t("leads.bulk.button")} <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start">
                                     <DropdownMenuLabel>
-                                        With {selectionMode === "all" ? totalRecords : selectedLeads.length} selected
+                                        {t("leads.bulk.withSelected", {
+                                            count: selectionMode === "all" ? totalRecords : selectedLeads.length,
+                                        })}
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     {can("leads-edit") && (
                                         <>
                                             <DropdownMenuLabel className="text-xs text-gray-500">
-                                                Change Status To
+                                                {t("leads.bulk.changeStatusTo")}
                                             </DropdownMenuLabel>
                                             {LEAD_STATUSES.map((s) => (
                                                 <DropdownMenuItem
@@ -1370,20 +1388,20 @@ export default function LeadsPage() {
                                         </>
                                     )}
                                     <DropdownMenuItem onClick={handleBatchEmail}>
-                                        <Send className="mr-2 h-4 w-4" /> Send Email to Selected
+                                        <Send className="mr-2 h-4 w-4" /> {t("leads.bulk.sendEmail")}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={openBulkEmailCompose}>
-                                        <Mail className="mr-2 h-4 w-4" /> Compose Email...
+                                        <Mail className="mr-2 h-4 w-4" /> {t("leads.bulk.composeEmail")}
                                     </DropdownMenuItem>
                                     {selectedLeads.length === 2 && can("leads-edit") && (
                                         <DropdownMenuItem onClick={openMergeDialog}>
-                                            <GitMerge className="mr-2 h-4 w-4" /> Merge Selected
+                                            <GitMerge className="mr-2 h-4 w-4" /> {t("leads.bulk.mergeSelected")}
                                         </DropdownMenuItem>
                                     )}
                                     <DropdownMenuSeparator />
                                     {can("leads-delete") && (
                                         <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
-                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                            <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                                         </DropdownMenuItem>
                                     )}
                                 </DropdownMenuContent>
@@ -1395,7 +1413,7 @@ export default function LeadsPage() {
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Search name, company, email..."
+                                placeholder={t("leads.search.placeholder")}
                                 className="pl-9"
                                 value={localSearch}
                                 onChange={(e) => setLocalSearch(e.target.value)}
@@ -1409,7 +1427,7 @@ export default function LeadsPage() {
                                     className={hasActiveFilters ? "border-blue-500 text-blue-600" : ""}
                                 >
                                     <Filter className="mr-2 h-4 w-4" />
-                                    Filters
+                                    {t("leads.filters.button")}
                                     {hasActiveFilters && (
                                         <Badge className="ml-2 bg-blue-600 text-white h-5 min-w-[20px] px-1 rounded-full text-[10px]">
                                             {(statusFilter !== "all" ? 1 : 0) + advancedFilters.length}
@@ -1420,7 +1438,7 @@ export default function LeadsPage() {
                             <PopoverContent align="start" className="w-[520px]">
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <h4 className="font-medium">Filters</h4>
+                                        <h4 className="font-medium">{t("leads.filters.button")}</h4>
                                         {hasActiveFilters && (
                                             <Button
                                                 variant="ghost"
@@ -1428,12 +1446,12 @@ export default function LeadsPage() {
                                                 onClick={clearAllFilters}
                                                 className="text-xs"
                                             >
-                                                Clear
+                                                {t("leads.selection.clear")}
                                             </Button>
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Status</label>
+                                        <label className="text-sm font-medium">{t("common.status")}</label>
                                         <Select
                                             value={statusFilter}
                                             onValueChange={(v) => {
@@ -1445,7 +1463,7 @@ export default function LeadsPage() {
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="all">All</SelectItem>
+                                                <SelectItem value="all">{t("leads.filter.all")}</SelectItem>
                                                 {LEAD_STATUSES.map((s) => (
                                                     <SelectItem key={s.value} value={s.value}>
                                                         <div className="flex gap-2">
@@ -1457,7 +1475,7 @@ export default function LeadsPage() {
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Conditions</label>
+                                        <label className="text-sm font-medium">{t("leads.filter.conditions")}</label>
                                         <div className="space-y-2 max-h-48 overflow-y-auto">
                                             {advancedFilters.map((f, i) => (
                                                 <FilterRow
@@ -1474,7 +1492,7 @@ export default function LeadsPage() {
                                         </div>
                                         <Button variant="outline" size="sm" onClick={addFilter} className="w-full">
                                             <PlusCircle className="mr-2 h-4 w-4" />
-                                            Add condition
+                                            {t("leads.filter.addCondition")}
                                         </Button>
                                     </div>
                                 </div>
@@ -1491,7 +1509,7 @@ export default function LeadsPage() {
                                     className={activeViewId ? "border-purple-500 text-purple-600" : ""}
                                 >
                                     <LayoutList className="mr-2 h-4 w-4" />
-                                    Display
+                                    {t("leads.display.button")}
                                     {(activeViewId || savedViews.length > 0) && (
                                         <Badge className="ml-2 bg-purple-600 text-white h-5 min-w-[20px] px-1 rounded-full text-[10px]">
                                             {activeViewId ? 1 : savedViews.length}
@@ -1500,42 +1518,47 @@ export default function LeadsPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-64">
-                                <DropdownMenuLabel>Layout</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("leads.display.layout")}</DropdownMenuLabel>
                                 <div className="px-2 py-1">
                                     <div className="flex bg-gray-100 p-1 rounded-md">
                                         <button
                                             onClick={() => setViewMode("table")}
                                             className={`flex-1 flex items-center justify-center p-1 rounded text-xs font-medium transition-all ${viewMode === "table" ? "bg-white shadow" : "text-gray-500 hover:text-gray-900"}`}
                                         >
-                                            <Table2 className="h-3 w-3 mr-1" /> Table
+                                            <Table2 className="h-3 w-3 mr-1" /> {t("leads.display.table")}
                                         </button>
                                         <button
                                             onClick={() => setViewMode("kanban")}
                                             className={`flex-1 flex items-center justify-center p-1 rounded text-xs font-medium transition-all ${viewMode === "kanban" ? "bg-white shadow" : "text-gray-500 hover:text-gray-900"}`}
                                         >
-                                            <Kanban className="h-3 w-3 mr-1" /> Board
+                                            <Kanban className="h-3 w-3 mr-1" /> {t("leads.display.board")}
                                         </button>
                                     </div>
                                 </div>
                                 <DropdownMenuSeparator />
 
-                                <DropdownMenuLabel>Density</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("leads.display.density")}</DropdownMenuLabel>
                                 <DropdownMenuRadioGroup
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">
+                                        {t("leads.display.compact")}
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">
+                                        {t("leads.display.comfortable")}
+                                    </DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                                 <DropdownMenuSeparator />
 
                                 <DropdownMenuSub>
                                     <DropdownMenuSubTrigger>
-                                        <Columns className="h-4 w-4 mr-2" /> Columns ({visibleColumnsCount})
+                                        <Columns className="h-4 w-4 mr-2" />{" "}
+                                        {t("leads.columns.title", { count: visibleColumnsCount })}
                                     </DropdownMenuSubTrigger>
                                     <DropdownMenuPortal>
                                         <DropdownMenuSubContent className="w-48">
-                                            <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                                            <DropdownMenuLabel>{t("leads.columns.toggle")}</DropdownMenuLabel>
                                             <DropdownMenuSeparator />
                                             {DEFAULT_COLUMNS.map((c) => (
                                                 <DropdownMenuCheckboxItem
@@ -1555,7 +1578,7 @@ export default function LeadsPage() {
                                                     className="flex-1 text-xs"
                                                     onClick={showAllColumns}
                                                 >
-                                                    All
+                                                    {t("leads.columns.all")}
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -1563,7 +1586,7 @@ export default function LeadsPage() {
                                                     className="flex-1 text-xs"
                                                     onClick={resetColumns}
                                                 >
-                                                    Reset
+                                                    {t("leads.columns.reset")}
                                                 </Button>
                                             </div>
                                         </DropdownMenuSubContent>
@@ -1571,10 +1594,10 @@ export default function LeadsPage() {
                                 </DropdownMenuSub>
                                 <DropdownMenuSeparator />
 
-                                <DropdownMenuLabel>Saved Views</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("leads.views.title")}</DropdownMenuLabel>
                                 {savedViews.length === 0 ? (
                                     <div className="px-2 py-2 text-xs text-gray-500 text-center italic">
-                                        No saved views
+                                        {t("leads.views.none")}
                                     </div>
                                 ) : (
                                     savedViews.map((view) => (
@@ -1584,11 +1607,13 @@ export default function LeadsPage() {
                                                 <span className="flex-1 truncate">{view.name}</span>
                                                 {view.isDefault && (
                                                     <Badge variant="secondary" className="text-[10px] ml-1">
-                                                        Default
+                                                        {t("leads.views.default")}
                                                     </Badge>
                                                 )}
                                                 {activeViewId === view.id && (
-                                                    <Badge className="bg-purple-600 text-[10px] ml-1">Active</Badge>
+                                                    <Badge className="bg-purple-600 text-[10px] ml-1">
+                                                        {t("leads.views.active")}
+                                                    </Badge>
                                                 )}
                                             </DropdownMenuItem>
                                             <DropdownMenu>
@@ -1604,13 +1629,15 @@ export default function LeadsPage() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => setViewAsDefault(view.id)}>
                                                         <Star className="mr-2 h-4 w-4" />{" "}
-                                                        {view.isDefault ? "Remove Default" : "Set as Default"}
+                                                        {view.isDefault
+                                                            ? t("leads.views.removeDefault")
+                                                            : t("leads.views.setDefault")}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
                                                         className="text-red-600"
                                                         onClick={() => deleteView(view.id)}
                                                     >
-                                                        <Trash className="mr-2 h-4 w-4" /> Delete
+                                                        <Trash className="mr-2 h-4 w-4" /> {t("common.delete")}
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -1619,11 +1646,11 @@ export default function LeadsPage() {
                                 )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => setShowSaveViewDialog(true)}>
-                                    <BookmarkPlus className="mr-2 h-4 w-4" /> Save Current View
+                                    <BookmarkPlus className="mr-2 h-4 w-4" /> {t("leads.views.saveCurrent")}
                                 </DropdownMenuItem>
                                 {activeViewId && (
                                     <DropdownMenuItem onClick={() => setActiveViewId(null)}>
-                                        <X className="mr-2 h-4 w-4" /> Reset to Default
+                                        <X className="mr-2 h-4 w-4" /> {t("leads.views.resetDefault")}
                                     </DropdownMenuItem>
                                 )}
                             </DropdownMenuContent>
@@ -1641,18 +1668,16 @@ export default function LeadsPage() {
                     <DialogContent className="sm:max-w-sm">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
-                                <Save className="h-5 w-5" /> Save Current View
+                                <Save className="h-5 w-5" /> {t("leads.views.saveCurrent")}
                             </DialogTitle>
-                            <DialogDescription>
-                                Save your current filters, columns, and sort preferences.
-                            </DialogDescription>
+                            <DialogDescription>{t("leads.views.saveDescription")}</DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-2">
                             <div className="space-y-2">
-                                <Label htmlFor="view-name">View Name</Label>
+                                <Label htmlFor="view-name">{t("leads.views.nameLabel")}</Label>
                                 <Input
                                     id="view-name"
-                                    placeholder="e.g. High Value Leads"
+                                    placeholder={t("leads.views.namePlaceholder")}
                                     value={newViewName}
                                     onChange={(e) => setNewViewName(e.target.value)}
                                     onKeyDown={(e) => {
@@ -1669,11 +1694,11 @@ export default function LeadsPage() {
                                     disabled={!newViewName.trim()}
                                     onClick={() => saveCurrentView(newViewName.trim())}
                                 >
-                                    Save New
+                                    {t("leads.views.saveNew")}
                                 </Button>
                                 {activeViewId && (
                                     <Button variant="secondary" className="flex-1" onClick={updateCurrentView}>
-                                        Update Active
+                                        {t("leads.views.updateActive")}
                                     </Button>
                                 )}
                             </div>
@@ -1683,7 +1708,7 @@ export default function LeadsPage() {
                                 disabled={!newViewName.trim()}
                                 onClick={() => saveCurrentView(newViewName.trim(), true)}
                             >
-                                Save as Default View
+                                {t("leads.views.saveAsDefault")}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
@@ -1691,10 +1716,10 @@ export default function LeadsPage() {
 
                 {hasActiveFilters && (
                     <div className="flex items-center gap-2 text-sm flex-wrap">
-                        <span className="text-gray-500">Active:</span>
+                        <span className="text-gray-500">{t("leads.activeFilters.label")}</span>
                         {statusFilter !== "all" && (
                             <Badge variant="secondary" className="flex items-center gap-1">
-                                Status: {statusFilter}
+                                {t("leads.activeFilters.status", { status: statusFilter })}
                                 <button onClick={() => setStatusFilter("all")} className="ml-1 hover:text-red-500">
                                     <X className="h-3 w-3" />
                                 </button>
@@ -1754,9 +1779,11 @@ export default function LeadsPage() {
 
                         <div className="flex items-center justify-between py-2">
                             <div className="flex items-center gap-4">
-                                <span className="text-sm text-gray-600 font-medium">Total: {totalRecords}</span>
+                                <span className="text-sm text-gray-600 font-medium">
+                                    {t("leads.footer.total", { count: totalRecords })}
+                                </span>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500">Rows:</span>
+                                    <span className="text-xs text-gray-500">{t("leads.footer.rows")}</span>
                                     <Select
                                         value={recordsPerPage.toString()}
                                         onValueChange={(v) => {
@@ -1786,9 +1813,7 @@ export default function LeadsPage() {
                                 compact
                             />
                         </div>
-                        <div className="text-xs text-gray-400 text-center">
-                            ↑↓ Navigate • Enter View • Space Select • Double-click Edit • Drag headers • ★ Star to pin
-                        </div>
+                        <div className="text-xs text-gray-400 text-center">{t("leads.footer.keyboardHint")}</div>
                     </>
                 ) : (
                     <KanbanBoard
@@ -1828,22 +1853,24 @@ export default function LeadsPage() {
                     <DialogContent className="max-w-lg">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
-                                <GitMerge className="h-5 w-5" /> Merge Leads
+                                <GitMerge className="h-5 w-5" /> {t("leads.merge.title")}
                             </DialogTitle>
-                            <DialogDescription>
-                                Combine two leads into one. Missing fields from the source will be copied to the target.
-                            </DialogDescription>
+                            <DialogDescription>{t("leads.merge.description")}</DialogDescription>
                         </DialogHeader>
                         {mergeTargetLead && mergeSourceLead && (
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-3 border rounded-lg bg-green-50">
-                                        <div className="text-xs text-green-600 font-medium mb-1">TARGET (Keep)</div>
+                                        <div className="text-xs text-green-600 font-medium mb-1">
+                                            {t("leads.merge.target")}
+                                        </div>
                                         <p className="font-medium">{mergeTargetLead.name}</p>
                                         <p className="text-sm text-gray-500">{mergeTargetLead.email}</p>
                                     </div>
                                     <div className="p-3 border rounded-lg bg-red-50">
-                                        <div className="text-xs text-red-600 font-medium mb-1">SOURCE (Delete)</div>
+                                        <div className="text-xs text-red-600 font-medium mb-1">
+                                            {t("leads.merge.source")}
+                                        </div>
                                         <p className="font-medium">{mergeSourceLead.name}</p>
                                         <p className="text-sm text-gray-500">{mergeSourceLead.email}</p>
                                     </div>
@@ -1852,10 +1879,10 @@ export default function LeadsPage() {
                         )}
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setShowMergeDialog(false)}>
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button onClick={handleMergeLeads} className="bg-green-600 hover:bg-green-700">
-                                Merge Leads
+                                {t("leads.merge.confirm")}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
@@ -1866,35 +1893,37 @@ export default function LeadsPage() {
                     <DialogContent className="max-w-lg">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
-                                <Mail className="h-5 w-5" /> Compose Email
+                                <Mail className="h-5 w-5" /> {t("leads.composeDialog.title")}
                             </DialogTitle>
-                            <DialogDescription>Send email to {selectedLeads.length} selected leads.</DialogDescription>
+                            <DialogDescription>
+                                {t("leads.composeDialog.description", { count: selectedLeads.length })}
+                            </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label>Subject</Label>
+                                <Label>{t("leads.composeDialog.subject")}</Label>
                                 <Input
                                     value={emailSubject}
                                     onChange={(e) => setEmailSubject(e.target.value)}
-                                    placeholder="Enter subject..."
+                                    placeholder={t("leads.composeDialog.subjectPlaceholder")}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Message</Label>
+                                <Label>{t("leads.composeDialog.message")}</Label>
                                 <Textarea
                                     value={emailBody}
                                     onChange={(e) => setEmailBody(e.target.value)}
-                                    placeholder="Write your message..."
+                                    placeholder={t("leads.composeDialog.messagePlaceholder")}
                                     className="min-h-[150px]"
                                 />
                             </div>
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setShowBulkEmailDialog(false)}>
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button onClick={handleSendBulkEmail}>
-                                <Send className="mr-2 h-4 w-4" /> Open in Email Client
+                                <Send className="mr-2 h-4 w-4" /> {t("leads.composeDialog.openInClient")}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

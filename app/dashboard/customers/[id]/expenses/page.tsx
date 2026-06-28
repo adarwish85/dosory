@@ -108,10 +108,11 @@ function Pagination({
     startRecord: number;
     endRecord: number;
 }) {
+    const { t } = useTranslation();
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
-                Showing {startRecord} to {endRecord} of {totalRecords}
+                {t("customers.pagination.showing", { start: startRecord, end: endRecord, total: totalRecords })}
             </span>
             <div className="flex items-center gap-1">
                 <Button
@@ -287,8 +288,10 @@ export default function ExpensesPage() {
         a.download = "expenses-export.csv";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Exported successfully");
+        toast.success(t("customers.toast.exported"));
     };
+
+    const columnLabel = (key: ColumnKey) => t(`customers.expenses.columns.${key}`);
 
     // Keyboard navigation
     const handleKeyDown = useCallback(
@@ -318,7 +321,7 @@ export default function ExpensesPage() {
         return (
             <div className="p-8 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading expenses...
+                {t("customers.expenses.loading")}
             </div>
         );
     }
@@ -327,11 +330,11 @@ export default function ExpensesPage() {
         <TooltipProvider>
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Expenses</h1>
+                    <h1 className="text-2xl font-bold">{t("customers.expenses.title")}</h1>
                     <Link href={`/dashboard/expenses/new?customerId=${customerId}`}>
                         <Button className="bg-gray-900 text-white hover:bg-gray-800">
                             <Plus className="mr-2 h-4 w-4" />
-                            New Expense
+                            {t("customers.expenses.new")}
                         </Button>
                     </Link>
                 </div>
@@ -341,17 +344,19 @@ export default function ExpensesPage() {
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-blue-600 mb-1">
                             <Receipt className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">Total</span>
+                            <span className="text-xs font-medium uppercase">{t("customers.stats.total")}</span>
                         </div>
                         <div className="text-2xl font-bold text-blue-900">
                             {formatExpenseCurrency(expenseStats.total)}
                         </div>
-                        <div className="text-xs text-blue-500 mt-1">{expenseStats.count} records</div>
+                        <div className="text-xs text-blue-500 mt-1">
+                            {t("customers.expenses.records", { count: expenseStats.count })}
+                        </div>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-green-600 mb-1">
                             <CircleDollarSign className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">Billable</span>
+                            <span className="text-xs font-medium uppercase">{t("customers.expenses.billable")}</span>
                         </div>
                         <div className="text-2xl font-bold text-green-900">
                             {formatExpenseCurrency(expenseStats.billable)}
@@ -360,7 +365,9 @@ export default function ExpensesPage() {
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-gray-600 mb-1">
                             <CircleOff className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">Non-Billable</span>
+                            <span className="text-xs font-medium uppercase">
+                                {t("customers.expenses.nonBillable")}
+                            </span>
                         </div>
                         <div className="text-2xl font-bold text-gray-900">
                             {formatExpenseCurrency(expenseStats.nonBillable)}
@@ -375,14 +382,15 @@ export default function ExpensesPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <MoreVertical className="h-4 w-4 mr-1" />
-                                Actions
+                                {t("common.actions")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                             <DropdownMenuItem onClick={handleExport}>
                                 <Download className="h-4 w-4 mr-2" />
-                                Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                {t("common.export")}{" "}
+                                {selectedIds.length > 0 ? `(${selectedIds.length})` : t("common.all")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -392,28 +400,32 @@ export default function ExpensesPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <LayoutList className="h-4 w-4 mr-1" />
-                                Display
+                                {t("customers.toolbar.display")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-48">
-                            <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.toolbar.rowDensity")}</DropdownMenuLabel>
                             <DropdownMenuRadioGroup
                                 value={rowDensity}
                                 onValueChange={(v) => setRowDensity(v as RowDensity)}
                             >
-                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="compact">
+                                    {t("customers.toolbar.compact")}
+                                </DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="comfortable">
+                                    {t("customers.toolbar.comfortable")}
+                                </DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.toolbar.columns")}</DropdownMenuLabel>
                             {DEFAULT_COLUMNS.map((col) => (
                                 <DropdownMenuCheckboxItem
                                     key={col.key}
                                     checked={columnVisibility[col.key]}
                                     onCheckedChange={() => toggleColumn(col.key)}
                                 >
-                                    {col.label}
+                                    {columnLabel(col.key)}
                                 </DropdownMenuCheckboxItem>
                             ))}
                         </DropdownMenuContent>
@@ -435,7 +447,7 @@ export default function ExpensesPage() {
                                 <RotateCcw className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Reset filters</TooltipContent>
+                        <TooltipContent>{t("customers.toolbar.resetFilters")}</TooltipContent>
                     </Tooltip>
 
                     <div className="flex-1" />
@@ -463,7 +475,7 @@ export default function ExpensesPage() {
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search..."
+                            placeholder={t("common.search")}
                             className="pl-9"
                             autoComplete="new-password"
                             name="expenses-search-nofill"
@@ -491,14 +503,14 @@ export default function ExpensesPage() {
                 {selectedIds.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
                         <span className="text-blue-800 text-sm font-medium">
-                            {selectedIds.length} expense{selectedIds.length > 1 ? "s" : ""} selected
+                            {t("customers.expenses.selected", { count: selectedIds.length })}
                         </span>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                                Select All ({processedExpenses.length})
+                                {t("customers.selection.selectAll", { count: processedExpenses.length })}
                             </Button>
                             <Button variant="outline" size="sm" onClick={handleClearSelection}>
-                                Clear
+                                {t("customers.selection.clear")}
                             </Button>
                         </div>
                     </div>
@@ -533,7 +545,7 @@ export default function ExpensesPage() {
                                                 className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200"
                                                 onClick={() => handleSort(col.key)}
                                             >
-                                                {col.label}
+                                                {columnLabel(col.key)}
                                                 {sortKey === col.key ? (
                                                     sortDirection === "asc" ? (
                                                         <ArrowUp className="ml-1 h-4 w-4" />
@@ -545,12 +557,12 @@ export default function ExpensesPage() {
                                                 )}
                                             </Button>
                                         ) : (
-                                            col.label
+                                            columnLabel(col.key)
                                         )}
                                     </TableHead>
                                 ))}
                                 <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">
-                                    Actions
+                                    {t("common.actions")}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -562,8 +574,10 @@ export default function ExpensesPage() {
                                         className="text-center py-8 text-gray-500"
                                     >
                                         {searchQuery
-                                            ? "No expenses match your search."
-                                            : `No expenses found for ${customer?.company || "this customer"}.`}
+                                            ? t("customers.expenses.emptySearch")
+                                            : t("customers.expenses.empty", {
+                                                  customer: customer?.company || t("customers.thisCustomer"),
+                                              })}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -603,7 +617,7 @@ export default function ExpensesPage() {
                                                     <Badge
                                                         className={`${getBillableBadge(expense.billable)} font-normal`}
                                                     >
-                                                        {expense.billable ? "Yes" : "No"}
+                                                        {expense.billable ? t("common.yes") : t("common.no")}
                                                     </Badge>
                                                 )}
                                             </TableCell>
@@ -618,7 +632,7 @@ export default function ExpensesPage() {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>View</TooltipContent>
+                                                    <TooltipContent>{t("common.view")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -628,7 +642,7 @@ export default function ExpensesPage() {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Edit</TooltipContent>
+                                                    <TooltipContent>{t("common.edit")}</TooltipContent>
                                                 </Tooltip>
                                             </div>
                                         </TableCell>

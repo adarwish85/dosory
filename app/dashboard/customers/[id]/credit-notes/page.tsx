@@ -46,6 +46,7 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 // Types
 type SortDirection = "asc" | "desc" | null;
@@ -61,10 +62,10 @@ interface ColumnDef {
 }
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
-    { key: "number", label: "Credit Note #", defaultVisible: true, sortable: true, width: 140 },
-    { key: "amount", label: "Amount", defaultVisible: true, sortable: true, width: 120 },
-    { key: "date", label: "Date", defaultVisible: true, sortable: true, width: 120 },
-    { key: "status", label: "Status", defaultVisible: true, sortable: true, width: 100 },
+    { key: "number", label: "customers.creditNotes.col.number", defaultVisible: true, sortable: true, width: 140 },
+    { key: "amount", label: "customers.creditNotes.col.amount", defaultVisible: true, sortable: true, width: 120 },
+    { key: "date", label: "common.date", defaultVisible: true, sortable: true, width: 120 },
+    { key: "status", label: "common.status", defaultVisible: true, sortable: true, width: 100 },
 ];
 
 const ROW_DENSITY_STYLES: Record<RowDensity, string> = { compact: "py-1 text-xs", comfortable: "py-3 text-sm" };
@@ -105,10 +106,11 @@ function Pagination({
     startRecord: number;
     endRecord: number;
 }) {
+    const { t } = useTranslation();
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
-                Showing {startRecord} to {endRecord} of {totalRecords}
+                {t("customers.pagination.showing", { start: startRecord, end: endRecord, total: totalRecords })}
             </span>
             <div className="flex items-center gap-1">
                 <Button
@@ -156,6 +158,7 @@ function Pagination({
 }
 
 export default function CreditNotesPage() {
+    const { t } = useTranslation();
     const { customer, loading: customerLoading, customerId } = useCustomer();
     const { creditNotes, loading: creditNotesLoading } = useCreditNotes({ customerId: customerId || undefined });
     const tableRef = useRef<HTMLDivElement>(null);
@@ -295,7 +298,7 @@ export default function CreditNotesPage() {
         a.download = "credit-notes-export.csv";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Exported successfully");
+        toast.success(t("customers.toast.exportSuccess"));
     };
 
     // Keyboard navigation
@@ -326,7 +329,7 @@ export default function CreditNotesPage() {
         return (
             <div className="p-8 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading credit notes...
+                {t("customers.creditNotes.loading")}
             </div>
         );
     }
@@ -335,11 +338,11 @@ export default function CreditNotesPage() {
         <TooltipProvider>
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Credit Notes</h1>
+                    <h1 className="text-2xl font-bold">{t("customers.creditNotes.title")}</h1>
                     <Link href={`/dashboard/sales/credit-notes/new?customerId=${customerId}`}>
                         <Button className="bg-gray-900 text-white hover:bg-gray-800">
                             <Plus className="mr-2 h-4 w-4" />
-                            Create Credit Note
+                            {t("customers.creditNotes.create")}
                         </Button>
                     </Link>
                 </div>
@@ -349,14 +352,14 @@ export default function CreditNotesPage() {
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-blue-600 mb-1">
                             <CreditCard className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">Open Credits</span>
+                            <span className="text-xs font-medium uppercase">{t("customers.creditNotes.openCredits")}</span>
                         </div>
                         <div className="text-2xl font-bold text-blue-900">{formatCurrency(openTotal)}</div>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-green-600 mb-1">
                             <CircleCheck className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">Applied Credits</span>
+                            <span className="text-xs font-medium uppercase">{t("customers.creditNotes.appliedCredits")}</span>
                         </div>
                         <div className="text-2xl font-bold text-green-900">{formatCurrency(closedTotal)}</div>
                     </div>
@@ -369,14 +372,16 @@ export default function CreditNotesPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <MoreVertical className="h-4 w-4 mr-1" />
-                                Actions
+                                {t("common.actions")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                             <DropdownMenuItem onClick={handleExport}>
                                 <Download className="h-4 w-4 mr-2" />
-                                Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                {selectedIds.length > 0
+                                    ? t("customers.toolbar.exportCount", { count: selectedIds.length })
+                                    : t("customers.toolbar.exportAll")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -386,28 +391,28 @@ export default function CreditNotesPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <LayoutList className="h-4 w-4 mr-1" />
-                                Display
+                                {t("customers.toolbar.display")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-48">
-                            <DropdownMenuLabel>Row Density</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.toolbar.rowDensity")}</DropdownMenuLabel>
                             <DropdownMenuRadioGroup
                                 value={rowDensity}
                                 onValueChange={(v) => setRowDensity(v as RowDensity)}
                             >
-                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="compact">{t("customers.toolbar.compact")}</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="comfortable">{t("customers.toolbar.comfortable")}</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("customers.toolbar.columns")}</DropdownMenuLabel>
                             {DEFAULT_COLUMNS.map((col) => (
                                 <DropdownMenuCheckboxItem
                                     key={col.key}
                                     checked={columnVisibility[col.key]}
                                     onCheckedChange={() => toggleColumn(col.key)}
                                 >
-                                    {col.label}
+                                    {t(col.label)}
                                 </DropdownMenuCheckboxItem>
                             ))}
                         </DropdownMenuContent>
@@ -429,7 +434,7 @@ export default function CreditNotesPage() {
                                 <RotateCcw className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Reset filters</TooltipContent>
+                        <TooltipContent>{t("customers.toolbar.resetFilters")}</TooltipContent>
                     </Tooltip>
 
                     <div className="flex-1" />
@@ -457,7 +462,7 @@ export default function CreditNotesPage() {
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search..."
+                            placeholder={t("common.search")}
                             className="pl-9"
                             autoComplete="new-password"
                             name="creditnotes-search-nofill"
@@ -485,14 +490,16 @@ export default function CreditNotesPage() {
                 {selectedIds.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
                         <span className="text-blue-800 text-sm font-medium">
-                            {selectedIds.length} credit note{selectedIds.length > 1 ? "s" : ""} selected
+                            {selectedIds.length > 1
+                                ? t("customers.creditNotes.selectedPlural", { count: selectedIds.length })
+                                : t("customers.creditNotes.selectedSingular", { count: selectedIds.length })}
                         </span>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                                Select All ({processedCreditNotes.length})
+                                {t("customers.selection.selectAll", { count: processedCreditNotes.length })}
                             </Button>
                             <Button variant="outline" size="sm" onClick={handleClearSelection}>
-                                Clear
+                                {t("customers.selection.clear")}
                             </Button>
                         </div>
                     </div>
@@ -527,7 +534,7 @@ export default function CreditNotesPage() {
                                                 className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200"
                                                 onClick={() => handleSort(col.key)}
                                             >
-                                                {col.label}
+                                                {t(col.label)}
                                                 {sortKey === col.key ? (
                                                     sortDirection === "asc" ? (
                                                         <ArrowUp className="ml-1 h-4 w-4" />
@@ -539,12 +546,12 @@ export default function CreditNotesPage() {
                                                 )}
                                             </Button>
                                         ) : (
-                                            col.label
+                                            t(col.label)
                                         )}
                                     </TableHead>
                                 ))}
                                 <TableHead className="w-20 font-semibold text-gray-900 bg-gray-100/50">
-                                    Actions
+                                    {t("common.actions")}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -556,8 +563,8 @@ export default function CreditNotesPage() {
                                         className="text-center py-8 text-gray-500"
                                     >
                                         {searchQuery
-                                            ? "No credit notes match your search."
-                                            : `No credit notes found for ${customer?.company || "this customer"}.`}
+                                            ? t("customers.creditNotes.emptySearch")
+                                            : t("customers.creditNotes.emptyForCustomer", { customer: customer?.company || t("customers.thisCustomer") })}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -611,7 +618,7 @@ export default function CreditNotesPage() {
                                                             <Eye className="h-4 w-4 text-gray-500" />
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>View</TooltipContent>
+                                                    <TooltipContent>{t("customers.actions.view")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -619,7 +626,7 @@ export default function CreditNotesPage() {
                                                             <Pencil className="h-4 w-4 text-gray-500" />
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Edit</TooltipContent>
+                                                    <TooltipContent>{t("common.edit")}</TooltipContent>
                                                 </Tooltip>
                                             </div>
                                         </TableCell>

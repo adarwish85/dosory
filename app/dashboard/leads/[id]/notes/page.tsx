@@ -53,6 +53,7 @@ import { collection, addDoc, deleteDoc, doc, updateDoc, onSnapshot, Timestamp } 
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 // Types
 type SortDirection = "asc" | "desc" | null;
@@ -111,6 +112,7 @@ function Pagination({
     totalRecords,
     startRecord,
     endRecord,
+    showingLabel,
 }: {
     currentPage: number;
     totalPages: number;
@@ -118,11 +120,12 @@ function Pagination({
     totalRecords: number;
     startRecord: number;
     endRecord: number;
+    showingLabel: string;
 }) {
     return (
         <div className="flex items-center justify-between text-sm text-gray-600">
             <span>
-                Showing {startRecord} to {endRecord} of {totalRecords}
+                {showingLabel}
             </span>
             <div className="flex items-center gap-1">
                 <Button
@@ -173,7 +176,14 @@ export default function LeadNotesPage() {
     const { lead, loading: leadLoading } = useLead();
     const leadId = lead?.id;
     const { user } = useAuth();
+    const { t } = useTranslation();
     const tableRef = useRef<HTMLDivElement>(null);
+
+    const COLUMN_LABELS: Record<ColumnKey, string> = {
+        description: t("leads.notes.table.description"),
+        addedFrom: t("leads.notes.table.addedFrom"),
+        dateAdded: t("leads.notes.table.dateAdded"),
+    };
 
     // Data State
     const [notes, setNotes] = useState<Note[]>([]);
@@ -234,16 +244,16 @@ export default function LeadNotesPage() {
             const notesRef = collection(db, "leads", leadId, "notes");
             await addDoc(notesRef, {
                 description: newNoteText,
-                addedFrom: user?.email || "System",
+                addedFrom: user?.email || t("leads.notes.system"),
                 dateAdded: new Date().toLocaleString(),
                 createdAt: Timestamp.now(),
             });
             setNewNoteText("");
             setShowNewNote(false);
-            toast.success("Note added successfully");
+            toast.success(t("leads.notes.addSuccess"));
         } catch (error) {
             console.error("Error saving note:", error);
-            toast.error("Failed to save note");
+            toast.error(t("leads.notes.addError"));
         } finally {
             setSaving(false);
         }
@@ -255,10 +265,10 @@ export default function LeadNotesPage() {
             const noteRef = doc(db, "leads", leadId, "notes", id);
             await updateDoc(noteRef, { description: editText });
             setEditingId(null);
-            toast.success("Note updated");
+            toast.success(t("leads.notes.updateSuccess"));
         } catch (error) {
             console.error("Error updating note:", error);
-            toast.error("Failed to update note");
+            toast.error(t("leads.notes.updateError"));
         }
     };
 
@@ -268,10 +278,10 @@ export default function LeadNotesPage() {
             const noteRef = doc(db, "leads", leadId, "notes", id);
             await deleteDoc(noteRef);
             setSelectedIds((prev) => prev.filter((i) => i !== id));
-            toast.success("Note deleted");
+            toast.success(t("leads.notes.deleteSuccess"));
         } catch (error) {
             console.error("Error deleting note:", error);
-            toast.error("Failed to delete note");
+            toast.error(t("leads.notes.deleteError"));
         }
     };
 
@@ -280,9 +290,9 @@ export default function LeadNotesPage() {
         try {
             await Promise.all(selectedIds.map((id) => deleteDoc(doc(db, "leads", leadId, "notes", id))));
             setSelectedIds([]);
-            toast.success(`Deleted ${selectedIds.length} notes`);
+            toast.success(t("leads.notes.bulkDeleteSuccess", { count: selectedIds.length }));
         } catch (error) {
-            toast.error("Failed to delete notes");
+            toast.error(t("leads.notes.bulkDeleteError"));
         }
     };
 
@@ -290,7 +300,7 @@ export default function LeadNotesPage() {
     const handleExport = () => {
         const dataToExport = selectedIds.length > 0 ? notes.filter((n) => selectedIds.includes(n.id)) : processedNotes;
         const csv = [
-            "Description,Added From,Date Added",
+            `${t("leads.notes.table.description")},${t("leads.notes.table.addedFrom")},${t("leads.notes.table.dateAdded")}`,
             ...dataToExport.map((n) => `"${n.description.replace(/"/g, '""')}","${n.addedFrom}","${n.dateAdded}"`),
         ].join("\n");
         const blob = new Blob([csv], { type: "text/csv" });
@@ -300,7 +310,7 @@ export default function LeadNotesPage() {
         a.download = "lead-notes-export.csv";
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Exported successfully");
+        toast.success(t("leads.notes.exportSuccess"));
     };
 
     // Sort handler
@@ -414,7 +424,7 @@ export default function LeadNotesPage() {
         return (
             <div className="p-8 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading notes...
+                {t("leads.notes.loading")}
             </div>
         );
     }
@@ -423,13 +433,13 @@ export default function LeadNotesPage() {
         <TooltipProvider>
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Notes</h1>
+                    <h1 className="text-2xl font-bold">{t("leads.notes.title")}</h1>
                     <Button
                         className="bg-gray-900 text-white hover:bg-gray-800"
                         onClick={() => setShowNewNote(!showNewNote)}
                     >
                         <Plus className="mr-2 h-4 w-4" />
-                        {showNewNote ? "Cancel" : "New Note"}
+                        {showNewNote ? t("common.cancel") : t("leads.notes.newNote")}
                     </Button>
                 </div>
 
@@ -437,7 +447,7 @@ export default function LeadNotesPage() {
                 {showNewNote && (
                     <div className="bg-white rounded-lg border p-4 space-y-3">
                         <Textarea
-                            placeholder="Enter note description..."
+                            placeholder={t("leads.notes.descriptionPlaceholder")}
                             className="min-h-[100px]"
                             value={newNoteText}
                             onChange={(e) => setNewNoteText(e.target.value)}
@@ -450,7 +460,7 @@ export default function LeadNotesPage() {
                                     setNewNoteText("");
                                 }}
                             >
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button
                                 className="bg-gray-900 text-white hover:bg-gray-800"
@@ -460,10 +470,10 @@ export default function LeadNotesPage() {
                                 {saving ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Saving...
+                                        {t("leads.notes.saving")}
                                     </>
                                 ) : (
-                                    "Save Note"
+                                    t("leads.notes.saveNote")
                                 )}
                             </Button>
                         </div>
@@ -477,20 +487,20 @@ export default function LeadNotesPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <MoreVertical className="h-4 w-4 mr-1" />
-                                Actions
+                                {t("common.actions")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                             <DropdownMenuItem onClick={handleExport}>
                                 <Download className="h-4 w-4 mr-2" />
-                                Export {selectedIds.length > 0 ? `(${selectedIds.length})` : "All"}
+                                {t("leads.notes.export")} {selectedIds.length > 0 ? `(${selectedIds.length})` : t("leads.notes.all")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {selectedIds.length > 0 && (
                                 <DropdownMenuItem onClick={handleBulkDelete} className="text-red-600">
                                     <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete Selected ({selectedIds.length})
+                                    {t("leads.notes.deleteSelected", { count: selectedIds.length })}
                                 </DropdownMenuItem>
                             )}
                         </DropdownMenuContent>
@@ -501,28 +511,28 @@ export default function LeadNotesPage() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <LayoutList className="h-4 w-4 mr-1" />
-                                Display
+                                {t("leads.notes.display")}
                                 <ChevronDown className="ml-1 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-48">
-                            <DropdownMenuLabel>Density</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("leads.notes.density")}</DropdownMenuLabel>
                             <DropdownMenuRadioGroup
                                 value={rowDensity}
                                 onValueChange={(v) => setRowDensity(v as RowDensity)}
                             >
-                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="compact">{t("leads.notes.compact")}</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="comfortable">{t("leads.notes.comfortable")}</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("leads.notes.columns")}</DropdownMenuLabel>
                             {DEFAULT_COLUMNS.map((col) => (
                                 <DropdownMenuCheckboxItem
                                     key={col.key}
                                     checked={columnVisibility[col.key]}
                                     onCheckedChange={() => toggleColumn(col.key)}
                                 >
-                                    {col.label}
+                                    {COLUMN_LABELS[col.key]}
                                 </DropdownMenuCheckboxItem>
                             ))}
                         </DropdownMenuContent>
@@ -544,7 +554,7 @@ export default function LeadNotesPage() {
                                 <RotateCcw className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Reset filters</TooltipContent>
+                        <TooltipContent>{t("leads.notes.resetFilters")}</TooltipContent>
                     </Tooltip>
 
                     <div className="flex-1" />
@@ -572,7 +582,7 @@ export default function LeadNotesPage() {
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search..."
+                            placeholder={t("common.search")}
                             className="pl-9"
                             autoComplete="new-password"
                             name="notes-search-nofill"
@@ -593,6 +603,11 @@ export default function LeadNotesPage() {
                         totalRecords={processedNotes.length}
                         startRecord={startRecord}
                         endRecord={endRecord}
+                        showingLabel={t("leads.notes.showing", {
+                            start: startRecord,
+                            end: endRecord,
+                            total: processedNotes.length,
+                        })}
                     />
                 )}
 
@@ -600,14 +615,14 @@ export default function LeadNotesPage() {
                 {selectedIds.length > 0 && (
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-center justify-between">
                         <span className="text-blue-800 text-sm font-medium">
-                            {selectedIds.length} note{selectedIds.length > 1 ? "s" : ""} selected
+                            {t("leads.notes.selectedCount", { count: selectedIds.length })}
                         </span>
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                                Select All ({processedNotes.length})
+                                {t("leads.notes.selectAll", { count: processedNotes.length })}
                             </Button>
                             <Button variant="outline" size="sm" onClick={handleClearSelection}>
-                                Clear
+                                {t("leads.notes.clear")}
                             </Button>
                         </div>
                     </div>
@@ -642,7 +657,7 @@ export default function LeadNotesPage() {
                                                 className="h-8 px-2 -ml-2 font-semibold hover:bg-gray-200"
                                                 onClick={() => handleSort(col.key)}
                                             >
-                                                {col.label}
+                                                {COLUMN_LABELS[col.key]}
                                                 {sortKey === col.key ? (
                                                     sortDirection === "asc" ? (
                                                         <ArrowUp className="ml-1 h-4 w-4" />
@@ -654,12 +669,12 @@ export default function LeadNotesPage() {
                                                 )}
                                             </Button>
                                         ) : (
-                                            col.label
+                                            COLUMN_LABELS[col.key]
                                         )}
                                     </TableHead>
                                 ))}
                                 <TableHead className="w-24 font-semibold text-gray-900 bg-gray-100/50">
-                                    Actions
+                                    {t("common.actions")}
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -671,8 +686,8 @@ export default function LeadNotesPage() {
                                         className="text-center py-8 text-gray-500"
                                     >
                                         {searchQuery
-                                            ? "No notes match your search."
-                                            : "No notes found. Add a note to get started."}
+                                            ? t("leads.notes.emptySearch")
+                                            : t("leads.notes.empty")}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -708,14 +723,14 @@ export default function LeadNotesPage() {
                                                                     size="sm"
                                                                     onClick={() => setEditingId(null)}
                                                                 >
-                                                                    Cancel
+                                                                    {t("common.cancel")}
                                                                 </Button>
                                                                 <Button
                                                                     size="sm"
                                                                     className="bg-gray-900 hover:bg-gray-800 text-white"
                                                                     onClick={() => saveEdit(note.id)}
                                                                 >
-                                                                    Save
+                                                                    {t("common.save")}
                                                                 </Button>
                                                             </div>
                                                         </div>
@@ -756,7 +771,7 @@ export default function LeadNotesPage() {
                                                             <SquarePen className="h-4 w-4 text-gray-500" />
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Edit</TooltipContent>
+                                                    <TooltipContent>{t("common.edit")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -769,7 +784,7 @@ export default function LeadNotesPage() {
                                                             <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Delete</TooltipContent>
+                                                    <TooltipContent>{t("common.delete")}</TooltipContent>
                                                 </Tooltip>
                                             </div>
                                         </TableCell>
@@ -789,6 +804,11 @@ export default function LeadNotesPage() {
                         totalRecords={processedNotes.length}
                         startRecord={startRecord}
                         endRecord={endRecord}
+                        showingLabel={t("leads.notes.showing", {
+                            start: startRecord,
+                            end: endRecord,
+                            total: processedNotes.length,
+                        })}
                     />
                 )}
 
@@ -796,13 +816,13 @@ export default function LeadNotesPage() {
                 <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Note?</AlertDialogTitle>
+                            <AlertDialogTitle>{t("leads.notes.deleteTitle")}</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this note.
+                                {t("leads.notes.deleteDescription")}
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                             <AlertDialogAction
                                 className="bg-red-600 hover:bg-red-700"
                                 onClick={() => {
@@ -810,7 +830,7 @@ export default function LeadNotesPage() {
                                     setDeletingId(null);
                                 }}
                             >
-                                Delete
+                                {t("common.delete")}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
