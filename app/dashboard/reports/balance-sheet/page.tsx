@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCurrency } from "@/lib/hooks/use-currency";
 import { Download, RefreshCcw } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export default function BalanceSheetPage() {
+    const { t } = useTranslation();
     const { getBalanceSheet, loading } = useFinancialReports();
     const { accounts } = useFinance();
     const { formatCurrency } = useCurrency();
@@ -57,13 +59,13 @@ export default function BalanceSheetPage() {
                 {/* For Equity, add Net Income Line */}
                 {type === "equity" && report && report.netIncomeYTD !== 0 && (
                     <div className="flex justify-between py-1 text-sm font-medium text-blue-600">
-                        <span>Net Income (YTD)</span>
+                        <span>{t("reports.netIncomeYTD")}</span>
                         <span className="font-mono">{formatCurrency(report.netIncomeYTD)}</span>
                     </div>
                 )}
 
                 <div className="flex justify-between py-2 font-bold border-t mt-2">
-                    <span>Total {title}</span>
+                    <span>{t("reports.totalLabel", { label: title })}</span>
                     <span>{formatCurrency(total)}</span>
                 </div>
             </div>
@@ -72,15 +74,15 @@ export default function BalanceSheetPage() {
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
-            <PageHeader title="Balance Sheet" description="Financial position of your organization as of today.">
+            <PageHeader title={t("reports.balanceSheet")} description={t("reports.balanceSheet.description")}>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={fetchReport} disabled={loading}>
                         <RefreshCcw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                        Refresh
+                        {t("reports.refresh")}
                     </Button>
                     <Button variant="outline">
                         <Download className="mr-2 h-4 w-4" />
-                        Export PDF
+                        {t("reports.exportPdf")}
                     </Button>
                 </div>
             </PageHeader>
@@ -89,21 +91,26 @@ export default function BalanceSheetPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                     <Card className="md:col-span-1">
                         <CardHeader>
-                            <CardTitle>Assets</CardTitle>
+                            <CardTitle>{t("reports.assets")}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <AccountSection title="Assets" type="asset" accounts={accounts} total={report.assets} />
+                            <AccountSection
+                                title={t("reports.assets")}
+                                type="asset"
+                                accounts={accounts}
+                                total={report.assets}
+                            />
                         </CardContent>
                     </Card>
 
                     <Card className="md:col-span-1 space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Liabilities</CardTitle>
+                                <CardTitle>{t("reports.liabilities")}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <AccountSection
-                                    title="Liabilities"
+                                    title={t("reports.liabilities")}
                                     type="liability"
                                     accounts={accounts}
                                     total={report.liabilities}
@@ -113,11 +120,11 @@ export default function BalanceSheetPage() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Equity</CardTitle>
+                                <CardTitle>{t("reports.equity")}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <AccountSection
-                                    title="Equity"
+                                    title={t("reports.equity")}
                                     type="equity"
                                     accounts={accounts}
                                     total={report.equity}
@@ -128,7 +135,7 @@ export default function BalanceSheetPage() {
                         <Card className="bg-gray-50">
                             <CardContent className="pt-6">
                                 <div className="flex justify-between text-lg font-bold">
-                                    <span>Total Liabilities & Equity</span>
+                                    <span>{t("reports.totalLiabilitiesEquity")}</span>
                                     <span>{formatCurrency(report.liabilities + report.equity)}</span>
                                 </div>
                             </CardContent>

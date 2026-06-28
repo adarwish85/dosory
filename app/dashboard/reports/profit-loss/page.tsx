@@ -11,8 +11,10 @@ import { format, startOfMonth, endOfMonth } from "date-fns";
 import { CalendarIcon, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCurrency } from "@/lib/hooks/use-currency";
+import { useTranslation } from "@/lib/i18n";
 
 export default function ProfitLossPage() {
+    const { t } = useTranslation();
     const { getProfitAndLoss, loading } = useFinancialReports();
     const { formatCurrency } = useCurrency();
     const [date, setDate] = useState<{ from: Date; to: Date }>({
@@ -35,13 +37,10 @@ export default function ProfitLossPage() {
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
-            <PageHeader
-                title="Profit & Loss"
-                description="Analyze your income, expenses, and net profit over a specific period."
-            >
+            <PageHeader title={t("reports.profitLoss")} description={t("reports.pnl.description")}>
                 <Button variant="outline">
                     <Download className="mr-2 h-4 w-4" />
-                    Export PDF
+                    {t("reports.exportPdf")}
                 </Button>
             </PageHeader>
 
@@ -67,7 +66,7 @@ export default function ProfitLossPage() {
                                         format(date.from, "LLL dd, y")
                                     )
                                 ) : (
-                                    <span>Pick a date range</span>
+                                    <span>{t("reports.pickDateRange")}</span>
                                 )}
                             </Button>
                         </PopoverTrigger>
@@ -84,7 +83,7 @@ export default function ProfitLossPage() {
                     </Popover>
                 </div>
                 <Button onClick={runReport} disabled={loading || !date.from || !date.to}>
-                    {loading ? "Running..." : "Run Report"}
+                    {loading ? t("reports.running") : t("reports.runReport")}
                 </Button>
             </div>
 
@@ -92,7 +91,7 @@ export default function ProfitLossPage() {
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Income</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("reports.totalIncome")}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-green-600">{formatCurrency(report.income)}</div>
@@ -100,7 +99,7 @@ export default function ProfitLossPage() {
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("reports.totalExpenses")}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-red-600">{formatCurrency(report.expenses)}</div>
@@ -108,7 +107,7 @@ export default function ProfitLossPage() {
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Net Income</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("reports.netIncome")}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div
@@ -124,22 +123,22 @@ export default function ProfitLossPage() {
             {report && (
                 <Card>
                     <CardHeader>
-                        <CardTitle>Detailed Breakdown</CardTitle>
+                        <CardTitle>{t("reports.detailedBreakdown")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
                             {Object.keys(report.byCategory).length === 0 ? (
-                                <p className="text-sm text-gray-500">No transactions found for this period.</p>
+                                <p className="text-sm text-gray-500">{t("reports.noTransactionsPeriod")}</p>
                             ) : (
                                 <div className="border rounded-lg overflow-hidden">
                                     <table className="min-w-full divide-y divide-gray-200">
                                         <thead className="bg-gray-50">
                                             <tr>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Account / Category
+                                                    {t("reports.accountCategory")}
                                                 </th>
                                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                    Amount
+                                                    {t("reports.col.amount")}
                                                 </th>
                                             </tr>
                                         </thead>

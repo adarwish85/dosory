@@ -30,16 +30,17 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/lib/i18n";
 
 type DateRangeOption = "7d" | "30d" | "90d" | "12m" | "ytd" | "all";
 
-const dateRangeOptions: { value: DateRangeOption; label: string }[] = [
-    { value: "7d", label: "Last 7 days" },
-    { value: "30d", label: "Last 30 days" },
-    { value: "90d", label: "Last 90 days" },
-    { value: "12m", label: "Last 12 months" },
-    { value: "ytd", label: "Year to date" },
-    { value: "all", label: "All time" },
+const dateRangeOptions: { value: DateRangeOption; labelKey: string }[] = [
+    { value: "7d", labelKey: "reports.dateRange.7d" },
+    { value: "30d", labelKey: "reports.dateRange.30d" },
+    { value: "90d", labelKey: "reports.dateRange.90d" },
+    { value: "12m", labelKey: "reports.dateRange.12m" },
+    { value: "ytd", labelKey: "reports.dateRange.ytd" },
+    { value: "all", labelKey: "reports.dateRange.all" },
 ];
 
 function getDateRange(option: DateRangeOption): { start: Date; end: Date } {
@@ -73,6 +74,7 @@ function getDateRange(option: DateRangeOption): { start: Date; end: Date } {
 }
 
 export default function ReportsPage() {
+    const { t } = useTranslation();
     const [dateRange, setDateRange] = useState<DateRangeOption>("30d");
     const { invoices, loading: invoicesLoading } = useInvoices({});
     const { customers, loading: customersLoading } = useCustomers();
@@ -211,15 +213,15 @@ export default function ReportsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold">Reports</h1>
-                    <p className="text-muted-foreground">Financial insights and business analytics</p>
+                    <h1 className="text-2xl font-bold">{t("reports.title")}</h1>
+                    <p className="text-muted-foreground">{t("reports.subtitle")}</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <Button variant="outline" asChild>
-                        <Link href="/dashboard/reports/profit-loss">Profit & Loss</Link>
+                        <Link href="/dashboard/reports/profit-loss">{t("reports.profitLoss")}</Link>
                     </Button>
                     <Button variant="outline" asChild>
-                        <Link href="/dashboard/reports/balance-sheet">Balance Sheet</Link>
+                        <Link href="/dashboard/reports/balance-sheet">{t("reports.balanceSheet")}</Link>
                     </Button>
                     <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeOption)}>
                         <SelectTrigger className="w-[180px]">
@@ -229,13 +231,13 @@ export default function ReportsPage() {
                         <SelectContent>
                             {dateRangeOptions.map((opt) => (
                                 <SelectItem key={opt.value} value={opt.value}>
-                                    {opt.label}
+                                    {t(opt.labelKey)}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                     <Button variant="outline">
-                        <Download className="h-4 w-4 mr-2" /> Export
+                        <Download className="h-4 w-4 mr-2" /> {t("common.export")}
                     </Button>
                 </div>
             </div>
@@ -246,7 +248,7 @@ export default function ReportsPage() {
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-green-600 font-medium">Total Revenue</p>
+                                <p className="text-sm text-green-600 font-medium">{t("reports.totalRevenue")}</p>
                                 <p className="text-2xl font-bold text-green-900">
                                     {formatCurrency(stats.totalRevenue)}
                                 </p>
@@ -255,7 +257,9 @@ export default function ReportsPage() {
                                 <DollarSign className="h-5 w-5 text-white" />
                             </div>
                         </div>
-                        <p className="text-xs text-green-600 mt-2">{stats.invoiceCount} invoices</p>
+                        <p className="text-xs text-green-600 mt-2">
+                            {t("reports.invoicesCount", { count: stats.invoiceCount })}
+                        </p>
                     </CardContent>
                 </Card>
 
@@ -263,7 +267,7 @@ export default function ReportsPage() {
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-blue-600 font-medium">Collected</p>
+                                <p className="text-sm text-blue-600 font-medium">{t("reports.collected")}</p>
                                 <p className="text-2xl font-bold text-blue-900">{formatCurrency(stats.totalPaid)}</p>
                             </div>
                             <div className="p-2 bg-blue-500 rounded-lg">
@@ -281,14 +285,16 @@ export default function ReportsPage() {
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-amber-600 font-medium">Outstanding</p>
+                                <p className="text-sm text-amber-600 font-medium">{t("reports.outstanding")}</p>
                                 <p className="text-2xl font-bold text-amber-900">{formatCurrency(stats.totalDue)}</p>
                             </div>
                             <div className="p-2 bg-amber-500 rounded-lg">
                                 <FileText className="h-5 w-5 text-white" />
                             </div>
                         </div>
-                        <p className="text-xs text-amber-600 mt-2">{stats.overdueCount} overdue</p>
+                        <p className="text-xs text-amber-600 mt-2">
+                            {t("reports.overdueCount", { count: stats.overdueCount })}
+                        </p>
                     </CardContent>
                 </Card>
 
@@ -301,7 +307,7 @@ export default function ReportsPage() {
                                 <p
                                     className={`text-sm font-medium ${stats.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}
                                 >
-                                    Net Profit
+                                    {t("reports.netProfit")}
                                 </p>
                                 <p
                                     className={`text-2xl font-bold ${stats.profit >= 0 ? "text-emerald-900" : "text-red-900"}`}
@@ -318,7 +324,7 @@ export default function ReportsPage() {
                             </div>
                         </div>
                         <p className={`text-xs mt-2 ${stats.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                            {stats.profitMargin.toFixed(1)}% margin
+                            {t("reports.marginPercent", { percent: stats.profitMargin.toFixed(1) })}
                         </p>
                     </CardContent>
                 </Card>
@@ -328,16 +334,16 @@ export default function ReportsPage() {
             <Tabs defaultValue="revenue" className="space-y-4">
                 <TabsList className="bg-gray-100">
                     <TabsTrigger value="revenue" className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4" /> Revenue
+                        <TrendingUp className="h-4 w-4" /> {t("reports.tabs.revenue")}
                     </TabsTrigger>
                     <TabsTrigger value="customers" className="flex items-center gap-2">
-                        <Users className="h-4 w-4" /> Customers
+                        <Users className="h-4 w-4" /> {t("reports.tabs.customers")}
                     </TabsTrigger>
                     <TabsTrigger value="projects" className="flex items-center gap-2">
-                        <Briefcase className="h-4 w-4" /> Projects
+                        <Briefcase className="h-4 w-4" /> {t("reports.tabs.projects")}
                     </TabsTrigger>
                     <TabsTrigger value="expenses" className="flex items-center gap-2">
-                        <Receipt className="h-4 w-4" /> Expenses
+                        <Receipt className="h-4 w-4" /> {t("reports.tabs.expenses")}
                     </TabsTrigger>
                 </TabsList>
 
@@ -348,7 +354,7 @@ export default function ReportsPage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                    <PieChart className="h-4 w-4" /> Invoice Status Breakdown
+                                    <PieChart className="h-4 w-4" /> {t("reports.invoiceStatusBreakdown")}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -370,7 +376,7 @@ export default function ReportsPage() {
                                                     className={`w-3 h-3 rounded-full ${colors[status] || "bg-gray-400"}`}
                                                 />
                                                 <span className="text-sm capitalize flex-1">
-                                                    {status.replace("_", " ")}
+                                                    {t(`reports.invoiceStatus.${status}`)}
                                                 </span>
                                                 <span className="text-sm font-medium">{count}</span>
                                                 <div className="w-24 bg-gray-100 rounded-full h-2">
@@ -389,16 +395,16 @@ export default function ReportsPage() {
                         {/* Recent Invoices */}
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-sm font-medium">Recent Invoices</CardTitle>
+                                <CardTitle className="text-sm font-medium">{t("reports.recentInvoices")}</CardTitle>
                             </CardHeader>
                             <CardContent className="p-0">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Invoice</TableHead>
-                                            <TableHead>Customer</TableHead>
-                                            <TableHead className="text-right">Amount</TableHead>
-                                            <TableHead>Status</TableHead>
+                                            <TableHead>{t("reports.col.invoice")}</TableHead>
+                                            <TableHead>{t("common.customer")}</TableHead>
+                                            <TableHead className="text-right">{t("reports.col.amount")}</TableHead>
+                                            <TableHead>{t("common.status")}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -413,7 +419,7 @@ export default function ReportsPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge variant="secondary" className="capitalize">
-                                                        {inv.status}
+                                                        {t(`reports.invoiceStatus.${inv.status}`)}
                                                     </Badge>
                                                 </TableCell>
                                             </TableRow>
@@ -429,23 +435,23 @@ export default function ReportsPage() {
                 <TabsContent value="customers">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium">Top Customers by Revenue</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("reports.topCustomersByRevenue")}</CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Customer</TableHead>
-                                        <TableHead className="text-center">Invoices</TableHead>
-                                        <TableHead className="text-right">Revenue</TableHead>
-                                        <TableHead className="w-40">Share</TableHead>
+                                        <TableHead>{t("common.customer")}</TableHead>
+                                        <TableHead className="text-center">{t("reports.col.invoices")}</TableHead>
+                                        <TableHead className="text-right">{t("reports.col.revenue")}</TableHead>
+                                        <TableHead className="w-40">{t("reports.col.share")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {revenueByCustomer.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                                                No customer data available
+                                                {t("reports.noCustomerData")}
                                             </TableCell>
                                         </TableRow>
                                     ) : (
@@ -481,23 +487,23 @@ export default function ReportsPage() {
                 <TabsContent value="projects">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium">Revenue by Project</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("reports.revenueByProject")}</CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Project</TableHead>
-                                        <TableHead className="text-center">Invoices</TableHead>
-                                        <TableHead className="text-right">Revenue</TableHead>
-                                        <TableHead className="w-40">Share</TableHead>
+                                        <TableHead>{t("reports.col.project")}</TableHead>
+                                        <TableHead className="text-center">{t("reports.col.invoices")}</TableHead>
+                                        <TableHead className="text-right">{t("reports.col.revenue")}</TableHead>
+                                        <TableHead className="w-40">{t("reports.col.share")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {revenueByProject.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                                                No project revenue data available
+                                                {t("reports.noProjectData")}
                                             </TableCell>
                                         </TableRow>
                                     ) : (
@@ -534,12 +540,12 @@ export default function ReportsPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-sm font-medium">Expenses by Category</CardTitle>
+                                <CardTitle className="text-sm font-medium">{t("reports.expensesByCategory")}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 {expensesByCategory.length === 0 ? (
                                     <div className="text-center py-8 text-muted-foreground">
-                                        No expense data available
+                                        {t("reports.noExpenseData")}
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
@@ -565,23 +571,23 @@ export default function ReportsPage() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-sm font-medium">Expense Summary</CardTitle>
+                                <CardTitle className="text-sm font-medium">{t("reports.expenseSummary")}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
                                     <div className="p-4 bg-red-50 rounded-lg">
-                                        <p className="text-sm text-red-600">Total Expenses</p>
+                                        <p className="text-sm text-red-600">{t("reports.totalExpenses")}</p>
                                         <p className="text-2xl font-bold text-red-900">
                                             {formatCurrency(stats.totalExpenses)}
                                         </p>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="p-3 bg-gray-50 rounded-lg">
-                                            <p className="text-xs text-muted-foreground">Categories</p>
+                                            <p className="text-xs text-muted-foreground">{t("reports.categories")}</p>
                                             <p className="text-xl font-bold">{expensesByCategory.length}</p>
                                         </div>
                                         <div className="p-3 bg-gray-50 rounded-lg">
-                                            <p className="text-xs text-muted-foreground">Transactions</p>
+                                            <p className="text-xs text-muted-foreground">{t("reports.transactions")}</p>
                                             <p className="text-xl font-bold">{filteredExpenses.length}</p>
                                         </div>
                                     </div>

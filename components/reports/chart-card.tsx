@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/lib/i18n";
 import {
     ResponsiveContainer,
     LineChart,
@@ -33,6 +34,7 @@ interface ChartCardProps {
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export function ChartCard({ title, loading, empty, data, type, series = [], height = 350 }: ChartCardProps) {
+    const { t } = useTranslation();
     if (loading) {
         return <Skeleton className={`w-full h-[${height}px] rounded-xl`} />;
     }
@@ -44,7 +46,7 @@ export function ChartCard({ title, loading, empty, data, type, series = [], heig
                     <CardTitle className="text-base font-medium">{title}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex items-center justify-center" style={{ height }}>
-                    <p className="text-muted-foreground text-sm">No data available for this period</p>
+                    <p className="text-muted-foreground text-sm">{t("reports.chart.noData")}</p>
                 </CardContent>
             </Card>
         );

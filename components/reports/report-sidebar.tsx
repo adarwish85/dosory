@@ -15,6 +15,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import { useReportPermissions } from "@/components/reports/use-report-permissions";
+import { useTranslation } from "@/lib/i18n";
 
 import { LucideIcon } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -22,7 +23,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Types for navigation structure
 interface NavItem {
-    title: string;
+    titleKey: string;
     href: string;
     icon?: LucideIcon;
     permission?: string;
@@ -32,62 +33,62 @@ interface NavItem {
 // Exact tree requested by user
 const reportNav: NavItem[] = [
     {
-        title: "Overview",
+        titleKey: "reports.nav.overview",
         href: "/dashboard/reports/overview",
         icon: LayoutDashboard,
-        children: [{ title: "Business Health", href: "/dashboard/reports/overview/business-health" }],
+        children: [{ titleKey: "reports.nav.businessHealth", href: "/dashboard/reports/overview/business-health" }],
     },
     {
-        title: "Sales Reports",
+        titleKey: "reports.nav.sales",
         href: "/dashboard/reports/sales",
         icon: DollarSign,
         permission: "reports.sales.view",
         children: [
-            { title: "Pipeline", href: "/dashboard/reports/sales/pipeline" },
-            { title: "Revenue Summary", href: "/dashboard/reports/sales/revenue-summary" },
-            { title: "Invoices", href: "/dashboard/reports/sales/invoices" },
+            { titleKey: "reports.nav.pipeline", href: "/dashboard/reports/sales/pipeline" },
+            { titleKey: "reports.nav.revenueSummary", href: "/dashboard/reports/sales/revenue-summary" },
+            { titleKey: "reports.nav.invoices", href: "/dashboard/reports/sales/invoices" },
         ],
     },
     {
-        title: "Marketing Reports",
+        titleKey: "reports.nav.marketing",
         href: "/dashboard/reports/marketing",
         icon: PieChart,
         permission: "reports.marketing.view",
         children: [
-            { title: "Campaign Performance", href: "/dashboard/reports/marketing/campaign-performance" },
-            { title: "Lead Sources", href: "/dashboard/reports/marketing/lead-sources" },
+            { titleKey: "reports.nav.campaignPerformance", href: "/dashboard/reports/marketing/campaign-performance" },
+            { titleKey: "reports.nav.leadSources", href: "/dashboard/reports/marketing/lead-sources" },
         ],
     },
     {
-        title: "Operations Reports",
+        titleKey: "reports.nav.operations",
         href: "/dashboard/reports/operations",
         icon: Briefcase,
         permission: "reports.operations.view",
         children: [
-            { title: "Project Status", href: "/dashboard/reports/operations/project-status" },
-            { title: "Resource Utilization", href: "/dashboard/reports/operations/resource-utilization" },
+            { titleKey: "reports.nav.projectStatus", href: "/dashboard/reports/operations/project-status" },
+            { titleKey: "reports.nav.resourceUtilization", href: "/dashboard/reports/operations/resource-utilization" },
         ],
     },
     {
-        title: "HR Reports",
+        titleKey: "reports.nav.hr",
         href: "/dashboard/reports/hr",
         icon: Users,
         permission: "reports.hr.view",
         children: [
-            { title: "Headcount", href: "/dashboard/reports/hr/headcount" },
-            { title: "Attendance", href: "/dashboard/reports/hr/attendance" },
-            { title: "Payroll Summary", href: "/dashboard/reports/hr/payroll-summary" },
+            { titleKey: "reports.nav.headcount", href: "/dashboard/reports/hr/headcount" },
+            { titleKey: "reports.nav.attendance", href: "/dashboard/reports/hr/attendance" },
+            { titleKey: "reports.nav.payrollSummary", href: "/dashboard/reports/hr/payroll-summary" },
         ],
     },
     {
-        title: "Accounting Reports",
+        titleKey: "reports.nav.accounting",
         href: "/dashboard/reports/accounting",
         icon: FileText,
         permission: "reports.accounting.view",
         children: [
-            { title: "Profit & Loss", href: "/dashboard/reports/accounting/profit-loss" },
-            { title: "Balance Sheet", href: "/dashboard/reports/accounting/balance-sheet" },
-            { title: "Cash Flow", href: "/dashboard/reports/accounting/cash-flow" },
+            { titleKey: "reports.nav.profitLoss", href: "/dashboard/reports/accounting/profit-loss" },
+            { titleKey: "reports.nav.balanceSheet", href: "/dashboard/reports/accounting/balance-sheet" },
+            { titleKey: "reports.nav.cashFlow", href: "/dashboard/reports/accounting/cash-flow" },
         ],
     },
 ];
@@ -97,6 +98,7 @@ const SIDEBAR_KEY = "report_sidebar_collapsed";
 export function ReportSidebar() {
     const pathname = usePathname();
     const permissions = useReportPermissions();
+    const { t } = useTranslation();
     const [collapsed, setCollapsed] = useState(false);
 
     // Load preference
@@ -182,7 +184,7 @@ export function ReportSidebar() {
                                 </HoverCardTrigger>
                                 <HoverCardContent side="right" className="w-56 p-2" align="start">
                                     <div className="font-semibold text-sm px-2 py-1.5 mb-1 border-b">
-                                        {section.title}
+                                        {t(section.titleKey)}
                                     </div>
                                     <div className="space-y-1">
                                         {section.children?.map((item) => (
@@ -196,7 +198,7 @@ export function ReportSidebar() {
                                                         : "text-muted-foreground"
                                                 )}
                                             >
-                                                {item.title}
+                                                {t(item.titleKey)}
                                             </Link>
                                         ))}
                                     </div>
@@ -209,7 +211,7 @@ export function ReportSidebar() {
                         <div key={i} className="space-y-1">
                             <div className="flex items-center gap-2 px-2 py-1.5 text-sm font-semibold text-muted-foreground">
                                 {section.icon && <section.icon className="h-4 w-4" />}
-                                {section.title}
+                                {t(section.titleKey)}
                             </div>
                             {section.children?.map((item) => (
                                 <Link
@@ -222,7 +224,7 @@ export function ReportSidebar() {
                                             : "text-muted-foreground"
                                     )}
                                 >
-                                    {item.title}
+                                    {t(item.titleKey)}
                                 </Link>
                             ))}
                         </div>

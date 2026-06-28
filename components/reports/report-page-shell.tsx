@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, RefreshCw } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface ReportPageShellProps {
     title: string;
@@ -28,6 +29,7 @@ export function ReportPageShell({
     canExport = false,
     loading = false,
 }: ReportPageShellProps) {
+    const { t } = useTranslation();
     return (
         <div className="space-y-6 p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -40,15 +42,15 @@ export function ReportPageShell({
                     {onDateRangeChange && (
                         <Select value={dateRange} onValueChange={onDateRangeChange}>
                             <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select Range" />
+                                <SelectValue placeholder={t("reports.shell.selectRange")} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="today">Today</SelectItem>
-                                <SelectItem value="week">This Week</SelectItem>
-                                <SelectItem value="month">This Month</SelectItem>
-                                <SelectItem value="quarter">This Quarter</SelectItem>
-                                <SelectItem value="year">This Year</SelectItem>
-                                <SelectItem value="all">All Time</SelectItem>
+                                <SelectItem value="today">{t("reports.shell.range.today")}</SelectItem>
+                                <SelectItem value="week">{t("reports.shell.range.week")}</SelectItem>
+                                <SelectItem value="month">{t("reports.shell.range.month")}</SelectItem>
+                                <SelectItem value="quarter">{t("reports.shell.range.quarter")}</SelectItem>
+                                <SelectItem value="year">{t("reports.shell.range.year")}</SelectItem>
+                                <SelectItem value="all">{t("reports.shell.range.all")}</SelectItem>
                             </SelectContent>
                         </Select>
                     )}
@@ -62,7 +64,7 @@ export function ReportPageShell({
                     {onExport && canExport && (
                         <Button variant="outline" onClick={onExport} disabled={loading}>
                             <Download className="mr-2 h-4 w-4" />
-                            Export
+                            {t("common.export")}
                         </Button>
                     )}
                 </div>

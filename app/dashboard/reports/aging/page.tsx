@@ -8,10 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { FileDown, RefreshCcw } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 // import jsPDF from "jspdf"; // Will add later
 // import autoTable from "jspdf-autotable";
 
 export default function ARAgingPage() {
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const { getARAging } = useFinancialReports();
     const [report, setReport] = useState<AgingReportItem[]>([]);
@@ -57,18 +59,15 @@ export default function ARAgingPage() {
 
     return (
         <div className="space-y-6">
-            <PageHeader
-                title="Accounts Receivable Aging"
-                description="View unpaid customer invoices grouped by overdue duration."
-            >
+            <PageHeader title={t("reports.arAging")} description={t("reports.arAging.description")}>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={fetchReport} disabled={loading}>
                         <RefreshCcw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                        Refresh
+                        {t("reports.refresh")}
                     </Button>
                     <Button variant="outline" size="sm" disabled={true}>
                         <FileDown className="mr-2 h-4 w-4" />
-                        Export PDF
+                        {t("reports.exportPdf")}
                     </Button>
                 </div>
             </PageHeader>
@@ -77,7 +76,9 @@ export default function ARAgingPage() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Outstanding</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                            {t("reports.outstanding")}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(totalStats.total)}</div>
@@ -85,7 +86,9 @@ export default function ARAgingPage() {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Current (0-30)</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                            {t("reports.aging.current")}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-xl font-semibold text-emerald-600">
@@ -95,7 +98,9 @@ export default function ARAgingPage() {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">31-60 Days</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                            {t("reports.aging.30")}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-xl font-semibold text-yellow-600">{formatCurrency(totalStats.thirty)}</div>
@@ -103,7 +108,9 @@ export default function ARAgingPage() {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">61-90 Days</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                            {t("reports.aging.60")}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-xl font-semibold text-orange-600">{formatCurrency(totalStats.sixty)}</div>
@@ -111,7 +118,9 @@ export default function ARAgingPage() {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">90+ Days</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                            {t("reports.aging.90")}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-xl font-semibold text-red-600">{formatCurrency(totalStats.ninety)}</div>
@@ -121,35 +130,32 @@ export default function ARAgingPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Customer Balances</CardTitle>
-                    <CardDescription>
-                        Aging breakdown by customer. &quot;Current&quot; includes invoices not yet overdue or overdue by
-                        &le; 30 days.
-                    </CardDescription>
+                    <CardTitle>{t("reports.customerBalances")}</CardTitle>
+                    <CardDescription>{t("reports.agingBreakdownNote")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[300px]">Customer</TableHead>
-                                <TableHead className="text-right">Total Due</TableHead>
-                                <TableHead className="text-right">0-30 Days</TableHead>
-                                <TableHead className="text-right">31-60 Days</TableHead>
-                                <TableHead className="text-right">61-90 Days</TableHead>
-                                <TableHead className="text-right">90+ Days</TableHead>
+                                <TableHead className="w-[300px]">{t("common.customer")}</TableHead>
+                                <TableHead className="text-right">{t("reports.totalDue")}</TableHead>
+                                <TableHead className="text-right">{t("reports.aging.0to30")}</TableHead>
+                                <TableHead className="text-right">{t("reports.aging.31to60")}</TableHead>
+                                <TableHead className="text-right">{t("reports.aging.61to90")}</TableHead>
+                                <TableHead className="text-right">{t("reports.aging.90plus")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-10">
-                                        Loading aging data...
+                                        {t("reports.loadingAging")}
                                     </TableCell>
                                 </TableRow>
                             ) : report.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                                        No outstanding invoices found.
+                                        {t("reports.noOutstandingInvoices")}
                                     </TableCell>
                                 </TableRow>
                             ) : (

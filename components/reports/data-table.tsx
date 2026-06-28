@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportTableColumn } from "@/lib/types/reports";
 import { formatCurrency, formatNumber, formatDate } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface DataTableProps {
     title?: string;
@@ -29,6 +30,7 @@ export function DataTable({
     onPageChange,
     loading,
 }: DataTableProps) {
+    const { t } = useTranslation();
     const totalPages = Math.ceil(total / pageSize);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,7 +82,7 @@ export function DataTable({
                         ) : data.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                                    No results found
+                                    {t("reports.table.noResults")}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -106,7 +108,7 @@ export function DataTable({
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <div className="text-sm text-muted-foreground">
-                            Page {page} of {totalPages}
+                            {t("reports.table.pageOf", { page, totalPages })}
                         </div>
                         <Button
                             variant="outline"
