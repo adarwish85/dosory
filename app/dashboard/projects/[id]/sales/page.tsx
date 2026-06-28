@@ -39,19 +39,21 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
 import type { Invoice, InvoiceStatus } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
-const statusConfig: Record<InvoiceStatus, { label: string; color: string; icon: React.ReactNode }> = {
-    draft: { label: "Draft", color: "bg-gray-100 text-gray-700", icon: <Receipt className="h-3 w-3" /> },
-    sent: { label: "Sent", color: "bg-blue-100 text-blue-700", icon: <Send className="h-3 w-3" /> },
-    viewed: { label: "Viewed", color: "bg-purple-100 text-purple-700", icon: <Eye className="h-3 w-3" /> },
-    partial: { label: "Partial", color: "bg-amber-100 text-amber-700", icon: <CreditCard className="h-3 w-3" /> },
-    paid: { label: "Paid", color: "bg-green-100 text-green-700", icon: <CheckCircle2 className="h-3 w-3" /> },
-    overdue: { label: "Overdue", color: "bg-red-100 text-red-700", icon: <AlertCircle className="h-3 w-3" /> },
-    cancelled: { label: "Cancelled", color: "bg-gray-200 text-gray-500", icon: <AlertCircle className="h-3 w-3" /> },
-    void: { label: "Void", color: "bg-slate-100 text-slate-700", icon: <AlertCircle className="h-3 w-3" /> },
+const statusConfig: Record<InvoiceStatus, { labelKey: string; color: string; icon: React.ReactNode }> = {
+    draft: { labelKey: "projects.sales.status.draft", color: "bg-gray-100 text-gray-700", icon: <Receipt className="h-3 w-3" /> },
+    sent: { labelKey: "projects.sales.status.sent", color: "bg-blue-100 text-blue-700", icon: <Send className="h-3 w-3" /> },
+    viewed: { labelKey: "projects.sales.status.viewed", color: "bg-purple-100 text-purple-700", icon: <Eye className="h-3 w-3" /> },
+    partial: { labelKey: "projects.sales.status.partial", color: "bg-amber-100 text-amber-700", icon: <CreditCard className="h-3 w-3" /> },
+    paid: { labelKey: "projects.sales.status.paid", color: "bg-green-100 text-green-700", icon: <CheckCircle2 className="h-3 w-3" /> },
+    overdue: { labelKey: "projects.sales.status.overdue", color: "bg-red-100 text-red-700", icon: <AlertCircle className="h-3 w-3" /> },
+    cancelled: { labelKey: "projects.sales.status.cancelled", color: "bg-gray-200 text-gray-500", icon: <AlertCircle className="h-3 w-3" /> },
+    void: { labelKey: "projects.sales.status.void", color: "bg-slate-100 text-slate-700", icon: <AlertCircle className="h-3 w-3" /> },
 };
 
 export default function ProjectSalesPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const { project, loading: projectLoading } = useProject(projectId);
@@ -105,37 +107,37 @@ export default function ProjectSalesPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-blue-600 flex items-center gap-2">
                             <Receipt className="h-4 w-4" />
-                            Total Invoiced
+                            {t("projects.sales.totalInvoiced")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-blue-900">{formatCurrency(totals.totalInvoiced)}</div>
-                        <p className="text-xs text-blue-600 mt-1">{invoices.length} invoices</p>
+                        <p className="text-xs text-blue-600 mt-1">{t("projects.sales.invoicesCount", { count: invoices.length })}</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-green-600 flex items-center gap-2">
                             <DollarSign className="h-4 w-4" />
-                            Total Paid
+                            {t("projects.sales.totalPaid")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-green-900">{formatCurrency(totals.totalPaid)}</div>
-                        <p className="text-xs text-green-600 mt-1">{Number(invoiceStats.paid) || 0} paid invoices</p>
+                        <p className="text-xs text-green-600 mt-1">{t("projects.sales.paidInvoicesCount", { count: Number(invoiceStats.paid) || 0 })}</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-amber-600 flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            Outstanding
+                            {t("projects.sales.outstanding")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-amber-900">{formatCurrency(totals.totalDue)}</div>
                         <p className="text-xs text-amber-600 mt-1">
-                            {(Number(invoiceStats.sent) || 0) + (Number(invoiceStats.overdue) || 0)} pending
+                            {t("projects.sales.pendingCount", { count: (Number(invoiceStats.sent) || 0) + (Number(invoiceStats.overdue) || 0) })}
                         </p>
                     </CardContent>
                 </Card>
@@ -143,7 +145,7 @@ export default function ProjectSalesPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-purple-600 flex items-center gap-2">
                             <TrendingUp className="h-4 w-4" />
-                            Collection Rate
+                            {t("projects.sales.collectionRate")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -162,7 +164,7 @@ export default function ProjectSalesPage() {
                         statusFilter === "all" ? "bg-gray-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"
                     )}
                 >
-                    <span className="font-bold">{invoices.length}</span> All
+                    <span className="font-bold">{invoices.length}</span> {t("projects.sales.filterAll")}
                 </button>
                 {(["draft", "sent", "partial", "paid", "overdue"] as InvoiceStatus[]).map((status) => {
                     const config = statusConfig[status];
@@ -178,7 +180,7 @@ export default function ProjectSalesPage() {
                             )}
                         >
                             {config.icon}
-                            <span className="font-bold">{count}</span> {config.label}
+                            <span className="font-bold">{count}</span> {t(config.labelKey)}
                         </button>
                     );
                 })}
@@ -189,7 +191,7 @@ export default function ProjectSalesPage() {
                 <div className="relative w-full sm:w-64">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                     <Input
-                        placeholder="Search invoices..."
+                        placeholder={t("projects.sales.searchPlaceholder")}
                         className="pl-9"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -199,7 +201,7 @@ export default function ProjectSalesPage() {
                     href={`/dashboard/invoices/new?projectId=${projectId}&projectName=${encodeURIComponent(project?.name || "")}&customerId=${project?.customerId || ""}`}
                 >
                     <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                        <Plus className="mr-2 h-4 w-4" /> New Invoice
+                        <Plus className="mr-2 h-4 w-4" /> {t("projects.sales.new")}
                     </Button>
                 </Link>
             </div>
@@ -209,15 +211,15 @@ export default function ProjectSalesPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-50">
-                            <TableHead className="font-semibold">Invoice #</TableHead>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Due Date</TableHead>
-                            <TableHead className="text-right">Total</TableHead>
-                            <TableHead className="text-right">Paid</TableHead>
-                            <TableHead className="text-right">Due</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="w-20 text-center">Actions</TableHead>
+                            <TableHead className="font-semibold">{t("projects.sales.invoiceNumber")}</TableHead>
+                            <TableHead>{t("projects.sales.customer")}</TableHead>
+                            <TableHead>{t("common.date")}</TableHead>
+                            <TableHead>{t("projects.sales.dueDate")}</TableHead>
+                            <TableHead className="text-right">{t("projects.sales.total")}</TableHead>
+                            <TableHead className="text-right">{t("projects.sales.paid")}</TableHead>
+                            <TableHead className="text-right">{t("projects.sales.due")}</TableHead>
+                            <TableHead>{t("common.status")}</TableHead>
+                            <TableHead className="w-20 text-center">{t("common.actions")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -225,11 +227,11 @@ export default function ProjectSalesPage() {
                             <TableRow>
                                 <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                                     <Receipt className="h-10 w-10 mx-auto mb-3 text-gray-300" />
-                                    <p className="font-medium">No invoices found</p>
+                                    <p className="font-medium">{t("projects.sales.emptyTitle")}</p>
                                     <p className="text-sm mt-1">
                                         {searchQuery
-                                            ? "Try a different search term"
-                                            : "Create an invoice to track project revenue"}
+                                            ? t("projects.sales.emptySearch")
+                                            : t("projects.sales.emptyHint")}
                                     </p>
                                 </TableCell>
                             </TableRow>
@@ -274,7 +276,7 @@ export default function ProjectSalesPage() {
                                         </TableCell>
                                         <TableCell>
                                             <Badge className={cn("flex items-center gap-1 w-fit", config.color)}>
-                                                {config.icon} {config.label}
+                                                {config.icon} {t(config.labelKey)}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
@@ -291,25 +293,25 @@ export default function ProjectSalesPage() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem asChild>
                                                         <Link href={`/dashboard/invoices/${invoice.id}`}>
-                                                            <Eye className="mr-2 h-4 w-4" /> View
+                                                            <Eye className="mr-2 h-4 w-4" /> {t("common.view")}
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem asChild>
                                                         <Link href={`/dashboard/invoices/${invoice.id}/edit`}>
-                                                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                            <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     {invoice.status === "draft" && (
                                                         <DropdownMenuItem
                                                             onClick={() => updateStatus(invoice.id, "sent")}
                                                         >
-                                                            <Send className="mr-2 h-4 w-4" /> Mark as Sent
+                                                            <Send className="mr-2 h-4 w-4" /> {t("projects.sales.markAsSent")}
                                                         </DropdownMenuItem>
                                                     )}
                                                     {invoice.amountDue > 0 && invoice.status !== "paid" && (
                                                         <DropdownMenuItem asChild>
                                                             <Link href={`/dashboard/invoices/${invoice.id}/payment`}>
-                                                                <CreditCard className="mr-2 h-4 w-4" /> Record Payment
+                                                                <CreditCard className="mr-2 h-4 w-4" /> {t("projects.sales.recordPayment")}
                                                             </Link>
                                                         </DropdownMenuItem>
                                                     )}
@@ -317,13 +319,13 @@ export default function ProjectSalesPage() {
                                                     <DropdownMenuItem
                                                         className="text-red-600"
                                                         onClick={() => {
-                                                            if (confirm("Delete this invoice?")) {
+                                                            if (confirm(t("projects.sales.deleteConfirm"))) {
                                                                 deleteInvoice(invoice.id);
-                                                                toast.success("Invoice deleted");
+                                                                toast.success(t("projects.sales.deletedToast"));
                                                             }
                                                         }}
                                                     >
-                                                        <Trash className="mr-2 h-4 w-4" /> Delete
+                                                        <Trash className="mr-2 h-4 w-4" /> {t("common.delete")}
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>

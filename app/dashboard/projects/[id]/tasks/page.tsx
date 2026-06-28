@@ -45,6 +45,7 @@ import {
     DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTranslation } from "@/lib/i18n";
 
 const statusColors: Record<TaskStatus, { bg: string; text: string }> = {
     to_do: { bg: "bg-gray-100", text: "text-gray-700" },
@@ -53,11 +54,11 @@ const statusColors: Record<TaskStatus, { bg: string; text: string }> = {
     done: { bg: "bg-green-100", text: "text-green-700" },
 };
 
-const statusLabels: Record<TaskStatus, string> = {
-    to_do: "To Do",
-    in_progress: "In Progress",
-    blocked: "Blocked",
-    done: "Done",
+const statusLabelKeys: Record<TaskStatus, string> = {
+    to_do: "projects.status.toDo",
+    in_progress: "projects.status.inProgress",
+    blocked: "projects.status.blocked",
+    done: "projects.status.done",
 };
 
 const priorityColors: Record<TaskPriority, { bg: string; text: string }> = {
@@ -73,19 +74,19 @@ type SelectionMode = "none" | "page" | "all";
 
 interface ColumnDef {
     key: ColumnKey;
-    label: string;
+    labelKey: string;
     defaultVisible: boolean;
     required?: boolean;
 }
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
-    { key: "id", label: "#", defaultVisible: true },
-    { key: "name", label: "Name", defaultVisible: true, required: true },
-    { key: "status", label: "Status", defaultVisible: true },
-    { key: "startDate", label: "Start Date", defaultVisible: true },
-    { key: "dueDate", label: "Due Date", defaultVisible: true },
-    { key: "priority", label: "Priority", defaultVisible: true },
-    { key: "assignee", label: "Assigned To", defaultVisible: false },
+    { key: "id", labelKey: "projects.tasks.columns.number", defaultVisible: true },
+    { key: "name", labelKey: "projects.tasks.columns.name", defaultVisible: true, required: true },
+    { key: "status", labelKey: "projects.tasks.columns.status", defaultVisible: true },
+    { key: "startDate", labelKey: "projects.tasks.columns.startDate", defaultVisible: true },
+    { key: "dueDate", labelKey: "projects.tasks.columns.dueDate", defaultVisible: true },
+    { key: "priority", labelKey: "projects.tasks.columns.priority", defaultVisible: true },
+    { key: "assignee", labelKey: "projects.tasks.columns.assignee", defaultVisible: false },
 ];
 
 const ROW_DENSITY_STYLES: Record<RowDensity, string> = {
@@ -114,41 +115,42 @@ function HighlightText({ text, search }: { text: string; search: string }) {
 }
 
 function QuickStatsBar({ tasks, stats }: { tasks: any[]; stats: Record<string, number> }) {
+    const { t } = useTranslation();
     const urgentCount = tasks.filter((t) => t.priority === "urgent").length;
     return (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-blue-600 mb-1">
                     <CheckSquare className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Total</span>
+                    <span className="text-xs font-medium uppercase">{t("projects.tasks.stats.total")}</span>
                 </div>
                 <div className="text-2xl font-bold text-blue-900">{tasks.length}</div>
             </div>
             <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-yellow-600 mb-1">
                     <Clock className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">In Progress</span>
+                    <span className="text-xs font-medium uppercase">{t("projects.status.inProgress")}</span>
                 </div>
                 <div className="text-2xl font-bold text-yellow-900">{stats.in_progress || 0}</div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1">
                     <CheckSquare className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Completed</span>
+                    <span className="text-xs font-medium uppercase">{t("projects.status.completed")}</span>
                 </div>
                 <div className="text-2xl font-bold text-green-900">{stats.completed || 0}</div>
             </div>
             <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-red-600 mb-1">
                     <AlertTriangle className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Urgent</span>
+                    <span className="text-xs font-medium uppercase">{t("projects.priority.urgent")}</span>
                 </div>
                 <div className="text-2xl font-bold text-red-900">{urgentCount}</div>
             </div>
             <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-red-600 mb-1">
                     <AlertTriangle className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Blocked</span>
+                    <span className="text-xs font-medium uppercase">{t("projects.status.blocked")}</span>
                 </div>
                 <div className="text-2xl font-bold text-red-900">{stats.blocked || 0}</div>
             </div>
@@ -173,13 +175,14 @@ function Pagination({
     endRecord: number;
     compact?: boolean;
 }) {
+    const { t } = useTranslation();
     const canPrev = currentPage > 1,
         canNext = currentPage < totalPages;
     return (
         <div className={`flex items-center ${compact ? "gap-1" : "justify-between gap-4"}`}>
             {!compact && (
                 <div className="text-sm text-gray-500">
-                    Showing {startRecord} to {endRecord} of {totalRecords}
+                    {t("projects.tasks.pagination.showing", { start: startRecord, end: endRecord, total: totalRecords })}
                 </div>
             )}
             <div className="flex items-center gap-1">
@@ -203,7 +206,7 @@ function Pagination({
                 </Button>
                 <div className="flex items-center gap-1 px-2 text-sm">
                     <span className="font-medium">{currentPage}</span>
-                    <span className="text-gray-700">of {totalPages}</span>
+                    <span className="text-gray-700">{t("projects.tasks.pagination.ofPages", { total: totalPages })}</span>
                 </div>
                 <Button
                     variant="outline"
@@ -241,25 +244,27 @@ function SelectionBanner({
     onSelectAll: () => void;
     onClearSelection: () => void;
 }) {
+    const { t } = useTranslation();
     if (selectionMode === "none" || selectedCount === 0) return null;
     return (
         <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-2 flex items-center justify-center gap-2 text-sm mb-2">
             <span className="text-blue-800">
-                <strong>{selectedCount}</strong> selected.
+                <strong>{selectedCount}</strong> {t("projects.tasks.selection.selected")}
             </span>
             {selectionMode === "page" && selectedCount < totalCount && (
                 <button onClick={onSelectAll} className="text-blue-600 font-medium hover:underline">
-                    Select all {totalCount}
+                    {t("projects.tasks.selection.selectAll", { total: totalCount })}
                 </button>
             )}
             <button onClick={onClearSelection} className="text-blue-600 font-medium hover:underline ml-2">
-                Clear
+                {t("projects.tasks.selection.clear")}
             </button>
         </div>
     );
 }
 
 export default function ProjectTasksPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const [searchQuery, setSearchQuery] = useState("");
@@ -311,19 +316,19 @@ export default function ProjectTasksPage() {
     };
     const handleDelete = useCallback(
         async (id: string) => {
-            if (window.confirm("Delete this task?")) await deleteTask(id);
+            if (window.confirm(t("projects.tasks.confirmDelete"))) await deleteTask(id);
         },
-        [deleteTask]
+        [deleteTask, t]
     );
 
     const handleBulkDelete = useCallback(async () => {
         if (selectedTasks.length === 0) return;
-        if (window.confirm(`Delete ${selectedTasks.length} tasks?`)) {
+        if (window.confirm(t("projects.tasks.confirmBulkDelete", { count: selectedTasks.length }))) {
             for (const id of selectedTasks) await deleteTask(id);
             setSelectedTasks([]);
             setSelectionMode("none");
         }
-    }, [selectedTasks, deleteTask]);
+    }, [selectedTasks, deleteTask, t]);
 
     const handleSelectAllOnPage = useCallback(() => {
         setSelectedTasks(currentPageIds);
@@ -352,7 +357,14 @@ export default function ProjectTasksPage() {
     }, []);
 
     const exportTasks = useCallback(() => {
-        const headers = ["ID", "Name", "Status", "Start Date", "Due Date", "Priority"];
+        const headers = [
+            t("projects.tasks.export.id"),
+            t("projects.tasks.columns.name"),
+            t("projects.tasks.columns.status"),
+            t("projects.tasks.columns.startDate"),
+            t("projects.tasks.columns.dueDate"),
+            t("projects.tasks.columns.priority"),
+        ];
         const rows = filteredTasks.map((t) => [
             t.id,
             t.name,
@@ -367,7 +379,7 @@ export default function ProjectTasksPage() {
         link.href = URL.createObjectURL(blob);
         link.download = `project_tasks_export_${new Date().toISOString().split("T")[0]}.csv`;
         link.click();
-    }, [filteredTasks]);
+    }, [filteredTasks, t]);
 
     const handleKeyDown = useCallback(
         (e: KeyboardEvent<HTMLDivElement>) => {
@@ -422,7 +434,7 @@ export default function ProjectTasksPage() {
                                     onClick={() => setStatusFilter(isActive ? "all" : status)}
                                     className={`border rounded-full px-3 py-1 text-sm font-medium flex items-center gap-2 cursor-pointer transition-colors ${isActive ? `${colors.bg} ${colors.text}` : "bg-white text-gray-500 hover:bg-gray-50"}`}
                                 >
-                                    <span className="font-bold text-gray-900">{count}</span> {statusLabels[status]}
+                                    <span className="font-bold text-gray-900">{count}</span> {t(statusLabelKeys[status])}
                                 </button>
                             );
                         }
@@ -432,7 +444,7 @@ export default function ProjectTasksPage() {
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500">Show</span>
+                        <span className="text-sm text-gray-500">{t("projects.tasks.show")}</span>
                         <Select
                             value={recordsPerPage.toString()}
                             onValueChange={(v) => {
@@ -452,28 +464,28 @@ export default function ProjectTasksPage() {
                         </Select>
                         <Button variant="outline" onClick={exportTasks}>
                             <Download className="mr-2 h-4 w-4" />
-                            Export
+                            {t("common.export")}
                         </Button>
                         {selectedTasks.length > 0 && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-                                        <Badge className="mr-2 bg-blue-600">{selectedTasks.length}</Badge>Bulk{" "}
+                                        <Badge className="mr-2 bg-blue-600">{selectedTasks.length}</Badge>{t("projects.tasks.bulk")}{" "}
                                         <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuLabel>With {selectedTasks.length} selected</DropdownMenuLabel>
+                                    <DropdownMenuLabel>{t("projects.tasks.withSelected", { count: selectedTasks.length })}</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                        <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}
                         <Link href={`/dashboard/tasks/new?projectId=${projectId}`}>
                             <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                                <Plus className="mr-2 h-4 w-4" /> New Task
+                                <Plus className="mr-2 h-4 w-4" /> {t("projects.tasks.newTask")}
                             </Button>
                         </Link>
                     </div>
@@ -481,7 +493,7 @@ export default function ProjectTasksPage() {
                         <div className="relative w-full sm:w-64">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Search tasks..."
+                                placeholder={t("projects.tasks.searchPlaceholder")}
                                 className="pl-9"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -494,15 +506,15 @@ export default function ProjectTasksPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Density</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("projects.tasks.density.label")}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuRadioGroup
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="spacious">Spacious</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">{t("projects.tasks.density.compact")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">{t("projects.tasks.density.comfortable")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="spacious">{t("projects.tasks.density.spacious")}</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -514,7 +526,7 @@ export default function ProjectTasksPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuLabel>
-                                    Columns ({visibleColumnsCount}/{DEFAULT_COLUMNS.length})
+                                    {t("projects.tasks.columnsLabel", { visible: visibleColumnsCount, total: DEFAULT_COLUMNS.length })}
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {DEFAULT_COLUMNS.map((col) => (
@@ -524,7 +536,7 @@ export default function ProjectTasksPage() {
                                         onCheckedChange={() => toggleColumn(col.key)}
                                         disabled={col.required}
                                     >
-                                        {col.label}
+                                        {t(col.labelKey)}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
@@ -567,16 +579,16 @@ export default function ProjectTasksPage() {
                                         onCheckedChange={(c) => (c ? handleSelectAllOnPage() : handleClearSelection())}
                                     />
                                 </TableHead>
-                                {columnVisibility.id && <TableHead className="w-10">#</TableHead>}
+                                {columnVisibility.id && <TableHead className="w-10">{t("projects.tasks.columns.number")}</TableHead>}
                                 {columnVisibility.name && (
-                                    <TableHead className="font-semibold text-gray-900">Name</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("projects.tasks.columns.name")}</TableHead>
                                 )}
-                                {columnVisibility.status && <TableHead>Status</TableHead>}
-                                {columnVisibility.startDate && <TableHead>Start Date</TableHead>}
-                                {columnVisibility.dueDate && <TableHead>Due Date</TableHead>}
-                                {columnVisibility.priority && <TableHead>Priority</TableHead>}
-                                {columnVisibility.assignee && <TableHead>Assigned To</TableHead>}
-                                <TableHead className="w-24 text-center">Actions</TableHead>
+                                {columnVisibility.status && <TableHead>{t("projects.tasks.columns.status")}</TableHead>}
+                                {columnVisibility.startDate && <TableHead>{t("projects.tasks.columns.startDate")}</TableHead>}
+                                {columnVisibility.dueDate && <TableHead>{t("projects.tasks.columns.dueDate")}</TableHead>}
+                                {columnVisibility.priority && <TableHead>{t("projects.tasks.columns.priority")}</TableHead>}
+                                {columnVisibility.assignee && <TableHead>{t("projects.tasks.columns.assignee")}</TableHead>}
+                                <TableHead className="w-24 text-center">{t("common.actions")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -586,7 +598,7 @@ export default function ProjectTasksPage() {
                                         colSpan={visibleColumnsCount + 2}
                                         className="text-center py-10 text-muted-foreground"
                                     >
-                                        {searchQuery ? "No matches" : "No tasks found"}
+                                        {searchQuery ? t("projects.tasks.noMatches") : t("projects.tasks.noTasks")}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -624,14 +636,14 @@ export default function ProjectTasksPage() {
                                                                 href={`/dashboard/tasks/${task.id}/edit`}
                                                                 className="hover:text-blue-600 hover:underline px-0.5"
                                                             >
-                                                                Edit
+                                                                {t("common.edit")}
                                                             </Link>
                                                             <span className="text-gray-300">|</span>
                                                             <button
                                                                 onClick={() => handleDelete(task.id)}
                                                                 className="hover:text-red-600 hover:underline px-0.5"
                                                             >
-                                                                Delete
+                                                                {t("common.delete")}
                                                             </button>
                                                         </div>
                                                     </div>
@@ -649,10 +661,10 @@ export default function ProjectTasksPage() {
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="to_do">To Do</SelectItem>
-                                                            <SelectItem value="in_progress">In Progress</SelectItem>
-                                                            <SelectItem value="blocked">Blocked</SelectItem>
-                                                            <SelectItem value="done">Done</SelectItem>
+                                                            <SelectItem value="to_do">{t("projects.status.toDo")}</SelectItem>
+                                                            <SelectItem value="in_progress">{t("projects.status.inProgress")}</SelectItem>
+                                                            <SelectItem value="blocked">{t("projects.status.blocked")}</SelectItem>
+                                                            <SelectItem value="done">{t("projects.status.done")}</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </TableCell>
@@ -672,7 +684,7 @@ export default function ProjectTasksPage() {
                                                     <Badge
                                                         className={`${priorityColor.bg} ${priorityColor.text} border-0`}
                                                     >
-                                                        {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                                                        {t(`projects.priority.${task.priority}`)}
                                                     </Badge>
                                                 </TableCell>
                                             )}
@@ -691,7 +703,7 @@ export default function ProjectTasksPage() {
                                                                 </Button>
                                                             </Link>
                                                         </TooltipTrigger>
-                                                        <TooltipContent>Edit</TooltipContent>
+                                                        <TooltipContent>{t("common.edit")}</TooltipContent>
                                                     </Tooltip>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
@@ -704,7 +716,7 @@ export default function ProjectTasksPage() {
                                                                 <Trash className="h-3.5 w-3.5" />
                                                             </Button>
                                                         </TooltipTrigger>
-                                                        <TooltipContent>Delete</TooltipContent>
+                                                        <TooltipContent>{t("common.delete")}</TooltipContent>
                                                     </Tooltip>
                                                 </div>
                                             </TableCell>
@@ -717,7 +729,7 @@ export default function ProjectTasksPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600 font-medium">Total: {totalRecords}</div>
+                    <div className="text-sm text-gray-600 font-medium">{t("projects.tasks.total", { count: totalRecords })}</div>
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}

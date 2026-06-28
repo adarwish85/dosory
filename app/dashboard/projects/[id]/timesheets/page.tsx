@@ -30,6 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useTranslation } from "@/lib/i18n";
 
 function formatDuration(seconds: number) {
     const h = Math.floor(seconds / 3600);
@@ -38,6 +39,7 @@ function formatDuration(seconds: number) {
 }
 
 export default function TimesheetsPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const { logs, totalDuration, loading, logTime, startTimer, stopTimer } = useTimesheets(projectId);
@@ -75,13 +77,13 @@ export default function TimesheetsPage() {
     const getUserName = (userId: string) => {
         const staffMember = staffMap.get(userId);
         if (staffMember) return staffMember.name;
-        return "Unknown User";
+        return t("projects.timesheets.unknownUser");
     };
 
     // Get task name
     const getTaskName = (taskId?: string) => {
         if (!taskId) return null;
-        return taskMap.get(taskId) || "Unknown Task";
+        return taskMap.get(taskId) || t("projects.timesheets.unknownTask");
     };
 
     const form = useForm<TimeLogFormData>({
@@ -96,31 +98,31 @@ export default function TimesheetsPage() {
     const onSubmit = async (data: TimeLogFormData) => {
         try {
             await logTime({ ...data, taskId: selectedTaskId || undefined });
-            toast.success("Time logged successfully");
+            toast.success(t("projects.timesheets.toast.logged"));
             setDialogOpen(false);
             form.reset({ projectId, note: "", billable: true });
             setSelectedTaskId("");
         } catch (error) {
             console.error(error);
-            toast.error("Failed to log time");
+            toast.error(t("projects.timesheets.toast.logFailed"));
         }
     };
 
     const handleStartTimer = async () => {
         try {
-            await startTimer(selectedTaskId || undefined, "Work in progress");
-            toast.success("Timer started");
+            await startTimer(selectedTaskId || undefined, t("projects.timesheets.workInProgress"));
+            toast.success(t("projects.timesheets.toast.timerStarted"));
         } catch {
-            toast.error("Failed to start timer");
+            toast.error(t("projects.timesheets.toast.timerStartFailed"));
         }
     };
 
     const handleStopTimer = async (id: string) => {
         try {
             await stopTimer(id);
-            toast.success("Timer stopped");
+            toast.success(t("projects.timesheets.toast.timerStopped"));
         } catch {
-            toast.error("Failed to stop timer");
+            toast.error(t("projects.timesheets.toast.timerStopFailed"));
         }
     };
 
@@ -130,17 +132,17 @@ export default function TimesheetsPage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold">Timesheets</h2>
-                    <p className="text-muted-foreground text-sm">Track time spent on this project.</p>
+                    <h2 className="text-2xl font-bold">{t("projects.timesheets.title")}</h2>
+                    <p className="text-muted-foreground text-sm">{t("projects.timesheets.subtitle")}</p>
                 </div>
                 <div className="flex gap-2">
                     {/* Task Selector for Timer */}
                     <Select value={selectedTaskId} onValueChange={setSelectedTaskId}>
                         <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select task..." />
+                            <SelectValue placeholder={t("projects.timesheets.selectTask")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">No specific task</SelectItem>
+                            <SelectItem value="">{t("projects.timesheets.noSpecificTask")}</SelectItem>
                             {tasks.map(task => (
                                 <SelectItem key={task.id} value={task.id}>
                                     {task.name}
@@ -151,36 +153,36 @@ export default function TimesheetsPage() {
 
                     {activeTimer ? (
                         <Button variant="destructive" onClick={() => handleStopTimer(activeTimer.id)}>
-                            <StopCircle className="mr-2 h-4 w-4 animate-pulse" /> Stop Timer
+                            <StopCircle className="mr-2 h-4 w-4 animate-pulse" /> {t("projects.timesheets.stopTimer")}
                         </Button>
                     ) : (
                         <Button variant="outline" onClick={handleStartTimer}>
-                            <PlayCircle className="mr-2 h-4 w-4" /> Start Timer
+                            <PlayCircle className="mr-2 h-4 w-4" /> {t("projects.timesheets.startTimer")}
                         </Button>
                     )}
 
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                         <DialogTrigger asChild>
                             <Button>
-                                <Plus className="mr-2 h-4 w-4" /> Log Manual Time
+                                <Plus className="mr-2 h-4 w-4" /> {t("projects.timesheets.logManualTime")}
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Log Time</DialogTitle>
-                                <DialogDescription>Manually enter time duration.</DialogDescription>
+                                <DialogTitle>{t("projects.timesheets.logTimeTitle")}</DialogTitle>
+                                <DialogDescription>{t("projects.timesheets.logTimeDescription")}</DialogDescription>
                             </DialogHeader>
                             <Form {...form}>
                                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                                     {/* Task Selector */}
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Task (Optional)</label>
+                                        <label className="text-sm font-medium">{t("projects.timesheets.taskOptional")}</label>
                                         <Select value={selectedTaskId} onValueChange={setSelectedTaskId}>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select a task..." />
+                                                <SelectValue placeholder={t("projects.timesheets.selectATask")} />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="">No specific task</SelectItem>
+                                                <SelectItem value="">{t("projects.timesheets.noSpecificTask")}</SelectItem>
                                                 {tasks.map(task => (
                                                     <SelectItem key={task.id} value={task.id}>
                                                         {task.name}
@@ -195,9 +197,9 @@ export default function TimesheetsPage() {
                                         name="note"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Description</FormLabel>
+                                                <FormLabel>{t("common.description")}</FormLabel>
                                                 <FormControl>
-                                                    <Textarea placeholder="What did you work on?" {...field} />
+                                                    <Textarea placeholder={t("projects.timesheets.workPlaceholder")} {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -210,7 +212,7 @@ export default function TimesheetsPage() {
                                             name="startTime"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Start Time</FormLabel>
+                                                    <FormLabel>{t("projects.timesheets.startTime")}</FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="datetime-local"
@@ -226,7 +228,7 @@ export default function TimesheetsPage() {
                                             name="endTime"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>End Time</FormLabel>
+                                                    <FormLabel>{t("projects.timesheets.endTime")}</FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="datetime-local"
@@ -251,18 +253,18 @@ export default function TimesheetsPage() {
                                                     />
                                                 </FormControl>
                                                 <div className="space-y-1 leading-none">
-                                                    <FormLabel>Billable</FormLabel>
+                                                    <FormLabel>{t("projects.timesheets.billable")}</FormLabel>
                                                 </div>
                                             </FormItem>
                                         )}
                                     />
                                     <DialogFooter>
                                         <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                                            Cancel
+                                            {t("common.cancel")}
                                         </Button>
                                         <Button type="submit" disabled={form.formState.isSubmitting}>
                                             {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            Save Log
+                                            {t("projects.timesheets.saveLog")}
                                         </Button>
                                     </DialogFooter>
                                 </form>
@@ -278,25 +280,25 @@ export default function TimesheetsPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium flex items-center gap-2">
                             <Clock className="h-4 w-4 text-blue-600" />
-                            Total Tracked
+                            {t("projects.timesheets.totalTracked")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatDuration(totalDuration)}</div>
-                        <p className="text-xs text-muted-foreground">{logs.length} time entries</p>
+                        <p className="text-xs text-muted-foreground">{t("projects.timesheets.timeEntries", { count: logs.length })}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium flex items-center gap-2">
                             <DollarSign className="h-4 w-4 text-green-600" />
-                            Billable Time
+                            {t("projects.timesheets.billableTime")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-green-600">{formatDuration(billableTime)}</div>
                         <p className="text-xs text-muted-foreground">
-                            {Math.round((billableTime / (totalDuration || 1)) * 100)}% of total
+                            {t("projects.timesheets.percentOfTotal", { percent: Math.round((billableTime / (totalDuration || 1)) * 100) })}
                         </p>
                     </CardContent>
                 </Card>
@@ -304,14 +306,14 @@ export default function TimesheetsPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium flex items-center gap-2">
                             <User className="h-4 w-4 text-orange-600" />
-                            Team Members
+                            {t("projects.timesheets.teamMembers")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
                             {new Set(logs.map(l => l.userId)).size}
                         </div>
-                        <p className="text-xs text-muted-foreground">Contributors</p>
+                        <p className="text-xs text-muted-foreground">{t("projects.timesheets.contributors")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -321,20 +323,20 @@ export default function TimesheetsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>User</TableHead>
-                            <TableHead>Task</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead>Start Time</TableHead>
-                            <TableHead>End Time</TableHead>
-                            <TableHead>Duration</TableHead>
-                            <TableHead>Billable</TableHead>
+                            <TableHead>{t("projects.timesheets.table.user")}</TableHead>
+                            <TableHead>{t("projects.timesheets.table.task")}</TableHead>
+                            <TableHead>{t("common.description")}</TableHead>
+                            <TableHead>{t("projects.timesheets.startTime")}</TableHead>
+                            <TableHead>{t("projects.timesheets.endTime")}</TableHead>
+                            <TableHead>{t("projects.timesheets.table.duration")}</TableHead>
+                            <TableHead>{t("projects.timesheets.billable")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {logs.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
-                                    No time logs found. Start tracking time!
+                                    {t("projects.timesheets.noLogs")}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -367,7 +369,7 @@ export default function TimesheetsPage() {
                                         ) : (
                                             <span className="text-green-600 animate-pulse font-medium flex items-center gap-1">
                                                 <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                                                Active
+                                                {t("projects.timesheets.active")}
                                             </span>
                                         )}
                                     </TableCell>
@@ -376,9 +378,9 @@ export default function TimesheetsPage() {
                                     </TableCell>
                                     <TableCell>
                                         {log.billable ? (
-                                            <Badge className="bg-green-100 text-green-700 hover:bg-green-200">Yes</Badge>
+                                            <Badge className="bg-green-100 text-green-700 hover:bg-green-200">{t("common.yes")}</Badge>
                                         ) : (
-                                            <Badge variant="secondary">No</Badge>
+                                            <Badge variant="secondary">{t("common.no")}</Badge>
                                         )}
                                     </TableCell>
                                 </TableRow>

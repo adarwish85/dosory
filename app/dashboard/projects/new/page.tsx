@@ -21,8 +21,10 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useTranslation } from "@/lib/i18n";
 
 export default function CreateProjectPage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const searchParams = useSearchParams();
     const customerIdParam = searchParams.get("customerId");
@@ -71,7 +73,7 @@ export default function CreateProjectPage() {
         setIsSubmitting(true);
         try {
             const projectId = await createProject(data);
-            toast.success("Project created successfully");
+            toast.success(t("projects.new.toast.created"));
 
             if (customerIdParam) {
                 router.push(`/dashboard/customers/${customerIdParam}/projects`);
@@ -80,7 +82,7 @@ export default function CreateProjectPage() {
             }
         } catch (error) {
             console.error("Error creating project:", error);
-            toast.error("Failed to create project");
+            toast.error(t("projects.new.toast.createFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -94,28 +96,28 @@ export default function CreateProjectPage() {
                     className="flex items-center hover:text-gray-900 transition-colors"
                 >
                     <ChevronLeft className="h-4 w-4 mr-1" />
-                    Back to Projects
+                    {t("projects.new.backToProjects")}
                 </Link>
             </div>
 
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Create New Project</h1>
-                    <p className="text-gray-500 mt-1">Start tracking a new customer project</p>
+                    <h1 className="text-3xl font-bold text-gray-900">{t("projects.new.title")}</h1>
+                    <p className="text-gray-500 mt-1">{t("projects.new.subtitle")}</p>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Project Details</CardTitle>
-                        <CardDescription>Basic information about the project</CardDescription>
+                        <CardTitle>{t("projects.new.detailsTitle")}</CardTitle>
+                        <CardDescription>{t("projects.new.detailsDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-6">
                         {/* Customer Selection */}
                         <div className="grid gap-2">
                             <Label htmlFor="customerId">
-                                Customer <span className="text-red-500">*</span>
+                                {t("projects.new.customer")} <span className="text-red-500">*</span>
                             </Label>
                             <Select
                                 value={watch("customerId")}
@@ -123,12 +125,12 @@ export default function CreateProjectPage() {
                                 disabled={!!customerIdParam}
                             >
                                 <SelectTrigger className={cn(errors.customerId && "border-red-500")}>
-                                    <SelectValue placeholder="Select a customer" />
+                                    <SelectValue placeholder={t("projects.new.selectCustomer")} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {customersLoading ? (
                                         <div className="p-2 flex items-center justify-center text-sm text-gray-500">
-                                            Loading customers...
+                                            {t("projects.new.loadingCustomers")}
                                         </div>
                                     ) : (
                                         customers.map((c) => (
@@ -145,11 +147,11 @@ export default function CreateProjectPage() {
                         {/* Project Name */}
                         <div className="grid gap-2">
                             <Label htmlFor="name">
-                                Project Name <span className="text-red-500">*</span>
+                                {t("projects.new.projectName")} <span className="text-red-500">*</span>
                             </Label>
                             <Input
                                 id="name"
-                                placeholder="e.g. Website Redesign"
+                                placeholder={t("projects.new.projectNamePlaceholder")}
                                 {...register("name")}
                                 className={cn(errors.name && "border-red-500")}
                             />
@@ -158,10 +160,10 @@ export default function CreateProjectPage() {
 
                         {/* Description */}
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">{t("projects.new.description")}</Label>
                             <Textarea
                                 id="description"
-                                placeholder="Project scope and goals..."
+                                placeholder={t("projects.new.descriptionPlaceholder")}
                                 className="min-h-[100px]"
                                 {...register("description")}
                             />
@@ -170,7 +172,7 @@ export default function CreateProjectPage() {
                         {/* Dates Row */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
-                                <Label>Start Date</Label>
+                                <Label>{t("projects.new.startDate")}</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -181,7 +183,7 @@ export default function CreateProjectPage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                                            {startDate ? format(startDate, "PPP") : <span>{t("projects.new.pickDate")}</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -196,7 +198,7 @@ export default function CreateProjectPage() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label>Deadline</Label>
+                                <Label>{t("projects.new.deadline")}</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -207,7 +209,7 @@ export default function CreateProjectPage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {deadline ? format(deadline, "PPP") : <span>Pick a date</span>}
+                                            {deadline ? format(deadline, "PPP") : <span>{t("projects.new.pickDate")}</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -226,12 +228,12 @@ export default function CreateProjectPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Details & Billing</CardTitle>
-                        <CardDescription>Financial and tracking settings</CardDescription>
+                        <CardTitle>{t("projects.new.billingTitle")}</CardTitle>
+                        <CardDescription>{t("projects.new.billingDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-6 md:grid-cols-2">
                         <div className="grid gap-2">
-                            <Label htmlFor="status">Status</Label>
+                            <Label htmlFor="status">{t("common.status")}</Label>
                             <Select
                                 value={watch("status")}
                                 onValueChange={(val: ProjectFormData["status"]) => setValue("status", val)}
@@ -240,17 +242,17 @@ export default function CreateProjectPage() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="to_do">Not Started</SelectItem>
-                                    <SelectItem value="in_progress">In Progress</SelectItem>
-                                    <SelectItem value="on_hold">On Hold</SelectItem>
-                                    <SelectItem value="completed">Finished</SelectItem>
-                                    <SelectItem value="archived">Cancelled</SelectItem>
+                                    <SelectItem value="to_do">{t("projects.new.status.notStarted")}</SelectItem>
+                                    <SelectItem value="in_progress">{t("projects.new.status.inProgress")}</SelectItem>
+                                    <SelectItem value="on_hold">{t("projects.new.status.onHold")}</SelectItem>
+                                    <SelectItem value="completed">{t("projects.new.status.finished")}</SelectItem>
+                                    <SelectItem value="archived">{t("projects.new.status.cancelled")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="billingType">Billing Type</Label>
+                            <Label htmlFor="billingType">{t("projects.new.billingType")}</Label>
                             <Select
                                 value={watch("billingType")}
                                 onValueChange={(val: ProjectFormData["billingType"]) => setValue("billingType", val)}
@@ -259,16 +261,16 @@ export default function CreateProjectPage() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="fixed">Fixed Rate</SelectItem>
-                                    <SelectItem value="hourly">Hourly Rate</SelectItem>
-                                    <SelectItem value="task_hours">Task Hours</SelectItem>
+                                    <SelectItem value="fixed">{t("projects.new.billing.fixed")}</SelectItem>
+                                    <SelectItem value="hourly">{t("projects.new.billing.hourly")}</SelectItem>
+                                    <SelectItem value="task_hours">{t("projects.new.billing.taskHours")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
                         {watch("billingType") === "fixed" && (
                             <div className="grid gap-2">
-                                <Label htmlFor="projectRate">Project Price</Label>
+                                <Label htmlFor="projectRate">{t("projects.new.projectPrice")}</Label>
                                 <Input
                                     type="number"
                                     min="0"
@@ -280,7 +282,7 @@ export default function CreateProjectPage() {
 
                         {watch("billingType") === "hourly" && (
                             <div className="grid gap-2">
-                                <Label htmlFor="projectRate">Hourly Rate</Label>
+                                <Label htmlFor="projectRate">{t("projects.new.hourlyRate")}</Label>
                                 <Input
                                     type="number"
                                     min="0"
@@ -291,7 +293,7 @@ export default function CreateProjectPage() {
                         )}
 
                         <div className="grid gap-2">
-                            <Label htmlFor="estimatedHours">Estimated Hours</Label>
+                            <Label htmlFor="estimatedHours">{t("projects.new.estimatedHours")}</Label>
                             <Input
                                 type="number"
                                 min="0"
@@ -302,11 +304,11 @@ export default function CreateProjectPage() {
                     </CardContent>
                     <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
                         <Button type="button" variant="ghost" className="mr-2" onClick={() => router.back()}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Project
+                            {t("projects.new.createButton")}
                         </Button>
                     </CardFooter>
                 </Card>

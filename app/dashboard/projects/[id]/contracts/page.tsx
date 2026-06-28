@@ -52,16 +52,18 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
 import type { Contract, ContractStatus } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
-const statusConfig: Record<ContractStatus, { label: string; color: string; icon: React.ReactNode }> = {
-    draft: { label: "Draft", color: "bg-gray-100 text-gray-700", icon: <FileText className="h-3 w-3" /> },
-    sent: { label: "Sent", color: "bg-blue-100 text-blue-700", icon: <Send className="h-3 w-3" /> },
-    signed: { label: "Signed", color: "bg-green-100 text-green-700", icon: <CheckCircle2 className="h-3 w-3" /> },
-    expired: { label: "Expired", color: "bg-amber-100 text-amber-700", icon: <Clock className="h-3 w-3" /> },
-    trash: { label: "Trashed", color: "bg-red-100 text-red-700", icon: <AlertCircle className="h-3 w-3" /> },
+const statusConfig: Record<ContractStatus, { labelKey: string; color: string; icon: React.ReactNode }> = {
+    draft: { labelKey: "projects.contracts.status.draft", color: "bg-gray-100 text-gray-700", icon: <FileText className="h-3 w-3" /> },
+    sent: { labelKey: "projects.contracts.status.sent", color: "bg-blue-100 text-blue-700", icon: <Send className="h-3 w-3" /> },
+    signed: { labelKey: "projects.contracts.status.signed", color: "bg-green-100 text-green-700", icon: <CheckCircle2 className="h-3 w-3" /> },
+    expired: { labelKey: "projects.contracts.status.expired", color: "bg-amber-100 text-amber-700", icon: <Clock className="h-3 w-3" /> },
+    trash: { labelKey: "projects.contracts.status.trash", color: "bg-red-100 text-red-700", icon: <AlertCircle className="h-3 w-3" /> },
 };
 
 export default function ProjectContractsPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const { project, loading: projectLoading } = useProject(projectId);
@@ -101,9 +103,9 @@ export default function ProjectContractsPage() {
         setIsDeleting(true);
         try {
             await deleteContract(deleteConfirm);
-            toast.success("Contract deleted");
+            toast.success(t("projects.contracts.deletedToast"));
         } catch {
-            toast.error("Failed to delete contract");
+            toast.error(t("projects.contracts.deleteFailedToast"));
         } finally {
             setIsDeleting(false);
             setDeleteConfirm(null);
@@ -127,7 +129,7 @@ export default function ProjectContractsPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-blue-600">Total Contracts</CardTitle>
+                        <CardTitle className="text-sm font-medium text-blue-600">{t("projects.contracts.totalContracts")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-blue-900">{contracts.length}</div>
@@ -135,7 +137,7 @@ export default function ProjectContractsPage() {
                 </Card>
                 <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-green-600">Signed</CardTitle>
+                        <CardTitle className="text-sm font-medium text-green-600">{t("projects.contracts.status.signed")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-green-900">{totals.signedCount}</div>
@@ -143,7 +145,7 @@ export default function ProjectContractsPage() {
                 </Card>
                 <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-purple-600">Total Value</CardTitle>
+                        <CardTitle className="text-sm font-medium text-purple-600">{t("projects.contracts.totalValue")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-purple-900">{formatCurrency(totals.totalValue)}</div>
@@ -151,7 +153,7 @@ export default function ProjectContractsPage() {
                 </Card>
                 <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-emerald-600">Signed Value</CardTitle>
+                        <CardTitle className="text-sm font-medium text-emerald-600">{t("projects.contracts.signedValue")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-emerald-900">{formatCurrency(totals.signedValue)}</div>
@@ -168,7 +170,7 @@ export default function ProjectContractsPage() {
                         statusFilter === "all" ? "bg-gray-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"
                     )}
                 >
-                    <span className="font-bold">{contracts.length}</span> All
+                    <span className="font-bold">{contracts.length}</span> {t("projects.contracts.filterAll")}
                 </button>
                 {(["draft", "sent", "signed", "expired"] as ContractStatus[]).map(status => {
                     const config = statusConfig[status];
@@ -184,7 +186,7 @@ export default function ProjectContractsPage() {
                             )}
                         >
                             {config.icon}
-                            <span className="font-bold">{count}</span> {config.label}
+                            <span className="font-bold">{count}</span> {t(config.labelKey)}
                         </button>
                     );
                 })}
@@ -195,7 +197,7 @@ export default function ProjectContractsPage() {
                 <div className="relative w-full sm:w-64">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                     <Input
-                        placeholder="Search contracts..."
+                        placeholder={t("projects.contracts.searchPlaceholder")}
                         className="pl-9"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -203,7 +205,7 @@ export default function ProjectContractsPage() {
                 </div>
                 <Link href={`/dashboard/contracts/new?projectId=${projectId}&projectName=${encodeURIComponent(project?.name || "")}&customerId=${project?.customerId || ""}`}>
                     <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                        <Plus className="mr-2 h-4 w-4" /> New Contract
+                        <Plus className="mr-2 h-4 w-4" /> {t("projects.contracts.new")}
                     </Button>
                 </Link>
             </div>
@@ -213,13 +215,13 @@ export default function ProjectContractsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-50">
-                            <TableHead className="font-semibold">Subject</TableHead>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Value</TableHead>
-                            <TableHead>Start Date</TableHead>
-                            <TableHead>End Date</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="w-20 text-center">Actions</TableHead>
+                            <TableHead className="font-semibold">{t("projects.contracts.subject")}</TableHead>
+                            <TableHead>{t("projects.contracts.customer")}</TableHead>
+                            <TableHead>{t("projects.contracts.value")}</TableHead>
+                            <TableHead>{t("projects.contracts.startDate")}</TableHead>
+                            <TableHead>{t("projects.contracts.endDate")}</TableHead>
+                            <TableHead>{t("common.status")}</TableHead>
+                            <TableHead className="w-20 text-center">{t("common.actions")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -227,9 +229,9 @@ export default function ProjectContractsPage() {
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                                     <FileText className="h-10 w-10 mx-auto mb-3 text-gray-300" />
-                                    <p className="font-medium">No contracts found</p>
+                                    <p className="font-medium">{t("projects.contracts.emptyTitle")}</p>
                                     <p className="text-sm mt-1">
-                                        {searchQuery ? "Try a different search term" : "Create a contract to get started"}
+                                        {searchQuery ? t("projects.contracts.emptySearch") : t("projects.contracts.emptyHint")}
                                     </p>
                                 </TableCell>
                             </TableRow>
@@ -258,7 +260,7 @@ export default function ProjectContractsPage() {
                                         </TableCell>
                                         <TableCell>
                                             <Badge className={cn("flex items-center gap-1 w-fit", config.color)}>
-                                                {config.icon} {config.label}
+                                                {config.icon} {t(config.labelKey)}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
@@ -275,22 +277,22 @@ export default function ProjectContractsPage() {
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem asChild>
                                                         <Link href={`/dashboard/contracts/${contract.id}`}>
-                                                            <Eye className="mr-2 h-4 w-4" /> View
+                                                            <Eye className="mr-2 h-4 w-4" /> {t("common.view")}
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem asChild>
                                                         <Link href={`/dashboard/contracts/${contract.id}/edit`}>
-                                                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                            <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     {contract.status === "draft" && (
                                                         <DropdownMenuItem onClick={() => updateStatus(contract.id, "sent")}>
-                                                            <Send className="mr-2 h-4 w-4" /> Mark as Sent
+                                                            <Send className="mr-2 h-4 w-4" /> {t("projects.contracts.markAsSent")}
                                                         </DropdownMenuItem>
                                                     )}
                                                     {contract.status === "sent" && (
                                                         <DropdownMenuItem onClick={() => updateStatus(contract.id, "signed")}>
-                                                            <CheckCircle2 className="mr-2 h-4 w-4" /> Mark as Signed
+                                                            <CheckCircle2 className="mr-2 h-4 w-4" /> {t("projects.contracts.markAsSigned")}
                                                         </DropdownMenuItem>
                                                     )}
                                                     <DropdownMenuSeparator />
@@ -298,7 +300,7 @@ export default function ProjectContractsPage() {
                                                         className="text-red-600"
                                                         onClick={() => setDeleteConfirm(contract.id)}
                                                     >
-                                                        <Trash className="mr-2 h-4 w-4" /> Delete
+                                                        <Trash className="mr-2 h-4 w-4" /> {t("common.delete")}
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -315,16 +317,16 @@ export default function ProjectContractsPage() {
             <Dialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete Contract</DialogTitle>
+                        <DialogTitle>{t("projects.contracts.deleteDialogTitle")}</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete this contract? This action cannot be undone.
+                            {t("projects.contracts.deleteDialogDescription")}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setDeleteConfirm(null)}>{t("common.cancel")}</Button>
                         <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                             {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Delete
+                            {t("common.delete")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

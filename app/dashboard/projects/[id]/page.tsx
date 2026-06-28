@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle2, Clock, Calendar, Target, TrendingUp, DollarSign } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 // Helper to safely convert Firestore timestamps or strings to Date
 function safeToDate(val: unknown): Date | null {
@@ -34,7 +35,16 @@ function safeToDate(val: unknown): Date | null {
     return null;
 }
 
+const statusLabelKeys: Record<string, string> = {
+    draft: "projects.status.draft",
+    active: "projects.status.active",
+    on_hold: "projects.status.onHold",
+    completed: "projects.status.completed",
+    archived: "projects.status.archived",
+};
+
 export default function ProjectOverviewPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const { project, loading: projectLoading } = useProject(projectId);
@@ -86,7 +96,7 @@ export default function ProjectOverviewPage() {
         return <Skeleton className="h-[400px] w-full" />;
     }
 
-    if (!project) return <div>Project not found</div>;
+    if (!project) return <div>{t("projects.notFound")}</div>;
 
     // Safe deadline extraction
     const deadlineDate = safeToDate(project.deadline);
@@ -116,7 +126,7 @@ export default function ProjectOverviewPage() {
                                 <CheckCircle2 className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                                <p className="text-xs text-blue-600 font-medium">Tasks</p>
+                                <p className="text-xs text-blue-600 font-medium">{t("projects.overview.tasks")}</p>
                                 <p className="text-xl font-bold text-blue-900">
                                     {taskStats.completed || 0}/{taskStats.total}
                                 </p>
@@ -133,7 +143,7 @@ export default function ProjectOverviewPage() {
                                 <Target className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                                <p className="text-xs text-purple-600 font-medium">Milestones</p>
+                                <p className="text-xs text-purple-600 font-medium">{t("projects.overview.milestones")}</p>
                                 <p className="text-xl font-bold text-purple-900">
                                     {milestoneStats.completed}/{milestoneStats.total}
                                 </p>
@@ -150,14 +160,14 @@ export default function ProjectOverviewPage() {
                                 <Clock className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                                <p className="text-xs text-green-600 font-medium">Hours Logged</p>
+                                <p className="text-xs text-green-600 font-medium">{t("projects.overview.hoursLogged")}</p>
                                 <p className="text-xl font-bold text-green-900">
                                     {timesheetStats.totalHours.toFixed(1)}h
                                 </p>
                             </div>
                         </div>
                         <p className="text-xs text-green-600 mt-2">
-                            {timesheetStats.billableHours.toFixed(1)}h billable
+                            {t("projects.overview.hoursBillable", { hours: timesheetStats.billableHours.toFixed(1) })}
                         </p>
                     </CardContent>
                 </Card>
@@ -176,7 +186,7 @@ export default function ProjectOverviewPage() {
                                 <p
                                     className={`text-xs font-medium ${daysLeft < 0 ? "text-red-600" : daysLeft < 7 ? "text-amber-600" : "text-cyan-600"}`}
                                 >
-                                    {daysLeft < 0 ? "Overdue" : "Days Left"}
+                                    {daysLeft < 0 ? t("projects.overview.overdue") : t("projects.overview.daysLeft")}
                                 </p>
                                 <p
                                     className={`text-xl font-bold ${daysLeft < 0 ? "text-red-900" : daysLeft < 7 ? "text-amber-900" : "text-cyan-900"}`}
@@ -188,7 +198,7 @@ export default function ProjectOverviewPage() {
                         <p
                             className={`text-xs mt-2 ${daysLeft < 0 ? "text-red-600" : daysLeft < 7 ? "text-amber-600" : "text-cyan-600"}`}
                         >
-                            {deadlineDate ? format(deadlineDate, "MMM d, yyyy") : "No deadline"}
+                            {deadlineDate ? format(deadlineDate, "MMM d, yyyy") : t("projects.overview.noDeadline")}
                         </p>
                     </CardContent>
                 </Card>
@@ -199,24 +209,24 @@ export default function ProjectOverviewPage() {
                 <div className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg">Project Details</CardTitle>
+                            <CardTitle className="text-lg">{t("projects.overview.detailsTitle")}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-2 gap-y-4 text-sm">
                                 <div>
-                                    <p className="text-muted-foreground">Project #</p>
+                                    <p className="text-muted-foreground">{t("projects.overview.projectNumber")}</p>
                                     <p className="font-medium">{project.id.slice(0, 8)}</p>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground">Customer</p>
+                                    <p className="text-muted-foreground">{t("projects.columns.customer")}</p>
                                     <p className="font-medium text-primary">{project.customerName}</p>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground">Billing Type</p>
+                                    <p className="text-muted-foreground">{t("projects.new.billingType")}</p>
                                     <p className="font-medium capitalize">{project.billingType}</p>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground">Total Rate</p>
+                                    <p className="text-muted-foreground">{t("projects.overview.totalRate")}</p>
                                     <p className="font-medium">
                                         {project.billingType === "fixed"
                                             ? formatCurrency(project.projectRate || 0, project.currency || "USD")
@@ -224,24 +234,26 @@ export default function ProjectOverviewPage() {
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground">Status</p>
+                                    <p className="text-muted-foreground">{t("common.status")}</p>
                                     <Badge
                                         variant={project.status === "completed" ? "default" : "secondary"}
                                         className="capitalize mt-1"
                                     >
-                                        {project.status.replace("_", " ")}
+                                        {statusLabelKeys[project.status]
+                                            ? t(statusLabelKeys[project.status])
+                                            : project.status.replace("_", " ")}
                                     </Badge>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground">Date Created</p>
+                                    <p className="text-muted-foreground">{t("projects.overview.dateCreated")}</p>
                                     <p className="font-medium">{formatDate(project.createdAt, "dd/MM/yyyy")}</p>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground">Start Date</p>
+                                    <p className="text-muted-foreground">{t("projects.columns.startDate")}</p>
                                     <p className="font-medium">{formatDate(project.startDate, "dd/MM/yyyy")}</p>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground">Deadline</p>
+                                    <p className="text-muted-foreground">{t("projects.columns.deadline")}</p>
                                     <p className={`font-medium ${daysLeft < 0 ? "text-destructive" : ""}`}>
                                         {deadlineDate ? format(deadlineDate, "dd/MM/yyyy") : "-"}
                                     </p>
@@ -251,11 +263,11 @@ export default function ProjectOverviewPage() {
                             <Separator />
 
                             <div className="space-y-2">
-                                <h3 className="font-medium">Description</h3>
+                                <h3 className="font-medium">{t("projects.new.description")}</h3>
                                 <div
                                     className="text-sm text-muted-foreground prose prose-sm max-w-none"
                                     dangerouslySetInnerHTML={{
-                                        __html: project.description || "No description provided.",
+                                        __html: project.description || t("projects.overview.noDescription"),
                                     }}
                                 />
                             </div>
@@ -269,13 +281,13 @@ export default function ProjectOverviewPage() {
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                                         <Target className="h-4 w-4 text-muted-foreground" />
-                                        Upcoming Milestones
+                                        {t("projects.overview.upcomingMilestones")}
                                     </CardTitle>
                                     <Link
                                         href={`/dashboard/projects/${projectId}/milestones`}
                                         className="text-xs text-blue-600 hover:underline"
                                     >
-                                        View all
+                                        {t("projects.overview.viewAll")}
                                     </Link>
                                 </div>
                             </CardHeader>
@@ -299,7 +311,7 @@ export default function ProjectOverviewPage() {
                                                 variant={isOverdue ? "destructive" : "secondary"}
                                                 className="text-xs"
                                             >
-                                                {isOverdue ? "Overdue" : dueDate ? format(dueDate, "MMM d") : "-"}
+                                                {isOverdue ? t("projects.overview.overdue") : dueDate ? format(dueDate, "MMM d") : "-"}
                                             </Badge>
                                         </div>
                                     );
@@ -316,31 +328,31 @@ export default function ProjectOverviewPage() {
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-medium flex items-center gap-2">
                                 <DollarSign className="h-4 w-4 text-muted-foreground" />
-                                Expense Summary
+                                {t("projects.overview.expenseSummary")}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 <div className="p-3 bg-gray-50 rounded-lg">
-                                    <p className="text-xs text-muted-foreground">Total</p>
+                                    <p className="text-xs text-muted-foreground">{t("projects.stats.total")}</p>
                                     <p className="font-bold text-lg">
                                         {formatCurrency(totalExpenses, project.currency)}
                                     </p>
                                 </div>
                                 <div className="p-3 bg-blue-50 rounded-lg">
-                                    <p className="text-xs text-blue-600">Billable</p>
+                                    <p className="text-xs text-blue-600">{t("projects.overview.billable")}</p>
                                     <p className="font-bold text-lg text-blue-900">
                                         {formatCurrency(billableExpenses, project.currency)}
                                     </p>
                                 </div>
                                 <div className="p-3 bg-green-50 rounded-lg">
-                                    <p className="text-xs text-green-600">Billed</p>
+                                    <p className="text-xs text-green-600">{t("projects.overview.billed")}</p>
                                     <p className="font-bold text-lg text-green-900">
                                         {formatCurrency(billedExpenses, project.currency)}
                                     </p>
                                 </div>
                                 <div className="p-3 bg-amber-50 rounded-lg">
-                                    <p className="text-xs text-amber-600">Unbilled</p>
+                                    <p className="text-xs text-amber-600">{t("projects.overview.unbilled")}</p>
                                     <p className="font-bold text-lg text-amber-900">
                                         {formatCurrency(unbilledExpenses, project.currency)}
                                     </p>
@@ -354,7 +366,7 @@ export default function ProjectOverviewPage() {
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-medium flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
-                                Time Logged
+                                {t("projects.overview.timeLogged")}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -363,32 +375,32 @@ export default function ProjectOverviewPage() {
                                     <p className="text-2xl font-bold text-gray-900">
                                         {timesheetStats.totalHours.toFixed(1)}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">Total Hours</p>
+                                    <p className="text-xs text-muted-foreground">{t("projects.overview.totalHours")}</p>
                                 </div>
                                 <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg text-center">
                                     <p className="text-2xl font-bold text-green-900">
                                         {timesheetStats.billableHours.toFixed(1)}
                                     </p>
-                                    <p className="text-xs text-green-600">Billable</p>
+                                    <p className="text-xs text-green-600">{t("projects.overview.billable")}</p>
                                 </div>
                                 <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg text-center">
                                     <p className="text-2xl font-bold text-orange-900">
                                         {timesheetStats.nonBillableHours.toFixed(1)}
                                     </p>
-                                    <p className="text-xs text-orange-600">Non-Billable</p>
+                                    <p className="text-xs text-orange-600">{t("projects.overview.nonBillable")}</p>
                                 </div>
                             </div>
 
                             {timesheets.length > 0 && (
                                 <div className="mt-4">
-                                    <p className="text-xs text-muted-foreground mb-2">Recent Entries</p>
+                                    <p className="text-xs text-muted-foreground mb-2">{t("projects.overview.recentEntries")}</p>
                                     <div className="space-y-2 max-h-[200px] overflow-y-auto">
                                         {timesheets.slice(0, 5).map((ts) => (
                                             <div
                                                 key={ts.id}
                                                 className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded"
                                             >
-                                                <span className="truncate flex-1">{ts.note || "Time entry"}</span>
+                                                <span className="truncate flex-1">{ts.note || t("projects.overview.timeEntry")}</span>
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant="outline" className="text-xs">
                                                         {(ts.duration / 3600).toFixed(1)}h
@@ -404,7 +416,7 @@ export default function ProjectOverviewPage() {
                                         href={`/dashboard/projects/${projectId}/timesheets`}
                                         className="text-xs text-blue-600 hover:underline block mt-2"
                                     >
-                                        View all time entries →
+                                        {t("projects.overview.viewAllTimeEntries")}
                                     </Link>
                                 </div>
                             )}
@@ -416,17 +428,17 @@ export default function ProjectOverviewPage() {
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-medium flex items-center gap-2">
                                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                                Task Status
+                                {t("projects.overview.taskStatus")}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
                                 {[
-                                    { key: "to_do", label: "Not Started", color: "bg-gray-400" },
-                                    { key: "in_progress", label: "In Progress", color: "bg-blue-500" },
-                                    { key: "in_progress", label: "Testing", color: "bg-purple-500" },
-                                    { key: "in_progress", label: "Awaiting Feedback", color: "bg-amber-500" },
-                                    { key: "done", label: "Completed", color: "bg-green-500" },
+                                    { key: "to_do", label: t("projects.taskStatus.notStarted"), color: "bg-gray-400" },
+                                    { key: "in_progress", label: t("projects.taskStatus.inProgress"), color: "bg-blue-500" },
+                                    { key: "in_progress", label: t("projects.taskStatus.testing"), color: "bg-purple-500" },
+                                    { key: "in_progress", label: t("projects.taskStatus.awaitingFeedback"), color: "bg-amber-500" },
+                                    { key: "done", label: t("projects.taskStatus.completed"), color: "bg-green-500" },
                                 ].map((status, i) => {
                                     const count = Number(taskStats[status.key]) || 0;
                                     const percent = taskStats.total > 0 ? (count / taskStats.total) * 100 : 0;

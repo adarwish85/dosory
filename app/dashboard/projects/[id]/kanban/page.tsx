@@ -46,13 +46,14 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import type { Task, TaskStatus, TaskPriority } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 // Status column configuration
-const COLUMNS: { id: TaskStatus; title: string; color: string; icon: React.ReactNode }[] = [
-    { id: "to_do", title: "To Do", color: "bg-gray-100", icon: <Circle className="h-4 w-4 text-gray-500" /> },
-    { id: "in_progress", title: "In Progress", color: "bg-blue-50", icon: <Loader2 className="h-4 w-4 text-blue-500" /> },
-    { id: "blocked", title: "Blocked", color: "bg-red-50", icon: <Lock className="h-4 w-4 text-red-500" /> },
-    { id: "done", title: "Done", color: "bg-green-50", icon: <CheckCircle2 className="h-4 w-4 text-green-500" /> },
+const COLUMNS: { id: TaskStatus; titleKey: string; color: string; icon: React.ReactNode }[] = [
+    { id: "to_do", titleKey: "projects.status.toDo", color: "bg-gray-100", icon: <Circle className="h-4 w-4 text-gray-500" /> },
+    { id: "in_progress", titleKey: "projects.status.inProgress", color: "bg-blue-50", icon: <Loader2 className="h-4 w-4 text-blue-500" /> },
+    { id: "blocked", titleKey: "projects.status.blocked", color: "bg-red-50", icon: <Lock className="h-4 w-4 text-red-500" /> },
+    { id: "done", titleKey: "projects.status.done", color: "bg-green-50", icon: <CheckCircle2 className="h-4 w-4 text-green-500" /> },
 ];
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
@@ -64,6 +65,7 @@ const PRIORITY_COLORS: Record<TaskPriority, string> = {
 
 // Draggable Task Card Component
 function TaskCard({ task, isDragging }: { task: Task; isDragging?: boolean }) {
+    const { t } = useTranslation();
     const isOverdue = task.dueDate && task.dueDate.toDate() < new Date() && task.status !== "done";
 
     return (
@@ -80,7 +82,7 @@ function TaskCard({ task, isDragging }: { task: Task; isDragging?: boolean }) {
                     <div className="flex flex-wrap gap-1">
                         <Badge variant="outline" className={PRIORITY_COLORS[task.priority]}>
                             <Flag className="h-3 w-3 mr-1" />
-                            {task.priority}
+                            {t(`projects.priority.${task.priority}`)}
                         </Badge>
                         {task.tags?.slice(0, 2).map((tag) => (
                             <Badge key={tag} variant="secondary" className="text-xs">
@@ -177,6 +179,7 @@ function KanbanColumn({
     tasks: Task[];
     milestoneFilter: string | null;
 }) {
+    const { t } = useTranslation();
     const filteredTasks = milestoneFilter
         ? tasks.filter((t) => t.milestoneId === milestoneFilter)
         : tasks;
@@ -186,7 +189,7 @@ function KanbanColumn({
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     {column.icon}
-                    <h3 className="font-semibold text-sm">{column.title}</h3>
+                    <h3 className="font-semibold text-sm">{t(column.titleKey)}</h3>
                     <Badge variant="secondary" className="text-xs">
                         {filteredTasks.length}
                     </Badge>
@@ -202,7 +205,7 @@ function KanbanColumn({
 
                 {filteredTasks.length === 0 && (
                     <div className="text-center text-sm text-muted-foreground py-8 border-2 border-dashed rounded-lg">
-                        No tasks
+                        {t("projects.kanban.noTasks")}
                     </div>
                 )}
             </div>
@@ -211,6 +214,7 @@ function KanbanColumn({
 }
 
 export default function KanbanPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const { tasks, loading: tasksLoading, updateTaskStatus } = useTasks({ projectId });
@@ -265,19 +269,20 @@ export default function KanbanPage() {
 
             // Check if task is blocked and trying to mark as done
             if (newStatus === "done" && task.isBlocked) {
-                toast.error("Cannot mark as done: This task is blocked by another task");
+                toast.error(t("projects.kanban.toast.blocked"));
                 return;
             }
 
             try {
                 await updateTaskStatus(taskId, newStatus);
-                toast.success(`Task moved to ${COLUMNS.find((c) => c.id === newStatus)?.title}`);
+                const columnKey = COLUMNS.find((c) => c.id === newStatus)?.titleKey;
+                toast.success(t("projects.kanban.toast.moved", { status: columnKey ? t(columnKey) : "" }));
             } catch (error) {
                 console.error("Failed to update task status:", error);
-                toast.error("Failed to move task");
+                toast.error(t("projects.kanban.toast.moveFailed"));
             }
         },
-        [tasks, updateTaskStatus]
+        [tasks, updateTaskStatus, t]
     );
 
     // Group tasks by status
@@ -304,9 +309,9 @@ export default function KanbanPage() {
             {/* Header */}
             <div className="flex items-center justify-between bg-white p-3 rounded-lg border">
                 <div>
-                    <h2 className="font-semibold">Kanban Board</h2>
+                    <h2 className="font-semibold">{t("projects.kanban.title")}</h2>
                     <p className="text-sm text-muted-foreground">
-                        Drag and drop tasks to change their status
+                        {t("projects.kanban.subtitle")}
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -315,10 +320,10 @@ export default function KanbanPage() {
                         onValueChange={(v) => setMilestoneFilter(v === "all" ? null : v)}
                     >
                         <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Filter by milestone" />
+                            <SelectValue placeholder={t("projects.kanban.filterByMilestone")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Milestones</SelectItem>
+                            <SelectItem value="all">{t("projects.kanban.allMilestones")}</SelectItem>
                             {milestones.map((m) => (
                                 <SelectItem key={m.id} value={m.id}>
                                     {m.name}
@@ -355,19 +360,19 @@ export default function KanbanPage() {
             {/* Stats */}
             <div className="flex gap-4 text-sm text-muted-foreground bg-gray-50 p-3 rounded-lg">
                 <div>
-                    <span className="font-medium text-foreground">{tasks.length}</span> total tasks
+                    <span className="font-medium text-foreground">{tasks.length}</span> {t("projects.kanban.stats.totalTasks")}
                 </div>
                 <div>
-                    <span className="font-medium text-green-600">{tasksByStatus.done?.length || 0}</span> completed
+                    <span className="font-medium text-green-600">{tasksByStatus.done?.length || 0}</span> {t("projects.status.completed")}
                 </div>
                 <div>
-                    <span className="font-medium text-red-600">{tasksByStatus.blocked?.length || 0}</span> blocked
+                    <span className="font-medium text-red-600">{tasksByStatus.blocked?.length || 0}</span> {t("projects.kanban.stats.blocked")}
                 </div>
                 <div>
                     <span className="font-medium text-orange-600">
                         {tasks.filter((t) => t.dueDate && t.dueDate.toDate() < new Date() && t.status !== "done").length}
                     </span>{" "}
-                    overdue
+                    {t("projects.kanban.stats.overdue")}
                 </div>
             </div>
         </div>

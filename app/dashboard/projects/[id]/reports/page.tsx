@@ -32,6 +32,7 @@ import {
 import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 import type { Task, TaskStatus } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 // Status colors
 const STATUS_COLORS: Record<TaskStatus, string> = {
@@ -42,6 +43,7 @@ const STATUS_COLORS: Record<TaskStatus, string> = {
 };
 
 export default function ProjectReportsPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const { tasks, loading: tasksLoading } = useTasks({ projectId });
@@ -173,7 +175,7 @@ export default function ProjectReportsPage() {
         link.href = URL.createObjectURL(blob);
         link.download = filename;
         link.click();
-        toast.success(`Exported ${filename}`);
+        toast.success(t("projects.reports.exportedToast", { filename }));
     };
 
     if (loading) {
@@ -195,9 +197,9 @@ export default function ProjectReportsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold">Project Reports</h2>
+                    <h2 className="text-xl font-semibold">{t("projects.reports.title")}</h2>
                     <p className="text-muted-foreground">
-                        Analytics and insights for {project?.name}
+                        {t("projects.reports.subtitle", { name: project?.name ?? "" })}
                     </p>
                 </div>
             </div>
@@ -212,7 +214,7 @@ export default function ProjectReportsPage() {
                             </div>
                             <div>
                                 <p className="text-2xl font-bold">{stats.completionRate}%</p>
-                                <p className="text-sm text-muted-foreground">Completed</p>
+                                <p className="text-sm text-muted-foreground">{t("projects.reports.completed")}</p>
                             </div>
                         </div>
                         <div className="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -234,7 +236,7 @@ export default function ProjectReportsPage() {
                                 <p className="text-2xl font-bold">
                                     {stats.completedTasks}/{stats.totalTasks}
                                 </p>
-                                <p className="text-sm text-muted-foreground">Tasks Done</p>
+                                <p className="text-sm text-muted-foreground">{t("projects.reports.tasksDone")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -248,7 +250,7 @@ export default function ProjectReportsPage() {
                             </div>
                             <div>
                                 <p className="text-2xl font-bold">{stats.overdueTasks.length}</p>
-                                <p className="text-sm text-muted-foreground">Overdue</p>
+                                <p className="text-sm text-muted-foreground">{t("projects.reports.overdue")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -264,7 +266,7 @@ export default function ProjectReportsPage() {
                                 <p className="text-2xl font-bold">
                                     {stats.actualHours}/{stats.estimatedHours}h
                                 </p>
-                                <p className="text-sm text-muted-foreground">Hours Tracked</p>
+                                <p className="text-sm text-muted-foreground">{t("projects.reports.hoursTracked")}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -274,22 +276,22 @@ export default function ProjectReportsPage() {
             {/* Detailed Reports */}
             <Tabs defaultValue="status">
                 <TabsList>
-                    <TabsTrigger value="status">By Status</TabsTrigger>
-                    <TabsTrigger value="milestones">Milestones</TabsTrigger>
-                    <TabsTrigger value="overdue">Overdue</TabsTrigger>
-                    <TabsTrigger value="workload">Team Workload</TabsTrigger>
+                    <TabsTrigger value="status">{t("projects.reports.tabByStatus")}</TabsTrigger>
+                    <TabsTrigger value="milestones">{t("projects.reports.tabMilestones")}</TabsTrigger>
+                    <TabsTrigger value="overdue">{t("projects.reports.overdue")}</TabsTrigger>
+                    <TabsTrigger value="workload">{t("projects.reports.tabWorkload")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="status" className="mt-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Tasks by Status</CardTitle>
-                                <CardDescription>Distribution of tasks across statuses</CardDescription>
+                                <CardTitle>{t("projects.reports.tasksByStatusTitle")}</CardTitle>
+                                <CardDescription>{t("projects.reports.tasksByStatusDesc")}</CardDescription>
                             </div>
                             <Button variant="outline" size="sm" onClick={() => exportToCSV("tasks")}>
                                 <Download className="h-4 w-4 mr-2" />
-                                Export CSV
+                                {t("projects.reports.exportCsv")}
                             </Button>
                         </CardHeader>
                         <CardContent>
@@ -297,7 +299,7 @@ export default function ProjectReportsPage() {
                                 {Object.entries(stats.byStatus).map(([status, count]) => (
                                     <div key={status} className="flex items-center gap-4">
                                         <Badge className={STATUS_COLORS[status as TaskStatus]}>
-                                            {status.replace("_", " ")}
+                                            {t(`projects.reports.taskStatus.${status}`)}
                                         </Badge>
                                         <div className="flex-1">
                                             <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
@@ -320,17 +322,17 @@ export default function ProjectReportsPage() {
                 <TabsContent value="milestones" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Milestone Progress</CardTitle>
-                            <CardDescription>Completion status of each milestone</CardDescription>
+                            <CardTitle>{t("projects.reports.milestoneProgressTitle")}</CardTitle>
+                            <CardDescription>{t("projects.reports.milestoneProgressDesc")}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Milestone</TableHead>
-                                        <TableHead>Due Date</TableHead>
-                                        <TableHead>Tasks</TableHead>
-                                        <TableHead>Progress</TableHead>
+                                        <TableHead>{t("projects.reports.milestone")}</TableHead>
+                                        <TableHead>{t("projects.reports.dueDate")}</TableHead>
+                                        <TableHead>{t("projects.reports.tasks")}</TableHead>
+                                        <TableHead>{t("projects.reports.progress")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -340,7 +342,7 @@ export default function ProjectReportsPage() {
                                                 {m.name}
                                                 {m.isOverdue && (
                                                     <Badge variant="destructive" className="ml-2 text-xs">
-                                                        Overdue
+                                                        {t("projects.reports.overdue")}
                                                     </Badge>
                                                 )}
                                             </TableCell>
@@ -364,7 +366,7 @@ export default function ProjectReportsPage() {
                                     {stats.milestoneProgress.length === 0 && (
                                         <TableRow>
                                             <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                                                No milestones found
+                                                {t("projects.reports.noMilestones")}
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -378,8 +380,8 @@ export default function ProjectReportsPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Overdue Tasks</CardTitle>
-                                <CardDescription>Tasks past their due date</CardDescription>
+                                <CardTitle>{t("projects.reports.overdueTasksTitle")}</CardTitle>
+                                <CardDescription>{t("projects.reports.overdueTasksDesc")}</CardDescription>
                             </div>
                             <Button
                                 variant="outline"
@@ -388,17 +390,17 @@ export default function ProjectReportsPage() {
                                 disabled={stats.overdueTasks.length === 0}
                             >
                                 <Download className="h-4 w-4 mr-2" />
-                                Export CSV
+                                {t("projects.reports.exportCsv")}
                             </Button>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Task</TableHead>
-                                        <TableHead>Due Date</TableHead>
-                                        <TableHead>Days Overdue</TableHead>
-                                        <TableHead>Priority</TableHead>
+                                        <TableHead>{t("projects.reports.task")}</TableHead>
+                                        <TableHead>{t("projects.reports.dueDate")}</TableHead>
+                                        <TableHead>{t("projects.reports.daysOverdue")}</TableHead>
+                                        <TableHead>{t("projects.reports.priority")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -407,13 +409,13 @@ export default function ProjectReportsPage() {
                                             <TableCell className="font-medium">{task.name}</TableCell>
                                             <TableCell>{format(task.dueDate!.toDate(), "MMM d, yyyy")}</TableCell>
                                             <TableCell className="text-red-600">
-                                                {differenceInDays(new Date(), task.dueDate!.toDate())} days
+                                                {t("projects.reports.daysCount", { count: differenceInDays(new Date(), task.dueDate!.toDate()) })}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge
                                                     variant={task.priority === "urgent" ? "destructive" : "secondary"}
                                                 >
-                                                    {task.priority}
+                                                    {t(`projects.reports.taskPriority.${task.priority}`)}
                                                 </Badge>
                                             </TableCell>
                                         </TableRow>
@@ -421,7 +423,7 @@ export default function ProjectReportsPage() {
                                     {stats.overdueTasks.length === 0 && (
                                         <TableRow>
                                             <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                                                No overdue tasks 🎉
+                                                {t("projects.reports.noOverdue")}
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -435,8 +437,8 @@ export default function ProjectReportsPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Team Workload</CardTitle>
-                                <CardDescription>Tasks assigned to each team member</CardDescription>
+                                <CardTitle>{t("projects.reports.tabWorkload")}</CardTitle>
+                                <CardDescription>{t("projects.reports.workloadDesc")}</CardDescription>
                             </div>
                             <Button
                                 variant="outline"
@@ -445,17 +447,17 @@ export default function ProjectReportsPage() {
                                 disabled={Object.keys(stats.byAssignee).length === 0}
                             >
                                 <Download className="h-4 w-4 mr-2" />
-                                Export CSV
+                                {t("projects.reports.exportCsv")}
                             </Button>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Team Member</TableHead>
-                                        <TableHead>Total Tasks</TableHead>
-                                        <TableHead>Completed</TableHead>
-                                        <TableHead>Completion Rate</TableHead>
+                                        <TableHead>{t("projects.reports.teamMember")}</TableHead>
+                                        <TableHead>{t("projects.reports.totalTasks")}</TableHead>
+                                        <TableHead>{t("projects.reports.completed")}</TableHead>
+                                        <TableHead>{t("projects.reports.completionRate")}</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -486,7 +488,7 @@ export default function ProjectReportsPage() {
                                     {Object.keys(stats.byAssignee).length === 0 && (
                                         <TableRow>
                                             <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                                                No tasks assigned yet
+                                                {t("projects.reports.noTasksAssigned")}
                                             </TableCell>
                                         </TableRow>
                                     )}

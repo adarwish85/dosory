@@ -48,6 +48,7 @@ import {
     DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTranslation } from "@/lib/i18n";
 
 const statusColors: Record<ProjectStatus, { bg: string; text: string; border: string }> = {
     draft: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
@@ -57,12 +58,12 @@ const statusColors: Record<ProjectStatus, { bg: string; text: string; border: st
     archived: { bg: "bg-red-50", text: "text-red-600", border: "border-red-200" },
 };
 
-const statusLabels: Record<ProjectStatus, string> = {
-    draft: "Draft",
-    active: "Active",
-    on_hold: "On Hold",
-    completed: "Completed",
-    archived: "Archived",
+const statusLabelKeys: Record<ProjectStatus, string> = {
+    draft: "projects.status.draft",
+    active: "projects.status.active",
+    on_hold: "projects.status.onHold",
+    completed: "projects.status.completed",
+    archived: "projects.status.archived",
 };
 
 type ColumnKey = "name" | "customer" | "status" | "progress" | "startDate" | "deadline";
@@ -111,40 +112,41 @@ function HighlightText({ text, search }: { text: string; search: string }) {
 }
 
 function QuickStatsBar({ projects, stats }: { projects: any[]; stats: Record<string, number> }) {
+    const { t } = useTranslation();
     return (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-blue-600 mb-1">
                     <FolderKanban className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Total</span>
+                    <span className="text-xs font-medium uppercase">{t("projects.stats.total")}</span>
                 </div>
                 <div className="text-2xl font-bold text-blue-900">{projects.length}</div>
             </div>
             <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-yellow-600 mb-1">
                     <Clock className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Active</span>
+                    <span className="text-xs font-medium uppercase">{t("projects.stats.active")}</span>
                 </div>
                 <div className="text-2xl font-bold text-yellow-900">{stats.active || 0}</div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1">
                     <CheckCircle2 className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Completed</span>
+                    <span className="text-xs font-medium uppercase">{t("projects.stats.completed")}</span>
                 </div>
                 <div className="text-2xl font-bold text-green-900">{stats.completed || 0}</div>
             </div>
             <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-orange-600 mb-1">
                     <PauseCircle className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">On Hold</span>
+                    <span className="text-xs font-medium uppercase">{t("projects.stats.onHold")}</span>
                 </div>
                 <div className="text-2xl font-bold text-orange-900">{stats.on_hold || 0}</div>
             </div>
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-gray-600 mb-1">
                     <FolderKanban className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Avg Progress</span>
+                    <span className="text-xs font-medium uppercase">{t("projects.stats.avgProgress")}</span>
                 </div>
                 <div className="text-2xl font-bold text-gray-900">
                     {projects.length > 0
@@ -174,13 +176,14 @@ function Pagination({
     endRecord: number;
     compact?: boolean;
 }) {
+    const { t } = useTranslation();
     const canPrev = currentPage > 1,
         canNext = currentPage < totalPages;
     return (
         <div className={`flex items-center ${compact ? "gap-1" : "justify-between gap-4"}`}>
             {!compact && (
                 <div className="text-sm text-gray-500">
-                    Showing {startRecord} to {endRecord} of {totalRecords}
+                    {t("projects.pagination.showing", { start: startRecord, end: endRecord, total: totalRecords })}
                 </div>
             )}
             <div className="flex items-center gap-1">
@@ -204,7 +207,7 @@ function Pagination({
                 </Button>
                 <div className="flex items-center gap-1 px-2 text-sm">
                     <span className="font-medium">{currentPage}</span>
-                    <span className="text-gray-700">of {totalPages}</span>
+                    <span className="text-gray-700">{t("projects.pagination.ofPages", { total: totalPages })}</span>
                 </div>
                 <Button
                     variant="outline"
@@ -242,25 +245,27 @@ function SelectionBanner({
     onSelectAll: () => void;
     onClearSelection: () => void;
 }) {
+    const { t } = useTranslation();
     if (selectionMode === "none" || selectedCount === 0) return null;
     return (
         <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-2 flex items-center justify-center gap-2 text-sm mb-2">
             <span className="text-blue-800">
-                <strong>{selectedCount}</strong> selected.
+                <strong>{selectedCount}</strong> {t("projects.selection.selected")}
             </span>
             {selectionMode === "page" && selectedCount < totalCount && (
                 <button onClick={onSelectAll} className="text-blue-600 font-medium hover:underline">
-                    Select all {totalCount}
+                    {t("projects.selection.selectAll", { count: totalCount })}
                 </button>
             )}
             <button onClick={onClearSelection} className="text-blue-600 font-medium hover:underline ml-2">
-                Clear
+                {t("projects.selection.clear")}
             </button>
         </div>
     );
 }
 
 export default function ProjectsPage() {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
     const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
@@ -309,19 +314,19 @@ export default function ProjectsPage() {
 
     const handleDelete = useCallback(
         async (id: string) => {
-            if (window.confirm("Delete this project?")) await deleteProject(id);
+            if (window.confirm(t("projects.confirm.deleteOne"))) await deleteProject(id);
         },
-        [deleteProject]
+        [deleteProject, t]
     );
 
     const handleBulkDelete = useCallback(async () => {
         if (selectedProjects.length === 0) return;
-        if (window.confirm(`Delete ${selectedProjects.length} projects?`)) {
+        if (window.confirm(t("projects.confirm.deleteMany", { count: selectedProjects.length }))) {
             for (const id of selectedProjects) await deleteProject(id);
             setSelectedProjects([]);
             setSelectionMode("none");
         }
-    }, [selectedProjects, deleteProject]);
+    }, [selectedProjects, deleteProject, t]);
 
     const handleSelectAllOnPage = useCallback(() => {
         setSelectedProjects(currentPageIds);
@@ -350,7 +355,15 @@ export default function ProjectsPage() {
     }, []);
 
     const exportProjects = useCallback(() => {
-        const headers = ["ID", "Name", "Customer", "Status", "Progress", "Start Date", "Deadline"];
+        const headers = [
+            t("projects.export.id"),
+            t("projects.columns.name"),
+            t("projects.columns.customer"),
+            t("common.status"),
+            t("projects.columns.progress"),
+            t("projects.columns.startDate"),
+            t("projects.columns.deadline"),
+        ];
         const rows = filteredProjects.map((p) => [
             p.id,
             p.name || "",
@@ -366,7 +379,7 @@ export default function ProjectsPage() {
         link.href = URL.createObjectURL(blob);
         link.download = `projects_export_${new Date().toISOString().split("T")[0]}.csv`;
         link.click();
-    }, [filteredProjects]);
+    }, [filteredProjects, t]);
 
     const handleKeyDown = useCallback(
         (e: KeyboardEvent<HTMLDivElement>) => {
@@ -401,7 +414,7 @@ export default function ProjectsPage() {
     if (loading)
         return (
             <div className="space-y-6">
-                <h1 className="text-2xl font-bold">Projects</h1>
+                <h1 className="text-2xl font-bold">{t("projects.list.title")}</h1>
                 <TableSkeleton rows={10} columns={6} />
             </div>
         );
@@ -410,10 +423,10 @@ export default function ProjectsPage() {
         <TooltipProvider>
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">Projects</h1>
+                    <h1 className="text-2xl font-bold">{t("projects.list.title")}</h1>
                     <Link href="/dashboard/projects/new">
                         <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                            <Plus className="mr-2 h-4 w-4" /> New Project
+                            <Plus className="mr-2 h-4 w-4" /> {t("projects.list.newProject")}
                         </Button>
                     </Link>
                 </div>
@@ -433,7 +446,7 @@ export default function ProjectsPage() {
                                     onClick={() => setStatusFilter(isActive ? "all" : status)}
                                     className={`border rounded-full px-3 py-1 text-sm font-medium flex items-center gap-2 cursor-pointer transition-colors ${isActive ? `${colors.bg} ${colors.text} ${colors.border}` : "bg-white text-gray-500 hover:bg-gray-50"}`}
                                 >
-                                    <span className="font-bold text-gray-900">{count}</span> {statusLabels[status]}
+                                    <span className="font-bold text-gray-900">{count}</span> {t(statusLabelKeys[status])}
                                 </button>
                             );
                         }
@@ -443,7 +456,7 @@ export default function ProjectsPage() {
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500">Show</span>
+                        <span className="text-sm text-gray-500">{t("projects.toolbar.show")}</span>
                         <Select
                             value={recordsPerPage.toString()}
                             onValueChange={(v) => {
@@ -463,21 +476,24 @@ export default function ProjectsPage() {
                         </Select>
                         <Button variant="outline" onClick={exportProjects}>
                             <Download className="mr-2 h-4 w-4" />
-                            Export
+                            {t("common.export")}
                         </Button>
                         {selectedProjects.length > 0 && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-                                        <Badge className="mr-2 bg-blue-600">{selectedProjects.length}</Badge>Bulk{" "}
+                                        <Badge className="mr-2 bg-blue-600">{selectedProjects.length}</Badge>
+                                        {t("projects.toolbar.bulk")}{" "}
                                         <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuLabel>With {selectedProjects.length} selected</DropdownMenuLabel>
+                                    <DropdownMenuLabel>
+                                        {t("projects.toolbar.withSelected", { count: selectedProjects.length })}
+                                    </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                        <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -490,7 +506,7 @@ export default function ProjectsPage() {
                         <div className="relative w-full sm:w-64">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Search..."
+                                placeholder={t("common.search")}
                                 className="pl-9"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -503,15 +519,15 @@ export default function ProjectsPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Density</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("projects.density.title")}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuRadioGroup
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="spacious">Spacious</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">{t("projects.density.compact")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">{t("projects.density.comfortable")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="spacious">{t("projects.density.spacious")}</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -523,7 +539,10 @@ export default function ProjectsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuLabel>
-                                    Columns ({visibleColumnsCount}/{DEFAULT_COLUMNS.length})
+                                    {t("projects.columns.title", {
+                                        visible: visibleColumnsCount,
+                                        total: DEFAULT_COLUMNS.length,
+                                    })}
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {DEFAULT_COLUMNS.map((col) => (
@@ -533,7 +552,7 @@ export default function ProjectsPage() {
                                         onCheckedChange={() => toggleColumn(col.key)}
                                         disabled={col.required}
                                     >
-                                        {col.label}
+                                        {col.key === "status" ? t("common.status") : t(`projects.columns.${col.key}`)}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
@@ -577,14 +596,14 @@ export default function ProjectsPage() {
                                     />
                                 </TableHead>
                                 {columnVisibility.name && (
-                                    <TableHead className="font-semibold text-gray-900">Name</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("projects.columns.name")}</TableHead>
                                 )}
-                                {columnVisibility.customer && <TableHead>Customer</TableHead>}
-                                {columnVisibility.status && <TableHead>Status</TableHead>}
-                                {columnVisibility.progress && <TableHead>Progress</TableHead>}
-                                {columnVisibility.startDate && <TableHead>Start Date</TableHead>}
-                                {columnVisibility.deadline && <TableHead>Deadline</TableHead>}
-                                <TableHead className="w-24 text-center">Actions</TableHead>
+                                {columnVisibility.customer && <TableHead>{t("projects.columns.customer")}</TableHead>}
+                                {columnVisibility.status && <TableHead>{t("common.status")}</TableHead>}
+                                {columnVisibility.progress && <TableHead>{t("projects.columns.progress")}</TableHead>}
+                                {columnVisibility.startDate && <TableHead>{t("projects.columns.startDate")}</TableHead>}
+                                {columnVisibility.deadline && <TableHead>{t("projects.columns.deadline")}</TableHead>}
+                                <TableHead className="w-24 text-center">{t("common.actions")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -594,7 +613,7 @@ export default function ProjectsPage() {
                                         colSpan={visibleColumnsCount + 2}
                                         className="text-center py-10 text-muted-foreground"
                                     >
-                                        {searchQuery ? "No matches" : "No projects"}
+                                        {searchQuery ? t("projects.empty.noMatches") : t("projects.empty.noProjects")}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -629,21 +648,21 @@ export default function ProjectsPage() {
                                                                 href={`/dashboard/projects/${project.id}`}
                                                                 className="hover:text-blue-600 hover:underline px-0.5"
                                                             >
-                                                                View
+                                                                {t("common.view")}
                                                             </Link>
                                                             <span className="text-gray-300">|</span>
                                                             <Link
                                                                 href={`/dashboard/projects/${project.id}/settings`}
                                                                 className="hover:text-blue-600 hover:underline px-0.5"
                                                             >
-                                                                Edit
+                                                                {t("common.edit")}
                                                             </Link>
                                                             <span className="text-gray-300">|</span>
                                                             <button
                                                                 onClick={() => handleDelete(project.id)}
                                                                 className="hover:text-red-600 hover:underline px-0.5"
                                                             >
-                                                                Delete
+                                                                {t("common.delete")}
                                                             </button>
                                                         </div>
                                                     </div>
@@ -662,7 +681,7 @@ export default function ProjectsPage() {
                                                     <Badge
                                                         className={`${colors.bg} ${colors.text} ${colors.border} border`}
                                                     >
-                                                        {statusLabels[project.status]}
+                                                        {t(statusLabelKeys[project.status])}
                                                     </Badge>
                                                 </TableCell>
                                             )}
@@ -696,7 +715,7 @@ export default function ProjectsPage() {
                                                                 </Button>
                                                             </Link>
                                                         </TooltipTrigger>
-                                                        <TooltipContent>View</TooltipContent>
+                                                        <TooltipContent>{t("common.view")}</TooltipContent>
                                                     </Tooltip>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
@@ -706,7 +725,7 @@ export default function ProjectsPage() {
                                                                 </Button>
                                                             </Link>
                                                         </TooltipTrigger>
-                                                        <TooltipContent>Edit</TooltipContent>
+                                                        <TooltipContent>{t("common.edit")}</TooltipContent>
                                                     </Tooltip>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
@@ -719,7 +738,7 @@ export default function ProjectsPage() {
                                                                 <Trash className="h-3.5 w-3.5" />
                                                             </Button>
                                                         </TooltipTrigger>
-                                                        <TooltipContent>Delete</TooltipContent>
+                                                        <TooltipContent>{t("common.delete")}</TooltipContent>
                                                     </Tooltip>
                                                 </div>
                                             </TableCell>
@@ -732,7 +751,7 @@ export default function ProjectsPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600 font-medium">Total: {totalRecords}</div>
+                    <div className="text-sm text-gray-600 font-medium">{t("projects.footer.total", { count: totalRecords })}</div>
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
@@ -743,7 +762,7 @@ export default function ProjectsPage() {
                         compact
                     />
                 </div>
-                <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Space Select • Click to view</div>
+                <div className="text-xs text-gray-400 text-center">{t("projects.footer.keyboardHint")}</div>
             </div>
         </TooltipProvider>
     );

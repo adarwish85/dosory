@@ -12,8 +12,10 @@ import { Calendar, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import type { TaskStatus } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 export default function GanttPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const { tasks, loading: tasksLoading, updateTask, updateTaskStatus } = useTasks({ projectId });
@@ -40,19 +42,19 @@ export default function GanttPage() {
                 await updateMilestone(task.id, {
                     dueDate: task.start
                 });
-                toast.success(`Milestone "${task.name}" updated`);
+                toast.success(t("projects.gantt.toast.milestoneUpdated", { name: task.name }));
             } else if (task.type === "task") {
                 await updateTask(task.id, {
                     startDate: task.start,
                     dueDate: task.end,
                 });
-                toast.success(`Task "${task.name}" dates updated`);
+                toast.success(t("projects.gantt.toast.taskDatesUpdated", { name: task.name }));
             }
         } catch (error) {
             console.error("Failed to update dates:", error);
-            toast.error("Failed to update dates");
+            toast.error(t("projects.gantt.toast.datesFailed"));
         }
-    }, [updateTask, updateMilestone]);
+    }, [updateTask, updateMilestone, t]);
 
     // Handle progress change from Gantt drag
     const handleProgressChange = useCallback(async (task: GanttTask) => {
@@ -61,12 +63,12 @@ export default function GanttPage() {
 
             const newStatus = progressToStatus(task.progress);
             await updateTaskStatus(task.id, newStatus);
-            toast.success(`Task "${task.name}" progress updated to ${Math.round(task.progress)}%`);
+            toast.success(t("projects.gantt.toast.progressUpdated", { name: task.name, percent: Math.round(task.progress) }));
         } catch (error) {
             console.error("Failed to update progress:", error);
-            toast.error("Failed to update progress");
+            toast.error(t("projects.gantt.toast.progressFailed"));
         }
-    }, [updateTaskStatus, progressToStatus]);
+    }, [updateTaskStatus, progressToStatus, t]);
 
     // Handle double click to edit
     const handleDoubleClick = useCallback((task: GanttTask) => {
@@ -84,7 +86,7 @@ export default function GanttPage() {
         const projectTask: GanttTask = {
             start: project?.startDate?.toDate() || new Date(),
             end: project?.deadline?.toDate() || new Date(),
-            name: project?.name || "Project",
+            name: project?.name || t("projects.legend.project"),
             id: "project_root",
             type: "project",
             progress: project?.progress || 0,
@@ -136,7 +138,7 @@ export default function GanttPage() {
         });
 
         return [projectTask, ...mTasks, ...tTasks].sort((a, b) => a.start.getTime() - b.start.getTime());
-    }, [tasks, milestones, project]);
+    }, [tasks, milestones, project, t]);
 
 
     if (tasksLoading || milestonesLoading) {
@@ -147,7 +149,7 @@ export default function GanttPage() {
         return (
             <div className="flex flex-col items-center justify-center h-[400px] border rounded-lg bg-gray-50/50 border-dashed text-muted-foreground">
                 <Calendar className="h-10 w-10 mb-2 opacity-20" />
-                <p>No tasks or milestones to display on Gantt.</p>
+                <p>{t("projects.gantt.empty")}</p>
             </div>
         );
     }
@@ -156,20 +158,20 @@ export default function GanttPage() {
         <div className="space-y-4">
             <div className="flex justify-between items-center bg-white p-2 rounded border">
                 <div className="px-2">
-                    <h3 className="font-semibold">Gantt View</h3>
-                    <p className="text-xs text-muted-foreground">Drag tasks to change dates • Drag progress bar to update status</p>
+                    <h3 className="font-semibold">{t("projects.gantt.title")}</h3>
+                    <p className="text-xs text-muted-foreground">{t("projects.gantt.subtitle")}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">View:</span>
+                    <span className="text-sm text-gray-500">{t("projects.gantt.viewLabel")}</span>
                     <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
                         <SelectTrigger className="w-[120px] h-8">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value={ViewMode.Day}>Day</SelectItem>
-                            <SelectItem value={ViewMode.Week}>Week</SelectItem>
-                            <SelectItem value={ViewMode.Month}>Month</SelectItem>
-                            <SelectItem value={ViewMode.Year}>Year</SelectItem>
+                            <SelectItem value={ViewMode.Day}>{t("projects.gantt.viewMode.day")}</SelectItem>
+                            <SelectItem value={ViewMode.Week}>{t("projects.gantt.viewMode.week")}</SelectItem>
+                            <SelectItem value={ViewMode.Month}>{t("projects.gantt.viewMode.month")}</SelectItem>
+                            <SelectItem value={ViewMode.Year}>{t("projects.gantt.viewMode.year")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -196,19 +198,19 @@ export default function GanttPage() {
             <div className="flex items-center gap-6 text-xs text-muted-foreground p-2 bg-gray-50 rounded">
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-blue-500" />
-                    <span>In Progress</span>
+                    <span>{t("projects.status.inProgress")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-green-500" />
-                    <span>Completed</span>
+                    <span>{t("projects.status.completed")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-cyan-400" />
-                    <span>Milestone</span>
+                    <span>{t("projects.legend.milestone")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-yellow-500" />
-                    <span>Project</span>
+                    <span>{t("projects.legend.project")}</span>
                 </div>
             </div>
         </div>

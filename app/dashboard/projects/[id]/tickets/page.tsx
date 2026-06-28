@@ -37,6 +37,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Ticket as TicketType, TicketStatus, TicketPriority } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 // Form schema for new ticket
 const ticketFormSchema = z.object({
@@ -50,29 +51,32 @@ type TicketFormData = z.infer<typeof ticketFormSchema>;
 
 // Status badge component
 const StatusBadge = ({ status }: { status: TicketStatus }) => {
-    const statusConfig: Record<TicketStatus, { label: string; className: string }> = {
-        open: { label: "Open", className: "bg-blue-100 text-blue-700" },
-        in_progress: { label: "In Progress", className: "bg-yellow-100 text-yellow-700" },
-        answered: { label: "Answered", className: "bg-green-100 text-green-700" },
-        on_hold: { label: "On Hold", className: "bg-orange-100 text-orange-700" },
-        closed: { label: "Closed", className: "bg-gray-100 text-gray-700" },
+    const { t } = useTranslation();
+    const statusConfig: Record<TicketStatus, { labelKey: string; className: string }> = {
+        open: { labelKey: "projects.tickets.status.open", className: "bg-blue-100 text-blue-700" },
+        in_progress: { labelKey: "projects.tickets.status.in_progress", className: "bg-yellow-100 text-yellow-700" },
+        answered: { labelKey: "projects.tickets.status.answered", className: "bg-green-100 text-green-700" },
+        on_hold: { labelKey: "projects.tickets.status.on_hold", className: "bg-orange-100 text-orange-700" },
+        closed: { labelKey: "projects.tickets.status.closed", className: "bg-gray-100 text-gray-700" },
     };
     const config = statusConfig[status] || statusConfig.open;
-    return <Badge className={config.className}>{config.label}</Badge>;
+    return <Badge className={config.className}>{t(config.labelKey)}</Badge>;
 };
 
 // Priority badge component
 const PriorityBadge = ({ priority }: { priority: TicketPriority }) => {
-    const priorityConfig: Record<TicketPriority, { label: string; className: string }> = {
-        low: { label: "Low", className: "bg-gray-100 text-gray-600" },
-        medium: { label: "Medium", className: "bg-blue-100 text-blue-600" },
-        high: { label: "High", className: "bg-red-100 text-red-600" },
+    const { t } = useTranslation();
+    const priorityConfig: Record<TicketPriority, { labelKey: string; className: string }> = {
+        low: { labelKey: "projects.tickets.priority.low", className: "bg-gray-100 text-gray-600" },
+        medium: { labelKey: "projects.tickets.priority.medium", className: "bg-blue-100 text-blue-600" },
+        high: { labelKey: "projects.tickets.priority.high", className: "bg-red-100 text-red-600" },
     };
     const config = priorityConfig[priority] || priorityConfig.medium;
-    return <Badge variant="outline" className={config.className}>{config.label}</Badge>;
+    return <Badge variant="outline" className={config.className}>{t(config.labelKey)}</Badge>;
 };
 
 export default function ProjectTicketsPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const { project } = useProject(projectId);
@@ -123,12 +127,12 @@ export default function ProjectTicketsPage() {
                 customerId: project?.customerId,
                 customerName: project?.customerName,
             } as any);
-            toast.success("Ticket created successfully");
+            toast.success(t("projects.tickets.createdToast"));
             setDialogOpen(false);
             form.reset();
         } catch (error) {
             console.error(error);
-            toast.error("Failed to create ticket");
+            toast.error(t("projects.tickets.createFailedToast"));
         }
     };
 
@@ -156,34 +160,34 @@ export default function ProjectTicketsPage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold">Project Tickets</h2>
-                    <p className="text-muted-foreground text-sm">Support tickets related to this project.</p>
+                    <h2 className="text-2xl font-bold">{t("projects.tickets.title")}</h2>
+                    <p className="text-muted-foreground text-sm">{t("projects.tickets.subtitle")}</p>
                 </div>
                 <div className="flex gap-2">
                     <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as TicketStatus | "all")}>
                         <SelectTrigger className="w-[140px]">
-                            <SelectValue placeholder="Filter status" />
+                            <SelectValue placeholder={t("projects.tickets.filterStatus")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Tickets</SelectItem>
-                            <SelectItem value="open">Open</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="answered">Answered</SelectItem>
-                            <SelectItem value="on_hold">On Hold</SelectItem>
-                            <SelectItem value="closed">Closed</SelectItem>
+                            <SelectItem value="all">{t("projects.tickets.allTickets")}</SelectItem>
+                            <SelectItem value="open">{t("projects.tickets.status.open")}</SelectItem>
+                            <SelectItem value="in_progress">{t("projects.tickets.status.in_progress")}</SelectItem>
+                            <SelectItem value="answered">{t("projects.tickets.status.answered")}</SelectItem>
+                            <SelectItem value="on_hold">{t("projects.tickets.status.on_hold")}</SelectItem>
+                            <SelectItem value="closed">{t("projects.tickets.status.closed")}</SelectItem>
                         </SelectContent>
                     </Select>
 
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                         <DialogTrigger asChild>
                             <Button>
-                                <Plus className="mr-2 h-4 w-4" /> New Ticket
+                                <Plus className="mr-2 h-4 w-4" /> {t("projects.tickets.new")}
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-lg">
                             <DialogHeader>
-                                <DialogTitle>Create Support Ticket</DialogTitle>
-                                <DialogDescription>Create a new support ticket for this project.</DialogDescription>
+                                <DialogTitle>{t("projects.tickets.dialogTitle")}</DialogTitle>
+                                <DialogDescription>{t("projects.tickets.dialogDescription")}</DialogDescription>
                             </DialogHeader>
                             <Form {...form}>
                                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -192,9 +196,9 @@ export default function ProjectTicketsPage() {
                                         name="subject"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Subject</FormLabel>
+                                                <FormLabel>{t("projects.tickets.subject")}</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Brief description of the issue" {...field} />
+                                                    <Input placeholder={t("projects.tickets.subjectPlaceholder")} {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -206,11 +210,11 @@ export default function ProjectTicketsPage() {
                                             name="departmentId"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Department</FormLabel>
+                                                    <FormLabel>{t("projects.tickets.department")}</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value}>
                                                         <FormControl>
                                                             <SelectTrigger>
-                                                                <SelectValue placeholder="Select department" />
+                                                                <SelectValue placeholder={t("projects.tickets.selectDepartment")} />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
@@ -230,17 +234,17 @@ export default function ProjectTicketsPage() {
                                             name="priority"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Priority</FormLabel>
+                                                    <FormLabel>{t("projects.tickets.priorityLabel")}</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value}>
                                                         <FormControl>
                                                             <SelectTrigger>
-                                                                <SelectValue placeholder="Select priority" />
+                                                                <SelectValue placeholder={t("projects.tickets.selectPriority")} />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="low">Low</SelectItem>
-                                                            <SelectItem value="medium">Medium</SelectItem>
-                                                            <SelectItem value="high">High</SelectItem>
+                                                            <SelectItem value="low">{t("projects.tickets.priority.low")}</SelectItem>
+                                                            <SelectItem value="medium">{t("projects.tickets.priority.medium")}</SelectItem>
+                                                            <SelectItem value="high">{t("projects.tickets.priority.high")}</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -253,10 +257,10 @@ export default function ProjectTicketsPage() {
                                         name="message"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Message</FormLabel>
+                                                <FormLabel>{t("projects.tickets.message")}</FormLabel>
                                                 <FormControl>
                                                     <Textarea
-                                                        placeholder="Describe the issue in detail..."
+                                                        placeholder={t("projects.tickets.messagePlaceholder")}
                                                         className="min-h-[100px]"
                                                         {...field}
                                                     />
@@ -267,11 +271,11 @@ export default function ProjectTicketsPage() {
                                     />
                                     <DialogFooter>
                                         <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                                            Cancel
+                                            {t("common.cancel")}
                                         </Button>
                                         <Button type="submit" disabled={form.formState.isSubmitting}>
                                             {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            Create Ticket
+                                            {t("projects.tickets.createButton")}
                                         </Button>
                                     </DialogFooter>
                                 </form>
@@ -287,7 +291,7 @@ export default function ProjectTicketsPage() {
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2">
                             <Ticket className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-muted-foreground">Total</span>
+                            <span className="text-sm text-muted-foreground">{t("projects.tickets.statTotal")}</span>
                         </div>
                         <p className="text-2xl font-bold mt-1">{ticketStats.total}</p>
                     </CardContent>
@@ -296,7 +300,7 @@ export default function ProjectTicketsPage() {
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2">
                             <AlertCircle className="h-4 w-4 text-blue-500" />
-                            <span className="text-sm text-muted-foreground">Open</span>
+                            <span className="text-sm text-muted-foreground">{t("projects.tickets.status.open")}</span>
                         </div>
                         <p className="text-2xl font-bold mt-1 text-blue-600">{ticketStats.open || 0}</p>
                     </CardContent>
@@ -305,7 +309,7 @@ export default function ProjectTicketsPage() {
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-yellow-500" />
-                            <span className="text-sm text-muted-foreground">In Progress</span>
+                            <span className="text-sm text-muted-foreground">{t("projects.tickets.status.in_progress")}</span>
                         </div>
                         <p className="text-2xl font-bold mt-1 text-yellow-600">{ticketStats.in_progress || 0}</p>
                     </CardContent>
@@ -314,7 +318,7 @@ export default function ProjectTicketsPage() {
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2">
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <span className="text-sm text-muted-foreground">Answered</span>
+                            <span className="text-sm text-muted-foreground">{t("projects.tickets.status.answered")}</span>
                         </div>
                         <p className="text-2xl font-bold mt-1 text-green-600">{ticketStats.answered || 0}</p>
                     </CardContent>
@@ -323,7 +327,7 @@ export default function ProjectTicketsPage() {
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2">
                             <CheckCircle2 className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm text-muted-foreground">Closed</span>
+                            <span className="text-sm text-muted-foreground">{t("projects.tickets.status.closed")}</span>
                         </div>
                         <p className="text-2xl font-bold mt-1 text-gray-600">{ticketStats.closed || 0}</p>
                     </CardContent>
@@ -335,13 +339,13 @@ export default function ProjectTicketsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Subject</TableHead>
-                            <TableHead>Department</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Priority</TableHead>
-                            <TableHead>Assigned To</TableHead>
-                            <TableHead>Last Reply</TableHead>
-                            <TableHead>Created</TableHead>
+                            <TableHead>{t("projects.tickets.subject")}</TableHead>
+                            <TableHead>{t("projects.tickets.department")}</TableHead>
+                            <TableHead>{t("common.status")}</TableHead>
+                            <TableHead>{t("projects.tickets.priorityLabel")}</TableHead>
+                            <TableHead>{t("projects.tickets.assignedTo")}</TableHead>
+                            <TableHead>{t("projects.tickets.lastReply")}</TableHead>
+                            <TableHead>{t("projects.tickets.created")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -349,9 +353,9 @@ export default function ProjectTicketsPage() {
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                                     <Ticket className="h-10 w-10 mx-auto mb-2 opacity-20" />
-                                    <p>No tickets found for this project.</p>
+                                    <p>{t("projects.tickets.empty")}</p>
                                     <Button variant="link" onClick={() => setDialogOpen(true)} className="mt-2">
-                                        Create the first ticket
+                                        {t("projects.tickets.createFirst")}
                                     </Button>
                                 </TableCell>
                             </TableRow>
@@ -381,10 +385,10 @@ export default function ProjectTicketsPage() {
                                                         {(staffMap.get(ticket.assignedTo) || "U").charAt(0)}
                                                     </AvatarFallback>
                                                 </Avatar>
-                                                <span className="text-sm">{staffMap.get(ticket.assignedTo) || "Unknown"}</span>
+                                                <span className="text-sm">{staffMap.get(ticket.assignedTo) || t("common.unknown")}</span>
                                             </div>
                                         ) : (
-                                            <span className="text-muted-foreground text-sm">Unassigned</span>
+                                            <span className="text-muted-foreground text-sm">{t("projects.tickets.unassigned")}</span>
                                         )}
                                     </TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
@@ -424,6 +428,7 @@ function TicketDetailView({
     assignTicket: (id: string, staffId: string) => Promise<void>;
     staff: any[];
 }) {
+    const { t } = useTranslation();
     const { replies, loading: repliesLoading, addReply } = useTicketReplies(ticket.id);
     const [replyText, setReplyText] = useState("");
     const [submitting, setSubmitting] = useState(false);
@@ -437,9 +442,9 @@ function TicketDetailView({
                 message: replyText.trim(),
             });
             setReplyText("");
-            toast.success("Reply sent");
+            toast.success(t("projects.tickets.replySentToast"));
         } catch (error) {
-            toast.error("Failed to send reply");
+            toast.error(t("projects.tickets.replyFailedToast"));
         } finally {
             setSubmitting(false);
         }
@@ -448,18 +453,18 @@ function TicketDetailView({
     const handleStatusChange = async (newStatus: TicketStatus) => {
         try {
             await updateTicketStatus(ticket.id, newStatus);
-            toast.success(`Status updated to ${newStatus}`);
+            toast.success(t("projects.tickets.statusUpdatedToast", { status: t(`projects.tickets.status.${newStatus}`) }));
         } catch {
-            toast.error("Failed to update status");
+            toast.error(t("projects.tickets.statusUpdateFailedToast"));
         }
     };
 
     const handleAssign = async (staffId: string) => {
         try {
             await assignTicket(ticket.id, staffId);
-            toast.success("Ticket assigned");
+            toast.success(t("projects.tickets.assignedToast"));
         } catch {
-            toast.error("Failed to assign ticket");
+            toast.error(t("projects.tickets.assignFailedToast"));
         }
     };
 
@@ -477,9 +482,9 @@ function TicketDetailView({
                     <div>
                         <h2 className="text-xl font-bold">{ticket.subject}</h2>
                         <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                            <span>{deptMap.get(ticket.departmentId) || "Unknown Department"}</span>
+                            <span>{deptMap.get(ticket.departmentId) || t("projects.tickets.unknownDepartment")}</span>
                             <span>•</span>
-                            <span>Created {ticket.createdAt && formatDistanceToNow(ticket.createdAt.toDate(), { addSuffix: true })}</span>
+                            <span>{t("projects.tickets.createdPrefix")} {ticket.createdAt && formatDistanceToNow(ticket.createdAt.toDate(), { addSuffix: true })}</span>
                         </div>
                     </div>
                 </div>
@@ -496,7 +501,7 @@ function TicketDetailView({
                         <CardHeader className="pb-3">
                             <CardTitle className="text-sm font-medium flex items-center gap-2">
                                 <MessageSquare className="h-4 w-4" />
-                                Conversation ({replies.length})
+                                {t("projects.tickets.conversation", { count: replies.length })}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -505,7 +510,7 @@ function TicketDetailView({
                             ) : replies.length === 0 ? (
                                 <div className="text-center py-8 text-muted-foreground">
                                     <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                                    <p>No messages yet. Start the conversation!</p>
+                                    <p>{t("projects.tickets.noMessages")}</p>
                                 </div>
                             ) : (
                                 <ScrollArea className="max-h-[400px] pr-4">
@@ -530,7 +535,7 @@ function TicketDetailView({
                                                         <p className="text-sm whitespace-pre-wrap">{reply.message}</p>
                                                     </div>
                                                     <p className="text-xs text-muted-foreground mt-1">
-                                                        {reply.isStaffReply ? "Staff" : "Customer"} • {reply.createdAt && formatDistanceToNow(reply.createdAt.toDate(), { addSuffix: true })}
+                                                        {reply.isStaffReply ? t("projects.tickets.staff") : t("projects.tickets.customer")} • {reply.createdAt && formatDistanceToNow(reply.createdAt.toDate(), { addSuffix: true })}
                                                     </p>
                                                 </div>
                                             </div>
@@ -544,7 +549,7 @@ function TicketDetailView({
                                 <Textarea
                                     value={replyText}
                                     onChange={(e) => setReplyText(e.target.value)}
-                                    placeholder="Write a reply..."
+                                    placeholder={t("projects.tickets.replyPlaceholder")}
                                     className="flex-1 min-h-[80px]"
                                 />
                                 <Button
@@ -567,29 +572,29 @@ function TicketDetailView({
                 <div className="space-y-4">
                     <Card>
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">Ticket Details</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("projects.tickets.detailsTitle")}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <label className="text-xs text-muted-foreground">Status</label>
+                                <label className="text-xs text-muted-foreground">{t("common.status")}</label>
                                 <Select value={ticket.status} onValueChange={handleStatusChange}>
                                     <SelectTrigger className="mt-1">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="open">Open</SelectItem>
-                                        <SelectItem value="in_progress">In Progress</SelectItem>
-                                        <SelectItem value="answered">Answered</SelectItem>
-                                        <SelectItem value="on_hold">On Hold</SelectItem>
-                                        <SelectItem value="closed">Closed</SelectItem>
+                                        <SelectItem value="open">{t("projects.tickets.status.open")}</SelectItem>
+                                        <SelectItem value="in_progress">{t("projects.tickets.status.in_progress")}</SelectItem>
+                                        <SelectItem value="answered">{t("projects.tickets.status.answered")}</SelectItem>
+                                        <SelectItem value="on_hold">{t("projects.tickets.status.on_hold")}</SelectItem>
+                                        <SelectItem value="closed">{t("projects.tickets.status.closed")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div>
-                                <label className="text-xs text-muted-foreground">Assigned To</label>
+                                <label className="text-xs text-muted-foreground">{t("projects.tickets.assignedTo")}</label>
                                 <Select value={ticket.assignedTo || ""} onValueChange={handleAssign}>
                                     <SelectTrigger className="mt-1">
-                                        <SelectValue placeholder="Unassigned" />
+                                        <SelectValue placeholder={t("projects.tickets.unassigned")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {staff.map(s => (
@@ -601,16 +606,16 @@ function TicketDetailView({
                                 </Select>
                             </div>
                             <div>
-                                <label className="text-xs text-muted-foreground">Priority</label>
+                                <label className="text-xs text-muted-foreground">{t("projects.tickets.priorityLabel")}</label>
                                 <div className="mt-1"><PriorityBadge priority={ticket.priority} /></div>
                             </div>
                             <div>
-                                <label className="text-xs text-muted-foreground">Department</label>
+                                <label className="text-xs text-muted-foreground">{t("projects.tickets.department")}</label>
                                 <p className="text-sm font-medium mt-1">{deptMap.get(ticket.departmentId) || "-"}</p>
                             </div>
                             {ticket.customerName && (
                                 <div>
-                                    <label className="text-xs text-muted-foreground">Customer</label>
+                                    <label className="text-xs text-muted-foreground">{t("projects.tickets.customer")}</label>
                                     <p className="text-sm font-medium mt-1">{ticket.customerName}</p>
                                 </div>
                             )}

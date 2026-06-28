@@ -24,8 +24,10 @@ import { Calendar as CalendarIcon, Loader2, ChevronLeft, AlertTriangle, FolderTr
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 export default function CreateTaskPage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const searchParams = useSearchParams();
     const customerIdParam = searchParams.get("customerId");
@@ -119,7 +121,7 @@ export default function CreateTaskPage() {
                 taskListId: data.taskListId || undefined,
             };
             await createTask(cleanData);
-            toast.success("Task created successfully");
+            toast.success(t("tasks.toast.created"));
 
             if (customerIdParam) {
                 router.push(`/dashboard/customers/${customerIdParam}/tasks`);
@@ -130,7 +132,7 @@ export default function CreateTaskPage() {
             }
         } catch (error) {
             console.error("Error creating task:", error);
-            toast.error("Failed to create task");
+            toast.error(t("tasks.toast.createFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -146,19 +148,20 @@ export default function CreateTaskPage() {
                     className="px-0 hover:bg-transparent hover:text-gray-900"
                 >
                     <ChevronLeft className="h-4 w-4 mr-1" />
-                    Back
+                    {t("common.back")}
                 </Button>
             </div>
 
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">New Task</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{t("tasks.new")}</h1>
                 <p className="text-gray-500 mt-1">
                     {contextProject ? (
                         <>
-                            Adding task to <span className="font-medium text-gray-900">{contextProject.name}</span>
+                            {t("tasks.form.addingTo")}{" "}
+                            <span className="font-medium text-gray-900">{contextProject.name}</span>
                         </>
                     ) : (
-                        "Create and assign a new task."
+                        t("tasks.form.createSubtitle")
                     )}
                 </p>
             </div>
@@ -166,17 +169,17 @@ export default function CreateTaskPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Task Details</CardTitle>
+                        <CardTitle>{t("tasks.form.details")}</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-6">
                         {/* Name */}
                         <div className="grid gap-2">
                             <Label htmlFor="name">
-                                Subject <span className="text-red-500">*</span>
+                                {t("tasks.form.subject")} <span className="text-red-500">*</span>
                             </Label>
                             <Input
                                 id="name"
-                                placeholder="What needs to be done?"
+                                placeholder={t("tasks.form.namePlaceholder")}
                                 {...register("name")}
                                 className={cn("text-lg", errors.name && "border-red-500")}
                                 autoFocus
@@ -188,7 +191,7 @@ export default function CreateTaskPage() {
                         {!projectIdParam && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="customerId">Customer</Label>
+                                    <Label htmlFor="customerId">{t("tasks.form.customer")}</Label>
                                     <Select
                                         value={watch("customerId")}
                                         onValueChange={(val) => {
@@ -200,7 +203,7 @@ export default function CreateTaskPage() {
                                         disabled={!!customerIdParam}
                                     >
                                         <SelectTrigger className="bg-white">
-                                            <SelectValue placeholder="Select Customer" />
+                                            <SelectValue placeholder={t("tasks.form.selectCustomer")} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {customers.map((c) => (
@@ -213,7 +216,7 @@ export default function CreateTaskPage() {
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="projectId">Project</Label>
+                                    <Label htmlFor="projectId">{t("tasks.form.project")}</Label>
                                     <Select
                                         value={watch("projectId")}
                                         onValueChange={(val) => {
@@ -224,10 +227,10 @@ export default function CreateTaskPage() {
                                         disabled={!!projectIdParam}
                                     >
                                         <SelectTrigger className="bg-white">
-                                            <SelectValue placeholder="Select Project (Optional)" />
+                                            <SelectValue placeholder={t("tasks.form.selectProject")} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="none">No Project</SelectItem>
+                                            <SelectItem value="none">{t("tasks.form.noProject")}</SelectItem>
                                             {filteredProjects.map((p) => (
                                                 <SelectItem key={p.id} value={p.id}>
                                                     {p.name}
@@ -245,7 +248,7 @@ export default function CreateTaskPage() {
                                 <div className="grid gap-2">
                                     <Label className="flex items-center gap-2">
                                         <FolderTree className="h-4 w-4 text-gray-400" />
-                                        Milestone
+                                        {t("tasks.form.milestone")}
                                     </Label>
                                     <Select
                                         value={watch("milestoneId") || ""}
@@ -255,10 +258,10 @@ export default function CreateTaskPage() {
                                         }}
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder="No Milestone" />
+                                            <SelectValue placeholder={t("tasks.form.noMilestone")} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="none">No Milestone</SelectItem>
+                                            <SelectItem value="none">{t("tasks.form.noMilestone")}</SelectItem>
                                             {milestones.map((m) => (
                                                 <SelectItem key={m.id} value={m.id}>
                                                     <div className="flex items-center gap-2">
@@ -277,7 +280,7 @@ export default function CreateTaskPage() {
                                 <div className="grid gap-2">
                                     <Label className="flex items-center gap-2">
                                         <ListTodo className="h-4 w-4 text-gray-400" />
-                                        Task List
+                                        {t("tasks.form.taskList")}
                                     </Label>
                                     <Select
                                         value={watch("taskListId") || ""}
@@ -286,11 +289,11 @@ export default function CreateTaskPage() {
                                     >
                                         <SelectTrigger className={!milestoneId ? "opacity-50" : ""}>
                                             <SelectValue
-                                                placeholder={milestoneId ? "No Task List" : "Select milestone first"}
+                                                placeholder={milestoneId ? t("tasks.form.noTaskList") : t("tasks.form.selectMilestoneFirst")}
                                             />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="none">No Task List</SelectItem>
+                                            <SelectItem value="none">{t("tasks.form.noTaskList")}</SelectItem>
                                             {filteredTaskLists.map((tl) => (
                                                 <SelectItem key={tl.id} value={tl.id}>
                                                     {tl.name}
@@ -303,10 +306,10 @@ export default function CreateTaskPage() {
                         )}
 
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">{t("tasks.form.description")}</Label>
                             <Textarea
                                 id="description"
-                                placeholder="Add more details..."
+                                placeholder={t("tasks.form.descriptionPlaceholder")}
                                 className="min-h-[120px] resize-y"
                                 {...register("description")}
                             />
@@ -314,10 +317,10 @@ export default function CreateTaskPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
-                                <Label>Assigned To</Label>
+                                <Label>{t("tasks.form.assignedTo")}</Label>
                                 <Select onValueChange={(val) => setValue("assignees", [val])}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Unassigned" />
+                                        <SelectValue placeholder={t("tasks.form.unassigned")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {staff?.map((s) => (
@@ -330,7 +333,7 @@ export default function CreateTaskPage() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label>Priority</Label>
+                                <Label>{t("tasks.form.priority")}</Label>
                                 <Select
                                     value={watch("priority")}
                                     onValueChange={(val) =>
@@ -341,10 +344,10 @@ export default function CreateTaskPage() {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="low">Low</SelectItem>
-                                        <SelectItem value="medium">Medium</SelectItem>
-                                        <SelectItem value="high">High</SelectItem>
-                                        <SelectItem value="urgent">Urgent</SelectItem>
+                                        <SelectItem value="low">{t("tasks.priority.low")}</SelectItem>
+                                        <SelectItem value="medium">{t("tasks.priority.medium")}</SelectItem>
+                                        <SelectItem value="high">{t("tasks.priority.high")}</SelectItem>
+                                        <SelectItem value="urgent">{t("tasks.priority.urgent")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -352,7 +355,7 @@ export default function CreateTaskPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
-                                <Label>Due Date</Label>
+                                <Label>{t("tasks.form.dueDate")}</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -367,7 +370,7 @@ export default function CreateTaskPage() {
                                             {watch("dueDate") ? (
                                                 format(watch("dueDate")!, "PPP")
                                             ) : (
-                                                <span>Pick a date</span>
+                                                <span>{t("tasks.form.pickDate")}</span>
                                             )}
                                         </Button>
                                     </PopoverTrigger>
@@ -383,13 +386,13 @@ export default function CreateTaskPage() {
                                 {isDueDateAfterMilestone && (
                                     <div className="flex items-center gap-1 text-amber-600 text-xs">
                                         <AlertTriangle className="h-3 w-3" />
-                                        <span>After milestone deadline</span>
+                                        <span>{t("tasks.form.afterMilestoneShort")}</span>
                                     </div>
                                 )}
                             </div>
 
                             <div className="grid gap-2">
-                                <Label>Status</Label>
+                                <Label>{t("tasks.form.status")}</Label>
                                 <Select
                                     value={watch("status")}
                                     onValueChange={(val) =>
@@ -408,11 +411,11 @@ export default function CreateTaskPage() {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="to_do">Not Started</SelectItem>
-                                        <SelectItem value="in_progress">In Progress</SelectItem>
-                                        <SelectItem value="in_progress">Testing</SelectItem>
-                                        <SelectItem value="in_progress">Awaiting Feedback</SelectItem>
-                                        <SelectItem value="done">Completed</SelectItem>
+                                        <SelectItem value="to_do">{t("tasks.statusOption.notStarted")}</SelectItem>
+                                        <SelectItem value="in_progress">{t("tasks.statusOption.inProgress")}</SelectItem>
+                                        <SelectItem value="in_progress">{t("tasks.statusOption.testing")}</SelectItem>
+                                        <SelectItem value="in_progress">{t("tasks.statusOption.awaitingFeedback")}</SelectItem>
+                                        <SelectItem value="done">{t("tasks.statusOption.completed")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -426,7 +429,7 @@ export default function CreateTaskPage() {
                                     onCheckedChange={(checked) => setValue("isPublic", !!checked)}
                                 />
                                 <Label htmlFor="isPublic" className="font-normal cursor-pointer">
-                                    Visible to Customer
+                                    {t("tasks.form.visibleToCustomer")}
                                 </Label>
                             </div>
 
@@ -437,18 +440,18 @@ export default function CreateTaskPage() {
                                     onCheckedChange={(checked) => setValue("billable", !!checked)}
                                 />
                                 <Label htmlFor="billable" className="font-normal cursor-pointer">
-                                    Billable
+                                    {t("tasks.form.billable")}
                                 </Label>
                             </div>
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
                         <Button type="button" variant="ghost" className="mr-2" onClick={() => router.back()}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Task
+                            {t("tasks.form.createTask")}
                         </Button>
                     </CardFooter>
                 </Card>

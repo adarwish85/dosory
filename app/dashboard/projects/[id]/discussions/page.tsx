@@ -27,8 +27,10 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ProjectDiscussion } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 export default function ProjectDiscussionsPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const { discussions, loading, createDiscussion, addComment } = useProjectDiscussions(projectId);
@@ -50,12 +52,12 @@ export default function ProjectDiscussionsPage() {
     const onSubmit = async (data: DiscussionFormData) => {
         try {
             await createDiscussion(data);
-            toast.success("Discussion started");
+            toast.success(t("projects.discussions.startedToast"));
             setDialogOpen(false);
             form.reset({ projectId, subject: "", description: "", participants: [] });
         } catch (error) {
             console.error(error);
-            toast.error("Failed to start discussion");
+            toast.error(t("projects.discussions.startFailedToast"));
         }
     };
 
@@ -66,13 +68,13 @@ export default function ProjectDiscussionsPage() {
         try {
             await addComment(selectedDiscussion.id, commentText.trim());
             setCommentText("");
-            toast.success("Comment added");
+            toast.success(t("projects.discussions.commentAddedToast"));
             // Refresh selected discussion from state
             const updated = discussions.find(d => d.id === selectedDiscussion.id);
             if (updated) setSelectedDiscussion(updated);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to add comment");
+            toast.error(t("projects.discussions.commentFailedToast"));
         } finally {
             setSubmittingComment(false);
         }
@@ -97,10 +99,10 @@ export default function ProjectDiscussionsPage() {
                     <div className="flex-1">
                         <h2 className="text-2xl font-bold">{selectedDiscussion.subject}</h2>
                         <p className="text-sm text-muted-foreground">
-                            Started by {selectedDiscussion.createdByName || "Unknown"} • {formatDistanceToNow(selectedDiscussion.createdAt.toDate(), { addSuffix: true })}
+                            {t("projects.discussions.startedBy", { name: selectedDiscussion.createdByName || t("common.unknown") })} • {formatDistanceToNow(selectedDiscussion.createdAt.toDate(), { addSuffix: true })}
                         </p>
                     </div>
-                    <Badge variant="outline">{comments.length} {comments.length === 1 ? "comment" : "comments"}</Badge>
+                    <Badge variant="outline">{comments.length} {comments.length === 1 ? t("projects.discussions.comment") : t("projects.discussions.comments")}</Badge>
                 </div>
 
                 {/* Original Post */}
@@ -114,7 +116,7 @@ export default function ProjectDiscussionsPage() {
                             </Avatar>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-medium">{selectedDiscussion.createdByName || "Unknown"}</span>
+                                    <span className="font-medium">{selectedDiscussion.createdByName || t("common.unknown")}</span>
                                     <span className="text-xs text-muted-foreground">
                                         {format(selectedDiscussion.createdAt.toDate(), "MMM d, yyyy h:mm a")}
                                     </span>
@@ -130,7 +132,7 @@ export default function ProjectDiscussionsPage() {
                     {comments.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground border rounded-lg bg-gray-50/50 border-dashed">
                             <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                            <p>No comments yet. Be the first to reply!</p>
+                            <p>{t("projects.discussions.noComments")}</p>
                         </div>
                     ) : (
                         <ScrollArea className="max-h-[400px]">
@@ -167,7 +169,7 @@ export default function ProjectDiscussionsPage() {
                     <Textarea
                         value={commentText}
                         onChange={(e) => setCommentText(e.target.value)}
-                        placeholder="Write a comment..."
+                        placeholder={t("projects.discussions.commentPlaceholder")}
                         className="flex-1 min-h-[80px]"
                     />
                     <Button
@@ -190,17 +192,17 @@ export default function ProjectDiscussionsPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Discussions</h2>
+                <h2 className="text-2xl font-bold">{t("projects.discussions.title")}</h2>
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
-                            <Plus className="mr-2 h-4 w-4" /> New Discussion
+                            <Plus className="mr-2 h-4 w-4" /> {t("projects.discussions.new")}
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Start a Discussion</DialogTitle>
-                            <DialogDescription>Create a topic for team discussion.</DialogDescription>
+                            <DialogTitle>{t("projects.discussions.dialogTitle")}</DialogTitle>
+                            <DialogDescription>{t("projects.discussions.dialogDescription")}</DialogDescription>
                         </DialogHeader>
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -209,9 +211,9 @@ export default function ProjectDiscussionsPage() {
                                     name="subject"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Subject</FormLabel>
+                                            <FormLabel>{t("projects.discussions.subject")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="e.g. Design Review" {...field} />
+                                                <Input placeholder={t("projects.discussions.subjectPlaceholder")} {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -222,9 +224,9 @@ export default function ProjectDiscussionsPage() {
                                     name="description"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Message</FormLabel>
+                                            <FormLabel>{t("projects.discussions.message")}</FormLabel>
                                             <FormControl>
-                                                <Textarea placeholder="Start the conversation..." {...field} />
+                                                <Textarea placeholder={t("projects.discussions.messagePlaceholder")} {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -232,11 +234,11 @@ export default function ProjectDiscussionsPage() {
                                 />
                                 <DialogFooter>
                                     <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                                        Cancel
+                                        {t("common.cancel")}
                                     </Button>
                                     <Button type="submit" disabled={form.formState.isSubmitting}>
                                         {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Start Discussion
+                                        {t("projects.discussions.startButton")}
                                     </Button>
                                 </DialogFooter>
                             </form>
@@ -249,7 +251,7 @@ export default function ProjectDiscussionsPage() {
                 {discussions.length === 0 ? (
                     <div className="text-center py-20 border rounded-lg bg-gray-50/50 border-dashed text-muted-foreground">
                         <MessageSquare className="h-10 w-10 mx-auto mb-2 opacity-20" />
-                        <p>No discussions yet. Start one!</p>
+                        <p>{t("projects.discussions.empty")}</p>
                     </div>
                 ) : (
                     discussions.map((discussion) => (
@@ -263,7 +265,7 @@ export default function ProjectDiscussionsPage() {
                                     <div className="space-y-1">
                                         <CardTitle className="text-lg text-primary">{discussion.subject}</CardTitle>
                                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                            <span>Started by {discussion.createdByName || discussion.createdBy || "Unknown"}</span>
+                                            <span>{t("projects.discussions.startedBy", { name: discussion.createdByName || discussion.createdBy || t("common.unknown") })}</span>
                                             <span>•</span>
                                             <span>{format(discussion.createdAt.toDate(), "MMM d, yyyy h:mm a")}</span>
                                         </div>
@@ -275,7 +277,7 @@ export default function ProjectDiscussionsPage() {
                                                 {discussion.comments?.length}
                                             </Badge>
                                         )}
-                                        <Badge variant="outline">{discussion.participants.length} Participants</Badge>
+                                        <Badge variant="outline">{discussion.participants.length} {t("projects.discussions.participants")}</Badge>
                                     </div>
                                 </div>
                             </CardHeader>

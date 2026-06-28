@@ -46,19 +46,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { BulkAssignDialog } from "@/components/dashboard/tasks/bulk-assign-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 const statusColors: Record<TaskStatus, { bg: string; text: string }> = {
     to_do: { bg: "bg-gray-100", text: "text-gray-700" },
     in_progress: { bg: "bg-blue-100", text: "text-blue-700" },
     blocked: { bg: "bg-red-100", text: "text-red-700" },
     done: { bg: "bg-green-100", text: "text-green-700" },
-};
-
-const statusLabels: Record<TaskStatus, string> = {
-    to_do: "To Do",
-    in_progress: "In Progress",
-    blocked: "Blocked",
-    done: "Done",
 };
 
 const priorityColors: Record<TaskPriority, { bg: string; text: string }> = {
@@ -115,41 +109,42 @@ function HighlightText({ text, search }: { text: string; search: string }) {
 }
 
 function QuickStatsBar({ tasks, stats }: { tasks: Task[]; stats: Record<string, number> }) {
+    const { t } = useTranslation();
     const urgentCount = tasks.filter((t) => t.priority === "urgent").length;
     return (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-blue-600 mb-1">
                     <CheckSquare className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Total</span>
+                    <span className="text-xs font-medium uppercase">{t("tasks.stats.total")}</span>
                 </div>
                 <div className="text-2xl font-bold text-blue-900">{tasks.length}</div>
             </div>
             <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-yellow-600 mb-1">
                     <Clock className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">In Progress</span>
+                    <span className="text-xs font-medium uppercase">{t("tasks.status.in_progress")}</span>
                 </div>
                 <div className="text-2xl font-bold text-yellow-900">{stats.in_progress || 0}</div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1">
                     <CheckSquare className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Done</span>
+                    <span className="text-xs font-medium uppercase">{t("tasks.status.done")}</span>
                 </div>
                 <div className="text-2xl font-bold text-green-900">{stats.done || 0}</div>
             </div>
             <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-red-600 mb-1">
                     <AlertTriangle className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Blocked</span>
+                    <span className="text-xs font-medium uppercase">{t("tasks.status.blocked")}</span>
                 </div>
                 <div className="text-2xl font-bold text-red-900">{stats.blocked || 0}</div>
             </div>
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-purple-600 mb-1">
                     <CircleDot className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Urgent</span>
+                    <span className="text-xs font-medium uppercase">{t("tasks.stats.urgent")}</span>
                 </div>
                 <div className="text-2xl font-bold text-purple-900">{urgentCount}</div>
             </div>
@@ -174,13 +169,14 @@ function Pagination({
     endRecord: number;
     compact?: boolean;
 }) {
+    const { t } = useTranslation();
     const canPrev = currentPage > 1,
         canNext = currentPage < totalPages;
     return (
         <div className={`flex items-center ${compact ? "gap-1" : "justify-between gap-4"}`}>
             {!compact && (
                 <div className="text-sm text-gray-500">
-                    Showing {startRecord} to {endRecord} of {totalRecords}
+                    {t("tasks.pagination.showing", { start: startRecord, end: endRecord, total: totalRecords })}
                 </div>
             )}
             <div className="flex items-center gap-1">
@@ -204,7 +200,7 @@ function Pagination({
                 </Button>
                 <div className="flex items-center gap-1 px-2 text-sm">
                     <span className="font-medium">{currentPage}</span>
-                    <span className="text-gray-700">of {totalPages}</span>
+                    <span className="text-gray-700">{t("tasks.pagination.ofPages", { total: totalPages })}</span>
                 </div>
                 <Button
                     variant="outline"
@@ -242,19 +238,20 @@ function SelectionBanner({
     onSelectAll: () => void;
     onClearSelection: () => void;
 }) {
+    const { t } = useTranslation();
     if (selectionMode === "none" || selectedCount === 0) return null;
     return (
         <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-2 flex items-center justify-center gap-2 text-sm mb-2">
             <span className="text-blue-800">
-                <strong>{selectedCount}</strong> selected.
+                <strong>{selectedCount}</strong> {t("tasks.selection.selected")}
             </span>
             {selectionMode === "page" && selectedCount < totalCount && (
                 <button onClick={onSelectAll} className="text-blue-600 font-medium hover:underline">
-                    Select all {totalCount}
+                    {t("tasks.selection.selectAll", { total: totalCount })}
                 </button>
             )}
             <button onClick={onClearSelection} className="text-blue-600 font-medium hover:underline ml-2">
-                Clear
+                {t("tasks.selection.clear")}
             </button>
         </div>
     );
@@ -278,6 +275,7 @@ export default function TasksPage() {
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
     const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
+    const { t } = useTranslation();
 
     const { tasks, loading, taskStats, updateTask, updateTaskStatus, deleteTask } = useTasks();
 
@@ -297,6 +295,16 @@ export default function TasksPage() {
     const visibleColumns = DEFAULT_COLUMNS.filter((col) => columnVisibility[col.key]);
     const visibleColumnsCount = visibleColumns.length;
 
+    const columnLabels: Record<ColumnKey, string> = {
+        id: "#",
+        name: t("tasks.column.name"),
+        status: t("tasks.column.status"),
+        startDate: t("tasks.column.startDate"),
+        dueDate: t("tasks.column.dueDate"),
+        priority: t("tasks.column.priority"),
+        assignee: t("tasks.column.assignee"),
+    };
+
     const formatDate = (timestamp: { toDate: () => Date } | null | undefined) => {
         if (!timestamp) return "-";
         try {
@@ -311,19 +319,19 @@ export default function TasksPage() {
     };
     const handleDelete = useCallback(
         async (id: string) => {
-            if (window.confirm("Delete this task?")) await deleteTask(id);
+            if (window.confirm(t("tasks.confirm.deleteOne"))) await deleteTask(id);
         },
-        [deleteTask]
+        [deleteTask, t]
     );
 
     const handleBulkDelete = useCallback(async () => {
         if (selectedTasks.length === 0) return;
-        if (window.confirm(`Delete ${selectedTasks.length} tasks?`)) {
+        if (window.confirm(t("tasks.confirm.deleteMany", { count: selectedTasks.length }))) {
             for (const id of selectedTasks) await deleteTask(id);
             setSelectedTasks([]);
             setSelectionMode("none");
         }
-    }, [selectedTasks, deleteTask]);
+    }, [selectedTasks, deleteTask, t]);
 
     const handleBulkAssign = async (projectId: string, milestoneId: string, taskListId: string) => {
         for (const taskId of selectedTasks) {
@@ -422,11 +430,11 @@ export default function TasksPage() {
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Tasks</h2>
+                        <h2 className="text-2xl font-bold text-gray-900">{t("tasks.title")}</h2>
                     </div>
                     <Link href="/dashboard/tasks/new">
                         <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                            <Plus className="mr-2 h-4 w-4" /> New Task
+                            <Plus className="mr-2 h-4 w-4" /> {t("tasks.new")}
                         </Button>
                     </Link>
                 </div>
@@ -446,7 +454,7 @@ export default function TasksPage() {
                                     onClick={() => setStatusFilter(isActive ? "all" : status)}
                                     className={`border rounded-full px-3 py-1 text-sm font-medium flex items-center gap-2 cursor-pointer transition-colors ${isActive ? `${colors.bg} ${colors.text}` : "bg-white text-gray-500 hover:bg-gray-50"}`}
                                 >
-                                    <span className="font-bold text-gray-900">{count}</span> {statusLabels[status]}
+                                    <span className="font-bold text-gray-900">{count}</span> {t(`tasks.status.${status}`)}
                                 </button>
                             );
                         }
@@ -456,7 +464,7 @@ export default function TasksPage() {
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500">Show</span>
+                        <span className="text-sm text-gray-500">{t("tasks.toolbar.show")}</span>
                         <Select
                             value={recordsPerPage.toString()}
                             onValueChange={(v) => {
@@ -476,24 +484,24 @@ export default function TasksPage() {
                         </Select>
                         <Button variant="outline" onClick={exportTasks}>
                             <Download className="mr-2 h-4 w-4" />
-                            Export
+                            {t("common.export")}
                         </Button>
                         {selectedTasks.length > 0 && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-                                        <Badge className="mr-2 bg-blue-600">{selectedTasks.length}</Badge>Bulk{" "}
+                                        <Badge className="mr-2 bg-blue-600">{selectedTasks.length}</Badge>{t("tasks.bulk.button")}{" "}
                                         <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuLabel>With {selectedTasks.length} selected</DropdownMenuLabel>
+                                    <DropdownMenuLabel>{t("tasks.bulk.withSelected", { count: selectedTasks.length })}</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => setBulkAssignOpen(true)}>
-                                        <LayoutList className="mr-2 h-4 w-4" /> Assign to...
+                                        <LayoutList className="mr-2 h-4 w-4" /> {t("tasks.bulk.assignTo")}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                        <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -506,7 +514,7 @@ export default function TasksPage() {
                         <div className="relative w-full sm:w-64">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Search..."
+                                placeholder={t("common.search")}
                                 className="pl-9"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -519,15 +527,15 @@ export default function TasksPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Density</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("tasks.density.label")}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuRadioGroup
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="spacious">Spacious</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">{t("tasks.density.compact")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">{t("tasks.density.comfortable")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="spacious">{t("tasks.density.spacious")}</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -539,7 +547,7 @@ export default function TasksPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuLabel>
-                                    Columns ({visibleColumnsCount}/{DEFAULT_COLUMNS.length})
+                                    {t("tasks.columns.label", { visible: visibleColumnsCount, total: DEFAULT_COLUMNS.length })}
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {DEFAULT_COLUMNS.map((col) => (
@@ -549,7 +557,7 @@ export default function TasksPage() {
                                         onCheckedChange={() => toggleColumn(col.key)}
                                         disabled={col.required}
                                     >
-                                        {col.label}
+                                        {columnLabels[col.key]}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
@@ -597,14 +605,14 @@ export default function TasksPage() {
                                 </TableHead>
                                 {columnVisibility.id && <TableHead className="w-10">#</TableHead>}
                                 {columnVisibility.name && (
-                                    <TableHead className="font-semibold text-gray-900">Name</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("tasks.column.name")}</TableHead>
                                 )}
-                                {columnVisibility.status && <TableHead>Status</TableHead>}
-                                {columnVisibility.startDate && <TableHead>Start Date</TableHead>}
-                                {columnVisibility.dueDate && <TableHead>Due Date</TableHead>}
-                                {columnVisibility.priority && <TableHead>Priority</TableHead>}
-                                {columnVisibility.assignee && <TableHead>Assigned To</TableHead>}
-                                <TableHead className="w-24 text-center">Actions</TableHead>
+                                {columnVisibility.status && <TableHead>{t("tasks.column.status")}</TableHead>}
+                                {columnVisibility.startDate && <TableHead>{t("tasks.column.startDate")}</TableHead>}
+                                {columnVisibility.dueDate && <TableHead>{t("tasks.column.dueDate")}</TableHead>}
+                                {columnVisibility.priority && <TableHead>{t("tasks.column.priority")}</TableHead>}
+                                {columnVisibility.assignee && <TableHead>{t("tasks.column.assignee")}</TableHead>}
+                                <TableHead className="w-24 text-center">{t("common.actions")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -614,7 +622,7 @@ export default function TasksPage() {
                                         colSpan={visibleColumnsCount + 2}
                                         className="text-center py-10 text-muted-foreground"
                                     >
-                                        {searchQuery ? "No matches" : "No tasks"}
+                                        {searchQuery ? t("tasks.empty.noMatches") : t("tasks.empty.noTasks")}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -651,14 +659,14 @@ export default function TasksPage() {
                                                                 href={`/dashboard/tasks/${task.id}/edit`}
                                                                 className="hover:text-blue-600 hover:underline px-0.5"
                                                             >
-                                                                Edit
+                                                                {t("common.edit")}
                                                             </Link>
                                                             <span className="text-gray-300">|</span>
                                                             <button
                                                                 onClick={() => handleDelete(task.id)}
                                                                 className="hover:text-red-600 hover:underline px-0.5"
                                                             >
-                                                                Delete
+                                                                {t("common.delete")}
                                                             </button>
                                                         </div>
                                                     </div>
@@ -688,7 +696,7 @@ export default function TasksPage() {
                                                                                     )}
                                                                                 />
                                                                                 <span className={color.text}>
-                                                                                    {status.replace("_", " ")}
+                                                                                    {t(`tasks.status.${status}`)}
                                                                                 </span>
                                                                             </div>
                                                                         );
@@ -698,10 +706,10 @@ export default function TasksPage() {
                                                             </SelectValue>
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="to_do">To Do</SelectItem>
-                                                            <SelectItem value="in_progress">In Progress</SelectItem>
-                                                            <SelectItem value="blocked">Blocked</SelectItem>
-                                                            <SelectItem value="done">Done</SelectItem>
+                                                            <SelectItem value="to_do">{t("tasks.status.to_do")}</SelectItem>
+                                                            <SelectItem value="in_progress">{t("tasks.status.in_progress")}</SelectItem>
+                                                            <SelectItem value="blocked">{t("tasks.status.blocked")}</SelectItem>
+                                                            <SelectItem value="done">{t("tasks.status.done")}</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </TableCell>
@@ -721,7 +729,7 @@ export default function TasksPage() {
                                                     <Badge
                                                         className={`${priorityColor.bg} ${priorityColor.text} border-0`}
                                                     >
-                                                        {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                                                        {t(`tasks.priority.${task.priority}`)}
                                                     </Badge>
                                                 </TableCell>
                                             )}
@@ -740,7 +748,7 @@ export default function TasksPage() {
                                                                 </Button>
                                                             </Link>
                                                         </TooltipTrigger>
-                                                        <TooltipContent>Edit</TooltipContent>
+                                                        <TooltipContent>{t("common.edit")}</TooltipContent>
                                                     </Tooltip>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
@@ -753,7 +761,7 @@ export default function TasksPage() {
                                                                 <Trash className="h-3.5 w-3.5" />
                                                             </Button>
                                                         </TooltipTrigger>
-                                                        <TooltipContent>Delete</TooltipContent>
+                                                        <TooltipContent>{t("common.delete")}</TooltipContent>
                                                     </Tooltip>
                                                 </div>
                                             </TableCell>
@@ -766,7 +774,7 @@ export default function TasksPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600 font-medium">Total: {totalRecords}</div>
+                    <div className="text-sm text-gray-600 font-medium">{t("tasks.footer.total", { total: totalRecords })}</div>
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
@@ -777,7 +785,7 @@ export default function TasksPage() {
                         compact
                     />
                 </div>
-                <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Space Select • Click to edit</div>
+                <div className="text-xs text-gray-400 text-center">{t("tasks.keyboardHelp")}</div>
             </div>
 
             <BulkAssignDialog

@@ -68,6 +68,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { LayoutGrid, List as ListIcon } from "lucide-react";
 import { MilestoneListItem, MilestoneBoardColumn } from "@/components/dashboard/projects/milestone-components";
+import { useTranslation } from "@/lib/i18n";
 
 // Draggable Task Item Component
 function DraggableTaskItem({
@@ -79,6 +80,7 @@ function DraggableTaskItem({
     milestone: Milestone;
     onToggleComplete: (task: Task) => void;
 }) {
+    const { t } = useTranslation();
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: task.id,
         data: { task, type: "task" },
@@ -119,13 +121,13 @@ function DraggableTaskItem({
             </button>
             <span className={cn("text-sm flex-1 truncate", isTaskComplete && "line-through")}>{task.name}</span>
             {afterMilestone && !isTaskComplete && (
-                <span title="Due after milestone">
+                <span title={t("projects.milestones.dueAfterMilestone")}>
                     <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
                 </span>
             )}
             {taskOverdue && (
                 <Badge variant="destructive" className="text-[10px] px-1 py-0">
-                    Overdue
+                    {t("projects.milestones.overdue")}
                 </Badge>
             )}
         </div>
@@ -156,6 +158,7 @@ function TaskListDropZone({
     onEditTask: (task: Task) => void;
     onEditTaskList: (list: TaskList) => void;
 }) {
+    const { t } = useTranslation();
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: list.id,
         data: { list, type: "taskList" },
@@ -232,7 +235,7 @@ function TaskListDropZone({
                             className="h-6 text-xs px-2 text-gray-500 hover:text-gray-900"
                             onClick={() => onImportTasks(list.id)}
                         >
-                            <FolderPlus className="h-3 w-3 mr-1" /> Import
+                            <FolderPlus className="h-3 w-3 mr-1" /> {t("projects.milestones.import")}
                         </Button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -242,13 +245,13 @@ function TaskListDropZone({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => onEditTaskList(list)}>
-                                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                                    <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     className="text-red-600"
-                                    onClick={() => confirm("Delete task list?") && onDeleteTaskList(list.id)}
+                                    onClick={() => confirm(t("projects.milestones.confirmDeleteTaskList")) && onDeleteTaskList(list.id)}
                                 >
-                                    <Trash className="mr-2 h-4 w-4" /> Delete
+                                    <Trash className="mr-2 h-4 w-4" /> {t("common.delete")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -290,7 +293,7 @@ function TaskListDropZone({
                                 value={newTaskName}
                                 onChange={(e) => setNewTaskName(e.target.value)}
                                 onKeyDown={onKeyDown}
-                                placeholder="Task name..."
+                                placeholder={t("projects.milestones.taskNamePlaceholder")}
                                 className="h-8 text-sm"
                                 disabled={submittingTask}
                             />
@@ -327,7 +330,7 @@ function TaskListDropZone({
                             className="w-full justify-start text-xs text-muted-foreground hover:text-foreground h-8 px-2"
                             onClick={() => setIsAddingTask(true)}
                         >
-                            <Plus className="h-3 w-3 mr-2" /> Add Task
+                            <Plus className="h-3 w-3 mr-2" /> {t("projects.milestones.addTask")}
                         </Button>
                     )}
                 </div>
@@ -337,6 +340,7 @@ function TaskListDropZone({
 }
 
 export default function MilestonesPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const { milestones, loading, deleteMilestone, updateMilestone, reorderMilestones } = useMilestones(projectId);
@@ -499,10 +503,10 @@ export default function MilestonesPage() {
                 isPublic: false,
                 billable: false,
             });
-            toast.success("Task created");
+            toast.success(t("projects.milestones.toast.taskCreated"));
         } catch (error) {
             console.error("Error creating task:", error);
-            toast.error("Failed to create task");
+            toast.error(t("projects.milestones.toast.taskCreateFailed"));
         }
     };
 
@@ -517,10 +521,10 @@ export default function MilestonesPage() {
                     taskListId: importTargetListId,
                 });
             }
-            toast.success(`Imported ${taskIds.length} tasks`);
+            toast.success(t("projects.milestones.toast.imported", { count: taskIds.length }));
         } catch {
             console.error("Failed to import tasks");
-            toast.error("Failed to import tasks");
+            toast.error(t("projects.milestones.toast.importFailed"));
         }
     };
 
@@ -534,10 +538,10 @@ export default function MilestonesPage() {
                 dueDate: new Date(editDueDate),
                 color: editColor,
             });
-            toast.success("Milestone updated");
+            toast.success(t("projects.milestones.toast.milestoneUpdated"));
             setEditingMilestone(null);
         } catch {
-            toast.error("Failed to update milestone");
+            toast.error(t("projects.milestones.toast.milestoneUpdateFailed"));
         }
     };
 
@@ -551,13 +555,13 @@ export default function MilestonesPage() {
                 milestoneId: creatingTaskListFor,
                 projectId,
             });
-            toast.success("Task list created");
+            toast.success(t("projects.milestones.toast.taskListCreated"));
             setCreatingTaskListFor(null);
             setNewTaskListName("");
             // Auto-expand the milestone
             setExpandedMilestones((prev) => new Set([...prev, creatingTaskListFor]));
         } catch {
-            toast.error("Failed to create task list");
+            toast.error(t("projects.milestones.toast.taskListCreateFailed"));
         } finally {
             setCreatingTaskList(false);
         }
@@ -571,7 +575,7 @@ export default function MilestonesPage() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
         } catch {
-            toast.error("Failed to update task");
+            toast.error(t("projects.milestones.toast.taskUpdateFailed"));
         }
     };
 
@@ -629,9 +633,9 @@ export default function MilestonesPage() {
 
                 try {
                     await reorderMilestones(updates);
-                    toast.success("Milestones reordered");
+                    toast.success(t("projects.milestones.toast.reordered"));
                 } catch {
-                    toast.error("Failed to reorder milestones");
+                    toast.error(t("projects.milestones.toast.reorderFailed"));
                 }
             }
             return;
@@ -648,7 +652,7 @@ export default function MilestonesPage() {
                 // Different milestone: move the list
                 if (activeList.milestoneId !== overList.milestoneId) {
                     await updateTaskList(activeId, { milestoneId: overList.milestoneId });
-                    toast.success("Task list moved to new milestone");
+                    toast.success(t("projects.milestones.toast.taskListMoved"));
                 } else {
                     // Reordering within same milestone logic would go here
                     // For now, simple swap of order if needed, but Firestore hook sorts by order field
@@ -695,9 +699,9 @@ export default function MilestonesPage() {
                     milestoneId: targetMilestoneId,
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } as any);
-                toast.success("Task moved");
+                toast.success(t("projects.milestones.toast.taskMoved"));
             } catch {
-                toast.error("Failed to move task");
+                toast.error(t("projects.milestones.toast.taskMoveFailed"));
             }
         }
     };
@@ -722,8 +726,8 @@ export default function MilestonesPage() {
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Milestones</h2>
-                        <p className="text-muted-foreground text-sm">Organize tasks into milestones and task lists.</p>
+                        <h2 className="text-2xl font-bold tracking-tight">{t("projects.milestones.title")}</h2>
+                        <p className="text-muted-foreground text-sm">{t("projects.milestones.subtitle")}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="flex bg-gray-100 p-1 rounded-lg">
@@ -737,7 +741,7 @@ export default function MilestonesPage() {
                                 )}
                             >
                                 <ListIcon className="h-4 w-4" />
-                                List
+                                {t("projects.milestones.list")}
                             </button>
                             <button
                                 onClick={() => setViewMode("board")}
@@ -749,7 +753,7 @@ export default function MilestonesPage() {
                                 )}
                             >
                                 <LayoutGrid className="h-4 w-4" />
-                                Board
+                                {t("projects.milestones.board")}
                             </button>
                         </div>
                         <CreateMilestoneDialog projectId={projectId} />
@@ -759,9 +763,9 @@ export default function MilestonesPage() {
                 {milestones.length === 0 ? (
                     <div className="text-center py-20 border rounded-lg bg-gray-50/50 border-dashed">
                         <Calendar className="h-10 w-10 mx-auto mb-4 text-gray-400" />
-                        <h3 className="text-lg font-medium text-gray-900">No milestones yet</h3>
+                        <h3 className="text-lg font-medium text-gray-900">{t("projects.milestones.emptyTitle")}</h3>
                         <p className="text-sm text-gray-500 mt-1 mb-4">
-                            Create a milestone to track major project phases.
+                            {t("projects.milestones.emptyDescription")}
                         </p>
                         <CreateMilestoneDialog projectId={projectId} />
                     </div>
@@ -880,12 +884,12 @@ export default function MilestonesPage() {
                 <Dialog open={!!editingMilestone} onOpenChange={(open) => !open && setEditingMilestone(null)}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Edit Milestone</DialogTitle>
-                            <DialogDescription>Update milestone details.</DialogDescription>
+                            <DialogTitle>{t("projects.milestones.editTitle")}</DialogTitle>
+                            <DialogDescription>{t("projects.milestones.editDescription")}</DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
                             <div>
-                                <label className="text-sm font-medium">Name</label>
+                                <label className="text-sm font-medium">{t("common.name")}</label>
                                 <Input
                                     value={editName}
                                     onChange={(e) => setEditName(e.target.value)}
@@ -893,7 +897,7 @@ export default function MilestonesPage() {
                                 />
                             </div>
                             <div>
-                                <label className="text-sm font-medium">Description</label>
+                                <label className="text-sm font-medium">{t("common.description")}</label>
                                 <Textarea
                                     value={editDescription}
                                     onChange={(e) => setEditDescription(e.target.value)}
@@ -902,7 +906,7 @@ export default function MilestonesPage() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-medium">Due Date</label>
+                                    <label className="text-sm font-medium">{t("projects.milestones.dueDate")}</label>
                                     <Input
                                         type="date"
                                         value={editDueDate}
@@ -911,7 +915,7 @@ export default function MilestonesPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium">Color</label>
+                                    <label className="text-sm font-medium">{t("projects.milestones.color")}</label>
                                     <div className="flex gap-2 mt-1">
                                         <Input
                                             type="color"
@@ -930,9 +934,9 @@ export default function MilestonesPage() {
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setEditingMilestone(null)}>
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
-                            <Button onClick={saveEdit}>Save Changes</Button>
+                            <Button onClick={saveEdit}>{t("common.saveChanges")}</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
@@ -941,30 +945,30 @@ export default function MilestonesPage() {
                 <Dialog open={!!creatingTaskListFor} onOpenChange={(open) => !open && setCreatingTaskListFor(null)}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Create Task List</DialogTitle>
+                            <DialogTitle>{t("projects.milestones.createTaskListTitle")}</DialogTitle>
                             <DialogDescription>
-                                Add a new task list to organize tasks within this milestone.
+                                {t("projects.milestones.createTaskListDescription")}
                             </DialogDescription>
                         </DialogHeader>
                         <div>
-                            <label className="text-sm font-medium">Name</label>
+                            <label className="text-sm font-medium">{t("common.name")}</label>
                             <Input
                                 value={newTaskListName}
                                 onChange={(e) => setNewTaskListName(e.target.value)}
-                                placeholder="e.g., UI Tasks, Backend Tasks"
+                                placeholder={t("projects.milestones.taskListNamePlaceholder")}
                                 className="mt-1"
                             />
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setCreatingTaskListFor(null)}>
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button
                                 onClick={handleCreateTaskList}
                                 disabled={!newTaskListName.trim() || creatingTaskList}
                             >
                                 {creatingTaskList && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Create
+                                {t("common.create")}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

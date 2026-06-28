@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { FileText, Download, Trash2, Upload, Loader2, File } from "lucide-react";
 import { toast } from "sonner";
 import { formatBytes } from "@/lib/utils"; // Assuming this utility exists, if not I'll inline it
+import { useTranslation } from "@/lib/i18n";
 
 function formatFileSize(bytes: number) {
     if (bytes === 0) return "0 Bytes";
@@ -21,6 +22,7 @@ function formatFileSize(bytes: number) {
 }
 
 export default function ProjectFilesPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const projectId = params.id as string;
     const { files, loading, uploadFile, deleteFile } = useProjectFiles(projectId);
@@ -34,23 +36,23 @@ export default function ProjectFilesPage() {
         setUploading(true);
         try {
             await uploadFile(file);
-            toast.success("File uploaded successfully");
+            toast.success(t("projects.files.uploadedToast"));
             if (fileInputRef.current) fileInputRef.current.value = "";
         } catch (error) {
             console.error(error);
-            toast.error("Failed to upload file");
+            toast.error(t("projects.files.uploadFailedToast"));
         } finally {
             setUploading(false);
         }
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (confirm(`Are you sure you want to delete ${name}?`)) {
+        if (confirm(t("projects.files.deleteConfirm", { name }))) {
             try {
                 await deleteFile(id);
-                toast.success("File deleted");
+                toast.success(t("projects.files.deletedToast"));
             } catch (error) {
-                toast.error("Failed to delete file");
+                toast.error(t("projects.files.deleteFailedToast"));
             }
         }
     };
@@ -60,7 +62,7 @@ export default function ProjectFilesPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Files</h2>
+                <h2 className="text-2xl font-bold">{t("projects.files.title")}</h2>
                 <div>
                     <input
                         type="file"
@@ -70,7 +72,7 @@ export default function ProjectFilesPage() {
                     />
                     <Button disabled={uploading} onClick={() => fileInputRef.current?.click()}>
                         {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                        Upload File
+                        {t("projects.files.uploadButton")}
                     </Button>
                 </div>
             </div>
@@ -79,11 +81,11 @@ export default function ProjectFilesPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Size</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Uploaded</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead>{t("common.name")}</TableHead>
+                            <TableHead>{t("projects.files.size")}</TableHead>
+                            <TableHead>{t("projects.files.type")}</TableHead>
+                            <TableHead>{t("projects.files.uploaded")}</TableHead>
+                            <TableHead className="text-right">{t("common.actions")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -92,7 +94,7 @@ export default function ProjectFilesPage() {
                                 <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
                                     <div className="flex flex-col items-center gap-2">
                                         <File className="h-10 w-10 opacity-20" />
-                                        <p>No files uploaded yet.</p>
+                                        <p>{t("projects.files.empty")}</p>
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -110,7 +112,7 @@ export default function ProjectFilesPage() {
                                     <TableCell>
                                         <div className="flex flex-col text-xs">
                                             <span>{format(file.createdAt.toDate(), "MMM d, yyyy")}</span>
-                                            <span className="text-muted-foreground">by {file.uploadedBy}</span>
+                                            <span className="text-muted-foreground">{t("projects.files.byUploader", { name: file.uploadedBy })}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right">
