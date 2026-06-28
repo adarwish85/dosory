@@ -9,6 +9,7 @@ import { Loader2, Upload, File as FileIcon, X } from "lucide-react";
 import { useCustomerFiles } from "@/lib/hooks/use-customer-data";
 import { toast } from "sonner";
 import { useCustomer } from "../customer-context";
+import { useTranslation } from "@/lib/i18n";
 
 interface UploadFileDialogProps {
     open: boolean;
@@ -16,6 +17,7 @@ interface UploadFileDialogProps {
 }
 
 export function UploadFileDialog({ open, onOpenChange }: UploadFileDialogProps) {
+    const { t } = useTranslation();
     const { customerId } = useCustomer();
     const { uploadFile } = useCustomerFiles();
     const [file, setFile] = useState<File | null>(null);
@@ -34,12 +36,12 @@ export function UploadFileDialog({ open, onOpenChange }: UploadFileDialogProps) 
         setUploading(true);
         try {
             await uploadFile(file, customerId);
-            toast.success("File uploaded successfully");
+            toast.success(t("customers.files.uploadSuccess"));
             onOpenChange(false);
             setFile(null);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to upload file");
+            toast.error(t("customers.files.uploadError"));
         } finally {
             setUploading(false);
         }
@@ -49,9 +51,9 @@ export function UploadFileDialog({ open, onOpenChange }: UploadFileDialogProps) 
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Upload File</DialogTitle>
+                    <DialogTitle>{t("customers.files.uploadTitle")}</DialogTitle>
                     <DialogDescription>
-                        Upload a document, image, or other file for this customer.
+                        {t("customers.files.uploadDescription")}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -62,8 +64,8 @@ export function UploadFileDialog({ open, onOpenChange }: UploadFileDialogProps) 
                             onClick={() => fileInputRef.current?.click()}
                         >
                             <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                            <p className="text-sm font-medium text-gray-900">Click to select a file</p>
-                            <p className="text-xs text-gray-500 mt-1">or drag and drop here</p>
+                            <p className="text-sm font-medium text-gray-900">{t("customers.files.clickToSelect")}</p>
+                            <p className="text-xs text-gray-500 mt-1">{t("customers.files.dragAndDrop")}</p>
                             <Input
                                 type="file"
                                 className="hidden"
@@ -91,16 +93,16 @@ export function UploadFileDialog({ open, onOpenChange }: UploadFileDialogProps) 
 
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button onClick={handleUpload} disabled={!file || uploading}>
                         {uploading ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Uploading...
+                                {t("customers.files.uploading")}
                             </>
                         ) : (
-                            "Upload"
+                            t("customers.files.upload")
                         )}
                     </Button>
                 </DialogFooter>

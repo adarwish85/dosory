@@ -28,6 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useTranslation } from "@/lib/i18n";
 // We need to import TaskListDropZone from page.tsx? No, that's circular or impossible if it's not exported.
 // We should probably move TaskListDropZone to a separate file too.
 // For now, let's assume TaskListDropZone is passed as a prop or slot?
@@ -86,6 +87,7 @@ export function MilestoneListItem({
     TaskListComponent,
     ...actions
 }: MilestoneItemProps) {
+    const { t } = useTranslation();
     const isCompleted = milestone.status === "complete";
     // Derived state if using the Set/Function directly
     const expanded = isExpanded ?? (expandedMilestones ? expandedMilestones.has(milestone.id) : false);
@@ -116,12 +118,14 @@ export function MilestoneListItem({
                                     {format(milestone.dueDate.toDate(), "MMM d, yyyy")}
                                 </span>
                                 <span>
-                                    {progress.completed}/{progress.total} tasks
+                                    {t("projects.milestone.tasksCount", { completed: progress.completed, total: progress.total })}
                                 </span>
                                 {lists.length > 0 && (
                                     <span className="flex items-center gap-1">
                                         <ListTodo className="h-3 w-3" />
-                                        {lists.length} list{lists.length !== 1 ? "s" : ""}
+                                        {lists.length === 1
+                                            ? t("projects.milestone.listCountOne", { count: lists.length })
+                                            : t("projects.milestone.listCountOther", { count: lists.length })}
                                     </span>
                                 )}
                             </div>
@@ -133,7 +137,7 @@ export function MilestoneListItem({
                             variant={isCompleted ? "default" : isOverdue ? "destructive" : "secondary"}
                             className={isCompleted ? "bg-green-500" : ""}
                         >
-                            {isCompleted ? "Complete" : isOverdue ? "Overdue" : `${progress.percent}%`}
+                            {isCompleted ? t("projects.milestone.complete") : isOverdue ? t("projects.milestone.overdue") : `${progress.percent}%`}
                         </Badge>
 
                         <DropdownMenu>
@@ -144,10 +148,10 @@ export function MilestoneListItem({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => actions.onEditMilestone(milestone)}>
-                                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                                    <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => actions.setCreatingTaskListFor(milestone.id)}>
-                                    <FolderPlus className="mr-2 h-4 w-4" /> Add Task List
+                                    <FolderPlus className="mr-2 h-4 w-4" /> {t("projects.milestone.addTaskList")}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -157,16 +161,16 @@ export function MilestoneListItem({
                                         })
                                     }
                                 >
-                                    {isCompleted ? "Mark Incomplete" : "Mark Complete"}
+                                    {isCompleted ? t("projects.milestone.markIncomplete") : t("projects.milestone.markComplete")}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                     className="text-red-600"
                                     onClick={() =>
-                                        confirm("Delete milestone?") && actions.onDeleteMilestone(milestone.id)
+                                        confirm(t("projects.milestone.deleteConfirm")) && actions.onDeleteMilestone(milestone.id)
                                     }
                                 >
-                                    <Trash className="mr-2 h-4 w-4" /> Delete
+                                    <Trash className="mr-2 h-4 w-4" /> {t("common.delete")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -191,13 +195,13 @@ export function MilestoneListItem({
                     {lists.length === 0 ? (
                         <div className="text-center py-6 border rounded-lg border-dashed bg-gray-50/50">
                             <FolderPlus className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                            <p className="text-sm text-muted-foreground mb-2">No task lists yet</p>
+                            <p className="text-sm text-muted-foreground mb-2">{t("projects.milestone.noTaskLists")}</p>
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => actions.setCreatingTaskListFor(milestone.id)}
                             >
-                                <Plus className="mr-2 h-4 w-4" /> Create Task List
+                                <Plus className="mr-2 h-4 w-4" /> {t("projects.milestone.createTaskList")}
                             </Button>
                         </div>
                     ) : (
@@ -249,6 +253,7 @@ export function MilestoneBoardColumn({
     TaskListComponent,
     ...actions
 }: MilestoneItemProps) {
+    const { t } = useTranslation();
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: milestone.id,
         data: { milestone, type: "milestone" },
@@ -300,10 +305,10 @@ export function MilestoneBoardColumn({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => actions.onEditMilestone(milestone)}>
-                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                                <Pencil className="mr-2 h-4 w-4" /> {t("common.edit")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => actions.setCreatingTaskListFor(milestone.id)}>
-                                <FolderPlus className="mr-2 h-4 w-4" /> Add List
+                                <FolderPlus className="mr-2 h-4 w-4" /> {t("projects.milestone.addList")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -313,14 +318,14 @@ export function MilestoneBoardColumn({
                                     })
                                 }
                             >
-                                {isCompleted ? "Mark Incomplete" : "Mark Complete"}
+                                {isCompleted ? t("projects.milestone.markIncomplete") : t("projects.milestone.markComplete")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 className="text-red-600"
-                                onClick={() => confirm("Delete milestone?") && actions.onDeleteMilestone(milestone.id)}
+                                onClick={() => confirm(t("projects.milestone.deleteConfirm")) && actions.onDeleteMilestone(milestone.id)}
                             >
-                                <Trash className="mr-2 h-4 w-4" /> Delete
+                                <Trash className="mr-2 h-4 w-4" /> {t("common.delete")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -331,7 +336,7 @@ export function MilestoneBoardColumn({
                         {format(milestone.dueDate.toDate(), "MMM d")}
                     </span>
                     <Badge variant={isCompleted ? "default" : "secondary"} className="text-[10px] h-5 px-1.5">
-                        {isCompleted ? "Done" : `${progress?.percent || 0}%`}
+                        {isCompleted ? t("projects.milestone.done") : `${progress?.percent || 0}%`}
                     </Badge>
                 </div>
                 <Progress
@@ -374,7 +379,7 @@ export function MilestoneBoardColumn({
                     className="w-full justify-start text-xs text-gray-500 hover:text-gray-900"
                     onClick={() => actions.setCreatingTaskListFor(milestone.id)}
                 >
-                    <Plus className="h-3 w-3 mr-1" /> Add List
+                    <Plus className="h-3 w-3 mr-1" /> {t("projects.milestone.addList")}
                 </Button>
             </div>
         </div>

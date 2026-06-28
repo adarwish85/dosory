@@ -19,28 +19,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { accountFormSchema } from "@/lib/schemas";
 import { Account, AccountType, AccountSubType } from "@/lib/types/finance";
 import { z } from "zod";
+import { useTranslation } from "@/lib/i18n";
 
 type FormData = z.infer<typeof accountFormSchema>;
 
 const ACCOUNT_TYPES: Record<AccountType, string> = {
-    asset: "Asset",
-    liability: "Liability",
-    equity: "Equity",
-    income: "Income",
-    expense: "Expense",
+    asset: "finance.account.types.asset",
+    liability: "finance.account.types.liability",
+    equity: "finance.account.types.equity",
+    income: "finance.account.types.income",
+    expense: "finance.account.types.expense",
 };
 
 const ACCOUNT_SUBTYPES: Record<AccountSubType, string> = {
-    current_asset: "Current Asset",
-    fixed_asset: "Fixed Asset",
-    current_liability: "Current Liability",
-    long_term_liability: "Long Term Liability",
-    sales: "Sales",
-    other_income: "Other Income",
-    operating_expense: "Operating Expense",
-    cost_of_goods_sold: "Cost of Goods Sold",
-    retained_earnings: "Retained Earnings",
-    owner_equity: "Owner Equity",
+    current_asset: "finance.account.subtypes.current_asset",
+    fixed_asset: "finance.account.subtypes.fixed_asset",
+    current_liability: "finance.account.subtypes.current_liability",
+    long_term_liability: "finance.account.subtypes.long_term_liability",
+    sales: "finance.account.subtypes.sales",
+    other_income: "finance.account.subtypes.other_income",
+    operating_expense: "finance.account.subtypes.operating_expense",
+    cost_of_goods_sold: "finance.account.subtypes.cost_of_goods_sold",
+    retained_earnings: "finance.account.subtypes.retained_earnings",
+    owner_equity: "finance.account.subtypes.owner_equity",
 };
 
 interface AccountFormDialogProps {
@@ -51,6 +52,7 @@ interface AccountFormDialogProps {
 }
 
 export function AccountFormDialog({ open, onOpenChange, onSubmit, initialData }: AccountFormDialogProps) {
+    const { t } = useTranslation();
     const [submitting, setSubmitting] = useState(false);
 
     const form = useForm<FormData>({
@@ -94,9 +96,9 @@ export function AccountFormDialog({ open, onOpenChange, onSubmit, initialData }:
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{initialData ? "Edit Account" : "New Account"}</DialogTitle>
+                    <DialogTitle>{initialData ? t("finance.account.editTitle") : t("finance.account.newTitle")}</DialogTitle>
                     <DialogDescription>
-                        {initialData ? "Update account details." : "Add a new account to your Chart of Accounts."}
+                        {initialData ? t("finance.account.editDescription") : t("finance.account.newDescription")}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -108,9 +110,9 @@ export function AccountFormDialog({ open, onOpenChange, onSubmit, initialData }:
                                 name="code"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Account Code</FormLabel>
+                                        <FormLabel>{t("finance.account.code")}</FormLabel>
                                         <FormControl>
-                                            <Input {...field} placeholder="e.g. 1000" disabled={!!initialData} />
+                                            <Input {...field} placeholder={t("finance.account.codePlaceholder")} disabled={!!initialData} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -121,9 +123,9 @@ export function AccountFormDialog({ open, onOpenChange, onSubmit, initialData }:
                                 name="name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Account Name</FormLabel>
+                                        <FormLabel>{t("finance.account.name")}</FormLabel>
                                         <FormControl>
-                                            <Input {...field} placeholder="Cash on Hand" />
+                                            <Input {...field} placeholder={t("finance.account.namePlaceholder")} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -137,17 +139,17 @@ export function AccountFormDialog({ open, onOpenChange, onSubmit, initialData }:
                                 name="type"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Type</FormLabel>
+                                        <FormLabel>{t("finance.account.type")}</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select type" />
+                                                    <SelectValue placeholder={t("finance.account.selectType")} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
                                                 {Object.entries(ACCOUNT_TYPES).map(([value, label]) => (
                                                     <SelectItem key={value} value={value}>
-                                                        {label}
+                                                        {t(label)}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -161,17 +163,17 @@ export function AccountFormDialog({ open, onOpenChange, onSubmit, initialData }:
                                 name="subType"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Sub Type</FormLabel>
+                                        <FormLabel>{t("finance.account.subType")}</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select subtype" />
+                                                    <SelectValue placeholder={t("finance.account.selectSubtype")} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
                                                 {Object.entries(ACCOUNT_SUBTYPES).map(([value, label]) => (
                                                     <SelectItem key={value} value={value}>
-                                                        {label}
+                                                        {t(label)}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -187,9 +189,9 @@ export function AccountFormDialog({ open, onOpenChange, onSubmit, initialData }:
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Description</FormLabel>
+                                    <FormLabel>{t("common.description")}</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder="Optional description" />
+                                        <Input {...field} placeholder={t("finance.account.descriptionPlaceholder")} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -198,10 +200,10 @@ export function AccountFormDialog({ open, onOpenChange, onSubmit, initialData }:
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button type="submit" disabled={submitting}>
-                                {submitting ? "Saving..." : initialData ? "Update" : "Create"}
+                                {submitting ? t("common.saving") : initialData ? t("finance.account.update") : t("common.create")}
                             </Button>
                         </DialogFooter>
                     </form>

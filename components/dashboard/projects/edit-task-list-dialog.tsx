@@ -11,6 +11,7 @@ import { useTaskLists } from "@/lib/hooks/use-task-lists";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { TaskList } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 const formSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -25,6 +26,7 @@ interface EditTaskListDialogProps {
 }
 
 export function EditTaskListDialog({ open, onOpenChange, taskList }: EditTaskListDialogProps) {
+    const { t } = useTranslation();
     const { updateTaskList } = useTaskLists();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,7 +63,7 @@ export function EditTaskListDialog({ open, onOpenChange, taskList }: EditTaskLis
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Edit Task List</DialogTitle>
+                    <DialogTitle>{t("projects.taskList.editTitle")}</DialogTitle>
                 </DialogHeader>
 
                 <Form {...form}>
@@ -71,9 +73,9 @@ export function EditTaskListDialog({ open, onOpenChange, taskList }: EditTaskLis
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Name</FormLabel>
+                                    <FormLabel>{t("common.name")}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Task list name" {...field} />
+                                        <Input placeholder={t("projects.taskList.namePlaceholder")} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -82,11 +84,11 @@ export function EditTaskListDialog({ open, onOpenChange, taskList }: EditTaskLis
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save Changes
+                                {t("common.saveChanges")}
                             </Button>
                         </DialogFooter>
                     </form>

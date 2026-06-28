@@ -29,10 +29,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTranslation } from "@/lib/i18n";
 
 const CUSTOMER_SIDEBAR_KEY = "customer_sidebar_collapsed";
 
 export function CustomerSidebar() {
+    const { t } = useTranslation();
     const pathname = usePathname();
     const { customerId, recordCounts } = useCustomer();
     const [collapsed, setCollapsed] = useState(true); // Default collapsed
@@ -54,94 +56,94 @@ export function CustomerSidebar() {
     };
 
     const menuItems = [
-        { icon: LayoutDashboard, label: "Overview", href: `/dashboard/customers/${customerId}` },
-        { icon: User, label: "Profile", href: `/dashboard/customers/${customerId}/profile` },
+        { icon: LayoutDashboard, label: t("customers.sidebar.overview"), href: `/dashboard/customers/${customerId}` },
+        { icon: User, label: t("customers.sidebar.profile"), href: `/dashboard/customers/${customerId}/profile` },
         {
             icon: Users,
-            label: "Contacts",
+            label: t("customers.sidebar.contacts"),
             href: `/dashboard/customers/${customerId}/contacts`,
             badge: recordCounts.contacts || undefined,
         },
         {
             icon: Phone,
-            label: "Activities",
+            label: t("customers.sidebar.activities"),
             href: `/dashboard/customers/${customerId}/activities`,
             badge: recordCounts.activities || undefined,
         },
         {
             icon: Calculator,
-            label: "Estimates",
+            label: t("customers.sidebar.estimates"),
             href: `/dashboard/customers/${customerId}/estimates`,
             badge: recordCounts.estimates || undefined,
         },
         {
             icon: Receipt,
-            label: "Invoices",
+            label: t("customers.sidebar.invoices"),
             href: `/dashboard/customers/${customerId}/invoices`,
             badge: recordCounts.invoices || undefined,
         },
         {
             icon: CreditCard,
-            label: "Payments",
+            label: t("customers.sidebar.payments"),
             href: `/dashboard/customers/${customerId}/payments`,
             badge: recordCounts.payments || undefined,
         },
         {
             icon: FileText,
-            label: "Credit Notes",
+            label: t("customers.sidebar.creditNotes"),
             href: `/dashboard/customers/${customerId}/credit-notes`,
             badge: recordCounts.creditNotes || undefined,
         },
         {
             icon: Receipt,
-            label: "Expenses",
+            label: t("customers.sidebar.expenses"),
             href: `/dashboard/customers/${customerId}/expenses`,
             badge: recordCounts.expenses || undefined,
         },
-        { icon: FileText, label: "Statement", href: `/dashboard/customers/${customerId}/statement` },
+        { icon: FileText, label: t("customers.sidebar.statement"), href: `/dashboard/customers/${customerId}/statement` },
         {
             icon: FileSignature,
-            label: "Contracts",
+            label: t("customers.sidebar.contracts"),
             href: `/dashboard/customers/${customerId}/contracts`,
             badge: recordCounts.contracts || undefined,
         },
         {
             icon: Folder,
-            label: "Projects",
+            label: t("customers.sidebar.projects"),
             href: `/dashboard/customers/${customerId}/projects`,
             badge: recordCounts.projects || undefined,
         },
         {
             icon: CheckSquare,
-            label: "Tasks",
+            label: t("customers.sidebar.tasks"),
             href: `/dashboard/customers/${customerId}/tasks`,
             badge: recordCounts.tasks || undefined,
         },
         {
             icon: LifeBuoy,
-            label: "Tickets",
+            label: t("customers.sidebar.tickets"),
             href: `/dashboard/customers/${customerId}/tickets`,
             badge: recordCounts.tickets || undefined,
         },
         {
             icon: Paperclip,
-            label: "Files",
+            label: t("customers.sidebar.files"),
             href: `/dashboard/customers/${customerId}/files`,
             badge: recordCounts.files || undefined,
         },
         {
             icon: Bell,
-            label: "Reminders",
+            label: t("customers.sidebar.reminders"),
             href: `/dashboard/customers/${customerId}/reminders`,
             badge: recordCounts.reminders || undefined,
         },
         {
             icon: StickyNote,
-            label: "Notes",
+            label: t("customers.sidebar.notes"),
             href: `/dashboard/customers/${customerId}/notes`,
             badge: recordCounts.notes || undefined,
         },
-        { icon: Lock, label: "Vault", href: `/dashboard/customers/${customerId}/vault` },
+        { icon: Lock, label: t("customers.sidebar.vault"), href: `/dashboard/customers/${customerId}/vault` },
     ];
 
     return (
@@ -179,13 +181,13 @@ export function CustomerSidebar() {
                                     </Button>
                                 </Link>
                             </TooltipTrigger>
-                            <TooltipContent side="right">Back to Customers</TooltipContent>
+                            <TooltipContent side="right">{t("customers.sidebar.backToCustomers")}</TooltipContent>
                         </Tooltip>
                     ) : (
                         <Link href="/dashboard/customers">
                             <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
                                 <ArrowLeft className="h-4 w-4 mr-2" />
-                                Back to Customers
+                                {t("customers.sidebar.backToCustomers")}
                             </Button>
                         </Link>
                     )}

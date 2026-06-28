@@ -31,6 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface CreateReminderDialogProps {
     open: boolean;
@@ -47,6 +48,7 @@ export function CreateReminderDialog({
     leadName,
     customerId,
 }: CreateReminderDialogProps) {
+    const { t } = useTranslation();
     const { createReminder } = useReminders();
     const { staff } = useStaff();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,14 +116,14 @@ export function CreateReminderDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Set Reminder</DialogTitle>
+                    <DialogTitle>{t("reminders.dialog.title")}</DialogTitle>
                 </DialogHeader>
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <FormItem className="flex flex-col">
-                                <FormLabel>Date *</FormLabel>
+                                <FormLabel>{t("reminders.field.dateRequired")}</FormLabel>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -134,7 +136,7 @@ export function CreateReminderDialog({
                                             {selectedDate ? (
                                                 format(selectedDate, "PPP")
                                             ) : (
-                                                <span>Pick a date</span>
+                                                <span>{t("reminders.field.pickDate")}</span>
                                             )}
                                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                         </Button>
@@ -154,10 +156,10 @@ export function CreateReminderDialog({
                             </FormItem>
 
                             <FormItem>
-                                <FormLabel>Time *</FormLabel>
+                                <FormLabel>{t("reminders.field.timeRequired")}</FormLabel>
                                 <Select value={selectedTime} onValueChange={setSelectedTime}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select time" />
+                                        <SelectValue placeholder={t("reminders.field.selectTime")} />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-[200px]">
                                         {timeOptions.map((time) => (
@@ -175,11 +177,11 @@ export function CreateReminderDialog({
                             name="assignedTo"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Set reminder to *</FormLabel>
+                                    <FormLabel>{t("reminders.field.setReminderTo")}</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select staff member" />
+                                                <SelectValue placeholder={t("reminders.field.selectStaff")} />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -200,10 +202,10 @@ export function CreateReminderDialog({
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Description *</FormLabel>
+                                    <FormLabel>{t("reminders.field.descriptionRequired")}</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="Reminder description"
+                                            placeholder={t("reminders.field.descriptionPlaceholder")}
                                             className="min-h-[100px]"
                                             {...field}
                                         />
@@ -226,7 +228,7 @@ export function CreateReminderDialog({
                                     </FormControl>
                                     <div className="space-y-1 leading-none">
                                         <FormLabel>
-                                            Send also an email for this reminder
+                                            {t("reminders.field.sendEmail")}
                                         </FormLabel>
                                     </div>
                                 </FormItem>
@@ -235,11 +237,11 @@ export function CreateReminderDialog({
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                                Close
+                                {t("common.close")}
                             </Button>
                             <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save
+                                {t("common.save")}
                             </Button>
                         </DialogFooter>
                     </form>

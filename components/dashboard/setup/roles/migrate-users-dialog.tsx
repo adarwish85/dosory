@@ -15,6 +15,7 @@ import { Loader2, Play, CheckCircle, AlertCircle } from "lucide-react";
 import { useStaff, useRoles } from "@/lib/hooks";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { useTranslation } from "@/lib/i18n";
 
 export function MigrateUsersDialog() {
     const [open, setOpen] = useState(false);
@@ -24,6 +25,7 @@ export function MigrateUsersDialog() {
 
     const { staff, updateStaff } = useStaff();
     const { roles } = useRoles();
+    const { t } = useTranslation();
 
     // Identify users needing migration (missing roleId)
     // Note: We might want to be more specific, e.g., missing roleId OR using legacy role field
@@ -56,7 +58,7 @@ export function MigrateUsersDialog() {
         const defaultRole = staffRole || roles.find((r) => r.id !== adminRole?.id) || roles[0];
 
         if (!defaultRole) {
-            toast.error("No roles found to assign users to. Please create a role first.");
+            toast.error(t("setup.roles.migrate.noRolesError"));
             setMigrating(false);
             return;
         }
@@ -87,7 +89,7 @@ export function MigrateUsersDialog() {
 
         setResults({ total, success: successCount, failed: failedCount });
         setMigrating(false);
-        toast.success(`Migration completed. ${successCount} users updated.`);
+        toast.success(t("setup.roles.migrate.completedToast", { count: String(successCount) }));
     };
 
     if (usersToMigrate.length === 0 && !open) {
@@ -102,28 +104,29 @@ export function MigrateUsersDialog() {
                     className="gap-2 border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 hover:text-yellow-800"
                 >
                     <AlertCircle className="h-4 w-4" />
-                    Migrate Legacy Users ({usersToMigrate.length})
+                    {t("setup.roles.migrate.triggerButton", { count: String(usersToMigrate.length) })}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Migrate Legacy Users</DialogTitle>
+                    <DialogTitle>{t("setup.roles.migrate.title")}</DialogTitle>
                     <DialogDescription>
-                        Update users who are missing a valid Role ID. They will be assigned to a role based on their
-                        legacy settings.
+                        {t("setup.roles.migrate.description")}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="py-4 space-y-4">
                     <div className="flex items-center justify-between text-sm bg-gray-50 p-3 rounded-md">
-                        <span className="text-gray-600">Users requiring migration:</span>
+                        <span className="text-gray-600">{t("setup.roles.migrate.usersRequiring")}</span>
                         <span className="font-semibold">{usersToMigrate.length}</span>
                     </div>
 
                     {migrating && (
                         <div className="space-y-2">
                             <Progress value={progress} className="h-2" />
-                            <p className="text-xs text-center text-gray-500">Processing... {progress}%</p>
+                            <p className="text-xs text-center text-gray-500">
+                                {t("setup.roles.migrate.processing", { progress: String(progress) })}
+                            </p>
                         </div>
                     )}
 
@@ -131,11 +134,11 @@ export function MigrateUsersDialog() {
                         <div className="bg-green-50 p-3 rounded-md border border-green-100 text-sm space-y-1">
                             <div className="flex items-center gap-2 text-green-700 font-medium">
                                 <CheckCircle className="h-4 w-4" />
-                                Migration Complete
+                                {t("setup.roles.migrate.complete")}
                             </div>
                             <div className="text-green-600 pl-6">
-                                Successfully updated {results.success} users.
-                                {results.failed > 0 && ` (${results.failed} failed)`}
+                                {t("setup.roles.migrate.successCount", { count: String(results.success) })}
+                                {results.failed > 0 && ` ${t("setup.roles.migrate.failedCount", { count: String(results.failed) })}`}
                             </div>
                         </div>
                     )}
@@ -143,7 +146,7 @@ export function MigrateUsersDialog() {
 
                 <DialogFooter>
                     <Button variant="ghost" onClick={() => setOpen(false)} disabled={migrating}>
-                        {results ? "Close" : "Cancel"}
+                        {results ? t("common.close") : t("common.cancel")}
                     </Button>
                     {!results && (
                         <Button
@@ -152,7 +155,7 @@ export function MigrateUsersDialog() {
                             className="gap-2"
                         >
                             {migrating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                            Start Migration
+                            {t("setup.roles.migrate.startButton")}
                         </Button>
                     )}
                 </DialogFooter>

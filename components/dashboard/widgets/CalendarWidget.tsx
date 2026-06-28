@@ -15,6 +15,7 @@ import {
     startOfWeek,
     endOfWeek,
 } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 import type { WidgetSettings, DataDensity } from "@/lib/hooks/use-dashboard-layout";
 
 interface CalendarWidgetProps {
@@ -23,6 +24,7 @@ interface CalendarWidgetProps {
 }
 
 export function CalendarWidget({ settings, density }: CalendarWidgetProps) {
+    const { t } = useTranslation();
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const today = new Date();
 
@@ -32,7 +34,15 @@ export function CalendarWidget({ settings, density }: CalendarWidgetProps) {
     const calendarEnd = endOfWeek(monthEnd);
 
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-    const weekDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+    const weekDays = [
+        t("dashboard.calendar.weekday.su"),
+        t("dashboard.calendar.weekday.mo"),
+        t("dashboard.calendar.weekday.tu"),
+        t("dashboard.calendar.weekday.we"),
+        t("dashboard.calendar.weekday.th"),
+        t("dashboard.calendar.weekday.fr"),
+        t("dashboard.calendar.weekday.sa"),
+    ];
 
     return (
         <div className="h-full flex flex-col">

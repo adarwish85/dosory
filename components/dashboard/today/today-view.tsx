@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/lib/i18n";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { todayService } from "@/lib/services/today-service";
 import { TodayDashboardData } from "@/lib/types/today";
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function TodayView() {
+    const { t } = useTranslation();
     const { profile, loading: profileLoading } = useUserProfile();
     const [data, setData] = useState<TodayDashboardData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -51,7 +53,7 @@ export function TodayView() {
                 </div>
                 <div className="flex gap-2">
                     <Button className="shadow-lg hover:shadow-xl transition-all bg-blue-600 hover:bg-blue-700">
-                        <Plus className="h-4 w-4 mr-2" /> Add Task
+                        <Plus className="h-4 w-4 mr-2" /> {t("dashboard.today.addTask")}
                     </Button>
                 </div>
             </div>
@@ -71,7 +73,7 @@ export function TodayView() {
                     {/* Activity Feed Placeholder */}
                     <div className="bg-white p-4 rounded-lg border shadow-sm">
                         <h3 className="text-sm font-semibold text-gray-500 uppercase mb-4 tracking-wider">
-                            Recent Activity
+                            {t("dashboard.today.recentActivity")}
                         </h3>
                         <div className="space-y-4">
                             {data.feed.map((item) => (
@@ -92,7 +94,9 @@ export function TodayView() {
                                     </div>
                                 </div>
                             ))}
-                            {data.feed.length === 0 && <p className="text-gray-400 italic">No recent activity.</p>}
+                            {data.feed.length === 0 && (
+                                <p className="text-gray-400 italic">{t("dashboard.today.noRecentActivity")}</p>
+                            )}
                         </div>
                     </div>
                 </div>

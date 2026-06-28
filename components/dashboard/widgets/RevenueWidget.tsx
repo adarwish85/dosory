@@ -5,6 +5,7 @@ import { useInvoices } from "@/lib/hooks/use-invoices";
 import { TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { WidgetSkeleton } from "./WidgetSkeleton";
+import { useTranslation } from "@/lib/i18n";
 import type { WidgetSettings, DataDensity } from "@/lib/hooks/use-dashboard-layout";
 
 interface RevenueWidgetProps {
@@ -25,6 +26,7 @@ function generateMonthlyData(totalPaid: number) {
 }
 
 export function RevenueWidget({ settings, density }: RevenueWidgetProps) {
+    const { t } = useTranslation();
     const { invoiceStats, loading } = useInvoices();
 
     const amounts = invoiceStats?.amountsByStatus || {};
@@ -77,7 +79,11 @@ export function RevenueWidget({ settings, density }: RevenueWidgetProps) {
                         {isPositive ? "+" : ""}
                         {trend}%
                     </span>
-                    <span className="text-gray-500 text-xs">vs last {settings.dateRange || "month"}</span>
+                    <span className="text-gray-500 text-xs">
+                        {t("dashboard.revenue.vsLast", {
+                            period: t(`dashboard.revenue.period.${settings.dateRange || "month"}`),
+                        })}
+                    </span>
                 </div>
             </div>
 
@@ -105,7 +111,7 @@ export function RevenueWidget({ settings, density }: RevenueWidgetProps) {
                                 tickFormatter={formatChartValue}
                             />
                             <Tooltip
-                                formatter={((value: number) => [formatCurrency(value), "Revenue"]) as any}
+                                formatter={((value: number) => [formatCurrency(value), t("dashboard.revenue.revenue")]) as any}
                                 contentStyle={{
                                     backgroundColor: "white",
                                     border: "1px solid #e5e7eb",
@@ -130,14 +136,14 @@ export function RevenueWidget({ settings, density }: RevenueWidgetProps) {
                 <div className="bg-green-50 rounded-lg p-2">
                     <div className="flex items-center gap-1 text-green-600 mb-0.5">
                         <DollarSign className="h-3 w-3" />
-                        <span className="text-xs font-medium">Paid</span>
+                        <span className="text-xs font-medium">{t("dashboard.revenue.paid")}</span>
                     </div>
                     <div className="text-sm font-bold text-green-900">{formatCurrency(paidAmount)}</div>
                 </div>
                 <div className="bg-amber-50 rounded-lg p-2">
                     <div className="flex items-center gap-1 text-amber-600 mb-0.5">
                         <DollarSign className="h-3 w-3" />
-                        <span className="text-xs font-medium">Outstanding</span>
+                        <span className="text-xs font-medium">{t("dashboard.revenue.outstanding")}</span>
                     </div>
                     <div className="text-sm font-bold text-amber-900">{formatCurrency(outstandingAmount)}</div>
                 </div>

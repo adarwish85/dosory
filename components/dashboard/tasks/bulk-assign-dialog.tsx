@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProjects, useMilestones, useTaskLists } from "@/lib/hooks";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface BulkAssignDialogProps {
     open: boolean;
@@ -23,6 +24,7 @@ interface BulkAssignDialogProps {
 }
 
 export function BulkAssignDialog({ open, onOpenChange, selectedCount, onAssign }: BulkAssignDialogProps) {
+    const { t } = useTranslation();
     const [selectedProjectId, setSelectedProjectId] = useState<string>("");
     const [selectedMilestoneId, setSelectedMilestoneId] = useState<string>("");
     const [selectedTaskListId, setSelectedTaskListId] = useState<string>("");
@@ -71,22 +73,24 @@ export function BulkAssignDialog({ open, onOpenChange, selectedCount, onAssign }
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Assign Tasks</DialogTitle>
+                    <DialogTitle>{t("tasks.bulkAssign.title")}</DialogTitle>
                     <DialogDescription>
-                        Assign {selectedCount} selected task{selectedCount !== 1 ? "s" : ""} to a project hierarchy.
+                        {selectedCount !== 1
+                            ? t("tasks.bulkAssign.descriptionPlural", { count: selectedCount })
+                            : t("tasks.bulkAssign.descriptionSingular", { count: selectedCount })}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label>Project</Label>
+                        <Label>{t("tasks.field.project")}</Label>
                         <Select
                             value={selectedProjectId}
                             onValueChange={setSelectedProjectId}
                             disabled={projectsLoading}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select project" />
+                                <SelectValue placeholder={t("tasks.field.selectProject")} />
                             </SelectTrigger>
                             <SelectContent>
                                 {projects.map((project) => (
@@ -99,14 +103,14 @@ export function BulkAssignDialog({ open, onOpenChange, selectedCount, onAssign }
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Milestone</Label>
+                        <Label>{t("tasks.field.milestone")}</Label>
                         <Select
                             value={selectedMilestoneId}
                             onValueChange={setSelectedMilestoneId}
                             disabled={!selectedProjectId || milestonesLoading}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select milestone" />
+                                <SelectValue placeholder={t("tasks.field.selectMilestone")} />
                             </SelectTrigger>
                             <SelectContent>
                                 {milestones.map((milestone) => (
@@ -119,14 +123,14 @@ export function BulkAssignDialog({ open, onOpenChange, selectedCount, onAssign }
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Task List</Label>
+                        <Label>{t("tasks.field.taskList")}</Label>
                         <Select
                             value={selectedTaskListId}
                             onValueChange={setSelectedTaskListId}
                             disabled={!selectedMilestoneId || taskListsLoading}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select task list" />
+                                <SelectValue placeholder={t("tasks.field.selectTaskList")} />
                             </SelectTrigger>
                             <SelectContent>
                                 {taskLists.map((list) => (
@@ -141,14 +145,14 @@ export function BulkAssignDialog({ open, onOpenChange, selectedCount, onAssign }
 
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button
                         onClick={handleAssign}
                         disabled={!selectedProjectId || !selectedMilestoneId || !selectedTaskListId || isSubmitting}
                     >
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Assign Tasks
+                        {t("tasks.bulkAssign.assignButton")}
                     </Button>
                 </DialogFooter>
             </DialogContent>

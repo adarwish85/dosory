@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useTranslation } from "@/lib/i18n";
 
 interface EditProjectDialogProps {
     open: boolean;
@@ -54,6 +55,7 @@ const defaultFormData: ProjectFormData = {
 };
 
 export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDialogProps) {
+    const { t } = useTranslation();
     const [step, setStep] = useState(1);
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState<ProjectFormData>(defaultFormData);
@@ -97,7 +99,7 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
     const validateStep = (currentStep: number): boolean => {
         if (currentStep === 1) {
             if (!formData.name.trim()) {
-                toast.error("Project name is required");
+                toast.error(t("projects.edit.nameRequired"));
                 return false;
             }
         }
@@ -119,7 +121,7 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
         }
 
         if (!project?.id) {
-            toast.error("Project ID not found");
+            toast.error(t("projects.edit.idNotFound"));
             return;
         }
 
@@ -143,26 +145,26 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                 updatedAt: serverTimestamp(),
             });
 
-            toast.success("Project updated successfully!");
+            toast.success(t("projects.edit.updateSuccess"));
             handleOpenChange(false);
         } catch (error) {
             console.error("Error updating project:", error);
-            toast.error("Failed to update project");
+            toast.error(t("projects.edit.updateError"));
         } finally {
             setSaving(false);
         }
     };
 
-    const stepLabels = ["Project Details", "Settings"];
+    const stepLabels = [t("projects.edit.stepDetails"), t("projects.edit.stepSettings")];
 
     return (
         <Sheet open={open} onOpenChange={handleOpenChange}>
             <SheetContent side="right" className="w-full sm:max-w-xl bg-white p-0 flex flex-col">
                 <SheetHeader className="px-6 py-4 border-b flex-shrink-0">
                     <div className="flex items-center justify-between">
-                        <SheetTitle>Edit Project</SheetTitle>
+                        <SheetTitle>{t("projects.edit.title")}</SheetTitle>
                         <span className="text-sm text-gray-500">
-                            Step {step}: {stepLabels[step - 1]}
+                            {t("projects.edit.stepLabel", { step })}: {stepLabels[step - 1]}
                         </span>
                     </div>
                 </SheetHeader>
@@ -183,11 +185,11 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                     {step === 1 && (
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Project Name</Label>
+                                <Label className="text-red-500">{t("projects.edit.projectNameLabel")}</Label>
                                 <Input
                                     value={formData.name}
                                     onChange={(e) => updateField("name", e.target.value)}
-                                    placeholder="Enter project name"
+                                    placeholder={t("projects.edit.projectNamePlaceholder")}
                                 />
                             </div>
 
@@ -198,13 +200,13 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                                     onCheckedChange={(c) => updateField("calculateProgressFromTasks", !!c)}
                                 />
                                 <Label htmlFor="calc-progress" className="font-normal">
-                                    Calculate progress through tasks
+                                    {t("projects.edit.calculateProgress")}
                                 </Label>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label className="text-red-500">* Billing Type</Label>
+                                    <Label className="text-red-500">{t("projects.edit.billingTypeLabel")}</Label>
                                     <Select
                                         value={formData.billingType}
                                         onValueChange={(v) => updateField("billingType", v)}
@@ -213,43 +215,43 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="fixed">Fixed Rate</SelectItem>
-                                            <SelectItem value="hourly">Project Hours</SelectItem>
-                                            <SelectItem value="task">Task Hours</SelectItem>
+                                            <SelectItem value="fixed">{t("projects.edit.billingFixed")}</SelectItem>
+                                            <SelectItem value="hourly">{t("projects.edit.billingHourly")}</SelectItem>
+                                            <SelectItem value="task">{t("projects.edit.billingTask")}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label>Status</Label>
+                                    <Label>{t("common.status")}</Label>
                                     <Select value={formData.status} onValueChange={(v) => updateField("status", v)}>
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="not-started">Not Started</SelectItem>
-                                            <SelectItem value="in-progress">In Progress</SelectItem>
-                                            <SelectItem value="on-hold">On Hold</SelectItem>
-                                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                                            <SelectItem value="finished">Finished</SelectItem>
+                                            <SelectItem value="not-started">{t("projects.status.notStarted")}</SelectItem>
+                                            <SelectItem value="in-progress">{t("projects.status.inProgress")}</SelectItem>
+                                            <SelectItem value="on-hold">{t("projects.status.onHold")}</SelectItem>
+                                            <SelectItem value="cancelled">{t("projects.status.cancelled")}</SelectItem>
+                                            <SelectItem value="finished">{t("projects.status.finished")}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Estimated Hours</Label>
+                                <Label>{t("projects.edit.estimatedHours")}</Label>
                                 <Input
                                     type="number"
                                     value={formData.estimatedHours}
                                     onChange={(e) => updateField("estimatedHours", e.target.value)}
-                                    placeholder="e.g. 100"
+                                    placeholder={t("projects.edit.estimatedHoursPlaceholder")}
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label className="text-red-500">* Start Date</Label>
+                                    <Label className="text-red-500">{t("projects.edit.startDateLabel")}</Label>
                                     <div className="relative">
                                         <Input
                                             type="date"
@@ -260,7 +262,7 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label>Deadline</Label>
+                                    <Label>{t("projects.edit.deadline")}</Label>
                                     <div className="relative">
                                         <Input
                                             type="date"
@@ -272,11 +274,11 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Description</Label>
+                                <Label>{t("common.description")}</Label>
                                 <Textarea
                                     value={formData.description}
                                     onChange={(e) => updateField("description", e.target.value)}
-                                    placeholder="Project description..."
+                                    placeholder={t("projects.edit.descriptionPlaceholder")}
                                     className="min-h-[100px]"
                                 />
                             </div>
@@ -286,7 +288,7 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                     {step === 2 && (
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label>Send contacts notifications</Label>
+                                <Label>{t("projects.edit.sendNotifications")}</Label>
                                 <Select
                                     value={formData.sendNotifications}
                                     onValueChange={(v) => updateField("sendNotifications", v)}
@@ -295,20 +297,20 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">To all contacts with notifications enabled</SelectItem>
-                                        <SelectItem value="none">Don&apos;t send notifications</SelectItem>
+                                        <SelectItem value="all">{t("projects.edit.notifyAll")}</SelectItem>
+                                        <SelectItem value="none">{t("projects.edit.notifyNone")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="space-y-3 pt-4 border-t">
-                                <h4 className="font-medium text-gray-900">Customer Permissions</h4>
+                                <h4 className="font-medium text-gray-900">{t("projects.edit.customerPermissions")}</h4>
 
                                 {[
-                                    { id: "allowCustomerViewTasks", label: "Allow customer to view tasks" },
-                                    { id: "allowCustomerCreateTasks", label: "Allow customer to create tasks" },
-                                    { id: "allowCustomerUploadFiles", label: "Allow customer to upload files" },
-                                    { id: "allowCustomerViewMilestones", label: "Allow customer to view milestones" },
+                                    { id: "allowCustomerViewTasks", label: t("projects.edit.allowViewTasks") },
+                                    { id: "allowCustomerCreateTasks", label: t("projects.edit.allowCreateTasks") },
+                                    { id: "allowCustomerUploadFiles", label: t("projects.edit.allowUploadFiles") },
+                                    { id: "allowCustomerViewMilestones", label: t("projects.edit.allowViewMilestones") },
                                 ].map((item) => (
                                     <div key={item.id} className="flex items-center gap-2">
                                         <Checkbox
@@ -330,17 +332,17 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                     <div>
                         {step > 1 && (
                             <Button variant="outline" onClick={prevStep} className="gap-1">
-                                <ChevronLeft className="h-4 w-4" /> Back
+                                <ChevronLeft className="h-4 w-4" /> {t("projects.edit.back")}
                             </Button>
                         )}
                     </div>
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         {step < totalSteps ? (
                             <Button onClick={nextStep} className="bg-gray-900 text-white hover:bg-gray-800 gap-1">
-                                Next <ChevronRight className="h-4 w-4" />
+                                {t("projects.edit.next")} <ChevronRight className="h-4 w-4" />
                             </Button>
                         ) : (
                             <Button
@@ -349,7 +351,7 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                                 disabled={saving}
                             >
                                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save Changes
+                                {t("common.saveChanges")}
                             </Button>
                         )}
                     </div>

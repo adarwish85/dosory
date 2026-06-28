@@ -13,6 +13,7 @@ import { db } from "@/lib/firebase";
 import { useLead } from "./lead-context";
 import { LEAD_STATUSES, LEAD_SOURCES } from "@/lib/constants";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 // World Countries
 const COUNTRIES = [
@@ -137,6 +138,7 @@ export function LeadProfileForm() {
     const router = useRouter();
     const { lead, loading, leadId, refreshLead } = useLead();
     const { register, handleSubmit, setValue } = useForm();
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (lead) {
@@ -191,32 +193,32 @@ export function LeadProfileForm() {
                 updatedAt: new Date(),
             });
             refreshLead();
-            toast.success("Lead updated successfully!");
+            toast.success(t("leads.form.updateSuccess"));
         } catch (error) {
             console.error("Error updating lead:", error);
-            toast.error("Failed to update lead");
+            toast.error(t("leads.form.updateError"));
         }
     };
 
     if (loading) {
-        return <div className="p-8">Loading lead...</div>;
+        return <div className="p-8">{t("leads.form.loading")}</div>;
     }
 
     if (!lead) {
-        return <div className="p-8">Lead not found</div>;
+        return <div className="p-8">{t("leads.notFound")}</div>;
     }
 
     return (
         <div className="space-y-6">
-            <h2 className="text-lg font-bold">Edit Profile</h2>
+            <h2 className="text-lg font-bold">{t("leads.form.editProfile")}</h2>
             <form onSubmit={handleSubmit(onSave)} className="space-y-4">
                 {/* Row 1: Status, Source */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-1.5">
-                        <Label className="text-red-500 text-sm">* Status</Label>
+                        <Label className="text-red-500 text-sm">* {t("common.status")}</Label>
                         <Select defaultValue={lead.status} onValueChange={(val) => setValue("status", val)}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
+                                <SelectValue placeholder={t("leads.form.selectStatus")} />
                             </SelectTrigger>
                             <SelectContent>
                                 {LEAD_STATUSES.map((s) => (
@@ -228,10 +230,10 @@ export function LeadProfileForm() {
                         </Select>
                     </div>
                     <div className="grid gap-1.5">
-                        <Label className="text-red-500 text-sm">* Source</Label>
+                        <Label className="text-red-500 text-sm">* {t("leads.fields.source")}</Label>
                         <Select defaultValue={lead.source} onValueChange={(val) => setValue("source", val)}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select source" />
+                                <SelectValue placeholder={t("leads.form.selectSource")} />
                             </SelectTrigger>
                             <SelectContent>
                                 {LEAD_SOURCES.map((s) => (
@@ -247,11 +249,11 @@ export function LeadProfileForm() {
                 {/* Row 2: Name, Company */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-1.5">
-                        <Label className="text-red-500 text-sm">* Name</Label>
+                        <Label className="text-red-500 text-sm">* {t("common.name")}</Label>
                         <Input {...register("name", { required: true })} />
                     </div>
                     <div className="grid gap-1.5">
-                        <Label className="text-sm">Company</Label>
+                        <Label className="text-sm">{t("leads.fields.company")}</Label>
                         <Input {...register("company")} />
                     </div>
                 </div>
@@ -259,11 +261,11 @@ export function LeadProfileForm() {
                 {/* Row 3: Email, Phone */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-1.5">
-                        <Label className="text-sm">Email</Label>
+                        <Label className="text-sm">{t("common.email")}</Label>
                         <Input {...register("email")} />
                     </div>
                     <div className="grid gap-1.5">
-                        <Label className="text-sm">Phone</Label>
+                        <Label className="text-sm">{t("common.phone")}</Label>
                         <Input {...register("phone")} />
                     </div>
                 </div>
@@ -271,31 +273,31 @@ export function LeadProfileForm() {
                 {/* Row 4: Position, Website */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-1.5">
-                        <Label className="text-sm">Position</Label>
+                        <Label className="text-sm">{t("leads.fields.position")}</Label>
                         <Input {...register("position")} />
                     </div>
                     <div className="grid gap-1.5">
-                        <Label className="text-sm">Website</Label>
+                        <Label className="text-sm">{t("leads.fields.website")}</Label>
                         <Input {...register("website")} />
                     </div>
                 </div>
 
                 {/* Row 5: Tags (Full Width) */}
                 <div className="grid gap-1.5">
-                    <Label className="text-sm">Tags</Label>
-                    <Input placeholder="Comma-separated" {...register("tags")} />
+                    <Label className="text-sm">{t("leads.fields.tags")}</Label>
+                    <Input placeholder={t("leads.form.commaSeparated")} {...register("tags")} />
                 </div>
 
                 {/* Row 6: Country, City */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-1.5">
-                        <Label className="text-sm">Country</Label>
+                        <Label className="text-sm">{t("leads.fields.country")}</Label>
                         <Select
                             defaultValue={lead.address?.country || ""}
                             onValueChange={(val) => setValue("address.country", val)}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select country" />
+                                <SelectValue placeholder={t("leads.form.selectCountry")} />
                             </SelectTrigger>
                             <SelectContent className="max-h-[200px]">
                                 {COUNTRIES.map((c) => (
@@ -307,7 +309,7 @@ export function LeadProfileForm() {
                         </Select>
                     </div>
                     <div className="grid gap-1.5">
-                        <Label className="text-sm">City</Label>
+                        <Label className="text-sm">{t("leads.fields.city")}</Label>
                         <Input {...register("address.city")} />
                     </div>
                 </div>
@@ -315,29 +317,29 @@ export function LeadProfileForm() {
                 {/* Row 7: Street, State */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-1.5">
-                        <Label className="text-sm">Street Address</Label>
+                        <Label className="text-sm">{t("leads.fields.streetAddress")}</Label>
                         <Input {...register("address.street")} />
                     </div>
                     <div className="grid gap-1.5">
-                        <Label className="text-sm">State / Zip Code</Label>
+                        <Label className="text-sm">{t("leads.fields.stateZip")}</Label>
                         <div className="flex gap-2">
-                            <Input placeholder="State" {...register("address.state")} />
-                            <Input placeholder="Zip" className="w-28" {...register("address.zipCode")} />
+                            <Input placeholder={t("leads.fields.state")} {...register("address.state")} />
+                            <Input placeholder={t("leads.fields.zip")} className="w-28" {...register("address.zipCode")} />
                         </div>
                     </div>
                 </div>
 
                 {/* Row 8: Description */}
                 <div className="grid gap-1.5">
-                    <Label className="text-sm">Description</Label>
+                    <Label className="text-sm">{t("common.description")}</Label>
                     <Textarea className="min-h-[80px]" {...register("description")} />
                 </div>
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
-                    <Button type="submit">Save Changes</Button>
+                    <Button type="submit">{t("common.saveChanges")}</Button>
                     <Button type="button" variant="outline" onClick={() => router.push("/dashboard/leads")}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                 </div>
             </form>

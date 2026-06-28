@@ -24,6 +24,7 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 interface CreateActivityDialogProps {
     open: boolean;
@@ -40,6 +41,7 @@ export function CreateActivityDialog({
     activity,
     onSuccess,
 }: CreateActivityDialogProps) {
+    const { t } = useTranslation();
     const { createActivity, updateActivity } = useActivities({
         relatedToId: relatedTo.id,
         relatedToType: relatedTo.type,
@@ -89,16 +91,16 @@ export function CreateActivityDialog({
             setIsLoading(true);
             if (isEditing && activity) {
                 await updateActivity(activity.id, data);
-                toast.success("Activity updated");
+                toast.success(t("activities.toast.updated"));
             } else {
                 await createActivity(data, relatedTo);
-                toast.success("Activity logged");
+                toast.success(t("activities.toast.logged"));
             }
             onOpenChange(false);
             onSuccess?.();
         } catch (error) {
             console.error(error);
-            toast.error(isEditing ? "Failed to update activity" : "Failed to log activity");
+            toast.error(isEditing ? t("activities.toast.updateFailed") : t("activities.toast.logFailed"));
         } finally {
             setIsLoading(false);
         }
@@ -108,9 +110,9 @@ export function CreateActivityDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>{isEditing ? "Edit Activity" : "Log New Activity"}</DialogTitle>
+                    <DialogTitle>{isEditing ? t("activities.dialog.editTitle") : t("activities.dialog.createTitle")}</DialogTitle>
                     <DialogDescription>
-                        {isEditing ? "Update the activity details." : "Record a meeting, call, email, or follow-up."}
+                        {isEditing ? t("activities.dialog.editDescription") : t("activities.dialog.createDescription")}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -122,18 +124,18 @@ export function CreateActivityDialog({
                                 name="type"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Type</FormLabel>
+                                        <FormLabel>{t("activities.table.type")}</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select type" />
+                                                    <SelectValue placeholder={t("activities.field.selectType")} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="meeting">Meeting</SelectItem>
-                                                <SelectItem value="call">Call</SelectItem>
-                                                <SelectItem value="follow_up">Follow-up</SelectItem>
-                                                <SelectItem value="email">Email</SelectItem>
+                                                <SelectItem value="meeting">{t("activities.type.meeting")}</SelectItem>
+                                                <SelectItem value="call">{t("activities.type.call")}</SelectItem>
+                                                <SelectItem value="follow_up">{t("activities.type.followUp")}</SelectItem>
+                                                <SelectItem value="email">{t("activities.type.email")}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -146,17 +148,17 @@ export function CreateActivityDialog({
                                 name="outcome"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Outcome</FormLabel>
+                                        <FormLabel>{t("activities.table.outcome")}</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select outcome" />
+                                                    <SelectValue placeholder={t("activities.field.selectOutcome")} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="pending">Pending</SelectItem>
-                                                <SelectItem value="completed">Completed</SelectItem>
-                                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                                                <SelectItem value="pending">{t("activities.outcome.pending")}</SelectItem>
+                                                <SelectItem value="completed">{t("activities.outcome.completed")}</SelectItem>
+                                                <SelectItem value="cancelled">{t("activities.outcome.cancelled")}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -170,9 +172,9 @@ export function CreateActivityDialog({
                             name="subject"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Subject *</FormLabel>
+                                    <FormLabel>{t("activities.field.subjectRequired")}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g., Follow-up call about contract" {...field} />
+                                        <Input placeholder={t("activities.field.subjectPlaceholder")} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -185,7 +187,7 @@ export function CreateActivityDialog({
                                 name="dateTime"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Date & Time</FormLabel>
+                                        <FormLabel>{t("activities.table.dateTime")}</FormLabel>
                                         <FormControl>
                                             <DateTimePicker date={field.value} setDate={field.onChange} />
                                         </FormControl>
@@ -199,7 +201,7 @@ export function CreateActivityDialog({
                                 name="duration"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Duration (minutes)</FormLabel>
+                                        <FormLabel>{t("activities.field.durationMinutes")}</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
@@ -224,10 +226,10 @@ export function CreateActivityDialog({
                             name="notes"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Notes</FormLabel>
+                                    <FormLabel>{t("activities.field.notes")}</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="Add any notes or details..."
+                                            placeholder={t("activities.field.notesPlaceholder")}
                                             className="min-h-[80px]"
                                             {...field}
                                         />
@@ -244,11 +246,11 @@ export function CreateActivityDialog({
                                 onClick={() => onOpenChange(false)}
                                 disabled={isLoading}
                             >
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button type="submit" disabled={isLoading}>
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {isEditing ? "Save Changes" : "Log Activity"}
+                                {isEditing ? t("common.saveChanges") : t("activities.logActivity")}
                             </Button>
                         </DialogFooter>
                     </form>

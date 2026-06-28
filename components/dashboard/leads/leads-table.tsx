@@ -37,6 +37,7 @@ import { Timestamp } from "firebase/firestore";
 import { LEAD_STATUSES, STATUS_COLORS } from "@/lib/constants";
 import { calculateLeadScore, getScoreColor } from "@/lib/utils/lead-score";
 import type { Lead, LeadStatus } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 // --- TYPES (Copied/Shared) ---
 
@@ -142,6 +143,7 @@ function InlineEditCell({
     onSave: (id: string, field: ColumnKey, value: string) => void;
     searchQuery: string;
 }) {
+    const { t } = useTranslation();
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(value);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -177,7 +179,7 @@ function InlineEditCell({
         <span
             onDoubleClick={() => setIsEditing(true)}
             className="cursor-text hover:bg-gray-100 px-1 py-0.5 rounded inline-block min-w-[20px]"
-            title="Double-click to edit"
+            title={t("leads.table.doubleClickToEdit")}
         >
             <HighlightText text={value || "-"} search={searchQuery} />
         </span>
@@ -194,16 +196,17 @@ function formatLastActivity(timestamp: Timestamp | undefined): string {
     }
 }
 
-function formatFullDate(timestamp: Timestamp | undefined): string {
-    if (!timestamp) return "No activity";
+function formatFullDate(timestamp: Timestamp | undefined, noActivityLabel: string): string {
+    if (!timestamp) return noActivityLabel;
     try {
         return format(timestamp.toDate(), "PPpp");
     } catch {
-        return "No activity";
+        return noActivityLabel;
     }
 }
 
 function QuickViewCard({ lead }: { lead: Lead }) {
+    const { t } = useTranslation();
     const statusColor = STATUS_COLORS[lead.status] || { bg: "bg-gray-50", text: "text-gray-600" };
     return (
         <Card className="w-80 shadow-lg border-0">
@@ -225,7 +228,9 @@ function QuickViewCard({ lead }: { lead: Lead }) {
             </CardHeader>
             <CardContent className="space-y-3">
                 <div className="flex items-center gap-2">
-                    <Badge className={`${statusColor.bg} ${statusColor.text} border-0`}>{lead.status}</Badge>
+                    <Badge className={`${statusColor.bg} ${statusColor.text} border-0`}>
+                        {lead.status ? t(`leads.status.${lead.status}`) : lead.status}
+                    </Badge>
                     {lead.value && (
                         <Badge variant="outline" className="font-mono">
                             ${lead.value.toLocaleString()}
@@ -339,6 +344,7 @@ export function LeadsTable({
     onToggleStar,
     onInlineEdit,
 }: LeadsTableProps) {
+    const { t } = useTranslation();
     const tableContainerRef = useRef<HTMLDivElement>(null);
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
 
@@ -416,7 +422,7 @@ export function LeadsTable({
                                 }}
                                 className="hover:text-blue-600 hover:underline px-0.5"
                             >
-                                View
+                                {t("common.view")}
                             </button>
                             {canEdit && (
                                 <>
@@ -428,7 +434,7 @@ export function LeadsTable({
                                         }}
                                         className="hover:text-blue-600 hover:underline px-0.5"
                                     >
-                                        Edit
+                                        {t("common.edit")}
                                     </button>
                                 </>
                             )}
@@ -442,7 +448,7 @@ export function LeadsTable({
                                         }}
                                         className="hover:text-red-600 hover:underline px-0.5"
                                     >
-                                        Delete
+                                        {t("common.delete")}
                                     </button>
                                 </>
                             )}
@@ -527,7 +533,9 @@ export function LeadsTable({
                                 {formatLastActivity(lead.lastContactedAt)}
                             </span>
                         </TooltipTrigger>
-                        <TooltipContent>{formatFullDate(lead.lastContactedAt)}</TooltipContent>
+                        <TooltipContent>
+                            {formatFullDate(lead.lastContactedAt, t("leads.table.noActivity"))}
+                        </TooltipContent>
                     </Tooltip>
                 );
             case "score": {
@@ -544,8 +552,8 @@ export function LeadsTable({
                         </TooltipTrigger>
                         <TooltipContent>
                             <div className="text-xs">
-                                <p className="font-medium">Lead Score: {score}/100</p>
-                                <p className="text-gray-400 mt-1">Based on: contact info, value, status, activity</p>
+                                <p className="font-medium">{t("leads.table.leadScoreValue", { score })}</p>
+                                <p className="text-gray-400 mt-1">{t("leads.table.scoreBasedOn")}</p>
                             </div>
                         </TooltipContent>
                     </Tooltip>
@@ -631,7 +639,7 @@ export function LeadsTable({
                                         colSpan={orderedColumns.length + 1}
                                         className="text-center py-10 text-muted-foreground w-full"
                                     >
-                                        {searchQuery ? "No matches" : "No leads"}
+                                        {searchQuery ? t("leads.table.noMatches") : t("leads.table.noLeads")}
                                     </TableCell>
                                 </TableRow>
                             ) : (

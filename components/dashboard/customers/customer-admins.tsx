@@ -17,8 +17,10 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useCustomer } from "./customer-context";
+import { useTranslation } from "@/lib/i18n";
 
 export function CustomerAdmins() {
+    const { t } = useTranslation();
     // We can use context here instead of prop drilling or fetching again?
     // CustomerContext has contacts!
     const { customer, contacts, loading } = useCustomer();
@@ -35,25 +37,25 @@ export function CustomerAdmins() {
         return () => unsubSub();
     }, [customer?.orgId]);
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <div>{t("common.loading")}</div>;
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h3 className="text-lg font-medium text-gray-900">Contacts & Portal Access</h3>
+                    <h3 className="text-lg font-medium text-gray-900">{t("customers.admins.title")}</h3>
                     <p className="text-sm text-gray-500">
-                        Manage customer contacts and grant access to the Client Portal.
+                        {t("customers.admins.subtitle")}
                     </p>
                 </div>
                 <Button variant="outline">
-                    <Plus className="mr-2 h-4 w-4" /> Add Contact
+                    <Plus className="mr-2 h-4 w-4" /> {t("customers.admins.addContact")}
                 </Button>
             </div>
 
             {!contacts.length ? (
                 <div className="text-center py-10 border rounded-lg bg-gray-50">
-                    <p className="text-gray-500">No contacts found for this customer.</p>
+                    <p className="text-gray-500">{t("customers.admins.noContacts")}</p>
                 </div>
             ) : (
                 <div className="grid gap-4">
@@ -76,7 +78,7 @@ export function CustomerAdmins() {
                                             {contact.firstName} {contact.lastName}
                                             {contact.isPrimary && (
                                                 <Badge variant="secondary" className="text-xs">
-                                                    Primary
+                                                    {t("customers.admins.primary")}
                                                 </Badge>
                                             )}
                                         </p>
@@ -89,13 +91,13 @@ export function CustomerAdmins() {
                                     {hasPortal ? (
                                         <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-100">
                                             <Shield className="h-3 w-3" />
-                                            Portal Active
+                                            {t("customers.admins.portalActive")}
                                         </div>
                                     ) : (
                                         canInvite && (
                                             <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 text-gray-500 rounded-full text-xs font-medium border border-gray-100">
                                                 <Shield className="h-3 w-3" />
-                                                No Access
+                                                {t("customers.admins.noAccess")}
                                             </div>
                                         )
                                     )}
@@ -113,13 +115,13 @@ export function CustomerAdmins() {
                                                 }}
                                             >
                                                 <Mail className="mr-2 h-3.5 w-3.5" />
-                                                Invite
+                                                {t("customers.admins.invite")}
                                             </Button>
                                         )}
                                         {/* Manage Button */}
                                         {hasPortal && (
                                             <Button size="sm" variant="ghost">
-                                                Manage
+                                                {t("customers.admins.manage")}
                                             </Button>
                                         )}
                                     </div>
@@ -134,19 +136,19 @@ export function CustomerAdmins() {
             <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Invite to Client Portal</DialogTitle>
+                        <DialogTitle>{t("customers.admins.inviteDialogTitle")}</DialogTitle>
                         <DialogDescription>
-                            Grant {selectedContact?.firstName} access to self-service portal.
+                            {t("customers.admins.inviteDialogDesc", { name: selectedContact?.firstName ?? "" })}
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-4 py-4">
                         <div className="p-3 bg-blue-50 text-blue-800 text-sm rounded-md">
-                            An email with login instructions will be sent to <strong>{selectedContact?.email}</strong>.
+                            {t("customers.admins.inviteEmailNotice")} <strong>{selectedContact?.email}</strong>.
                         </div>
 
                         <div>
-                            <label className="text-sm font-medium mb-2 block">Allowed Modules</label>
+                            <label className="text-sm font-medium mb-2 block">{t("customers.admins.allowedModules")}</label>
                             <div className="space-y-2 border rounded-md p-3 max-h-[200px] overflow-y-auto">
                                 {["invoices", "projects", "tickets", "contracts"].map((mod) => (
                                     <div key={mod} className="flex items-center space-x-2">
@@ -157,7 +159,7 @@ export function CustomerAdmins() {
                                             defaultChecked
                                         />
                                         <label htmlFor={`mod-${mod}`} className="text-sm capitalize">
-                                            {mod}
+                                            {t(`customers.admins.module.${mod}`)}
                                         </label>
                                     </div>
                                 ))}
@@ -167,16 +169,16 @@ export function CustomerAdmins() {
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button
                             className="bg-purple-600 hover:bg-purple-700"
                             onClick={() => {
-                                alert("Invite simulated.");
+                                alert(t("customers.admins.inviteSimulated"));
                                 setInviteDialogOpen(false);
                             }}
                         >
-                            <Mail className="mr-2 h-4 w-4" /> Send Invite
+                            <Mail className="mr-2 h-4 w-4" /> {t("customers.admins.sendInvite")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAnalytics } from "@/lib/hooks/use-analytics";
+import { useTranslation } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     DollarSign,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 
 export default function AnalyticsDashboard() {
+    const { t } = useTranslation();
     const { loading, salesMetrics, customerMetrics, revenueByMonth } = useAnalytics();
 
     if (loading) {
@@ -46,8 +48,8 @@ export default function AnalyticsDashboard() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-                <p className="text-gray-500">Business performance overview</p>
+                <h1 className="text-2xl font-bold text-gray-900">{t("dashboard.analytics.title")}</h1>
+                <p className="text-gray-500">{t("dashboard.analytics.subtitle")}</p>
             </div>
 
             {/* Key Metrics */}
@@ -57,7 +59,7 @@ export default function AnalyticsDashboard() {
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-green-100 text-sm">Total Revenue</p>
+                                <p className="text-green-100 text-sm">{t("dashboard.analytics.totalRevenue")}</p>
                                 <p className="text-3xl font-bold mt-1">
                                     {formatCurrency(salesMetrics?.totalRevenue || 0)}
                                 </p>
@@ -70,7 +72,7 @@ export default function AnalyticsDashboard() {
                             <span className="text-white font-medium">
                                 {formatCurrency(salesMetrics?.monthlyRevenue || 0)}
                             </span>{" "}
-                            this month
+                            {t("dashboard.analytics.thisMonth")}
                         </div>
                     </CardContent>
                 </Card>
@@ -80,7 +82,7 @@ export default function AnalyticsDashboard() {
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-orange-100 text-sm">Outstanding</p>
+                                <p className="text-orange-100 text-sm">{t("dashboard.analytics.outstanding")}</p>
                                 <p className="text-3xl font-bold mt-1">
                                     {formatCurrency(salesMetrics?.outstandingAmount || 0)}
                                 </p>
@@ -90,8 +92,8 @@ export default function AnalyticsDashboard() {
                             </div>
                         </div>
                         <div className="mt-4 text-sm text-orange-100">
-                            <span className="text-white font-medium">{salesMetrics?.overdueInvoices || 0}</span> overdue
-                            invoices
+                            <span className="text-white font-medium">{salesMetrics?.overdueInvoices || 0}</span>{" "}
+                            {t("dashboard.analytics.overdueInvoices")}
                         </div>
                     </CardContent>
                 </Card>
@@ -101,7 +103,7 @@ export default function AnalyticsDashboard() {
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-blue-100 text-sm">Total Customers</p>
+                                <p className="text-blue-100 text-sm">{t("dashboard.analytics.totalCustomers")}</p>
                                 <p className="text-3xl font-bold mt-1">{customerMetrics?.totalCustomers || 0}</p>
                             </div>
                             <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -109,8 +111,8 @@ export default function AnalyticsDashboard() {
                             </div>
                         </div>
                         <div className="mt-4 text-sm text-blue-100">
-                            <span className="text-white font-medium">+{customerMetrics?.newThisMonth || 0}</span> this
-                            month
+                            <span className="text-white font-medium">+{customerMetrics?.newThisMonth || 0}</span>{" "}
+                            {t("dashboard.analytics.thisMonth")}
                         </div>
                     </CardContent>
                 </Card>
@@ -124,7 +126,7 @@ export default function AnalyticsDashboard() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <BarChart3 className="h-5 w-5 text-blue-600" />
-                            Monthly Revenue
+                            {t("dashboard.analytics.monthlyRevenue")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -147,7 +149,7 @@ export default function AnalyticsDashboard() {
                                 </div>
                             ))}
                             {revenueByMonth.length === 0 && (
-                                <p className="text-gray-500 text-center py-8">No revenue data yet</p>
+                                <p className="text-gray-500 text-center py-8">{t("dashboard.analytics.noRevenueData")}</p>
                             )}
                         </div>
                     </CardContent>
@@ -158,7 +160,7 @@ export default function AnalyticsDashboard() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <PieChart className="h-5 w-5 text-green-600" />
-                            Invoice Status
+                            {t("dashboard.analytics.invoiceStatus")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -166,7 +168,7 @@ export default function AnalyticsDashboard() {
                             <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                                 <div className="flex items-center gap-3">
                                     <CheckCircle className="h-5 w-5 text-green-600" />
-                                    <span className="font-medium text-gray-700">Paid</span>
+                                    <span className="font-medium text-gray-700">{t("dashboard.analytics.paid")}</span>
                                 </div>
                                 <span className="text-xl font-bold text-green-600">
                                     {salesMetrics?.paidInvoices || 0}
@@ -175,7 +177,7 @@ export default function AnalyticsDashboard() {
                             <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                                 <div className="flex items-center gap-3">
                                     <Clock className="h-5 w-5 text-yellow-600" />
-                                    <span className="font-medium text-gray-700">Pending</span>
+                                    <span className="font-medium text-gray-700">{t("dashboard.analytics.pending")}</span>
                                 </div>
                                 <span className="text-xl font-bold text-yellow-600">
                                     {salesMetrics?.pendingInvoices || 0}
@@ -184,7 +186,7 @@ export default function AnalyticsDashboard() {
                             <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                                 <div className="flex items-center gap-3">
                                     <AlertTriangle className="h-5 w-5 text-red-600" />
-                                    <span className="font-medium text-gray-700">Overdue</span>
+                                    <span className="font-medium text-gray-700">{t("dashboard.analytics.overdue")}</span>
                                 </div>
                                 <span className="text-xl font-bold text-red-600">
                                     {salesMetrics?.overdueInvoices || 0}
@@ -195,7 +197,7 @@ export default function AnalyticsDashboard() {
                         {/* Collection Rate */}
                         <div className="mt-6 pt-4 border-t">
                             <div className="flex justify-between mb-2">
-                                <span className="text-sm text-gray-600">Collection Rate</span>
+                                <span className="text-sm text-gray-600">{t("dashboard.analytics.collectionRate")}</span>
                                 <span className="text-sm font-medium">
                                     {(salesMetrics?.collectionRate || 0).toFixed(1)}%
                                 </span>
@@ -220,7 +222,7 @@ export default function AnalyticsDashboard() {
                                 <FileText className="h-6 w-6 text-blue-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Avg Invoice Value</p>
+                                <p className="text-sm text-gray-500">{t("dashboard.analytics.avgInvoiceValue")}</p>
                                 <p className="text-2xl font-bold text-gray-900">
                                     {formatCurrency(salesMetrics?.averageInvoiceValue || 0)}
                                 </p>

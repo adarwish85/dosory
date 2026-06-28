@@ -10,12 +10,14 @@ import { toast } from "sonner";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useTranslation } from "@/lib/i18n";
 
 export function AddSourceDialog() {
     const [open, setOpen] = useState(false);
     const [name, setName] = useState("");
     const [saving, setSaving] = useState(false);
     const { profile } = useUserProfile();
+    const { t } = useTranslation();
 
     const handleOpenChange = (newOpen: boolean) => {
         setOpen(newOpen);
@@ -26,7 +28,7 @@ export function AddSourceDialog() {
 
     const handleSave = async () => {
         if (!name.trim()) {
-            toast.error("Source name is required");
+            toast.error(t("setup.leads.source.nameRequired"));
             return;
         }
 
@@ -40,11 +42,11 @@ export function AddSourceDialog() {
                 createdBy: profile?.uid,
             });
 
-            toast.success("Lead source created successfully!");
+            toast.success(t("setup.leads.source.createSuccess"));
             handleOpenChange(false);
         } catch (error) {
             console.error("Error creating lead source:", error);
-            toast.error("Failed to create lead source");
+            toast.error(t("setup.leads.source.createError"));
         } finally {
             setSaving(false);
         }
@@ -54,22 +56,22 @@ export function AddSourceDialog() {
         <Sheet open={open} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
                 <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                    <Plus className="mr-2 h-4 w-4" /> New Source
+                    <Plus className="mr-2 h-4 w-4" /> {t("setup.leads.source.newButton")}
                 </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-md bg-white p-0 flex flex-col">
                 <SheetHeader className="px-6 py-4 border-b flex-shrink-0">
-                    <SheetTitle>Add New Lead Source</SheetTitle>
+                    <SheetTitle>{t("setup.leads.source.dialogTitle")}</SheetTitle>
                 </SheetHeader>
 
                 <div className="flex-1 p-6">
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label className="text-red-500">* Source Name</Label>
+                            <Label className="text-red-500">{t("setup.leads.source.nameLabel")}</Label>
                             <Input
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="e.g. Website, Referral, Social Media"
+                                placeholder={t("setup.leads.source.namePlaceholder")}
                                 autoFocus
                             />
                         </div>
@@ -78,11 +80,11 @@ export function AddSourceDialog() {
 
                 <div className="p-4 border-t bg-white flex justify-end gap-2 flex-shrink-0">
                     <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button onClick={handleSave} className="bg-gray-900 text-white hover:bg-gray-800" disabled={saving}>
                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save
+                        {t("common.save")}
                     </Button>
                 </div>
             </SheetContent>

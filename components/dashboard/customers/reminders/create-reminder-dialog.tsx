@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { Timestamp } from "firebase/firestore";
+import { useTranslation } from "@/lib/i18n";
 
 interface CreateReminderDialogProps {
     open: boolean;
@@ -26,6 +27,7 @@ interface FormData {
 }
 
 export function CreateReminderDialog({ open, onOpenChange }: CreateReminderDialogProps) {
+    const { t } = useTranslation();
     const { customerId, customer } = useCustomer();
     const { createReminder } = useReminders();
     const { user } = useAuth();
@@ -51,12 +53,12 @@ export function CreateReminderDialog({ open, onOpenChange }: CreateReminderDialo
                 isRead: false,
             });
 
-            toast.success("Reminder set successfully");
+            toast.success(t("customers.reminders.setSuccess"));
             onOpenChange(false);
             reset();
         } catch (error) {
             console.error(error);
-            toast.error("Failed to set reminder");
+            toast.error(t("customers.reminders.setError"));
         } finally {
             setLoading(false);
         }
@@ -66,46 +68,46 @@ export function CreateReminderDialog({ open, onOpenChange }: CreateReminderDialo
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Set Reminder</DialogTitle>
-                    <DialogDescription>Create a new reminder for this customer.</DialogDescription>
+                    <DialogTitle>{t("customers.reminders.title")}</DialogTitle>
+                    <DialogDescription>{t("customers.reminders.description")}</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
 
                     <div className="grid gap-2">
-                        <Label htmlFor="description">Description</Label>
+                        <Label htmlFor="description">{t("common.description")}</Label>
                         <Textarea
                             id="description"
                             {...register("description")}
-                            placeholder="Add details..."
+                            placeholder={t("customers.reminders.detailsPlaceholder")}
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="date">Date</Label>
+                            <Label htmlFor="date">{t("common.date")}</Label>
                             <Input
                                 id="date"
                                 type="date"
-                                {...register("date", { required: "Date is required" })}
+                                {...register("date", { required: t("customers.reminders.dateRequired") })}
                             />
                             {errors.date && <p className="text-red-500 text-xs">{errors.date.message}</p>}
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="time">Time</Label>
+                            <Label htmlFor="time">{t("customers.reminders.time")}</Label>
                             <Input
                                 id="time"
                                 type="time"
-                                {...register("time", { required: "Time is required" })}
+                                {...register("time", { required: t("customers.reminders.timeRequired") })}
                             />
                             {errors.time && <p className="text-red-500 text-xs">{errors.time.message}</p>}
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
                         <Button type="submit" disabled={loading}>
-                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Set Reminder"}
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : t("customers.reminders.setReminder")}
                         </Button>
                     </DialogFooter>
                 </form>

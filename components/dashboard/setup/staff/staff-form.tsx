@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "@/lib/firebase";
+import { useTranslation } from "@/lib/i18n";
 
 interface StaffFormData {
     firstName: string;
@@ -44,6 +45,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { t } = useTranslation();
     const [formData, setFormData] = useState<StaffFormData>({
         firstName: "",
         lastName: "",
@@ -91,13 +93,13 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
 
         // Validate file type
         if (!file.type.startsWith("image/")) {
-            toast.error("Please select an image file");
+            toast.error(t("setup.staff.selectImageError"));
             return;
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            toast.error("Image size must be less than 5MB");
+            toast.error(t("setup.staff.imageSizeError"));
             return;
         }
 
@@ -108,10 +110,10 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
             const downloadURL = await getDownloadURL(fileRef);
 
             setFormData((prev) => ({ ...prev, image: downloadURL }));
-            toast.success("Photo uploaded successfully");
+            toast.success(t("setup.staff.photoUploadedSuccess"));
         } catch (error) {
             console.error("Error uploading photo:", error);
-            toast.error("Failed to upload photo");
+            toast.error(t("setup.staff.photoUploadError"));
         } finally {
             setUploading(false);
         }
@@ -129,7 +131,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                 });
             }
             setFormData((prev) => ({ ...prev, image: "" }));
-            toast.success("Photo removed");
+            toast.success(t("setup.staff.photoRemoved"));
         } catch (error) {
             console.error("Error removing photo:", error);
             setFormData((prev) => ({ ...prev, image: "" }));
@@ -138,15 +140,15 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
 
     const handleSave = async () => {
         if (!formData.firstName.trim()) {
-            toast.error("First name is required");
+            toast.error(t("setup.staff.firstNameRequired"));
             return;
         }
         if (!formData.lastName.trim()) {
-            toast.error("Last name is required");
+            toast.error(t("setup.staff.lastNameRequired"));
             return;
         }
         if (!formData.email.trim()) {
-            toast.error("Email is required");
+            toast.error(t("setup.staff.emailRequired"));
             return;
         }
 
@@ -177,18 +179,18 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
             if (mode === "edit" && staffId) {
                 const docRef = doc(db, "staff", staffId);
                 await updateDoc(docRef, staffData);
-                toast.success("Staff member updated successfully!");
+                toast.success(t("setup.staff.updateSuccess"));
             } else {
                 await addDoc(collection(db, "staff"), {
                     ...staffData,
                     createdAt: serverTimestamp(),
                 });
-                toast.success("Staff member created successfully!");
+                toast.success(t("setup.staff.createSuccess"));
                 onCancel?.();
             }
         } catch (error) {
             console.error("Error saving staff:", error);
-            toast.error(mode === "edit" ? "Failed to update staff member" : "Failed to create staff member");
+            toast.error(mode === "edit" ? t("setup.staff.updateError") : t("setup.staff.createError"));
         } finally {
             setSaving(false);
         }
@@ -215,13 +217,13 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                         value="profile"
                         className="bg-transparent border-b-2 border-transparent data-[state=active]:border-gray-900 data-[state=active]:shadow-none rounded-none px-0 py-3 text-gray-500 data-[state=active]:text-gray-900 font-medium"
                     >
-                        Profile
+                        {t("setup.staff.tabProfile")}
                     </TabsTrigger>
                     <TabsTrigger
                         value="permissions"
                         className="bg-transparent border-b-2 border-transparent data-[state=active]:border-gray-900 data-[state=active]:shadow-none rounded-none px-0 py-3 text-gray-500 data-[state=active]:text-gray-900 font-medium"
                     >
-                        Permissions
+                        {t("setup.staff.tabPermissions")}
                     </TabsTrigger>
                 </TabsList>
             </div>
@@ -238,7 +240,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                                         onCheckedChange={(checked) => updateField("isAdmin", !!checked)}
                                     />
                                     <Label htmlFor="admin" className="font-normal text-gray-600">
-                                        Administrator
+                                        {t("setup.staff.administrator")}
                                     </Label>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -248,7 +250,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                                         onCheckedChange={(checked) => updateField("isNotStaff", !!checked)}
                                     />
                                     <Label htmlFor="not-staff" className="font-normal text-gray-600">
-                                        Not Staff Member
+                                        {t("setup.staff.notStaffMember")}
                                     </Label>
                                 </div>
                             </div>
@@ -298,7 +300,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={uploading}
                                     >
-                                        Upload Photo
+                                        {t("setup.staff.uploadPhoto")}
                                     </Button>
                                 )}
                             </div>
@@ -306,7 +308,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <Label className="text-red-500">* First Name</Label>
+                                <Label className="text-red-500">{t("setup.staff.firstNameLabel")}</Label>
                                 <Input
                                     required
                                     className="focus-visible:ring-blue-600 border-blue-200"
@@ -316,7 +318,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Last Name</Label>
+                                <Label className="text-red-500">{t("setup.staff.lastNameLabel")}</Label>
                                 <Input
                                     required
                                     value={formData.lastName}
@@ -325,7 +327,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Email</Label>
+                                <Label className="text-red-500">{t("setup.staff.emailLabel")}</Label>
                                 <Input
                                     type="email"
                                     required
@@ -335,12 +337,12 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Phone</Label>
+                                <Label>{t("common.phone")}</Label>
                                 <Input value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} />
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Hourly Rate</Label>
+                                <Label>{t("setup.staff.hourlyRate")}</Label>
                                 <div className="relative">
                                     <Input
                                         value={formData.hourlyRate}
@@ -353,46 +355,46 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Default Language</Label>
+                                <Label>{t("setup.staff.defaultLanguage")}</Label>
                                 <Select
                                     value={formData.defaultLanguage}
                                     onValueChange={(value) => updateField("defaultLanguage", value)}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="System Default" />
+                                        <SelectValue placeholder={t("setup.staff.systemDefault")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="system">System Default</SelectItem>
-                                        <SelectItem value="en">English</SelectItem>
-                                        <SelectItem value="ar">Arabic</SelectItem>
+                                        <SelectItem value="system">{t("setup.staff.systemDefault")}</SelectItem>
+                                        <SelectItem value="en">{t("setup.staff.english")}</SelectItem>
+                                        <SelectItem value="ar">{t("setup.staff.arabic")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Direction</Label>
+                                <Label>{t("setup.staff.direction")}</Label>
                                 <Select
                                     value={formData.direction}
                                     onValueChange={(value) => updateField("direction", value)}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="System Default" />
+                                        <SelectValue placeholder={t("setup.staff.systemDefault")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="system">System Default</SelectItem>
-                                        <SelectItem value="ltr">LTR</SelectItem>
-                                        <SelectItem value="rtl">RTL</SelectItem>
+                                        <SelectItem value="system">{t("setup.staff.systemDefault")}</SelectItem>
+                                        <SelectItem value="ltr">{t("setup.staff.ltr")}</SelectItem>
+                                        <SelectItem value="rtl">{t("setup.staff.rtl")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="flex items-center gap-2">Skype</Label>
+                                <Label className="flex items-center gap-2">{t("setup.staff.skype")}</Label>
                                 <Input value={formData.skype} onChange={(e) => updateField("skype", e.target.value)} />
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="flex items-center gap-2">Facebook</Label>
+                                <Label className="flex items-center gap-2">{t("setup.staff.facebook")}</Label>
                                 <Input
                                     value={formData.facebook}
                                     onChange={(e) => updateField("facebook", e.target.value)}
@@ -400,7 +402,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="flex items-center gap-2">LinkedIn</Label>
+                                <Label className="flex items-center gap-2">{t("setup.staff.linkedin")}</Label>
                                 <Input
                                     value={formData.linkedin}
                                     onChange={(e) => updateField("linkedin", e.target.value)}
@@ -410,7 +412,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
 
                         <div className="space-y-2">
                             <Label className="flex items-center gap-1">
-                                <HelpCircle className="h-3 w-3 text-gray-500" /> Email Signature
+                                <HelpCircle className="h-3 w-3 text-gray-500" /> {t("setup.staff.emailSignature")}
                             </Label>
                             <Textarea
                                 className="min-h-[100px]"
@@ -420,7 +422,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Member departments</Label>
+                            <Label>{t("setup.staff.memberDepartments")}</Label>
                             <div className="flex flex-wrap gap-4 mt-2">
                                 <div className="flex items-center gap-2">
                                     <Checkbox
@@ -429,7 +431,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                                         onCheckedChange={() => toggleDepartment("tech")}
                                     />
                                     <Label htmlFor="dept-tech" className="font-normal text-gray-700">
-                                        Technical Support
+                                        {t("setup.staff.deptTechnicalSupport")}
                                     </Label>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -439,7 +441,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                                         onCheckedChange={() => toggleDepartment("dev")}
                                     />
                                     <Label htmlFor="dept-dev" className="font-normal text-gray-700">
-                                        Development
+                                        {t("setup.staff.deptDevelopment")}
                                     </Label>
                                 </div>
                             </div>
@@ -449,13 +451,13 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                             <div className="flex items-center gap-2 pt-2">
                                 <Checkbox id="welcome-email" defaultChecked />
                                 <Label htmlFor="welcome-email" className="font-medium text-gray-900">
-                                    Send welcome email
+                                    {t("setup.staff.sendWelcomeEmail")}
                                 </Label>
                             </div>
                         )}
 
                         <div className="space-y-2 pt-4 border-t border-dashed">
-                            <Label className="text-red-500">* Password</Label>
+                            <Label className="text-red-500">{t("setup.staff.passwordLabel")}</Label>
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
                                     <Input type={passwordVisible ? "text" : "password"} required={mode === "create"} />
@@ -469,13 +471,13 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                                         <Eye className="h-4 w-4" />
                                     </Button>
                                 </div>
-                                <Button variant="outline" size="icon" className="shrink-0" title="Generate Password">
+                                <Button variant="outline" size="icon" className="shrink-0" title={t("setup.staff.generatePassword")}>
                                     <RefreshCw className="h-4 w-4" />
                                 </Button>
                             </div>
                             {mode === "edit" && (
                                 <p className="text-xs text-gray-500">
-                                    Note: if you populate this field, password will be changed on this member.
+                                    {t("setup.staff.passwordChangeNote")}
                                 </p>
                             )}
                         </div>
@@ -485,63 +487,63 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                 <TabsContent value="permissions" className="m-0 space-y-6 max-w-full">
                     <div className="bg-white p-6 rounded-lg border shadow-sm space-y-6">
                         <div className="space-y-2">
-                            <Label>Role</Label>
+                            <Label>{t("setup.staff.roleLabel")}</Label>
                             <Select defaultValue="employee">
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Employee" />
+                                    <SelectValue placeholder={t("setup.staff.roleEmployee")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="employee">Employee</SelectItem>
-                                    <SelectItem value="pm">Project Manager</SelectItem>
+                                    <SelectItem value="employee">{t("setup.staff.roleEmployee")}</SelectItem>
+                                    <SelectItem value="pm">{t("setup.staff.roleProjectManager")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
 
                         <div className="space-y-4">
-                            <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Permissions</h3>
+                            <h3 className="text-lg font-bold text-gray-900 border-b pb-2">{t("setup.staff.permissions")}</h3>
 
                             <div className="border rounded-md overflow-hidden">
                                 <table className="w-full text-sm text-left">
                                     <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                                         <tr>
-                                            <th className="px-4 py-3 border-b border-r w-1/3">Features</th>
-                                            <th className="px-4 py-3 border-b">Capabilities</th>
+                                            <th className="px-4 py-3 border-b border-r w-1/3">{t("setup.staff.featuresHeader")}</th>
+                                            <th className="px-4 py-3 border-b">{t("setup.staff.capabilitiesHeader")}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
                                         <PermissionRow
-                                            label="Bulk PDF Export"
-                                            options={[{ label: "View(Global)", id: "bulk-view" }]}
+                                            label={t("setup.staff.featBulkPdfExport")}
+                                            options={[{ label: t("setup.staff.capViewGlobal"), id: "bulk-view" }]}
                                         />
                                         <PermissionRow
-                                            label="Contracts"
+                                            label={t("setup.staff.featContracts")}
                                             options={[
-                                                { label: "View (Own)", id: "contracts-view-own" },
-                                                { label: "View(Global)", id: "contracts-view-global" },
-                                                { label: "Create", id: "contracts-create" },
-                                                { label: "Edit", id: "contracts-edit" },
-                                                { label: "Delete", id: "contracts-delete" },
-                                                { label: "View All Templates", id: "contracts-templates" },
+                                                { label: t("setup.staff.capViewOwn"), id: "contracts-view-own" },
+                                                { label: t("setup.staff.capViewGlobal"), id: "contracts-view-global" },
+                                                { label: t("common.create"), id: "contracts-create" },
+                                                { label: t("common.edit"), id: "contracts-edit" },
+                                                { label: t("common.delete"), id: "contracts-delete" },
+                                                { label: t("setup.staff.capViewAllTemplates"), id: "contracts-templates" },
                                             ]}
                                         />
                                         <PermissionRow
-                                            label="Credit Notes"
+                                            label={t("setup.staff.featCreditNotes")}
                                             options={[
-                                                { label: "View (Own)", id: "cn-view-own" },
-                                                { label: "View(Global)", id: "cn-view-global" },
-                                                { label: "Create", id: "cn-create" },
-                                                { label: "Edit", id: "cn-edit" },
-                                                { label: "Delete", id: "cn-delete" },
+                                                { label: t("setup.staff.capViewOwn"), id: "cn-view-own" },
+                                                { label: t("setup.staff.capViewGlobal"), id: "cn-view-global" },
+                                                { label: t("common.create"), id: "cn-create" },
+                                                { label: t("common.edit"), id: "cn-edit" },
+                                                { label: t("common.delete"), id: "cn-delete" },
                                             ]}
                                         />
                                         <PermissionRow
-                                            label="Customers"
+                                            label={t("setup.staff.featCustomers")}
                                             options={[
-                                                { label: "View (Own)", id: "customers-view-own", help: true },
-                                                { label: "View(Global)", id: "customers-view-global" },
-                                                { label: "Create", id: "customers-create" },
-                                                { label: "Edit", id: "customers-edit" },
-                                                { label: "Delete", id: "customers-delete" },
+                                                { label: t("setup.staff.capViewOwn"), id: "customers-view-own", help: true },
+                                                { label: t("setup.staff.capViewGlobal"), id: "customers-view-global" },
+                                                { label: t("common.create"), id: "customers-create" },
+                                                { label: t("common.edit"), id: "customers-edit" },
+                                                { label: t("common.delete"), id: "customers-delete" },
                                             ]}
                                         />
                                     </tbody>
@@ -554,7 +556,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                 <div className="flex justify-end gap-2 pt-6">
                     {onCancel && (
                         <Button variant="outline" onClick={onCancel}>
-                            Close
+                            {t("common.close")}
                         </Button>
                     )}
                     <Button
@@ -563,7 +565,7 @@ export function StaffForm({ mode, defaultValues, staffId, onCancel }: StaffFormP
                         disabled={saving || uploading}
                     >
                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save
+                        {t("common.save")}
                     </Button>
                 </div>
             </div>

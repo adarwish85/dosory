@@ -6,6 +6,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
 import { SETUP_MENU_STRUCTURE, type SetupMenuItem } from "@/lib/setup-menu-config";
+import { useTranslation } from "@/lib/i18n";
 
 interface SetupSidebarProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ interface SetupSidebarProps {
 
 export function SetupSidebar({ isOpen, onClose, topOffset }: SetupSidebarProps) {
     const pathname = usePathname();
+    const { t } = useTranslation();
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
     // Auto-expand categories that contain the current page
@@ -163,7 +165,7 @@ export function SetupSidebar({ isOpen, onClose, topOffset }: SetupSidebarProps) 
             )}
         >
             <div className="flex items-center justify-between px-4 py-4 border-b bg-white">
-                <h2 className="font-bold text-lg text-gray-900">Setup</h2>
+                <h2 className="font-bold text-lg text-gray-900">{t("dashboard.setup.title")}</h2>
                 <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
                     <X className="h-5 w-5 text-gray-500" />
                 </button>
@@ -172,8 +174,8 @@ export function SetupSidebar({ isOpen, onClose, topOffset }: SetupSidebarProps) 
                 {SETUP_MENU_STRUCTURE.map((item) => renderMenuItem(item, 0))}
             </nav>
             <div className="px-4 py-3 border-t bg-white text-xs text-gray-500">
-                <p>Setup & Configuration</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">Account Admin Only</p>
+                <p>{t("dashboard.setup.footerTitle")}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">{t("dashboard.setup.footerSubtitle")}</p>
             </div>
         </aside>
     );

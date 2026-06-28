@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useTranslation } from "@/lib/i18n";
 
 interface StaffFormData {
     firstName: string;
@@ -52,6 +53,7 @@ export function AddStaffDialog() {
     const [formData, setFormData] = useState<StaffFormData>(defaultFormData);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { profile } = useUserProfile();
+    const { t } = useTranslation();
 
     const totalSteps = 2;
 
@@ -93,12 +95,12 @@ export function AddStaffDialog() {
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
-            toast.error("Please select an image file");
+            toast.error(t("setup.staff.selectImageError"));
             return;
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            toast.error("Image size must be less than 5MB");
+            toast.error(t("setup.staff.imageSizeError"));
             return;
         }
 
@@ -108,10 +110,10 @@ export function AddStaffDialog() {
             await uploadBytes(fileRef, file);
             const downloadURL = await getDownloadURL(fileRef);
             updateField("image", downloadURL);
-            toast.success("Photo uploaded");
+            toast.success(t("setup.staff.photoUploaded"));
         } catch (error) {
             console.error("Error uploading photo:", error);
-            toast.error("Failed to upload photo");
+            toast.error(t("setup.staff.photoUploadError"));
         } finally {
             setUploading(false);
         }
@@ -120,19 +122,19 @@ export function AddStaffDialog() {
     const validateStep = (currentStep: number): boolean => {
         if (currentStep === 1) {
             if (!formData.firstName.trim()) {
-                toast.error("First name is required");
+                toast.error(t("setup.staff.firstNameRequired"));
                 return false;
             }
             if (!formData.lastName.trim()) {
-                toast.error("Last name is required");
+                toast.error(t("setup.staff.lastNameRequired"));
                 return false;
             }
             if (!formData.email.trim()) {
-                toast.error("Email is required");
+                toast.error(t("setup.staff.emailRequired"));
                 return false;
             }
             if (!password.trim()) {
-                toast.error("Password is required");
+                toast.error(t("setup.staff.passwordRequired"));
                 return false;
             }
         }
@@ -154,7 +156,7 @@ export function AddStaffDialog() {
         }
 
         if (!password || password.length < 6) {
-            toast.error("Password must be at least 6 characters");
+            toast.error(t("setup.staff.passwordMinLength"));
             setStep(1);
             return;
         }
@@ -188,18 +190,18 @@ export function AddStaffDialog() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || "Failed to create staff member");
+                throw new Error(data.error || t("setup.staff.createError"));
             }
 
             if (data.emailSent) {
-                toast.success("Staff member created and welcome email sent!");
+                toast.success(t("setup.staff.createSuccessWithEmail"));
             } else {
-                toast.success("Staff member created successfully!");
+                toast.success(t("setup.staff.createSuccess"));
             }
             handleOpenChange(false);
         } catch (error: any) {
             console.error("Error creating staff:", error);
-            toast.error(error.message || "Failed to create staff member");
+            toast.error(error.message || t("setup.staff.createError"));
         } finally {
             setSaving(false);
         }
@@ -209,19 +211,19 @@ export function AddStaffDialog() {
         <Sheet open={open} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
                 <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                    <Plus className="mr-2 h-4 w-4" /> New Staff Member
+                    <Plus className="mr-2 h-4 w-4" /> {t("setup.staff.newButton")}
                 </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-xl bg-white p-0 flex flex-col">
                 <SheetHeader className="px-6 py-4 border-b flex-shrink-0">
-                    <SheetTitle>Add New Staff Member</SheetTitle>
+                    <SheetTitle>{t("setup.staff.dialogTitle")}</SheetTitle>
                 </SheetHeader>
 
                 {/* Step Indicator */}
                 <div className="px-6 py-3 border-b bg-gray-50 flex-shrink-0">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-gray-700">
-                            Step {step} of {totalSteps}
+                            {t("setup.staff.stepOf", { step: String(step), total: String(totalSteps) })}
                         </span>
                     </div>
                     <div className="flex gap-1">
@@ -285,7 +287,7 @@ export function AddStaffDialog() {
                                             onCheckedChange={(checked) => updateField("isAdmin", !!checked)}
                                         />
                                         <Label htmlFor="admin" className="font-normal text-gray-600 text-xs">
-                                            Administrator
+                                            {t("setup.staff.administrator")}
                                         </Label>
                                     </div>
                                     <div className="flex items-center gap-1.5">
@@ -295,7 +297,7 @@ export function AddStaffDialog() {
                                             onCheckedChange={(checked) => updateField("isNotStaff", !!checked)}
                                         />
                                         <Label htmlFor="not-staff" className="font-normal text-gray-600 text-xs">
-                                            Not Staff Member
+                                            {t("setup.staff.notStaffMember")}
                                         </Label>
                                     </div>
                                 </div>
@@ -303,7 +305,7 @@ export function AddStaffDialog() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-0.5">
-                                    <Label className="text-red-500 text-xs">* First Name</Label>
+                                    <Label className="text-red-500 text-xs">{t("setup.staff.firstNameLabel")}</Label>
                                     <Input
                                         value={formData.firstName}
                                         onChange={(e) => updateField("firstName", e.target.value)}
@@ -311,7 +313,7 @@ export function AddStaffDialog() {
                                     />
                                 </div>
                                 <div className="space-y-0.5">
-                                    <Label className="text-red-500 text-xs">* Last Name</Label>
+                                    <Label className="text-red-500 text-xs">{t("setup.staff.lastNameLabel")}</Label>
                                     <Input
                                         value={formData.lastName}
                                         onChange={(e) => updateField("lastName", e.target.value)}
@@ -322,7 +324,7 @@ export function AddStaffDialog() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-0.5">
-                                    <Label className="text-red-500 text-xs">* Email</Label>
+                                    <Label className="text-red-500 text-xs">{t("setup.staff.emailLabel")}</Label>
                                     <Input
                                         type="email"
                                         value={formData.email}
@@ -331,7 +333,7 @@ export function AddStaffDialog() {
                                     />
                                 </div>
                                 <div className="space-y-0.5">
-                                    <Label className="text-xs">Phone</Label>
+                                    <Label className="text-xs">{t("common.phone")}</Label>
                                     <Input
                                         value={formData.phone}
                                         onChange={(e) => updateField("phone", e.target.value)}
@@ -342,7 +344,7 @@ export function AddStaffDialog() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-0.5">
-                                    <Label className="text-xs">Hourly Rate (EGP)</Label>
+                                    <Label className="text-xs">{t("setup.staff.hourlyRateEgp")}</Label>
                                     <Input
                                         type="number"
                                         value={formData.hourlyRate}
@@ -351,7 +353,7 @@ export function AddStaffDialog() {
                                     />
                                 </div>
                                 <div className="space-y-0.5">
-                                    <Label className="text-red-500 text-xs">* Password</Label>
+                                    <Label className="text-red-500 text-xs">{t("setup.staff.passwordLabel")}</Label>
                                     <div className="flex gap-1">
                                         <div className="relative flex-1">
                                             <Input
@@ -374,7 +376,7 @@ export function AddStaffDialog() {
                                             variant="outline"
                                             size="icon"
                                             className="shrink-0 h-8 w-8"
-                                            title="Generate"
+                                            title={t("setup.staff.generate")}
                                         >
                                             <RefreshCw className="h-3.5 w-3.5" />
                                         </Button>
@@ -387,39 +389,39 @@ export function AddStaffDialog() {
                     {step === 2 && (
                         <div className="space-y-3">
                             <div className="space-y-0.5">
-                                <Label className="text-xs">Role</Label>
+                                <Label className="text-xs">{t("setup.staff.roleLabel")}</Label>
                                 <Select value={formData.roleId} onValueChange={(value) => updateField("roleId", value)}>
                                     <SelectTrigger className="h-8 text-sm">
-                                        <SelectValue placeholder="Select role" />
+                                        <SelectValue placeholder={t("setup.staff.selectRole")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="employee">Employee</SelectItem>
-                                        <SelectItem value="pm">Project Manager</SelectItem>
-                                        <SelectItem value="admin">Administrator</SelectItem>
+                                        <SelectItem value="employee">{t("setup.staff.roleEmployee")}</SelectItem>
+                                        <SelectItem value="pm">{t("setup.staff.roleProjectManager")}</SelectItem>
+                                        <SelectItem value="admin">{t("setup.staff.roleAdministrator")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-xs font-medium">Permissions</Label>
+                                <Label className="text-xs font-medium">{t("setup.staff.permissions")}</Label>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                                     {[
-                                        { id: "customers-view", label: "View Customers" },
-                                        { id: "customers-create", label: "Create Customers" },
-                                        { id: "customers-edit", label: "Edit Customers" },
-                                        { id: "customers-delete", label: "Delete Customers" },
-                                        { id: "invoices-view", label: "View Invoices" },
-                                        { id: "invoices-create", label: "Create Invoices" },
-                                        { id: "invoices-edit", label: "Edit Invoices" },
-                                        { id: "invoices-delete", label: "Delete Invoices" },
-                                        { id: "projects-view", label: "View Projects" },
-                                        { id: "projects-create", label: "Create Projects" },
-                                        { id: "projects-edit", label: "Edit Projects" },
-                                        { id: "projects-delete", label: "Delete Projects" },
-                                        { id: "expenses-view", label: "View Expenses" },
-                                        { id: "expenses-create", label: "Create Expenses" },
-                                        { id: "reports-view", label: "View Reports" },
-                                        { id: "settings-view", label: "View Settings" },
+                                        { id: "customers-view", label: t("setup.staff.perm.customersView") },
+                                        { id: "customers-create", label: t("setup.staff.perm.customersCreate") },
+                                        { id: "customers-edit", label: t("setup.staff.perm.customersEdit") },
+                                        { id: "customers-delete", label: t("setup.staff.perm.customersDelete") },
+                                        { id: "invoices-view", label: t("setup.staff.perm.invoicesView") },
+                                        { id: "invoices-create", label: t("setup.staff.perm.invoicesCreate") },
+                                        { id: "invoices-edit", label: t("setup.staff.perm.invoicesEdit") },
+                                        { id: "invoices-delete", label: t("setup.staff.perm.invoicesDelete") },
+                                        { id: "projects-view", label: t("setup.staff.perm.projectsView") },
+                                        { id: "projects-create", label: t("setup.staff.perm.projectsCreate") },
+                                        { id: "projects-edit", label: t("setup.staff.perm.projectsEdit") },
+                                        { id: "projects-delete", label: t("setup.staff.perm.projectsDelete") },
+                                        { id: "expenses-view", label: t("setup.staff.perm.expensesView") },
+                                        { id: "expenses-create", label: t("setup.staff.perm.expensesCreate") },
+                                        { id: "reports-view", label: t("setup.staff.perm.reportsView") },
+                                        { id: "settings-view", label: t("setup.staff.perm.settingsView") },
                                     ].map((perm) => (
                                         <div key={perm.id} className="flex items-center gap-1.5">
                                             <Checkbox
@@ -442,7 +444,7 @@ export function AddStaffDialog() {
                             <div className="flex items-center gap-1.5 pt-2 border-t">
                                 <Checkbox id="welcome-email" defaultChecked className="h-3.5 w-3.5" />
                                 <Label htmlFor="welcome-email" className="font-medium text-gray-900 text-xs">
-                                    Send welcome email
+                                    {t("setup.staff.sendWelcomeEmail")}
                                 </Label>
                             </div>
                         </div>
@@ -453,17 +455,17 @@ export function AddStaffDialog() {
                     <div>
                         {step > 1 && (
                             <Button variant="outline" onClick={prevStep} className="gap-1">
-                                <ChevronLeft className="h-4 w-4" /> Back
+                                <ChevronLeft className="h-4 w-4" /> {t("common.back")}
                             </Button>
                         )}
                     </div>
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         {step < totalSteps ? (
                             <Button onClick={nextStep} className="bg-gray-900 text-white hover:bg-gray-800 gap-1">
-                                Next <ChevronRight className="h-4 w-4" />
+                                {t("common.next")} <ChevronRight className="h-4 w-4" />
                             </Button>
                         ) : (
                             <Button
@@ -472,7 +474,7 @@ export function AddStaffDialog() {
                                 disabled={saving}
                             >
                                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Create Staff
+                                {t("setup.staff.createButton")}
                             </Button>
                         )}
                     </div>

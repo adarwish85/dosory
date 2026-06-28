@@ -13,8 +13,10 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Customer } from "@/lib/types";
 import { useCustomFields } from "@/lib/hooks/use-settings";
+import { useTranslation } from "@/lib/i18n";
 
 export function CustomerProfileForm() {
+    const { t } = useTranslation();
     const params = useParams();
     const router = useRouter();
     const customerId = params?.id as string;
@@ -98,24 +100,24 @@ export function CustomerProfileForm() {
                 updatedAt: new Date(),
             });
 
-            alert("Customer updated successfully!");
+            alert(t("customers.profile.updateSuccess"));
         } catch (error) {
             console.error("Error updating customer:", error);
-            alert("Failed to update customer");
+            alert(t("customers.profile.updateError"));
         }
     };
 
     if (loading || fieldsLoading) {
-        return <div className="p-8">Loading customer...</div>;
+        return <div className="p-8">{t("customers.profile.loading")}</div>;
     }
 
     if (!customer) {
-        return <div className="p-8">Customer not found</div>;
+        return <div className="p-8">{t("customers.profile.notFound")}</div>;
     }
 
     return (
         <div className="space-y-6 max-w-3xl">
-            <h2 className="text-xl font-bold text-gray-900">Customer Details</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t("customers.profile.details")}</h2>
 
             <form onSubmit={handleSubmit(onSave)} className="space-y-6">
                 <div className="flex items-start space-x-2">
@@ -124,42 +126,42 @@ export function CustomerProfileForm() {
                         htmlFor="show-contact"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700"
                     >
-                        Show primary contact full name on Invoices, Estimates, Payments, Credit Notes
+                        {t("customers.profile.showPrimaryContact")}
                     </label>
                 </div>
 
                 <div className="space-y-4">
                     <div className="grid gap-2">
                         <Label htmlFor="company" className="text-red-500 font-semibold">
-                            * <span className="text-gray-700">Company</span>
+                            * <span className="text-gray-700">{t("customers.field.company")}</span>
                         </Label>
                         <Input id="company" {...register("company", { required: true })} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="vat">VAT Number</Label>
+                        <Label htmlFor="vat">{t("customers.field.vatNumber")}</Label>
                         <Input id="vat" {...register("vatNumber")} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="phone">Phone</Label>
+                        <Label htmlFor="phone">{t("common.phone")}</Label>
                         <Input id="phone" {...register("phone")} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="website">Website</Label>
+                        <Label htmlFor="website">{t("customers.field.website")}</Label>
                         <Input id="website" {...register("website")} />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label>Currency</Label>
+                            <Label>{t("customers.field.currency")}</Label>
                             <Select
                                 defaultValue={customer.currency || "usd"}
                                 onValueChange={(val) => setValue("currency", val)}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="System Default" />
+                                    <SelectValue placeholder={t("customers.profile.systemDefault")} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="usd">USD</SelectItem>
@@ -168,45 +170,45 @@ export function CustomerProfileForm() {
                             </Select>
                         </div>
                         <div className="grid gap-2">
-                            <Label>Default Language</Label>
+                            <Label>{t("customers.field.defaultLanguage")}</Label>
                             <Select
                                 defaultValue={customer.defaultLanguage || "default"}
                                 onValueChange={(val) => setValue("defaultLanguage", val)}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="System Default" />
+                                    <SelectValue placeholder={t("customers.profile.systemDefault")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="default">System Default</SelectItem>
-                                    <SelectItem value="en">English</SelectItem>
+                                    <SelectItem value="default">{t("customers.profile.systemDefault")}</SelectItem>
+                                    <SelectItem value="en">{t("customers.profile.english")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="address">Address</Label>
+                        <Label htmlFor="address">{t("customers.field.address")}</Label>
                         <Textarea id="address" className="min-h-[100px]" {...register("address")} />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="city">City</Label>
+                            <Label htmlFor="city">{t("customers.field.city")}</Label>
                             <Input id="city" {...register("city")} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="state">State</Label>
+                            <Label htmlFor="state">{t("customers.field.state")}</Label>
                             <Input id="state" {...register("state")} />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="zipCode">Zip Code</Label>
+                            <Label htmlFor="zipCode">{t("customers.field.zipCode")}</Label>
                             <Input id="zipCode" {...register("zipCode")} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="country">Country</Label>
+                            <Label htmlFor="country">{t("customers.field.country")}</Label>
                             <Input id="country" {...register("country")} />
                         </div>
                     </div>
@@ -214,7 +216,7 @@ export function CustomerProfileForm() {
                     {/* Custom Fields Section */}
                     {customFields.length > 0 && (
                         <div className="pt-6 border-t">
-                            <h3 className="text-lg font-semibold mb-4">Additional Information</h3>
+                            <h3 className="text-lg font-semibold mb-4">{t("customers.profile.additionalInfo")}</h3>
                             <div className="grid grid-cols-12 gap-4">
                                 {customFields.map((field) => (
                                     <div
@@ -277,9 +279,9 @@ export function CustomerProfileForm() {
                 </div>
 
                 <div className="flex gap-2 pt-4">
-                    <Button type="submit">Save Changes</Button>
+                    <Button type="submit">{t("common.saveChanges")}</Button>
                     <Button type="button" variant="outline" onClick={() => router.push("/dashboard/customers")}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                 </div>
             </form>

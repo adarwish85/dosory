@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStickyNotes } from "@/lib/hooks/use-sticky-notes";
+import { useTranslation } from "@/lib/i18n";
 
 interface RightSidebarProps {
     isOpen: boolean;
@@ -30,6 +31,7 @@ interface RightSidebarProps {
 
 export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
     const pathname = usePathname();
+    const { t } = useTranslation();
     const { notes, addNote, toggleNoteOpen } = useStickyNotes();
     const minimizedNotes = notes.filter((n) => !n.isOpen);
 
@@ -37,45 +39,45 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
     const quickActions = useMemo(() => {
         // Default actions
         const defaults = [
-            { label: "New Project", href: "/dashboard/projects/new", icon: FolderKanban },
-            { label: "New Task", href: "/dashboard/tasks/new", icon: CheckSquare },
-            { label: "Support Ticket", href: "/dashboard/support/new", icon: LifeBuoy },
+            { label: t("dashboard.quickActions.newProject"), href: "/dashboard/projects/new", icon: FolderKanban },
+            { label: t("dashboard.quickActions.newTask"), href: "/dashboard/tasks/new", icon: CheckSquare },
+            { label: t("dashboard.quickActions.supportTicket"), href: "/dashboard/support/new", icon: LifeBuoy },
         ];
 
         // Route-specific overrides
         if (pathname.includes("/dashboard/customers")) {
             return [
-                { label: "Add Customer", href: "/dashboard/customers/new", icon: Users },
-                { label: "Import Customers", href: "/dashboard/customers/import", icon: FileText },
+                { label: t("dashboard.quickActions.addCustomer"), href: "/dashboard/customers/new", icon: Users },
+                { label: t("dashboard.quickActions.importCustomers"), href: "/dashboard/customers/import", icon: FileText },
                 ...defaults.slice(0, 1), // Keep "New Project" as backup
             ];
         }
 
         if (pathname.includes("/dashboard/invoices") || pathname.includes("/dashboard/sales/estimates")) {
             return [
-                { label: "New Invoice", href: "/dashboard/invoices/new", icon: Receipt },
-                { label: "New Estimate", href: "/dashboard/sales/estimates/new", icon: FileSignature },
-                { label: "Record Payment", href: "/dashboard/payments/new", icon: DollarSign },
+                { label: t("dashboard.quickActions.newInvoice"), href: "/dashboard/invoices/new", icon: Receipt },
+                { label: t("dashboard.quickActions.newEstimate"), href: "/dashboard/sales/estimates/new", icon: FileSignature },
+                { label: t("dashboard.quickActions.recordPayment"), href: "/dashboard/payments/new", icon: DollarSign },
             ];
         }
 
         if (pathname.includes("/dashboard/projects") || pathname.includes("/dashboard/tasks")) {
             return [
-                { label: "New Project", href: "/dashboard/projects/new", icon: FolderKanban },
-                { label: "New Task", href: "/dashboard/tasks/new", icon: CheckSquare },
-                { label: "Log Time", href: "/dashboard/timesheets/new", icon: Clock },
+                { label: t("dashboard.quickActions.newProject"), href: "/dashboard/projects/new", icon: FolderKanban },
+                { label: t("dashboard.quickActions.newTask"), href: "/dashboard/tasks/new", icon: CheckSquare },
+                { label: t("dashboard.quickActions.logTime"), href: "/dashboard/timesheets/new", icon: Clock },
             ];
         }
 
         if (pathname.includes("/dashboard/leads")) {
             return [
-                { label: "Add Lead", href: "/dashboard/leads/new", icon: Zap },
-                { label: "Import Leads", href: "/dashboard/leads/import", icon: FileText },
+                { label: t("dashboard.quickActions.addLead"), href: "/dashboard/leads/new", icon: Zap },
+                { label: t("dashboard.quickActions.importLeads"), href: "/dashboard/leads/import", icon: FileText },
             ];
         }
 
         return defaults;
-    }, [pathname]);
+    }, [pathname, t]);
 
     return (
         <aside
@@ -87,7 +89,7 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
             {/* Context-Aware Quick Actions */}
             <div className="mb-4">
                 <h3 className="text-[#65676B] font-semibold text-xs mb-2 px-2 uppercase tracking-wider">
-                    Quick Actions
+                    {t("dashboard.quickActions.title")}
                 </h3>
                 <div className="space-y-2">
                     {quickActions.map((action, index) => {
@@ -110,7 +112,7 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
             <div className="mb-4">
                 <div className="flex items-center justify-between px-2 mb-2">
                     <h3 className="text-[#65676B] font-semibold text-xs uppercase tracking-wider">
-                        Sticky Notes ({notes.length})
+                        {t("dashboard.stickyNotes.title", { count: notes.length })}
                     </h3>
                     <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-black/5" onClick={() => addNote()}>
                         <Plus className="h-3 w-3 text-[#65676B]" />
@@ -136,12 +138,12 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
                                     colorClass
                                 )}
                                 onClick={() => toggleNoteOpen(note.id, true)}
-                                title="Show Note"
+                                title={t("dashboard.stickyNotes.showNote")}
                             />
                         );
                     })}
                     {minimizedNotes.length === 0 && (
-                        <span className="text-xs text-gray-400 italic">No minimized notes</span>
+                        <span className="text-xs text-gray-400 italic">{t("dashboard.stickyNotes.noMinimized")}</span>
                     )}
                 </div>
             </div>

@@ -28,6 +28,7 @@ import { useTasks } from "@/lib/hooks/use-projects";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useTranslation } from "@/lib/i18n";
 
 const LEAD_SIDEBAR_KEY = "lead_sidebar_collapsed";
 
@@ -35,6 +36,7 @@ export function LeadSidebar() {
     const pathname = usePathname();
     const { leadId, lead } = useLead();
     const { profile } = useUserProfile();
+    const { t } = useTranslation();
     const [collapsed, setCollapsed] = useState(true); // Default collapsed
 
     // Local state for counts of items not covered by standard hooks or that require specific sub-collections
@@ -109,20 +111,20 @@ export function LeadSidebar() {
     };
 
     const menuItems = [
-        { icon: LayoutDashboard, label: "Overview", href: `/dashboard/leads/${leadId}`, count: 0 },
-        { icon: User, label: "Profile", href: `/dashboard/leads/${leadId}/profile`, count: 0 },
+        { icon: LayoutDashboard, label: t("leads.sidebar.overview"), href: `/dashboard/leads/${leadId}`, count: 0 },
+        { icon: User, label: t("leads.sidebar.profile"), href: `/dashboard/leads/${leadId}/profile`, count: 0 },
         {
             icon: Phone,
-            label: "Activities",
+            label: t("leads.sidebar.activities"),
             href: `/dashboard/leads/${leadId}/activities`,
             count: activities?.length || 0,
         },
-        { icon: Briefcase, label: "Deal", href: `/dashboard/leads/${leadId}/deal`, count: lead?.deal ? 1 : 0 },
-        { icon: Calculator, label: "Estimates", href: `/dashboard/leads/${leadId}/estimates`, count: 0 }, // Tasks: Estimates not yet implemented
-        { icon: CheckSquare, label: "Tasks", href: `/dashboard/leads/${leadId}/tasks`, count: tasks?.length || 0 },
-        { icon: Bell, label: "Reminders", href: `/dashboard/leads/${leadId}/reminders`, count: remindersCount },
-        { icon: Paperclip, label: "Files", href: `/dashboard/leads/${leadId}/files`, count: files?.length || 0 },
-        { icon: StickyNote, label: "Notes", href: `/dashboard/leads/${leadId}/notes`, count: notesCount },
+        { icon: Briefcase, label: t("leads.sidebar.deal"), href: `/dashboard/leads/${leadId}/deal`, count: lead?.deal ? 1 : 0 },
+        { icon: Calculator, label: t("leads.sidebar.estimates"), href: `/dashboard/leads/${leadId}/estimates`, count: 0 }, // Tasks: Estimates not yet implemented
+        { icon: CheckSquare, label: t("leads.sidebar.tasks"), href: `/dashboard/leads/${leadId}/tasks`, count: tasks?.length || 0 },
+        { icon: Bell, label: t("leads.sidebar.reminders"), href: `/dashboard/leads/${leadId}/reminders`, count: remindersCount },
+        { icon: Paperclip, label: t("leads.sidebar.files"), href: `/dashboard/leads/${leadId}/files`, count: files?.length || 0 },
+        { icon: StickyNote, label: t("leads.sidebar.notes"), href: `/dashboard/leads/${leadId}/notes`, count: notesCount },
     ];
 
     return (
@@ -160,13 +162,13 @@ export function LeadSidebar() {
                                     </Button>
                                 </Link>
                             </TooltipTrigger>
-                            <TooltipContent side="right">Back to Leads</TooltipContent>
+                            <TooltipContent side="right">{t("leads.sidebar.backToLeads")}</TooltipContent>
                         </Tooltip>
                     ) : (
                         <Link href="/dashboard/leads">
                             <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
                                 <ArrowLeft className="h-4 w-4 mr-2" />
-                                Back to Leads
+                                {t("leads.sidebar.backToLeads")}
                             </Button>
                         </Link>
                     )}
@@ -179,7 +181,7 @@ export function LeadSidebar() {
 
                         if (collapsed) {
                             return (
-                                <Tooltip key={item.label}>
+                                <Tooltip key={item.href}>
                                     <TooltipTrigger asChild>
                                         <Link
                                             href={item.href}
@@ -208,7 +210,7 @@ export function LeadSidebar() {
 
                         return (
                             <Link
-                                key={item.label}
+                                key={item.href}
                                 href={item.href}
                                 className={cn(
                                     "flex items-center justify-between px-4 py-2 text-sm font-medium transition-colors",

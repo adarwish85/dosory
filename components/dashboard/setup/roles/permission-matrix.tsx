@@ -15,12 +15,14 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTranslation } from "@/lib/i18n";
 
 interface PermissionMatrixProps {
     onSaveSuccess?: () => void;
 }
 
 export function PermissionMatrix({ onSaveSuccess }: PermissionMatrixProps) {
+    const { t } = useTranslation();
     const { roles, loading: rolesLoading, updateRole } = useRoles();
     const [localRoles, setLocalRoles] = useState<Role[]>([]);
     const [saving, setSaving] = useState(false);
@@ -95,7 +97,7 @@ export function PermissionMatrix({ onSaveSuccess }: PermissionMatrixProps) {
 
     const handleSave = async () => {
         if (modifiedRoleIds.size === 0) {
-            toast.info("No changes to save.");
+            toast.info(t("setup.roles.matrix.noChanges"));
             return;
         }
 
@@ -111,13 +113,13 @@ export function PermissionMatrix({ onSaveSuccess }: PermissionMatrixProps) {
                 )
             );
 
-            toast.success(`Updated ${rolesToUpdate.length} roles successfully.`);
+            toast.success(t("setup.roles.matrix.saveSuccess", { count: String(rolesToUpdate.length) }));
             setModifiedRoleIds(new Set());
             onSaveSuccess?.();
             // Re-sync happens via useEffect when parent refetches, but we clear modified flag
         } catch (error) {
             console.error("Failed to save matrix", error);
-            toast.error("Failed to save permission changes.");
+            toast.error(t("setup.roles.matrix.saveError"));
         } finally {
             setSaving(false);
         }
@@ -145,12 +147,12 @@ export function PermissionMatrix({ onSaveSuccess }: PermissionMatrixProps) {
         <div className="space-y-4">
             <div className="flex justify-between items-center bg-yellow-50 p-3 rounded-lg border border-yellow-200">
                 <div className="text-sm text-yellow-800">
-                    <span className="font-semibold">⚠️ Caution:</span> You are editing permissions for multiple roles directly. Changes are not saved until you click the button below.
+                    <span className="font-semibold">{t("setup.roles.matrix.cautionLabel")}</span> {t("setup.roles.matrix.cautionBody")}
                 </div>
                 <Button onClick={handleSave} disabled={modifiedRoleIds.size === 0 || saving} className="gap-2">
                     {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                     <Save className="h-4 w-4" />
-                    Save Changes ({modifiedRoleIds.size})
+                    {t("setup.roles.matrix.saveChangesCount", { count: String(modifiedRoleIds.size) })}
                 </Button>
             </div>
 
@@ -159,7 +161,7 @@ export function PermissionMatrix({ onSaveSuccess }: PermissionMatrixProps) {
                     <thead className="bg-gray-50 text-gray-700 font-semibold">
                         <tr>
                             <th className="p-3 border-b min-w-[250px] sticky left-0 bg-gray-50 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                                Permission
+                                {t("setup.roles.matrix.permissionHeader")}
                             </th>
                             {localRoles.map((role) => (
                                 <th key={role.id} className="p-3 border-b border-l text-center min-w-[120px]">
@@ -175,7 +177,7 @@ export function PermissionMatrix({ onSaveSuccess }: PermissionMatrixProps) {
                                                             className="h-3.5 w-3.5"
                                                         />
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Select/Deselect All for Role</TooltipContent>
+                                                    <TooltipContent>{t("setup.roles.matrix.toggleAllForRole")}</TooltipContent>
                                                 </Tooltip>
                                             </TooltipProvider>
                                         </div>
@@ -222,7 +224,7 @@ export function PermissionMatrix({ onSaveSuccess }: PermissionMatrixProps) {
                                                                     className={cn("h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity", (allRolesHave || someRolesHave) && "opacity-100")}
                                                                 />
                                                             </TooltipTrigger>
-                                                            <TooltipContent>Select/Deselect All Roles</TooltipContent>
+                                                            <TooltipContent>{t("setup.roles.matrix.toggleAllRoles")}</TooltipContent>
                                                         </Tooltip>
                                                     </TooltipProvider>
                                                 </div>

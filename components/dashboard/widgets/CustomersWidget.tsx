@@ -4,6 +4,7 @@ import { useCustomers } from "@/lib/hooks/use-customers";
 import { Users, TrendingUp, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { WidgetSkeleton } from "./WidgetSkeleton";
+import { useTranslation } from "@/lib/i18n";
 import type { WidgetSettings, DataDensity } from "@/lib/hooks/use-dashboard-layout";
 
 interface CustomersWidgetProps {
@@ -12,6 +13,7 @@ interface CustomersWidgetProps {
 }
 
 export function CustomersWidget({ settings, density }: CustomersWidgetProps) {
+    const { t } = useTranslation();
     const { customers, loading } = useCustomers();
     const limit = settings.limit || 5;
 
@@ -38,23 +40,23 @@ export function CustomersWidget({ settings, density }: CustomersWidgetProps) {
                         <Users className="h-4 w-4" />
                     </div>
                     <div className="text-xl font-bold text-blue-900">{customers.length}</div>
-                    <div className="text-xs text-blue-600">Total</div>
+                    <div className="text-xs text-blue-600">{t("dashboard.customers.total")}</div>
                 </div>
                 <div className="bg-green-50 rounded-lg p-3 text-center">
                     <div className="flex items-center justify-center gap-1 text-green-600 mb-1">
                         <TrendingUp className="h-4 w-4" />
                     </div>
                     <div className="text-xl font-bold text-green-900">{activeCount}</div>
-                    <div className="text-xs text-green-600">Active</div>
+                    <div className="text-xs text-green-600">{t("dashboard.customers.active")}</div>
                 </div>
             </div>
 
             {/* Recent Customers List */}
             <div className="flex-1 space-y-2 overflow-auto">
-                <div className="text-xs font-medium text-gray-500 uppercase mb-2">Recent Customers</div>
+                <div className="text-xs font-medium text-gray-500 uppercase mb-2">{t("dashboard.customers.recent")}</div>
                 {recentCustomers.length === 0 ? (
                     <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                        No customers yet
+                        {t("dashboard.customers.empty")}
                     </div>
                 ) : (
                     recentCustomers.map((customer) => (
@@ -85,7 +87,7 @@ export function CustomersWidget({ settings, density }: CustomersWidgetProps) {
                 className="flex items-center justify-center gap-2 text-sm text-blue-600 hover:underline mt-2"
             >
                 <UserPlus className="h-4 w-4" />
-                Add Customer
+                {t("dashboard.customers.add")}
             </Link>
         </div>
     );

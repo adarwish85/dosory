@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Phone, Mail, Calendar, FileText, CheckSquare, Bell, Receipt, ArrowLeft } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 
 export function CustomerProfileHeader() {
+    const { t } = useTranslation();
     const { customer, loading } = useCustomer();
     const router = useRouter();
 
@@ -61,7 +63,7 @@ export function CustomerProfileHeader() {
                                 <Phone className="h-4 w-4 text-green-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Call Customer</TooltipContent>
+                        <TooltipContent>{t("customers.header.callCustomer")}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -74,7 +76,7 @@ export function CustomerProfileHeader() {
                                 <Mail className="h-4 w-4 text-blue-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Send Email</TooltipContent>
+                        <TooltipContent>{t("customers.header.sendEmail")}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -83,7 +85,7 @@ export function CustomerProfileHeader() {
                                 <Receipt className="h-4 w-4 text-indigo-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Create Invoice</TooltipContent>
+                        <TooltipContent>{t("customers.header.createInvoice")}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -92,7 +94,7 @@ export function CustomerProfileHeader() {
                                 <FileText className="h-4 w-4 text-orange-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Create Estimate</TooltipContent>
+                        <TooltipContent>{t("customers.header.createEstimate")}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -101,7 +103,7 @@ export function CustomerProfileHeader() {
                                 <CheckSquare className="h-4 w-4 text-teal-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Add Task</TooltipContent>
+                        <TooltipContent>{t("customers.header.addTask")}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -110,7 +112,7 @@ export function CustomerProfileHeader() {
                                 <Bell className="h-4 w-4 text-pink-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Set Reminder</TooltipContent>
+                        <TooltipContent>{t("customers.header.setReminder")}</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
             </div>

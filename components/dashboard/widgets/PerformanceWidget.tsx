@@ -1,6 +1,7 @@
 "use client";
 
 import { Trophy, Medal, Award } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 import type { WidgetSettings, DataDensity } from "@/lib/hooks/use-dashboard-layout";
 
 interface PerformanceWidgetProps {
@@ -10,11 +11,11 @@ interface PerformanceWidgetProps {
 
 // Mock leaderboard data - in real app, calculate from invoices/leads
 const LEADERBOARD = [
-    { id: "1", name: "Ahmed Hassan", avatar: "AH", score: 47, metric: "deals closed" },
-    { id: "2", name: "Sara Mohamed", avatar: "SM", score: 42, metric: "deals closed" },
-    { id: "3", name: "Omar Ali", avatar: "OA", score: 38, metric: "deals closed" },
-    { id: "4", name: "Fatima Nour", avatar: "FN", score: 31, metric: "deals closed" },
-    { id: "5", name: "Youssef Karim", avatar: "YK", score: 28, metric: "deals closed" },
+    { id: "1", name: "Ahmed Hassan", avatar: "AH", score: 47 },
+    { id: "2", name: "Sara Mohamed", avatar: "SM", score: 42 },
+    { id: "3", name: "Omar Ali", avatar: "OA", score: 38 },
+    { id: "4", name: "Fatima Nour", avatar: "FN", score: 31 },
+    { id: "5", name: "Youssef Karim", avatar: "YK", score: 28 },
 ];
 
 const RANK_ICONS = [
@@ -24,12 +25,13 @@ const RANK_ICONS = [
 ];
 
 export function PerformanceWidget({ settings, density }: PerformanceWidgetProps) {
+    const { t } = useTranslation();
     const limit = settings.limit || 5;
     const users = LEADERBOARD.slice(0, limit);
 
     return (
         <div className="h-full flex flex-col">
-            <div className="text-xs font-medium text-gray-500 uppercase mb-3">Top Performers</div>
+            <div className="text-xs font-medium text-gray-500 uppercase mb-3">{t("dashboard.performance.topPerformers")}</div>
 
             <div className="flex-1 space-y-2 overflow-auto">
                 {users.map((user, index) => {
@@ -60,7 +62,7 @@ export function PerformanceWidget({ settings, density }: PerformanceWidgetProps)
                             {/* Score */}
                             <div className="text-right">
                                 <div className="text-sm font-bold text-gray-900">{user.score}</div>
-                                <div className="text-xs text-gray-400">{user.metric}</div>
+                                <div className="text-xs text-gray-400">{t("dashboard.performance.dealsClosed")}</div>
                             </div>
                         </div>
                     );

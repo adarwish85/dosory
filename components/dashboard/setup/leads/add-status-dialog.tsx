@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useTranslation } from "@/lib/i18n";
 
 export function AddLeadStatusDialog() {
     const [open, setOpen] = useState(false);
@@ -17,6 +18,7 @@ export function AddLeadStatusDialog() {
     const [color, setColor] = useState("#3B82F6");
     const [saving, setSaving] = useState(false);
     const { profile } = useUserProfile();
+    const { t } = useTranslation();
 
     const handleOpenChange = (newOpen: boolean) => {
         setOpen(newOpen);
@@ -28,7 +30,7 @@ export function AddLeadStatusDialog() {
 
     const handleSave = async () => {
         if (!name.trim()) {
-            toast.error("Status name is required");
+            toast.error(t("setup.leads.status.nameRequired"));
             return;
         }
 
@@ -43,11 +45,11 @@ export function AddLeadStatusDialog() {
                 createdBy: profile?.uid,
             });
 
-            toast.success("Lead status created successfully!");
+            toast.success(t("setup.leads.status.createSuccess"));
             handleOpenChange(false);
         } catch (error) {
             console.error("Error creating lead status:", error);
-            toast.error("Failed to create lead status");
+            toast.error(t("setup.leads.status.createError"));
         } finally {
             setSaving(false);
         }
@@ -57,27 +59,27 @@ export function AddLeadStatusDialog() {
         <Sheet open={open} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
                 <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                    <Plus className="mr-2 h-4 w-4" /> New Lead Status
+                    <Plus className="mr-2 h-4 w-4" /> {t("setup.leads.status.newButton")}
                 </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-md bg-white p-0 flex flex-col">
                 <SheetHeader className="px-6 py-4 border-b flex-shrink-0">
-                    <SheetTitle>Add New Lead Status</SheetTitle>
+                    <SheetTitle>{t("setup.leads.status.dialogTitle")}</SheetTitle>
                 </SheetHeader>
 
                 <div className="flex-1 p-6">
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label className="text-red-500">* Status Name</Label>
+                            <Label className="text-red-500">{t("setup.leads.status.nameLabel")}</Label>
                             <Input
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="e.g. New, Contacted, Qualified"
+                                placeholder={t("setup.leads.status.namePlaceholder")}
                                 autoFocus
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Status Color</Label>
+                            <Label>{t("setup.leads.status.colorLabel")}</Label>
                             <div className="flex items-center gap-3">
                                 <input
                                     type="color"

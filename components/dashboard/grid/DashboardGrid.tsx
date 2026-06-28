@@ -15,6 +15,7 @@ import {
     DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { toast } from "sonner";
 import {
@@ -36,16 +37,16 @@ import { CustomersWidget } from "../widgets/CustomersWidget";
 import { PerformanceWidget } from "../widgets/PerformanceWidget";
 import { RevenueWidget } from "../widgets/RevenueWidget";
 
-// Widget catalog
-const WIDGET_CATALOG: Record<WidgetId, { title: string; description: string; icon: string }> = {
-    revenue: { title: "Revenue", description: "Revenue chart and summary", icon: "💰" },
-    tasks: { title: "Tasks", description: "My tasks and overdue items", icon: "✅" },
-    activity: { title: "Activity", description: "Team activity feed", icon: "📢" },
-    pipeline: { title: "Pipeline", description: "Sales pipeline funnel", icon: "📊" },
-    quickActions: { title: "Quick Actions", description: "Shortcuts to common tasks", icon: "⚡" },
-    calendar: { title: "Calendar", description: "Mini calendar view", icon: "📅" },
-    customers: { title: "Customers", description: "Recent and top customers", icon: "👥" },
-    performance: { title: "Performance", description: "Team leaderboard", icon: "🏆" },
+// Widget catalog (titleKey/descriptionKey resolved via t() at render)
+const WIDGET_CATALOG: Record<WidgetId, { titleKey: string; descriptionKey: string; icon: string }> = {
+    revenue: { titleKey: "dashboard.grid.widget.revenue.title", descriptionKey: "dashboard.grid.widget.revenue.description", icon: "💰" },
+    tasks: { titleKey: "dashboard.grid.widget.tasks.title", descriptionKey: "dashboard.grid.widget.tasks.description", icon: "✅" },
+    activity: { titleKey: "dashboard.grid.widget.activity.title", descriptionKey: "dashboard.grid.widget.activity.description", icon: "📢" },
+    pipeline: { titleKey: "dashboard.grid.widget.pipeline.title", descriptionKey: "dashboard.grid.widget.pipeline.description", icon: "📊" },
+    quickActions: { titleKey: "dashboard.grid.widget.quickActions.title", descriptionKey: "dashboard.grid.widget.quickActions.description", icon: "⚡" },
+    calendar: { titleKey: "dashboard.grid.widget.calendar.title", descriptionKey: "dashboard.grid.widget.calendar.description", icon: "📅" },
+    customers: { titleKey: "dashboard.grid.widget.customers.title", descriptionKey: "dashboard.grid.widget.customers.description", icon: "👥" },
+    performance: { titleKey: "dashboard.grid.widget.performance.title", descriptionKey: "dashboard.grid.widget.performance.description", icon: "🏆" },
 };
 
 // Widget components mapping
@@ -77,6 +78,7 @@ interface DashboardGridProps {
 }
 
 export function DashboardGrid({ className }: DashboardGridProps) {
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const [showWidgetMenu, setShowWidgetMenu] = useState(false);
 
@@ -107,18 +109,18 @@ export function DashboardGrid({ className }: DashboardGridProps) {
         if (orgId && userId) {
             const success = await saveToFirestore(orgId, userId);
             if (success) {
-                toast.success("Dashboard settings saved!");
+                toast.success(t("dashboard.grid.savedToast"));
             } else {
-                toast.error("Failed to save settings");
+                toast.error(t("dashboard.grid.saveFailedToast"));
             }
         }
-    }, [orgId, userId, saveToFirestore]);
+    }, [orgId, userId, saveToFirestore, t]);
 
     // Discard handler
     const handleDiscard = useCallback(() => {
         discardChanges();
-        toast.info("Changes discarded");
-    }, [discardChanges]);
+        toast.info(t("dashboard.grid.discardedToast"));
+    }, [discardChanges, t]);
 
     // Style change handler
     const handleStyleChange = useCallback(
@@ -142,10 +144,10 @@ export function DashboardGrid({ className }: DashboardGridProps) {
     // Greeting based on time
     const greeting = (() => {
         const hour = new Date().getHours();
-        if (hour >= 5 && hour < 12) return "Good morning";
-        if (hour >= 12 && hour < 17) return "Good afternoon";
-        if (hour >= 17 && hour < 21) return "Good evening";
-        return "Working late";
+        if (hour >= 5 && hour < 12) return t("dashboard.grid.greeting.morning");
+        if (hour >= 12 && hour < 17) return t("dashboard.grid.greeting.afternoon");
+        if (hour >= 17 && hour < 21) return t("dashboard.grid.greeting.evening");
+        return t("dashboard.grid.greeting.late");
     })();
 
     if (isLoading) {
@@ -164,28 +166,30 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                     <h1 className="text-2xl font-bold text-gray-900">
                         {greeting},{" "}
                         {profile?.firstName ||
-                            (profile?.displayName?.includes(" ") ? profile.displayName.split(" ")[0] : "there")}
+                            (profile?.displayName?.includes(" ")
+                                ? profile.displayName.split(" ")[0]
+                                : t("dashboard.grid.there"))}
                         ! 👋
                     </h1>
-                    <p className="text-sm text-gray-500">Here&apos;s what&apos;s happening with your business today.</p>
+                    <p className="text-sm text-gray-500">{t("dashboard.grid.subtitle")}</p>
                 </div>
 
                 <div className="flex items-center gap-2">
                     {/* Unsaved Changes Indicator */}
                     {hasUnsavedChanges && (
                         <div className="flex items-center gap-2">
-                            <span className="text-sm text-orange-600">• Unsaved</span>
+                            <span className="text-sm text-orange-600">• {t("dashboard.grid.unsaved")}</span>
                             <Button size="sm" onClick={handleSave} disabled={isSaving}>
                                 {isSaving ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
                                     <Save className="h-4 w-4 mr-1" />
                                 )}
-                                Save
+                                {t("common.save")}
                             </Button>
                             <Button size="sm" variant="ghost" onClick={handleDiscard}>
                                 <RotateCcw className="h-4 w-4 mr-1" />
-                                Discard
+                                {t("dashboard.grid.discard")}
                             </Button>
                         </div>
                     )}
@@ -195,11 +199,11 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="sm" className="gap-2">
                                 <Plus className="h-4 w-4" />
-                                Widgets
+                                {t("dashboard.grid.widgets")}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-64">
-                            <DropdownMenuLabel>Toggle Widgets</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("dashboard.grid.toggleWidgets")}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             {WIDGET_ORDER.map((id) => {
                                 const meta = WIDGET_CATALOG[id];
@@ -212,8 +216,8 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                                     >
                                         <span className="mr-2">{meta.icon}</span>
                                         <div className="flex-1">
-                                            <div className="font-medium">{meta.title}</div>
-                                            <div className="text-xs text-gray-500">{meta.description}</div>
+                                            <div className="font-medium">{t(meta.titleKey)}</div>
+                                            <div className="text-xs text-gray-500">{t(meta.descriptionKey)}</div>
                                         </div>
                                     </DropdownMenuCheckboxItem>
                                 );
@@ -229,20 +233,20 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Widget Style</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("dashboard.grid.widgetStyle")}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuRadioGroup value={config.widgetStyle} onValueChange={handleStyleChange}>
-                                <DropdownMenuRadioItem value="minimal">Minimal</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="card">Card</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="gradient">Gradient</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="minimal">{t("dashboard.grid.style.minimal")}</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="card">{t("dashboard.grid.style.card")}</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="gradient">{t("dashboard.grid.style.gradient")}</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Data Density</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("dashboard.grid.dataDensity")}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuRadioGroup value={config.dataDensity} onValueChange={handleDensityChange}>
-                                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="spacious">Spacious</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="compact">{t("dashboard.grid.density.compact")}</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="comfortable">{t("dashboard.grid.density.comfortable")}</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="spacious">{t("dashboard.grid.density.spacious")}</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -266,7 +270,7 @@ export function DashboardGrid({ className }: DashboardGridProps) {
                         <div key={widgetId} className={spanClass}>
                             <BaseWidget
                                 id={widgetId}
-                                title={meta.title}
+                                title={t(meta.titleKey)}
                                 icon={meta.icon}
                                 settings={settings}
                                 style={config.widgetStyle}
@@ -285,13 +289,11 @@ export function DashboardGrid({ className }: DashboardGridProps) {
             {visibleWidgets.length === 0 && (
                 <div className="border-2 border-dashed border-gray-200 rounded-xl p-12 text-center">
                     <div className="text-4xl mb-4">📊</div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No widgets visible</h3>
-                    <p className="text-gray-500 mb-4">
-                        Click &quot;Widgets&quot; to toggle which widgets appear on your dashboard
-                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{t("dashboard.grid.emptyTitle")}</h3>
+                    <p className="text-gray-500 mb-4">{t("dashboard.grid.emptyDescription")}</p>
                     <Button onClick={() => setShowWidgetMenu(true)}>
                         <Plus className="h-4 w-4 mr-2" />
-                        Show Widgets
+                        {t("dashboard.grid.showWidgets")}
                     </Button>
                 </div>
             )}

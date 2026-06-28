@@ -5,8 +5,10 @@ import { DollarSign, Briefcase, Activity, CheckCircle, Clock } from "lucide-reac
 import { Progress } from "@/components/ui/progress";
 import { useInvoices, useProjects } from "@/lib/hooks";
 import { format } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 
 export function CustomerOverview() {
+    const { t } = useTranslation();
     const { customer, contacts, loading: customerLoading } = useCustomer();
 
     // Fetch Financials
@@ -22,7 +24,7 @@ export function CustomerOverview() {
 
     const loading = customerLoading || invoicesLoading || projectsLoading;
 
-    if (loading || !customer) return <div className="p-8">Loading overview...</div>;
+    if (loading || !customer) return <div className="p-8">{t("customers.overview.loading")}</div>;
 
     // Financial Data
     const financials = {
@@ -81,26 +83,26 @@ export function CustomerOverview() {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-lg font-bold">Performance Overview</h2>
+            <h2 className="text-lg font-bold">{t("customers.overview.title")}</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Financial Health Widget */}
                 <div className="p-6 border rounded-lg bg-white shadow-sm">
                     <div className="flex items-center gap-3 mb-4 text-green-600">
                         <DollarSign className="h-6 w-6" />
-                        <h3 className="text-md font-semibold text-gray-900">Financials</h3>
+                        <h3 className="text-md font-semibold text-gray-900">{t("customers.overview.financials")}</h3>
                     </div>
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Total Invoiced</span>
+                            <span className="text-sm text-gray-500">{t("customers.overview.totalInvoiced")}</span>
                             <span className="font-bold text-gray-900">{formatCurrency(financials.invoiced)}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Amount Paid</span>
+                            <span className="text-sm text-gray-500">{t("customers.overview.amountPaid")}</span>
                             <span className="font-bold text-green-600">{formatCurrency(financials.paid)}</span>
                         </div>
                         <div className="flex justify-between items-center pt-2 border-t">
-                            <span className="text-sm text-gray-500">Amount Due</span>
+                            <span className="text-sm text-gray-500">{t("customers.overview.amountDue")}</span>
                             <span className="font-bold text-red-600">{formatCurrency(financials.due)}</span>
                         </div>
                     </div>
@@ -110,21 +112,21 @@ export function CustomerOverview() {
                 <div className="p-6 border rounded-lg bg-white shadow-sm">
                     <div className="flex items-center gap-3 mb-4 text-blue-600">
                         <Briefcase className="h-6 w-6" />
-                        <h3 className="text-md font-semibold text-gray-900">Projects</h3>
+                        <h3 className="text-md font-semibold text-gray-900">{t("customers.overview.projects")}</h3>
                     </div>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-gray-900">{projectStats.active}</div>
-                                <div className="text-xs text-gray-500 uppercase">Active</div>
+                                <div className="text-xs text-gray-500 uppercase">{t("customers.overview.active")}</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-gray-900">{projectStats.completed}</div>
-                                <div className="text-xs text-gray-500 uppercase">Completed</div>
+                                <div className="text-xs text-gray-500 uppercase">{t("customers.overview.completed")}</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-bold text-gray-900">{projectStats.total}</div>
-                                <div className="text-xs text-gray-500 uppercase">Total</div>
+                                <div className="text-xs text-gray-500 uppercase">{t("customers.overview.total")}</div>
                             </div>
                         </div>
                         {projectStats.total > 0 && (
@@ -132,7 +134,7 @@ export function CustomerOverview() {
                                 className="text-xs text-center text-blue-600 cursor-pointer hover:underline"
                                 onClick={() => (window.location.href = `/dashboard/customers/${customer.id}/projects`)}
                             >
-                                View All Projects →
+                                {t("customers.overview.viewAllProjects")} →
                             </div>
                         )}
                     </div>
@@ -142,11 +144,11 @@ export function CustomerOverview() {
                 <div className="p-6 border rounded-lg bg-white shadow-sm">
                     <div className="flex items-center gap-3 mb-4 text-purple-600">
                         <Activity className="h-6 w-6" />
-                        <h3 className="text-md font-semibold text-gray-900">Engagement</h3>
+                        <h3 className="text-md font-semibold text-gray-900">{t("customers.overview.engagement")}</h3>
                     </div>
                     <div className="space-y-2">
                         <div className="flex justify-between text-sm mb-1">
-                            <span>Health Score</span>
+                            <span>{t("customers.overview.healthScore")}</span>
                             <span
                                 className={`font-bold ${healthScore >= 70 ? "text-green-600" : healthScore >= 40 ? "text-yellow-600" : "text-gray-600"}`}
                             >
@@ -159,12 +161,12 @@ export function CustomerOverview() {
                                 <CheckCircle
                                     className={`h-3 w-3 ${hasPortalAccess ? "text-green-500" : "text-gray-300"}`}
                                 />
-                                {hasPortalAccess ? "Portal Active" : "No Portal Access"}
+                                {hasPortalAccess ? t("customers.overview.portalActive") : t("customers.overview.noPortalAccess")}
                             </div>
                             {lastLoginDate && (
                                 <div className="flex items-center gap-1 text-gray-600">
                                     <Clock className="h-3 w-3 text-yellow-500" />
-                                    Last: {format(lastLoginDate, "MMM d")}
+                                    {t("customers.overview.last")} {format(lastLoginDate, "MMM d")}
                                 </div>
                             )}
                         </div>
@@ -174,8 +176,8 @@ export function CustomerOverview() {
 
             {/* Recent Activity Placeholder (Could be expanded later) */}
             <div className="border rounded-lg bg-white p-6 shadow-sm">
-                <h3 className="font-semibold mb-4">Recent Activity</h3>
-                <div className="text-sm text-gray-500 italic">No recent activity logged.</div>
+                <h3 className="font-semibold mb-4">{t("customers.overview.recentActivity")}</h3>
+                <div className="text-sm text-gray-500 italic">{t("customers.overview.noRecentActivity")}</div>
             </div>
         </div>
     );

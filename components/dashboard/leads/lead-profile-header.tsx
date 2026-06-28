@@ -6,9 +6,11 @@ import { Phone, Mail, Calendar, FileText, CheckSquare, Bell, UserPlus, Link as L
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConvertLeadDialog } from "./convert-lead-dialog";
 import { toSlug, createSlugId } from "@/lib/url-utils";
+import { useTranslation } from "@/lib/i18n";
 
 export function LeadProfileHeader() {
     const { lead, loading } = useLead();
+    const { t } = useTranslation();
 
     if (loading || !lead) return null;
 
@@ -19,7 +21,7 @@ export function LeadProfileHeader() {
                     <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
                         {lead.name}
                         <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full whitespace-nowrap">
-                            {lead.status}
+                            {lead.status ? t(`leads.status.${lead.status}`) : lead.status}
                         </span>
                     </h1>
                     {lead.company && <p className="text-gray-500 mt-1">{lead.company}</p>}
@@ -59,7 +61,7 @@ export function LeadProfileHeader() {
                                 <LinkIcon className="h-4 w-4 text-gray-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Copy Share Link</TooltipContent>
+                        <TooltipContent>{t("leads.header.copyShareLink")}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -73,7 +75,7 @@ export function LeadProfileHeader() {
                                 <Phone className="h-4 w-4 text-green-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Call Lead</TooltipContent>
+                        <TooltipContent>{t("leads.header.callLead")}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -87,7 +89,7 @@ export function LeadProfileHeader() {
                                 <Mail className="h-4 w-4 text-blue-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Send Email</TooltipContent>
+                        <TooltipContent>{t("leads.header.sendEmail")}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -96,7 +98,7 @@ export function LeadProfileHeader() {
                                 <Calendar className="h-4 w-4 text-purple-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Schedule Meeting</TooltipContent>
+                        <TooltipContent>{t("leads.header.scheduleMeeting")}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -105,7 +107,7 @@ export function LeadProfileHeader() {
                                 <CheckSquare className="h-4 w-4 text-teal-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Add Task</TooltipContent>
+                        <TooltipContent>{t("leads.header.addTask")}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -114,7 +116,7 @@ export function LeadProfileHeader() {
                                 <Bell className="h-4 w-4 text-pink-600" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Set Reminder</TooltipContent>
+                        <TooltipContent>{t("leads.header.setReminder")}</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
             </div>

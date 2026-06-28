@@ -23,6 +23,7 @@ import { useEstimates } from "@/lib/hooks/use-sales";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 const convertSchema = z.object({
     createContact: z.boolean(),
@@ -41,6 +42,7 @@ interface ConvertLeadDialogProps {
 }
 
 export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: ConvertLeadDialogProps) {
+    const { t } = useTranslation();
     const { convertToCustomer, isConverting, conversionStep } = useLeads();
     const { estimates } = useEstimates({ leadId: lead.id }); // Fetch estimates for this lead
     // const [isLoading, setIsLoading] = useState(false); // Deprecated in favor of hook state
@@ -74,16 +76,16 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                 selectedEstimateId: data.selectedEstimateId,
             });
 
-            toast.success("Lead Converted", {
-                description: "Lead successfully converted to customer.",
+            toast.success(t("leads.convertDialog.successTitle"), {
+                description: t("leads.convertDialog.successDesc"),
             });
 
             onOpenChangeHandler?.(false);
             router.push(`/dashboard/customers/${customerId}`);
         } catch (error) {
             console.error(error);
-            toast.error("Error", {
-                description: "Failed to convert lead. Please try again.",
+            toast.error(t("common.error"), {
+                description: t("leads.convertDialog.errorDesc"),
             });
         } finally {
             // setIsLoading(false); // Handled by hook
@@ -95,9 +97,9 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
             <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Convert Lead to Customer</DialogTitle>
+                    <DialogTitle>{t("leads.convertDialog.title")}</DialogTitle>
                     <DialogDescription>
-                        Create a new customer from this lead. Select additional items to create.
+                        {t("leads.convertDialog.description")}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -109,10 +111,12 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                                 <Checkbox checked disabled />
                                 <div className="grid gap-1.5 leading-none">
                                     <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                        Create Customer & Company
+                                        {t("leads.convertDialog.createCustomerCompany")}
                                     </label>
                                     <p className="text-xs text-muted-foreground">
-                                        Creates {lead.company || lead.name} in Customers.
+                                        {t("leads.convertDialog.createsInCustomers", {
+                                            name: lead.company || lead.name,
+                                        })}
                                     </p>
                                 </div>
                             </div>
@@ -127,8 +131,10 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                                             <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
-                                            <FormLabel>Create Contact Person</FormLabel>
-                                            <FormDescription>Creates {lead.name} as a primary contact.</FormDescription>
+                                            <FormLabel>{t("leads.convertDialog.createContactPerson")}</FormLabel>
+                                            <FormDescription>
+                                                {t("leads.convertDialog.createsPrimaryContact", { name: lead.name })}
+                                            </FormDescription>
                                         </div>
                                     </FormItem>
                                 )}
@@ -148,11 +154,13 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                                             />
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
-                                            <FormLabel>Create Project from Deal Data</FormLabel>
+                                            <FormLabel>{t("leads.convertDialog.createProjectFromDeal")}</FormLabel>
                                             <FormDescription>
                                                 {lead.deal
-                                                    ? `Creates project "${lead.deal.subject}"`
-                                                    : "No deal data available (add in Deal section)"}
+                                                    ? t("leads.convertDialog.createsProject", {
+                                                          subject: lead.deal.subject,
+                                                      })
+                                                    : t("leads.convertDialog.noDealData")}
                                             </FormDescription>
                                         </div>
                                     </FormItem>
@@ -173,11 +181,11 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                                             />
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
-                                            <FormLabel>Create Invoice from Estimate</FormLabel>
+                                            <FormLabel>{t("leads.convertDialog.createInvoiceFromEstimate")}</FormLabel>
                                             <FormDescription>
                                                 {estimates && estimates.length > 0
-                                                    ? "Converts an existing estimate to a draft invoice."
-                                                    : "No estimates found for this lead."}
+                                                    ? t("leads.convertDialog.convertsEstimate")
+                                                    : t("leads.convertDialog.noEstimates")}
                                             </FormDescription>
                                         </div>
                                     </FormItem>
@@ -191,14 +199,14 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                                 name="selectedEstimateId"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Select Estimate to Convert</FormLabel>
+                                        <FormLabel>{t("leads.convertDialog.selectEstimate")}</FormLabel>
                                         <Select
                                             onValueChange={field.onChange}
                                             defaultValue={field.value || estimates[0]?.id}
                                         >
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select an estimate" />
+                                                    <SelectValue placeholder={t("leads.convertDialog.selectEstimatePlaceholder")} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -209,7 +217,7 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <FormDescription>This estimate will be marked as accepted.</FormDescription>
+                                        <FormDescription>{t("leads.convertDialog.markedAccepted")}</FormDescription>
                                     </FormItem>
                                 )}
                             />
@@ -222,16 +230,16 @@ export function ConvertLeadDialog({ lead, trigger, open, onOpenChange }: Convert
                                 onClick={() => onOpenChangeHandler?.(false)}
                                 disabled={isConverting}
                             >
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button type="submit" disabled={isConverting}>
                                 {isConverting ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        {conversionStep || "Converting..."}
+                                        {conversionStep || t("leads.convertDialog.converting")}
                                     </>
                                 ) : (
-                                    "Convert to Customer"
+                                    t("leads.convertDialog.convertButton")
                                 )}
                             </Button>
                         </DialogFooter>

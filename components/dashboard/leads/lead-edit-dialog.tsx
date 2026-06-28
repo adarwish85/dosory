@@ -20,6 +20,7 @@ import { useStaff } from "@/lib/hooks/use-staff";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLeads, usePermission } from "@/lib/hooks";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useTranslation } from "@/lib/i18n";
 
 // World Countries
 const COUNTRIES = [
@@ -148,6 +149,7 @@ interface LeadEditSheetProps {
 }
 
 export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProps) {
+    const { t } = useTranslation();
     const { staff } = useStaff();
     const { leads } = useLeads({});
     const { can } = usePermission();
@@ -249,7 +251,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
             <Sheet open={open} onOpenChange={onClose}>
                 <SheetContent className="w-[90%] sm:max-w-[800px] p-0 gap-0 bg-white flex flex-col">
                     <SheetHeader className="px-4 py-3 border-b flex flex-row items-center justify-between sticky top-0 bg-white z-10 shrink-0">
-                        <SheetTitle className="text-lg font-bold">Edit Lead - {lead.name}</SheetTitle>
+                        <SheetTitle className="text-lg font-bold">{t("leads.edit.title", { name: lead.name })}</SheetTitle>
                         <div className="flex items-center gap-2">
                             <Button
                                 variant="ghost"
@@ -274,9 +276,11 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 className="bg-yellow-50 border-yellow-300 text-yellow-800"
                                             >
                                                 <AlertTriangle className="h-4 w-4" />
-                                                <AlertTitle>Potential Duplicate Found!</AlertTitle>
+                                                <AlertTitle>{t("leads.edit.duplicateTitle")}</AlertTitle>
                                                 <AlertDescription>
-                                                    A lead with this {duplicateWarning.type} already exists:{" "}
+                                                    {t("leads.edit.duplicateDesc", {
+                                                        type: duplicateWarning.type,
+                                                    })}{" "}
                                                     {duplicateWarning.duplicates.map((d, i) => (
                                                         <span key={d.id}>
                                                             {i > 0 && ", "}
@@ -295,12 +299,12 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="status"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-red-500 text-xs">* Status</FormLabel>
+                                                        <FormLabel className="text-red-500 text-xs">{t("leads.edit.statusLabel")}</FormLabel>
                                                         <div className="flex gap-1">
                                                             <Select onValueChange={field.onChange} value={field.value}>
                                                                 <FormControl>
                                                                     <SelectTrigger className="h-9">
-                                                                        <SelectValue placeholder="Select" />
+                                                                        <SelectValue placeholder={t("leads.edit.selectPlaceholder")} />
                                                                     </SelectTrigger>
                                                                 </FormControl>
                                                                 <SelectContent>
@@ -333,12 +337,12 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="source"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-red-500 text-xs">* Source</FormLabel>
+                                                        <FormLabel className="text-red-500 text-xs">{t("leads.edit.sourceLabel")}</FormLabel>
                                                         <div className="flex gap-1">
                                                             <Select onValueChange={field.onChange} value={field.value}>
                                                                 <FormControl>
                                                                     <SelectTrigger className="h-9">
-                                                                        <SelectValue placeholder="Select" />
+                                                                        <SelectValue placeholder={t("leads.edit.selectPlaceholder")} />
                                                                     </SelectTrigger>
                                                                 </FormControl>
                                                                 <SelectContent>
@@ -368,15 +372,15 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="assignedTo"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">Assigned</FormLabel>
+                                                        <FormLabel className="text-xs">{t("leads.edit.assigned")}</FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value}>
                                                             <FormControl>
                                                                 <SelectTrigger className="h-9">
-                                                                    <SelectValue placeholder="Select staff" />
+                                                                    <SelectValue placeholder={t("leads.edit.selectStaff")} />
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
-                                                                <SelectItem value="unassigned">Unassigned</SelectItem>
+                                                                <SelectItem value="unassigned">{t("leads.edit.unassigned")}</SelectItem>
                                                                 {staff.map((member) => (
                                                                     <SelectItem key={member.id} value={member.id}>
                                                                         {member.firstName} {member.lastName}
@@ -396,7 +400,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="name"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-red-500 text-xs">* Name</FormLabel>
+                                                        <FormLabel className="text-red-500 text-xs">{t("leads.edit.nameLabel")}</FormLabel>
                                                         <FormControl>
                                                             <Input {...field} className="h-9" />
                                                         </FormControl>
@@ -408,7 +412,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="email"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">Email</FormLabel>
+                                                        <FormLabel className="text-xs">{t("common.email")}</FormLabel>
                                                         <FormControl>
                                                             <Input {...field} className="h-9" />
                                                         </FormControl>
@@ -420,7 +424,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="phone"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">Phone</FormLabel>
+                                                        <FormLabel className="text-xs">{t("common.phone")}</FormLabel>
                                                         <FormControl>
                                                             <Input {...field} className="h-9" />
                                                         </FormControl>
@@ -436,7 +440,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="position"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">Position</FormLabel>
+                                                        <FormLabel className="text-xs">{t("leads.edit.position")}</FormLabel>
                                                         <FormControl>
                                                             <Input {...field} className="h-9" />
                                                         </FormControl>
@@ -448,7 +452,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="company"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">Company</FormLabel>
+                                                        <FormLabel className="text-xs">{t("leads.edit.company")}</FormLabel>
                                                         <FormControl>
                                                             <Input {...field} className="h-9" />
                                                         </FormControl>
@@ -464,7 +468,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="website"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">Website</FormLabel>
+                                                        <FormLabel className="text-xs">{t("leads.edit.website")}</FormLabel>
                                                         <FormControl>
                                                             <Input {...field} className="h-9" />
                                                         </FormControl>
@@ -472,13 +476,13 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 )}
                                             />
                                             <div className="space-y-1">
-                                                <FormLabel className="text-xs">Country</FormLabel>
+                                                <FormLabel className="text-xs">{t("leads.edit.country")}</FormLabel>
                                                 <Select
                                                     onValueChange={(val) => form.setValue("address.country", val)}
                                                     value={form.watch("address.country") || ""}
                                                 >
                                                     <SelectTrigger className="h-9">
-                                                        <SelectValue placeholder="Select country" />
+                                                        <SelectValue placeholder={t("leads.edit.selectCountry")} />
                                                     </SelectTrigger>
                                                     <SelectContent className="max-h-[200px]">
                                                         {COUNTRIES.map((country) => (
@@ -490,7 +494,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 </Select>
                                             </div>
                                             <div className="space-y-1">
-                                                <FormLabel className="text-xs">City</FormLabel>
+                                                <FormLabel className="text-xs">{t("leads.edit.city")}</FormLabel>
                                                 <Input {...form.register("address.city")} className="h-9" />
                                             </div>
                                         </div>
@@ -502,10 +506,10 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="tags"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">Tags</FormLabel>
+                                                        <FormLabel className="text-xs">{t("leads.edit.tags")}</FormLabel>
                                                         <FormControl>
                                                             <Input
-                                                                placeholder="Comma-separated"
+                                                                placeholder={t("leads.edit.tagsPlaceholder")}
                                                                 {...field}
                                                                 className="h-9"
                                                                 value={field.value?.join(", ") || ""}
@@ -531,7 +535,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
 
                     <div className="p-3 border-t bg-white mt-auto flex justify-end gap-2 sticky bottom-0">
                         <Button variant="outline" size="sm" onClick={onClose}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button
                             size="sm"
@@ -539,7 +543,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                             className="bg-gray-900 text-white hover:bg-gray-800"
                             disabled={!can("leads-edit")}
                         >
-                            Save Changes
+                            {t("common.saveChanges")}
                         </Button>
                     </div>
                 </SheetContent>
@@ -549,11 +553,11 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
             <Dialog open={showAddStatusDialog} onOpenChange={setShowAddStatusDialog}>
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
-                        <DialogTitle>Add New Status</DialogTitle>
+                        <DialogTitle>{t("leads.edit.addStatusTitle")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <Input
-                            placeholder="Enter new status name"
+                            placeholder={t("leads.edit.statusNamePlaceholder")}
                             value={newStatusValue}
                             onChange={(e) => setNewStatusValue(e.target.value)}
                             onKeyDown={(e) => {
@@ -573,7 +577,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowAddStatusDialog(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button
                             disabled={!newStatusValue.trim()}
@@ -586,7 +590,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                 setShowAddStatusDialog(false);
                             }}
                         >
-                            Add Status
+                            {t("leads.edit.addStatusButton")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -596,11 +600,11 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
             <Dialog open={showAddSourceDialog} onOpenChange={setShowAddSourceDialog}>
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
-                        <DialogTitle>Add New Source</DialogTitle>
+                        <DialogTitle>{t("leads.edit.addSourceTitle")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <Input
-                            placeholder="Enter new source name"
+                            placeholder={t("leads.edit.sourceNamePlaceholder")}
                             value={newSourceValue}
                             onChange={(e) => setNewSourceValue(e.target.value)}
                             onKeyDown={(e) => {
@@ -615,7 +619,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowAddSourceDialog(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button
                             disabled={!newSourceValue.trim()}
@@ -626,7 +630,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                 setShowAddSourceDialog(false);
                             }}
                         >
-                            Add Source
+                            {t("leads.edit.addSourceButton")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

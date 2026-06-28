@@ -13,6 +13,7 @@ import { useCustomer } from "../customer-context";
 import { toast } from "sonner";
 import { Loader2, Lock, Users } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { useTranslation } from "@/lib/i18n";
 
 interface CreateVaultItemDialogProps {
     open: boolean;
@@ -26,6 +27,7 @@ interface FormData {
 }
 
 export function CreateVaultItemDialog({ open, onOpenChange }: CreateVaultItemDialogProps) {
+    const { t } = useTranslation();
     const { customerId } = useCustomer();
     const { createVaultItem } = useVault();
     const { user } = useAuth();
@@ -52,12 +54,12 @@ export function CreateVaultItemDialog({ open, onOpenChange }: CreateVaultItemDia
                 url: "",
             });
 
-            toast.success("Vault item added successfully");
+            toast.success(t("customers.vault.addSuccess"));
             onOpenChange(false);
             reset();
         } catch (error) {
             console.error(error);
-            toast.error("Failed to add vault item");
+            toast.error(t("customers.vault.addError"));
         } finally {
             setLoading(false);
         }
@@ -67,26 +69,26 @@ export function CreateVaultItemDialog({ open, onOpenChange }: CreateVaultItemDia
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Add to Vault</DialogTitle>
-                    <DialogDescription>Securely store sensitive information.</DialogDescription>
+                    <DialogTitle>{t("customers.vault.title")}</DialogTitle>
+                    <DialogDescription>{t("customers.vault.description")}</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="name">Name</Label>
+                        <Label htmlFor="name">{t("common.name")}</Label>
                         <Input
                             id="name"
-                            {...register("name", { required: "Name is required" })}
-                            placeholder="e.g., WiFi Password"
+                            {...register("name", { required: t("customers.vault.nameRequired") })}
+                            placeholder={t("customers.vault.namePlaceholder")}
                         />
                         {errors.name && <p className="text-red-500 text-xs">{errors.name.message}</p>}
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="value">Value</Label>
+                        <Label htmlFor="value">{t("customers.vault.value")}</Label>
                         <Textarea
                             id="value"
-                            {...register("value", { required: "Value is required" })}
-                            placeholder="Enter sensitive data..."
+                            {...register("value", { required: t("customers.vault.valueRequired") })}
+                            placeholder={t("customers.vault.valuePlaceholder")}
                             className="font-mono text-sm"
                         />
                         {errors.value && <p className="text-red-500 text-xs">{errors.value.message}</p>}
@@ -94,9 +96,9 @@ export function CreateVaultItemDialog({ open, onOpenChange }: CreateVaultItemDia
 
                     <div className="flex items-center justify-between border rounded-lg p-3">
                         <div className="space-y-0.5">
-                            <Label className="text-base">Visibility</Label>
+                            <Label className="text-base">{t("customers.vault.visibility")}</Label>
                             <p className="text-xs text-gray-500">
-                                {control._formValues.isShared ? "Shared with team" : "Private to you"}
+                                {control._formValues.isShared ? t("customers.vault.sharedWithTeam") : t("customers.vault.privateToYou")}
                             </p>
                         </div>
                         <Controller
@@ -115,9 +117,9 @@ export function CreateVaultItemDialog({ open, onOpenChange }: CreateVaultItemDia
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
                         <Button type="submit" disabled={loading}>
-                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Securely"}
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : t("customers.vault.saveSecurely")}
                         </Button>
                     </DialogFooter>
                 </form>

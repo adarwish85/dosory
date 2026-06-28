@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { useInvoices } from "@/lib/hooks/use-invoices";
 import { toast } from "sonner";
 import { Invoice } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface RecordPaymentDialogProps {
     open: boolean;
@@ -31,6 +32,7 @@ interface RecordPaymentDialogProps {
 }
 
 export function RecordPaymentDialog({ open, onOpenChange, customerId, customerName }: RecordPaymentDialogProps) {
+    const { t } = useTranslation();
     const { invoices, loading: loadingInvoices, recordPayment } = useInvoices({ customerId });
     const [outstandingInvoices, setOutstandingInvoices] = useState<Invoice[]>([]);
 
@@ -64,20 +66,20 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
 
     const handleSubmit = async () => {
         if (!selectedInvoiceId || !amount || !date) {
-            toast.error("Please fill in all required fields");
+            toast.error(t("customers.payments.fillRequired"));
             return;
         }
 
         const numAmount = parseFloat(amount);
         if (isNaN(numAmount) || numAmount <= 0) {
-            toast.error("Please enter a valid amount");
+            toast.error(t("customers.payments.invalidAmount"));
             return;
         }
 
         setSubmitting(true);
         try {
             await recordPayment(selectedInvoiceId, numAmount, paymentMode, date, note);
-            toast.success("Payment recorded successfully");
+            toast.success(t("customers.payments.recordSuccess"));
             onOpenChange(false);
             // Reset form
             setSelectedInvoiceId("");
@@ -86,7 +88,7 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
             setPaymentMode("Bank Transfer");
         } catch (error: any) {
             console.error("Error recording payment:", error);
-            toast.error(error.message || "Failed to record payment");
+            toast.error(error.message || t("customers.payments.recordError"));
         } finally {
             setSubmitting(false);
         }
@@ -96,29 +98,29 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Record Payment</DialogTitle>
-                    <DialogDescription>Record a payment received from {customerName}.</DialogDescription>
+                    <DialogTitle>{t("customers.payments.title")}</DialogTitle>
+                    <DialogDescription>{t("customers.payments.description", { name: customerName })}</DialogDescription>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
                     {/* Invoice Selection */}
                     <div className="space-y-2">
-                        <Label>Invoice</Label>
+                        <Label>{t("customers.payments.invoice")}</Label>
                         <Select value={selectedInvoiceId} onValueChange={setSelectedInvoiceId}>
                             <SelectTrigger>
                                 <SelectValue
-                                    placeholder={loadingInvoices ? "Loading invoices..." : "Select Invoice to Pay"}
+                                    placeholder={loadingInvoices ? t("customers.payments.loadingInvoices") : t("customers.payments.selectInvoice")}
                                 />
                             </SelectTrigger>
                             <SelectContent>
                                 {outstandingInvoices.length === 0 ? (
                                     <SelectItem value="none" disabled>
-                                        No outstanding invoices
+                                        {t("customers.payments.noOutstanding")}
                                     </SelectItem>
                                 ) : (
                                     outstandingInvoices.map((inv) => (
                                         <SelectItem key={inv.id} value={inv.id}>
-                                            {inv.number} - Due: ${inv.amountDue.toFixed(2)}
+                                            {inv.number} - {t("customers.payments.due")}: ${inv.amountDue.toFixed(2)}
                                         </SelectItem>
                                     ))
                                 )}
@@ -128,7 +130,7 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
 
                     {/* Amount */}
                     <div className="space-y-2">
-                        <Label>Amount Received</Label>
+                        <Label>{t("customers.payments.amountReceived")}</Label>
                         <Input
                             type="number"
                             value={amount}
@@ -139,7 +141,7 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
 
                     {/* Date */}
                     <div className="space-y-2">
-                        <Label>Payment Date</Label>
+                        <Label>{t("customers.payments.paymentDate")}</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -150,7 +152,7 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
                                     )}
                                 >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                    {date ? format(date, "PPP") : <span>{t("customers.payments.pickDate")}</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
@@ -161,28 +163,28 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
 
                     {/* Payment Mode */}
                     <div className="space-y-2">
-                        <Label>Payment Mode</Label>
+                        <Label>{t("customers.payments.paymentMode")}</Label>
                         <Select value={paymentMode} onValueChange={setPaymentMode}>
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                                <SelectItem value="Cash">Cash</SelectItem>
-                                <SelectItem value="Cheque">Cheque</SelectItem>
-                                <SelectItem value="Credit Card">Credit Card</SelectItem>
-                                <SelectItem value="PayPal">PayPal</SelectItem>
-                                <SelectItem value="Stripe">Stripe</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
+                                <SelectItem value="Bank Transfer">{t("customers.payments.mode.bankTransfer")}</SelectItem>
+                                <SelectItem value="Cash">{t("customers.payments.mode.cash")}</SelectItem>
+                                <SelectItem value="Cheque">{t("customers.payments.mode.cheque")}</SelectItem>
+                                <SelectItem value="Credit Card">{t("customers.payments.mode.creditCard")}</SelectItem>
+                                <SelectItem value="PayPal">{t("customers.payments.mode.paypal")}</SelectItem>
+                                <SelectItem value="Stripe">{t("customers.payments.mode.stripe")}</SelectItem>
+                                <SelectItem value="Other">{t("customers.payments.mode.other")}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
                     {/* Note */}
                     <div className="space-y-2">
-                        <Label>Note / Transaction ID</Label>
+                        <Label>{t("customers.payments.note")}</Label>
                         <Textarea
-                            placeholder="Enter transaction details..."
+                            placeholder={t("customers.payments.notePlaceholder")}
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                         />
@@ -191,11 +193,11 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
 
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button onClick={handleSubmit} disabled={submitting || !selectedInvoiceId}>
                         {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Record Payment
+                        {t("customers.payments.recordPayment")}
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import type { Lead } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface ConvertLeadWizardProps {
     open: boolean;
@@ -24,6 +25,7 @@ interface ConvertLeadWizardProps {
 }
 
 export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLeadWizardProps) {
+    const { t } = useTranslation();
     const [step, setStep] = useState(1);
     const [company, setCompany] = useState(lead?.company || "");
     const [email, setEmail] = useState(lead?.email || "");
@@ -34,7 +36,7 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
 
     const handleNext = () => {
         if (!company.trim() && !lead.company) {
-            setError("Company name is required.");
+            setError(t("leads.convertWizard.companyRequired"));
             return;
         }
         setError(null);
@@ -52,7 +54,7 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
             });
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to convert lead.");
+            setError(err instanceof Error ? err.message : t("leads.convertWizard.convertFailed"));
         } finally {
             setLoading(false);
         }
@@ -64,8 +66,8 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Convert Lead to Customer</DialogTitle>
-                    <DialogDescription>Turn this lead into an active customer and transfer all data.</DialogDescription>
+                    <DialogTitle>{t("leads.convertWizard.title")}</DialogTitle>
+                    <DialogDescription>{t("leads.convertWizard.description")}</DialogDescription>
                 </DialogHeader>
 
                 {step === 1 && (
@@ -73,32 +75,32 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
                         {isMissingData && (
                             <Alert variant="default" className="bg-yellow-50 border-yellow-200 text-yellow-800">
                                 <AlertCircle className="h-4 w-4" />
-                                <AlertTitle>Missing Information</AlertTitle>
+                                <AlertTitle>{t("leads.convertWizard.missingInfoTitle")}</AlertTitle>
                                 <AlertDescription>
-                                    Some required fields are missing. Please provide them to continue.
+                                    {t("leads.convertWizard.missingInfoDesc")}
                                 </AlertDescription>
                             </Alert>
                         )}
 
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="company">Company / Customer Name *</Label>
+                                <Label htmlFor="company">{t("leads.convertWizard.companyLabel")}</Label>
                                 <Input
                                     id="company"
                                     value={company}
                                     onChange={(e) => setCompany(e.target.value)}
-                                    placeholder="Enter company name"
+                                    placeholder={t("leads.convertWizard.companyPlaceholder")}
                                     defaultValue={lead.company}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="email">Primary Email</Label>
+                                <Label htmlFor="email">{t("leads.convertWizard.primaryEmail")}</Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="Enter email address"
+                                    placeholder={t("leads.convertWizard.emailPlaceholder")}
                                     defaultValue={lead.email}
                                 />
                             </div>
@@ -118,18 +120,19 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
                         <div className="bg-green-50 border border-green-200 rounded-md p-4 space-y-3">
                             <div className="flex items-center gap-2 text-green-700 font-medium">
                                 <CheckCircle2 className="h-5 w-5" />
-                                <span>Ready to Convert</span>
+                                <span>{t("leads.convertWizard.readyToConvert")}</span>
                             </div>
-                            <p className="text-sm text-green-800">The following will be created:</p>
+                            <p className="text-sm text-green-800">{t("leads.convertWizard.willBeCreated")}</p>
                             <ul className="list-disc list-inside text-sm text-green-800 ml-1 space-y-1">
                                 <li>
-                                    New Customer: <strong>{company || lead.company || lead.name}</strong>
+                                    {t("leads.convertWizard.newCustomer")}{" "}
+                                    <strong>{company || lead.company || lead.name}</strong>
                                 </li>
                                 <li>
-                                    Primary Contact: <strong>{lead.name}</strong>
+                                    {t("leads.convertWizard.primaryContact")} <strong>{lead.name}</strong>
                                 </li>
-                                <li>All tasks, notes, and records will be transferred.</li>
-                                <li>The original lead will be deleted.</li>
+                                <li>{t("leads.convertWizard.recordsTransferred")}</li>
+                                <li>{t("leads.convertWizard.originalDeleted")}</li>
                             </ul>
                         </div>
 
@@ -146,16 +149,16 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
                     {step === 1 ? (
                         <>
                             <Button variant="outline" onClick={onClose}>
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button onClick={handleNext}>
-                                Next <ArrowRight className="ml-2 h-4 w-4" />
+                                {t("leads.convertWizard.next")} <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </>
                     ) : (
                         <>
                             <Button variant="outline" onClick={() => setStep(1)} disabled={loading}>
-                                Back
+                                {t("leads.convertWizard.back")}
                             </Button>
                             <Button
                                 onClick={handleConvert}
@@ -167,7 +170,7 @@ export function ConvertLeadWizard({ open, onClose, lead, onConvert }: ConvertLea
                                 ) : (
                                     <CheckCircle2 className="mr-2 h-4 w-4" />
                                 )}
-                                Confirm Conversion
+                                {t("leads.convertWizard.confirmConversion")}
                             </Button>
                         </>
                     )}

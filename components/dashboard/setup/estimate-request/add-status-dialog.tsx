@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useTranslation } from "@/lib/i18n";
 
 export function AddEstimateStatusDialog() {
     const [open, setOpen] = useState(false);
@@ -17,6 +18,7 @@ export function AddEstimateStatusDialog() {
     const [color, setColor] = useState("#3B82F6");
     const [saving, setSaving] = useState(false);
     const { profile } = useUserProfile();
+    const { t } = useTranslation();
 
     const handleOpenChange = (newOpen: boolean) => {
         setOpen(newOpen);
@@ -28,7 +30,7 @@ export function AddEstimateStatusDialog() {
 
     const handleSave = async () => {
         if (!name.trim()) {
-            toast.error("Status name is required");
+            toast.error(t("setup.estimateStatuses.nameRequired"));
             return;
         }
 
@@ -43,11 +45,11 @@ export function AddEstimateStatusDialog() {
                 createdBy: profile?.uid,
             });
 
-            toast.success("Estimate status created successfully!");
+            toast.success(t("setup.estimateStatuses.created"));
             handleOpenChange(false);
         } catch (error) {
             console.error("Error creating status:", error);
-            toast.error("Failed to create status");
+            toast.error(t("setup.estimateStatuses.createFailed"));
         } finally {
             setSaving(false);
         }
@@ -57,27 +59,27 @@ export function AddEstimateStatusDialog() {
         <Sheet open={open} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
                 <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                    <Plus className="mr-2 h-4 w-4" /> New Status
+                    <Plus className="mr-2 h-4 w-4" /> {t("setup.estimateStatuses.new")}
                 </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-md bg-white p-0 flex flex-col">
                 <SheetHeader className="px-6 py-4 border-b flex-shrink-0">
-                    <SheetTitle>Add New Estimate Status</SheetTitle>
+                    <SheetTitle>{t("setup.estimateStatuses.addTitle")}</SheetTitle>
                 </SheetHeader>
 
                 <div className="flex-1 p-6">
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label className="text-red-500">* Status Name</Label>
+                            <Label className="text-red-500">{t("setup.estimateStatuses.nameLabel")}</Label>
                             <Input
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="e.g. Pending, Approved, Rejected"
+                                placeholder={t("setup.estimateStatuses.namePlaceholder")}
                                 autoFocus
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Status Color</Label>
+                            <Label>{t("setup.estimateStatuses.colorLabel")}</Label>
                             <div className="flex items-center gap-3">
                                 <input
                                     type="color"
@@ -93,11 +95,11 @@ export function AddEstimateStatusDialog() {
 
                 <div className="p-4 border-t bg-white flex justify-end gap-2 flex-shrink-0">
                     <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button onClick={handleSave} className="bg-gray-900 text-white hover:bg-gray-800" disabled={saving}>
                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save
+                        {t("common.save")}
                     </Button>
                 </div>
             </SheetContent>

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useRoles } from "@/lib/hooks";
 import type { Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 import { PERMISSION_MODULES } from "@/lib/rbac/definitions";
 
@@ -120,6 +121,7 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
     const [permissions, setPermissions] = useState<string[]>([]);
     const [expandedModules, setExpandedModules] = useState<string[]>([]);
     const { createRole, updateRole } = useRoles();
+    const { t } = useTranslation();
 
     const isEditing = !!role;
 
@@ -215,13 +217,13 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                 m.actions.some((a) => template.permissions.includes(`${m.id}-${a.id}`))
             ).map((m) => m.id);
             setExpandedModules(modulesWithPerms);
-            toast.success(`Applied "${template.name}" template`);
+            toast.success(t("setup.roles.form.templateApplied", { name: template.name }));
         }
     };
 
     const handleSave = async () => {
         if (!roleName.trim()) {
-            toast.error("Role name is required");
+            toast.error(t("setup.roles.form.nameRequired"));
             return;
         }
 
@@ -233,20 +235,20 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                     description: description.trim(),
                     permissions,
                 });
-                toast.success("Role updated successfully!");
+                toast.success(t("setup.roles.form.updateSuccess"));
             } else {
                 await createRole({
                     name: roleName.trim(),
                     description: description.trim(),
                     permissions,
                 });
-                toast.success("Role created successfully!");
+                toast.success(t("setup.roles.form.createSuccess"));
             }
             handleOpenChange(false);
             onSuccess?.();
         } catch (error) {
             console.error("Error saving role:", error);
-            toast.error(isEditing ? "Failed to update role" : "Failed to create role");
+            toast.error(isEditing ? t("setup.roles.form.updateError") : t("setup.roles.form.createError"));
         } finally {
             setSaving(false);
         }
@@ -256,7 +258,7 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
         <Pen className="h-4 w-4 cursor-pointer hover:text-blue-600" />
     ) : (
         <Button className="bg-gray-900 text-white hover:bg-gray-800">
-            <Plus className="mr-2 h-4 w-4" /> New Role
+            <Plus className="mr-2 h-4 w-4" /> {t("setup.roles.form.newButton")}
         </Button>
     );
 
@@ -268,7 +270,7 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                     <div className="flex items-center justify-between">
                         <SheetTitle className="flex items-center gap-2">
                             <ShieldCheck className="h-5 w-5 text-gray-600" />
-                            {isEditing ? "Edit Role" : "Create New Role"}
+                            {isEditing ? t("setup.roles.form.editTitle") : t("setup.roles.form.createTitle")}
                         </SheetTitle>
                     </div>
                 </SheetHeader>
@@ -276,15 +278,15 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {/* Role Information */}
                     <div className="space-y-4">
-                        <h3 className="font-semibold text-gray-900">Role Information</h3>
+                        <h3 className="font-semibold text-gray-900">{t("setup.roles.form.roleInfo")}</h3>
 
                         {/* Template Selector (only for new roles) */}
                         {!isEditing && (
                             <div className="space-y-2">
-                                <Label>Start from Template</Label>
+                                <Label>{t("setup.roles.form.startFromTemplate")}</Label>
                                 <Select onValueChange={applyTemplate}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a template (optional)" />
+                                        <SelectValue placeholder={t("setup.roles.form.selectTemplatePlaceholder")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {ROLE_TEMPLATES.map((t) => (
@@ -299,20 +301,20 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
 
                         <div className="grid grid-cols-1 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Role Name</Label>
+                                <Label className="text-red-500">{t("setup.roles.form.nameLabel")}</Label>
                                 <Input
                                     value={roleName}
                                     onChange={(e) => setRoleName(e.target.value)}
-                                    placeholder="e.g. Project Manager"
+                                    placeholder={t("setup.roles.form.namePlaceholder")}
                                     autoFocus
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Description</Label>
+                                <Label>{t("common.description")}</Label>
                                 <Textarea
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Describe what this role is for..."
+                                    placeholder={t("setup.roles.form.descriptionPlaceholder")}
                                     rows={2}
                                 />
                             </div>
@@ -322,11 +324,11 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                     {/* Permission Matrix */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-gray-900">Permissions</h3>
+                            <h3 className="font-semibold text-gray-900">{t("setup.roles.form.permissions")}</h3>
                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-500">{permissions.length} selected</span>
+                                <span className="text-sm text-gray-500">{t("setup.roles.form.selectedCount", { count: String(permissions.length) })}</span>
                                 <Button variant="outline" size="sm" onClick={toggleAll} className="text-xs">
-                                    {isAllSelected ? "Deselect All" : "Select All"}
+                                    {isAllSelected ? t("setup.roles.form.deselectAll") : t("setup.roles.form.selectAll")}
                                 </Button>
                             </div>
                         </div>
@@ -362,7 +364,7 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                                                 )}
                                                 {isFullySelected && (
                                                     <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                                                        All
+                                                        {t("setup.roles.form.allBadge")}
                                                     </span>
                                                 )}
                                             </div>
@@ -409,11 +411,11 @@ export function RoleForm({ role, trigger, onSuccess }: RoleFormProps) {
                 {/* Footer */}
                 <div className="p-4 border-t bg-white flex justify-between items-center flex-shrink-0">
                     <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button onClick={handleSave} className="bg-gray-900 text-white hover:bg-gray-800" disabled={saving}>
                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {isEditing ? "Save Changes" : "Create Role"}
+                        {isEditing ? t("common.saveChanges") : t("setup.roles.form.createButton")}
                     </Button>
                 </div>
             </SheetContent>

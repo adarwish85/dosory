@@ -5,6 +5,7 @@ import { X, Minus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStickyNotes, type StickyNote, type StickyNoteColor } from "@/lib/hooks/use-sticky-notes";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 const COLORS: Record<StickyNoteColor, string> = {
     yellow: "bg-yellow-100 border-yellow-200 text-yellow-900",
@@ -23,6 +24,7 @@ interface StickyNoteProps {
 }
 
 export function StickyNoteCard({ note, onUpdate, onDelete, onMinimize }: StickyNoteProps) {
+    const { t } = useTranslation();
     const [isDragging, setIsDragging] = useState(false);
     const dragOffset = useRef({ x: 0, y: 0 });
 
@@ -125,7 +127,7 @@ export function StickyNoteCard({ note, onUpdate, onDelete, onMinimize }: StickyN
             {/* Content */}
             <textarea
                 className="flex-1 w-full bg-transparent resize-none border-none p-4 focus:ring-0 focus:outline-none text-sm leading-relaxed placeholder-black/30 text-inherit"
-                placeholder="Type your note here..."
+                placeholder={t("dashboard.stickyNotes.placeholder")}
                 value={note.content}
                 onChange={(e) => onUpdate(note.id, { content: e.target.value })}
                 onMouseDown={(e) => e.stopPropagation()}

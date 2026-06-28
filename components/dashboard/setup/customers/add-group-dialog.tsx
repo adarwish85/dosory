@@ -10,12 +10,14 @@ import { toast } from "sonner";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useTranslation } from "@/lib/i18n";
 
 export function AddGroupDialog() {
     const [open, setOpen] = useState(false);
     const [name, setName] = useState("");
     const [saving, setSaving] = useState(false);
     const { profile } = useUserProfile();
+    const { t } = useTranslation();
 
     const handleOpenChange = (newOpen: boolean) => {
         setOpen(newOpen);
@@ -26,7 +28,7 @@ export function AddGroupDialog() {
 
     const handleSave = async () => {
         if (!name.trim()) {
-            toast.error("Name is required");
+            toast.error(t("setup.customerGroups.nameRequired"));
             return;
         }
 
@@ -40,11 +42,11 @@ export function AddGroupDialog() {
                 createdBy: profile?.uid,
             });
 
-            toast.success("Customer group created successfully!");
+            toast.success(t("setup.customerGroups.created"));
             handleOpenChange(false);
         } catch (error) {
             console.error("Error creating customer group:", error);
-            toast.error("Failed to create customer group");
+            toast.error(t("setup.customerGroups.createFailed"));
         } finally {
             setSaving(false);
         }
@@ -54,22 +56,22 @@ export function AddGroupDialog() {
         <Sheet open={open} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
                 <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                    <Plus className="mr-2 h-4 w-4" /> New Customer Group
+                    <Plus className="mr-2 h-4 w-4" /> {t("setup.customerGroups.new")}
                 </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-md bg-white p-0 flex flex-col">
                 <SheetHeader className="px-6 py-4 border-b flex-shrink-0">
-                    <SheetTitle>Add New Customer Group</SheetTitle>
+                    <SheetTitle>{t("setup.customerGroups.addTitle")}</SheetTitle>
                 </SheetHeader>
 
                 <div className="flex-1 p-6">
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label className="text-red-500">* Name</Label>
+                            <Label className="text-red-500">{t("setup.customerGroups.nameLabel")}</Label>
                             <Input
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="Enter group name"
+                                placeholder={t("setup.customerGroups.namePlaceholder")}
                                 autoFocus
                             />
                         </div>
@@ -78,11 +80,11 @@ export function AddGroupDialog() {
 
                 <div className="p-4 border-t bg-white flex justify-end gap-2 flex-shrink-0">
                     <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button onClick={handleSave} className="bg-gray-900 text-white hover:bg-gray-800" disabled={saving}>
                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save
+                        {t("common.save")}
                     </Button>
                 </div>
             </SheetContent>

@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { Task } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface EditTaskDialogProps {
     open: boolean;
@@ -29,6 +30,7 @@ interface EditTaskDialogProps {
 }
 
 export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps) {
+    const { t } = useTranslation();
     const { updateTask } = useTasks();
     const { staff } = useStaff();
     const { projects } = useProjects();
@@ -143,7 +145,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Edit Task</DialogTitle>
+                    <DialogTitle>{t("tasks.dialog.editTitle")}</DialogTitle>
                 </DialogHeader>
 
                 <Form {...form}>
@@ -153,9 +155,9 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Subject *</FormLabel>
+                                    <FormLabel>{t("tasks.field.subjectRequired")}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Task subject" {...field} />
+                                        <Input placeholder={t("tasks.field.subjectPlaceholder")} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -172,7 +174,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                 htmlFor="general-task"
                                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                             >
-                                General Task (Not linked to any project)
+                                {t("tasks.field.generalTask")}
                             </label>
                         </div>
 
@@ -184,11 +186,11 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                         name="projectId"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Project</FormLabel>
+                                                <FormLabel>{t("tasks.field.project")}</FormLabel>
                                                 <Select value={field.value} onValueChange={handleProjectChange}>
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="Select project" />
+                                                            <SelectValue placeholder={t("tasks.field.selectProject")} />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
@@ -209,7 +211,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                         name="milestoneId"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Milestone</FormLabel>
+                                                <FormLabel>{t("tasks.field.milestone")}</FormLabel>
                                                 <Select
                                                     value={field.value}
                                                     onValueChange={handleMilestoneChange}
@@ -217,7 +219,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                                 >
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="Select milestone" />
+                                                            <SelectValue placeholder={t("tasks.field.selectMilestone")} />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
@@ -240,7 +242,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                         name="taskListId"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Task List</FormLabel>
+                                                <FormLabel>{t("tasks.field.taskList")}</FormLabel>
                                                 <Select
                                                     value={field.value}
                                                     onValueChange={field.onChange}
@@ -248,7 +250,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                                 >
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="Select task list" />
+                                                            <SelectValue placeholder={t("tasks.field.selectTaskList")} />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
@@ -279,7 +281,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                 name="hourlyRate"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Hourly Rate</FormLabel>
+                                        <FormLabel>{t("tasks.field.hourlyRate")}</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
@@ -293,14 +295,14 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                             />
 
                             <FormItem>
-                                <FormLabel>Repeat every</FormLabel>
+                                <FormLabel>{t("tasks.field.repeatEvery")}</FormLabel>
                                 <Select disabled>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Nothing selected" />
+                                        <SelectValue placeholder={t("tasks.field.nothingSelected")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="daily">Daily</SelectItem>
-                                        <SelectItem value="weekly">Weekly</SelectItem>
+                                        <SelectItem value="daily">{t("tasks.repeat.daily")}</SelectItem>
+                                        <SelectItem value="weekly">{t("tasks.repeat.weekly")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </FormItem>
@@ -312,7 +314,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                 name="startDate"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Start Date</FormLabel>
+                                        <FormLabel>{t("tasks.field.startDate")}</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -326,7 +328,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                                         {field.value ? (
                                                             format(field.value, "PPP")
                                                         ) : (
-                                                            <span>Pick a date</span>
+                                                            <span>{t("tasks.field.pickDate")}</span>
                                                         )}
                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button>
@@ -352,7 +354,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                 name="dueDate"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Due Date</FormLabel>
+                                        <FormLabel>{t("tasks.field.dueDate")}</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -366,7 +368,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                                         {field.value ? (
                                                             format(field.value, "PPP")
                                                         ) : (
-                                                            <span>Pick a date</span>
+                                                            <span>{t("tasks.field.pickDate")}</span>
                                                         )}
                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button>
@@ -394,18 +396,18 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                 name="priority"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Priority</FormLabel>
+                                        <FormLabel>{t("tasks.field.priority")}</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select priority" />
+                                                    <SelectValue placeholder={t("tasks.field.selectPriority")} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="low">Low</SelectItem>
-                                                <SelectItem value="medium">Medium</SelectItem>
-                                                <SelectItem value="high">High</SelectItem>
-                                                <SelectItem value="urgent">Urgent</SelectItem>
+                                                <SelectItem value="low">{t("tasks.priority.low")}</SelectItem>
+                                                <SelectItem value="medium">{t("tasks.priority.medium")}</SelectItem>
+                                                <SelectItem value="high">{t("tasks.priority.high")}</SelectItem>
+                                                <SelectItem value="urgent">{t("tasks.priority.urgent")}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -414,14 +416,14 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                             />
 
                             <FormItem>
-                                <FormLabel>Related To</FormLabel>
+                                <FormLabel>{t("tasks.field.relatedTo")}</FormLabel>
                                 <Select disabled defaultValue={task.relatedTo?.type || "lead"}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select type" />
+                                        <SelectValue placeholder={t("tasks.field.selectType")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="lead">Lead</SelectItem>
-                                        <SelectItem value="customer">Customer</SelectItem>
+                                        <SelectItem value="lead">{t("tasks.relatedTo.lead")}</SelectItem>
+                                        <SelectItem value="customer">{t("tasks.relatedTo.customer")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </FormItem>
@@ -433,11 +435,11 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                 name="assignees"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Assignees</FormLabel>
+                                        <FormLabel>{t("tasks.field.assignees")}</FormLabel>
                                         <Select onValueChange={(val) => field.onChange([...field.value, val])}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select assignees" />
+                                                    <SelectValue placeholder={t("tasks.field.selectAssignees")} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -449,7 +451,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                             </SelectContent>
                                         </Select>
                                         <div className="text-xs text-muted-foreground mt-1">
-                                            {field.value.length} assigned
+                                            {t("tasks.field.assignedCount", { count: field.value.length })}
                                         </div>
                                         <FormMessage />
                                     </FormItem>
@@ -461,11 +463,11 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                 name="followers"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Followers</FormLabel>
+                                        <FormLabel>{t("tasks.field.followers")}</FormLabel>
                                         <Select onValueChange={(val) => field.onChange([...(field.value || []), val])}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select followers" />
+                                                    <SelectValue placeholder={t("tasks.field.selectFollowers")} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -477,7 +479,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                             </SelectContent>
                                         </Select>
                                         <div className="text-xs text-muted-foreground mt-1">
-                                            {(field.value || []).length} followers
+                                            {t("tasks.field.followersCount", { count: (field.value || []).length })}
                                         </div>
                                         <FormMessage />
                                     </FormItem>
@@ -490,9 +492,9 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Task Description</FormLabel>
+                                    <FormLabel>{t("tasks.field.taskDescription")}</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Add Description" className="min-h-[100px]" {...field} />
+                                        <Textarea placeholder={t("tasks.field.addDescription")} className="min-h-[100px]" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -501,11 +503,11 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                                Close
+                                {t("common.close")}
                             </Button>
                             <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save Changes
+                                {t("common.saveChanges")}
                             </Button>
                         </DialogFooter>
                     </form>

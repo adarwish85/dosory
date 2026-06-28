@@ -24,6 +24,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 interface ActivitiesTableProps {
     relatedToType: "lead" | "customer";
@@ -37,6 +38,7 @@ const outcomeColors: Record<ActivityOutcome, { bg: string; text: string }> = {
 };
 
 export function ActivitiesTable({ relatedToType, relatedToId }: ActivitiesTableProps) {
+    const { t } = useTranslation();
     const [typeFilter, setTypeFilter] = useState<ActivityType | "all">("all");
     const [outcomeFilter, setOutcomeFilter] = useState<ActivityOutcome | "all">("all");
     const [searchQuery, setSearchQuery] = useState("");
@@ -63,11 +65,11 @@ export function ActivitiesTable({ relatedToType, relatedToId }: ActivitiesTableP
         if (!deletingActivity) return;
         try {
             await deleteActivity(deletingActivity.id);
-            toast.success("Activity deleted");
+            toast.success(t("activities.toast.deleted"));
             setDeletingActivity(null);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to delete activity");
+            toast.error(t("activities.toast.deleteFailed"));
         }
     };
 
@@ -95,7 +97,7 @@ export function ActivitiesTable({ relatedToType, relatedToId }: ActivitiesTableP
                     <div className="relative flex-1 max-w-xs">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
-                            placeholder="Search activities..."
+                            placeholder={t("activities.searchPlaceholder")}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-9"
@@ -103,30 +105,30 @@ export function ActivitiesTable({ relatedToType, relatedToId }: ActivitiesTableP
                     </div>
                     <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as ActivityType | "all")}>
                         <SelectTrigger className="w-[130px]">
-                            <SelectValue placeholder="Type" />
+                            <SelectValue placeholder={t("activities.filter.type")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Types</SelectItem>
-                            <SelectItem value="meeting">Meeting</SelectItem>
-                            <SelectItem value="call">Call</SelectItem>
-                            <SelectItem value="follow_up">Follow-up</SelectItem>
-                            <SelectItem value="email">Email</SelectItem>
+                            <SelectItem value="all">{t("activities.filter.allTypes")}</SelectItem>
+                            <SelectItem value="meeting">{t("activities.type.meeting")}</SelectItem>
+                            <SelectItem value="call">{t("activities.type.call")}</SelectItem>
+                            <SelectItem value="follow_up">{t("activities.type.followUp")}</SelectItem>
+                            <SelectItem value="email">{t("activities.type.email")}</SelectItem>
                         </SelectContent>
                     </Select>
                     <Select value={outcomeFilter} onValueChange={(v) => setOutcomeFilter(v as ActivityOutcome | "all")}>
                         <SelectTrigger className="w-[130px]">
-                            <SelectValue placeholder="Outcome" />
+                            <SelectValue placeholder={t("activities.filter.outcome")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Outcomes</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                            <SelectItem value="all">{t("activities.filter.allOutcomes")}</SelectItem>
+                            <SelectItem value="pending">{t("activities.outcome.pending")}</SelectItem>
+                            <SelectItem value="completed">{t("activities.outcome.completed")}</SelectItem>
+                            <SelectItem value="cancelled">{t("activities.outcome.cancelled")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
                 <Button onClick={() => setShowCreateDialog(true)}>
-                    <Plus className="mr-2 h-4 w-4" /> Log Activity
+                    <Plus className="mr-2 h-4 w-4" /> {t("activities.logActivity")}
                 </Button>
             </div>
 
@@ -135,11 +137,11 @@ export function ActivitiesTable({ relatedToType, relatedToId }: ActivitiesTableP
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-50 hover:bg-gray-50">
-                            <TableHead className="font-semibold text-gray-900">Type</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Subject</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Date & Time</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Duration</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Outcome</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("activities.table.type")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("activities.table.subject")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("activities.table.dateTime")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("activities.table.duration")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("activities.table.outcome")}</TableHead>
                             <TableHead className="w-[100px]"></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -149,9 +151,9 @@ export function ActivitiesTable({ relatedToType, relatedToId }: ActivitiesTableP
                                 <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                                     <div className="flex flex-col items-center gap-2">
                                         <Calendar className="h-8 w-8 text-gray-300" />
-                                        <p>No activities logged yet.</p>
+                                        <p>{t("activities.empty.title")}</p>
                                         <Button variant="outline" size="sm" onClick={() => setShowCreateDialog(true)}>
-                                            <Plus className="mr-2 h-4 w-4" /> Log First Activity
+                                            <Plus className="mr-2 h-4 w-4" /> {t("activities.empty.action")}
                                         </Button>
                                     </div>
                                 </TableCell>
@@ -177,7 +179,7 @@ export function ActivitiesTable({ relatedToType, relatedToId }: ActivitiesTableP
                                         {activity.duration ? (
                                             <span className="flex items-center gap-1">
                                                 <Clock className="h-3 w-3" />
-                                                {activity.duration} min
+                                                {t("activities.durationMinutes", { count: activity.duration })}
                                             </span>
                                         ) : (
                                             "-"
@@ -188,7 +190,7 @@ export function ActivitiesTable({ relatedToType, relatedToId }: ActivitiesTableP
                                             variant="outline"
                                             className={`${outcomeColors[activity.outcome].bg} ${outcomeColors[activity.outcome].text} border-0 capitalize`}
                                         >
-                                            {activity.outcome}
+                                            {t(`activities.outcome.${activity.outcome}`)}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
@@ -235,15 +237,15 @@ export function ActivitiesTable({ relatedToType, relatedToId }: ActivitiesTableP
             <AlertDialog open={!!deletingActivity} onOpenChange={(open) => !open && setDeletingActivity(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Activity</AlertDialogTitle>
+                        <AlertDialogTitle>{t("activities.delete.title")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete this activity? This action cannot be undone.
+                            {t("activities.delete.description")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                            Delete
+                            {t("common.delete")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

@@ -15,6 +15,7 @@ import {
     DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 import type { WidgetId, WidgetSettings, WidgetStyle, DataDensity } from "@/lib/stores/dashboard-store";
 
 interface BaseWidgetProps {
@@ -63,6 +64,7 @@ export function BaseWidget({
     onRemove,
     children,
 }: BaseWidgetProps) {
+    const { t } = useTranslation();
     const styleClasses = STYLE_CLASSES[style];
     const isGradient = style === "gradient";
 
@@ -102,28 +104,28 @@ export function BaseWidget({
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuLabel>Widget Settings</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("dashboard.widget.settings")}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
 
                                 {/* Date Range Setting */}
-                                <DropdownMenuLabel className="text-xs text-gray-500">Date Range</DropdownMenuLabel>
+                                <DropdownMenuLabel className="text-xs text-gray-500">{t("dashboard.widget.dateRange")}</DropdownMenuLabel>
                                 <DropdownMenuRadioGroup
                                     value={settings.dateRange || "month"}
                                     onValueChange={(v) =>
                                         onSettingsChange({ dateRange: v as WidgetSettings["dateRange"] })
                                     }
                                 >
-                                    <DropdownMenuRadioItem value="week">This Week</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="month">This Month</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="quarter">This Quarter</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="year">This Year</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="week">{t("dashboard.widget.thisWeek")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="month">{t("dashboard.widget.thisMonth")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="quarter">{t("dashboard.widget.thisQuarter")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="year">{t("dashboard.widget.thisYear")}</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
 
                                 <DropdownMenuSeparator />
 
                                 {/* Show Chart Toggle */}
                                 <DropdownMenuItem onClick={() => onSettingsChange({ showChart: !settings.showChart })}>
-                                    {settings.showChart ? "Hide Chart" : "Show Chart"}
+                                    {settings.showChart ? t("dashboard.widget.hideChart") : t("dashboard.widget.showChart")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { FileText, File } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTranslation } from "@/lib/i18n";
 
 interface StatusItem {
     label: string;
@@ -59,6 +60,7 @@ export function FinanceOverviewWidget({
     invoiceStats?: any;
     estimateStats?: any;
 }) {
+    const { t } = useTranslation();
     const getPerc = (val: number, total: number) => (total > 0 ? (val / total) * 100 : 0);
 
     // Corrected Mapping
@@ -74,38 +76,38 @@ export function FinanceOverviewWidget({
 
     const invoiceItems = [
         {
-            label: "Draft",
+            label: t("finance.invoiceStatus.draft"),
             count: invoiceStats?.draft || 0,
             percentage: getPerc(invoiceStats?.draft || 0, totalInvoices),
             color: "text-gray-500",
         },
         {
-            label: "Sent",
+            label: t("finance.invoiceStatus.sent"),
             count: (invoiceStats?.sent || 0) + (invoiceStats?.viewed || 0),
             percentage: getPerc((invoiceStats?.sent || 0) + (invoiceStats?.viewed || 0), totalInvoices),
             color: "text-blue-600",
         },
-        { label: "Unpaid", count: 0, percentage: 0, color: "text-red-500" }, // 'Unpaid' usually means Sent/Viewed but 0 payment. But we count those as Sent/Viewed. Let's keep 0 for now or map 'viewed' here?
+        { label: t("finance.invoiceStatus.unpaid"), count: 0, percentage: 0, color: "text-red-500" }, // 'Unpaid' usually means Sent/Viewed but 0 payment. But we count those as Sent/Viewed. Let's keep 0 for now or map 'viewed' here?
         {
-            label: "Partially Paid",
+            label: t("finance.invoiceStatus.partiallyPaid"),
             count: invoiceStats?.partial || 0,
             percentage: getPerc(invoiceStats?.partial || 0, totalInvoices),
             color: "text-orange-500",
         },
         {
-            label: "Overdue",
+            label: t("finance.invoiceStatus.overdue"),
             count: invoiceStats?.overdue || 0,
             percentage: getPerc(invoiceStats?.overdue || 0, totalInvoices),
             color: "text-amber-600",
         },
         {
-            label: "Paid",
+            label: t("finance.invoiceStatus.paid"),
             count: invoiceStats?.paid || 0,
             percentage: getPerc(invoiceStats?.paid || 0, totalInvoices),
             color: "text-green-500",
         },
         {
-            label: "Cancelled",
+            label: t("finance.invoiceStatus.cancelled"),
             count: invoiceStats?.cancelled || 0,
             percentage: getPerc(invoiceStats?.cancelled || 0, totalInvoices),
             color: "text-gray-400",
@@ -114,31 +116,31 @@ export function FinanceOverviewWidget({
 
     const estimateItems = [
         {
-            label: "Draft",
+            label: t("finance.estimateStatus.draft"),
             count: estimateStats?.draft || 0,
             percentage: getPerc(estimateStats?.draft || 0, estimateStats?.total || 1),
             color: "text-gray-500",
         },
         {
-            label: "Sent",
+            label: t("finance.estimateStatus.sent"),
             count: estimateStats?.sent || 0,
             percentage: getPerc(estimateStats?.sent || 0, estimateStats?.total || 1),
             color: "text-blue-500",
         },
         {
-            label: "Expired",
+            label: t("finance.estimateStatus.expired"),
             count: estimateStats?.expired || 0,
             percentage: getPerc(estimateStats?.expired || 0, estimateStats?.total || 1),
             color: "text-amber-600",
         },
         {
-            label: "Declined",
+            label: t("finance.estimateStatus.declined"),
             count: estimateStats?.declined || 0,
             percentage: getPerc(estimateStats?.declined || 0, estimateStats?.total || 1),
             color: "text-red-500",
         },
         {
-            label: "Accepted",
+            label: t("finance.estimateStatus.accepted"),
             count: estimateStats?.accepted || 0,
             percentage: getPerc(estimateStats?.accepted || 0, estimateStats?.total || 1),
             color: "text-green-500",
@@ -161,12 +163,12 @@ export function FinanceOverviewWidget({
             <CardContent className="p-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     <OverviewColumn
-                        title="Invoice overview"
+                        title={t("finance.overview.invoiceTitle")}
                         icon={<FileText className="h-5 w-5" />}
                         items={invoiceItems}
                     />
                     <OverviewColumn
-                        title="Estimate overview"
+                        title={t("finance.overview.estimateTitle")}
                         icon={<File className="h-5 w-5" />}
                         items={estimateItems}
                     />
@@ -178,7 +180,7 @@ export function FinanceOverviewWidget({
                     <div className="flex justify-end gap-3">
                         <Select defaultValue="EGP">
                             <SelectTrigger className="w-[100px] border-none shadow-none font-bold text-gray-600">
-                                <SelectValue placeholder="Currency" />
+                                <SelectValue placeholder={t("finance.overview.currency")} />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="EGP">EGP EGP</SelectItem>
@@ -187,7 +189,7 @@ export function FinanceOverviewWidget({
                         </Select>
                         <Select defaultValue="2025">
                             <SelectTrigger className="w-[80px] border-none shadow-none font-bold text-gray-700">
-                                <SelectValue placeholder="Year" />
+                                <SelectValue placeholder={t("finance.overview.year")} />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="2025">2025</SelectItem>
@@ -198,15 +200,15 @@ export function FinanceOverviewWidget({
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="border border-gray-200 rounded-lg p-4">
-                            <div className="text-sm font-medium text-amber-600 mb-1">Outstanding Invoices</div>
+                            <div className="text-sm font-medium text-amber-600 mb-1">{t("finance.overview.outstandingInvoices")}</div>
                             <div className="text-lg font-bold text-gray-800">{formatCurrency(outstandingAmount)}</div>
                         </div>
                         <div className="border border-gray-200 rounded-lg p-4">
-                            <div className="text-sm font-medium text-gray-600 mb-1">Past Due Invoices</div>
+                            <div className="text-sm font-medium text-gray-600 mb-1">{t("finance.overview.pastDueInvoices")}</div>
                             <div className="text-lg font-bold text-gray-800">{formatCurrency(pastDueAmount)}</div>
                         </div>
                         <div className="border border-gray-200 rounded-lg p-4">
-                            <div className="text-sm font-medium text-green-600 mb-1">Paid Invoices</div>
+                            <div className="text-sm font-medium text-green-600 mb-1">{t("finance.overview.paidInvoices")}</div>
                             <div className="text-lg font-bold text-gray-800">{formatCurrency(paidAmount)}</div>
                         </div>
                     </div>

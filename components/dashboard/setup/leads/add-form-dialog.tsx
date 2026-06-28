@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useTranslation } from "@/lib/i18n";
 
 interface FormData {
     name: string;
@@ -57,6 +58,7 @@ export function AddFormDialog() {
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState<FormData>(defaultFormData);
     const { profile } = useUserProfile();
+    const { t } = useTranslation();
 
     const totalSteps = 4;
 
@@ -77,7 +79,7 @@ export function AddFormDialog() {
     const validateStep = (currentStep: number): boolean => {
         if (currentStep === 1) {
             if (!formData.name.trim()) {
-                toast.error("Form name is required");
+                toast.error(t("setup.leads.form.nameRequired"));
                 return false;
             }
         }
@@ -108,31 +110,36 @@ export function AddFormDialog() {
                 createdBy: profile?.uid,
             });
 
-            toast.success("Lead form created successfully!");
+            toast.success(t("setup.leads.form.createSuccess"));
             handleOpenChange(false);
         } catch (error) {
             console.error("Error creating lead form:", error);
-            toast.error("Failed to create lead form");
+            toast.error(t("setup.leads.form.createError"));
         } finally {
             setSaving(false);
         }
     };
 
-    const stepLabels = ["General", "Branding", "Submission", "Notifications"];
+    const stepLabels = [
+        t("setup.leads.form.stepGeneral"),
+        t("setup.leads.form.stepBranding"),
+        t("setup.leads.form.stepSubmission"),
+        t("setup.leads.form.stepNotifications"),
+    ];
 
     return (
         <Sheet open={open} onOpenChange={handleOpenChange}>
             <SheetTrigger asChild>
                 <Button className="bg-gray-900 text-white hover:bg-gray-800">
-                    <Plus className="mr-2 h-4 w-4" /> New Form
+                    <Plus className="mr-2 h-4 w-4" /> {t("setup.leads.form.newButton")}
                 </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-xl bg-white p-0 flex flex-col">
                 <SheetHeader className="px-6 py-4 border-b flex-shrink-0">
                     <div className="flex items-center justify-between">
-                        <SheetTitle>New Lead Form</SheetTitle>
+                        <SheetTitle>{t("setup.leads.form.dialogTitle")}</SheetTitle>
                         <span className="text-sm text-gray-500">
-                            Step {step}: {stepLabels[step - 1]}
+                            {t("setup.leads.form.stepLabel", { step: String(step), label: stepLabels[step - 1] })}
                         </span>
                     </div>
                 </SheetHeader>
@@ -153,33 +160,33 @@ export function AddFormDialog() {
                     {step === 1 && (
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Form Name</Label>
+                                <Label className="text-red-500">{t("setup.leads.form.nameLabel")}</Label>
                                 <Input
                                     value={formData.name}
                                     onChange={(e) => updateField("name", e.target.value)}
-                                    placeholder="e.g. Contact Form"
+                                    placeholder={t("setup.leads.form.namePlaceholder")}
                                     autoFocus
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Language</Label>
+                                <Label>{t("setup.leads.form.languageLabel")}</Label>
                                 <Select value={formData.language} onValueChange={(v) => updateField("language", v)}>
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="english">English</SelectItem>
-                                        <SelectItem value="arabic">Arabic</SelectItem>
+                                        <SelectItem value="english">{t("setup.leads.form.languageEnglish")}</SelectItem>
+                                        <SelectItem value="arabic">{t("setup.leads.form.languageArabic")}</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <p className="text-xs text-gray-500">For validation messages</p>
+                                <p className="text-xs text-gray-500">{t("setup.leads.form.languageHint")}</p>
                             </div>
                             <div className="space-y-2">
-                                <Label>Lead title prefix</Label>
+                                <Label>{t("setup.leads.form.titlePrefixLabel")}</Label>
                                 <Input
                                     value={formData.titlePrefix}
                                     onChange={(e) => updateField("titlePrefix", e.target.value)}
-                                    placeholder="Optional prefix"
+                                    placeholder={t("setup.leads.form.titlePrefixPlaceholder")}
                                 />
                             </div>
                         </div>
@@ -188,7 +195,7 @@ export function AddFormDialog() {
                     {step === 2 && (
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label>Submit button text</Label>
+                                <Label>{t("setup.leads.form.submitButtonTextLabel")}</Label>
                                 <Input
                                     value={formData.submitButtonText}
                                     onChange={(e) => updateField("submitButtonText", e.target.value)}
@@ -196,7 +203,7 @@ export function AddFormDialog() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Button background color</Label>
+                                    <Label>{t("setup.leads.form.buttonBgColorLabel")}</Label>
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="color"
@@ -208,7 +215,7 @@ export function AddFormDialog() {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Button text color</Label>
+                                    <Label>{t("setup.leads.form.buttonTextColorLabel")}</Label>
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="color"
@@ -221,7 +228,7 @@ export function AddFormDialog() {
                                 </div>
                             </div>
                             <div className="pt-4 border-t">
-                                <p className="text-sm text-gray-600">Preview:</p>
+                                <p className="text-sm text-gray-600">{t("setup.leads.form.previewLabel")}</p>
                                 <Button
                                     className="mt-2"
                                     style={{
@@ -238,7 +245,7 @@ export function AddFormDialog() {
                     {step === 3 && (
                         <div className="space-y-4">
                             <div className="space-y-3">
-                                <Label>After submission</Label>
+                                <Label>{t("setup.leads.form.afterSubmissionLabel")}</Label>
                                 <RadioGroup
                                     value={formData.successAction}
                                     onValueChange={(v) => updateField("successAction", v)}
@@ -246,19 +253,19 @@ export function AddFormDialog() {
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="message" id="message" />
                                         <Label htmlFor="message" className="font-normal">
-                                            Show thank you message
+                                            {t("setup.leads.form.showThankYou")}
                                         </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="redirect" id="redirect" />
                                         <Label htmlFor="redirect" className="font-normal">
-                                            Redirect to URL
+                                            {t("setup.leads.form.redirectToUrl")}
                                         </Label>
                                     </div>
                                 </RadioGroup>
                             </div>
                             <div className="space-y-2">
-                                <Label>Success message</Label>
+                                <Label>{t("setup.leads.form.successMessageLabel")}</Label>
                                 <Textarea
                                     value={formData.successMessage}
                                     onChange={(e) => updateField("successMessage", e.target.value)}
@@ -273,7 +280,7 @@ export function AddFormDialog() {
                                         onCheckedChange={(c) => updateField("autoMarkPublic", !!c)}
                                     />
                                     <Label htmlFor="autoPublic" className="font-normal">
-                                        Auto mark as public
+                                        {t("setup.leads.form.autoMarkPublic")}
                                     </Label>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -283,7 +290,7 @@ export function AddFormDialog() {
                                         onCheckedChange={(c) => updateField("allowDuplicate", !!c)}
                                     />
                                     <Label htmlFor="allowDuplicate" className="font-normal">
-                                        Allow duplicate leads
+                                        {t("setup.leads.form.allowDuplicate")}
                                     </Label>
                                 </div>
                             </div>
@@ -299,11 +306,11 @@ export function AddFormDialog() {
                                     onCheckedChange={(c) => updateField("notifyOnImport", !!c)}
                                 />
                                 <Label htmlFor="notifyImport" className="font-normal">
-                                    Notify when lead imported
+                                    {t("setup.leads.form.notifyOnImport")}
                                 </Label>
                             </div>
                             <div className="space-y-3 pt-4 border-t">
-                                <Label>Who to notify</Label>
+                                <Label>{t("setup.leads.form.whoToNotify")}</Label>
                                 <RadioGroup
                                     value={formData.notifyType}
                                     onValueChange={(v) => updateField("notifyType", v)}
@@ -311,19 +318,19 @@ export function AddFormDialog() {
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="specific" id="specific" />
                                         <Label htmlFor="specific" className="font-normal">
-                                            Specific staff members
+                                            {t("setup.leads.form.notifySpecific")}
                                         </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="roles" id="roles" />
                                         <Label htmlFor="roles" className="font-normal">
-                                            Staff with specific roles
+                                            {t("setup.leads.form.notifyRoles")}
                                         </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="responsible" id="responsible" />
                                         <Label htmlFor="responsible" className="font-normal">
-                                            Responsible person
+                                            {t("setup.leads.form.notifyResponsible")}
                                         </Label>
                                     </div>
                                 </RadioGroup>
@@ -336,17 +343,17 @@ export function AddFormDialog() {
                     <div>
                         {step > 1 && (
                             <Button variant="outline" onClick={prevStep} className="gap-1">
-                                <ChevronLeft className="h-4 w-4" /> Back
+                                <ChevronLeft className="h-4 w-4" /> {t("common.back")}
                             </Button>
                         )}
                     </div>
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={() => handleOpenChange(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         {step < totalSteps ? (
                             <Button onClick={nextStep} className="bg-gray-900 text-white hover:bg-gray-800 gap-1">
-                                Next <ChevronRight className="h-4 w-4" />
+                                {t("common.next")} <ChevronRight className="h-4 w-4" />
                             </Button>
                         ) : (
                             <Button
@@ -355,7 +362,7 @@ export function AddFormDialog() {
                                 disabled={saving}
                             >
                                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Create Form
+                                {t("setup.leads.form.createButton")}
                             </Button>
                         )}
                     </div>

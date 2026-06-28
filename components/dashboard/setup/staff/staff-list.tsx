@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useStaff, useRoles } from "@/lib/hooks";
+import { useTranslation } from "@/lib/i18n";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -40,6 +41,7 @@ export function StaffList() {
     const [bulkActionLoading, setBulkActionLoading] = useState(false);
     const { staff, loading, updateStaff, deleteStaff } = useStaff();
     const { roles } = useRoles();
+    const { t } = useTranslation();
 
     // Deduplicate staff by email to handle potential duplicate records
     const uniqueStaff = useMemo(() => {
@@ -66,11 +68,11 @@ export function StaffList() {
     };
 
     const formatLastLogin = (timestamp: { toDate: () => Date } | null | undefined) => {
-        if (!timestamp) return "Never";
+        if (!timestamp) return t("setup.staff.never");
         try {
             return formatDistanceToNow(timestamp.toDate(), { addSuffix: true });
         } catch {
-            return "Never";
+            return t("setup.staff.never");
         }
     };
 
@@ -100,10 +102,10 @@ export function StaffList() {
         setBulkActionLoading(true);
         try {
             await Promise.all(Array.from(selectedIds).map((id) => updateStaff(id, { status: "active" })));
-            toast.success(`${selectedIds.size} staff members activated`);
+            toast.success(t("setup.staff.toast.bulkActivated", { count: selectedIds.size }));
             setSelectedIds(new Set());
         } catch {
-            toast.error("Failed to activate some staff members");
+            toast.error(t("setup.staff.toast.bulkActivateFailed"));
         } finally {
             setBulkActionLoading(false);
         }
@@ -113,10 +115,10 @@ export function StaffList() {
         setBulkActionLoading(true);
         try {
             await Promise.all(Array.from(selectedIds).map((id) => updateStaff(id, { status: "inactive" })));
-            toast.success(`${selectedIds.size} staff members deactivated`);
+            toast.success(t("setup.staff.toast.bulkDeactivated", { count: selectedIds.size }));
             setSelectedIds(new Set());
         } catch {
-            toast.error("Failed to deactivate some staff members");
+            toast.error(t("setup.staff.toast.bulkDeactivateFailed"));
         } finally {
             setBulkActionLoading(false);
         }
@@ -126,10 +128,10 @@ export function StaffList() {
         setBulkActionLoading(true);
         try {
             await Promise.all(Array.from(selectedIds).map((id) => deleteStaff(id)));
-            toast.success(`${selectedIds.size} staff members deleted`);
+            toast.success(t("setup.staff.toast.bulkDeleted", { count: selectedIds.size }));
             setSelectedIds(new Set());
         } catch {
-            toast.error("Failed to delete some staff members");
+            toast.error(t("setup.staff.toast.bulkDeleteFailed"));
         } finally {
             setBulkActionLoading(false);
             setDeleteDialogOpen(false);
@@ -164,22 +166,22 @@ export function StaffList() {
                                     ) : (
                                         <Badge className="mr-2 bg-blue-600">{selectedIds.size}</Badge>
                                     )}
-                                    Bulk Actions
+                                    {t("setup.staff.bulkActions")}
                                     <ChevronDown className="ml-2 h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
                                 <DropdownMenuItem onClick={handleBulkActivate}>
                                     <UserCheck className="mr-2 h-4 w-4 text-green-600" />
-                                    Activate Selected
+                                    {t("setup.staff.activateSelected")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={handleBulkDeactivate}>
                                     <UserX className="mr-2 h-4 w-4 text-orange-600" />
-                                    Deactivate Selected
+                                    {t("setup.staff.deactivateSelected")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setDeleteDialogOpen(true)} className="text-red-600">
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete Selected
+                                    {t("setup.staff.deleteSelected")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -190,7 +192,7 @@ export function StaffList() {
                     <div className="relative flex-1">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search staff..."
+                            placeholder={t("setup.staff.searchPlaceholder")}
                             className="pl-9"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -209,7 +211,7 @@ export function StaffList() {
                             <SelectItem value="100">100</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Button variant="outline">Export</Button>
+                    <Button variant="outline">{t("common.export")}</Button>
                     <Button variant="outline" size="icon">
                         <RefreshCw className="h-4 w-4" />
                     </Button>
@@ -226,18 +228,18 @@ export function StaffList() {
                                     onCheckedChange={toggleSelectAll}
                                 />
                             </TableHead>
-                            <TableHead className="font-bold text-gray-900">Full Name</TableHead>
-                            <TableHead className="font-bold text-gray-900">Email</TableHead>
-                            <TableHead className="font-bold text-gray-900">Role</TableHead>
-                            <TableHead className="font-bold text-gray-900">Last Login</TableHead>
-                            <TableHead className="font-bold text-gray-900">Active</TableHead>
+                            <TableHead className="font-bold text-gray-900">{t("setup.staff.table.fullName")}</TableHead>
+                            <TableHead className="font-bold text-gray-900">{t("common.email")}</TableHead>
+                            <TableHead className="font-bold text-gray-900">{t("setup.staff.table.role")}</TableHead>
+                            <TableHead className="font-bold text-gray-900">{t("setup.staff.table.lastLogin")}</TableHead>
+                            <TableHead className="font-bold text-gray-900">{t("setup.staff.table.active")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filteredStaff.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                                    {searchQuery ? "No staff match your search." : "No staff members found."}
+                                    {searchQuery ? t("setup.staff.noMatch") : t("setup.staff.empty")}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -269,7 +271,7 @@ export function StaffList() {
                                                         href={`/dashboard/setup/team-roles/staff/${encodeURIComponent(member.id)}`}
                                                         className="hover:text-blue-600 hover:underline px-0.5"
                                                     >
-                                                        View
+                                                        {t("common.view")}
                                                     </Link>
                                                     <span className="text-gray-300">|</span>
                                                     <button
@@ -279,7 +281,7 @@ export function StaffList() {
                                                         }}
                                                         className="hover:text-red-600 hover:underline px-0.5"
                                                     >
-                                                        Delete
+                                                        {t("common.delete")}
                                                     </button>
                                                 </div>
                                             </div>
@@ -289,7 +291,7 @@ export function StaffList() {
                                     <TableCell className="text-gray-700">
                                         {member.isAdmin ? (
                                             <Badge className="bg-purple-100 text-purple-700 border-0 hover:bg-purple-200">
-                                                Administrator
+                                                {t("setup.staff.administrator")}
                                             </Badge>
                                         ) : (
                                             getRoleName(member.roleId)
@@ -312,16 +314,16 @@ export function StaffList() {
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete {selectedIds.size} staff member(s)?</AlertDialogTitle>
+                        <AlertDialogTitle>{t("setup.staff.bulkDeleteTitle", { count: selectedIds.size })}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. The selected staff members will be permanently removed.
+                            {t("setup.staff.bulkDeleteDescription")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
                             {bulkActionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Delete
+                            {t("common.delete")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -330,24 +332,24 @@ export function StaffList() {
             <AlertDialog open={!!singleDeleteId} onOpenChange={(open) => !open && setSingleDeleteId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete staff member?</AlertDialogTitle>
+                        <AlertDialogTitle>{t("setup.staff.deleteTitle")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the staff member account.
+                            {t("setup.staff.deleteDescription")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={async () => {
                                 if (singleDeleteId) {
                                     await deleteStaff(singleDeleteId);
                                     setSingleDeleteId(null);
-                                    toast.success("Staff member deleted");
+                                    toast.success(t("setup.staff.toast.deleted"));
                                 }
                             }}
                             className="bg-red-600 hover:bg-red-700"
                         >
-                            Delete
+                            {t("common.delete")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

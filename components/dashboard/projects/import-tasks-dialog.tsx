@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Loader2 } from "lucide-react";
 import { useTasks } from "@/lib/hooks";
+import { useTranslation } from "@/lib/i18n";
 
 interface ImportTasksDialogProps {
     open: boolean;
@@ -32,6 +33,7 @@ export function ImportTasksDialog({
     targetTaskListId,
     onImport,
 }: ImportTasksDialogProps) {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,14 +85,14 @@ export function ImportTasksDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Import Tasks</DialogTitle>
-                    <DialogDescription>Select tasks to add to this task list.</DialogDescription>
+                    <DialogTitle>{t("projects.importTasks.title")}</DialogTitle>
+                    <DialogDescription>{t("projects.importTasks.description")}</DialogDescription>
                 </DialogHeader>
 
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                     <Input
-                        placeholder="Search tasks..."
+                        placeholder={t("projects.importTasks.searchPlaceholder")}
                         className="pl-9"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -107,16 +109,16 @@ export function ImportTasksDialog({
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[50px]"></TableHead>
-                                    <TableHead>Task Name</TableHead>
-                                    <TableHead>Current Status</TableHead>
-                                    <TableHead>Project</TableHead>
+                                    <TableHead>{t("projects.importTasks.taskName")}</TableHead>
+                                    <TableHead>{t("projects.importTasks.currentStatus")}</TableHead>
+                                    <TableHead>{t("projects.importTasks.project")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {importableTasks.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                                            No matching tasks found.
+                                            {t("projects.importTasks.noTasks")}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -137,9 +139,9 @@ export function ImportTasksDialog({
                                             <TableCell className="text-muted-foreground text-sm">
                                                 {task.projectId
                                                     ? task.projectId === currentProjectId
-                                                        ? "This Project"
-                                                        : "Other Project"
-                                                    : "General"}
+                                                        ? t("projects.importTasks.thisProject")
+                                                        : t("projects.importTasks.otherProject")
+                                                    : t("projects.importTasks.general")}
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -150,14 +152,14 @@ export function ImportTasksDialog({
                 </div>
 
                 <DialogFooter className="flex justify-between items-center sm:justify-between">
-                    <div className="text-sm text-muted-foreground">{selectedTasks.size} tasks selected</div>
+                    <div className="text-sm text-muted-foreground">{t("projects.importTasks.selectedCount", { count: selectedTasks.size })}</div>
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button onClick={handleImport} disabled={selectedTasks.size === 0 || isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Import Selected
+                            {t("projects.importTasks.importSelected")}
                         </Button>
                     </div>
                 </DialogFooter>

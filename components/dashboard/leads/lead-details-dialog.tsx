@@ -76,6 +76,7 @@ import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { EditDealDialog } from "./edit-deal-dialog";
 import { CreateEstimateDialog } from "@/components/dashboard/sales/create-estimate-dialog";
 import { ActivitiesTable } from "@/components/dashboard/activities/activities-table";
+import { useTranslation } from "@/lib/i18n";
 
 interface LeadDetailsSheetProps {
     open: boolean;
@@ -101,12 +102,12 @@ interface LeadReminder {
 
 // Status Pipeline for Conversion Meter
 const STATUS_PIPELINE = [
-    { key: "new", label: "New", color: "bg-gray-400" },
-    { key: "contacted", label: "Contacted", color: "bg-blue-400" },
-    { key: "qualified", label: "Qualified", color: "bg-purple-500" },
-    { key: "offer-sent", label: "Offer Sent", color: "bg-yellow-500" },
-    { key: "negotiation", label: "Negotiation", color: "bg-orange-500" },
-    { key: "won", label: "Won", color: "bg-green-500" },
+    { key: "new", labelKey: "leads.pipeline.new", color: "bg-gray-400" },
+    { key: "contacted", labelKey: "leads.pipeline.contacted", color: "bg-blue-400" },
+    { key: "qualified", labelKey: "leads.pipeline.qualified", color: "bg-purple-500" },
+    { key: "offer-sent", labelKey: "leads.pipeline.offerSent", color: "bg-yellow-500" },
+    { key: "negotiation", labelKey: "leads.pipeline.negotiation", color: "bg-orange-500" },
+    { key: "won", labelKey: "leads.pipeline.won", color: "bg-green-500" },
 ] as const;
 
 // Shared scoring logic
@@ -115,6 +116,7 @@ import { estimateFormSchema } from "@/lib/schemas";
 import * as z from "zod";
 
 export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsSheetProps) {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState("overview");
     const [showConvertWizard, setShowConvertWizard] = useState(false);
     const [estimateInitialData, setEstimateInitialData] = useState<Partial<z.infer<typeof estimateFormSchema>>>();
@@ -214,7 +216,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     // Save note handler
     const handleSaveNote = async () => {
         if (!noteText.trim() || !lead?.id || !profile?.orgId) {
-            setError("Cannot save note: Missing required data");
+            setError(t("leads.details.noteMissingData"));
             return;
         }
 
@@ -232,7 +234,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("Failed to save note:", error);
-            setError(`Failed to save note: ${error.message || "Unknown error"}`);
+            setError(t("leads.details.noteSaveError", { error: error.message || t("common.unknownError") }));
         } finally {
             setSavingNote(false);
         }
@@ -250,7 +252,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     // Save reminder handler
     const handleSaveReminder = async () => {
         if (!reminderDesc.trim() || !reminderDate || !lead?.id || !profile?.orgId) {
-            setError("Please fill in all required fields");
+            setError(t("leads.details.fillRequiredFields"));
             return;
         }
 
@@ -273,7 +275,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("Failed to save reminder:", error);
-            setError(`Failed to save reminder: ${error.message || "Unknown error"}`);
+            setError(t("leads.details.reminderSaveError", { error: error.message || t("common.unknownError") }));
         } finally {
             setSavingReminder(false);
         }
@@ -334,11 +336,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
             const file = fileList[i];
             try {
                 await uploadFile(file);
-                toast.success(`File uploaded: ${file.name}`);
+                toast.success(t("leads.details.fileUploaded", { name: file.name }));
             } catch (error) {
                 console.error("File upload error:", error);
-                const msg = error instanceof Error ? error.message : "Details unavailable";
-                toast.error(`Failed to upload ${file.name}: ${msg}`);
+                const msg = error instanceof Error ? error.message : t("leads.details.detailsUnavailable");
+                toast.error(t("leads.details.fileUploadError", { name: file.name, error: msg }));
             }
         }
 
@@ -349,13 +351,13 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     };
 
     const handleDeleteFile = async (file: FileDoc) => {
-        if (confirm(`Are you sure you want to delete ${file.name}?`)) {
+        if (confirm(t("leads.details.confirmDeleteFile", { name: file.name }))) {
             try {
                 await deleteFile(file);
-                toast.success("File deleted");
+                toast.success(t("leads.details.fileDeleted"));
             } catch (error) {
                 console.error(error);
-                toast.error("Failed to delete file");
+                toast.error(t("leads.details.fileDeleteError"));
             }
         }
     };
@@ -374,13 +376,13 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                             <div className="flex items-center gap-2 text-sm text-gray-500">
                                 <span className="capitalize">{lead.status}</span>
                                 <span>•</span>
-                                <span>{lead.company || "No Company"}</span>
+                                <span>{lead.company || t("leads.details.noCompany")}</span>
                             </div>
                         </div>
                     </div>
                     <div className="flex items-center justify-end gap-2">
                         <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-2 text-gray-600">
-                            <Printer className="h-4 w-4" /> Print
+                            <Printer className="h-4 w-4" /> {t("leads.details.print")}
                         </Button>
                         {can("leads-edit") && (
                             <Button variant="ghost" size="icon" onClick={() => onEdit(lead)} className="text-gray-600">
@@ -398,19 +400,19 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     value="overview"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
-                                    <TrendingUp className="h-4 w-4" /> Overview
+                                    <TrendingUp className="h-4 w-4" /> {t("leads.details.tabOverview")}
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="profile"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
-                                    <User className="h-4 w-4" /> Profile
+                                    <User className="h-4 w-4" /> {t("leads.details.tabProfile")}
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="activities"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
-                                    <Phone className="h-4 w-4" /> Activities
+                                    <Phone className="h-4 w-4" /> {t("leads.details.tabActivities")}
                                     <Badge
                                         variant="secondary"
                                         className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
@@ -422,13 +424,13 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     value="deal"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
-                                    <DollarSign className="h-4 w-4" /> Deal
+                                    <DollarSign className="h-4 w-4" /> {t("leads.details.tabDeal")}
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="estimates"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
-                                    <Calculator className="h-4 w-4" /> Estimates
+                                    <Calculator className="h-4 w-4" /> {t("leads.details.tabEstimates")}
                                     <Badge
                                         variant="secondary"
                                         className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
@@ -440,7 +442,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     value="tasks"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
-                                    <CheckSquare className="h-4 w-4" /> Tasks
+                                    <CheckSquare className="h-4 w-4" /> {t("leads.details.tabTasks")}
                                     <Badge
                                         variant="secondary"
                                         className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
@@ -452,7 +454,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     value="reminders"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
-                                    <Bell className="h-4 w-4" /> Reminders
+                                    <Bell className="h-4 w-4" /> {t("leads.details.tabReminders")}
                                     <Badge
                                         variant="secondary"
                                         className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
@@ -464,7 +466,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     value="attachments"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
-                                    <Paperclip className="h-4 w-4" /> Files
+                                    <Paperclip className="h-4 w-4" /> {t("leads.details.tabFiles")}
                                     <Badge
                                         variant="secondary"
                                         className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
@@ -476,7 +478,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     value="notes"
                                     className="gap-2 px-0 py-2 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600 rounded-none bg-transparent text-gray-500 border-b-2 border-transparent transition-none"
                                 >
-                                    <StickyNote className="h-4 w-4" /> Notes
+                                    <StickyNote className="h-4 w-4" /> {t("leads.details.tabNotes")}
                                     <Badge
                                         variant="secondary"
                                         className="ml-1 px-1 py-0 h-5 min-w-5 rounded-full text-[10px]"
@@ -515,7 +517,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     <div className="flex items-center justify-between mb-2">
                                                         <div className="flex items-center gap-2">
                                                             <Zap className={`h-5 w-5 ${scoreColor}`} />
-                                                            <h3 className="font-semibold text-gray-900">Lead Score</h3>
+                                                            <h3 className="font-semibold text-gray-900">{t("leads.details.leadScore")}</h3>
                                                         </div>
                                                         <span className={`text-3xl font-bold ${scoreColor}`}>
                                                             {score}
@@ -569,7 +571,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         <div className="p-3 bg-white border rounded-lg shadow-sm lg:col-span-2">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <TrendingUp className="h-5 w-5 text-blue-600" />
-                                                <h3 className="font-semibold text-gray-900">Quick Actions</h3>
+                                                <h3 className="font-semibold text-gray-900">{t("leads.details.quickActions")}</h3>
                                             </div>
                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                 {lead.phone && (
@@ -578,7 +580,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         className="flex flex-col items-center gap-1 p-3 rounded-lg bg-green-50 hover:bg-green-100 border border-green-200 transition-colors"
                                                     >
                                                         <Phone className="h-5 w-5 text-green-600" />
-                                                        <span className="text-xs font-medium text-green-700">Call</span>
+                                                        <span className="text-xs font-medium text-green-700">{t("leads.details.call")}</span>
                                                     </a>
                                                 )}
                                                 {lead.email && (
@@ -587,7 +589,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         className="flex flex-col items-center gap-1 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
                                                     >
                                                         <Mail className="h-5 w-5 text-blue-600" />
-                                                        <span className="text-xs font-medium text-blue-700">Email</span>
+                                                        <span className="text-xs font-medium text-blue-700">{t("common.email")}</span>
                                                     </a>
                                                 )}
                                                 <button
@@ -596,7 +598,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 >
                                                     <CalendarPlus className="h-5 w-5 text-purple-600" />
                                                     <span className="text-xs font-medium text-purple-700">
-                                                        Schedule
+                                                        {t("leads.details.schedule")}
                                                     </span>
                                                 </button>
                                                 <button
@@ -607,7 +609,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 >
                                                     <StickyNote className="h-5 w-5 text-orange-600" />
                                                     <span className="text-xs font-medium text-orange-700">
-                                                        Add Note
+                                                        {t("leads.details.addNote")}
                                                     </span>
                                                 </button>
                                             </div>
@@ -619,7 +621,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-2">
                                                 <ArrowRight className="h-5 w-5 text-blue-600" />
-                                                <h3 className="font-semibold text-gray-900">Conversion Pipeline</h3>
+                                                <h3 className="font-semibold text-gray-900">{t("leads.details.conversionPipeline")}</h3>
                                             </div>
                                             {can("leads-edit") && (
                                                 <Button
@@ -627,7 +629,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     variant="outline"
                                                     onClick={() => setShowConvertWizard(true)}
                                                 >
-                                                    <User className="mr-1 h-4 w-4" /> Convert to Customer
+                                                    <User className="mr-1 h-4 w-4" /> {t("leads.details.convertToCustomer")}
                                                 </Button>
                                             )}
                                         </div>
@@ -647,7 +649,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         <span
                                                             className={`text-[10px] mt-1 w-full text-center truncate px-0.5 ${isActive ? "font-bold text-gray-900" : isPast ? "text-gray-600" : "text-gray-400"}`}
                                                         >
-                                                            {stage.label}
+                                                            {t(stage.labelKey)}
                                                         </span>
                                                     </div>
                                                 );
@@ -655,20 +657,20 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         </div>
                                         {lead.status === "new" && (
                                             <p className="mt-3 text-sm text-blue-600 flex items-center gap-1">
-                                                <AlertTriangle className="h-4 w-4" /> Suggested action:{" "}
-                                                <strong>Make first contact</strong>
+                                                <AlertTriangle className="h-4 w-4" /> {t("leads.details.suggestedAction")}{" "}
+                                                <strong>{t("leads.details.actionMakeFirstContact")}</strong>
                                             </p>
                                         )}
                                         {lead.status === "contacted" && (
                                             <p className="mt-3 text-sm text-purple-600 flex items-center gap-1">
-                                                <AlertTriangle className="h-4 w-4" /> Suggested action:{" "}
-                                                <strong>Qualify this lead</strong>
+                                                <AlertTriangle className="h-4 w-4" /> {t("leads.details.suggestedAction")}{" "}
+                                                <strong>{t("leads.details.actionQualifyLead")}</strong>
                                             </p>
                                         )}
                                         {lead.status === "qualified" && (
                                             <p className="mt-3 text-sm text-yellow-600 flex items-center gap-1">
-                                                <AlertTriangle className="h-4 w-4" /> Suggested action:{" "}
-                                                <strong>Send an estimate</strong>
+                                                <AlertTriangle className="h-4 w-4" /> {t("leads.details.suggestedAction")}{" "}
+                                                <strong>{t("leads.details.actionSendEstimate")}</strong>
                                             </p>
                                         )}
                                     </div>
@@ -680,7 +682,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             <div className="flex items-center gap-2 mb-2">
                                                 <CheckSquare className="h-4 w-4 text-green-600" />
                                                 <h3 className="text-sm font-semibold text-gray-900">
-                                                    Data Completeness
+                                                    {t("leads.details.dataCompleteness")}
                                                 </h3>
                                             </div>
                                             {(() => {
@@ -697,7 +699,10 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     <>
                                                         <div className="flex items-center justify-between text-sm mb-2">
                                                             <span className="text-gray-600">
-                                                                {complete}/{COMPLETENESS_FIELDS.length} fields
+                                                                {t("leads.details.fieldsCount", {
+                                                                    complete,
+                                                                    total: COMPLETENESS_FIELDS.length,
+                                                                })}
                                                             </span>
                                                             <span
                                                                 className={
@@ -749,7 +754,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                                 className="text-blue-600 hover:underline text-[10px]"
                                                                                 disabled={!can("leads-edit")}
                                                                             >
-                                                                                Add
+                                                                                {t("leads.details.add")}
                                                                             </button>
                                                                         )}
                                                                     </div>
@@ -765,7 +770,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         <div className="p-4 bg-white border rounded-lg shadow-sm">
                                             <div className="flex items-center gap-2 mb-3">
                                                 <FileText className="h-5 w-5 text-purple-600" />
-                                                <h3 className="font-semibold text-gray-900">Related Items</h3>
+                                                <h3 className="font-semibold text-gray-900">{t("leads.details.relatedItems")}</h3>
                                             </div>
                                             <div className="space-y-3">
                                                 <button
@@ -773,16 +778,22 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                                                 >
                                                     <span className="flex items-center gap-2 text-sm">
-                                                        <CheckSquare className="h-4 w-4 text-green-500" /> Tasks
+                                                        <CheckSquare className="h-4 w-4 text-green-500" /> {t("leads.details.tabTasks")}
                                                     </span>
                                                     <div className="flex items-center gap-1">
                                                         <Badge variant="outline" className="text-orange-600">
-                                                            {relatedTasks.filter((t) => t.status !== "done").length}{" "}
-                                                            open
+                                                            {t("leads.details.openCount", {
+                                                                count: relatedTasks.filter(
+                                                                    (task) => task.status !== "done"
+                                                                ).length,
+                                                            })}
                                                         </Badge>
                                                         <Badge variant="secondary">
-                                                            {relatedTasks.filter((t) => t.status === "done").length}{" "}
-                                                            done
+                                                            {t("leads.details.doneCount", {
+                                                                count: relatedTasks.filter(
+                                                                    (task) => task.status === "done"
+                                                                ).length,
+                                                            })}
                                                         </Badge>
                                                     </div>
                                                 </button>
@@ -791,7 +802,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                                                 >
                                                     <span className="flex items-center gap-2 text-sm">
-                                                        <Bell className="h-4 w-4 text-yellow-500" /> Reminders
+                                                        <Bell className="h-4 w-4 text-yellow-500" /> {t("leads.details.tabReminders")}
                                                     </span>
                                                     <Badge variant="secondary">{reminders.length}</Badge>
                                                 </button>
@@ -800,7 +811,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                                                 >
                                                     <span className="flex items-center gap-2 text-sm">
-                                                        <StickyNote className="h-4 w-4 text-orange-500" /> Notes
+                                                        <StickyNote className="h-4 w-4 text-orange-500" /> {t("leads.details.tabNotes")}
                                                     </span>
                                                     <Badge variant="secondary">{notes.length}</Badge>
                                                 </button>
@@ -816,11 +827,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             <div className="flex items-center gap-2 pb-2 border-b mb-3">
                                                 <User className="h-4 w-4 text-gray-500" />
                                                 <h3 className="text-sm font-semibold text-gray-900">
-                                                    Lead Information
+                                                    {t("leads.details.leadInformation")}
                                                 </h3>
                                             </div>
                                             <div className="grid grid-cols-[100px_1fr] gap-y-2 text-sm">
-                                                <div className="text-gray-500">Email</div>
+                                                <div className="text-gray-500">{t("common.email")}</div>
                                                 <div className="font-medium text-blue-600">
                                                     {lead.email ? (
                                                         <a href={`mailto:${lead.email}`}>{lead.email}</a>
@@ -828,7 +839,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         "-"
                                                     )}
                                                 </div>
-                                                <div className="text-gray-500">Phone</div>
+                                                <div className="text-gray-500">{t("common.phone")}</div>
                                                 <div className="font-medium">
                                                     {lead.phone ? (
                                                         <a href={`tel:${lead.phone}`} className="text-blue-600">
@@ -838,7 +849,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         "-"
                                                     )}
                                                 </div>
-                                                <div className="text-gray-500">Website</div>
+                                                <div className="text-gray-500">{t("leads.edit.website")}</div>
                                                 <div className="font-medium">
                                                     {lead.website ? (
                                                         <a
@@ -857,11 +868,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         "-"
                                                     )}
                                                 </div>
-                                                <div className="text-gray-500">Value</div>
+                                                <div className="text-gray-500">{t("leads.details.value")}</div>
                                                 <div className="font-medium">
                                                     {lead.value ? `$${lead.value.toLocaleString()}` : "-"}
                                                 </div>
-                                                <div className="text-gray-500">Address</div>
+                                                <div className="text-gray-500">{t("leads.details.address")}</div>
                                                 <div className="font-medium text-gray-900">
                                                     {[lead.address?.street, lead.address?.city, lead.address?.country]
                                                         .filter(Boolean)
@@ -874,25 +885,25 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             <div className="flex items-center gap-2 pb-2 border-b mb-3">
                                                 <Activity className="h-4 w-4 text-gray-500" />
                                                 <h3 className="text-sm font-semibold text-gray-900">
-                                                    System Information
+                                                    {t("leads.details.systemInformation")}
                                                 </h3>
                                             </div>
                                             <div className="grid grid-cols-[100px_1fr] gap-y-2 text-sm">
-                                                <div className="text-gray-500">Status</div>
+                                                <div className="text-gray-500">{t("common.status")}</div>
                                                 <div>
                                                     <Badge variant="secondary" className="capitalize">
                                                         {lead.status}
                                                     </Badge>
                                                 </div>
-                                                <div className="text-gray-500">Source</div>
+                                                <div className="text-gray-500">{t("leads.details.source")}</div>
                                                 <div className="font-medium">{lead.source || "-"}</div>
-                                                <div className="text-gray-500">Created</div>
+                                                <div className="text-gray-500">{t("leads.details.created")}</div>
                                                 <div className="font-medium">
                                                     {lead.createdAt
                                                         ? format(lead.createdAt.toDate(), "MMM d, yyyy")
                                                         : "-"}
                                                 </div>
-                                                <div className="text-gray-500">Assigned To</div>
+                                                <div className="text-gray-500">{t("leads.details.assignedTo")}</div>
                                                 <div className="flex items-center gap-2">
                                                     {lead.assignedTo ? (
                                                         <>
@@ -905,13 +916,13 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             </Avatar>
                                                             <span className="font-medium">
                                                                 {staff.find((s) => s.id === lead.assignedTo)
-                                                                    ?.firstName || "Unknown"}{" "}
+                                                                    ?.firstName || t("leads.details.unknown")}{" "}
                                                                 {staff.find((s) => s.id === lead.assignedTo)
                                                                     ?.lastName || ""}
                                                             </span>
                                                         </>
                                                     ) : (
-                                                        <span className="text-gray-400">Not assigned</span>
+                                                        <span className="text-gray-400">{t("leads.details.notAssigned")}</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -921,7 +932,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     {/* Description */}
                                     {lead.description && (
                                         <div className="p-4 bg-white border rounded-lg shadow-sm">
-                                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Description</h3>
+                                            <h3 className="text-sm font-semibold text-gray-900 mb-2">{t("common.description")}</h3>
                                             <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700 whitespace-pre-wrap">
                                                 {lead.description}
                                             </div>
@@ -935,7 +946,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center gap-2">
                                                 <Briefcase className="h-5 w-5 text-indigo-600" />
-                                                <h3 className="font-semibold text-gray-900">Deal Details</h3>
+                                                <h3 className="font-semibold text-gray-900">{t("leads.details.dealDetails")}</h3>
                                             </div>
                                             <EditDealDialog
                                                 lead={lead}
@@ -945,7 +956,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         size="sm"
                                                         className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                                     >
-                                                        {lead.deal ? "Edit" : "Add Details"}
+                                                        {lead.deal ? t("common.edit") : t("leads.details.addDetails")}
                                                     </Button>
                                                 }
                                             />
@@ -959,18 +970,20 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             items: [
                                                                 {
                                                                     id: Math.random().toString(),
-                                                                    description: lead.deal?.description || "Deal Value",
+                                                                    description: lead.deal?.description || t("leads.details.dealValue"),
                                                                     quantity: 1,
                                                                     rate: lead.deal?.value || 0,
                                                                     amount: lead.deal?.value || 0,
                                                                 },
                                                             ],
-                                                            notes: `Created from Deal: ${lead.deal?.description || ""}`,
+                                                            notes: t("leads.details.createdFromDeal", {
+                                                                description: lead.deal?.description || "",
+                                                            }),
                                                         });
                                                         setShowCreateEstimate(true);
                                                     }}
                                                 >
-                                                    <Plus className="mr-2 h-4 w-4" /> Create Estimate
+                                                    <Plus className="mr-2 h-4 w-4" /> {t("leads.details.createEstimate")}
                                                 </Button>
                                             )}
                                         </div>
@@ -978,14 +991,14 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             <div className="space-y-3">
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="p-2 bg-gray-50 rounded border">
-                                                        <div className="text-xs text-gray-500">Value</div>
+                                                        <div className="text-xs text-gray-500">{t("leads.details.value")}</div>
                                                         <div className="font-medium flex items-center">
                                                             <DollarSign className="h-3 w-3 mr-1 text-green-600" />
                                                             {lead.deal.value?.toLocaleString() || "0"}
                                                         </div>
                                                     </div>
                                                     <div className="p-2 bg-gray-50 rounded border">
-                                                        <div className="text-xs text-gray-500">Close Date</div>
+                                                        <div className="text-xs text-gray-500">{t("leads.details.closeDate")}</div>
                                                         <div className="font-medium flex items-center">
                                                             <CalendarIcon className="h-3 w-3 mr-1 text-gray-400" />
                                                             {lead.deal.expectedCloseDate
@@ -1007,7 +1020,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             </div>
                                         ) : (
                                             <div className="text-center py-4 bg-gray-50 rounded border border-dashed">
-                                                <p className="text-xs text-gray-500">No deal details added.</p>
+                                                <p className="text-xs text-gray-500">{t("leads.details.noDealDetails")}</p>
                                             </div>
                                         )}
                                     </div>
@@ -1024,7 +1037,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         {estimates.length === 0 ? (
                                             <div className="text-center py-8 bg-white border rounded-lg border-dashed">
                                                 <Calculator className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                                                <p className="text-sm text-gray-500">No estimates found.</p>
+                                                <p className="text-sm text-gray-500">{t("leads.details.noEstimatesFound")}</p>
                                             </div>
                                         ) : (
                                             estimates.map((est) => (
@@ -1063,15 +1076,15 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                 {/* Tasks Tab */}
                                 <TabsContent value="tasks" className="m-0">
                                     <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-lg font-semibold">Related Tasks</h3>
+                                        <h3 className="text-lg font-semibold">{t("leads.details.relatedTasks")}</h3>
                                         <Button size="sm" onClick={() => setShowTaskDialog(true)}>
-                                            <Plus className="h-4 w-4 mr-1" /> New Task
+                                            <Plus className="h-4 w-4 mr-1" /> {t("leads.details.newTask")}
                                         </Button>
                                     </div>
                                     {relatedTasks.length === 0 ? (
                                         <div className="text-center py-12 border-2 border-dashed rounded-lg bg-gray-50">
                                             <CheckSquare className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                                            <p className="text-gray-500 font-medium">No tasks found for this lead</p>
+                                            <p className="text-gray-500 font-medium">{t("leads.details.noTasksFound")}</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
@@ -1095,7 +1108,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             </Badge>
                                                             {task.dueDate && (
                                                                 <span className="text-xs text-red-500">
-                                                                    Due {format(task.dueDate.toDate(), "MMM d")}
+                                                                    {t("leads.details.due", {
+                                                                        date: format(task.dueDate.toDate(), "MMM d"),
+                                                                    })}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -1117,7 +1132,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         )}
                                         <div className="bg-yellow-50 p-4 rounded-md border border-yellow-100">
                                             <Textarea
-                                                placeholder="Type a note..."
+                                                placeholder={t("leads.details.typeNote")}
                                                 className="bg-transparent border-none resize-none focus-visible:ring-0 p-0 text-sm min-h-[80px]"
                                                 value={noteText}
                                                 onChange={(e) => setNoteText(e.target.value)}
@@ -1133,14 +1148,14 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     {savingNote ? (
                                                         <Loader2 className="h-4 w-4 animate-spin" />
                                                     ) : (
-                                                        "Save Note"
+                                                        t("leads.details.saveNote")
                                                     )}
                                                 </Button>
                                             </div>
                                         </div>
 
                                         {notes.length === 0 ? (
-                                            <p className="text-center text-gray-400 text-sm py-4">No past notes.</p>
+                                            <p className="text-center text-gray-400 text-sm py-4">{t("leads.details.noPastNotes")}</p>
                                         ) : (
                                             <div className="space-y-3">
                                                 {notes.map((note) => (
@@ -1152,7 +1167,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                           note.createdAt.toDate(),
                                                                           "MMM d, yyyy @ h:mm a"
                                                                       )
-                                                                    : "Just now"}
+                                                                    : t("leads.details.justNow")}
                                                             </span>
                                                             <Button
                                                                 variant="ghost"
@@ -1178,7 +1193,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     {files.length === 0 ? (
                                         <div className="border-2 border-dashed rounded-lg p-10 flex flex-col items-center justify-center">
                                             <Paperclip className="h-10 w-10 text-gray-300 mb-2" />
-                                            <p className="text-sm text-gray-500 mb-4">No files attached</p>
+                                            <p className="text-sm text-gray-500 mb-4">{t("leads.details.noFilesAttached")}</p>
                                             <input
                                                 type="file"
                                                 ref={fileInputRef}
@@ -1197,7 +1212,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                 ) : (
                                                     <Upload className="h-4 w-4 mr-2" />
                                                 )}
-                                                Upload File
+                                                {t("leads.details.uploadFile")}
                                             </Button>
                                         </div>
                                     ) : (
@@ -1220,7 +1235,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     ) : (
                                                         <Upload className="h-4 w-4 mr-1" />
                                                     )}
-                                                    Upload
+                                                    {t("leads.details.upload")}
                                                 </Button>
                                             </div>
                                             <div className="space-y-2">
@@ -1246,7 +1261,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                     {formatBytes(file.size)} •{" "}
                                                                     {file.createdAt
                                                                         ? format(file.createdAt.toDate(), "MMM d, yyyy")
-                                                                        : "Unknown"}
+                                                                        : t("leads.details.unknown")}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1283,15 +1298,15 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                 {/* Reminders Tab */}
                                 <TabsContent value="reminders" className="m-0">
                                     <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-lg font-semibold">Reminders</h3>
+                                        <h3 className="text-lg font-semibold">{t("leads.details.tabReminders")}</h3>
                                         <Button size="sm" onClick={() => setShowReminderDialog(true)}>
-                                            <Plus className="h-4 w-4 mr-1" /> Add Reminder
+                                            <Plus className="h-4 w-4 mr-1" /> {t("leads.details.addReminder")}
                                         </Button>
                                     </div>
                                     {reminders.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-10">
                                             <Bell className="h-10 w-10 text-gray-300 mb-2" />
-                                            <p className="text-sm text-gray-500 mb-4">No active reminders</p>
+                                            <p className="text-sm text-gray-500 mb-4">{t("leads.details.noActiveReminders")}</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
@@ -1315,7 +1330,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                           reminder.date.toDate(),
                                                                           "MMM d, yyyy @ h:mm a"
                                                                       )
-                                                                    : "No date"}
+                                                                    : t("leads.details.noDate")}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1337,7 +1352,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                 <TabsContent value="activity" className="m-0">
                                     <div className="space-y-4">
                                         <h3 className="text-lg font-semibold flex items-center gap-2">
-                                            <Activity className="h-5 w-5" /> Activity Timeline
+                                            <Activity className="h-5 w-5" /> {t("leads.details.activityTimeline")}
                                         </h3>
                                         <div className="pl-4 border-l-2 border-gray-200 space-y-6">
                                             {/* Lead Created */}
@@ -1349,7 +1364,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-medium text-gray-900">
-                                                            Lead Created
+                                                            {t("leads.details.leadCreated")}
                                                         </p>
                                                         <p className="text-xs text-gray-500">
                                                             {lead.createdAt
@@ -1357,7 +1372,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                                       lead.createdAt.toDate(),
                                                                       "MMM d, yyyy @ h:mm a"
                                                                   )
-                                                                : "Unknown date"}
+                                                                : t("leads.details.unknownDate")}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -1373,7 +1388,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         </div>
                                                         <div className="flex-1">
                                                             <p className="text-sm font-medium text-gray-900">
-                                                                Note Added
+                                                                {t("leads.details.noteAdded")}
                                                             </p>
                                                             <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                                                                 {note.content}
@@ -1401,13 +1416,13 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         </div>
                                                         <div className="flex-1">
                                                             <p className="text-sm font-medium text-gray-900">
-                                                                Reminder Set
+                                                                {t("leads.details.reminderSet")}
                                                             </p>
                                                             <p className="text-sm text-gray-600 mt-1">
                                                                 {reminder.description}
                                                             </p>
                                                             <p className="text-xs text-gray-500 mt-1">
-                                                                For:{" "}
+                                                                {t("leads.details.for")}{" "}
                                                                 {reminder.date
                                                                     ? format(
                                                                           reminder.date.toDate(),
@@ -1430,7 +1445,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         </div>
                                                         <div className="flex-1">
                                                             <p className="text-sm font-medium text-gray-900">
-                                                                Task Created: {task.name}
+                                                                {t("leads.details.taskCreated", { name: task.name })}
                                                             </p>
                                                             <div className="flex items-center gap-2 mt-1">
                                                                 <Badge
@@ -1466,7 +1481,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         </div>
                                                         <div>
                                                             <p className="text-sm font-medium text-gray-900">
-                                                                Last Contacted
+                                                                {t("leads.details.lastContacted")}
                                                             </p>
                                                             <p className="text-xs text-gray-500">
                                                                 {format(
@@ -1488,19 +1503,19 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     </div>
                                                     <div>
                                                         <p className="text-sm text-gray-900">
-                                                            Current Status:{" "}
+                                                            {t("leads.details.currentStatus")}{" "}
                                                             <Badge variant="secondary" className="capitalize ml-1">
                                                                 {lead.status}
                                                             </Badge>
                                                         </p>
                                                         <p className="text-xs text-gray-500">
-                                                            Updated:{" "}
+                                                            {t("leads.details.updated")}{" "}
                                                             {lead.updatedAt
                                                                 ? format(
                                                                       lead.updatedAt.toDate(),
                                                                       "MMM d, yyyy @ h:mm a"
                                                                   )
-                                                                : "Unknown"}
+                                                                : t("leads.details.unknown")}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -1513,8 +1528,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     <div className="relative">
                                                         <div className="absolute -left-[21px] top-1 h-3 w-3 bg-gray-300 rounded-full border-2 border-white ring-1 ring-gray-200"></div>
                                                         <p className="text-sm text-gray-500 italic">
-                                                            No additional activity recorded yet. Add notes, reminders,
-                                                            or tasks to see them here.
+                                                            {t("leads.details.noActivityYet")}
                                                         </p>
                                                     </div>
                                                 )}
@@ -1544,24 +1558,24 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
             <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>New Task for {lead.name}</DialogTitle>
+                        <DialogTitle>{t("leads.details.newTaskFor", { name: lead.name })}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Task Name *</Label>
+                            <Label>{t("leads.details.taskNameLabel")}</Label>
                             <Input
-                                placeholder="Enter task name"
+                                placeholder={t("leads.details.taskNamePlaceholder")}
                                 value={taskName}
                                 onChange={(e) => setTaskName(e.target.value)}
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Due Date</Label>
+                                <Label>{t("leads.details.dueDate")}</Label>
                                 <DatePicker date={taskDueDate} setDate={setTaskDueDate} />
                             </div>
                             <div className="space-y-2">
-                                <Label>Priority</Label>
+                                <Label>{t("leads.details.priority")}</Label>
                                 <Select
                                     value={taskPriority}
                                     onValueChange={(v) => setTaskPriority(v as "low" | "medium" | "high" | "urgent")}
@@ -1570,10 +1584,10 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="low">Low</SelectItem>
-                                        <SelectItem value="medium">Medium</SelectItem>
-                                        <SelectItem value="high">High</SelectItem>
-                                        <SelectItem value="urgent">Urgent</SelectItem>
+                                        <SelectItem value="low">{t("leads.details.priorityLow")}</SelectItem>
+                                        <SelectItem value="medium">{t("leads.details.priorityMedium")}</SelectItem>
+                                        <SelectItem value="high">{t("leads.details.priorityHigh")}</SelectItem>
+                                        <SelectItem value="urgent">{t("leads.details.priorityUrgent")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -1581,11 +1595,11 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowTaskDialog(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button onClick={handleSaveTask} disabled={savingTask || !taskName.trim()}>
                             {savingTask ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                            Create Task
+                            {t("leads.details.createTask")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -1595,34 +1609,34 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
             <Dialog open={showReminderDialog} onOpenChange={setShowReminderDialog}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Add Reminder</DialogTitle>
+                        <DialogTitle>{t("leads.details.addReminder")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label>Description *</Label>
+                            <Label>{t("leads.details.descriptionLabel")}</Label>
                             <Textarea
-                                placeholder="What do you want to be reminded about?"
+                                placeholder={t("leads.details.reminderPlaceholder")}
                                 value={reminderDesc}
                                 onChange={(e) => setReminderDesc(e.target.value)}
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Date & Time *</Label>
+                                <Label>{t("leads.details.dateTimeLabel")}</Label>
                                 <DateTimePicker date={reminderDate} setDate={setReminderDate} />
                             </div>
                             <div className="space-y-2">
-                                <Label>Notify Before</Label>
+                                <Label>{t("leads.details.notifyBefore")}</Label>
                                 <Select value={reminderNotify} onValueChange={setReminderNotify}>
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="0">At time</SelectItem>
-                                        <SelectItem value="15">15 minutes</SelectItem>
-                                        <SelectItem value="30">30 minutes</SelectItem>
-                                        <SelectItem value="60">1 hour</SelectItem>
-                                        <SelectItem value="1440">1 day</SelectItem>
+                                        <SelectItem value="0">{t("leads.details.atTime")}</SelectItem>
+                                        <SelectItem value="15">{t("leads.details.minutes15")}</SelectItem>
+                                        <SelectItem value="30">{t("leads.details.minutes30")}</SelectItem>
+                                        <SelectItem value="60">{t("leads.details.hour1")}</SelectItem>
+                                        <SelectItem value="1440">{t("leads.details.day1")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -1630,14 +1644,14 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowReminderDialog(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button
                             onClick={handleSaveReminder}
                             disabled={savingReminder || !reminderDesc.trim() || !reminderDate}
                         >
                             {savingReminder ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                            Set Reminder
+                            {t("leads.details.setReminder")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

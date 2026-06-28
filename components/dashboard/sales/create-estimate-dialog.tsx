@@ -30,6 +30,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
+import { useTranslation } from "@/lib/i18n";
 
 // Extend schema for form usage if needed, but schema is good.
 type EstimateFormData = z.infer<typeof estimateFormSchema>;
@@ -53,6 +54,7 @@ export function CreateEstimateDialog({
     onSuccess,
     initialData,
 }: CreateEstimateDialogProps) {
+    const { t } = useTranslation();
     const { createEstimate } = useEstimates();
     const { profile } = useUserProfile();
     const { settings } = useSettings();
@@ -121,7 +123,7 @@ export function CreateEstimateDialog({
     const onSubmit = async (data: EstimateFormData) => {
         // Additional safety check
         if (!profile?.orgId) {
-            toast.error("Profile not loaded", { description: "Please wait for your profile to load and try again." });
+            toast.error(t("sales.estimate.profileNotLoaded"), { description: t("sales.estimate.profileNotLoadedDesc") });
             console.error("Estimate creation failed: profile.orgId not available", { profile });
             return;
         }
@@ -140,7 +142,7 @@ export function CreateEstimateDialog({
 
             console.log("Creating estimate with data:", { ...data, orgId: profile.orgId });
             await createEstimate(data);
-            toast.success("Estimate Created");
+            toast.success(t("sales.estimate.createSuccess"));
             onOpenChange(false);
             onSuccess?.();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -148,7 +150,7 @@ export function CreateEstimateDialog({
             console.error("Estimate creation error:", error);
             console.error("Error code:", error.code);
             console.error("Error message:", error.message);
-            toast.error("Failed to create estimate", { description: error.message || "Please check your permissions and try again." });
+            toast.error(t("sales.estimate.createError"), { description: error.message || t("sales.estimate.createErrorDesc") });
         } finally {
             setIsLoading(false);
         }
@@ -163,9 +165,15 @@ export function CreateEstimateDialog({
             {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
             <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Create New Estimate</DialogTitle>
+                    <DialogTitle>{t("sales.estimate.createTitle")}</DialogTitle>
                     <DialogDescription>
-                        Create an estimate for {leadId ? "this lead" : customerId ? "this customer" : "a client"}.
+                        {t("sales.estimate.createDescription", {
+                            target: leadId
+                                ? t("sales.estimate.targetLead")
+                                : customerId
+                                  ? t("sales.estimate.targetCustomer")
+                                  : t("sales.estimate.targetClient"),
+                        })}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -179,11 +187,11 @@ export function CreateEstimateDialog({
                                     name="customerId"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Client</FormLabel>
+                                            <FormLabel>{t("sales.estimate.client")}</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select a client" />
+                                                        <SelectValue placeholder={t("sales.estimate.selectClient")} />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -205,7 +213,7 @@ export function CreateEstimateDialog({
                                 name="date"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Date</FormLabel>
+                                        <FormLabel>{t("common.date")}</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -219,7 +227,7 @@ export function CreateEstimateDialog({
                                                         {field.value ? (
                                                             format(field.value, "PPP")
                                                         ) : (
-                                                            <span>Pick a date</span>
+                                                            <span>{t("sales.estimate.pickDate")}</span>
                                                         )}
                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button>
@@ -244,7 +252,7 @@ export function CreateEstimateDialog({
                                 name="expiryDate"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Expiry Date</FormLabel>
+                                        <FormLabel>{t("sales.estimate.expiryDate")}</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -258,7 +266,7 @@ export function CreateEstimateDialog({
                                                         {field.value ? (
                                                             format(field.value, "PPP")
                                                         ) : (
-                                                            <span>Pick a date</span>
+                                                            <span>{t("sales.estimate.pickDate")}</span>
                                                         )}
                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button>
@@ -281,7 +289,7 @@ export function CreateEstimateDialog({
 
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <FormLabel className="text-base font-semibold">Line Items</FormLabel>
+                                <FormLabel className="text-base font-semibold">{t("sales.estimate.lineItems")}</FormLabel>
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -296,7 +304,7 @@ export function CreateEstimateDialog({
                                         })
                                     }
                                 >
-                                    <Plus className="h-4 w-4 mr-2" /> Add Item
+                                    <Plus className="h-4 w-4 mr-2" /> {t("sales.estimate.addItem")}
                                 </Button>
                             </div>
 
@@ -313,7 +321,7 @@ export function CreateEstimateDialog({
                                                 render={({ field }) => (
                                                     <FormItem className="space-y-0">
                                                         <FormControl>
-                                                            <Input placeholder="Description" {...field} />
+                                                            <Input placeholder={t("common.description")} {...field} />
                                                         </FormControl>
                                                     </FormItem>
                                                 )}
@@ -328,7 +336,7 @@ export function CreateEstimateDialog({
                                                         <FormControl>
                                                             <Input
                                                                 type="number"
-                                                                placeholder="Qty"
+                                                                placeholder={t("sales.estimate.qty")}
                                                                 {...field}
                                                                 onChange={(e) =>
                                                                     field.onChange(parseFloat(e.target.value) || 0)
@@ -348,7 +356,7 @@ export function CreateEstimateDialog({
                                                         <FormControl>
                                                             <Input
                                                                 type="number"
-                                                                placeholder="Rate"
+                                                                placeholder={t("sales.estimate.rate")}
                                                                 {...field}
                                                                 onChange={(e) =>
                                                                     field.onChange(parseFloat(e.target.value) || 0)
@@ -376,7 +384,7 @@ export function CreateEstimateDialog({
 
                         <div className="flex justify-end pt-4 border-t">
                             <div className="text-right">
-                                <p className="text-sm text-muted-foreground">Total</p>
+                                <p className="text-sm text-muted-foreground">{t("sales.estimate.total")}</p>
                                 <p className="text-2xl font-bold">
                                     {new Intl.NumberFormat("en-US", { style: "currency", currency }).format(total)}
                                 </p>
@@ -389,9 +397,9 @@ export function CreateEstimateDialog({
                                 name="notes"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Notes</FormLabel>
+                                        <FormLabel>{t("sales.estimate.notes")}</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Additional notes..." {...field} />
+                                            <Textarea placeholder={t("sales.estimate.notesPlaceholder")} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -406,11 +414,11 @@ export function CreateEstimateDialog({
                                 onClick={() => onOpenChange(false)}
                                 disabled={isLoading}
                             >
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button type="submit" disabled={isLoading || !profile?.orgId}>
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Create Estimate
+                                {t("sales.estimate.createTitle")}
                             </Button>
                         </DialogFooter>
                     </form>

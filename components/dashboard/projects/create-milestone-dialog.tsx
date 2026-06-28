@@ -31,6 +31,7 @@ import { CalendarIcon, Loader2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMilestones } from "@/lib/hooks/use-project-data";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 interface CreateMilestoneDialogProps {
     projectId: string;
@@ -45,6 +46,7 @@ export function CreateMilestoneDialog({
     open: controlledOpen,
     onOpenChange: setControlledOpen,
 }: CreateMilestoneDialogProps) {
+    const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const { createMilestone } = useMilestones(projectId);
 
@@ -74,7 +76,7 @@ export function CreateMilestoneDialog({
     const onSubmit = async (data: MilestoneFormData) => {
         try {
             await createMilestone(data);
-            toast.success("Milestone created successfully");
+            toast.success(t("projects.milestone.createSuccess"));
             if (setShow) setShow(false);
             form.reset({
                 name: "",
@@ -86,7 +88,7 @@ export function CreateMilestoneDialog({
             });
         } catch (error) {
             console.error(error);
-            toast.error("Failed to create milestone");
+            toast.error(t("projects.milestone.createError"));
         }
     };
 
@@ -96,15 +98,15 @@ export function CreateMilestoneDialog({
                 {trigger || (
                     <Button>
                         <Plus className="mr-2 h-4 w-4" />
-                        New Milestone
+                        {t("projects.milestone.new")}
                     </Button>
                 )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Create Milestone</DialogTitle>
+                    <DialogTitle>{t("projects.milestone.createTitle")}</DialogTitle>
                     <DialogDescription>
-                        Set a target date and goal for your project.
+                        {t("projects.milestone.createDescription")}
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -114,9 +116,9 @@ export function CreateMilestoneDialog({
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Name</FormLabel>
+                                    <FormLabel>{t("common.name")}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. Phase 1 Release" {...field} />
+                                        <Input placeholder={t("projects.milestone.namePlaceholder")} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -127,7 +129,7 @@ export function CreateMilestoneDialog({
                             name="dueDate"
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
-                                    <FormLabel>Due Date</FormLabel>
+                                    <FormLabel>{t("projects.milestone.dueDate")}</FormLabel>
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <FormControl>
@@ -141,7 +143,7 @@ export function CreateMilestoneDialog({
                                                     {field.value ? (
                                                         format(field.value, "PPP")
                                                     ) : (
-                                                        <span>Pick a date</span>
+                                                        <span>{t("projects.milestone.pickDate")}</span>
                                                     )}
                                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                 </Button>
@@ -168,7 +170,7 @@ export function CreateMilestoneDialog({
                             name="color"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Color</FormLabel>
+                                    <FormLabel>{t("projects.milestone.color")}</FormLabel>
                                     <FormControl>
                                         <div className="flex gap-2">
                                             <Input type="color" className="w-12 h-10 p-1" {...field} />
@@ -184,9 +186,9 @@ export function CreateMilestoneDialog({
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Description</FormLabel>
+                                    <FormLabel>{t("common.description")}</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Milestone details..." {...field} />
+                                        <Textarea placeholder={t("projects.milestone.descriptionPlaceholder")} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -194,13 +196,13 @@ export function CreateMilestoneDialog({
                         />
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setShow && setShow(false)}>
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button type="submit" disabled={form.formState.isSubmitting}>
                                 {form.formState.isSubmitting && (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 )}
-                                Create Milestone
+                                {t("projects.milestone.createTitle")}
                             </Button>
                         </DialogFooter>
                     </form>

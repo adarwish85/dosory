@@ -3,6 +3,7 @@
 import { useActivity, getActivityMeta, type ActivityType } from "@/lib/hooks/use-activity";
 import { formatDistanceToNow } from "date-fns";
 import { WidgetSkeleton } from "./WidgetSkeleton";
+import { useTranslation } from "@/lib/i18n";
 import type { WidgetSettings, DataDensity } from "@/lib/hooks/use-dashboard-layout";
 
 interface ActivityWidgetProps {
@@ -11,6 +12,7 @@ interface ActivityWidgetProps {
 }
 
 export function ActivityWidget({ settings, density }: ActivityWidgetProps) {
+    const { t } = useTranslation();
     const limit = settings.limit || 10;
     const { activities, loading } = useActivity({ limit });
 
@@ -32,8 +34,8 @@ export function ActivityWidget({ settings, density }: ActivityWidgetProps) {
         return (
             <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm">
                 <div className="text-3xl mb-2">📋</div>
-                <p>No recent activity</p>
-                <p className="text-xs mt-1">Activity will appear here as you work</p>
+                <p>{t("dashboard.activity.empty")}</p>
+                <p className="text-xs mt-1">{t("dashboard.activity.emptyHint")}</p>
             </div>
         );
     }

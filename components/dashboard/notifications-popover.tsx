@@ -8,8 +8,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/lib/hooks/use-notifications";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 
 export function NotificationsPopover() {
+    const { t } = useTranslation();
     const { notifications, unreadCount, markAsRead, markAllAsRead, loading } = useNotifications();
     const [open, setOpen] = useState(false);
 
@@ -50,7 +52,7 @@ export function NotificationsPopover() {
             </PopoverTrigger>
             <PopoverContent align="end" className="w-80 p-0 shadow-xl rounded-xl border-gray-200">
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                    <h3 className="font-semibold text-gray-900">Notifications</h3>
+                    <h3 className="font-semibold text-gray-900">{t("dashboard.notifications.title")}</h3>
                     {unreadCount > 0 && (
                         <Button
                             variant="ghost"
@@ -58,17 +60,17 @@ export function NotificationsPopover() {
                             className="h-auto p-1 text-xs text-[#0A66C2] hover:text-[#004182] hover:bg-transparent"
                             onClick={() => markAllAsRead()}
                         >
-                            Mark all as read
+                            {t("dashboard.notifications.markAllAsRead")}
                         </Button>
                     )}
                 </div>
                 <ScrollArea className="h-[350px]">
                     {loading ? (
-                        <div className="p-4 text-center text-sm text-gray-500">Loading...</div>
+                        <div className="p-4 text-center text-sm text-gray-500">{t("common.loading")}</div>
                     ) : notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full p-8 text-center text-gray-500 gap-2">
                             <Bell className="h-8 w-8 opacity-20" />
-                            <p className="text-sm">No notifications yet</p>
+                            <p className="text-sm">{t("dashboard.notifications.empty")}</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-gray-50">
@@ -95,7 +97,7 @@ export function NotificationsPopover() {
                                         <p className="text-[10px] text-gray-400">
                                             {notification.createdAt
                                                 ? formatDistanceToNow(notification.createdAt, { addSuffix: true })
-                                                : "Just now"}
+                                                : t("dashboard.notifications.justNow")}
                                         </p>
                                     </div>
                                     {!notification.read && (
@@ -108,7 +110,7 @@ export function NotificationsPopover() {
                 </ScrollArea>
                 <div className="p-2 border-t border-gray-100">
                     <Button variant="ghost" size="sm" className="w-full text-xs text-gray-500 h-8">
-                        View all
+                        {t("dashboard.notifications.viewAll")}
                     </Button>
                 </div>
             </PopoverContent>

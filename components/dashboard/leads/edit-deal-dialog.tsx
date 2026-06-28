@@ -35,6 +35,7 @@ import { CalendarIcon, Plus, Trash2, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Timestamp } from "firebase/firestore";
+import { useTranslation } from "@/lib/i18n";
 
 // Convert dealSchema to form schema (dates as Date objects)
 // dealSchema expects Date for expectedCloseDate
@@ -50,6 +51,7 @@ interface EditDealDialogProps {
 }
 
 export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDialogProps) {
+    const { t } = useTranslation();
     const { updateLead } = useLeads();
 
     const [isLoading, setIsLoading] = useState(false);
@@ -103,14 +105,14 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                 value: data.value,
             });
 
-            toast.success("Deal Updated", {
-                description: "Deal details saved successfully.",
+            toast.success(t("leads.deal.updatedTitle"), {
+                description: t("leads.deal.updatedDesc"),
             });
             onOpenChangeHandler?.(false);
         } catch (error) {
             console.error(error);
-            toast.error("Error", {
-                description: "Failed to save deal details.",
+            toast.error(t("common.error"), {
+                description: t("leads.deal.saveError"),
             });
         } finally {
             setIsLoading(false);
@@ -133,9 +135,9 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
             <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Edit Deal Details</DialogTitle>
+                    <DialogTitle>{t("leads.deal.editTitle")}</DialogTitle>
                     <DialogDescription>
-                        Manage deal information, value, and products/services.
+                        {t("leads.deal.editDescription")}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -147,9 +149,9 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                 name="subject"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Deal Subject</FormLabel>
+                                        <FormLabel>{t("leads.deal.subject")}</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. Q4 Marketing Contract" {...field} />
+                                            <Input placeholder={t("leads.deal.subjectPlaceholder")} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -161,7 +163,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                 name="expectedCloseDate"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Expected Close Date</FormLabel>
+                                        <FormLabel>{t("leads.deal.expectedCloseDate")}</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -175,7 +177,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                                         {field.value ? (
                                                             format(field.value, "PPP")
                                                         ) : (
-                                                            <span>Pick a date</span>
+                                                            <span>{t("leads.deal.pickDate")}</span>
                                                         )}
                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button>
@@ -203,7 +205,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                 name="value"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Deal Value</FormLabel>
+                                        <FormLabel>{t("leads.deal.value")}</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
@@ -212,7 +214,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                             />
                                         </FormControl>
                                         <FormDescription>
-                                            Auto-calculated from products if added.
+                                            {t("leads.deal.valueAutoCalc")}
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -225,9 +227,9 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Description</FormLabel>
+                                    <FormLabel>{t("common.description")}</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Deal details..." {...field} />
+                                        <Textarea placeholder={t("leads.deal.descriptionPlaceholder")} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -237,7 +239,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                         {/* Products / Line Items */}
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <FormLabel className="text-base font-semibold">Products / Services</FormLabel>
+                                <FormLabel className="text-base font-semibold">{t("leads.deal.productsServices")}</FormLabel>
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -250,7 +252,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                         amount: 0,
                                     })}
                                 >
-                                    <Plus className="h-4 w-4 mr-2" /> Add Item
+                                    <Plus className="h-4 w-4 mr-2" /> {t("leads.deal.addItem")}
                                 </Button>
                             </div>
 
@@ -264,7 +266,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                                 render={({ field }) => (
                                                     <FormItem className="space-y-0">
                                                         <FormControl>
-                                                            <Input placeholder="Item name" {...field} />
+                                                            <Input placeholder={t("leads.deal.itemName")} {...field} />
                                                         </FormControl>
                                                     </FormItem>
                                                 )}
@@ -279,7 +281,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                                         <FormControl>
                                                             <Input
                                                                 type="number"
-                                                                placeholder="Qty"
+                                                                placeholder={t("leads.deal.qty")}
                                                                 {...field}
                                                                 onChange={e => {
                                                                     const qty = parseFloat(e.target.value) || 0;
@@ -302,7 +304,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                                         <FormControl>
                                                             <Input
                                                                 type="number"
-                                                                placeholder="Rate"
+                                                                placeholder={t("leads.deal.rate")}
                                                                 {...field}
                                                                 onChange={e => {
                                                                     const rate = parseFloat(e.target.value) || 0;
@@ -333,7 +335,7 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                 ))}
                                 {fields.length === 0 && (
                                     <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-md">
-                                        No products added. Add items to calculate deal value automatically.
+                                        {t("leads.deal.noProducts")}
                                     </p>
                                 )}
                             </div>
@@ -346,11 +348,11 @@ export function EditDealDialog({ lead, trigger, open, onOpenChange }: EditDealDi
                                 onClick={() => onOpenChangeHandler?.(false)}
                                 disabled={isLoading}
                             >
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button type="submit" disabled={isLoading}>
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save Deal
+                                {t("leads.deal.saveDeal")}
                             </Button>
                         </DialogFooter>
                     </form>

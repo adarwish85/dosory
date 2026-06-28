@@ -5,6 +5,7 @@ import { CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { format, isBefore, startOfDay } from "date-fns";
 import Link from "next/link";
 import { WidgetSkeleton } from "./WidgetSkeleton";
+import { useTranslation } from "@/lib/i18n";
 import type { WidgetSettings, DataDensity } from "@/lib/hooks/use-dashboard-layout";
 
 interface TasksWidgetProps {
@@ -13,6 +14,7 @@ interface TasksWidgetProps {
 }
 
 export function TasksWidget({ settings, density }: TasksWidgetProps) {
+    const { t } = useTranslation();
     const { tasks, loading, taskStats } = useTasks();
     const limit = settings.limit || 5;
     const today = startOfDay(new Date());
@@ -59,22 +61,22 @@ export function TasksWidget({ settings, density }: TasksWidgetProps) {
             <div className="grid grid-cols-3 gap-2 mb-4">
                 <div className="text-center">
                     <div className="text-2xl font-bold text-gray-900">{taskStats?.total || 0}</div>
-                    <div className="text-xs text-gray-500">Total</div>
+                    <div className="text-xs text-gray-500">{t("dashboard.tasks.total")}</div>
                 </div>
                 <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">{taskStats?.completed || 0}</div>
-                    <div className="text-xs text-gray-500">Done</div>
+                    <div className="text-xs text-gray-500">{t("dashboard.tasks.done")}</div>
                 </div>
                 <div className="text-center">
                     <div className="text-2xl font-bold text-red-600">{overdueTasks.length}</div>
-                    <div className="text-xs text-gray-500">Overdue</div>
+                    <div className="text-xs text-gray-500">{t("dashboard.tasks.overdue")}</div>
                 </div>
             </div>
 
             {/* Task List */}
             <div className="flex-1 space-y-2 overflow-auto">
                 {upcomingTasks.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">No tasks yet</div>
+                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">{t("dashboard.tasks.empty")}</div>
                 ) : (
                     upcomingTasks.map((task) => (
                         <Link
@@ -104,7 +106,7 @@ export function TasksWidget({ settings, density }: TasksWidgetProps) {
 
             {/* View All Link */}
             <Link href="/dashboard/tasks" className="text-sm text-blue-600 hover:underline text-center mt-2 block">
-                View all tasks →
+                {t("dashboard.tasks.viewAll")}
             </Link>
         </div>
     );

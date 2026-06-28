@@ -57,6 +57,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 interface CustomersTableProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -114,34 +115,35 @@ function HighlightText({ text, search }: { text: string; search: string }) {
 // Quick Stats Bar
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function QuickStatsBar({ customers }: { customers: any[] }) {
+    const { t } = useTranslation();
     const activeCount = customers.filter((c) => c.status === "active").length;
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-blue-600 mb-1">
                     <Users className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Total</span>
+                    <span className="text-xs font-medium uppercase">{t("customers.table.stats.total")}</span>
                 </div>
                 <div className="text-2xl font-bold text-blue-900">{customers.length}</div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1">
                     <Building2 className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Active</span>
+                    <span className="text-xs font-medium uppercase">{t("customers.table.stats.active")}</span>
                 </div>
                 <div className="text-2xl font-bold text-green-900">{activeCount}</div>
             </div>
             <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-yellow-600 mb-1">
                     <DollarSign className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Inactive</span>
+                    <span className="text-xs font-medium uppercase">{t("customers.table.stats.inactive")}</span>
                 </div>
                 <div className="text-2xl font-bold text-yellow-900">{customers.length - activeCount}</div>
             </div>
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-purple-600 mb-1">
                     <Users className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">With Groups</span>
+                    <span className="text-xs font-medium uppercase">{t("customers.table.stats.withGroups")}</span>
                 </div>
                 <div className="text-2xl font-bold text-purple-900">
                     {customers.filter((c) => c.groups?.length > 0).length}
@@ -169,13 +171,14 @@ function Pagination({
     endRecord: number;
     compact?: boolean;
 }) {
+    const { t } = useTranslation();
     const canPrev = currentPage > 1,
         canNext = currentPage < totalPages;
     return (
         <div className={`flex items-center ${compact ? "gap-1" : "justify-between gap-4"}`}>
             {!compact && (
                 <div className="text-sm text-gray-500">
-                    Showing {startRecord} to {endRecord} of {totalRecords}
+                    {t("customers.table.showingRange", { start: startRecord, end: endRecord, total: totalRecords })}
                 </div>
             )}
             <div className="flex items-center gap-1">
@@ -198,9 +201,9 @@ function Pagination({
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center gap-1 px-2 text-sm">
-                    <span className="text-gray-700">Page</span>
+                    <span className="text-gray-700">{t("customers.table.page")}</span>
                     <span className="font-medium">{currentPage}</span>
-                    <span className="text-gray-700">of {totalPages}</span>
+                    <span className="text-gray-700">{t("customers.table.ofPages", { total: totalPages })}</span>
                 </div>
                 <Button
                     variant="outline"
@@ -239,25 +242,27 @@ function SelectionBanner({
     onSelectAll: () => void;
     onClearSelection: () => void;
 }) {
+    const { t } = useTranslation();
     if (selectionMode === "none" || selectedCount === 0) return null;
     return (
         <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-2 flex items-center justify-center gap-2 text-sm mb-2">
             <span className="text-blue-800">
-                <strong>{selectedCount}</strong> selected.
+                <strong>{selectedCount}</strong> {t("customers.table.selectedSuffix")}
             </span>
             {selectionMode === "page" && selectedCount < totalCount && (
                 <button onClick={onSelectAll} className="text-blue-600 font-medium hover:underline">
-                    Select all {totalCount}
+                    {t("customers.table.selectAllCount", { total: totalCount })}
                 </button>
             )}
             <button onClick={onClearSelection} className="text-blue-600 font-medium hover:underline ml-2">
-                Clear
+                {t("customers.table.clear")}
             </button>
         </div>
     );
 }
 
 export function CustomersTable({ customers, loading }: CustomersTableProps) {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
     const [selectionMode, setSelectionMode] = useState<SelectionMode>("none");
@@ -316,9 +321,9 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
         try {
             await deleteCustomer(deleteId);
             setDeleteId(null);
-            toast.success("Customer deleted");
+            toast.success(t("customers.table.deleteSuccess"));
         } catch {
-            toast.error("Failed to delete customer");
+            toast.error(t("customers.table.deleteError"));
         }
     };
 
@@ -333,9 +338,9 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
             setSelectedCustomers([]);
             setSelectionMode("none");
             setShowBulkDelete(false);
-            toast.success("Customers deleted");
+            toast.success(t("customers.table.bulkDeleteSuccess"));
         } catch {
-            toast.error("Failed to delete some customers");
+            toast.error(t("customers.table.bulkDeleteError"));
         }
     };
 
@@ -443,7 +448,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500">Show</span>
+                        <span className="text-sm text-gray-500">{t("customers.table.show")}</span>
                         <Select
                             value={recordsPerPage.toString()}
                             onValueChange={(v) => {
@@ -463,21 +468,21 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                         </Select>
                         <Button variant="outline" onClick={exportCustomers}>
                             <Download className="mr-2 h-4 w-4" />
-                            Export
+                            {t("common.export")}
                         </Button>
                         {selectedCustomers.length > 0 && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-                                        <Badge className="mr-2 bg-blue-600">{selectedCustomers.length}</Badge>Bulk{" "}
+                                        <Badge className="mr-2 bg-blue-600">{selectedCustomers.length}</Badge>{t("customers.table.bulk")}{" "}
                                         <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuLabel>With {selectedCustomers.length} selected</DropdownMenuLabel>
+                                    <DropdownMenuLabel>{t("customers.table.withSelected", { count: selectedCustomers.length })}</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                        <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -490,7 +495,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                         <div className="relative w-full sm:w-64">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Search..."
+                                placeholder={t("common.search")}
                                 className="pl-9"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -503,15 +508,15 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Density</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("customers.table.density")}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuRadioGroup
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="spacious">Spacious</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">{t("customers.table.densityCompact")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">{t("customers.table.densityComfortable")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="spacious">{t("customers.table.densitySpacious")}</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -523,7 +528,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuLabel>
-                                    Columns ({visibleColumnsCount}/{DEFAULT_COLUMNS.length})
+                                    {t("customers.table.columns")} ({visibleColumnsCount}/{DEFAULT_COLUMNS.length})
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {DEFAULT_COLUMNS.map((col) => (
@@ -533,7 +538,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                                         onCheckedChange={() => toggleColumn(col.key)}
                                         disabled={col.required}
                                     >
-                                        {col.label}
+                                        {t(`customers.table.column.${col.key}`)}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
@@ -577,16 +582,16 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                                         onCheckedChange={(c) => (c ? handleSelectAllOnPage() : handleClearSelection())}
                                     />
                                 </TableHead>
-                                {columnVisibility.id && <TableHead className="w-[60px]">#</TableHead>}
+                                {columnVisibility.id && <TableHead className="w-[60px]">{t("customers.table.column.id")}</TableHead>}
                                 {columnVisibility.company && (
-                                    <TableHead className="font-semibold text-gray-900">Company</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("customers.table.column.company")}</TableHead>
                                 )}
-                                {columnVisibility.email && <TableHead>Email</TableHead>}
-                                {columnVisibility.phone && <TableHead>Phone</TableHead>}
-                                {columnVisibility.status && <TableHead>Active</TableHead>}
-                                {columnVisibility.groups && <TableHead>Groups</TableHead>}
-                                {columnVisibility.createdAt && <TableHead>Date Created</TableHead>}
-                                <TableHead className="w-24 text-center">Actions</TableHead>
+                                {columnVisibility.email && <TableHead>{t("customers.table.column.email")}</TableHead>}
+                                {columnVisibility.phone && <TableHead>{t("customers.table.column.phone")}</TableHead>}
+                                {columnVisibility.status && <TableHead>{t("customers.table.column.status")}</TableHead>}
+                                {columnVisibility.groups && <TableHead>{t("customers.table.column.groups")}</TableHead>}
+                                {columnVisibility.createdAt && <TableHead>{t("customers.table.column.createdAt")}</TableHead>}
+                                <TableHead className="w-24 text-center">{t("common.actions")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -596,7 +601,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                                         colSpan={visibleColumnsCount + 2}
                                         className="text-center py-10 text-muted-foreground"
                                     >
-                                        {searchQuery ? "No customers match your search." : "No customers found."}
+                                        {searchQuery ? t("customers.table.noMatch") : t("customers.table.noCustomers")}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -707,7 +712,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>View</TooltipContent>
+                                                    <TooltipContent>{t("common.view")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -717,7 +722,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                                                             </Button>
                                                         </Link>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Edit</TooltipContent>
+                                                    <TooltipContent>{t("common.edit")}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -730,7 +735,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                                                             <Trash className="h-3.5 w-3.5" />
                                                         </Button>
                                                     </TooltipTrigger>
-                                                    <TooltipContent>Delete</TooltipContent>
+                                                    <TooltipContent>{t("common.delete")}</TooltipContent>
                                                 </Tooltip>
                                             </div>
                                         </TableCell>
@@ -742,7 +747,7 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600 font-medium">Total: {totalRecords}</div>
+                    <div className="text-sm text-gray-600 font-medium">{t("customers.table.total", { count: totalRecords })}</div>
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
@@ -753,22 +758,21 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
                         compact
                     />
                 </div>
-                <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Space Select • Click to view</div>
+                <div className="text-xs text-gray-400 text-center">{t("customers.table.keyboardHint")}</div>
             </div>
 
             <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this customer?</AlertDialogTitle>
+                        <AlertDialogTitle>{t("customers.table.deleteConfirmTitle")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the customer and all associated
-                            data.
+                            {t("customers.table.deleteConfirmDescription")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
-                            Delete
+                            {t("common.delete")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -777,15 +781,15 @@ export function CustomersTable({ customers, loading }: CustomersTableProps) {
             <AlertDialog open={showBulkDelete} onOpenChange={setShowBulkDelete}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete {selectedCustomers.length} customers?</AlertDialogTitle>
+                        <AlertDialogTitle>{t("customers.table.bulkDeleteConfirmTitle", { count: selectedCustomers.length })}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. Selected customers will be permanently deleted.
+                            {t("customers.table.bulkDeleteConfirmDescription")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleConfirmBulkDelete} className="bg-red-600 hover:bg-red-700">
-                            Delete
+                            {t("common.delete")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
