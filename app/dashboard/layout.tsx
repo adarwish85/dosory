@@ -69,6 +69,7 @@ import { SetupSidebar } from "@/components/dashboard/setup-sidebar";
 import { RightSidebar } from "@/components/dashboard/RightSidebar";
 import { StickyNotesBoard } from "@/components/dashboard/StickyNotes";
 import { NotificationsPopover } from "@/components/dashboard/notifications-popover";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { usePermissions, canAccessModule } from "@/lib/hooks/use-permissions";
 import { SystemBanners } from "@/components/dashboard/system-banners";
 import { useNotifications } from "@/lib/hooks/use-notifications";
@@ -208,8 +209,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const displayInitial = staffProfile?.firstName?.charAt(0) || user?.email?.charAt(0).toUpperCase() || "U";
 
     // Only block on auth loading — settings/profile load in parallel, modules show their own skeletons
-    if (loading)
-        return <div className="flex h-screen items-center justify-center bg-[#F3F2EF]">Loading...</div>;
+    if (loading) return <div className="flex h-screen items-center justify-center bg-[#F3F2EF]">Loading...</div>;
 
     if (!user) {
         router.push("/login");
@@ -396,6 +396,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     </span>
                                 )}
                             </Link>
+
+                            {/* Language Switcher */}
+                            <LanguageSwitcher variant="ghost" className="hidden sm:flex" />
 
                             {/* Notifications Icon */}
                             <Link href="/dashboard/notifications" className="relative">

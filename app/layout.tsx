@@ -34,8 +34,12 @@ export const metadata: Metadata = {
 import { ImpersonationProvider } from "@/lib/contexts/ImpersonationContext";
 import { ImpersonationBanner } from "@/components/impersonation/ImpersonationBanner";
 import { UserProfileProvider } from "@/components/user-profile-provider";
+import { LanguageProvider } from "@/lib/i18n";
 
-// ... (existing imports, but wait, replace modifies a chunk)
+// Pre-paint locale init: set <html dir/lang> from the saved choice (or the browser
+// language) before hydration, so Arabic loads RTL with no flash. Key + precedence mirror
+// lib/i18n/config.ts.
+const LOCALE_INIT_SCRIPT = `(function(){try{var k='dosory.locale';var l=localStorage.getItem(k);if(l!=='en'&&l!=='ar'){l=((navigator.language||'en').toLowerCase().indexOf('ar')===0)?'ar':'en';}var e=document.documentElement;e.lang=l;e.dir=(l==='ar')?'rtl':'ltr';}catch(e){}})();`;
 
 export default function RootLayout({
     children,
@@ -43,17 +47,20 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en" dir="ltr" suppressHydrationWarning>
             <body className={`${urbanist.variable} ${geistMono.variable} antialiased font-sans`}>
-                <PlatformSettingsProvider>
-                    <ImpersonationProvider>
-                        <ImpersonationBanner />
-                        <AuthProvider>
-                            <UserProfileProvider>{children}</UserProfileProvider>
-                        </AuthProvider>
-                    </ImpersonationProvider>
-                    <Toaster richColors position="top-right" />
-                </PlatformSettingsProvider>
+                <script dangerouslySetInnerHTML={{ __html: LOCALE_INIT_SCRIPT }} />
+                <LanguageProvider>
+                    <PlatformSettingsProvider>
+                        <ImpersonationProvider>
+                            <ImpersonationBanner />
+                            <AuthProvider>
+                                <UserProfileProvider>{children}</UserProfileProvider>
+                            </AuthProvider>
+                        </ImpersonationProvider>
+                        <Toaster richColors position="top-right" />
+                    </PlatformSettingsProvider>
+                </LanguageProvider>
             </body>
         </html>
     );

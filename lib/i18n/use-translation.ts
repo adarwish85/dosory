@@ -1,14 +1,17 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import { useOrganizationSettings } from "../hooks/use-organization-settings";
+import { useCallback } from "react";
 
 // Import translation files
 import en from "./locales/en.json";
 import ar from "./locales/ar.json";
 
-// Type for supported locales
-export type SupportedLocale = "en" | "ar";
+import { SupportedLocale, LOCALE_METADATA } from "./config";
+import { useLanguage } from "./language-provider";
+
+// Re-export for backwards compatibility (these used to live in this file).
+export type { SupportedLocale } from "./config";
+export { LOCALE_METADATA } from "./config";
 
 // Translation dictionary type
 type TranslationDictionary = typeof en;
@@ -18,13 +21,6 @@ const translations: Record<SupportedLocale, TranslationDictionary> = {
     en,
     ar,
 };
-
-// Locale metadata
-export const LOCALE_METADATA: Record<SupportedLocale, { name: string; nativeName: string; direction: "ltr" | "rtl" }> =
-    {
-        en: { name: "English", nativeName: "English", direction: "ltr" },
-        ar: { name: "Arabic", nativeName: "العربية", direction: "rtl" },
-    };
 
 /**
  * Get a nested value from an object using dot notation
@@ -57,41 +53,26 @@ function interpolate(str: string, params?: Record<string, string | number>): str
 }
 
 /**
- * Hook to access translations based on organization settings.
- * Uses the `defaultLanguage` from org settings.
+ * Hook to access translations. The active locale comes from the LanguageProvider
+ * (saved choice > browser language > default) and is shared app-wide, so switching
+ * the language updates every component instantly.
  *
  * @example
  * const { t, locale, dir } = useTranslation();
  * return <h1>{t("invoices.title")}</h1>;
  */
 export function useTranslation() {
-    const { settings, loading } = useOrganizationSettings();
+    const { locale, dir } = useLanguage();
 
-    // Get current locale from settings, fallback to "en"
-    const locale = useMemo((): SupportedLocale => {
-        const lang = settings.defaultLanguage?.toLowerCase();
-        if (lang && lang in translations) {
-            return lang as SupportedLocale;
-        }
-        return "en";
-    }, [settings.defaultLanguage]);
-
-    // Get text direction for current locale
-    const dir = useMemo(() => {
-        return LOCALE_METADATA[locale]?.direction || "ltr";
-    }, [locale]);
-
-    // Translation function
     const t = useCallback(
         (key: string, params?: Record<string, string | number>): string => {
-            // Get translation from current locale
+            // Current locale
             const translation = getNestedValue(translations[locale] as unknown as Record<string, unknown>, key);
-
             if (translation) {
                 return interpolate(translation, params);
             }
 
-            // Fallback to English if not found in current locale
+            // Fallback to English
             if (locale !== "en") {
                 const fallback = getNestedValue(translations.en as unknown as Record<string, unknown>, key);
                 if (fallback) {
@@ -99,8 +80,10 @@ export function useTranslation() {
                 }
             }
 
-            // Return key if no translation found
-            console.warn(`Translation not found for key: ${key}`);
+            // Return the key itself if nothing matched
+            if (process.env.NODE_ENV !== "production") {
+                console.warn(`Translation not found for key: ${key}`);
+            }
             return key;
         },
         [locale]
@@ -110,13 +93,13 @@ export function useTranslation() {
         t,
         locale,
         dir,
-        loading,
+        loading: false,
         isRTL: dir === "rtl",
     };
 }
 
 /**
- * Get all available locales
+ * Get all available locales (for a language switcher).
  */
 export function getAvailableLocales() {
     return Object.entries(LOCALE_METADATA).map(([code, meta]) => ({

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteLogo } from "@/components/site/site-logo";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import {
     ArrowRight,
@@ -220,6 +221,7 @@ export default function Home() {
                         </a>
                     </nav>
                     <div className="flex items-center gap-2.5">
+                        <LanguageSwitcher variant="ghost" className="text-[#16171B] hover:bg-[#F0EDE6]" />
                         <Link
                             href="/login"
                             className="rounded-lg px-3.5 py-2 text-[14px] text-[#16171B] transition-colors hover:bg-[#F0EDE6]"
