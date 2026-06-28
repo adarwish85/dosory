@@ -5,8 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw, Pen, Trash2 } from "lucide-react";
 import { AddGroupDialog } from "@/components/dashboard/setup/customers/add-group-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function GroupsPage() {
+    const { t } = useTranslation();
     const groups = [
         { name: "AI-Automation" },
         { name: "Dev Outsourcing" },
@@ -31,7 +33,7 @@ export default function GroupsPage() {
                                 <SelectItem value="25">25</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline">Export</Button>
+                        <Button variant="outline">{t("common.export")}</Button>
                         <Button variant="outline" size="icon">
                             <RefreshCw className="h-4 w-4" />
                         </Button>
@@ -39,15 +41,15 @@ export default function GroupsPage() {
                     <div className="relative w-64">
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                            <Input placeholder="Search..." className="pl-9" />
+                            <Input placeholder={t("common.search")} className="pl-9" />
                         </div>
                     </div>
                 </div>
 
                 <div className="bg-white rounded-md border shadow-sm">
                     <div className="px-6 py-3 border-b bg-gray-50 flex justify-between items-center">
-                        <div className="font-bold text-gray-900 text-sm">Name</div>
-                        <div className="font-bold text-gray-900 text-sm">Options</div>
+                        <div className="font-bold text-gray-900 text-sm">{t("common.name")}</div>
+                        <div className="font-bold text-gray-900 text-sm">{t("setup.groups.options")}</div>
                     </div>
                     <div className="divide-y">
                         {groups.map((group, idx) => (
@@ -66,17 +68,17 @@ export default function GroupsPage() {
                     <div className="px-6 py-4 border-t bg-gray-50 rounded-b-md">
                         <div className="text-xs text-gray-500 flex justify-end items-center gap-4">
                             <span>
-                                Showing 1 to {groups.length} of {groups.length} entries
+                                {t("setup.groups.showingEntries", { from: 1, to: groups.length, total: groups.length })}
                             </span>
                             <div className="flex items-center gap-1">
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Previous
+                                    {t("setup.groups.previous")}
                                 </Button>
                                 <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">
                                     1
                                 </div>
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Next
+                                    {t("setup.groups.next")}
                                 </Button>
                             </div>
                         </div>

@@ -1,13 +1,15 @@
 "use client";
 
 import { PageHeader } from "@/components/dashboard/shared/page-header";
+import { useTranslation } from "@/lib/i18n";
 
 export default function SetupEstimateRequestPage() {
+    const { t } = useTranslation();
     return (
         <div className="p-6">
-            <PageHeader title="Estimate Request Setup" />
+            <PageHeader title={t("setup.estimateRequest.title")} />
             <div className="mt-6 p-4 bg-white border rounded-lg">
-                <p className="text-gray-500">Estimate request form settings will appear here.</p>
+                <p className="text-gray-500">{t("setup.estimateRequest.placeholder")}</p>
             </div>
         </div>
     );

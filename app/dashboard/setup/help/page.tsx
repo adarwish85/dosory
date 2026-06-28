@@ -36,8 +36,10 @@ import {
 } from "@/lib/hooks/use-platform-tickets";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 
 export default function HelpPage() {
+    const { t } = useTranslation();
     const { tickets, loading, createTicket, addReply } = usePlatformTickets();
     const [activeTab, setActiveTab] = useState("submit");
     const [selectedTicket, setSelectedTicket] = useState<PlatformTicket | null>(null);
@@ -57,7 +59,7 @@ export default function HelpPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!subject.trim() || !description.trim()) {
-            toast.error("Please fill in all required fields");
+            toast.error(t("setup.help.fillRequired"));
             return;
         }
 
@@ -70,7 +72,7 @@ export default function HelpPage() {
                 priority,
                 attachments: attachments.length > 0 ? attachments : undefined,
             });
-            toast.success("Ticket submitted successfully!");
+            toast.success(t("setup.help.ticketSubmitted"));
             // Reset form
             setSubject("");
             setDescription("");
@@ -80,7 +82,7 @@ export default function HelpPage() {
             setActiveTab("my-tickets");
         } catch (error) {
             console.error("Error creating ticket:", error);
-            toast.error("Failed to submit ticket");
+            toast.error(t("setup.help.ticketSubmitFailed"));
         } finally {
             setSubmitting(false);
         }
@@ -93,13 +95,13 @@ export default function HelpPage() {
         try {
             await addReply(selectedTicket.id, replyMessage.trim());
             setReplyMessage("");
-            toast.success("Reply sent!");
+            toast.success(t("setup.help.replySent"));
             // Refresh selected ticket from list
             const updated = tickets.find((t) => t.id === selectedTicket.id);
             if (updated) setSelectedTicket(updated);
         } catch (error) {
             console.error("Error sending reply:", error);
-            toast.error("Failed to send reply");
+            toast.error(t("setup.help.replyFailed"));
         } finally {
             setReplying(false);
         }
@@ -141,18 +143,18 @@ export default function HelpPage() {
             {/* Header */}
             <div className="flex items-center gap-3">
                 <HelpCircle className="h-6 w-6 text-blue-600" />
-                <h1 className="text-2xl font-semibold text-gray-900">Help & Support</h1>
+                <h1 className="text-2xl font-semibold text-gray-900">{t("setup.help.title")}</h1>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList>
                     <TabsTrigger value="submit" className="gap-2">
                         <Plus className="h-4 w-4" />
-                        Submit Ticket
+                        {t("setup.help.submitTicket")}
                     </TabsTrigger>
                     <TabsTrigger value="my-tickets" className="gap-2">
                         <MessageSquare className="h-4 w-4" />
-                        My Tickets
+                        {t("setup.help.myTickets")}
                         {tickets.length > 0 && (
                             <Badge variant="secondary" className="ml-1">
                                 {tickets.length}
@@ -164,25 +166,25 @@ export default function HelpPage() {
                 {/* Submit Ticket Tab */}
                 <TabsContent value="submit" className="mt-6">
                     <div className="bg-white rounded-lg border p-6 max-w-2xl">
-                        <h2 className="text-lg font-semibold mb-4">Report an Issue</h2>
+                        <h2 className="text-lg font-semibold mb-4">{t("setup.help.reportIssue")}</h2>
                         <p className="text-gray-500 text-sm mb-6">
-                            Having trouble with the platform? Let us know and we&apos;ll help you out.
+                            {t("setup.help.reportIssueDescription")}
                         </p>
 
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Subject</Label>
+                                <Label className="text-red-500">{t("setup.help.subjectRequired")}</Label>
                                 <Input
                                     value={subject}
                                     onChange={(e) => setSubject(e.target.value)}
-                                    placeholder="Brief description of your issue"
+                                    placeholder={t("setup.help.subjectPlaceholder")}
                                     required
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Category</Label>
+                                    <Label>{t("setup.help.category")}</Label>
                                     <Select value={category} onValueChange={(v) => setCategory(v as TicketCategory)}>
                                         <SelectTrigger>
                                             <SelectValue />
@@ -197,7 +199,7 @@ export default function HelpPage() {
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Priority</Label>
+                                    <Label>{t("setup.help.priority")}</Label>
                                     <Select value={priority} onValueChange={(v) => setPriority(v as TicketPriority)}>
                                         <SelectTrigger>
                                             <SelectValue />
@@ -214,11 +216,11 @@ export default function HelpPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Description</Label>
+                                <Label className="text-red-500">{t("setup.help.descriptionRequired")}</Label>
                                 <Textarea
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Please describe your issue in detail..."
+                                    placeholder={t("setup.help.descriptionPlaceholder")}
                                     rows={5}
                                     required
                                 />
@@ -226,7 +228,7 @@ export default function HelpPage() {
 
                             {/* Attachments */}
                             <div className="space-y-2">
-                                <Label>Attachments (optional)</Label>
+                                <Label>{t("setup.help.attachments")}</Label>
                                 <div className="flex flex-wrap gap-2">
                                     {attachments.map((file, i) => (
                                         <div
@@ -247,7 +249,7 @@ export default function HelpPage() {
                                     {attachments.length < 5 && (
                                         <label className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded cursor-pointer hover:bg-gray-50 text-sm text-gray-600">
                                             <Plus className="h-3 w-3" />
-                                            Add File
+                                            {t("setup.help.addFile")}
                                             <input
                                                 type="file"
                                                 className="hidden"
@@ -257,12 +259,12 @@ export default function HelpPage() {
                                         </label>
                                     )}
                                 </div>
-                                <p className="text-xs text-gray-500">Max 5 files. Supported: Images, PDF, DOC, TXT</p>
+                                <p className="text-xs text-gray-500">{t("setup.help.attachmentsHint")}</p>
                             </div>
 
                             <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={submitting}>
                                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Submit Ticket
+                                {t("setup.help.submitTicket")}
                             </Button>
                         </form>
                     </div>
@@ -273,11 +275,11 @@ export default function HelpPage() {
                     {tickets.length === 0 ? (
                         <div className="bg-white rounded-lg border p-10 text-center">
                             <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets yet</h3>
-                            <p className="text-gray-500 mb-4">You haven&apos;t submitted any support tickets.</p>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">{t("setup.help.noTickets")}</h3>
+                            <p className="text-gray-500 mb-4">{t("setup.help.noTicketsDescription")}</p>
                             <Button onClick={() => setActiveTab("submit")}>
                                 <Plus className="mr-2 h-4 w-4" />
-                                Submit Ticket
+                                {t("setup.help.submitTicket")}
                             </Button>
                         </div>
                     ) : (
@@ -311,7 +313,9 @@ export default function HelpPage() {
                                                 {ticket.replies.length > 0 && (
                                                     <div className="flex items-center gap-1 mt-1">
                                                         <MessageSquare className="h-3 w-3" />
-                                                        {ticket.replies.length} replies
+                                                        {t("setup.help.repliesCount", {
+                                                            count: ticket.replies.length,
+                                                        })}
                                                     </div>
                                                 )}
                                             </div>
@@ -375,7 +379,7 @@ export default function HelpPage() {
                                             className="flex items-center gap-1 text-sm text-blue-600 hover:underline"
                                         >
                                             <Paperclip className="h-3 w-3" />
-                                            Attachment {i + 1}
+                                            {t("setup.help.attachmentLabel", { number: i + 1 })}
                                         </a>
                                     ))}
                                 </div>
@@ -408,7 +412,7 @@ export default function HelpPage() {
                                         <div className="flex items-center gap-2">
                                             <span className="font-medium text-sm">{reply.author.name}</span>
                                             {reply.author.isAdmin && (
-                                                <Badge className="text-[10px] py-0 bg-blue-600">Admin</Badge>
+                                                <Badge className="text-[10px] py-0 bg-blue-600">{t("setup.help.adminBadge")}</Badge>
                                             )}
                                         </div>
                                         <div className="text-xs text-gray-500">
@@ -428,7 +432,7 @@ export default function HelpPage() {
                                 <Textarea
                                     value={replyMessage}
                                     onChange={(e) => setReplyMessage(e.target.value)}
-                                    placeholder="Write a reply..."
+                                    placeholder={t("setup.help.replyPlaceholder")}
                                     rows={2}
                                     className="flex-1"
                                 />
@@ -450,7 +454,7 @@ export default function HelpPage() {
                     {/* Closed ticket notice */}
                     {selectedTicket?.status === "closed" && (
                         <div className="border-t p-4 bg-gray-50 text-center text-sm text-gray-500">
-                            This ticket is closed. Please submit a new ticket if you need further help.
+                            {t("setup.help.closedNotice")}
                         </div>
                     )}
                 </DialogContent>

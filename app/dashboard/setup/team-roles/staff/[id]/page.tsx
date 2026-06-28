@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useTranslation } from "@/lib/i18n";
 
 interface StaffMember {
     id: string;
@@ -21,6 +22,7 @@ interface StaffMember {
 }
 
 export default function EditStaffPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const rawStaffId = params?.id as string;
     // Decode the URL parameter (handles %40 for @ and other encoded chars)
@@ -66,11 +68,11 @@ export default function EditStaffPage() {
     }, [staffId]);
 
     if (loading) {
-        return <div className="p-8">Loading staff member...</div>;
+        return <div className="p-8">{t("setup.staffMember.loading")}</div>;
     }
 
     if (!staff) {
-        return <div className="p-8">Staff member not found</div>;
+        return <div className="p-8">{t("setup.staffMember.notFound")}</div>;
     }
 
     return (
@@ -83,7 +85,7 @@ export default function EditStaffPage() {
                 </Link>
                 <h1 className="text-2xl font-bold text-gray-900">
                     {staff.firstName} {staff.lastName}
-                    <span className="text-sm font-normal text-gray-500 ml-2">- Staff Member</span>
+                    <span className="text-sm font-normal text-gray-500 ml-2">{t("setup.staffMember.staffMemberSuffix")}</span>
                 </h1>
             </div>
 

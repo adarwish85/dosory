@@ -8,9 +8,11 @@ import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsS
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
 import { CURRENCIES, TIMEZONES } from "@/lib/constants";
+import { useTranslation } from "@/lib/i18n";
 
 export default function LocalizationPage() {
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
+    const { t } = useTranslation();
     const [localizationForm, setLocalizationForm] = useState({
         dateFormat: "d/m/Y",
         timeFormat: "12" as "12" | "24",
@@ -34,23 +36,23 @@ export default function LocalizationPage() {
     const handleSave = async () => {
         try {
             await saveSettings(localizationForm);
-            toast.success("Localization settings saved successfully");
+            toast.success(t("setup.localization.saved"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.localization.saveFailed"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Localization</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.localization.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Configure date, time, currency and language preferences
+                    {t("setup.localization.subtitle")}
                 </p>
             </div>
 
-            <SettingsSection title="Regional Settings" description="Set your organization's locale preferences">
-                <SettingsField label="Date Format">
+            <SettingsSection title={t("setup.localization.regionalSettingsTitle")} description={t("setup.localization.regionalSettingsDescription")}>
+                <SettingsField label={t("setup.localization.dateFormatLabel")}>
                     <Select
                         value={localizationForm.dateFormat}
                         onValueChange={(val) => setLocalizationForm({ ...localizationForm, dateFormat: val })}
@@ -66,22 +68,22 @@ export default function LocalizationPage() {
                     </Select>
                 </SettingsField>
 
-                <SettingsField label="Time Format">
+                <SettingsField label={t("setup.localization.timeFormatLabel")}>
                     <Select
                         value={localizationForm.timeFormat}
                         onValueChange={(val) => setLocalizationForm({ ...localizationForm, timeFormat: val as "12" | "24" })}
                     >
                         <SelectTrigger>
-                            <SelectValue>12 hours</SelectValue>
+                            <SelectValue>{t("setup.localization.time12")}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="12">12 hours</SelectItem>
-                            <SelectItem value="24">24 hours</SelectItem>
+                            <SelectItem value="12">{t("setup.localization.time12")}</SelectItem>
+                            <SelectItem value="24">{t("setup.localization.time24")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </SettingsField>
 
-                <SettingsField label="Default Timezone">
+                <SettingsField label={t("setup.localization.timezoneLabel")}>
                     <Select
                         value={localizationForm.timezone}
                         onValueChange={(val) => setLocalizationForm({ ...localizationForm, timezone: val })}
@@ -99,13 +101,13 @@ export default function LocalizationPage() {
                     </Select>
                 </SettingsField>
 
-                <SettingsField label="Default Currency">
+                <SettingsField label={t("setup.localization.currencyLabel")}>
                     <Select
                         value={localizationForm.currency}
                         onValueChange={(val) => setLocalizationForm({ ...localizationForm, currency: val })}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select currency" />
+                            <SelectValue placeholder={t("setup.localization.currencyPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent>
                             {CURRENCIES.map((currency) => (
@@ -117,7 +119,7 @@ export default function LocalizationPage() {
                     </Select>
                 </SettingsField>
 
-                <SettingsField label="Default Language">
+                <SettingsField label={t("setup.localization.languageLabel")}>
                     <Select
                         value={localizationForm.defaultLanguage}
                         onValueChange={(val) =>
@@ -125,14 +127,14 @@ export default function LocalizationPage() {
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue>English</SelectValue>
+                            <SelectValue>{t("setup.localization.langEnglish")}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="english">English</SelectItem>
-                            <SelectItem value="arabic">Arabic</SelectItem>
-                            <SelectItem value="spanish">Spanish</SelectItem>
-                            <SelectItem value="french">French</SelectItem>
-                            <SelectItem value="german">German</SelectItem>
+                            <SelectItem value="english">{t("setup.localization.langEnglish")}</SelectItem>
+                            <SelectItem value="arabic">{t("setup.localization.langArabic")}</SelectItem>
+                            <SelectItem value="spanish">{t("setup.localization.langSpanish")}</SelectItem>
+                            <SelectItem value="french">{t("setup.localization.langFrench")}</SelectItem>
+                            <SelectItem value="german">{t("setup.localization.langGerman")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </SettingsField>

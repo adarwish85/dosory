@@ -12,10 +12,12 @@ import { useAuth } from "@/components/auth-provider";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
+import { useTranslation } from "@/lib/i18n";
 
 export default function CompanyInfoPage() {
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const { user } = useAuth();
+    const { t } = useTranslation();
 
     // General Settings State
     const [localSubdomain, setLocalSubdomain] = useState("");
@@ -91,23 +93,23 @@ export default function CompanyInfoPage() {
                     data.available
                         ? ""
                         : data.reason === "invalid"
-                          ? "Use 2–32 lowercase letters, numbers, or hyphens"
+                          ? t("setup.companyInfo.subdomainInvalid")
                           : data.reason === "reserved"
-                            ? "That subdomain is reserved"
-                            : "Subdomain is already taken"
+                            ? t("setup.companyInfo.subdomainReserved")
+                            : t("setup.companyInfo.subdomainTaken")
                 );
             } catch {
-                setCheckError("Error checking availability");
+                setCheckError(t("setup.companyInfo.subdomainCheckError"));
                 setAvailability("unavailable");
             }
         };
         const timeoutId = setTimeout(checkAvailability, 500);
         return () => clearTimeout(timeoutId);
-    }, [localSubdomain, settings.subdomain, user]);
+    }, [localSubdomain, settings.subdomain, user, t]);
 
     const handleSaveGeneral = async () => {
         if (availability === "unavailable") {
-            toast.error("Subdomain is not available");
+            toast.error(t("setup.companyInfo.subdomainNotAvailable"));
             return;
         }
         try {
@@ -118,9 +120,9 @@ export default function CompanyInfoPage() {
                 rtlAdmin: rtlAdmin === "yes",
                 rtlCustomer: rtlCustomer === "yes",
             });
-            toast.success("General settings saved successfully");
+            toast.success(t("setup.companyInfo.generalSaved"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.companyInfo.saveFailed"));
         }
     };
 
@@ -129,19 +131,19 @@ export default function CompanyInfoPage() {
             ...companyInfo,
             companyName,
         });
-        toast.success("Company information saved successfully");
+        toast.success(t("setup.companyInfo.companyInfoSaved"));
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Company Information</h1>
-                <p className="text-gray-500 mt-1">Manage your company details and general configuration</p>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.companyInfo.title")}</h1>
+                <p className="text-gray-500 mt-1">{t("setup.companyInfo.subtitle")}</p>
             </div>
 
             {/* General Configuration */}
-            <SettingsSection title="General Configuration" description="Configure subdomain and RTL settings">
-                <SettingsField label="Subdomain" description="This will change your dashboard URL">
+            <SettingsSection title={t("setup.companyInfo.generalConfigTitle")} description={t("setup.companyInfo.generalConfigDescription")}>
+                <SettingsField label={t("setup.companyInfo.subdomainLabel")} description={t("setup.companyInfo.subdomainDescription")}>
                     <div className="flex items-center gap-2">
                         <span className="text-gray-500 font-medium">https://</span>
                         <Input
@@ -154,12 +156,12 @@ export default function CompanyInfoPage() {
                     </div>
                     {availability === "loading" && (
                         <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                            <Loader2 className="h-3 w-3 animate-spin" /> Checking availability...
+                            <Loader2 className="h-3 w-3 animate-spin" /> {t("setup.companyInfo.checkingAvailability")}
                         </p>
                     )}
                     {availability === "available" && localSubdomain !== settings.subdomain && (
                         <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                            <Check className="h-3 w-3" /> Subdomain is available
+                            <Check className="h-3 w-3" /> {t("setup.companyInfo.subdomainAvailable")}
                         </p>
                     )}
                     {availability === "unavailable" && (
@@ -169,31 +171,31 @@ export default function CompanyInfoPage() {
                     )}
                 </SettingsField>
 
-                <SettingsField label="RTL Admin Area (Right to Left)">
+                <SettingsField label={t("setup.companyInfo.rtlAdminLabel")}>
                     <RadioGroup value={rtlAdmin} onValueChange={setRtlAdmin}>
                         <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id="rtl-admin-yes" />
-                                <Label htmlFor="rtl-admin-yes">Yes</Label>
+                                <Label htmlFor="rtl-admin-yes">{t("common.yes")}</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="no" id="rtl-admin-no" />
-                                <Label htmlFor="rtl-admin-no">No</Label>
+                                <Label htmlFor="rtl-admin-no">{t("common.no")}</Label>
                             </div>
                         </div>
                     </RadioGroup>
                 </SettingsField>
 
-                <SettingsField label="RTL Customers Area (Right to Left)">
+                <SettingsField label={t("setup.companyInfo.rtlCustomerLabel")}>
                     <RadioGroup value={rtlCustomer} onValueChange={setRtlCustomer}>
                         <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id="rtl-customer-yes" />
-                                <Label htmlFor="rtl-customer-yes">Yes</Label>
+                                <Label htmlFor="rtl-customer-yes">{t("common.yes")}</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="no" id="rtl-customer-no" />
-                                <Label htmlFor="rtl-customer-no">No</Label>
+                                <Label htmlFor="rtl-customer-no">{t("common.no")}</Label>
                             </div>
                         </div>
                     </RadioGroup>
@@ -204,78 +206,78 @@ export default function CompanyInfoPage() {
 
             {/* Company Details */}
             <SettingsSection
-                title="Company Details"
-                description="These details will appear on invoices, estimates, payments, and other PDF documents"
+                title={t("setup.companyInfo.companyDetailsTitle")}
+                description={t("setup.companyInfo.companyDetailsDescription")}
             >
-                <SettingsField label="Company Name" required>
+                <SettingsField label={t("setup.companyInfo.companyNameLabel")} required>
                     <Input
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="Enter your company name"
+                        placeholder={t("setup.companyInfo.companyNamePlaceholder")}
                     />
                 </SettingsField>
 
-                <SettingsField label="Address">
+                <SettingsField label={t("setup.companyInfo.addressLabel")}>
                     <Input
                         value={companyInfo.address}
                         onChange={(e) => setCompanyInfo((prev) => ({ ...prev, address: e.target.value }))}
-                        placeholder="Enter your address"
+                        placeholder={t("setup.companyInfo.addressPlaceholder")}
                     />
                 </SettingsField>
 
-                <SettingsField label="City">
+                <SettingsField label={t("setup.companyInfo.cityLabel")}>
                     <Input
                         value={companyInfo.city}
                         onChange={(e) => setCompanyInfo((prev) => ({ ...prev, city: e.target.value }))}
-                        placeholder="Enter your city"
+                        placeholder={t("setup.companyInfo.cityPlaceholder")}
                     />
                 </SettingsField>
 
-                <SettingsField label="State">
+                <SettingsField label={t("setup.companyInfo.stateLabel")}>
                     <Input
                         value={companyInfo.state}
                         onChange={(e) => setCompanyInfo((prev) => ({ ...prev, state: e.target.value }))}
-                        placeholder="Enter your state"
+                        placeholder={t("setup.companyInfo.statePlaceholder")}
                     />
                 </SettingsField>
 
-                <SettingsField label="Country Code">
+                <SettingsField label={t("setup.companyInfo.countryLabel")}>
                     <Input
                         value={companyInfo.country}
                         onChange={(e) => setCompanyInfo((prev) => ({ ...prev, country: e.target.value }))}
-                        placeholder="Enter your country"
+                        placeholder={t("setup.companyInfo.countryPlaceholder")}
                     />
                 </SettingsField>
 
-                <SettingsField label="Zip Code">
+                <SettingsField label={t("setup.companyInfo.zipCodeLabel")}>
                     <Input
                         value={companyInfo.zipCode}
                         onChange={(e) => setCompanyInfo((prev) => ({ ...prev, zipCode: e.target.value }))}
-                        placeholder="Enter your zip code"
+                        placeholder={t("setup.companyInfo.zipCodePlaceholder")}
                     />
                 </SettingsField>
 
-                <SettingsField label="Phone">
+                <SettingsField label={t("common.phone")}>
                     <Input
                         value={companyInfo.phone}
                         onChange={(e) => setCompanyInfo((prev) => ({ ...prev, phone: e.target.value }))}
-                        placeholder="Enter your phone number"
+                        placeholder={t("setup.companyInfo.phonePlaceholder")}
                     />
                 </SettingsField>
 
-                <SettingsField label="VAT Number">
+                <SettingsField label={t("setup.companyInfo.vatNumberLabel")}>
                     <Input
                         value={companyInfo.vatNumber}
                         onChange={(e) => setCompanyInfo((prev) => ({ ...prev, vatNumber: e.target.value }))}
-                        placeholder="Enter your VAT number"
+                        placeholder={t("setup.companyInfo.vatNumberPlaceholder")}
                     />
                 </SettingsField>
 
                 <SettingsField
-                    label="Company Information Format (PDF and HTML)"
+                    label={t("setup.companyInfo.companyInfoFormatLabel")}
                     description={
                         <>
-                            Available variables: <span className="text-blue-600">{"{company_name}"}</span>,{" "}
+                            {t("setup.companyInfo.availableVariables")} <span className="text-blue-600">{"{company_name}"}</span>,{" "}
                             <span className="text-blue-600">{"{address}"}</span>,{" "}
                             <span className="text-blue-600">{"{city}"}</span>,{" "}
                             <span className="text-blue-600">{"{state}"}</span>,{" "}

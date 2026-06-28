@@ -12,8 +12,10 @@ import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
+import { useTranslation } from "@/lib/i18n";
 
 export default function FinanceInvoicesPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [invoiceForm, setInvoiceForm] = useState({
         invoiceNumberPrefix: "INV-",
@@ -62,23 +64,23 @@ export default function FinanceInvoicesPage() {
     const handleSave = async () => {
         try {
             await saveSettings(invoiceForm as any);
-            toast.success("Invoice settings saved successfully");
+            toast.success(t("setup.financeInvoices.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.financeInvoices.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.financeInvoices.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Configure invoice numbering, defaults, and display options
+                    {t("setup.financeInvoices.subtitle")}
                 </p>
             </div>
 
-            <SettingsSection title="Format & Numbering" description="Configure how invoice numbers are generated">
-                <SettingsField label="Invoice Number Prefix">
+            <SettingsSection title={t("setup.financeInvoices.formatTitle")} description={t("setup.financeInvoices.formatDesc")}>
+                <SettingsField label={t("setup.financeInvoices.numberPrefix")}>
                     <Input
                         value={invoiceForm.invoiceNumberPrefix}
                         onChange={(e) =>
@@ -87,7 +89,7 @@ export default function FinanceInvoicesPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Next Invoice Number">
+                <SettingsField label={t("setup.financeInvoices.nextNumber")}>
                     <Input
                         value={invoiceForm.invoiceNextNumber}
                         onChange={(e) =>
@@ -96,7 +98,7 @@ export default function FinanceInvoicesPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Invoice Number Format">
+                <SettingsField label={t("setup.financeInvoices.numberFormat")}>
                     <RadioGroup
                         value={invoiceForm.invoiceNumberFormat}
                         onValueChange={(val) =>
@@ -107,13 +109,13 @@ export default function FinanceInvoicesPage() {
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="number_based" id="fmt-number" />
                             <Label htmlFor="fmt-number" className="font-normal">
-                                Number Based (000001)
+                                {t("setup.financeInvoices.fmtNumberBased")}
                             </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="year_based" id="fmt-year" />
                             <Label htmlFor="fmt-year" className="font-normal">
-                                Year Based (YYYY/000001)
+                                {t("setup.financeInvoices.fmtYearBased")}
                             </Label>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -125,7 +127,7 @@ export default function FinanceInvoicesPage() {
                     </RadioGroup>
                 </SettingsField>
 
-                <SettingsField label="Invoice Due After (Days)">
+                <SettingsField label={t("setup.financeInvoices.dueAfterDays")}>
                     <Input
                         type="number"
                         value={invoiceForm.invoiceDueAfterDays}
@@ -139,30 +141,30 @@ export default function FinanceInvoicesPage() {
                 </SettingsField>
             </SettingsSection>
 
-            <SettingsSection title="Display & Behavior" description="Control invoice visibility and actions">
+            <SettingsSection title={t("setup.financeInvoices.displayTitle")} description={t("setup.financeInvoices.displayDesc")}>
                 {[
                     {
                         key: "invoiceAllowStaffViewAssigned",
-                        label: "Allow staff members to view invoices where they are assigned to",
+                        label: t("setup.financeInvoices.optAllowStaffViewAssigned"),
                     },
                     {
                         key: "invoiceRequireClientLogin",
-                        label: "Require client to be logged in to view invoice",
+                        label: t("setup.financeInvoices.optRequireClientLogin"),
                     },
-                    { key: "invoiceDeleteOnlyLast", label: "Delete invoice allowed only on last invoice" },
-                    { key: "invoiceDecrementOnDelete", label: "Decrement invoice number on delete" },
+                    { key: "invoiceDeleteOnlyLast", label: t("setup.financeInvoices.optDeleteOnlyLast") },
+                    { key: "invoiceDecrementOnDelete", label: t("setup.financeInvoices.optDecrementOnDelete") },
                     {
                         key: "invoiceExcludeDraftsFromClient",
-                        label: "Exclude invoices with draft status from customers area",
+                        label: t("setup.financeInvoices.optExcludeDraftsFromClient"),
                     },
-                    { key: "invoiceShowSaleAgent", label: "Show Sale Agent On Invoice" },
-                    { key: "invoiceShowProjectName", label: "Show Project Name On Invoice" },
-                    { key: "invoiceShowTotalPaid", label: "Show Total Paid On Invoice" },
-                    { key: "invoiceShowCreditsApplied", label: "Show Credits Applied On Invoice" },
-                    { key: "invoiceShowAmountDue", label: "Show Amount Due On Invoice" },
+                    { key: "invoiceShowSaleAgent", label: t("setup.financeInvoices.optShowSaleAgent") },
+                    { key: "invoiceShowProjectName", label: t("setup.financeInvoices.optShowProjectName") },
+                    { key: "invoiceShowTotalPaid", label: t("setup.financeInvoices.optShowTotalPaid") },
+                    { key: "invoiceShowCreditsApplied", label: t("setup.financeInvoices.optShowCreditsApplied") },
+                    { key: "invoiceShowAmountDue", label: t("setup.financeInvoices.optShowAmountDue") },
                     {
                         key: "invoiceAttachPdfToEmail",
-                        label: "Attach invoice PDF when sending payment receipt to email",
+                        label: t("setup.financeInvoices.optAttachPdfToEmail"),
                     },
                 ].map((item) => (
                     <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
@@ -178,19 +180,19 @@ export default function FinanceInvoicesPage() {
                 ))}
             </SettingsSection>
 
-            <SettingsSection title="Defaults" description="Set default content for new invoices">
-                <SettingsField label="Predefined Client Note">
+            <SettingsSection title={t("setup.financeInvoices.defaultsTitle")} description={t("setup.financeInvoices.defaultsDesc")}>
+                <SettingsField label={t("setup.financeInvoices.predefinedClientNote")}>
                     <Textarea
                         value={invoiceForm.invoiceDefaultClientNote}
                         onChange={(e) =>
                             setInvoiceForm({ ...invoiceForm, invoiceDefaultClientNote: e.target.value })
                         }
                         className="h-24"
-                        placeholder="Thank you for doing business with us..."
+                        placeholder={t("setup.financeInvoices.clientNotePlaceholder")}
                     />
                 </SettingsField>
 
-                <SettingsField label="Predefined Terms & Conditions">
+                <SettingsField label={t("setup.financeInvoices.predefinedTerms")}>
                     <Textarea
                         value={invoiceForm.invoiceDefaultTerms}
                         onChange={(e) =>

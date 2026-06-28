@@ -13,8 +13,10 @@ import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
+import { useTranslation } from "@/lib/i18n";
 
 export default function CalendarSettingsPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [calendarForm, setCalendarForm] = useState({
         calendarEventsLimit: "4",
@@ -78,30 +80,30 @@ export default function CalendarSettingsPage() {
                 ...calendarForm,
                 calendarEventsLimit: parseInt(calendarForm.calendarEventsLimit) || 4,
             } as any);
-            toast.success("Calendar settings saved successfully");
+            toast.success(t("setup.calendar.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.calendar.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Calendar Settings</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.calendar.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Configure calendar view defaults and visibility
+                    {t("setup.calendar.subtitle")}
                 </p>
             </div>
 
             <Tabs defaultValue="general" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-                    <TabsTrigger value="general">General</TabsTrigger>
-                    <TabsTrigger value="styling">Styling</TabsTrigger>
+                    <TabsTrigger value="general">{t("setup.calendar.tabGeneral")}</TabsTrigger>
+                    <TabsTrigger value="styling">{t("setup.calendar.tabStyling")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="general" className="space-y-6 mt-6">
-                    <SettingsSection title="View Options" description="Default calendar behavior">
-                        <SettingsField label="Calendar Events Limit (Month and Week View)">
+                    <SettingsSection title={t("setup.calendar.viewOptionsTitle")} description={t("setup.calendar.viewOptionsDesc")}>
+                        <SettingsField label={t("setup.calendar.eventsLimit")}>
                             <Input
                                 type="number"
                                 value={calendarForm.calendarEventsLimit}
@@ -111,7 +113,7 @@ export default function CalendarSettingsPage() {
                             />
                         </SettingsField>
 
-                        <SettingsField label="Default View">
+                        <SettingsField label={t("setup.calendar.defaultView")}>
                             <Select
                                 value={calendarForm.calendarDefaultView}
                                 onValueChange={(val) =>
@@ -119,19 +121,19 @@ export default function CalendarSettingsPage() {
                                 }
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select" />
+                                    <SelectValue placeholder={t("common.select")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="dayGridMonth">Month</SelectItem>
-                                    <SelectItem value="timeGridWeek">Week</SelectItem>
-                                    <SelectItem value="timeGridDay">Day</SelectItem>
-                                    <SelectItem value="listWeek">Agenda Week</SelectItem>
-                                    <SelectItem value="listDay">Agenda Day</SelectItem>
+                                    <SelectItem value="dayGridMonth">{t("setup.calendar.viewMonth")}</SelectItem>
+                                    <SelectItem value="timeGridWeek">{t("setup.calendar.viewWeek")}</SelectItem>
+                                    <SelectItem value="timeGridDay">{t("setup.calendar.viewDay")}</SelectItem>
+                                    <SelectItem value="listWeek">{t("setup.calendar.viewAgendaWeek")}</SelectItem>
+                                    <SelectItem value="listDay">{t("setup.calendar.viewAgendaDay")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </SettingsField>
 
-                        <SettingsField label="First Day">
+                        <SettingsField label={t("setup.calendar.firstDay")}>
                             <Select
                                 value={calendarForm.calendarFirstDay}
                                 onValueChange={(val) =>
@@ -139,49 +141,49 @@ export default function CalendarSettingsPage() {
                                 }
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select" />
+                                    <SelectValue placeholder={t("common.select")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="0">Sunday</SelectItem>
-                                    <SelectItem value="1">Monday</SelectItem>
-                                    <SelectItem value="2">Tuesday</SelectItem>
-                                    <SelectItem value="3">Wednesday</SelectItem>
-                                    <SelectItem value="4">Thursday</SelectItem>
-                                    <SelectItem value="5">Friday</SelectItem>
-                                    <SelectItem value="6">Saturday</SelectItem>
+                                    <SelectItem value="0">{t("setup.calendar.sunday")}</SelectItem>
+                                    <SelectItem value="1">{t("setup.calendar.monday")}</SelectItem>
+                                    <SelectItem value="2">{t("setup.calendar.tuesday")}</SelectItem>
+                                    <SelectItem value="3">{t("setup.calendar.wednesday")}</SelectItem>
+                                    <SelectItem value="4">{t("setup.calendar.thursday")}</SelectItem>
+                                    <SelectItem value="5">{t("setup.calendar.friday")}</SelectItem>
+                                    <SelectItem value="6">{t("setup.calendar.saturday")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </SettingsField>
                     </SettingsSection>
 
-                    <SettingsSection title="Visibility" description="Show or hide items on calendar">
+                    <SettingsSection title={t("setup.calendar.visibilityTitle")} description={t("setup.calendar.visibilityDesc")}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {[
                                 {
                                     key: "calendarShowHideNotifiedReminders",
-                                    label: "Hide notified reminders from calendar",
+                                    label: "setup.calendar.vis.hideNotifiedReminders",
                                 },
-                                { key: "calendarShowTicketReminders", label: "Ticket Reminders" },
-                                { key: "calendarShowLeadReminders", label: "Lead Reminders" },
-                                { key: "calendarShowInvoices", label: "Invoices" },
-                                { key: "calendarShowCustomerReminders", label: "Customer Reminders" },
-                                { key: "calendarShowEstimates", label: "Estimates" },
-                                { key: "calendarShowEstimateReminders", label: "Estimate Reminders" },
-                                { key: "calendarShowContracts", label: "Contracts" },
-                                { key: "calendarShowInvoiceReminders", label: "Invoice Reminders" },
-                                { key: "calendarShowTasks", label: "Tasks" },
+                                { key: "calendarShowTicketReminders", label: "setup.calendar.vis.ticketReminders" },
+                                { key: "calendarShowLeadReminders", label: "setup.calendar.vis.leadReminders" },
+                                { key: "calendarShowInvoices", label: "setup.calendar.vis.invoices" },
+                                { key: "calendarShowCustomerReminders", label: "setup.calendar.vis.customerReminders" },
+                                { key: "calendarShowEstimates", label: "setup.calendar.vis.estimates" },
+                                { key: "calendarShowEstimateReminders", label: "setup.calendar.vis.estimateReminders" },
+                                { key: "calendarShowContracts", label: "setup.calendar.vis.contracts" },
+                                { key: "calendarShowInvoiceReminders", label: "setup.calendar.vis.invoiceReminders" },
+                                { key: "calendarShowTasks", label: "setup.calendar.vis.tasks" },
                                 {
                                     key: "calendarShowTasksStaffOnly",
-                                    label: "Show only tasks assigned to the logged in staff member",
+                                    label: "setup.calendar.vis.tasksStaffOnly",
                                 },
-                                { key: "calendarShowExpenseReminders", label: "Expense Reminders" },
-                                { key: "calendarShowProjects", label: "Projects" },
-                                { key: "calendarShowTaskReminders", label: "Task Reminders" },
-                                { key: "calendarShowCreditNoteReminders", label: "Credit Note Reminders" },
+                                { key: "calendarShowExpenseReminders", label: "setup.calendar.vis.expenseReminders" },
+                                { key: "calendarShowProjects", label: "setup.calendar.vis.projects" },
+                                { key: "calendarShowTaskReminders", label: "setup.calendar.vis.taskReminders" },
+                                { key: "calendarShowCreditNoteReminders", label: "setup.calendar.vis.creditNoteReminders" },
                             ].map((item) => (
                                 <div key={item.key}>
                                     <Label className="mb-2 block text-sm font-medium text-gray-700">
-                                        {item.label}
+                                        {t(item.label)}
                                     </Label>
                                     <RadioGroup
                                         value={
@@ -197,13 +199,13 @@ export default function CalendarSettingsPage() {
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id={`cal-${item.key}-yes`} />
                                             <Label htmlFor={`cal-${item.key}-yes`} className="font-normal">
-                                                Yes
+                                                {t("common.yes")}
                                             </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id={`cal-${item.key}-no`} />
                                             <Label htmlFor={`cal-${item.key}-no`} className="font-normal">
-                                                No
+                                                {t("common.no")}
                                             </Label>
                                         </div>
                                     </RadioGroup>
@@ -215,16 +217,16 @@ export default function CalendarSettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="styling" className="space-y-6 mt-6">
-                    <SettingsSection title="Colors" description="Event type colors">
+                    <SettingsSection title={t("setup.calendar.colorsTitle")} description={t("setup.calendar.colorsDesc")}>
                         {[
-                            { key: "calendarInvoiceColor", label: "Invoice Color" },
-                            { key: "calendarEstimateColor", label: "Estimate Color" },
-                            { key: "calendarReminderColor", label: "Reminder Color" },
-                            { key: "calendarContractColor", label: "Contract Color" },
-                            { key: "calendarProjectColor", label: "Project Color" },
+                            { key: "calendarInvoiceColor", label: "setup.calendar.color.invoice" },
+                            { key: "calendarEstimateColor", label: "setup.calendar.color.estimate" },
+                            { key: "calendarReminderColor", label: "setup.calendar.color.reminder" },
+                            { key: "calendarContractColor", label: "setup.calendar.color.contract" },
+                            { key: "calendarProjectColor", label: "setup.calendar.color.project" },
                         ].map((item) => (
                             <div key={item.key}>
-                                <Label>{item.label}</Label>
+                                <Label>{t(item.label)}</Label>
                                 <div className="flex gap-2 mt-1">
                                     <Input
                                         value={calendarForm[item.key as keyof typeof calendarForm] as string}

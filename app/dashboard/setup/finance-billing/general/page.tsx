@@ -11,8 +11,10 @@ import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsS
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTranslation } from "@/lib/i18n";
 
 export default function FinanceGeneralPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [financeGeneralForm, setFinanceGeneralForm] = useState({
         decimalSeparator: "." as "." | ",",
@@ -49,24 +51,24 @@ export default function FinanceGeneralPage() {
     const handleSave = async () => {
         try {
             await saveSettings(financeGeneralForm);
-            toast.success("Finance settings saved successfully");
+            toast.success(t("setup.financeGeneral.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.financeGeneral.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Finance Settings</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.financeGeneral.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Configure general financial preferences
+                    {t("setup.financeGeneral.subtitle")}
                 </p>
             </div>
 
-            <SettingsSection title="General" description="Format and display settings for financial documents">
+            <SettingsSection title={t("setup.financeGeneral.generalTitle")} description={t("setup.financeGeneral.generalDesc")}>
                 <div className="grid grid-cols-2 gap-6">
-                    <SettingsField label="Decimal Separator">
+                    <SettingsField label={t("setup.financeGeneral.decimalSeparator")}>
                         <Select
                             value={financeGeneralForm.decimalSeparator}
                             onValueChange={(val) =>
@@ -74,16 +76,16 @@ export default function FinanceGeneralPage() {
                             }
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select separator" />
+                                <SelectValue placeholder={t("setup.financeGeneral.selectSeparator")} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value=".">. (Dot)</SelectItem>
-                                <SelectItem value=",">, (Comma)</SelectItem>
+                                <SelectItem value=".">{t("setup.financeGeneral.sepDot")}</SelectItem>
+                                <SelectItem value=",">{t("setup.financeGeneral.sepComma")}</SelectItem>
                             </SelectContent>
                         </Select>
                     </SettingsField>
 
-                    <SettingsField label="Thousand Separator">
+                    <SettingsField label={t("setup.financeGeneral.thousandSeparator")}>
                         <Select
                             value={financeGeneralForm.thousandSeparator}
                             onValueChange={(val) =>
@@ -91,30 +93,30 @@ export default function FinanceGeneralPage() {
                             }
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select separator" />
+                                <SelectValue placeholder={t("setup.financeGeneral.selectSeparator")} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value=",">, (Comma)</SelectItem>
-                                <SelectItem value=".">. (Dot)</SelectItem>
-                                <SelectItem value="none">None</SelectItem>
-                                <SelectItem value="space">Space</SelectItem>
-                                <SelectItem value="'">&apos; (Apostrophe)</SelectItem>
+                                <SelectItem value=",">{t("setup.financeGeneral.sepComma")}</SelectItem>
+                                <SelectItem value=".">{t("setup.financeGeneral.sepDot")}</SelectItem>
+                                <SelectItem value="none">{t("setup.financeGeneral.sepNone")}</SelectItem>
+                                <SelectItem value="space">{t("setup.financeGeneral.sepSpace")}</SelectItem>
+                                <SelectItem value="'">{t("setup.financeGeneral.sepApostrophe")}</SelectItem>
                             </SelectContent>
                         </Select>
                     </SettingsField>
                 </div>
 
-                <SettingsField label="Default Tax">
+                <SettingsField label={t("setup.financeGeneral.defaultTax")}>
                     <Select
                         value={financeGeneralForm.defaultTax}
                         onValueChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, defaultTax: val })}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select Default Tax" />
+                            <SelectValue placeholder={t("setup.financeGeneral.selectDefaultTax")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="14.00%">14.00% (VAT)</SelectItem>
-                            <SelectItem value="0.00%">0.00% (No Tax)</SelectItem>
+                            <SelectItem value="14.00%">{t("setup.financeGeneral.taxVat")}</SelectItem>
+                            <SelectItem value="0.00%">{t("setup.financeGeneral.taxNone")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </SettingsField>
@@ -122,14 +124,14 @@ export default function FinanceGeneralPage() {
                 <div className="space-y-4 pt-2">
                     <div className="flex items-center justify-between border-b pb-4">
                         <div className="flex items-center gap-2">
-                            <Label>Auto Assign Sale Agent</Label>
+                            <Label>{t("setup.financeGeneral.autoAssignSaleAgent")}</Label>
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger>
                                         <HelpCircle className="h-4 w-4 text-gray-400" />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>Automatically assign the logged-in staff member as the sale agent when creating invoices/estimates</p>
+                                        <p>{t("setup.financeGeneral.autoAssignSaleAgentTooltip")}</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
@@ -141,7 +143,7 @@ export default function FinanceGeneralPage() {
                     </div>
 
                     <div className="flex items-center justify-between border-b pb-4">
-                        <Label>Show Tax Per Item</Label>
+                        <Label>{t("setup.financeGeneral.showTaxPerItem")}</Label>
                         <Switch
                             checked={financeGeneralForm.showTaxPerItem}
                             onCheckedChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, showTaxPerItem: val })}
@@ -149,7 +151,7 @@ export default function FinanceGeneralPage() {
                     </div>
 
                     <div className="flex items-center justify-between border-b pb-4">
-                        <Label>Remove Tax Name From Row</Label>
+                        <Label>{t("setup.financeGeneral.removeTaxNameFromRow")}</Label>
                         <Switch
                             checked={financeGeneralForm.removeTaxNameFromRow}
                             onCheckedChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, removeTaxNameFromRow: val })}
@@ -157,7 +159,7 @@ export default function FinanceGeneralPage() {
                     </div>
 
                     <div className="flex items-center justify-between border-b pb-4">
-                        <Label>Exclude Currency Symbol</Label>
+                        <Label>{t("setup.financeGeneral.excludeCurrencySymbol")}</Label>
                         <Switch
                             checked={financeGeneralForm.excludeCurrencySymbol}
                             onCheckedChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, excludeCurrencySymbol: val })}
@@ -165,7 +167,7 @@ export default function FinanceGeneralPage() {
                     </div>
 
                     <div className="flex items-center justify-between border-b pb-4">
-                        <Label>Remove Decimals on Zero</Label>
+                        <Label>{t("setup.financeGeneral.removeDecimalsOnZero")}</Label>
                         <Switch
                             checked={financeGeneralForm.removeDecimalsOnZero}
                             onCheckedChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, removeDecimalsOnZero: val })}
@@ -174,9 +176,9 @@ export default function FinanceGeneralPage() {
                 </div>
             </SettingsSection>
 
-            <SettingsSection title="Amount to Words" description="Convert numerical amounts to words on documents">
+            <SettingsSection title={t("setup.financeGeneral.amountToWordsTitle")} description={t("setup.financeGeneral.amountToWordsDesc")}>
                 <div className="flex items-center justify-between border-b pb-4 mb-4">
-                    <Label>Enable Amount to Words</Label>
+                    <Label>{t("setup.financeGeneral.enableAmountToWords")}</Label>
                     <Switch
                         checked={financeGeneralForm.amountToWordsEnable}
                         onCheckedChange={(val) => setFinanceGeneralForm({ ...financeGeneralForm, amountToWordsEnable: val })}
@@ -185,7 +187,7 @@ export default function FinanceGeneralPage() {
 
                 {financeGeneralForm.amountToWordsEnable && (
                     <div className="flex items-center justify-between">
-                        <Label>Lowercase Amount to Words</Label>
+                        <Label>{t("setup.financeGeneral.lowercaseAmountToWords")}</Label>
                         <Switch
                             checked={financeGeneralForm.amountToWordsLowercase}
                             onCheckedChange={(val) =>

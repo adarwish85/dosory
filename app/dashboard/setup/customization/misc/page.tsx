@@ -13,8 +13,10 @@ import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
+import { useTranslation } from "@/lib/i18n";
 
 export default function MiscSettingsPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [miscForm, setMiscForm] = useState({
         miscRequireLoginForContract: false,
@@ -76,34 +78,34 @@ export default function MiscSettingsPage() {
                 miscDeleteActivityLogOlderThan: parseInt(miscForm.miscDeleteActivityLogOlderThan) || 1,
                 miscTablesPaginationLimit: parseInt(miscForm.miscTablesPaginationLimit) || 25,
             } as any);
-            toast.success("Misc settings saved successfully");
+            toast.success(t("setup.misc.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.misc.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Miscellaneous Settings</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.misc.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    System-wide configurations, permissions, and defaults
+                    {t("setup.misc.subtitle")}
                 </p>
             </div>
 
             <Tabs defaultValue="general" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 max-w-[600px]">
-                    <TabsTrigger value="general">General</TabsTrigger>
-                    <TabsTrigger value="tables">Tables</TabsTrigger>
-                    <TabsTrigger value="inline-create">Inline Create</TabsTrigger>
+                    <TabsTrigger value="general">{t("setup.misc.tabGeneral")}</TabsTrigger>
+                    <TabsTrigger value="tables">{t("setup.misc.tabTables")}</TabsTrigger>
+                    <TabsTrigger value="inline-create">{t("setup.misc.tabInlineCreate")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="general" className="space-y-6 mt-6">
-                    <SettingsSection title="System" description="General system behavior">
+                    <SettingsSection title={t("setup.misc.systemTitle")} description={t("setup.misc.systemDesc")}>
                         <div className="space-y-4">
                             <div>
                                 <Label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Require client to be logged in to view contract
+                                    {t("setup.misc.requireLoginForContract")}
                                 </Label>
                                 <RadioGroup
                                     value={miscForm.miscRequireLoginForContract ? "yes" : "no"}
@@ -115,19 +117,19 @@ export default function MiscSettingsPage() {
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="yes" id="miscRequireLoginForContract-yes" />
                                         <Label htmlFor="miscRequireLoginForContract-yes" className="font-normal">
-                                            Yes
+                                            {t("common.yes")}
                                         </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="no" id="miscRequireLoginForContract-no" />
                                         <Label htmlFor="miscRequireLoginForContract-no" className="font-normal">
-                                            No
+                                            {t("common.no")}
                                         </Label>
                                     </div>
                                 </RadioGroup>
                             </div>
 
-                            <SettingsField label="Dropbox APP Key">
+                            <SettingsField label={t("setup.misc.dropboxAppKey")}>
                                 <Input
                                     value={miscForm.miscDropboxAppKey}
                                     onChange={(e) =>
@@ -136,7 +138,7 @@ export default function MiscSettingsPage() {
                                 />
                             </SettingsField>
 
-                            <SettingsField label="Max file size upload in Media (MB)">
+                            <SettingsField label={t("setup.misc.maxFileSizeMedia")}>
                                 <Input
                                     type="number"
                                     value={miscForm.miscMaxFileSizeMedia}
@@ -149,7 +151,7 @@ export default function MiscSettingsPage() {
                             <div>
                                 <div className="flex items-center gap-1 mb-1">
                                     <HelpCircle className="h-4 w-4 text-gray-400" />
-                                    <Label>Maximum files upload on post</Label>
+                                    <Label>{t("setup.misc.maxFileUploadsPost")}</Label>
                                 </div>
                                 <Input
                                     type="number"
@@ -160,7 +162,7 @@ export default function MiscSettingsPage() {
                                 />
                             </div>
 
-                            <SettingsField label="Limit Top Search Bar Results to">
+                            <SettingsField label={t("setup.misc.limitTopSearchBarResults")}>
                                 <Input
                                     type="number"
                                     value={miscForm.miscLimitTopSearchBarResults}
@@ -170,22 +172,22 @@ export default function MiscSettingsPage() {
                                 />
                             </SettingsField>
 
-                            <SettingsField label="Default Staff Role">
+                            <SettingsField label={t("setup.misc.defaultStaffRole")}>
                                 <Select
                                     value={miscForm.miscDefaultStaffRole}
                                     onValueChange={(val) => setMiscForm({ ...miscForm, miscDefaultStaffRole: val })}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select" />
+                                        <SelectValue placeholder={t("setup.misc.selectPlaceholder")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="employee">Employee</SelectItem>
-                                        <SelectItem value="admin">Admin</SelectItem>
+                                        <SelectItem value="employee">{t("setup.misc.roleEmployee")}</SelectItem>
+                                        <SelectItem value="admin">{t("setup.misc.roleAdmin")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </SettingsField>
 
-                            <SettingsField label="Delete system activity log older then X months">
+                            <SettingsField label={t("setup.misc.deleteActivityLogOlderThan")}>
                                 <Input
                                     type="number"
                                     value={miscForm.miscDeleteActivityLogOlderThan}
@@ -198,17 +200,17 @@ export default function MiscSettingsPage() {
                             {[
                                 {
                                     key: "miscShowSetupMenuHover",
-                                    label: "Show setup menu item only when hover with mouse on main sidebar area",
+                                    labelKey: "setup.misc.showSetupMenuHover",
                                 },
-                                { key: "miscShowHelpMenu", label: "Show help menu item on setup menu" },
+                                { key: "miscShowHelpMenu", labelKey: "setup.misc.showHelpMenu" },
                                 {
                                     key: "miscUseMinified",
-                                    label: "Use minified files version for css and js (only system files)",
+                                    labelKey: "setup.misc.useMinified",
                                 },
                             ].map((item) => (
                                 <div key={item.key}>
                                     <Label className="mb-2 block text-sm font-medium text-gray-700">
-                                        {item.label}
+                                        {t(item.labelKey)}
                                     </Label>
                                     <RadioGroup
                                         value={miscForm[item.key as keyof typeof miscForm] ? "yes" : "no"}
@@ -220,13 +222,13 @@ export default function MiscSettingsPage() {
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="yes" id={`misc-${item.key}-yes`} />
                                             <Label htmlFor={`misc-${item.key}-yes`} className="font-normal">
-                                                Yes
+                                                {t("common.yes")}
                                             </Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="no" id={`misc-${item.key}-no`} />
                                             <Label htmlFor={`misc-${item.key}-no`} className="font-normal">
-                                                No
+                                                {t("common.no")}
                                             </Label>
                                         </div>
                                     </RadioGroup>
@@ -237,12 +239,12 @@ export default function MiscSettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="tables" className="space-y-6 mt-6">
-                    <SettingsSection title="Table Behavior" description="Configuration for data tables">
+                    <SettingsSection title={t("setup.misc.tableBehaviorTitle")} description={t("setup.misc.tableBehaviorDesc")}>
                         <div>
                             <div className="flex items-center gap-1 mb-2">
                                 <HelpCircle className="h-4 w-4 text-gray-400" />
                                 <Label className="block text-sm font-medium text-gray-700">
-                                    Save last order for tables
+                                    {t("setup.misc.saveLastTableOrder")}
                                 </Label>
                             </div>
                             <RadioGroup
@@ -255,13 +257,13 @@ export default function MiscSettingsPage() {
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="yes" id="miscSaveLastTableOrder-yes" />
                                     <Label htmlFor="miscSaveLastTableOrder-yes" className="font-normal">
-                                        Yes
+                                        {t("common.yes")}
                                     </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="no" id="miscSaveLastTableOrder-no" />
                                     <Label htmlFor="miscSaveLastTableOrder-no" className="font-normal">
-                                        No
+                                        {t("common.no")}
                                     </Label>
                                 </div>
                             </RadioGroup>
@@ -269,7 +271,7 @@ export default function MiscSettingsPage() {
 
                         <div>
                             <Label className="mb-2 block text-sm font-medium text-gray-700">
-                                Show table export button
+                                {t("setup.misc.showTableExportButton")}
                             </Label>
                             <RadioGroup
                                 value={miscForm.miscShowTableExportButton}
@@ -281,25 +283,25 @@ export default function MiscSettingsPage() {
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="all" id="export-all" />
                                     <Label htmlFor="export-all" className="font-normal">
-                                        To all staff members
+                                        {t("setup.misc.exportToAll")}
                                     </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="admin" id="export-admin" />
                                     <Label htmlFor="export-admin" className="font-normal">
-                                        Only to administrators
+                                        {t("setup.misc.exportToAdmins")}
                                     </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="hide" id="export-hide" />
                                     <Label htmlFor="export-hide" className="font-normal">
-                                        Hide export button for all staff members
+                                        {t("setup.misc.exportHide")}
                                     </Label>
                                 </div>
                             </RadioGroup>
                         </div>
 
-                        <SettingsField label="Tables Pagination Limit">
+                        <SettingsField label={t("setup.misc.tablesPaginationLimit")}>
                             <Input
                                 type="number"
                                 value={miscForm.miscTablesPaginationLimit}
@@ -312,39 +314,39 @@ export default function MiscSettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="inline-create" className="space-y-6 mt-6">
-                    <SettingsSection title="Inline Creation" description="Permissions for creating items on the fly">
+                    <SettingsSection title={t("setup.misc.inlineCreateTitle")} description={t("setup.misc.inlineCreateDesc")}>
                         {[
                             {
                                 key: "miscAllowNonAdminCreateLeadStatus",
-                                label: "Allow non-admin staff members to create Lead Status in Lead create/edit area?",
+                                labelKey: "setup.misc.allowNonAdminCreateLeadStatus",
                             },
                             {
                                 key: "miscAllowNonAdminCreateLeadSource",
-                                label: "Allow non-admin staff members to create Lead Source in Lead create/edit area?",
+                                labelKey: "setup.misc.allowNonAdminCreateLeadSource",
                             },
                             {
                                 key: "miscAllowNonAdminCreateCustomerGroup",
-                                label: "Allow non-admin staff members to create Customer Group in Customer create/edit area?",
+                                labelKey: "setup.misc.allowNonAdminCreateCustomerGroup",
                             },
                             {
                                 key: "miscAllowNonAdminCreateService",
-                                label: "Allow non-admin staff members to create Service in Ticket create/edit area?",
+                                labelKey: "setup.misc.allowNonAdminCreateService",
                             },
                             {
                                 key: "miscAllowNonAdminSavePredefinedReplies",
-                                label: "Allow non-admin staff members to save predefined replies from ticket message",
+                                labelKey: "setup.misc.allowNonAdminSavePredefinedReplies",
                             },
                             {
                                 key: "miscAllowNonAdminCreateContractType",
-                                label: "Allow non-admin staff members to create Contract type in Contract create/edit area?",
+                                labelKey: "setup.misc.allowNonAdminCreateContractType",
                             },
                             {
                                 key: "miscAllowNonAdminCreateExpenseCategory",
-                                label: "Allow non-admin staff members to create Expense Category in Expense create/edit area?",
+                                labelKey: "setup.misc.allowNonAdminCreateExpenseCategory",
                             },
                         ].map((item) => (
                             <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                                <Label className="block text-sm font-medium text-gray-700">{item.label}</Label>
+                                <Label className="block text-sm font-medium text-gray-700">{t(item.labelKey)}</Label>
                                 <RadioGroup
                                     value={miscForm[item.key as keyof typeof miscForm] ? "yes" : "no"}
                                     onValueChange={(val) =>
@@ -355,13 +357,13 @@ export default function MiscSettingsPage() {
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="yes" id={`misc-${item.key}-yes`} />
                                         <Label htmlFor={`misc-${item.key}-yes`} className="font-normal">
-                                            Yes
+                                            {t("common.yes")}
                                         </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="no" id={`misc-${item.key}-no`} />
                                         <Label htmlFor={`misc-${item.key}-no`} className="font-normal">
-                                            No
+                                            {t("common.no")}
                                         </Label>
                                     </div>
                                 </RadioGroup>

@@ -5,14 +5,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw, Pen } from "lucide-react";
 import { AddStatusDialog } from "@/components/dashboard/setup/support/add-status-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function TicketStatusesPage() {
+    const { t } = useTranslation();
     const statuses = [
-        { id: 1, name: "Open", total: 0 },
-        { id: 2, name: "In progress", total: 0 },
-        { id: 3, name: "Answered", total: 1 },
-        { id: 4, name: "On Hold", total: 0 },
-        { id: 5, name: "Closed", total: 102 },
+        { id: 1, name: t("setup.ticketStatuses.open"), total: 0 },
+        { id: 2, name: t("setup.ticketStatuses.inProgress"), total: 0 },
+        { id: 3, name: t("setup.ticketStatuses.answered"), total: 1 },
+        { id: 4, name: t("setup.ticketStatuses.onHold"), total: 0 },
+        { id: 5, name: t("setup.ticketStatuses.closed"), total: 102 },
     ];
 
     return (
@@ -32,12 +34,12 @@ export default function TicketStatusesPage() {
                                 <SelectItem value="25">25</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline">Export</Button>
+                        <Button variant="outline">{t("common.export")}</Button>
                     </div>
                     <div className="relative w-64">
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                            <Input placeholder="Search..." className="pl-9" />
+                            <Input placeholder={t("common.search")} className="pl-9" />
                         </div>
                     </div>
                 </div>
@@ -45,9 +47,9 @@ export default function TicketStatusesPage() {
                 <div className="bg-white rounded-md border shadow-sm">
                     <div className="px-6 py-3 border-b bg-gray-50">
                         <div className="grid grid-cols-12 gap-4">
-                            <div className="col-span-2 font-bold text-gray-900 text-sm">ID</div>
-                            <div className="col-span-8 font-bold text-gray-900 text-sm">Ticket Status Name</div>
-                            <div className="col-span-2 font-bold text-gray-900 text-sm text-right">Options</div>
+                            <div className="col-span-2 font-bold text-gray-900 text-sm">{t("setup.ticketStatuses.colId")}</div>
+                            <div className="col-span-8 font-bold text-gray-900 text-sm">{t("setup.ticketStatuses.colName")}</div>
+                            <div className="col-span-2 font-bold text-gray-900 text-sm text-right">{t("setup.ticketStatuses.colOptions")}</div>
                         </div>
                     </div>
                     <div className="divide-y">
@@ -57,7 +59,7 @@ export default function TicketStatusesPage() {
                                     <div className="col-span-2 text-gray-700">{status.id}</div>
                                     <div className="col-span-8">
                                         <div className="font-medium text-gray-900">{status.name}</div>
-                                        <div className="text-xs text-gray-500">Total {status.total}</div>
+                                        <div className="text-xs text-gray-500">{t("setup.ticketStatuses.total", { count: status.total })}</div>
                                     </div>
                                     <div className="col-span-2 flex items-center justify-end gap-2 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Pen className="h-4 w-4 cursor-pointer hover:text-blue-600" />
@@ -69,17 +71,17 @@ export default function TicketStatusesPage() {
                     <div className="px-6 py-4 border-t bg-gray-50 rounded-b-md">
                         <div className="text-xs text-gray-500 flex justify-end items-center gap-4">
                             <span>
-                                Showing 1 to {statuses.length} of {statuses.length} entries
+                                {t("setup.supportConfig.showingEntries", { from: 1, to: statuses.length, total: statuses.length })}
                             </span>
                             <div className="flex items-center gap-1">
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Previous
+                                    {t("setup.supportConfig.previous")}
                                 </Button>
                                 <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">
                                     1
                                 </div>
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Next
+                                    {t("setup.supportConfig.next")}
                                 </Button>
                             </div>
                         </div>

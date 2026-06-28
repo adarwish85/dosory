@@ -11,11 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Save, RefreshCw, Boxes, LayoutDashboard, Users, FileText, DollarSign, Briefcase, Headphones, TrendingUp, Calendar, ClipboardList, Settings, Package, FileCheck, PieChart, MessageSquare, Bell, Megaphone, Receipt, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface ModuleConfig {
     id: string;
-    name: string;
-    description: string;
+    nameKey: string;
+    descriptionKey: string;
     icon: React.ReactNode;
     category: "core" | "sales" | "finance" | "support" | "operations";
     isCore?: boolean; // Core modules cannot be disabled
@@ -23,42 +24,43 @@ interface ModuleConfig {
 
 const MODULES: ModuleConfig[] = [
     // Core Modules
-    { id: "dashboard", name: "Dashboard", description: "Main dashboard with analytics and widgets", icon: <LayoutDashboard className="h-5 w-5" />, category: "core", isCore: true },
-    { id: "customers", name: "Customers", description: "Customer management and contacts", icon: <Users className="h-5 w-5" />, category: "core", isCore: true },
-    { id: "staff", name: "Staff", description: "Team member management and roles", icon: <Building2 className="h-5 w-5" />, category: "core", isCore: true },
+    { id: "dashboard", nameKey: "setup.featureToggles.moduleDashboard", descriptionKey: "setup.featureToggles.moduleDashboardDesc", icon: <LayoutDashboard className="h-5 w-5" />, category: "core", isCore: true },
+    { id: "customers", nameKey: "setup.featureToggles.moduleCustomers", descriptionKey: "setup.featureToggles.moduleCustomersDesc", icon: <Users className="h-5 w-5" />, category: "core", isCore: true },
+    { id: "staff", nameKey: "setup.featureToggles.moduleStaff", descriptionKey: "setup.featureToggles.moduleStaffDesc", icon: <Building2 className="h-5 w-5" />, category: "core", isCore: true },
 
     // Sales Modules
-    { id: "leads", name: "Leads", description: "Lead tracking and conversion pipeline", icon: <TrendingUp className="h-5 w-5" />, category: "sales" },
-    { id: "estimates", name: "Estimates", description: "Generate cost estimates for projects", icon: <FileCheck className="h-5 w-5" />, category: "sales" },
-    { id: "contracts", name: "Contracts", description: "Contract management and e-signatures", icon: <ClipboardList className="h-5 w-5" />, category: "sales" },
+    { id: "leads", nameKey: "setup.featureToggles.moduleLeads", descriptionKey: "setup.featureToggles.moduleLeadsDesc", icon: <TrendingUp className="h-5 w-5" />, category: "sales" },
+    { id: "estimates", nameKey: "setup.featureToggles.moduleEstimates", descriptionKey: "setup.featureToggles.moduleEstimatesDesc", icon: <FileCheck className="h-5 w-5" />, category: "sales" },
+    { id: "contracts", nameKey: "setup.featureToggles.moduleContracts", descriptionKey: "setup.featureToggles.moduleContractsDesc", icon: <ClipboardList className="h-5 w-5" />, category: "sales" },
 
     // Finance Modules
-    { id: "invoices", name: "Invoices", description: "Invoice generation and payment tracking", icon: <Receipt className="h-5 w-5" />, category: "finance" },
-    { id: "payments", name: "Payments", description: "Payment processing and records", icon: <DollarSign className="h-5 w-5" />, category: "finance" },
-    { id: "expenses", name: "Expenses", description: "Track and manage business expenses", icon: <PieChart className="h-5 w-5" />, category: "finance" },
-    { id: "credit_notes", name: "Credit Notes", description: "Issue and manage credit notes", icon: <FileText className="h-5 w-5" />, category: "finance" },
+    { id: "invoices", nameKey: "setup.featureToggles.moduleInvoices", descriptionKey: "setup.featureToggles.moduleInvoicesDesc", icon: <Receipt className="h-5 w-5" />, category: "finance" },
+    { id: "payments", nameKey: "setup.featureToggles.modulePayments", descriptionKey: "setup.featureToggles.modulePaymentsDesc", icon: <DollarSign className="h-5 w-5" />, category: "finance" },
+    { id: "expenses", nameKey: "setup.featureToggles.moduleExpenses", descriptionKey: "setup.featureToggles.moduleExpensesDesc", icon: <PieChart className="h-5 w-5" />, category: "finance" },
+    { id: "credit_notes", nameKey: "setup.featureToggles.moduleCreditNotes", descriptionKey: "setup.featureToggles.moduleCreditNotesDesc", icon: <FileText className="h-5 w-5" />, category: "finance" },
 
     // Operations Modules
-    { id: "projects", name: "Projects", description: "Project management with tasks and milestones", icon: <Briefcase className="h-5 w-5" />, category: "operations" },
-    { id: "tasks", name: "Tasks", description: "Task assignment and tracking", icon: <ClipboardList className="h-5 w-5" />, category: "operations" },
-    { id: "calendar", name: "Calendar", description: "Appointments and event scheduling", icon: <Calendar className="h-5 w-5" />, category: "operations" },
+    { id: "projects", nameKey: "setup.featureToggles.moduleProjects", descriptionKey: "setup.featureToggles.moduleProjectsDesc", icon: <Briefcase className="h-5 w-5" />, category: "operations" },
+    { id: "tasks", nameKey: "setup.featureToggles.moduleTasks", descriptionKey: "setup.featureToggles.moduleTasksDesc", icon: <ClipboardList className="h-5 w-5" />, category: "operations" },
+    { id: "calendar", nameKey: "setup.featureToggles.moduleCalendar", descriptionKey: "setup.featureToggles.moduleCalendarDesc", icon: <Calendar className="h-5 w-5" />, category: "operations" },
 
     // Support Modules
-    { id: "support", name: "Support Tickets", description: "Customer support ticketing system", icon: <Headphones className="h-5 w-5" />, category: "support" },
-    { id: "knowledge_base", name: "Knowledge Base", description: "Self-service help articles", icon: <MessageSquare className="h-5 w-5" />, category: "support" },
-    { id: "announcements", name: "Announcements", description: "Broadcast announcements to users", icon: <Megaphone className="h-5 w-5" />, category: "support" },
-    { id: "notifications", name: "Notifications", description: "System notification preferences", icon: <Bell className="h-5 w-5" />, category: "support" },
+    { id: "support", nameKey: "setup.featureToggles.moduleSupport", descriptionKey: "setup.featureToggles.moduleSupportDesc", icon: <Headphones className="h-5 w-5" />, category: "support" },
+    { id: "knowledge_base", nameKey: "setup.featureToggles.moduleKnowledgeBase", descriptionKey: "setup.featureToggles.moduleKnowledgeBaseDesc", icon: <MessageSquare className="h-5 w-5" />, category: "support" },
+    { id: "announcements", nameKey: "setup.featureToggles.moduleAnnouncements", descriptionKey: "setup.featureToggles.moduleAnnouncementsDesc", icon: <Megaphone className="h-5 w-5" />, category: "support" },
+    { id: "notifications", nameKey: "setup.featureToggles.moduleNotifications", descriptionKey: "setup.featureToggles.moduleNotificationsDesc", icon: <Bell className="h-5 w-5" />, category: "support" },
 ];
 
-const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
-    core: { label: "Core", color: "bg-blue-100 text-blue-700" },
-    sales: { label: "Sales & CRM", color: "bg-green-100 text-green-700" },
-    finance: { label: "Finance", color: "bg-yellow-100 text-yellow-700" },
-    operations: { label: "Operations", color: "bg-purple-100 text-purple-700" },
-    support: { label: "Support", color: "bg-orange-100 text-orange-700" },
+const CATEGORY_LABELS: Record<string, { labelKey: string; color: string }> = {
+    core: { labelKey: "setup.featureToggles.categoryCore", color: "bg-blue-100 text-blue-700" },
+    sales: { labelKey: "setup.featureToggles.categorySales", color: "bg-green-100 text-green-700" },
+    finance: { labelKey: "setup.featureToggles.categoryFinance", color: "bg-yellow-100 text-yellow-700" },
+    operations: { labelKey: "setup.featureToggles.categoryOperations", color: "bg-purple-100 text-purple-700" },
+    support: { labelKey: "setup.featureToggles.categorySupport", color: "bg-orange-100 text-orange-700" },
 };
 
 export default function ModulesPage() {
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -89,14 +91,14 @@ export default function ModulesPage() {
                 }
             } catch (error) {
                 console.error("Error loading module config:", error);
-                toast.error("Failed to load module configuration");
+                toast.error(t("setup.featureToggles.loadError"));
             } finally {
                 setLoading(false);
             }
         };
 
         loadModuleConfig();
-    }, [profile?.orgId]);
+    }, [profile?.orgId, t]);
 
     const handleToggle = (moduleId: string, enabled: boolean) => {
         setEnabledModules(prev => ({ ...prev, [moduleId]: enabled }));
@@ -115,11 +117,11 @@ export default function ModulesPage() {
                 updatedBy: profile.uid,
             }, { merge: true });
 
-            toast.success("Module configuration saved successfully");
+            toast.success(t("setup.featureToggles.saveSuccess"));
             setHasChanges(false);
         } catch (error) {
             console.error("Error saving module config:", error);
-            toast.error("Failed to save module configuration");
+            toast.error(t("setup.featureToggles.saveError"));
         } finally {
             setSaving(false);
         }
@@ -155,14 +157,14 @@ export default function ModulesPage() {
                 <div className="flex items-center gap-3">
                     <Boxes className="h-6 w-6 text-blue-600" />
                     <div>
-                        <h1 className="text-2xl font-semibold text-gray-900">Modules</h1>
-                        <p className="text-sm text-gray-500">Enable or disable system modules for your organization</p>
+                        <h1 className="text-2xl font-semibold text-gray-900">{t("setup.featureToggles.title")}</h1>
+                        <p className="text-sm text-gray-500">{t("setup.featureToggles.subtitle")}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={handleReset}>
                         <RefreshCw className="h-4 w-4 mr-2" />
-                        Reset to Default
+                        {t("setup.featureToggles.resetToDefault")}
                     </Button>
                     <Button
                         onClick={handleSave}
@@ -174,7 +176,7 @@ export default function ModulesPage() {
                         ) : (
                             <Save className="h-4 w-4 mr-2" />
                         )}
-                        Save Changes
+                        {t("common.saveChanges")}
                     </Button>
                 </div>
             </div>
@@ -184,7 +186,7 @@ export default function ModulesPage() {
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center gap-3">
                     <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                     <p className="text-sm text-amber-800">
-                        You have unsaved changes. Click &quot;Save Changes&quot; to apply your configuration.
+                        {t("setup.featureToggles.unsavedChanges")}
                     </p>
                 </div>
             )}
@@ -195,10 +197,13 @@ export default function ModulesPage() {
                     <div key={category}>
                         <div className="flex items-center gap-2 mb-4">
                             <Badge className={cn("font-normal", CATEGORY_LABELS[category].color)}>
-                                {CATEGORY_LABELS[category].label}
+                                {t(CATEGORY_LABELS[category].labelKey)}
                             </Badge>
                             <span className="text-sm text-gray-500">
-                                {modules.filter(m => enabledModules[m.id]).length} of {modules.length} enabled
+                                {t("setup.featureToggles.enabledCount", {
+                                    count: modules.filter(m => enabledModules[m.id]).length,
+                                    total: modules.length,
+                                })}
                             </span>
                         </div>
 
@@ -222,11 +227,11 @@ export default function ModulesPage() {
                                                 </div>
                                                 <div>
                                                     <CardTitle className="text-base font-medium">
-                                                        {module.name}
+                                                        {t(module.nameKey)}
                                                     </CardTitle>
                                                     {module.isCore && (
                                                         <Badge variant="secondary" className="text-[10px] py-0 mt-1">
-                                                            Required
+                                                            {t("setup.featureToggles.required")}
                                                         </Badge>
                                                     )}
                                                 </div>
@@ -240,7 +245,7 @@ export default function ModulesPage() {
                                     </CardHeader>
                                     <CardContent>
                                         <CardDescription className="text-sm">
-                                            {module.description}
+                                            {t(module.descriptionKey)}
                                         </CardDescription>
                                     </CardContent>
                                 </Card>
@@ -253,8 +258,10 @@ export default function ModulesPage() {
             {/* Summary Footer */}
             <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
                 <div className="text-sm text-gray-600">
-                    <span className="font-medium">{Object.values(enabledModules).filter(Boolean).length}</span> of{" "}
-                    <span className="font-medium">{MODULES.length}</span> modules enabled
+                    {t("setup.featureToggles.modulesEnabledSummary", {
+                        count: Object.values(enabledModules).filter(Boolean).length,
+                        total: MODULES.length,
+                    })}
                 </div>
                 <Button
                     variant="outline"
@@ -263,7 +270,7 @@ export default function ModulesPage() {
                     disabled={!hasChanges || saving}
                 >
                     {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Save Configuration
+                    {t("setup.featureToggles.saveConfiguration")}
                 </Button>
             </div>
         </div>

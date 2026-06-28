@@ -12,8 +12,10 @@ import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
+import { useTranslation } from "@/lib/i18n";
 
 export default function TasksSettingsPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [tasksForm, setTasksForm] = useState({
         tasksKanbanLimit: 0,
@@ -54,23 +56,23 @@ export default function TasksSettingsPage() {
     const handleSave = async () => {
         try {
             await saveSettings(tasksForm as Partial<OrganizationSettings>);
-            toast.success("Tasks settings saved successfully");
+            toast.success(t("setup.tasks.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.tasks.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.tasks.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Manage task defaults, visibility, and timer settings
+                    {t("setup.tasks.subtitle")}
                 </p>
             </div>
 
-            <SettingsSection title="General" description="Basic task configurations">
-                <SettingsField label="Limit tasks kanban rows per status">
+            <SettingsSection title={t("setup.tasks.generalSectionTitle")} description={t("setup.tasks.generalSectionDesc")}>
+                <SettingsField label={t("setup.tasks.kanbanLimit")}>
                     <Input
                         type="number"
                         value={tasksForm.tasksKanbanLimit}
@@ -80,48 +82,48 @@ export default function TasksSettingsPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Modal Width Class">
+                <SettingsField label={t("setup.tasks.modalWidthClass")}>
                     <Input
                         value={tasksForm.tasksModalWidth}
                         onChange={(e) => setTasksForm({ ...tasksForm, tasksModalWidth: e.target.value })}
                         placeholder="modal-lg"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                        Use Bootstrap classes like modal-lg, modal-xl, modal-xxl
+                        {t("setup.tasks.modalWidthHelp")}
                     </p>
                 </SettingsField>
             </SettingsSection>
 
-            <SettingsSection title="Behavior & Visibility" description="Control task permissions and interactions">
+            <SettingsSection title={t("setup.tasks.behaviorSectionTitle")} description={t("setup.tasks.behaviorSectionDesc")}>
                 {[
                     {
                         key: "tasksAllowStaffViewAllProjectTasks",
-                        label: "Allow all staff to see all tasks related to projects (includes non-staff)",
+                        label: t("setup.tasks.allowStaffViewAll"),
                     },
                     {
                         key: "tasksAllowEditCommentsFirstHourOnly",
-                        label: "Allow customer/staff to add/edit task comments only in the first hour",
+                        label: t("setup.tasks.allowEditCommentsFirstHour"),
                     },
                     {
                         key: "tasksAutoAssignCreator",
-                        label: "Auto assign task creator when new task is created",
+                        label: t("setup.tasks.autoAssignCreator"),
                         help: true,
                     },
                     {
                         key: "tasksAutoAddCreatorAsFollower",
-                        label: "Auto add task creator as task follower when new task is created",
+                        label: t("setup.tasks.autoAddCreatorAsFollower"),
                     },
                     {
                         key: "tasksStopOtherTimers",
-                        label: "Stop all other started timers when starting new timer",
+                        label: t("setup.tasks.stopOtherTimers"),
                     },
                     {
                         key: "tasksAutoStartTimer",
-                        label: "Change task status to In Progress on timer started",
+                        label: t("setup.tasks.autoStartTimer"),
                     },
                     {
                         key: "tasksBillableDefault",
-                        label: "Billable option is by default checked when new task is created",
+                        label: t("setup.tasks.billableDefault"),
                     },
                 ].map((item: any) => (
                     <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
@@ -139,13 +141,13 @@ export default function TasksSettingsPage() {
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id={`task-${item.key}-yes`} />
                                 <Label htmlFor={`task-${item.key}-yes`} className="font-normal">
-                                    Yes
+                                    {t("common.yes")}
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="no" id={`task-${item.key}-no`} />
                                 <Label htmlFor={`task-${item.key}-no`} className="font-normal">
-                                    No
+                                    {t("common.no")}
                                 </Label>
                             </div>
                         </RadioGroup>
@@ -153,24 +155,24 @@ export default function TasksSettingsPage() {
                 ))}
             </SettingsSection>
 
-            <SettingsSection title="Timers" description="Timer rounding and behavior">
-                <SettingsField label="Round off task timer">
+            <SettingsSection title={t("setup.tasks.timersSectionTitle")} description={t("setup.tasks.timersSectionDesc")}>
+                <SettingsField label={t("setup.tasks.roundOffTimer")}>
                     <Select
                         value={tasksForm.tasksTimerRoundOff}
                         onValueChange={(val) => setTasksForm({ ...tasksForm, tasksTimerRoundOff: val })}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select" />
+                            <SelectValue placeholder={t("setup.tasks.selectPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="no_round">Don&apos;t round off</SelectItem>
-                            <SelectItem value="round_up">Round up</SelectItem>
-                            <SelectItem value="round_down">Round down</SelectItem>
+                            <SelectItem value="no_round">{t("setup.tasks.roundNone")}</SelectItem>
+                            <SelectItem value="round_up">{t("setup.tasks.roundUp")}</SelectItem>
+                            <SelectItem value="round_down">{t("setup.tasks.roundDown")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </SettingsField>
 
-                <SettingsField label="multiplies of (minutes)">
+                <SettingsField label={t("setup.tasks.multiplesOfMinutes")}>
                     <Select
                         value={tasksForm.tasksTimerRoundOffMultiples}
                         onValueChange={(val) =>
@@ -192,34 +194,34 @@ export default function TasksSettingsPage() {
                 </SettingsField>
             </SettingsSection>
 
-            <SettingsSection title="Defaults" description="Default values for new tasks">
-                <SettingsField label="Default status when new task is created">
+            <SettingsSection title={t("setup.tasks.defaultsSectionTitle")} description={t("setup.tasks.defaultsSectionDesc")}>
+                <SettingsField label={t("setup.tasks.defaultStatus")}>
                     <Select
                         value={tasksForm.tasksDefaultStatus}
                         onValueChange={(val) => setTasksForm({ ...tasksForm, tasksDefaultStatus: val })}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select" />
+                            <SelectValue placeholder={t("setup.tasks.selectPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="to_do">Not Started</SelectItem>
+                            <SelectItem value="to_do">{t("setup.tasks.statusNotStarted")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </SettingsField>
 
-                <SettingsField label="Default Priority">
+                <SettingsField label={t("setup.tasks.defaultPriority")}>
                     <Select
                         value={tasksForm.tasksDefaultPriority}
                         onValueChange={(val) => setTasksForm({ ...tasksForm, tasksDefaultPriority: val })}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select" />
+                            <SelectValue placeholder={t("setup.tasks.selectPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="urgent">Urgent</SelectItem>
+                            <SelectItem value="low">{t("setup.tasks.priorityLow")}</SelectItem>
+                            <SelectItem value="medium">{t("setup.tasks.priorityMedium")}</SelectItem>
+                            <SelectItem value="high">{t("setup.tasks.priorityHigh")}</SelectItem>
+                            <SelectItem value="urgent">{t("setup.tasks.priorityUrgent")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </SettingsField>

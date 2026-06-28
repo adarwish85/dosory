@@ -2,8 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 export default function EmailTemplatesPage() {
+    const { t } = useTranslation();
     const templateSections = [
         {
             title: "Tickets",
@@ -138,19 +140,35 @@ export default function EmailTemplatesPage() {
         },
     ];
 
+    const sectionTitleMap: Record<string, string> = {
+        Tickets: t("setup.emailTemplates.sectionTickets"),
+        Estimates: t("setup.emailTemplates.sectionEstimates"),
+        Contracts: t("setup.emailTemplates.sectionContracts"),
+        Invoices: t("setup.emailTemplates.sectionInvoices"),
+        Subscriptions: t("setup.emailTemplates.sectionSubscriptions"),
+        "Credit Note": t("setup.emailTemplates.sectionCreditNote"),
+        Tasks: t("setup.emailTemplates.sectionTasks"),
+        Customers: t("setup.emailTemplates.sectionCustomers"),
+        Projects: t("setup.emailTemplates.sectionProjects"),
+        "Staff Members": t("setup.emailTemplates.sectionStaffMembers"),
+        Leads: t("setup.emailTemplates.sectionLeads"),
+        "Estimate Request": t("setup.emailTemplates.sectionEstimateRequest"),
+        Notifications: t("setup.emailTemplates.sectionNotifications"),
+    };
+
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-semibold mb-6">Email Templates</h1>
+            <h1 className="text-2xl font-semibold mb-6">{t("setup.emailTemplates.title")}</h1>
 
             <div className="space-y-8">
                 {templateSections.map((section) => (
                     <div key={section.title} className="bg-white rounded-lg border">
                         <div className="px-6 py-4 border-b flex items-center justify-between">
-                            <h2 className="text-lg font-medium">{section.title}</h2>
+                            <h2 className="text-lg font-medium">{sectionTitleMap[section.title] || section.title}</h2>
                             <div className="flex gap-2 text-sm">
-                                <button className="text-blue-600 hover:underline">Enable All</button>
+                                <button className="text-blue-600 hover:underline">{t("setup.emailTemplates.enableAll")}</button>
                                 <span className="text-gray-400">|</span>
-                                <button className="text-blue-600 hover:underline">Disable All</button>
+                                <button className="text-blue-600 hover:underline">{t("setup.emailTemplates.disableAll")}</button>
                             </div>
                         </div>
                         <div className="divide-y">
@@ -158,7 +176,7 @@ export default function EmailTemplatesPage() {
                                 <div key={idx} className="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3">
-                                            <span className="text-sm text-gray-500 min-w-[120px]">Template Name</span>
+                                            <span className="text-sm text-gray-500 min-w-[120px]">{t("setup.emailTemplates.templateName")}</span>
                                             <Link
                                                 href={`/dashboard/setup/templates-docs/email-templates/edit?template=${encodeURIComponent(template)}&category=${encodeURIComponent(section.title)}`}
                                                 className="text-blue-600 hover:underline text-left"
@@ -167,7 +185,7 @@ export default function EmailTemplatesPage() {
                                             </Link>
                                         </div>
                                     </div>
-                                    <button className="text-blue-600 hover:underline text-sm">Disable</button>
+                                    <button className="text-blue-600 hover:underline text-sm">{t("setup.emailTemplates.disable")}</button>
                                 </div>
                             ))}
                         </div>

@@ -11,8 +11,10 @@ import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
+import { useTranslation } from "@/lib/i18n";
 
 export default function EstimatesPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [estimateForm, setEstimateForm] = useState({
         estimateNumberPrefix: "EST-",
@@ -61,23 +63,23 @@ export default function EstimatesPage() {
     const handleSave = async () => {
         try {
             await saveSettings(estimateForm as any);
-            toast.success("Estimate settings saved successfully");
+            toast.success(t("setup.estimates.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.estimates.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Estimates</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.estimates.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Configure estimate numbering, pipeline, and defaults
+                    {t("setup.estimates.subtitle")}
                 </p>
             </div>
 
-            <SettingsSection title="Format & Numbering" description="Configure how estimate numbers are generated">
-                <SettingsField label="Estimate Number Prefix">
+            <SettingsSection title={t("setup.estimates.formatSectionTitle")} description={t("setup.estimates.formatSectionDesc")}>
+                <SettingsField label={t("setup.estimates.numberPrefix")}>
                     <Input
                         value={estimateForm.estimateNumberPrefix}
                         onChange={(e) =>
@@ -86,7 +88,7 @@ export default function EstimatesPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Next Estimate Number">
+                <SettingsField label={t("setup.estimates.nextNumber")}>
                     <Input
                         value={estimateForm.estimateNextNumber}
                         onChange={(e) =>
@@ -95,7 +97,7 @@ export default function EstimatesPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Estimate Due After (Days)">
+                <SettingsField label={t("setup.estimates.dueAfterDays")}>
                     <Input
                         type="number"
                         value={estimateForm.estimateDueAfterDays}
@@ -108,7 +110,7 @@ export default function EstimatesPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Estimate Number Format">
+                <SettingsField label={t("setup.estimates.numberFormat")}>
                     <RadioGroup
                         value={estimateForm.estimateNumberFormat}
                         onValueChange={(val) =>
@@ -119,13 +121,13 @@ export default function EstimatesPage() {
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="number_based" id="est-fmt-number" />
                             <Label htmlFor="est-fmt-number" className="font-normal">
-                                Number Based (000001)
+                                {t("setup.estimates.formatNumberBased")}
                             </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="year_based" id="est-fmt-year" />
                             <Label htmlFor="est-fmt-year" className="font-normal">
-                                Year Based (YYYY/000001)
+                                {t("setup.estimates.formatYearBased")}
                             </Label>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -144,31 +146,31 @@ export default function EstimatesPage() {
                 </SettingsField>
             </SettingsSection>
 
-            <SettingsSection title="Behavior & Display" description="Control visibility and automation">
+            <SettingsSection title={t("setup.estimates.behaviorSectionTitle")} description={t("setup.estimates.behaviorSectionDesc")}>
                 {[
-                    { key: "estimateDeleteOnlyLast", label: "Delete estimate allowed only on last invoice" },
-                    { key: "estimateDecrementOnDelete", label: "Decrement estimate number on delete" },
+                    { key: "estimateDeleteOnlyLast", labelKey: "setup.estimates.behaviorDeleteOnlyLast" },
+                    { key: "estimateDecrementOnDelete", labelKey: "setup.estimates.behaviorDecrementOnDelete" },
                     {
                         key: "estimateAllowStaffViewAssigned",
-                        label: "Allow staff members to view estimates where they are assigned to",
+                        labelKey: "setup.estimates.behaviorAllowStaffViewAssigned",
                     },
                     {
                         key: "estimateRequireClientLogin",
-                        label: "Require client to be logged in to view estimate",
+                        labelKey: "setup.estimates.behaviorRequireClientLogin",
                     },
-                    { key: "estimateShowSaleAgent", label: "Show Sale Agent On Estimate" },
-                    { key: "estimateShowProjectName", label: "Show Project Name On Estimate" },
+                    { key: "estimateShowSaleAgent", labelKey: "setup.estimates.behaviorShowSaleAgent" },
+                    { key: "estimateShowProjectName", labelKey: "setup.estimates.behaviorShowProjectName" },
                     {
                         key: "estimateAutoConvert",
-                        label: "Auto convert the estimate to invoice after client accept",
+                        labelKey: "setup.estimates.behaviorAutoConvert",
                     },
                     {
                         key: "estimateExcludeDraftsFromClient",
-                        label: "Exclude estimates with draft status from customers area",
+                        labelKey: "setup.estimates.behaviorExcludeDrafts",
                     },
                 ].map((item) => (
                     <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                        <Label className="block text-sm font-medium text-gray-700">{item.label}</Label>
+                        <Label className="block text-sm font-medium text-gray-700">{t(item.labelKey)}</Label>
                         <RadioGroup
                             value={estimateForm[item.key as keyof typeof estimateForm] ? "yes" : "no"}
                             onValueChange={(val) =>
@@ -179,13 +181,13 @@ export default function EstimatesPage() {
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id={`ef-${item.key}-yes`} />
                                 <Label htmlFor={`ef-${item.key}-yes`} className="font-normal">
-                                    Yes
+                                    {t("common.yes")}
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="no" id={`ef-${item.key}-no`} />
                                 <Label htmlFor={`ef-${item.key}-no`} className="font-normal">
-                                    No
+                                    {t("common.no")}
                                 </Label>
                             </div>
                         </RadioGroup>
@@ -193,8 +195,8 @@ export default function EstimatesPage() {
                 ))}
             </SettingsSection>
 
-            <SettingsSection title="Pipeline" description="Pipeline view configuration">
-                <SettingsField label="Pipeline limit per status">
+            <SettingsSection title={t("setup.estimates.pipelineSectionTitle")} description={t("setup.estimates.pipelineSectionDesc")}>
+                <SettingsField label={t("setup.estimates.pipelineLimit")}>
                     <Input
                         type="number"
                         value={estimateForm.estimatePipelineLimit}
@@ -207,7 +209,7 @@ export default function EstimatesPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Default pipeline sort">
+                <SettingsField label={t("setup.estimates.defaultPipelineSort")}>
                     <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
                         <Select
                             value={estimateForm.estimatePipelineSort}
@@ -216,11 +218,11 @@ export default function EstimatesPage() {
                             }
                         >
                             <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="Sort By" />
+                                <SelectValue placeholder={t("setup.estimates.sortBy")} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="pipeline_order">Pipeline Order</SelectItem>
-                                <SelectItem value="date">Date</SelectItem>
+                                <SelectItem value="pipeline_order">{t("setup.estimates.sortPipelineOrder")}</SelectItem>
+                                <SelectItem value="date">{t("common.date")}</SelectItem>
                             </SelectContent>
                         </Select>
                         <RadioGroup
@@ -232,30 +234,30 @@ export default function EstimatesPage() {
                         >
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="asc" id="est-sort-asc" />
-                                <Label htmlFor="est-sort-asc">Ascending</Label>
+                                <Label htmlFor="est-sort-asc">{t("setup.estimates.ascending")}</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="desc" id="est-sort-desc" />
-                                <Label htmlFor="est-sort-desc">Descending</Label>
+                                <Label htmlFor="est-sort-desc">{t("setup.estimates.descending")}</Label>
                             </div>
                         </RadioGroup>
                     </div>
                 </SettingsField>
             </SettingsSection>
 
-            <SettingsSection title="Defaults" description="Set default content for new estimates">
-                <SettingsField label="Predefined Client Note">
+            <SettingsSection title={t("setup.estimates.defaultsSectionTitle")} description={t("setup.estimates.defaultsSectionDesc")}>
+                <SettingsField label={t("setup.estimates.predefinedClientNote")}>
                     <Textarea
                         value={estimateForm.estimateDefaultClientNote}
                         onChange={(e) =>
                             setEstimateForm({ ...estimateForm, estimateDefaultClientNote: e.target.value })
                         }
                         className="h-24"
-                        placeholder="Thank you for doing business with WasilaDev"
+                        placeholder={t("setup.estimates.clientNotePlaceholder")}
                     />
                 </SettingsField>
 
-                <SettingsField label="Predefined Terms & Conditions">
+                <SettingsField label={t("setup.estimates.predefinedTerms")}>
                     <Textarea
                         value={estimateForm.estimateDefaultTerms}
                         onChange={(e) =>

@@ -6,8 +6,10 @@ import { StaffList } from "@/components/dashboard/setup/staff/staff-list";
 import JoinRequestsPage from "../../join-requests/page";
 import RolesPage from "../roles-permissions/page";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useTranslation } from "@/lib/i18n";
 
 export default function StaffPage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -22,8 +24,8 @@ export default function StaffPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Staff Management</h1>
-                <p className="text-gray-500">Manage your team members, roles, and access requests.</p>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.staff.title")}</h1>
+                <p className="text-gray-500">{t("setup.staff.subtitle")}</p>
             </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
@@ -32,19 +34,19 @@ export default function StaffPage() {
                         value="staff"
                         className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 px-4 py-2"
                     >
-                        Staff
+                        {t("setup.staff.tabStaff")}
                     </TabsTrigger>
                     <TabsTrigger
                         value="join-requests"
                         className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 px-4 py-2"
                     >
-                        Join Requests
+                        {t("setup.staff.tabJoinRequests")}
                     </TabsTrigger>
                     <TabsTrigger
                         value="roles"
                         className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 px-4 py-2"
                     >
-                        Roles
+                        {t("setup.staff.tabRoles")}
                     </TabsTrigger>
                 </TabsList>
 

@@ -5,19 +5,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw, Pen, Trash2 } from "lucide-react";
 import { AddReplyDialog } from "@/components/dashboard/setup/support/add-reply-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function PredefinedRepliesPage() {
+    const { t } = useTranslation();
     const replies = [
-        "Acknowledgment of Your Request",
-        "Additional Information Needed for Your Support Request",
-        "Apologies for the Delay in Response",
-        "Follow-Up on Your Recent Support Request",
-        "Important: Service Outage Notification",
-        "Scheduled Maintenance Notification",
-        "Update on Your Support Ticket",
-        "We Value Your Feedback",
-        "Your Issue Has Been Resolved",
-        "Your Support Request Has Been Closed",
+        t("setup.predefinedReplies.sampleAcknowledgment"),
+        t("setup.predefinedReplies.sampleAdditionalInfo"),
+        t("setup.predefinedReplies.sampleApologyDelay"),
+        t("setup.predefinedReplies.sampleFollowUp"),
+        t("setup.predefinedReplies.sampleOutage"),
+        t("setup.predefinedReplies.sampleMaintenance"),
+        t("setup.predefinedReplies.sampleUpdate"),
+        t("setup.predefinedReplies.sampleFeedback"),
+        t("setup.predefinedReplies.sampleResolved"),
+        t("setup.predefinedReplies.sampleClosed"),
     ];
 
     return (
@@ -37,7 +39,7 @@ export default function PredefinedRepliesPage() {
                                 <SelectItem value="25">25</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline">Export</Button>
+                        <Button variant="outline">{t("common.export")}</Button>
                         <Button variant="outline" size="icon">
                             <RefreshCw className="h-4 w-4" />
                         </Button>
@@ -45,15 +47,15 @@ export default function PredefinedRepliesPage() {
                     <div className="relative w-64">
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                            <Input placeholder="Search..." className="pl-9" />
+                            <Input placeholder={t("common.search")} className="pl-9" />
                         </div>
                     </div>
                 </div>
 
                 <div className="bg-white rounded-md border shadow-sm">
                     <div className="px-6 py-3 border-b bg-gray-50 flex justify-between items-center">
-                        <div className="font-bold text-gray-900 text-sm">Predefined Reply Name</div>
-                        <div className="font-bold text-gray-900 text-sm">Options</div>
+                        <div className="font-bold text-gray-900 text-sm">{t("setup.predefinedReplies.colName")}</div>
+                        <div className="font-bold text-gray-900 text-sm">{t("setup.predefinedReplies.colOptions")}</div>
                     </div>
                     <div className="divide-y">
                         {replies.map((reply, idx) => (
@@ -72,17 +74,17 @@ export default function PredefinedRepliesPage() {
                     <div className="px-6 py-4 border-t bg-gray-50 rounded-b-md">
                         <div className="text-xs text-gray-500 flex justify-end items-center gap-4">
                             <span>
-                                Showing 1 to {replies.length} of {replies.length} entries
+                                {t("setup.supportConfig.showingEntries", { from: 1, to: replies.length, total: replies.length })}
                             </span>
                             <div className="flex items-center gap-1">
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Previous
+                                    {t("setup.supportConfig.previous")}
                                 </Button>
                                 <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">
                                     1
                                 </div>
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Next
+                                    {t("setup.supportConfig.next")}
                                 </Button>
                             </div>
                         </div>

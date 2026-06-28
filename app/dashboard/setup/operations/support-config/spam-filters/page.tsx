@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, RefreshCw } from "lucide-react";
 import { AddSpamFilterDialog } from "@/components/dashboard/setup/support/add-spam-filter-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function SpamFiltersPage() {
+    const { t } = useTranslation();
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-2">
@@ -17,9 +19,9 @@ export default function SpamFiltersPage() {
             <Tabs defaultValue="senders" className="flex flex-col">
                 <div className="bg-gray-100 p-1 rounded-md mb-6 w-full inline-flex">
                     <TabsList className="bg-transparent h-auto p-0 space-x-1 w-full justify-start">
-                        <TabTrigger value="senders">Blocked Senders</TabTrigger>
-                        <TabTrigger value="subjects">Blocked Subjects</TabTrigger>
-                        <TabTrigger value="phrases">Blocked Phrases</TabTrigger>
+                        <TabTrigger value="senders">{t("setup.spamFilters.blockedSenders")}</TabTrigger>
+                        <TabTrigger value="subjects">{t("setup.spamFilters.blockedSubjects")}</TabTrigger>
+                        <TabTrigger value="phrases">{t("setup.spamFilters.blockedPhrases")}</TabTrigger>
                     </TabsList>
                 </div>
 
@@ -49,6 +51,7 @@ function TabTrigger({ value, children }: { value: string; children: React.ReactN
 }
 
 function SpamFilterTable() {
+    const { t } = useTranslation();
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center gap-4">
@@ -61,7 +64,7 @@ function SpamFilterTable() {
                             <SelectItem value="25">25</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Button variant="outline">Export</Button>
+                    <Button variant="outline">{t("common.export")}</Button>
                     <Button variant="outline" size="icon">
                         <RefreshCw className="h-4 w-4" />
                     </Button>
@@ -69,17 +72,17 @@ function SpamFilterTable() {
                 <div className="relative w-64">
                     <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search..." className="pl-9" />
+                        <Input placeholder={t("common.search")} className="pl-9" />
                     </div>
                 </div>
             </div>
 
             <div className="bg-white rounded-md border shadow-sm">
                 <div className="px-6 py-3 border-b bg-gray-50 flex justify-between items-center">
-                    <div className="font-bold text-gray-900 text-sm">Content</div>
-                    <div className="font-bold text-gray-900 text-sm">Options</div>
+                    <div className="font-bold text-gray-900 text-sm">{t("setup.spamFilters.colContent")}</div>
+                    <div className="font-bold text-gray-900 text-sm">{t("setup.spamFilters.colOptions")}</div>
                 </div>
-                <div className="p-8 text-center text-gray-500">No entries found</div>
+                <div className="p-8 text-center text-gray-500">{t("setup.spamFilters.noEntries")}</div>
             </div>
         </div>
     );

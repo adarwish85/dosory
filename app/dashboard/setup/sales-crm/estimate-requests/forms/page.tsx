@@ -5,8 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw } from "lucide-react";
 import { AddEstimateFormDialog } from "@/components/dashboard/setup/estimate-request/add-form-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function FormsPage() {
+    const { t } = useTranslation();
     const forms = [{ id: 1, name: "Estimate Request", totalSubmissions: 0, created: "one year ago" }];
 
     return (
@@ -26,7 +28,7 @@ export default function FormsPage() {
                                 <SelectItem value="25">25</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline">Export</Button>
+                        <Button variant="outline">{t("common.export")}</Button>
                         <Button variant="outline" size="icon">
                             <RefreshCw className="h-4 w-4" />
                         </Button>
@@ -34,7 +36,7 @@ export default function FormsPage() {
                     <div className="relative w-64">
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                            <Input placeholder="Search..." className="pl-9" />
+                            <Input placeholder={t("common.searchPlaceholder")} className="pl-9" />
                         </div>
                     </div>
                 </div>
@@ -42,10 +44,10 @@ export default function FormsPage() {
                 <div className="bg-white rounded-md border shadow-sm">
                     <div className="px-6 py-3 border-b bg-gray-50">
                         <div className="grid grid-cols-12 gap-4">
-                            <div className="col-span-1 font-bold text-gray-900 text-sm">ID</div>
-                            <div className="col-span-5 font-bold text-gray-900 text-sm">Form Name</div>
-                            <div className="col-span-3 font-bold text-gray-900 text-sm">Total Submissions</div>
-                            <div className="col-span-3 font-bold text-gray-900 text-sm">Created</div>
+                            <div className="col-span-1 font-bold text-gray-900 text-sm">{t("setup.estimateForms.colId")}</div>
+                            <div className="col-span-5 font-bold text-gray-900 text-sm">{t("setup.estimateForms.colFormName")}</div>
+                            <div className="col-span-3 font-bold text-gray-900 text-sm">{t("setup.estimateForms.colTotalSubmissions")}</div>
+                            <div className="col-span-3 font-bold text-gray-900 text-sm">{t("setup.estimateForms.colCreated")}</div>
                         </div>
                     </div>
                     <div className="divide-y">
@@ -63,17 +65,17 @@ export default function FormsPage() {
                     <div className="px-6 py-4 border-t bg-gray-50 rounded-b-md">
                         <div className="text-xs text-gray-500 flex justify-end items-center gap-4">
                             <span>
-                                Showing 1 to {forms.length} of {forms.length} entries
+                                {t("common.showingEntries", { from: 1, to: forms.length, total: forms.length })}
                             </span>
                             <div className="flex items-center gap-1">
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Previous
+                                    {t("common.previous")}
                                 </Button>
                                 <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">
                                     1
                                 </div>
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Next
+                                    {t("common.next")}
                                 </Button>
                             </div>
                         </div>

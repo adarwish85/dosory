@@ -21,6 +21,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { useTranslation } from "@/lib/i18n";
 
 interface JoinRequest {
     id: string;
@@ -36,25 +37,26 @@ interface JoinRequest {
 }
 
 const AVAILABLE_PERMISSIONS = [
-    { id: "customers-view", label: "View Customers" },
-    { id: "customers-create", label: "Create Customers" },
-    { id: "customers-edit", label: "Edit Customers" },
-    { id: "customers-delete", label: "Delete Customers" },
-    { id: "invoices-view", label: "View Invoices" },
-    { id: "invoices-create", label: "Create Invoices" },
-    { id: "invoices-edit", label: "Edit Invoices" },
-    { id: "invoices-delete", label: "Delete Invoices" },
-    { id: "projects-view", label: "View Projects" },
-    { id: "projects-create", label: "Create Projects" },
-    { id: "projects-edit", label: "Edit Projects" },
-    { id: "projects-delete", label: "Delete Projects" },
-    { id: "expenses-view", label: "View Expenses" },
-    { id: "expenses-create", label: "Create Expenses" },
-    { id: "reports-view", label: "View Reports" },
-    { id: "settings-view", label: "View Settings" },
+    { id: "customers-view", labelKey: "setup.joinRequests.permCustomersView" },
+    { id: "customers-create", labelKey: "setup.joinRequests.permCustomersCreate" },
+    { id: "customers-edit", labelKey: "setup.joinRequests.permCustomersEdit" },
+    { id: "customers-delete", labelKey: "setup.joinRequests.permCustomersDelete" },
+    { id: "invoices-view", labelKey: "setup.joinRequests.permInvoicesView" },
+    { id: "invoices-create", labelKey: "setup.joinRequests.permInvoicesCreate" },
+    { id: "invoices-edit", labelKey: "setup.joinRequests.permInvoicesEdit" },
+    { id: "invoices-delete", labelKey: "setup.joinRequests.permInvoicesDelete" },
+    { id: "projects-view", labelKey: "setup.joinRequests.permProjectsView" },
+    { id: "projects-create", labelKey: "setup.joinRequests.permProjectsCreate" },
+    { id: "projects-edit", labelKey: "setup.joinRequests.permProjectsEdit" },
+    { id: "projects-delete", labelKey: "setup.joinRequests.permProjectsDelete" },
+    { id: "expenses-view", labelKey: "setup.joinRequests.permExpensesView" },
+    { id: "expenses-create", labelKey: "setup.joinRequests.permExpensesCreate" },
+    { id: "reports-view", labelKey: "setup.joinRequests.permReportsView" },
+    { id: "settings-view", labelKey: "setup.joinRequests.permSettingsView" },
 ];
 
 export default function JoinRequestsPage() {
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const [requests, setRequests] = useState<JoinRequest[]>([]);
     const [loading, setLoading] = useState(true);
@@ -121,19 +123,24 @@ export default function JoinRequestsPage() {
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || "Failed to approve request");
+                throw new Error(data.error || t("setup.joinRequests.approveFailed"));
             }
 
             const data = await response.json();
             toast.success(
-                `${selectedRequest.userEmail} has been approved and added to the team! ${data.emailSent ? "(Email sent)" : "(Email failed)"}`
+                t("setup.joinRequests.approveSuccess", {
+                    email: selectedRequest.userEmail,
+                    emailStatus: data.emailSent
+                        ? t("setup.joinRequests.emailSent")
+                        : t("setup.joinRequests.emailFailed"),
+                })
             );
             setApproveDialogOpen(false);
 
             // Note: Snapshot listener will automatically update the list
         } catch (error) {
             console.error("Error approving request:", error);
-            toast.error((error as Error).message || "Failed to approve request");
+            toast.error((error as Error).message || t("setup.joinRequests.approveFailed"));
         } finally {
             setProcessing(false);
         }
@@ -157,16 +164,21 @@ export default function JoinRequestsPage() {
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || "Failed to reject request");
+                throw new Error(data.error || t("setup.joinRequests.rejectFailed"));
             }
 
             const data = await response.json();
             toast.success(
-                `Request from ${request.userEmail} has been rejected. ${data.emailSent ? "(Email sent)" : "(Email failed)"}`
+                t("setup.joinRequests.rejectSuccess", {
+                    email: request.userEmail,
+                    emailStatus: data.emailSent
+                        ? t("setup.joinRequests.emailSent")
+                        : t("setup.joinRequests.emailFailed"),
+                })
             );
         } catch (error) {
             console.error("Error rejecting request:", error);
-            toast.error((error as Error).message || "Failed to reject request");
+            toast.error((error as Error).message || t("setup.joinRequests.rejectFailed"));
         } finally {
             setProcessing(false);
         }
@@ -200,11 +212,13 @@ export default function JoinRequestsPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Join Requests</h1>
-                    <p className="text-gray-500">Review and approve users who want to join your organization</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{t("setup.joinRequests.title")}</h1>
+                    <p className="text-gray-500">{t("setup.joinRequests.description")}</p>
                 </div>
                 {pendingCount > 0 && (
-                    <Badge className="bg-orange-100 text-orange-700 border-orange-200">{pendingCount} pending</Badge>
+                    <Badge className="bg-orange-100 text-orange-700 border-orange-200">
+                        {t("setup.joinRequests.pendingCount", { count: pendingCount })}
+                    </Badge>
                 )}
             </div>
 
@@ -212,9 +226,9 @@ export default function JoinRequestsPage() {
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-16">
                         <UserPlus className="h-12 w-12 text-gray-300 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-600">No join requests</h3>
+                        <h3 className="text-lg font-medium text-gray-600">{t("setup.joinRequests.empty")}</h3>
                         <p className="text-sm text-gray-400">
-                            Users who request to join your organization will appear here
+                            {t("setup.joinRequests.emptyDescription")}
                         </p>
                     </CardContent>
                 </Card>
@@ -256,7 +270,7 @@ export default function JoinRequestsPage() {
                                                     className="text-red-600 hover:bg-red-50"
                                                 >
                                                     <X className="h-4 w-4 mr-1" />
-                                                    Reject
+                                                    {t("setup.joinRequests.reject")}
                                                 </Button>
                                                 <Button
                                                     size="sm"
@@ -265,13 +279,13 @@ export default function JoinRequestsPage() {
                                                     className="bg-green-600 hover:bg-green-700"
                                                 >
                                                     <Check className="h-4 w-4 mr-1" />
-                                                    Approve
+                                                    {t("setup.joinRequests.approve")}
                                                 </Button>
                                             </>
                                         ) : request.status === "approved" ? (
-                                            <Badge className="bg-green-100 text-green-700">Approved</Badge>
+                                            <Badge className="bg-green-100 text-green-700">{t("setup.joinRequests.approved")}</Badge>
                                         ) : (
-                                            <Badge className="bg-red-100 text-red-700">Rejected</Badge>
+                                            <Badge className="bg-red-100 text-red-700">{t("setup.joinRequests.rejected")}</Badge>
                                         )}
                                     </div>
                                 </div>
@@ -285,23 +299,25 @@ export default function JoinRequestsPage() {
             <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Approve Join Request</DialogTitle>
+                        <DialogTitle>{t("setup.joinRequests.approveDialogTitle")}</DialogTitle>
                         <DialogDescription>
-                            Set the role and permissions for {selectedRequest?.userEmail}
+                            {t("setup.joinRequests.approveDialogDescription", {
+                                email: selectedRequest?.userEmail ?? "",
+                            })}
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Role</Label>
+                            <Label>{t("setup.joinRequests.role")}</Label>
                             <Select value={selectedRole} onValueChange={setSelectedRole}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="employee">Employee</SelectItem>
-                                    <SelectItem value="pm">Project Manager</SelectItem>
-                                    <SelectItem value="admin">Administrator</SelectItem>
+                                    <SelectItem value="employee">{t("setup.joinRequests.roleEmployee")}</SelectItem>
+                                    <SelectItem value="pm">{t("setup.joinRequests.roleProjectManager")}</SelectItem>
+                                    <SelectItem value="admin">{t("setup.joinRequests.roleAdministrator")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -313,19 +329,19 @@ export default function JoinRequestsPage() {
                                 onCheckedChange={(checked) => setIsAdmin(!!checked)}
                             />
                             <Label htmlFor="isAdmin" className="text-sm">
-                                Grant admin privileges
+                                {t("setup.joinRequests.grantAdmin")}
                             </Label>
                         </div>
 
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label>Permissions</Label>
+                                <Label>{t("setup.joinRequests.permissions")}</Label>
                                 <div className="flex gap-2">
                                     <Button variant="ghost" size="sm" onClick={selectAllPermissions}>
-                                        Select All
+                                        {t("setup.joinRequests.selectAll")}
                                     </Button>
                                     <Button variant="ghost" size="sm" onClick={clearAllPermissions}>
-                                        Clear
+                                        {t("setup.joinRequests.clear")}
                                     </Button>
                                 </div>
                             </div>
@@ -338,7 +354,7 @@ export default function JoinRequestsPage() {
                                             onCheckedChange={() => togglePermission(perm.id)}
                                         />
                                         <Label htmlFor={perm.id} className="text-xs cursor-pointer">
-                                            {perm.label}
+                                            {t(perm.labelKey)}
                                         </Label>
                                     </div>
                                 ))}
@@ -348,7 +364,7 @@ export default function JoinRequestsPage() {
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setApproveDialogOpen(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button
                             onClick={handleApprove}
@@ -356,7 +372,7 @@ export default function JoinRequestsPage() {
                             className="bg-green-600 hover:bg-green-700"
                         >
                             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Approve & Add to Team
+                            {t("setup.joinRequests.approveAndAdd")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

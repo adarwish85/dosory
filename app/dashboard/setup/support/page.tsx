@@ -16,8 +16,10 @@ import { toast } from "sonner";
 import { useStaff } from "@/lib/hooks";
 import { Trash2, Edit2, Plus, Save } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/lib/i18n";
 
 export default function SupportSetupPage() {
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const { staff } = useStaff();
     const [loading, setLoading] = useState(true);
@@ -61,7 +63,7 @@ export default function SupportSetupPage() {
             if (data.autoAssignRules) setAutoAssignRules(data.autoAssignRules);
             if (data.cannedResponses) setCannedResponses(data.cannedResponses);
         } catch (error) {
-            toast.error("Failed to load settings");
+            toast.error(t("setup.support.loadFailed"));
             console.error(error);
         } finally {
             setLoading(false);
@@ -72,9 +74,9 @@ export default function SupportSetupPage() {
         if (!profile?.orgId) return;
         try {
             await SupportSettingsService.saveSettings(profile.orgId, { slaRules });
-            toast.success("SLA rules saved");
+            toast.success(t("setup.support.slaSaved"));
         } catch (e) {
-            toast.error("Failed to save SLA rules");
+            toast.error(t("setup.support.slaSaveFailed"));
         }
     };
 
@@ -131,10 +133,10 @@ export default function SupportSetupPage() {
         try {
             if (isEditingResponse && editingResponseId) {
                 await SupportSettingsService.updateCannedResponse(profile.orgId, editingResponseId, responseForm);
-                toast.success("Response updated");
+                toast.success(t("setup.support.responseUpdated"));
             } else {
                 await SupportSettingsService.addCannedResponse(profile.orgId, responseForm, profile.uid);
-                toast.success("Response created");
+                toast.success(t("setup.support.responseCreated"));
             }
 
             // Reset form
@@ -143,7 +145,7 @@ export default function SupportSetupPage() {
             setEditingResponseId(null);
             loadSettings(); // Reload to get updated list
         } catch (e) {
-            toast.error("Failed to save response");
+            toast.error(t("setup.support.responseSaveFailed"));
         }
     };
 
@@ -159,54 +161,54 @@ export default function SupportSetupPage() {
 
     const handleDeleteResponse = async (id: string) => {
         if (!profile?.orgId) return;
-        if (!confirm("Are you sure?")) return;
+        if (!confirm(t("setup.support.confirmDelete"))) return;
 
         try {
             await SupportSettingsService.deleteCannedResponse(profile.orgId, id);
             loadSettings();
-            toast.success("Response deleted");
+            toast.success(t("setup.support.responseDeleted"));
         } catch (e) {
-            toast.error("Failed to delete response");
+            toast.error(t("setup.support.responseDeleteFailed"));
         }
     };
 
-    if (loading) return <div>Loading settings...</div>;
+    if (loading) return <div>{t("setup.support.loading")}</div>;
 
     const priorities: SupportTicketPriority[] = ["low", "medium", "high", "critical"];
 
     return (
         <div className="space-y-6 max-w-5xl mx-auto pb-10">
             <div>
-                <h1 className="text-2xl font-bold tracking-tight">Support Settings</h1>
+                <h1 className="text-2xl font-bold tracking-tight">{t("setup.support.title")}</h1>
                 <p className="text-muted-foreground">
-                    Configure SLA policies, automation rules, and response templates.
+                    {t("setup.support.description")}
                 </p>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                 <TabsList>
-                    <TabsTrigger value="general">General & Automation</TabsTrigger>
-                    <TabsTrigger value="sla">SLA Policies</TabsTrigger>
-                    <TabsTrigger value="canned">Canned Responses</TabsTrigger>
+                    <TabsTrigger value="general">{t("setup.support.tabGeneral")}</TabsTrigger>
+                    <TabsTrigger value="sla">{t("setup.support.tabSla")}</TabsTrigger>
+                    <TabsTrigger value="canned">{t("setup.support.tabCanned")}</TabsTrigger>
                 </TabsList>
 
                 {/* General Tab: Categories & Auto-Assignment */}
                 <TabsContent value="general" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Ticket Categories</CardTitle>
-                            <CardDescription>Define categories for organizing tickets.</CardDescription>
+                            <CardTitle>{t("setup.support.categoriesTitle")}</CardTitle>
+                            <CardDescription>{t("setup.support.categoriesDescription")}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex gap-2">
                                 <Input
-                                    placeholder="New Category Name"
+                                    placeholder={t("setup.support.newCategoryPlaceholder")}
                                     value={newCategory}
                                     onChange={(e) => setNewCategory(e.target.value)}
                                     className="max-w-sm"
                                 />
                                 <Button onClick={addCategory} disabled={!newCategory.trim()}>
-                                    Add
+                                    {t("common.add")}
                                 </Button>
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -228,16 +230,16 @@ export default function SupportSetupPage() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Auto-Assignment Rules</CardTitle>
-                            <CardDescription>Automatically assign tickets based on category.</CardDescription>
+                            <CardTitle>{t("setup.support.autoAssignTitle")}</CardTitle>
+                            <CardDescription>{t("setup.support.autoAssignDescription")}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="flex gap-4 items-end border-b pb-6">
                                 <div className="space-y-2 w-1/3">
-                                    <Label>If Category is...</Label>
+                                    <Label>{t("setup.support.ifCategoryIs")}</Label>
                                     <Select value={selectedCategoryForRule} onValueChange={setSelectedCategoryForRule}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select Category" />
+                                            <SelectValue placeholder={t("setup.support.selectCategory")} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {categories.map((c) => (
@@ -249,10 +251,10 @@ export default function SupportSetupPage() {
                                     </Select>
                                 </div>
                                 <div className="space-y-2 w-1/3">
-                                    <Label>Assign to Agent...</Label>
+                                    <Label>{t("setup.support.assignToAgent")}</Label>
                                     <Select value={selectedAgentForRule} onValueChange={setSelectedAgentForRule}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select Agent" />
+                                            <SelectValue placeholder={t("setup.support.selectAgent")} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {staff.map((s: { id: string; firstName?: string; lastName?: string }) => (
@@ -267,7 +269,7 @@ export default function SupportSetupPage() {
                                     onClick={addAutoAssignRule}
                                     disabled={!selectedCategoryForRule || selectedAgentForRule === "unassigned"}
                                 >
-                                    <Plus className="mr-2 h-4 w-4" /> Add Rule
+                                    <Plus className="mr-2 h-4 w-4" /> {t("setup.support.addRule")}
                                 </Button>
                             </div>
 
@@ -275,8 +277,8 @@ export default function SupportSetupPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Category</TableHead>
-                                            <TableHead>Assigned Agent</TableHead>
+                                            <TableHead>{t("setup.support.colCategory")}</TableHead>
+                                            <TableHead>{t("setup.support.colAssignedAgent")}</TableHead>
                                             <TableHead className="w-[50px]"></TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -287,7 +289,7 @@ export default function SupportSetupPage() {
                                                     colSpan={3}
                                                     className="text-center text-muted-foreground p-4"
                                                 >
-                                                    No automation rules defined.
+                                                    {t("setup.support.noRules")}
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
@@ -302,7 +304,7 @@ export default function SupportSetupPage() {
                                                         <TableCell>
                                                             {agent
                                                                 ? `${agent.firstName} ${agent.lastName}`
-                                                                : "Unknown Agent"}
+                                                                : t("setup.support.unknownAgent")}
                                                         </TableCell>
                                                         <TableCell>
                                                             <Button
@@ -329,17 +331,17 @@ export default function SupportSetupPage() {
                 <TabsContent value="sla" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>SLA Policies</CardTitle>
+                            <CardTitle>{t("setup.support.slaTitle")}</CardTitle>
                             <CardDescription>
-                                Set expected response and resolution times (in hours) for each priority level.
+                                {t("setup.support.slaDescription")}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-6">
                                 <div className="grid grid-cols-3 gap-4 font-medium text-sm text-muted-foreground mb-2">
-                                    <div>Priority Level</div>
-                                    <div>First Response (Hours)</div>
-                                    <div>Resolution (Hours)</div>
+                                    <div>{t("setup.support.priorityLevel")}</div>
+                                    <div>{t("setup.support.firstResponseHours")}</div>
+                                    <div>{t("setup.support.resolutionHours")}</div>
                                 </div>
 
                                 {priorities.map((priority) => (
@@ -386,7 +388,7 @@ export default function SupportSetupPage() {
 
                                 <div className="pt-4 flex justify-end">
                                     <Button onClick={saveSla}>
-                                        <Save className="mr-2 h-4 w-4" /> Save SLA Policies
+                                        <Save className="mr-2 h-4 w-4" /> {t("setup.support.saveSla")}
                                     </Button>
                                 </div>
                             </div>
@@ -398,25 +400,25 @@ export default function SupportSetupPage() {
                 <TabsContent value="canned" className="grid gap-6 md:grid-cols-2">
                     <Card className="h-fit">
                         <CardHeader>
-                            <CardTitle>{isEditingResponse ? "Edit Template" : "New Template"}</CardTitle>
+                            <CardTitle>{isEditingResponse ? t("setup.support.editTemplate") : t("setup.support.newTemplate")}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label>Title</Label>
+                                <Label>{t("setup.support.templateTitle")}</Label>
                                 <Input
-                                    placeholder="e.g., Initial Greeting"
+                                    placeholder={t("setup.support.templateTitlePlaceholder")}
                                     value={responseForm.title}
                                     onChange={(e) => setResponseForm({ ...responseForm, title: e.target.value })}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Category</Label>
+                                <Label>{t("setup.support.category")}</Label>
                                 <Select
                                     value={responseForm.category}
                                     onValueChange={(v) => setResponseForm({ ...responseForm, category: v })}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select Category" />
+                                        <SelectValue placeholder={t("setup.support.selectCategory")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {categories.map((c) => (
@@ -428,7 +430,7 @@ export default function SupportSetupPage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Response Body</Label>
+                                <Label>{t("setup.support.responseBody")}</Label>
                                 <Textarea
                                     className="h-40 font-mono text-sm"
                                     placeholder="Hello {{customer_name}}, ..."
@@ -436,7 +438,7 @@ export default function SupportSetupPage() {
                                     onChange={(e) => setResponseForm({ ...responseForm, body: e.target.value })}
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    Available variables: {"{{customer_name}}, {{ticket_id}}, {{agent_name}}"}
+                                    {t("setup.support.availableVariables")} {"{{customer_name}}, {{ticket_id}}, {{agent_name}}"}
                                 </p>
                             </div>
                             <div className="flex gap-2 justify-end">
@@ -449,14 +451,14 @@ export default function SupportSetupPage() {
                                             setResponseForm({ title: "", body: "", category: "General" });
                                         }}
                                     >
-                                        Cancel
+                                        {t("common.cancel")}
                                     </Button>
                                 )}
                                 <Button
                                     onClick={handleSaveResponse}
                                     disabled={!responseForm.title || !responseForm.body}
                                 >
-                                    {isEditingResponse ? "Update Template" : "Create Template"}
+                                    {isEditingResponse ? t("setup.support.updateTemplate") : t("setup.support.createTemplate")}
                                 </Button>
                             </div>
                         </CardContent>
@@ -464,13 +466,13 @@ export default function SupportSetupPage() {
 
                     <Card className="h-fit">
                         <CardHeader>
-                            <CardTitle>Templates Library</CardTitle>
+                            <CardTitle>{t("setup.support.templatesLibrary")}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
                                 {cannedResponses.length === 0 ? (
                                     <div className="text-center py-8 text-muted-foreground border rounded-md border-dashed">
-                                        No templates created yet.
+                                        {t("setup.support.noTemplates")}
                                     </div>
                                 ) : (
                                     cannedResponses.map((response) => (

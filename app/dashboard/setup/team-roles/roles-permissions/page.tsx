@@ -22,8 +22,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 export default function RolesPage() {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const [viewMode, setViewMode] = useState<"cards" | "matrix">("cards");
     const { roles, loading, deleteRole } = useRoles();
@@ -36,26 +38,26 @@ export default function RolesPage() {
     };
 
     const getPermissionSummary = (permissions: string[] = []) => {
-        if (permissions.length === 0) return "No permissions";
+        if (permissions.length === 0) return t("setup.rolesConfig.noPermissions");
         if (permissions.length <= 3) {
             return permissions.map((p) => p.split("-")[0]).join(", ");
         }
-        return `${permissions.length} permissions`;
+        return t("setup.rolesConfig.permissionsCount", { count: permissions.length });
     };
 
     const handleDelete = async (roleId: string, roleName: string) => {
         const userCount = getUserCount(roleId);
         if (userCount > 0) {
-            toast.error(`Cannot delete "${roleName}" - it has ${userCount} user(s) assigned.`);
+            toast.error(t("setup.rolesConfig.cannotDeleteAssigned", { name: roleName, count: userCount }));
             return;
         }
 
         try {
             await deleteRole(roleId);
-            toast.success(`Role "${roleName}" deleted.`);
+            toast.success(t("setup.rolesConfig.roleDeleted", { name: roleName }));
         } catch (error) {
             console.error("Error deleting role:", error);
-            toast.error("Failed to delete role.");
+            toast.error(t("setup.rolesConfig.deleteFailed"));
         }
     };
 
@@ -73,7 +75,7 @@ export default function RolesPage() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <ShieldCheck className="h-6 w-6 text-gray-600" />
-                    <h1 className="text-2xl font-semibold text-gray-900">Roles & Permissions</h1>
+                    <h1 className="text-2xl font-semibold text-gray-900">{t("setup.rolesConfig.title")}</h1>
                 </div>
                 <div className="flex items-center gap-3">
                     <MigrateUsersDialog />
@@ -96,7 +98,7 @@ export default function RolesPage() {
                         )}
                     >
                         <LayoutGrid className="h-4 w-4" />
-                        Cards
+                        {t("setup.rolesConfig.cards")}
                     </Button>
                     <Button
                         variant="ghost"
@@ -110,18 +112,23 @@ export default function RolesPage() {
                         )}
                     >
                         <Table className="h-4 w-4" />
-                        Matrix
+                        {t("setup.rolesConfig.matrix")}
                     </Button>
                 </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <Button variant="outline" size="icon" onClick={() => window.location.reload()} title="Refresh">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => window.location.reload()}
+                        title={t("setup.rolesConfig.refresh")}
+                    >
                         <RefreshCw className="h-4 w-4" />
                     </Button>
                     <div className="relative w-full sm:w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search roles..."
+                            placeholder={t("setup.rolesConfig.searchRoles")}
                             className="pl-9"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -137,12 +144,12 @@ export default function RolesPage() {
                 <div className="bg-white rounded-lg border p-10 text-center">
                     <ShieldCheck className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        {searchQuery ? "No roles match your search" : "No roles yet"}
+                        {searchQuery ? t("setup.rolesConfig.noRolesMatch") : t("setup.rolesConfig.noRolesYet")}
                     </h3>
                     <p className="text-gray-500 mb-4">
                         {searchQuery
-                            ? "Try a different search term."
-                            : "Create your first role to manage staff permissions."}
+                            ? t("setup.rolesConfig.tryDifferentSearch")
+                            : t("setup.rolesConfig.createFirstRole")}
                     </p>
                     {!searchQuery && <RoleForm />}
                 </div>

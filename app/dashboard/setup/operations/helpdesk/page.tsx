@@ -13,8 +13,10 @@ import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
+import { useTranslation } from "@/lib/i18n";
 
 export default function HelpdeskSettingsPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [supportForm, setSupportForm] = useState({
         supportUseServices: false,
@@ -65,18 +67,18 @@ export default function HelpdeskSettingsPage() {
     const handleSave = async () => {
         try {
             await saveSettings(supportForm as Partial<OrganizationSettings>);
-            toast.success("Helpdesk settings saved successfully");
+            toast.success(t("setup.helpdesk.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.helpdesk.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Helpdesk Settings</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.helpdesk.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Configure support ticket behavior, notifications, and permissions
+                    {t("setup.helpdesk.subtitle")}
                 </p>
             </div>
 
@@ -86,74 +88,74 @@ export default function HelpdeskSettingsPage() {
                         value="general"
                         className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:bg-transparent px-4 py-2"
                     >
-                        General
+                        {t("setup.helpdesk.tabGeneral")}
                     </TabsTrigger>
                     <TabsTrigger
                         value="email_piping"
                         className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:bg-transparent px-4 py-2"
                     >
-                        Email Piping
+                        {t("setup.helpdesk.tabEmailPiping")}
                     </TabsTrigger>
                     <TabsTrigger
                         value="ticket_form"
                         className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:bg-transparent px-4 py-2"
                     >
-                        Ticket Form
+                        {t("setup.helpdesk.tabTicketForm")}
                     </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="general" className="space-y-6">
-                    <SettingsSection title="General Helpdesk" description="Basic support configuration">
+                    <SettingsSection title={t("setup.helpdesk.generalSectionTitle")} description={t("setup.helpdesk.generalSectionDesc")}>
                         {[
-                            { key: "supportUseServices", label: "Use services" },
-                            { key: "supportDisablePublicUrl", label: "Disable Ticket Public URL" },
+                            { key: "supportUseServices", label: t("setup.helpdesk.useServices") },
+                            { key: "supportDisablePublicUrl", label: t("setup.helpdesk.disablePublicUrl") },
                             {
                                 key: "supportStaffLimitToAssignedDepartments",
-                                label: "Allow staff to access only ticket that belongs to staff departments",
+                                label: t("setup.helpdesk.staffLimitToDepartments"),
                             },
                             {
                                 key: "supportStaffNotificationAssignedOnly",
-                                label: "Send staff-related ticket notifications to the ticket assignee only",
+                                label: t("setup.helpdesk.staffNotificationAssignedOnly"),
                                 help: true,
                             },
                             {
                                 key: "supportNotifyOnNewTicket",
-                                label: "Receive notification on new ticket opened",
+                                label: t("setup.helpdesk.notifyOnNewTicket"),
                                 help: true,
                             },
                             {
                                 key: "supportNotifyOnCustomerReply",
-                                label: "Receive notification when customer reply to a ticket",
+                                label: t("setup.helpdesk.notifyOnCustomerReply"),
                                 help: true,
                             },
                             {
                                 key: "supportStaffOpenTicketsAllContacts",
-                                label: "Allow staff members to open tickets to all contacts",
+                                label: t("setup.helpdesk.staffOpenTicketsAllContacts"),
                                 help: true,
                             },
                             {
                                 key: "supportAutoAssignFirstReplyStaff",
-                                label: "Automatically assign the ticket to the first staff that post a reply",
+                                label: t("setup.helpdesk.autoAssignFirstReplyStaff"),
                             },
                             {
                                 key: "supportAllowNonStaffAccess",
-                                label: "Allow access to tickets for non staff members",
+                                label: t("setup.helpdesk.allowNonStaffAccess"),
                             },
                             {
                                 key: "supportAllowNonAdminDeleteAttachments",
-                                label: "Allow non-admin staff members to delete ticket attachments",
+                                label: t("setup.helpdesk.allowNonAdminDeleteAttachments"),
                             },
                             {
                                 key: "supportAllowNonAdminDeleteTickets",
-                                label: "Allow non-admin staff members to delete tickets and replies",
+                                label: t("setup.helpdesk.allowNonAdminDeleteTickets"),
                             },
                             {
                                 key: "supportAllowCustomerChangeStatus",
-                                label: "Allow customer to change ticket status from customers area",
+                                label: t("setup.helpdesk.allowCustomerChangeStatus"),
                             },
                             {
                                 key: "supportCustomerShowContactTicketsOnly",
-                                label: "In customers area only show tickets related to the logged in contact (Primary contact not applied)",
+                                label: t("setup.helpdesk.customerShowContactTicketsOnly"),
                             },
                         ].map((item: any) => (
                             <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
@@ -171,13 +173,13 @@ export default function HelpdeskSettingsPage() {
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="yes" id={`supp-${item.key}-yes`} />
                                         <Label htmlFor={`supp-${item.key}-yes`} className="font-normal">
-                                            Yes
+                                            {t("common.yes")}
                                         </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="no" id={`supp-${item.key}-no`} />
                                         <Label htmlFor={`supp-${item.key}-no`} className="font-normal">
-                                            No
+                                            {t("common.no")}
                                         </Label>
                                     </div>
                                 </RadioGroup>
@@ -185,8 +187,8 @@ export default function HelpdeskSettingsPage() {
                         ))}
                     </SettingsSection>
 
-                    <SettingsSection title="Display & Behavior" description="Reply order and defaults">
-                        <SettingsField label="Ticket Replies Order">
+                    <SettingsSection title={t("setup.helpdesk.displaySectionTitle")} description={t("setup.helpdesk.displaySectionDesc")}>
+                        <SettingsField label={t("setup.helpdesk.ticketRepliesOrder")}>
                             <RadioGroup
                                 value={supportForm.supportTicketReplyOrder}
                                 onValueChange={(val) =>
@@ -197,19 +199,19 @@ export default function HelpdeskSettingsPage() {
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="asc" id="rep-asc" />
                                     <Label htmlFor="rep-asc" className="font-normal">
-                                        Ascending
+                                        {t("setup.helpdesk.ascending")}
                                     </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="desc" id="rep-desc" />
                                     <Label htmlFor="rep-desc" className="font-normal">
-                                        Descending
+                                        {t("setup.helpdesk.descending")}
                                     </Label>
                                 </div>
                             </RadioGroup>
                         </SettingsField>
 
-                        <SettingsField label="Enable support menu item badge">
+                        <SettingsField label={t("setup.helpdesk.enableBadge")}>
                             <RadioGroup
                                 value={supportForm.supportEnableBadge ? "yes" : "no"}
                                 onValueChange={(val) =>
@@ -220,19 +222,19 @@ export default function HelpdeskSettingsPage() {
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="yes" id="badge-yes" />
                                     <Label htmlFor="badge-yes" className="font-normal">
-                                        Yes
+                                        {t("common.yes")}
                                     </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="no" id="badge-no" />
                                     <Label htmlFor="badge-no" className="font-normal">
-                                        No
+                                        {t("common.no")}
                                     </Label>
                                 </div>
                             </RadioGroup>
                         </SettingsField>
 
-                        <SettingsField label="Default status selected when replying to ticket">
+                        <SettingsField label={t("setup.helpdesk.defaultReplyStatus")}>
                             <Select
                                 value={supportForm.supportDefaultReplyStatus}
                                 onValueChange={(val) =>
@@ -240,20 +242,20 @@ export default function HelpdeskSettingsPage() {
                                 }
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select" />
+                                    <SelectValue placeholder={t("setup.helpdesk.selectPlaceholder")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="in_progress">In Progress</SelectItem>
-                                    <SelectItem value="answered">Answered</SelectItem>
-                                    <SelectItem value="hold">On Hold</SelectItem>
-                                    <SelectItem value="closed">Closed</SelectItem>
+                                    <SelectItem value="in_progress">{t("setup.helpdesk.statusInProgress")}</SelectItem>
+                                    <SelectItem value="answered">{t("setup.helpdesk.statusAnswered")}</SelectItem>
+                                    <SelectItem value="hold">{t("setup.helpdesk.statusOnHold")}</SelectItem>
+                                    <SelectItem value="closed">{t("setup.helpdesk.statusClosed")}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </SettingsField>
                     </SettingsSection>
 
-                    <SettingsSection title="Attachments" description="File upload restrictions">
-                        <SettingsField label="Maximum ticket attachments">
+                    <SettingsSection title={t("setup.helpdesk.attachmentsSectionTitle")} description={t("setup.helpdesk.attachmentsSectionDesc")}>
+                        <SettingsField label={t("setup.helpdesk.maxAttachments")}>
                             <Input
                                 type="number"
                                 value={supportForm.supportMaxAttachments}
@@ -263,7 +265,7 @@ export default function HelpdeskSettingsPage() {
                             />
                         </SettingsField>
 
-                        <SettingsField label="Allowed attachments file extensions">
+                        <SettingsField label={t("setup.helpdesk.allowedExtensions")}>
                             <Input
                                 value={supportForm.supportAllowedExtensions}
                                 onChange={(e) =>
@@ -279,13 +281,13 @@ export default function HelpdeskSettingsPage() {
 
                 <TabsContent value="email_piping">
                     <div className="bg-white p-12 text-center rounded-lg border text-gray-500">
-                        Email Piping Settings (Coming Soon)
+                        {t("setup.helpdesk.emailPipingComingSoon")}
                     </div>
                 </TabsContent>
 
                 <TabsContent value="ticket_form">
                     <div className="bg-white p-12 text-center rounded-lg border text-gray-500">
-                        Ticket Form Settings (Coming Soon)
+                        {t("setup.helpdesk.ticketFormComingSoon")}
                     </div>
                 </TabsContent>
             </Tabs>

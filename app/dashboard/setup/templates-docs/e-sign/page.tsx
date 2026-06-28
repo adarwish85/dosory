@@ -10,8 +10,10 @@ import { useOrganizationSettings, OrganizationSettings } from "@/lib/hooks/use-o
 import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
+import { useTranslation } from "@/lib/i18n";
 
 export default function ESignSettingsPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [esignForm, setEsignForm] = useState({
         esignEstimateRequireSignature: true,
@@ -33,24 +35,24 @@ export default function ESignSettingsPage() {
     const handleSave = async () => {
         try {
             await saveSettings(esignForm as any);
-            toast.success("E-Sign settings saved successfully");
+            toast.success(t("setup.eSign.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.eSign.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">E-Signature Settings</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.eSign.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Configure electronic signature requirements and legal text
+                    {t("setup.eSign.subtitle")}
                 </p>
             </div>
 
-            <SettingsSection title="Requirements" description="When signatures are required">
+            <SettingsSection title={t("setup.eSign.requirementsTitle")} description={t("setup.eSign.requirementsDesc")}>
                 {[
-                    { key: "esignEstimateRequireSignature", label: "Require digital signature on estimates" },
+                    { key: "esignEstimateRequireSignature", label: t("setup.eSign.requireSignatureEstimates") },
                 ].map((item) => (
                     <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                         <Label className="block text-sm font-medium text-gray-700">{item.label}</Label>
@@ -64,13 +66,13 @@ export default function ESignSettingsPage() {
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id={`esign-${item.key}-yes`} />
                                 <Label htmlFor={`esign-${item.key}-yes`} className="font-normal">
-                                    Yes
+                                    {t("common.yes")}
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="no" id={`esign-${item.key}-no`} />
                                 <Label htmlFor={`esign-${item.key}-no`} className="font-normal">
-                                    No
+                                    {t("common.no")}
                                 </Label>
                             </div>
                         </RadioGroup>
@@ -78,9 +80,9 @@ export default function ESignSettingsPage() {
                 ))}
             </SettingsSection>
 
-            <SettingsSection title="Legal Text" description="Text displayed to signer">
+            <SettingsSection title={t("setup.eSign.legalTextTitle")} description={t("setup.eSign.legalTextDesc")}>
                 <div className="space-y-2">
-                    <Label>Sign Legal Text</Label>
+                    <Label>{t("setup.eSign.signLegalText")}</Label>
                     <Textarea
                         value={esignForm.esignLegalBoundText}
                         onChange={(e) =>

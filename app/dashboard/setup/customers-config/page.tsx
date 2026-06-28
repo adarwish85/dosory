@@ -13,8 +13,10 @@ import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
+import { useTranslation } from "@/lib/i18n";
 
 export default function CustomersConfigPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [customerForm, setCustomerForm] = useState({
         customerDefaultTheme: "perfex",
@@ -65,29 +67,29 @@ export default function CustomersConfigPage() {
     const handleSave = async () => {
         try {
             await saveSettings(customerForm as Partial<OrganizationSettings>);
-            toast.success("Customer settings saved successfully");
+            toast.success(t("setup.customersConfig.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.customersConfig.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Customers Configuration</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.customersConfig.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Manage customer portal settings, registration, and defaults
+                    {t("setup.customersConfig.subtitle")}
                 </p>
             </div>
 
-            <SettingsSection title="Defaults & Portal" description="Default settings for new customers">
-                <SettingsField label="Default customers theme">
+            <SettingsSection title={t("setup.customersConfig.defaultsSectionTitle")} description={t("setup.customersConfig.defaultsSectionDesc")}>
+                <SettingsField label={t("setup.customersConfig.defaultTheme")}>
                     <Select
                         value={customerForm.customerDefaultTheme}
                         onValueChange={(val) => setCustomerForm({ ...customerForm, customerDefaultTheme: val })}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select theme" />
+                            <SelectValue placeholder={t("setup.customersConfig.selectTheme")} />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="perfex">Perfex</SelectItem>
@@ -95,7 +97,7 @@ export default function CustomersConfigPage() {
                     </Select>
                 </SettingsField>
 
-                <SettingsField label="Default Country">
+                <SettingsField label={t("setup.customersConfig.defaultCountry")}>
                     <Select
                         value={customerForm.customerDefaultCountry}
                         onValueChange={(val) =>
@@ -103,16 +105,16 @@ export default function CustomersConfigPage() {
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Nothing selected" />
+                            <SelectValue placeholder={t("setup.customersConfig.nothingSelected")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="us">United States</SelectItem>
+                            <SelectItem value="us">{t("setup.customersConfig.unitedStates")}</SelectItem>
                             {/* Add more countries as needed */}
                         </SelectContent>
                     </Select>
                 </SettingsField>
 
-                <SettingsField label="Visible Tabs (Profile)">
+                <SettingsField label={t("setup.customersConfig.visibleTabs")}>
                     <Select
                         value={customerForm.customerVisibleTabs[0] || "all"}
                         onValueChange={(val) =>
@@ -120,66 +122,66 @@ export default function CustomersConfigPage() {
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select tabs" />
+                            <SelectValue placeholder={t("setup.customersConfig.selectTabs")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="all">{t("setup.customersConfig.all")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </SettingsField>
 
-                <SettingsField label="Required fields for registration (customers area)">
+                <SettingsField label={t("setup.customersConfig.requiredRegFields")}>
                     <Select>
                         <SelectTrigger>
-                            <SelectValue placeholder="First Name - Contact, Last Name - Contact, Email Address - Contact, Company - Company" />
+                            <SelectValue placeholder={t("setup.customersConfig.requiredRegFieldsPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="default">Default Fields</SelectItem>
+                            <SelectItem value="default">{t("setup.customersConfig.defaultFields")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </SettingsField>
             </SettingsSection>
 
-            <SettingsSection title="Permissions & Rules" description="Access control and registration rules">
+            <SettingsSection title={t("setup.customersConfig.permissionsSectionTitle")} description={t("setup.customersConfig.permissionsSectionDesc")}>
                 {[
-                    { key: "customerCompanyFieldRequired", label: "Company field is required?" },
+                    { key: "customerCompanyFieldRequired", label: "setup.customersConfig.rule.companyFieldRequired" },
                     {
                         key: "customerCompanyVatRequired",
-                        label: "Company requires the usage of the VAT Number field",
+                        label: "setup.customersConfig.rule.companyVatRequired",
                     },
-                    { key: "customerAllowRegistration", label: "Allow customers to register" },
+                    { key: "customerAllowRegistration", label: "setup.customersConfig.rule.allowRegistration" },
                     {
                         key: "customerRequiresRegistrationConfirmation",
-                        label: "Require registration confirmation from administrator after customer register",
+                        label: "setup.customersConfig.rule.requiresRegConfirmation",
                     },
                     {
                         key: "customerAllowPrimaryContactManageContacts",
-                        label: "Allow primary contact to manage other customer contacts",
+                        label: "setup.customersConfig.rule.primaryManageContacts",
                     },
-                    { key: "customerEnableHoneypot", label: "Enable Honeypot spam validation" },
+                    { key: "customerEnableHoneypot", label: "setup.customersConfig.rule.enableHoneypot" },
                     {
                         key: "customerAllowPrimaryContactViewBilling",
-                        label: "Allow primary contact to view/edit billing & shipping details",
+                        label: "setup.customersConfig.rule.primaryViewBilling",
                     },
                     {
                         key: "customerContactsSeeOwnFilesOnly",
-                        label: "Contacts see only own files uploaded in customer area (files uploaded in customer profile)",
+                        label: "setup.customersConfig.rule.contactsSeeOwnFiles",
                         help: true,
                     },
                     {
                         key: "customerAllowContactsDeleteOwnFiles",
-                        label: "Allow contacts to delete own files uploaded from customers area",
+                        label: "setup.customersConfig.rule.contactsDeleteOwnFiles",
                     },
-                    { key: "customerUseKnowledgeBase", label: "Use Knowledge Base", help: true },
+                    { key: "customerUseKnowledgeBase", label: "setup.customersConfig.rule.useKnowledgeBase", help: true },
                     {
                         key: "customerAllowKnowledgeBaseWithoutRegistration",
-                        label: "Allow knowledge base to be viewed without registration",
+                        label: "setup.customersConfig.rule.kbWithoutRegistration",
                     },
                 ].map((item: any) => (
                     <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                         <Label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
                             {item.help && <HelpCircle className="h-4 w-4 text-gray-400" />}
-                            {item.label}
+                            {t(item.label)}
                         </Label>
                         <RadioGroup
                             value={customerForm[item.key as keyof typeof customerForm] ? "yes" : "no"}
@@ -191,13 +193,13 @@ export default function CustomersConfigPage() {
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id={`cust-${item.key}-yes`} />
                                 <Label htmlFor={`cust-${item.key}-yes`} className="font-normal">
-                                    Yes
+                                    {t("common.yes")}
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="no" id={`cust-${item.key}-no`} />
                                 <Label htmlFor={`cust-${item.key}-no`} className="font-normal">
-                                    No
+                                    {t("common.no")}
                                 </Label>
                             </div>
                         </RadioGroup>
@@ -205,9 +207,9 @@ export default function CustomersConfigPage() {
                 ))}
             </SettingsSection>
 
-            <SettingsSection title="Feature Visibility" description="Toggle features in customer area">
+            <SettingsSection title={t("setup.customersConfig.featureVisibilityTitle")} description={t("setup.customersConfig.featureVisibilityDesc")}>
                 <div className="flex items-center justify-between">
-                    <Label>Show Estimate request link in customers area?</Label>
+                    <Label>{t("setup.customersConfig.showEstimateRequestLink")}</Label>
                     <Select
                         value={customerForm.customerShowEstimateRequestLink ? "yes" : "no"}
                         onValueChange={(val) =>
@@ -215,17 +217,17 @@ export default function CustomersConfigPage() {
                         }
                     >
                         <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select" />
+                            <SelectValue placeholder={t("common.select")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="yes">Estimate Request</SelectItem>
-                            <SelectItem value="no">Hide</SelectItem>
+                            <SelectItem value="yes">{t("setup.customersConfig.estimateRequest")}</SelectItem>
+                            <SelectItem value="no">{t("setup.customersConfig.hide")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
             </SettingsSection>
 
-            <SettingsSection title="Default Permissions" description="Default permissions for new contacts">
+            <SettingsSection title={t("setup.customersConfig.defaultPermissionsTitle")} description={t("setup.customersConfig.defaultPermissionsDesc")}>
                 <div className="space-y-2">
                     {["Invoices", "Estimates", "Contracts", "Support", "Projects"].map(
                         (perm) => (
@@ -260,7 +262,7 @@ export default function CustomersConfigPage() {
                                     htmlFor={`perm-${perm}`}
                                     className="font-normal cursor-pointer select-none"
                                 >
-                                    {perm}
+                                    {t(`setup.customersConfig.perm.${perm.toLowerCase()}`)}
                                 </Label>
                             </div>
                         )
@@ -268,8 +270,8 @@ export default function CustomersConfigPage() {
                 </div>
             </SettingsSection>
 
-            <SettingsSection title="Formatting" description="Display format for customer info">
-                <SettingsField label="Customer Information Format (PDF and HTML)">
+            <SettingsSection title={t("setup.customersConfig.formattingTitle")} description={t("setup.customersConfig.formattingDesc")}>
+                <SettingsField label={t("setup.customersConfig.customerInfoFormat")}>
                     <Textarea
                         value={customerForm.customerInfoFormat}
                         onChange={(e) =>

@@ -10,8 +10,10 @@ import { useOrganizationSettings, OrganizationSettings } from "@/lib/hooks/use-o
 import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
+import { useTranslation } from "@/lib/i18n";
 
 export default function OpenAiSettingsPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [openaiForm, setOpenaiForm] = useState({
         openaiApiKey: "",
@@ -35,25 +37,25 @@ export default function OpenAiSettingsPage() {
                 ...openaiForm,
                 openaiMaxTokens: parseInt(openaiForm.openaiMaxTokens.toString()) || 0,
             } as Partial<OrganizationSettings>);
-            toast.success("OpenAI settings saved successfully");
+            toast.success(t("setup.openai.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.openai.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">OpenAI Configuration</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.openai.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Configure AI model settings and API keys
+                    {t("setup.openai.subtitle")}
                 </p>
             </div>
 
-            <SettingsSection title="API Connection" description="Connect to OpenAI API">
+            <SettingsSection title={t("setup.openai.apiConnectionTitle")} description={t("setup.openai.apiConnectionDesc")}>
                 <div className="space-y-4">
                     <div>
-                        <Label>OpenAI API Key</Label>
+                        <Label>{t("setup.openai.apiKey")}</Label>
                         <div className="mt-1">
                             <Input
                                 type="password"
@@ -65,13 +67,13 @@ export default function OpenAiSettingsPage() {
                     </div>
 
                     <div>
-                        <Label>OpenAI Model</Label>
+                        <Label>{t("setup.openai.model")}</Label>
                         <Select
                             value={openaiForm.openaiModel}
                             onValueChange={(val) => setOpenaiForm({ ...openaiForm, openaiModel: val })}
                         >
                             <SelectTrigger className="mt-1">
-                                <SelectValue placeholder="Select" />
+                                <SelectValue placeholder={t("common.select")} />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="gpt-4o">GPT-4o</SelectItem>
@@ -83,7 +85,7 @@ export default function OpenAiSettingsPage() {
                     </div>
 
                     <div>
-                        <Label>Max Output Tokens</Label>
+                        <Label>{t("setup.openai.maxOutputTokens")}</Label>
                         <Input
                             type="number"
                             value={openaiForm.openaiMaxTokens}
@@ -94,16 +96,15 @@ export default function OpenAiSettingsPage() {
                 </div>
             </SettingsSection>
 
-            <SettingsSection title="Features" description="AI capabilities">
+            <SettingsSection title={t("setup.openai.featuresTitle")} description={t("setup.openai.featuresDesc")}>
                 <div className="flex items-center gap-4">
                     <Button variant="outline" className="gap-2">
                         <Zap className="h-4 w-4" />
-                        OpenAI Fine-Tuning
+                        {t("setup.openai.fineTuning")}
                     </Button>
                 </div>
                 <p className="mt-2 text-sm text-gray-500">
-                    Fine-tune OpenAI models with your knowledge base and predefined replies content for more
-                    accurate responses.
+                    {t("setup.openai.fineTuningDesc")}
                 </p>
 
                 <SettingsSaveButton onClick={handleSave} loading={saving} />

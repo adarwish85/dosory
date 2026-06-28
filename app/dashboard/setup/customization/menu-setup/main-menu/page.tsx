@@ -20,15 +20,17 @@ import {
     useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useTranslation } from "@/lib/i18n";
 
 interface MenuItem {
     id: string;
-    name: string;
+    nameKey: string;
     hasChildren?: boolean;
     children?: MenuItem[];
 }
 
-function SortableItem({ id, name, hasChildren }: { id: string; name: string; hasChildren?: boolean }) {
+function SortableItem({ id, nameKey, hasChildren }: { id: string; nameKey: string; hasChildren?: boolean }) {
+    const { t } = useTranslation();
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
     const style = {
@@ -56,7 +58,7 @@ function SortableItem({ id, name, hasChildren }: { id: string; name: string; has
                         <button className="text-gray-600 hover:text-gray-900 text-sm">+</button>
                     </div>
                 )}
-                <span className="text-sm font-medium">{name}</span>
+                <span className="text-sm font-medium">{t(nameKey)}</span>
             </div>
             <button className="text-gray-400 hover:text-gray-600">
                 <Settings className="h-4 w-4" />
@@ -66,20 +68,21 @@ function SortableItem({ id, name, hasChildren }: { id: string; name: string; has
 }
 
 export default function MainMenuPage() {
+    const { t } = useTranslation();
     const [menuItems, setMenuItems] = useState<MenuItem[]>([
-        { id: "1", name: "Dashboard", hasChildren: false },
-        { id: "2", name: "Customers", hasChildren: false },
-        { id: "3", name: "Sales", hasChildren: true },
-        { id: "5", name: "Estimates", hasChildren: false },
-        { id: "6", name: "Invoices", hasChildren: false },
-        { id: "7", name: "Payments", hasChildren: false },
-        { id: "8", name: "Credit Notes", hasChildren: false },
-        { id: "9", name: "Items", hasChildren: false },
-        { id: "10", name: "Subscriptions", hasChildren: false },
-        { id: "11", name: "Expenses", hasChildren: false },
-        { id: "12", name: "Contracts", hasChildren: false },
-        { id: "13", name: "Projects", hasChildren: false },
-        { id: "14", name: "Tasks", hasChildren: false },
+        { id: "1", nameKey: "setup.mainMenu.itemDashboard", hasChildren: false },
+        { id: "2", nameKey: "setup.mainMenu.itemCustomers", hasChildren: false },
+        { id: "3", nameKey: "setup.mainMenu.itemSales", hasChildren: true },
+        { id: "5", nameKey: "setup.mainMenu.itemEstimates", hasChildren: false },
+        { id: "6", nameKey: "setup.mainMenu.itemInvoices", hasChildren: false },
+        { id: "7", nameKey: "setup.mainMenu.itemPayments", hasChildren: false },
+        { id: "8", nameKey: "setup.mainMenu.itemCreditNotes", hasChildren: false },
+        { id: "9", nameKey: "setup.mainMenu.itemItems", hasChildren: false },
+        { id: "10", nameKey: "setup.mainMenu.itemSubscriptions", hasChildren: false },
+        { id: "11", nameKey: "setup.mainMenu.itemExpenses", hasChildren: false },
+        { id: "12", nameKey: "setup.mainMenu.itemContracts", hasChildren: false },
+        { id: "13", nameKey: "setup.mainMenu.itemProjects", hasChildren: false },
+        { id: "14", nameKey: "setup.mainMenu.itemTasks", hasChildren: false },
     ]);
 
     const sensors = useSensors(
@@ -106,12 +109,12 @@ export default function MainMenuPage() {
         <div className="p-6 max-w-4xl">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl font-semibold">Main Menu</h1>
-                    <p className="text-sm text-gray-500 mt-1">Drag and drop menu items to reorder them</p>
+                    <h1 className="text-2xl font-semibold">{t("setup.mainMenu.title")}</h1>
+                    <p className="text-sm text-gray-500 mt-1">{t("setup.menuSetup.dragHint")}</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline">Reset</Button>
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">Save Menu</Button>
+                    <Button variant="outline">{t("setup.menuSetup.reset")}</Button>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">{t("setup.menuSetup.saveMenu")}</Button>
                 </div>
             </div>
 
@@ -119,7 +122,7 @@ export default function MainMenuPage() {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={menuItems.map((item) => item.id)} strategy={verticalListSortingStrategy}>
                         {menuItems.map((item) => (
-                            <SortableItem key={item.id} id={item.id} name={item.name} hasChildren={item.hasChildren} />
+                            <SortableItem key={item.id} id={item.id} nameKey={item.nameKey} hasChildren={item.hasChildren} />
                         ))}
                     </SortableContext>
                 </DndContext>

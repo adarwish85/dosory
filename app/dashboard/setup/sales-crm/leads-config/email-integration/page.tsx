@@ -7,14 +7,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 export default function EmailIntegrationPage() {
+    const { t } = useTranslation();
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900">Email Integration</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.leadsEmailIntegration.title")}</h1>
                 <Button variant="outline" asChild>
-                    <Link href="/dashboard/setup/operations/support-config/spam-filters">Spam Filters</Link>
+                    <Link href="/dashboard/setup/operations/support-config/spam-filters">{t("setup.leadsEmailIntegration.spamFilters")}</Link>
                 </Button>
             </div>
 
@@ -24,7 +26,7 @@ export default function EmailIntegrationPage() {
                     <div className="flex items-center space-x-2">
                         <Checkbox id="active" defaultChecked />
                         <Label htmlFor="active" className="font-medium">
-                            Active
+                            {t("setup.leadsEmailIntegration.active")}
                         </Label>
                     </div>
 
@@ -33,22 +35,22 @@ export default function EmailIntegrationPage() {
                         {/* Left Column */}
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label className="text-red-500">* IMAP Server</Label>
+                                <Label className="text-red-500">{t("setup.leadsEmailIntegration.imapServer")}</Label>
                                 <Input defaultValue="imap.zoho.com" />
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Email address (Login)</Label>
+                                <Label className="text-red-500">{t("setup.leadsEmailIntegration.emailLogin")}</Label>
                                 <Input type="email" placeholder="sales@example.com" />
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Password</Label>
+                                <Label className="text-red-500">{t("setup.leadsEmailIntegration.password")}</Label>
                                 <Input type="password" />
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Encryption</Label>
+                                <Label>{t("setup.leadsEmailIntegration.encryption")}</Label>
                                 <RadioGroup defaultValue="ssl" className="flex gap-4">
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="tls" id="tls" />
@@ -65,7 +67,7 @@ export default function EmailIntegrationPage() {
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="none" id="none" />
                                         <Label htmlFor="none" className="font-normal">
-                                            No Encryption
+                                            {t("setup.leadsEmailIntegration.noEncryption")}
                                         </Label>
                                     </div>
                                 </RadioGroup>
@@ -73,9 +75,9 @@ export default function EmailIntegrationPage() {
 
                             <div className="space-y-2">
                                 <Label className="text-red-500">
-                                    * Folder{" "}
+                                    {t("setup.leadsEmailIntegration.folder")}{" "}
                                     <Link href="#" className="text-blue-600 hover:underline">
-                                        Retrieve Folders
+                                        {t("setup.leadsEmailIntegration.retrieveFolders")}
                                     </Link>
                                 </Label>
                                 <Select defaultValue="inbox">
@@ -89,7 +91,7 @@ export default function EmailIntegrationPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Check Every (minutes)</Label>
+                                <Label className="text-red-500">{t("setup.leadsEmailIntegration.checkEvery")}</Label>
                                 <Input type="number" defaultValue="60" />
                             </div>
 
@@ -97,29 +99,28 @@ export default function EmailIntegrationPage() {
                                 <div className="flex items-start space-x-2">
                                     <Checkbox id="non-opened" defaultChecked />
                                     <Label htmlFor="non-opened" className="font-normal leading-tight">
-                                        Only check non opened emails
+                                        {t("setup.leadsEmailIntegration.onlyNonOpened")}
                                     </Label>
                                 </div>
 
                                 <div className="flex items-start space-x-2">
                                     <Checkbox id="create-task" defaultChecked />
                                     <Label htmlFor="create-task" className="font-normal leading-tight">
-                                        Create task if email sender is already customer and assign to responsible staff
-                                        member.
+                                        {t("setup.leadsEmailIntegration.createTaskIfCustomer")}
                                     </Label>
                                 </div>
 
                                 <div className="flex items-start space-x-2">
                                     <Checkbox id="delete-import" />
                                     <Label htmlFor="delete-import" className="font-normal leading-tight">
-                                        Delete mail after import?
+                                        {t("setup.leadsEmailIntegration.deleteAfterImport")}
                                     </Label>
                                 </div>
 
                                 <div className="flex items-start space-x-2">
                                     <Checkbox id="auto-public" />
                                     <Label htmlFor="auto-public" className="font-normal leading-tight">
-                                        Auto mark as public
+                                        {t("setup.leadsEmailIntegration.autoMarkPublic")}
                                     </Label>
                                 </div>
                             </div>
@@ -128,7 +129,7 @@ export default function EmailIntegrationPage() {
                         {/* Right Column */}
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Default Status</Label>
+                                <Label className="text-red-500">{t("setup.leadsEmailIntegration.defaultStatus")}</Label>
                                 <div className="flex gap-2">
                                     <div className="flex-1">
                                         <Select defaultValue="sql">
@@ -147,7 +148,7 @@ export default function EmailIntegrationPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Default Source</Label>
+                                <Label className="text-red-500">{t("setup.leadsEmailIntegration.defaultSource")}</Label>
                                 <div className="flex gap-2">
                                     <div className="flex-1">
                                         <Select defaultValue="referral">
@@ -166,7 +167,7 @@ export default function EmailIntegrationPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Responsible for new lead</Label>
+                                <Label className="text-red-500">{t("setup.leadsEmailIntegration.responsibleForNewLead")}</Label>
                                 <Select defaultValue="ahmed">
                                     <SelectTrigger>
                                         <SelectValue />
@@ -178,19 +179,19 @@ export default function EmailIntegrationPage() {
                             </div>
 
                             <div className="space-y-3 pt-4">
-                                <Label className="font-medium">Notification settings</Label>
+                                <Label className="font-medium">{t("setup.leadsEmailIntegration.notificationSettings")}</Label>
 
                                 <div className="flex items-start space-x-2">
                                     <Checkbox id="notify-imported" defaultChecked />
                                     <Label htmlFor="notify-imported" className="font-normal leading-tight">
-                                        Notify when lead imported
+                                        {t("setup.leadsEmailIntegration.notifyWhenImported")}
                                     </Label>
                                 </div>
 
                                 <div className="flex items-start space-x-2">
                                     <Checkbox id="notify-multiple" defaultChecked />
                                     <Label htmlFor="notify-multiple" className="font-normal leading-tight">
-                                        Notify if lead send email multiple times
+                                        {t("setup.leadsEmailIntegration.notifyMultipleEmails")}
                                     </Label>
                                 </div>
                             </div>
@@ -200,19 +201,19 @@ export default function EmailIntegrationPage() {
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="roles" id="roles" />
                                         <Label htmlFor="roles" className="font-normal">
-                                            Staff members with roles
+                                            {t("setup.leadsEmailIntegration.staffWithRoles")}
                                         </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="responsible" id="responsible" />
                                         <Label htmlFor="responsible" className="font-normal">
-                                            Responsible person
+                                            {t("setup.leadsEmailIntegration.responsiblePerson")}
                                         </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="specific" id="specific" />
                                         <Label htmlFor="specific" className="font-normal">
-                                            Specific Staff Members
+                                            {t("setup.leadsEmailIntegration.specificStaff")}
                                         </Label>
                                     </div>
                                 </RadioGroup>
@@ -222,8 +223,8 @@ export default function EmailIntegrationPage() {
 
                     {/* Action Buttons */}
                     <div className="flex justify-end gap-2 pt-4 border-t">
-                        <Button variant="outline">Test IMAP Connection</Button>
-                        <Button className="bg-gray-900 text-white hover:bg-gray-800">Save</Button>
+                        <Button variant="outline">{t("setup.leadsEmailIntegration.testConnection")}</Button>
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800">{t("common.save")}</Button>
                     </div>
                 </div>
             </div>

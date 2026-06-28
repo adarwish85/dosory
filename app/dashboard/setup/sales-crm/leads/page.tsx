@@ -12,8 +12,10 @@ import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
+import { useTranslation } from "@/lib/i18n";
 
 export default function LeadsSettingsPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [leadsForm, setLeadsForm] = useState({
         leadsKanbanLimit: "50",
@@ -51,23 +53,23 @@ export default function LeadsSettingsPage() {
                 ...leadsForm,
                 leadsKanbanLimit: parseInt(leadsForm.leadsKanbanLimit) || 50,
             } as any);
-            toast.success("Leads settings saved successfully");
+            toast.success(t("setup.leadsConfig.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.leadsConfig.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Leads Settings</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.leadsConfig.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Configure lead management defaults, validation, and kanban view
+                    {t("setup.leadsConfig.subtitle")}
                 </p>
             </div>
 
-            <SettingsSection title="General" description="Default behavior for leads">
-                <SettingsField label="Leads Kanban Limit (per status)">
+            <SettingsSection title={t("setup.leadsConfig.generalSectionTitle")} description={t("setup.leadsConfig.generalSectionDesc")}>
+                <SettingsField label={t("setup.leadsConfig.kanbanLimit")}>
                     <Input
                         type="number"
                         value={leadsForm.leadsKanbanLimit}
@@ -77,27 +79,27 @@ export default function LeadsSettingsPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Default Status">
+                <SettingsField label={t("setup.leadsConfig.defaultStatus")}>
                     <Input
                         value={leadsForm.leadsDefaultStatus}
                         onChange={(e) =>
                             setLeadsForm({ ...leadsForm, leadsDefaultStatus: e.target.value })
                         }
-                        placeholder="ID of default status"
+                        placeholder={t("setup.leadsConfig.defaultStatusPlaceholder")}
                     />
                 </SettingsField>
 
-                <SettingsField label="Default Source">
+                <SettingsField label={t("setup.leadsConfig.defaultSource")}>
                     <Input
                         value={leadsForm.leadsDefaultSource}
                         onChange={(e) =>
                             setLeadsForm({ ...leadsForm, leadsDefaultSource: e.target.value })
                         }
-                        placeholder="ID of default source"
+                        placeholder={t("setup.leadsConfig.defaultSourcePlaceholder")}
                     />
                 </SettingsField>
 
-                <SettingsField label="Unique Validation Fields (comma separated)">
+                <SettingsField label={t("setup.leadsConfig.uniqueValidationFields")}>
                     <Input
                         value={leadsForm.leadsDuplicateValidationFields}
                         onChange={(e) =>
@@ -107,7 +109,7 @@ export default function LeadsSettingsPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Modal Width Class (modal-lg, modal-xl, modal-xxl)">
+                <SettingsField label={t("setup.leadsConfig.modalWidthClass")}>
                     <Input
                         value={leadsForm.leadsModalWidth}
                         onChange={(e) => setLeadsForm({ ...leadsForm, leadsModalWidth: e.target.value })}
@@ -115,23 +117,23 @@ export default function LeadsSettingsPage() {
                 </SettingsField>
             </SettingsSection>
 
-            <SettingsSection title="Automation & Permissions" description="Automated actions and access control">
+            <SettingsSection title={t("setup.leadsConfig.automationSectionTitle")} description={t("setup.leadsConfig.automationSectionDesc")}>
                 {[
                     {
                         key: "leadsAutoAssignAdminAfterConvert",
-                        label: "Auto assign customer admin after converting lead to customer",
+                        labelKey: "setup.leadsConfig.autoAssignAdmin",
                     },
                     {
                         key: "leadsAllowNonAdminImport",
-                        label: "Allow non-admin staff members to import leads",
+                        labelKey: "setup.leadsConfig.allowNonAdminImport",
                     },
                     {
                         key: "leadsDisableEditAfterConvert",
-                        label: "Disable editing lead after converted to customer",
+                        labelKey: "setup.leadsConfig.disableEditAfterConvert",
                     },
                 ].map((item) => (
                     <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                        <Label className="block text-sm font-medium text-gray-700">{item.label}</Label>
+                        <Label className="block text-sm font-medium text-gray-700">{t(item.labelKey)}</Label>
                         <RadioGroup
                             value={leadsForm[item.key as keyof typeof leadsForm] ? "yes" : "no"}
                             onValueChange={(val) =>
@@ -142,13 +144,13 @@ export default function LeadsSettingsPage() {
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id={`leads-${item.key}-yes`} />
                                 <Label htmlFor={`leads-${item.key}-yes`} className="font-normal">
-                                    Yes
+                                    {t("common.yes")}
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="no" id={`leads-${item.key}-no`} />
                                 <Label htmlFor={`leads-${item.key}-no`} className="font-normal">
-                                    No
+                                    {t("common.no")}
                                 </Label>
                             </div>
                         </RadioGroup>
@@ -156,35 +158,35 @@ export default function LeadsSettingsPage() {
                 ))}
             </SettingsSection>
 
-            <SettingsSection title="Kanban Sorting" description="Default sort order for kanban board">
-                <SettingsField label="Sort By">
+            <SettingsSection title={t("setup.leadsConfig.kanbanSortingSectionTitle")} description={t("setup.leadsConfig.kanbanSortingSectionDesc")}>
+                <SettingsField label={t("setup.leadsConfig.sortBy")}>
                     <Select
                         value={leadsForm.leadsKanbanSort}
                         onValueChange={(val) => setLeadsForm({ ...leadsForm, leadsKanbanSort: val })}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select" />
+                            <SelectValue placeholder={t("common.select")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="dateadded">Date Created</SelectItem>
-                            <SelectItem value="leadorder">Kanban Order</SelectItem>
-                            <SelectItem value="name">Name</SelectItem>
-                            <SelectItem value="company">Company</SelectItem>
+                            <SelectItem value="dateadded">{t("setup.leadsConfig.sortDateCreated")}</SelectItem>
+                            <SelectItem value="leadorder">{t("setup.leadsConfig.sortKanbanOrder")}</SelectItem>
+                            <SelectItem value="name">{t("common.name")}</SelectItem>
+                            <SelectItem value="company">{t("setup.leadsConfig.sortCompany")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </SettingsField>
 
-                <SettingsField label="Sort Order">
+                <SettingsField label={t("setup.leadsConfig.sortOrder")}>
                     <Select
                         value={leadsForm.leadsKanbanSortOrder}
                         onValueChange={(val) => setLeadsForm({ ...leadsForm, leadsKanbanSortOrder: val })}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select" />
+                            <SelectValue placeholder={t("common.select")} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="asc">Ascending</SelectItem>
-                            <SelectItem value="desc">Descending</SelectItem>
+                            <SelectItem value="asc">{t("setup.leadsConfig.ascending")}</SelectItem>
+                            <SelectItem value="desc">{t("setup.leadsConfig.descending")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </SettingsField>

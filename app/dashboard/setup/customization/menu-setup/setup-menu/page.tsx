@@ -20,14 +20,16 @@ import {
     useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useTranslation } from "@/lib/i18n";
 
 interface MenuItem {
     id: string;
-    name: string;
+    nameKey: string;
     hasChildren?: boolean;
 }
 
-function SortableItem({ id, name, hasChildren }: { id: string; name: string; hasChildren?: boolean }) {
+function SortableItem({ id, nameKey, hasChildren }: { id: string; nameKey: string; hasChildren?: boolean }) {
+    const { t } = useTranslation();
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
     const style = {
@@ -55,7 +57,7 @@ function SortableItem({ id, name, hasChildren }: { id: string; name: string; has
                         <button className="text-gray-600 hover:text-gray-900 text-sm">+</button>
                     </div>
                 )}
-                <span className="text-sm font-medium">{name}</span>
+                <span className="text-sm font-medium">{t(nameKey)}</span>
             </div>
             <button className="text-gray-400 hover:text-gray-600">
                 <Settings className="h-4 w-4" />
@@ -65,29 +67,30 @@ function SortableItem({ id, name, hasChildren }: { id: string; name: string; has
 }
 
 export default function SetupMenuPage() {
+    const { t } = useTranslation();
     const [menuItems, setMenuItems] = useState<MenuItem[]>([
-        { id: "1", name: "Staff", hasChildren: false },
-        { id: "2", name: "Roles", hasChildren: false },
-        { id: "3", name: "Customers", hasChildren: true },
-        { id: "4", name: "Groups", hasChildren: false },
-        { id: "5", name: "Support", hasChildren: true },
-        { id: "6", name: "Departments", hasChildren: false },
-        { id: "7", name: "Predefined Replies", hasChildren: false },
-        { id: "8", name: "Ticket Priority", hasChildren: false },
-        { id: "9", name: "Ticket Statuses", hasChildren: false },
-        { id: "10", name: "Services", hasChildren: false },
-        { id: "11", name: "Spam Filters", hasChildren: false },
-        { id: "12", name: "Leads", hasChildren: true },
-        { id: "13", name: "Finance", hasChildren: true },
-        { id: "14", name: "Contracts", hasChildren: true },
-        { id: "15", name: "Estimate Request", hasChildren: true },
-        { id: "16", name: "Modules", hasChildren: false },
-        { id: "17", name: "Email Templates", hasChildren: false },
-        { id: "18", name: "Custom Fields", hasChildren: false },
-        { id: "19", name: "GDPR", hasChildren: false },
-        { id: "20", name: "Menu Setup", hasChildren: true },
-        { id: "21", name: "Theme Style", hasChildren: false },
-        { id: "22", name: "Settings", hasChildren: false },
+        { id: "1", nameKey: "setup.setupMenu.itemStaff", hasChildren: false },
+        { id: "2", nameKey: "setup.setupMenu.itemRoles", hasChildren: false },
+        { id: "3", nameKey: "setup.setupMenu.itemCustomers", hasChildren: true },
+        { id: "4", nameKey: "setup.setupMenu.itemGroups", hasChildren: false },
+        { id: "5", nameKey: "setup.setupMenu.itemSupport", hasChildren: true },
+        { id: "6", nameKey: "setup.setupMenu.itemDepartments", hasChildren: false },
+        { id: "7", nameKey: "setup.setupMenu.itemPredefinedReplies", hasChildren: false },
+        { id: "8", nameKey: "setup.setupMenu.itemTicketPriority", hasChildren: false },
+        { id: "9", nameKey: "setup.setupMenu.itemTicketStatuses", hasChildren: false },
+        { id: "10", nameKey: "setup.setupMenu.itemServices", hasChildren: false },
+        { id: "11", nameKey: "setup.setupMenu.itemSpamFilters", hasChildren: false },
+        { id: "12", nameKey: "setup.setupMenu.itemLeads", hasChildren: true },
+        { id: "13", nameKey: "setup.setupMenu.itemFinance", hasChildren: true },
+        { id: "14", nameKey: "setup.setupMenu.itemContracts", hasChildren: true },
+        { id: "15", nameKey: "setup.setupMenu.itemEstimateRequest", hasChildren: true },
+        { id: "16", nameKey: "setup.setupMenu.itemModules", hasChildren: false },
+        { id: "17", nameKey: "setup.setupMenu.itemEmailTemplates", hasChildren: false },
+        { id: "18", nameKey: "setup.setupMenu.itemCustomFields", hasChildren: false },
+        { id: "19", nameKey: "setup.setupMenu.itemGdpr", hasChildren: false },
+        { id: "20", nameKey: "setup.setupMenu.itemMenuSetup", hasChildren: true },
+        { id: "21", nameKey: "setup.setupMenu.itemThemeStyle", hasChildren: false },
+        { id: "22", nameKey: "setup.setupMenu.itemSettings", hasChildren: false },
     ]);
 
     const sensors = useSensors(
@@ -114,12 +117,12 @@ export default function SetupMenuPage() {
         <div className="p-6 max-w-4xl">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl font-semibold">Setup Menu</h1>
-                    <p className="text-sm text-gray-500 mt-1">Drag and drop menu items to reorder them</p>
+                    <h1 className="text-2xl font-semibold">{t("setup.setupMenu.title")}</h1>
+                    <p className="text-sm text-gray-500 mt-1">{t("setup.menuSetup.dragHint")}</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline">Reset</Button>
-                    <Button className="bg-gray-900 text-white hover:bg-gray-800">Save Menu</Button>
+                    <Button variant="outline">{t("setup.menuSetup.reset")}</Button>
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800">{t("setup.menuSetup.saveMenu")}</Button>
                 </div>
             </div>
 
@@ -127,7 +130,7 @@ export default function SetupMenuPage() {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={menuItems.map((item) => item.id)} strategy={verticalListSortingStrategy}>
                         {menuItems.map((item) => (
-                            <SortableItem key={item.id} id={item.id} name={item.name} hasChildren={item.hasChildren} />
+                            <SortableItem key={item.id} id={item.id} nameKey={item.nameKey} hasChildren={item.hasChildren} />
                         ))}
                     </SortableContext>
                 </DndContext>

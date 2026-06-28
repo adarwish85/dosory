@@ -7,8 +7,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 function TemplateEditorContent() {
+    const { t } = useTranslation();
     const searchParams = useSearchParams();
     const templateName = searchParams.get("template") || "";
     const category = searchParams.get("category") || "";
@@ -179,20 +181,20 @@ function TemplateEditorContent() {
                         <div className="space-y-4">
                             {/* Template Title */}
                             <div className="space-y-2">
-                                <Label className="text-red-500">* Template Title</Label>
+                                <Label className="text-red-500">{t("setup.emailTemplateEdit.templateTitle")}</Label>
                                 <Input defaultValue={templateName} className="bg-gray-50" />
                             </div>
 
                             {/* Subject */}
                             <div className="space-y-2">
-                                <Label>Subject</Label>
-                                <Input defaultValue="New Support Ticket Opened" placeholder="Subject" />
+                                <Label>{t("setup.emailTemplateEdit.subject")}</Label>
+                                <Input defaultValue="New Support Ticket Opened" placeholder={t("setup.emailTemplateEdit.subject")} />
                             </div>
 
                             {/* From Name */}
                             <div className="space-y-2">
-                                <Label className="text-red-500">* From Name</Label>
-                                <Input defaultValue="{companyname} | Technical Support" placeholder="From Name" />
+                                <Label className="text-red-500">{t("setup.emailTemplateEdit.fromName")}</Label>
+                                <Input defaultValue="{companyname} | Technical Support" placeholder={t("setup.emailTemplateEdit.fromNamePlaceholder")} />
                             </div>
 
                             {/* Checkboxes */}
@@ -203,7 +205,7 @@ function TemplateEditorContent() {
                                         htmlFor="plaintext"
                                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                     >
-                                        Send as Plaintext
+                                        {t("setup.emailTemplateEdit.sendAsPlaintext")}
                                     </label>
                                 </div>
                                 <div className="flex items-center space-x-2">
@@ -212,14 +214,14 @@ function TemplateEditorContent() {
                                         htmlFor="disabled"
                                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                     >
-                                        Disabled
+                                        {t("setup.emailTemplateEdit.disabled")}
                                     </label>
                                 </div>
                             </div>
 
                             {/* Rich Text Editor */}
                             <div className="space-y-2">
-                                <Label>English</Label>
+                                <Label>{t("setup.emailTemplateEdit.english")}</Label>
                                 <div className="border rounded-md bg-white">
                                     {/* Toolbar */}
                                     <div className="border-b p-2 flex items-center gap-2 bg-gray-50">
@@ -270,23 +272,23 @@ function TemplateEditorContent() {
                                     {/* Editor Content */}
                                     <div className="p-4 min-h-[300px] font-mono text-sm leading-relaxed">
                                         <p>
-                                            Hi {"{contact_firstname}"} {"{contact_lastname}"}
+                                            {t("setup.emailTemplateEdit.sampleGreeting")} {"{contact_firstname}"} {"{contact_lastname}"}
                                         </p>
                                         <br />
-                                        <p>New support ticket has been opened.</p>
+                                        <p>{t("setup.emailTemplateEdit.sampleBody")}</p>
                                         <br />
                                         <p>
-                                            <strong>Subject:</strong> {"{ticket_subject}"}
+                                            <strong>{t("setup.emailTemplateEdit.sampleSubject")}</strong> {"{ticket_subject}"}
                                         </p>
                                         <p>
-                                            <strong>Department:</strong> {"{ticket_department}"}
+                                            <strong>{t("setup.emailTemplateEdit.sampleDepartment")}</strong> {"{ticket_department}"}
                                         </p>
                                         <p>
-                                            <strong>Priority:</strong> {"{ticket_priority}"}
+                                            <strong>{t("setup.emailTemplateEdit.samplePriority")}</strong> {"{ticket_priority}"}
                                         </p>
                                         <br />
                                         <p>
-                                            <strong>Ticket message:</strong>
+                                            <strong>{t("setup.emailTemplateEdit.sampleTicketMessage")}</strong>
                                         </p>
                                         <p>{"{ticket_message}"}</p>
                                     </div>
@@ -297,18 +299,17 @@ function TemplateEditorContent() {
 
                     {/* Save Button */}
                     <div className="flex justify-end">
-                        <Button className="bg-gray-900 text-white hover:bg-gray-800">Save</Button>
+                        <Button className="bg-gray-900 text-white hover:bg-gray-800">{t("common.save")}</Button>
                     </div>
                 </div>
 
                 {/* Merge Fields Sidebar */}
                 <div className="w-96 bg-white border-l p-6">
-                    <h2 className="text-lg font-semibold mb-4">Available merge fields</h2>
+                    <h2 className="text-lg font-semibold mb-4">{t("setup.emailTemplateEdit.availableMergeFields")}</h2>
 
                     {category === "Tickets" && (
                         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-6 text-sm">
-                            If ticket is imported with email piping and the contact does not exists in the CRM the
-                            fields won&apos;t be replaced.
+                            {t("setup.emailTemplateEdit.ticketPipingWarning")}
                         </div>
                     )}
 
@@ -316,19 +317,19 @@ function TemplateEditorContent() {
                         {Object.entries(mergeFields).map(([sectionKey, fields]) => {
                             // Create readable section titles
                             const sectionTitles: Record<string, string> = {
-                                staff: "Staff",
-                                client: "Client",
-                                ticket: "Ticket",
-                                invoice: "Invoice",
-                                estimate: "Estimate",
-                                contract: "Contract",
-                                project: "Projects",
-                                task: "Task",
-                                subscription: "Subscription",
-                                lead: "Lead",
-                                creditNote: "Credit Note",
-                                estimateRequest: "Estimate Request",
-                                other: "Other",
+                                staff: t("setup.emailTemplateEdit.mfStaff"),
+                                client: t("setup.emailTemplateEdit.mfClient"),
+                                ticket: t("setup.emailTemplateEdit.mfTicket"),
+                                invoice: t("setup.emailTemplateEdit.mfInvoice"),
+                                estimate: t("setup.emailTemplateEdit.mfEstimate"),
+                                contract: t("setup.emailTemplateEdit.mfContract"),
+                                project: t("setup.emailTemplateEdit.mfProjects"),
+                                task: t("setup.emailTemplateEdit.mfTask"),
+                                subscription: t("setup.emailTemplateEdit.mfSubscription"),
+                                lead: t("setup.emailTemplateEdit.mfLead"),
+                                creditNote: t("setup.emailTemplateEdit.mfCreditNote"),
+                                estimateRequest: t("setup.emailTemplateEdit.mfEstimateRequest"),
+                                other: t("setup.emailTemplateEdit.mfOther"),
                             };
 
                             return (
@@ -352,9 +353,14 @@ function TemplateEditorContent() {
     );
 }
 
+function EditTemplateFallback() {
+    const { t } = useTranslation();
+    return <div className="p-6">{t("common.loading")}</div>;
+}
+
 export default function EditTemplatePage() {
     return (
-        <Suspense fallback={<div className="p-6">Loading...</div>}>
+        <Suspense fallback={<EditTemplateFallback />}>
             <TemplateEditorContent />
         </Suspense>
     );

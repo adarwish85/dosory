@@ -12,8 +12,10 @@ import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
+import { useTranslation } from "@/lib/i18n";
 
 export default function PdfSettingsPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [pdfForm, setPdfForm] = useState({
         pdfFont: "freesans",
@@ -76,9 +78,9 @@ export default function PdfSettingsPage() {
                 pdfFontSize: parseInt(pdfForm.pdfFontSize) || 10,
                 pdfLogoWidth: parseInt(pdfForm.pdfLogoWidth) || 150,
             } as any);
-            toast.success("PDF settings saved successfully");
+            toast.success(t("setup.pdfSettings.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.pdfSettings.saveError"));
         }
     };
 
@@ -92,20 +94,20 @@ export default function PdfSettingsPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">PDF Settings</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.pdfSettings.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Configure PDF fonts, layout, and document verification
+                    {t("setup.pdfSettings.subtitle")}
                 </p>
             </div>
 
-            <SettingsSection title="General" description="Basic formatting options">
-                <SettingsField label="Font">
+            <SettingsSection title={t("setup.pdfSettings.generalTitle")} description={t("setup.pdfSettings.generalDesc")}>
+                <SettingsField label={t("setup.pdfSettings.font")}>
                     <Select
                         value={pdfForm.pdfFont}
                         onValueChange={(val) => setPdfForm({ ...pdfForm, pdfFont: val })}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select font" />
+                            <SelectValue placeholder={t("setup.pdfSettings.selectFont")} />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="freesans">Freesans</SelectItem>
@@ -116,7 +118,7 @@ export default function PdfSettingsPage() {
                     </Select>
                 </SettingsField>
 
-                <SettingsField label="Font Size">
+                <SettingsField label={t("setup.pdfSettings.fontSize")}>
                     <Input
                         type="number"
                         value={pdfForm.pdfFontSize}
@@ -124,7 +126,7 @@ export default function PdfSettingsPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Company/Customer Details Order">
+                <SettingsField label={t("setup.pdfSettings.detailsOrder")}>
                     <RadioGroup
                         value={pdfForm.pdfSwapDetails ? "swap" : "default"}
                         onValueChange={(val) =>
@@ -135,27 +137,27 @@ export default function PdfSettingsPage() {
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="default" id="order-default" />
                             <Label htmlFor="order-default" className="font-normal">
-                                Company Details Left, Customer Details Right
+                                {t("setup.pdfSettings.detailsOrderDefault")}
                             </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="swap" id="order-swap" />
                             <Label htmlFor="order-swap" className="font-normal">
-                                Swap (Customer Left, Company Right)
+                                {t("setup.pdfSettings.detailsOrderSwap")}
                             </Label>
                         </div>
                     </RadioGroup>
                 </SettingsField>
             </SettingsSection>
 
-            <SettingsSection title="Document Formats" description="Paper size and orientation per document type">
+            <SettingsSection title={t("setup.pdfSettings.documentFormatsTitle")} description={t("setup.pdfSettings.documentFormatsDesc")}>
                 {[
-                    { key: "pdfFormatInvoice", label: "Invoice Format" },
-                    { key: "pdfFormatEstimate", label: "Estimate Format" },
-                    { key: "pdfFormatCreditNote", label: "Credit Note Format" },
-                    { key: "pdfFormatContract", label: "Contract Format" },
-                    { key: "pdfFormatPayment", label: "Payment Receipt Format" },
-                    { key: "pdfFormatStatement", label: "Statement Format" },
+                    { key: "pdfFormatInvoice", label: t("setup.pdfSettings.invoiceFormat") },
+                    { key: "pdfFormatEstimate", label: t("setup.pdfSettings.estimateFormat") },
+                    { key: "pdfFormatCreditNote", label: t("setup.pdfSettings.creditNoteFormat") },
+                    { key: "pdfFormatContract", label: t("setup.pdfSettings.contractFormat") },
+                    { key: "pdfFormatPayment", label: t("setup.pdfSettings.paymentReceiptFormat") },
+                    { key: "pdfFormatStatement", label: t("setup.pdfSettings.statementFormat") },
                 ].map((item) => (
                     <SettingsField key={item.key} label={item.label}>
                         <Select
@@ -165,7 +167,7 @@ export default function PdfSettingsPage() {
                             }
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select format" />
+                                <SelectValue placeholder={t("setup.pdfSettings.selectFormat")} />
                             </SelectTrigger>
                             <SelectContent>
                                 {formatOptions.map((opt) => (
@@ -179,12 +181,12 @@ export default function PdfSettingsPage() {
                 ))}
             </SettingsSection>
 
-            <SettingsSection title="Display Toggles" description="Show or hide elements on PDF">
+            <SettingsSection title={t("setup.pdfSettings.displayTogglesTitle")} description={t("setup.pdfSettings.displayTogglesDesc")}>
                 {[
-                    { key: "pdfShowStatus", label: "Show status" },
-                    { key: "pdfShowLink", label: "Show link to view online" },
-                    { key: "pdfShowPayments", label: "Show payments (Invoices)" },
-                    { key: "pdfShowPageNumber", label: "Show page number" },
+                    { key: "pdfShowStatus", label: t("setup.pdfSettings.showStatus") },
+                    { key: "pdfShowLink", label: t("setup.pdfSettings.showLink") },
+                    { key: "pdfShowPayments", label: t("setup.pdfSettings.showPayments") },
+                    { key: "pdfShowPageNumber", label: t("setup.pdfSettings.showPageNumber") },
                 ].map((item) => (
                     <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                         <Label className="block text-sm font-medium text-gray-700">{item.label}</Label>
@@ -198,13 +200,13 @@ export default function PdfSettingsPage() {
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id={`pdf-${item.key}-yes`} />
                                 <Label htmlFor={`pdf-${item.key}-yes`} className="font-normal">
-                                    Yes
+                                    {t("common.yes")}
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="no" id={`pdf-${item.key}-no`} />
                                 <Label htmlFor={`pdf-${item.key}-no`} className="font-normal">
-                                    No
+                                    {t("common.no")}
                                 </Label>
                             </div>
                         </RadioGroup>
@@ -212,12 +214,12 @@ export default function PdfSettingsPage() {
                 ))}
             </SettingsSection>
 
-            <SettingsSection title="Signatures" description="Show signatures on PDF documents">
+            <SettingsSection title={t("setup.pdfSettings.signaturesTitle")} description={t("setup.pdfSettings.signaturesDesc")}>
                 {[
-                    { key: "pdfShowSignatureInvoice", label: "Invoice" },
-                    { key: "pdfShowSignatureEstimate", label: "Estimate" },
-                    { key: "pdfShowSignatureCreditNote", label: "Credit Note" },
-                    { key: "pdfShowSignatureContract", label: "Contract" },
+                    { key: "pdfShowSignatureInvoice", label: t("setup.pdfSettings.signatureInvoice") },
+                    { key: "pdfShowSignatureEstimate", label: t("setup.pdfSettings.signatureEstimate") },
+                    { key: "pdfShowSignatureCreditNote", label: t("setup.pdfSettings.signatureCreditNote") },
+                    { key: "pdfShowSignatureContract", label: t("setup.pdfSettings.signatureContract") },
                 ].map((item) => (
                     <div key={item.key} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                         <Label className="block text-sm font-medium text-gray-700">{item.label}</Label>
@@ -231,13 +233,13 @@ export default function PdfSettingsPage() {
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="yes" id={`sig-${item.key}-yes`} />
                                 <Label htmlFor={`sig-${item.key}-yes`} className="font-normal">
-                                    Show
+                                    {t("setup.pdfSettings.show")}
                                 </Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="no" id={`sig-${item.key}-no`} />
                                 <Label htmlFor={`sig-${item.key}-no`} className="font-normal">
-                                    Hide
+                                    {t("setup.pdfSettings.hide")}
                                 </Label>
                             </div>
                         </RadioGroup>

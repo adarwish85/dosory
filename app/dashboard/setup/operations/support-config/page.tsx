@@ -3,20 +3,21 @@
 import { PageHeader } from "@/components/dashboard/shared/page-header";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-
-const SECTIONS = [
-    { label: "Departments", href: "/dashboard/setup/team-roles/departments" },
-    { label: "Predefined Replies", href: "/dashboard/setup/operations/support-config/predefined-replies" },
-    { label: "Services", href: "/dashboard/setup/operations/support-config/services" },
-    { label: "Spam Filters", href: "/dashboard/setup/operations/support-config/spam-filters" },
-    { label: "Ticket Priority", href: "/dashboard/setup/operations/support-config/ticket-priority" },
-    { label: "Ticket Statuses", href: "/dashboard/setup/operations/support-config/ticket-statuses" },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export default function SetupSupportPage() {
+    const { t } = useTranslation();
+    const SECTIONS = [
+        { label: t("setup.supportConfig.departments"), href: "/dashboard/setup/team-roles/departments" },
+        { label: t("setup.supportConfig.predefinedReplies"), href: "/dashboard/setup/operations/support-config/predefined-replies" },
+        { label: t("setup.supportConfig.services"), href: "/dashboard/setup/operations/support-config/services" },
+        { label: t("setup.supportConfig.spamFilters"), href: "/dashboard/setup/operations/support-config/spam-filters" },
+        { label: t("setup.supportConfig.ticketPriority"), href: "/dashboard/setup/operations/support-config/ticket-priority" },
+        { label: t("setup.supportConfig.ticketStatuses"), href: "/dashboard/setup/operations/support-config/ticket-statuses" },
+    ];
     return (
         <div className="p-6">
-            <PageHeader title="Support Setup" />
+            <PageHeader title={t("setup.supportConfig.title")} />
             <div className="grid gap-4 mt-6">
                 {SECTIONS.map((section) => (
                     <Link

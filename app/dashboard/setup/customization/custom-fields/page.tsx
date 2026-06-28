@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw } from "lucide-react";
 import { AddFieldDialog } from "@/components/dashboard/setup/custom-fields/add-field-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function CustomFieldsPage() {
+    const { t } = useTranslation();
     return (
         <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-semibold">Custom Fields</h1>
+                <h1 className="text-2xl font-semibold">{t("setup.customFields.title")}</h1>
                 <AddFieldDialog />
             </div>
 
@@ -23,7 +25,7 @@ export default function CustomFieldsPage() {
                             <option>100</option>
                         </select>
                         <Button variant="outline" size="sm">
-                            Export
+                            {t("common.export")}
                         </Button>
                         <Button variant="outline" size="sm">
                             <RefreshCw className="h-4 w-4" />
@@ -31,7 +33,7 @@ export default function CustomFieldsPage() {
                     </div>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input placeholder="Search..." className="pl-9 w-64" />
+                        <Input placeholder={t("common.search")} className="pl-9 w-64" />
                     </div>
                 </div>
 
@@ -41,29 +43,29 @@ export default function CustomFieldsPage() {
                         <thead className="bg-gray-50 border-b">
                             <tr>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    ID
+                                    {t("setup.customFields.colId")}
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Name
+                                    {t("common.name")}
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Belongs to
+                                    {t("setup.customFields.colBelongsTo")}
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Type
+                                    {t("setup.customFields.colType")}
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Slug
+                                    {t("setup.customFields.colSlug")}
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Active
+                                    {t("setup.customFields.colActive")}
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                                    No entries found
+                                    {t("setup.customFields.noEntries")}
                                 </td>
                             </tr>
                         </tbody>

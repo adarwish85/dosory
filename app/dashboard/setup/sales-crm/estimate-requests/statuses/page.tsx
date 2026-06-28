@@ -5,8 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw, Pen } from "lucide-react";
 import { AddEstimateStatusDialog } from "@/components/dashboard/setup/estimate-request/add-status-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function StatusesPage() {
+    const { t } = useTranslation();
     const statuses = [
         { id: 1, name: "Cancelled", totalRequest: 0 },
         { id: 3, name: "Completed", totalRequest: 0 },
@@ -30,12 +32,12 @@ export default function StatusesPage() {
                                 <SelectItem value="25">25</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline">Export</Button>
+                        <Button variant="outline">{t("common.export")}</Button>
                     </div>
                     <div className="relative w-64">
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                            <Input placeholder="Search..." className="pl-9" />
+                            <Input placeholder={t("common.searchPlaceholder")} className="pl-9" />
                         </div>
                     </div>
                 </div>
@@ -43,9 +45,9 @@ export default function StatusesPage() {
                 <div className="bg-white rounded-md border shadow-sm">
                     <div className="px-6 py-3 border-b bg-gray-50">
                         <div className="grid grid-cols-12 gap-4">
-                            <div className="col-span-2 font-bold text-gray-900 text-sm">ID</div>
-                            <div className="col-span-9 font-bold text-gray-900 text-sm">Status Name</div>
-                            <div className="col-span-1 font-bold text-gray-900 text-sm text-right">Options</div>
+                            <div className="col-span-2 font-bold text-gray-900 text-sm">{t("setup.estimateStatuses.colId")}</div>
+                            <div className="col-span-9 font-bold text-gray-900 text-sm">{t("setup.estimateStatuses.colStatusName")}</div>
+                            <div className="col-span-1 font-bold text-gray-900 text-sm text-right">{t("setup.estimateStatuses.colOptions")}</div>
                         </div>
                     </div>
                     <div className="divide-y">
@@ -56,7 +58,7 @@ export default function StatusesPage() {
                                     <div className="col-span-9">
                                         <div className="font-medium text-gray-900">{status.name}</div>
                                         <div className="text-xs text-gray-500">
-                                            Total Request: {status.totalRequest}
+                                            {t("setup.estimateStatuses.totalRequest", { count: status.totalRequest })}
                                         </div>
                                     </div>
                                     <div className="col-span-1 flex items-center justify-end gap-2 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -69,17 +71,17 @@ export default function StatusesPage() {
                     <div className="px-6 py-4 border-t bg-gray-50 rounded-b-md">
                         <div className="text-xs text-gray-500 flex justify-end items-center gap-4">
                             <span>
-                                Showing 1 to {statuses.length} of {statuses.length} entries
+                                {t("common.showingEntries", { from: 1, to: statuses.length, total: statuses.length })}
                             </span>
                             <div className="flex items-center gap-1">
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Previous
+                                    {t("common.previous")}
                                 </Button>
                                 <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">
                                     1
                                 </div>
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Next
+                                    {t("common.next")}
                                 </Button>
                             </div>
                         </div>

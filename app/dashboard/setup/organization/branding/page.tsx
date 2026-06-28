@@ -8,19 +8,21 @@ import { toast } from "sonner";
 import { X, Loader2 } from "lucide-react";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
+import { useTranslation } from "@/lib/i18n";
 
 export default function BrandingPage() {
     const { settings, saveSettings, uploadLogo } = useOrganizationSettings();
+    const { t } = useTranslation();
     const [uploading, setUploading] = useState<"light" | "dark" | "favicon" | null>(null);
 
     const handleUpload = async (file: File, type: "light" | "dark" | "favicon") => {
         try {
             setUploading(type);
             await uploadLogo(file, type);
-            toast.success(`${type === "favicon" ? "Favicon" : "Logo"} uploaded successfully`);
+            toast.success(type === "favicon" ? t("setup.branding.faviconUploaded") : t("setup.branding.logoUploaded"));
         } catch (error) {
             console.error(error);
-            toast.error("Failed to upload image");
+            toast.error(t("setup.branding.uploadFailed"));
         } finally {
             setUploading(null);
         }
@@ -29,21 +31,21 @@ export default function BrandingPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Branding</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.branding.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Upload your company logos and favicon for dashboard and PDF documents
+                    {t("setup.branding.subtitle")}
                 </p>
             </div>
 
             <SettingsSection
-                title="Company Logos"
-                description="Manage the visual identity of your organization"
+                title={t("setup.branding.logosTitle")}
+                description={t("setup.branding.logosDescription")}
             >
-                <SettingsField label="Company Logo Light (for dark backgrounds)" description="Used on the dark sidebar and dark mode interfaces">
+                <SettingsField label={t("setup.branding.logoLightLabel")} description={t("setup.branding.logoLightDescription")}>
                     {settings.logoLight && (
                         <div className="mt-2 mb-2 relative w-fit">
                             <div className="bg-gray-900 p-2 rounded-md">
-                                <img src={settings.logoLight} alt="Light Logo" className="h-12 object-contain" />
+                                <img src={settings.logoLight} alt={t("setup.branding.logoLightAlt")} className="h-12 object-contain" />
                             </div>
                             <Button
                                 variant="ghost"
@@ -69,11 +71,11 @@ export default function BrandingPage() {
                     </div>
                 </SettingsField>
 
-                <SettingsField label="Company Logo Dark (Standard)" description="Used on white backgrounds like invoices and reports">
+                <SettingsField label={t("setup.branding.logoDarkLabel")} description={t("setup.branding.logoDarkDescription")}>
                     {settings.logoDark && (
                         <div className="mt-2 mb-2 relative w-fit">
                             <div className="bg-white p-2 rounded-md border">
-                                <img src={settings.logoDark} alt="Dark Logo" className="h-12 object-contain" />
+                                <img src={settings.logoDark} alt={t("setup.branding.logoDarkAlt")} className="h-12 object-contain" />
                             </div>
                             <Button
                                 variant="ghost"
@@ -99,10 +101,10 @@ export default function BrandingPage() {
                     </div>
                 </SettingsField>
 
-                <SettingsField label="Favicon" description="Displayed in browser tab">
+                <SettingsField label={t("setup.branding.faviconLabel")} description={t("setup.branding.faviconDescription")}>
                     {settings.favicon && (
                         <div className="mt-2 mb-2 relative w-fit">
-                            <img src={settings.favicon} alt="Favicon" className="h-8 w-8 object-contain" />
+                            <img src={settings.favicon} alt={t("setup.branding.faviconLabel")} className="h-8 w-8 object-contain" />
                             <Button
                                 variant="ghost"
                                 size="icon"

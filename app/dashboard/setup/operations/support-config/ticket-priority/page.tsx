@@ -5,13 +5,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw, Pen, Trash2 } from "lucide-react";
 import { AddPriorityDialog } from "@/components/dashboard/setup/support/add-priority-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function TicketPriorityPage() {
+    const { t } = useTranslation();
     const priorities = [
-        { id: 1, name: "Low" },
-        { id: 2, name: "Medium" },
-        { id: 3, name: "High" },
-        { id: 4, name: "Critical" },
+        { id: 1, name: t("setup.ticketPriority.low") },
+        { id: 2, name: t("setup.ticketPriority.medium") },
+        { id: 3, name: t("setup.ticketPriority.high") },
+        { id: 4, name: t("setup.ticketPriority.critical") },
     ];
 
     return (
@@ -31,12 +33,12 @@ export default function TicketPriorityPage() {
                                 <SelectItem value="25">25</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline">Export</Button>
+                        <Button variant="outline">{t("common.export")}</Button>
                     </div>
                     <div className="relative w-64">
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                            <Input placeholder="Search..." className="pl-9" />
+                            <Input placeholder={t("common.search")} className="pl-9" />
                         </div>
                     </div>
                 </div>
@@ -44,9 +46,9 @@ export default function TicketPriorityPage() {
                 <div className="bg-white rounded-md border shadow-sm">
                     <div className="px-6 py-3 border-b bg-gray-50">
                         <div className="grid grid-cols-12 gap-4">
-                            <div className="col-span-2 font-bold text-gray-900 text-sm">ID</div>
-                            <div className="col-span-8 font-bold text-gray-900 text-sm">Ticket Priority Name</div>
-                            <div className="col-span-2 font-bold text-gray-900 text-sm text-right">Options</div>
+                            <div className="col-span-2 font-bold text-gray-900 text-sm">{t("setup.ticketPriority.colId")}</div>
+                            <div className="col-span-8 font-bold text-gray-900 text-sm">{t("setup.ticketPriority.colName")}</div>
+                            <div className="col-span-2 font-bold text-gray-900 text-sm text-right">{t("setup.ticketPriority.colOptions")}</div>
                         </div>
                     </div>
                     <div className="divide-y">
@@ -66,17 +68,17 @@ export default function TicketPriorityPage() {
                     <div className="px-6 py-4 border-t bg-gray-50 rounded-b-md">
                         <div className="text-xs text-gray-500 flex justify-end items-center gap-4">
                             <span>
-                                Showing 1 to {priorities.length} of {priorities.length} entries
+                                {t("setup.supportConfig.showingEntries", { from: 1, to: priorities.length, total: priorities.length })}
                             </span>
                             <div className="flex items-center gap-1">
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Previous
+                                    {t("setup.supportConfig.previous")}
                                 </Button>
                                 <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">
                                     1
                                 </div>
                                 <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    Next
+                                    {t("setup.supportConfig.next")}
                                 </Button>
                             </div>
                         </div>

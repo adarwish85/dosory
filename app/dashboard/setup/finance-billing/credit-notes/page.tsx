@@ -7,12 +7,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
+import { useTranslation } from "@/lib/i18n";
 import { toast } from "sonner";
 import { SettingsSection } from "@/components/dashboard/setup/settings/SettingsSection";
 import { SettingsField } from "@/components/dashboard/setup/settings/SettingsField";
 import { SettingsSaveButton } from "@/components/dashboard/setup/settings/SettingsSaveButton";
 
 export default function FinanceCreditNotesPage() {
+    const { t } = useTranslation();
     const { settings, saveSettings, saving, loading } = useOrganizationSettings();
     const [creditNoteForm, setCreditNoteForm] = useState({
         creditNoteNumberPrefix: "CN-",
@@ -41,23 +43,23 @@ export default function FinanceCreditNotesPage() {
     const handleSave = async () => {
         try {
             await saveSettings(creditNoteForm as any);
-            toast.success("Credit note settings saved successfully");
+            toast.success(t("setup.creditNotes.saveSuccess"));
         } catch (error) {
-            toast.error("Failed to save settings");
+            toast.error(t("setup.creditNotes.saveError"));
         }
     };
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Credit Notes</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t("setup.creditNotes.title")}</h1>
                 <p className="text-gray-500 mt-1">
-                    Configure credit note numbering and defaults
+                    {t("setup.creditNotes.subtitle")}
                 </p>
             </div>
 
-            <SettingsSection title="Format & Numbering" description="Configure how credit note numbers are generated">
-                <SettingsField label="Credit Note Number Prefix">
+            <SettingsSection title={t("setup.creditNotes.formatSection")} description={t("setup.creditNotes.formatSectionDesc")}>
+                <SettingsField label={t("setup.creditNotes.prefix")}>
                     <Input
                         value={creditNoteForm.creditNoteNumberPrefix}
                         onChange={(e) =>
@@ -66,7 +68,7 @@ export default function FinanceCreditNotesPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Next Credit Note Number">
+                <SettingsField label={t("setup.creditNotes.nextNumber")}>
                     <Input
                         value={creditNoteForm.creditNoteNextNumber}
                         onChange={(e) =>
@@ -75,7 +77,7 @@ export default function FinanceCreditNotesPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Credit Note Number Format">
+                <SettingsField label={t("setup.creditNotes.numberFormat")}>
                     <RadioGroup
                         value={creditNoteForm.creditNoteNumberFormat}
                         onValueChange={(val) =>
@@ -86,13 +88,13 @@ export default function FinanceCreditNotesPage() {
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="number_based" id="cn-fmt-number" />
                             <Label htmlFor="cn-fmt-number" className="font-normal">
-                                Number Based (000001)
+                                {t("setup.creditNotes.formatNumberBased")}
                             </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="year_based" id="cn-fmt-year" />
                             <Label htmlFor="cn-fmt-year" className="font-normal">
-                                Year Based (YYYY/000001)
+                                {t("setup.creditNotes.formatYearBased")}
                             </Label>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -105,9 +107,9 @@ export default function FinanceCreditNotesPage() {
                 </SettingsField>
             </SettingsSection>
 
-            <SettingsSection title="Behavior" description="Control credit note behavior">
+            <SettingsSection title={t("setup.creditNotes.behaviorSection")} description={t("setup.creditNotes.behaviorSectionDesc")}>
                 <div className="flex items-center justify-between border-b pb-4">
-                    <Label>Decrement Credit Note Number on Delete</Label>
+                    <Label>{t("setup.creditNotes.decrementOnDelete")}</Label>
                     <Switch
                         checked={creditNoteForm.creditNoteDecrementOnDelete}
                         onCheckedChange={(val) =>
@@ -117,7 +119,7 @@ export default function FinanceCreditNotesPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <Label>Show Project Name on Credit Note</Label>
+                    <Label>{t("setup.creditNotes.showProjectName")}</Label>
                     <Switch
                         checked={creditNoteForm.creditNoteShowProjectName}
                         onCheckedChange={(val) =>
@@ -127,8 +129,8 @@ export default function FinanceCreditNotesPage() {
                 </div>
             </SettingsSection>
 
-            <SettingsSection title="Defaults" description="Set default content for new credit notes">
-                <SettingsField label="Predefined Client Note">
+            <SettingsSection title={t("setup.creditNotes.defaultsSection")} description={t("setup.creditNotes.defaultsSectionDesc")}>
+                <SettingsField label={t("setup.creditNotes.predefinedClientNote")}>
                     <Textarea
                         value={creditNoteForm.creditNoteDefaultClientNote}
                         onChange={(e) =>
@@ -138,7 +140,7 @@ export default function FinanceCreditNotesPage() {
                     />
                 </SettingsField>
 
-                <SettingsField label="Predefined Terms & Conditions">
+                <SettingsField label={t("setup.creditNotes.predefinedTerms")}>
                     <Textarea
                         value={creditNoteForm.creditNoteDefaultTerms}
                         onChange={(e) =>
