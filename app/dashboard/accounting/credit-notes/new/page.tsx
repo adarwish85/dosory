@@ -21,8 +21,10 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useTranslation } from "@/lib/i18n";
 
 export default function CreateCreditNotePage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const searchParams = useSearchParams();
     const customerIdParam = searchParams.get("customerId");
@@ -80,7 +82,7 @@ export default function CreateCreditNotePage() {
         setIsSubmitting(true);
         try {
             await createCreditNote(data);
-            toast.success("Credit Note created successfully");
+            toast.success(t("accounting.creditNotes.createSuccess"));
 
             if (customerIdParam) {
                 router.push(`/dashboard/customers/${customerIdParam}/credit-notes`);
@@ -89,7 +91,7 @@ export default function CreateCreditNotePage() {
             }
         } catch (error) {
             console.error("Error creating credit note:", error);
-            toast.error("Failed to create credit note");
+            toast.error(t("accounting.creditNotes.createFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -103,31 +105,31 @@ export default function CreateCreditNotePage() {
                     className="flex items-center hover:text-gray-900 transition-colors"
                 >
                     <ChevronLeft className="h-4 w-4 mr-1" />
-                    Back to Credit Notes
+                    {t("accounting.creditNotes.backToList")}
                 </Link>
             </div>
 
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">New Credit Note</h1>
-                <p className="text-gray-500 mt-1">Issue a refund or credit to a customer.</p>
+                <h1 className="text-3xl font-bold text-gray-900">{t("accounting.creditNotes.new")}</h1>
+                <p className="text-gray-500 mt-1">{t("accounting.creditNotes.newDescription")}</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Credit Details</CardTitle>
+                        <CardTitle>{t("accounting.creditNotes.detailsTitle")}</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="customerId">Customer <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="customerId">{t("accounting.payments.customer")} <span className="text-red-500">*</span></Label>
                                 <Select
                                     value={watch("customerId")}
                                     onValueChange={(val) => setValue("customerId", val, { shouldValidate: true })}
                                     disabled={!!customerIdParam}
                                 >
                                     <SelectTrigger className={cn(errors.customerId && "border-red-500")}>
-                                        <SelectValue placeholder="Select Customer" />
+                                        <SelectValue placeholder={t("accounting.creditNotes.selectCustomer")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {customers.map((c) => (
@@ -139,7 +141,7 @@ export default function CreateCreditNotePage() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="currency">Currency</Label>
+                                <Label htmlFor="currency">{t("accounting.journal.currency")}</Label>
                                 <Select
                                     value={watch("currency")}
                                     onValueChange={(val) => setValue("currency", val)}
@@ -157,7 +159,7 @@ export default function CreateCreditNotePage() {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label>Date</Label>
+                            <Label>{t("common.date")}</Label>
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -168,7 +170,7 @@ export default function CreateCreditNotePage() {
                                         )}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                        {date ? format(date, "PPP") : <span>{t("accounting.journal.new.pickDate")}</span>}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
@@ -186,29 +188,29 @@ export default function CreateCreditNotePage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Credit Items</CardTitle>
+                        <CardTitle>{t("accounting.creditNotes.itemsTitle")}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="hidden md:grid grid-cols-12 gap-4 text-sm font-medium text-gray-500 mb-2">
-                            <div className="col-span-6">Description</div>
-                            <div className="col-span-2">Quantity</div>
-                            <div className="col-span-2">Rate</div>
-                            <div className="col-span-1">Amount</div>
+                            <div className="col-span-6">{t("accounting.journal.descriptionColumn")}</div>
+                            <div className="col-span-2">{t("accounting.creditNotes.quantity")}</div>
+                            <div className="col-span-2">{t("accounting.creditNotes.rate")}</div>
+                            <div className="col-span-1">{t("common.amount")}</div>
                             <div className="col-span-1"></div>
                         </div>
 
                         {fields.map((field, index) => (
                             <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end border-b pb-4 md:border-0 md:pb-0">
                                 <div className="md:col-span-6">
-                                    <Label className="md:hidden">Description</Label>
+                                    <Label className="md:hidden">{t("accounting.journal.descriptionColumn")}</Label>
                                     <Input
                                         {...register(`items.${index}.description` as const)}
-                                        placeholder="Item description"
+                                        placeholder={t("accounting.creditNotes.itemDescription")}
                                         className={cn(errors.items?.[index]?.description && "border-red-500")}
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <Label className="md:hidden">Quantity</Label>
+                                    <Label className="md:hidden">{t("accounting.creditNotes.quantity")}</Label>
                                     <Input
                                         type="number"
                                         min="0"
@@ -217,7 +219,7 @@ export default function CreateCreditNotePage() {
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <Label className="md:hidden">Rate</Label>
+                                    <Label className="md:hidden">{t("accounting.creditNotes.rate")}</Label>
                                     <Input
                                         type="number"
                                         min="0"
@@ -226,7 +228,7 @@ export default function CreateCreditNotePage() {
                                     />
                                 </div>
                                 <div className="md:col-span-1 py-2 md:py-0 text-right md:text-left font-medium">
-                                    <span className="md:hidden mr-2 text-gray-500">Amount:</span>
+                                    <span className="md:hidden mr-2 text-gray-500">{t("accounting.creditNotes.amountLabel")}</span>
                                     {((watch(`items.${index}.quantity`) || 0) * (watch(`items.${index}.rate`) || 0)).toFixed(2)}
                                 </div>
                                 <div className="md:col-span-1 flex justify-end md:justify-center">
@@ -245,12 +247,12 @@ export default function CreateCreditNotePage() {
                             className="mt-2"
                         >
                             <Plus className="h-4 w-4 mr-2" />
-                            Add Item
+                            {t("accounting.creditNotes.addItem")}
                         </Button>
 
                         <div className="flex justify-end pt-4 border-t mt-4">
                             <div className="text-right">
-                                <p className="text-gray-500 text-sm">Total Credit</p>
+                                <p className="text-gray-500 text-sm">{t("accounting.creditNotes.totalCredit")}</p>
                                 <p className="text-2xl font-bold">{subtotal.toFixed(2)} {watch("currency")}</p>
                             </div>
                         </div>
@@ -259,21 +261,21 @@ export default function CreateCreditNotePage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Reason & Notes</CardTitle>
+                        <CardTitle>{t("accounting.creditNotes.reasonNotesTitle")}</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="notes">Notes</Label>
-                            <Textarea {...register("notes")} placeholder="Reason for credit..." />
+                            <Label htmlFor="notes">{t("accounting.creditNotes.notes")}</Label>
+                            <Textarea {...register("notes")} placeholder={t("accounting.creditNotes.notesPlaceholder")} />
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
                         <Button type="button" variant="ghost" className="mr-2" onClick={() => router.back()}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Issue Credit Note
+                            {t("accounting.creditNotes.issue")}
                         </Button>
                     </CardFooter>
                 </Card>

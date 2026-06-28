@@ -10,8 +10,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useExpenses, useSettings } from "@/lib/hooks";
 import { format } from "date-fns";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 export default function ExpensesPage() {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const { expenses, loading, expenseStats } = useExpenses();
     const { settings } = useSettings();
@@ -52,25 +54,25 @@ export default function ExpensesPage() {
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg px-4 py-3">
-                    <div className="text-xs font-medium text-orange-600 uppercase">Total</div>
+                    <div className="text-xs font-medium text-orange-600 uppercase">{t("expenses.stats.total")}</div>
                     <div className="text-2xl font-bold text-orange-900">
                         {formatCurrency(expenseStats.total || 0, orgCurrency)}
                     </div>
                 </div>
                 <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
-                    <div className="text-xs font-medium text-green-600 uppercase">Billable</div>
+                    <div className="text-xs font-medium text-green-600 uppercase">{t("expenses.stats.billable")}</div>
                     <div className="text-2xl font-bold text-green-900">
                         {formatCurrency(expenseStats.billable || 0, orgCurrency)}
                     </div>
                 </div>
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg px-4 py-3">
-                    <div className="text-xs font-medium text-gray-600 uppercase">Non Billable</div>
+                    <div className="text-xs font-medium text-gray-600 uppercase">{t("expenses.stats.nonBillable")}</div>
                     <div className="text-2xl font-bold text-gray-900">
                         {formatCurrency(expenseStats.nonBillable || 0, orgCurrency)}
                     </div>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
-                    <div className="text-xs font-medium text-blue-600 uppercase">Count</div>
+                    <div className="text-xs font-medium text-blue-600 uppercase">{t("expenses.stats.count")}</div>
                     <div className="text-2xl font-bold text-blue-900">{expenseStats.count || 0}</div>
                 </div>
             </div>
@@ -81,7 +83,7 @@ export default function ExpensesPage() {
                     <Link href="/dashboard/expenses/new">
                         <Button className="bg-gray-900 text-white hover:bg-gray-800">
                             <Plus className="mr-2 h-4 w-4" />
-                            New Expense
+                            {t("expenses.list.newExpense")}
                         </Button>
                     </Link>
                     <Button variant="outline" size="icon">
@@ -93,7 +95,7 @@ export default function ExpensesPage() {
                     <div className="relative flex-1">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search expenses..."
+                            placeholder={t("expenses.search.placeholder")}
                             className="pl-9"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -116,11 +118,11 @@ export default function ExpensesPage() {
                             <TableHead className="w-12 text-center">
                                 <Checkbox />
                             </TableHead>
-                            <TableHead className="font-semibold text-gray-900">Category</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Amount</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Date</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Payment Mode</TableHead>
-                            <TableHead className="font-semibold text-gray-900">Billable</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("expenses.table.category")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("expenses.table.amount")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("common.date")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("expenses.table.paymentMode")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">{t("expenses.table.billable")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -128,8 +130,8 @@ export default function ExpensesPage() {
                             <TableRow>
                                 <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                                     {searchQuery
-                                        ? "No expenses match your search."
-                                        : "No expenses found. Record your first one!"}
+                                        ? t("expenses.empty.noMatch")
+                                        : t("expenses.empty.none")}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -144,21 +146,21 @@ export default function ExpensesPage() {
                                                 {exp.categoryName}
                                             </span>
                                             <span className="text-gray-500 text-xs mt-0.5 group-hover:hidden">
-                                                {exp.note || "No details"}
+                                                {exp.note || t("expenses.list.noDetails")}
                                             </span>
                                             <div className="hidden group-hover:flex items-center gap-3 mt-0.5">
                                                 <Link
                                                     href={`/dashboard/expenses/${exp.id}/edit`}
                                                     className="text-xs font-medium text-gray-900 hover:underline"
                                                 >
-                                                    Edit
+                                                    {t("common.edit")}
                                                 </Link>
                                                 <span className="text-gray-300">|</span>
                                                 <Link
                                                     href={`/dashboard/expenses/${exp.id}/delete`}
                                                     className="text-xs font-medium text-red-600 hover:underline"
                                                 >
-                                                    Delete
+                                                    {t("common.delete")}
                                                 </Link>
                                             </div>
                                         </div>
@@ -170,9 +172,9 @@ export default function ExpensesPage() {
                                     <TableCell className="text-gray-500">{exp.paymentMode || "-"}</TableCell>
                                     <TableCell>
                                         {exp.billable ? (
-                                            <span className="text-green-600 font-medium">Yes</span>
+                                            <span className="text-green-600 font-medium">{t("common.yes")}</span>
                                         ) : (
-                                            <span className="text-gray-400">No</span>
+                                            <span className="text-gray-400">{t("common.no")}</span>
                                         )}
                                     </TableCell>
                                 </TableRow>
@@ -185,7 +187,9 @@ export default function ExpensesPage() {
             {/* Footer */}
             <div className="flex items-center justify-between py-2">
                 <div className="flex items-center gap-4">
-                    <span className="text-sm text-gray-600 font-medium">Total: {filteredExpenses.length}</span>
+                    <span className="text-sm text-gray-600 font-medium">
+                        {t("expenses.footer.total", { count: filteredExpenses.length })}
+                    </span>
                 </div>
             </div>
         </div>

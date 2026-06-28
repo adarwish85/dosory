@@ -5,8 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export default function PaymentsPage() {
+    const { t } = useTranslation();
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center gap-4">
@@ -19,14 +21,14 @@ export default function PaymentsPage() {
                             <SelectItem value="25">25</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Button variant="outline">Export</Button>
+                    <Button variant="outline">{t("common.export")}</Button>
                     <Button variant="outline" size="icon">
                         <RefreshCw className="h-4 w-4" />
                     </Button>
                 </div>
                 <div className="relative w-64">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                    <Input placeholder="Search..." className="pl-9" />
+                    <Input placeholder={t("common.searchPlaceholder")} className="pl-9" />
                 </div>
             </div>
 
@@ -34,13 +36,13 @@ export default function PaymentsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-50 hover:bg-gray-50">
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Payment #</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Invoice #</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Payment Mode</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Transaction ID</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Customer</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Amount</TableHead>
-                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Date</TableHead>
+                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("accounting.payments.paymentNumber")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("accounting.payments.invoiceNumber")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("accounting.payments.paymentMode")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("accounting.payments.transactionId")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("accounting.payments.customer")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("common.amount")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("common.date")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -134,15 +136,15 @@ export default function PaymentsPage() {
                                         {/* Hover Actions Menu */}
                                         <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
                                             <span className="hover:text-blue-600 hover:underline cursor-pointer">
-                                                View
+                                                {t("common.view")}
                                             </span>
                                             <span className="text-gray-300">|</span>
                                             <span className="hover:text-blue-600 hover:underline cursor-pointer">
-                                                Edit
+                                                {t("common.edit")}
                                             </span>
                                             <span className="text-gray-300">|</span>
                                             <span className="hover:text-red-600 hover:underline cursor-pointer">
-                                                Delete
+                                                {t("common.delete")}
                                             </span>
                                         </div>
                                     </div>
@@ -159,16 +161,16 @@ export default function PaymentsPage() {
                 </Table>
             </div>
             <div className="flex items-center text-sm text-gray-500 gap-2 mt-4 ml-1">
-                Showing 1 to 9 of 25 entries
+                {t("accounting.payments.showingEntries", { from: 1, to: 9, total: 25 })}
                 <div className="flex gap-1 ml-auto">
                     <Button variant="ghost" disabled className="text-gray-400">
-                        Previous
+                        {t("common.previous")}
                     </Button>
                     <Button variant="secondary" className="bg-gray-200 text-gray-900 h-8 w-8 p-0">
                         1
                     </Button>
                     <Button variant="ghost" className="text-gray-900 hover:bg-gray-100">
-                        Next
+                        {t("common.next")}
                     </Button>
                 </div>
             </div>

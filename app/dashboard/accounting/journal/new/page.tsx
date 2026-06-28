@@ -26,6 +26,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/dashboard/shared/page-header";
+import { useTranslation } from "@/lib/i18n";
 
 // Schema
 const journalLineSchema = z.object({
@@ -49,6 +50,7 @@ const journalEntryFormSchema = z.object({
 type JournalEntryValues = z.infer<typeof journalEntryFormSchema>;
 
 export default function NewJournalEntryPage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const { profile } = useUserProfile();
     const { accounts, fetchAccounts, recordJournalEntry } = useFinance();
@@ -89,7 +91,7 @@ export default function NewJournalEntryPage() {
 
     const onSubmit = async (data: JournalEntryValues) => {
         if (!isBalanced) {
-            toast.error(`Entry is unbalanced. Difference: ${(totalDebits - totalCredits).toFixed(2)}`);
+            toast.error(t("accounting.journal.unbalanced", { difference: (totalDebits - totalCredits).toFixed(2) }));
             return;
         }
 
@@ -116,11 +118,11 @@ export default function NewJournalEntryPage() {
                 totalAmount: totalDebits,
             });
 
-            toast.success("Journal Entry Recorded");
+            toast.success(t("accounting.journal.recorded"));
             // router.push("/dashboard/accounting/journal");
             form.reset();
         } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : "Failed to record entry";
+            const message = error instanceof Error ? error.message : t("accounting.journal.recordFailed");
             toast.error(message);
         } finally {
             setIsSubmitting(false);
@@ -130,19 +132,19 @@ export default function NewJournalEntryPage() {
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
             <Button variant="ghost" onClick={() => router.back()} className="gap-2 pl-0">
-                <ArrowLeft className="h-4 w-4" /> Back
+                <ArrowLeft className="h-4 w-4" /> {t("common.back")}
             </Button>
 
             <PageHeader
-                title="New Journal Entry"
-                description="Record a manual double-entry transaction. Supports Multi-Currency."
+                title={t("accounting.journal.new.title")}
+                description={t("accounting.journal.new.description")}
             />
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Transaction Details</CardTitle>
+                            <CardTitle>{t("accounting.journal.new.transactionDetails")}</CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-6 md:grid-cols-3">
                             <FormField
@@ -150,7 +152,7 @@ export default function NewJournalEntryPage() {
                                 name="date"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Date</FormLabel>
+                                        <FormLabel>{t("common.date")}</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
@@ -164,7 +166,7 @@ export default function NewJournalEntryPage() {
                                                         {field.value ? (
                                                             format(field.value, "PPP")
                                                         ) : (
-                                                            <span>Pick a date</span>
+                                                            <span>{t("accounting.journal.new.pickDate")}</span>
                                                         )}
                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button>
@@ -192,9 +194,9 @@ export default function NewJournalEntryPage() {
                                 name="reference"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Reference #</FormLabel>
+                                        <FormLabel>{t("accounting.journal.new.referenceLabel")}</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. JE-2024-001" {...field} />
+                                            <Input placeholder={t("accounting.journal.new.referencePlaceholder")} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -206,9 +208,9 @@ export default function NewJournalEntryPage() {
                                 name="description"
                                 render={({ field }) => (
                                     <FormItem className="md:col-span-3">
-                                        <FormLabel>Memo / Description</FormLabel>
+                                        <FormLabel>{t("accounting.journal.new.memoLabel")}</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Describe the transaction..." {...field} />
+                                            <Textarea placeholder={t("accounting.journal.new.memoPlaceholder")} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -221,11 +223,11 @@ export default function NewJournalEntryPage() {
                                 name="currency"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Currency</FormLabel>
+                                        <FormLabel>{t("accounting.journal.currency")}</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Select currency" />
+                                                    <SelectValue placeholder={t("accounting.journal.new.selectCurrency")} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
@@ -246,7 +248,7 @@ export default function NewJournalEntryPage() {
                                 name="fxRate"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Exchange Rate (1 {form.watch("currency")} = ? Base)</FormLabel>
+                                        <FormLabel>{t("accounting.journal.new.exchangeRate", { currency: form.watch("currency") })}</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
@@ -265,18 +267,18 @@ export default function NewJournalEntryPage() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Journal Lines</CardTitle>
-                            <CardDescription>Debits must equal Credits</CardDescription>
+                            <CardTitle>{t("accounting.journal.new.linesTitle")}</CardTitle>
+                            <CardDescription>{t("accounting.journal.new.linesDescription")}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[250px]">Account</TableHead>
-                                        <TableHead className="w-[120px]">Debit</TableHead>
-                                        <TableHead className="w-[120px]">Credit</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead className="w-[150px]">Entity (Opt)</TableHead>
+                                        <TableHead className="w-[250px]">{t("accounting.journal.new.account")}</TableHead>
+                                        <TableHead className="w-[120px]">{t("accounting.journal.new.debit")}</TableHead>
+                                        <TableHead className="w-[120px]">{t("accounting.journal.new.credit")}</TableHead>
+                                        <TableHead>{t("accounting.journal.descriptionColumn")}</TableHead>
+                                        <TableHead className="w-[150px]">{t("accounting.journal.new.entityOptional")}</TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -291,7 +293,7 @@ export default function NewJournalEntryPage() {
                                                         <Select onValueChange={field.onChange} value={field.value}>
                                                             <FormControl>
                                                                 <SelectTrigger>
-                                                                    <SelectValue placeholder="Select Account" />
+                                                                    <SelectValue placeholder={t("accounting.journal.new.selectAccount")} />
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
@@ -339,7 +341,7 @@ export default function NewJournalEntryPage() {
                                                 <FormField
                                                     control={form.control}
                                                     name={`lines.${index}.description`}
-                                                    render={({ field }) => <Input {...field} placeholder="Line memo" />}
+                                                    render={({ field }) => <Input {...field} placeholder={t("accounting.journal.new.lineMemo")} />}
                                                 />
                                             </TableCell>
                                             <TableCell>
@@ -355,7 +357,7 @@ export default function NewJournalEntryPage() {
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
-                                                                <SelectItem value="none">- None -</SelectItem>
+                                                                <SelectItem value="none">{t("accounting.journal.new.entityNone")}</SelectItem>
                                                                 {customers.map((c) => (
                                                                     <SelectItem key={c.id} value={c.id}>
                                                                         {c.company}
@@ -388,23 +390,23 @@ export default function NewJournalEntryPage() {
                                 className="mt-4"
                                 onClick={() => append({ accountId: "", debit: 0, credit: 0 })}
                             >
-                                <Plus className="mr-2 h-4 w-4" /> Add Line
+                                <Plus className="mr-2 h-4 w-4" /> {t("accounting.journal.new.addLine")}
                             </Button>
                         </CardContent>
                     </Card>
 
                     <div className="flex justify-between items-center bg-gray-50 p-6 rounded-lg border">
                         <div className="text-sm text-gray-500">
-                            Total Debits: <span className="font-mono font-bold">{totalDebits.toFixed(2)}</span>
+                            {t("accounting.journal.new.totalDebits")} <span className="font-mono font-bold">{totalDebits.toFixed(2)}</span>
                             <span className="mx-4">|</span>
-                            Total Credits: <span className="font-mono font-bold">{totalCredits.toFixed(2)}</span>
+                            {t("accounting.journal.new.totalCredits")} <span className="font-mono font-bold">{totalCredits.toFixed(2)}</span>
                         </div>
                         <div className="flex gap-4">
                             <Button variant="outline" type="button" onClick={() => router.back()}>
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                             <Button type="submit" disabled={isSubmitting || !isBalanced}>
-                                {isSubmitting ? "Recording..." : "Post Journal Entry"}
+                                {isSubmitting ? t("accounting.journal.new.recording") : t("accounting.journal.new.post")}
                             </Button>
                         </div>
                     </div>

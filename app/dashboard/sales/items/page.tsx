@@ -6,23 +6,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Plus, Search, RefreshCw, Upload, ArrowUpDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTranslation } from "@/lib/i18n";
 
 export default function SalesItemsPage() {
+    const { t } = useTranslation();
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-1">
-                <h2 className="text-xl font-bold text-gray-900">Items</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t("sales.items.title")}</h2>
                 <a href="#" className="text-sm text-blue-600 hover:underline">
-                    Groups
+                    {t("sales.items.groups")}
                 </a>
             </div>
 
             <div className="flex items-center gap-2">
                 <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
-                    <Plus className="mr-2 h-4 w-4" /> New Item
+                    <Plus className="mr-2 h-4 w-4" /> {t("sales.items.newItem")}
                 </Button>
                 <Button variant="outline" className="text-gray-700 bg-white hover:bg-gray-50">
-                    <Upload className="mr-2 h-4 w-4" /> Import Items
+                    <Upload className="mr-2 h-4 w-4" /> {t("sales.items.import")}
                 </Button>
             </div>
 
@@ -37,15 +39,15 @@ export default function SalesItemsPage() {
                                 <SelectItem value="25">25</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline">Export</Button>
-                        <Button variant="outline">Bulk Actions</Button>
+                        <Button variant="outline">{t("common.export")}</Button>
+                        <Button variant="outline">{t("sales.items.bulkActions")}</Button>
                         <Button variant="outline" size="icon">
                             <RefreshCw className="h-4 w-4" />
                         </Button>
                     </div>
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                        <Input placeholder="Search..." className="pl-9" />
+                        <Input placeholder={t("common.searchPlaceholder")} className="pl-9" />
                     </div>
                 </div>
 
@@ -58,17 +60,17 @@ export default function SalesItemsPage() {
                                 </TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">
                                     <div className="flex items-center cursor-pointer hover:bg-gray-200/50 p-1 rounded -ml-1">
-                                        Description <ArrowUpDown className="ml-1 h-3 w-3 text-gray-400" />
+                                        {t("sales.items.column.description")} <ArrowUpDown className="ml-1 h-3 w-3 text-gray-400" />
                                     </div>
                                 </TableHead>
                                 <TableHead className="font-semibold text-gray-900 bg-gray-100/50">
-                                    Long Description
+                                    {t("sales.items.column.longDescription")}
                                 </TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Rate</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Tax 1</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Tax 2</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Unit</TableHead>
-                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">Group Name</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("sales.items.column.rate")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("sales.items.column.tax1")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("sales.items.column.tax2")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("sales.items.column.unit")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900 bg-gray-100/50">{t("sales.items.column.groupName")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -125,21 +127,21 @@ export default function SalesItemsPage() {
                                         <div className="font-semibold text-gray-900">{row.desc}</div>
                                         {row.showActions && (
                                             <div className="flex gap-1 text-xs text-gray-500 mt-1">
-                                                <span className="hover:text-gray-900 cursor-pointer">Edit</span> |
+                                                <span className="hover:text-gray-900 cursor-pointer">{t("common.edit")}</span> |
                                                 <span className="text-red-600 hover:text-red-700 cursor-pointer">
-                                                    Delete
+                                                    {t("common.delete")}
                                                 </span>{" "}
-                                                |<span className="hover:text-gray-900 cursor-pointer">Copy</span>
+                                                |<span className="hover:text-gray-900 cursor-pointer">{t("sales.items.copy")}</span>
                                             </div>
                                         )}
                                         {/* CSS-only hover effect for non-simulated rows */}
                                         {!row.showActions && (
                                             <div className="invisible group-hover:visible flex gap-1 text-xs text-gray-500 mt-1">
-                                                <span className="hover:text-gray-900 cursor-pointer">Edit</span> |
+                                                <span className="hover:text-gray-900 cursor-pointer">{t("common.edit")}</span> |
                                                 <span className="text-red-600 hover:text-red-700 cursor-pointer">
-                                                    Delete
+                                                    {t("common.delete")}
                                                 </span>{" "}
-                                                |<span className="hover:text-gray-900 cursor-pointer">Copy</span>
+                                                |<span className="hover:text-gray-900 cursor-pointer">{t("sales.items.copy")}</span>
                                             </div>
                                         )}
                                     </TableCell>

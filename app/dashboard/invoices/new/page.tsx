@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useInvoices } from "@/lib/hooks/use-invoices";
+import { useTranslation } from "@/lib/i18n";
 import type { InvoiceFormData } from "@/lib/schemas";
 
 interface Client {
@@ -58,6 +59,7 @@ interface LineItem {
 }
 
 export default function CreateInvoicePage() {
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -193,12 +195,12 @@ export default function CreateInvoicePage() {
     const handleSubmit = async (action: "draft" | "send" | "send_later" | "record_payment") => {
         if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) return;
         if (!profile?.orgId || !selectedClient) {
-            toast.error("Please select a client");
+            toast.error(t("invoices.new.toast.selectClient"));
             return;
         }
 
         if (!date || !dueDate) {
-            toast.error("Please select both Invoice Date and Due Date");
+            toast.error(t("invoices.new.toast.selectDates"));
             return;
         }
 
@@ -242,16 +244,16 @@ export default function CreateInvoicePage() {
             const invoiceId = await createInvoice(invoiceData);
 
             if (action === "draft") {
-                toast.success("Draft invoice created successfully");
+                toast.success(t("invoices.new.toast.draftCreated"));
             } else {
-                toast.success("Invoice created successfully");
+                toast.success(t("invoices.new.toast.created"));
                 // In real app, trigger send/email logic here
             }
 
             router.push("/dashboard/invoices");
         } catch (error) {
             console.error("Error creating invoice:", error);
-            toast.error("Failed to create invoice");
+            toast.error(t("invoices.new.toast.failed"));
         } finally {
             setLoading(false);
         }
@@ -269,10 +271,10 @@ export default function CreateInvoicePage() {
                         <div className="space-y-6">
                             {/* Customer */}
                             <div className="space-y-2">
-                                <Label className="text-red-500 font-medium">* Customer</Label>
+                                <Label className="text-red-500 font-medium">{t("invoices.new.customerRequired")}</Label>
                                 <Select onValueChange={setSelectedClient} value={selectedClient}>
                                     <SelectTrigger className="bg-gray-50 border-gray-200">
-                                        <SelectValue placeholder="Select Customer" />
+                                        <SelectValue placeholder={t("invoices.new.selectCustomer")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {clients.map((client) => (
@@ -286,10 +288,10 @@ export default function CreateInvoicePage() {
 
                             {/* Project */}
                             <div className="space-y-2">
-                                <Label>Project</Label>
+                                <Label>{t("invoices.new.project")}</Label>
                                 <Select onValueChange={setSelectedProject} value={selectedProject}>
                                     <SelectTrigger className="bg-gray-50 border-gray-200">
-                                        <SelectValue placeholder="Select Project" />
+                                        <SelectValue placeholder={t("invoices.new.selectProject")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {projects.map((project) => (
@@ -308,16 +310,18 @@ export default function CreateInvoicePage() {
                                         <span className="h-4 w-4 border border-blue-600 rounded flex items-center justify-center text-[10px]">
                                             ✎
                                         </span>
-                                        Bill To
+                                        {t("invoices.new.billTo")}
                                     </div>
                                     <div className="text-sm text-gray-600 whitespace-pre-wrap min-h-[80px]">
-                                        {clientDetails?.billingAddress || "No billing address"}
+                                        {clientDetails?.billingAddress || t("invoices.new.noBillingAddress")}
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="flex items-center gap-2 mb-2 text-sm font-medium">Ship to</div>
+                                    <div className="flex items-center gap-2 mb-2 text-sm font-medium">
+                                        {t("invoices.new.shipTo")}
+                                    </div>
                                     <div className="text-sm text-gray-600 whitespace-pre-wrap min-h-[80px]">
-                                        {clientDetails?.shippingAddress || "No shipping address"}
+                                        {clientDetails?.shippingAddress || t("invoices.new.noShippingAddress")}
                                     </div>
                                 </div>
                             </div>
@@ -325,19 +329,23 @@ export default function CreateInvoicePage() {
                             {/* Invoice Number & Dates */}
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label className="text-red-500 font-medium">* Invoice Number</Label>
+                                    <Label className="text-red-500 font-medium">
+                                        {t("invoices.new.invoiceNumberRequired")}
+                                    </Label>
                                     <div className="flex items-center gap-2">
                                         <div className="bg-gray-100 border border-gray-200 px-3 py-2 rounded-md text-sm text-gray-500">
                                             INV-
                                         </div>
-                                        <Input disabled placeholder="Auto-generated" className="bg-gray-50" />
+                                        <Input disabled placeholder={t("invoices.new.autoGenerated")} className="bg-gray-50" />
                                         <Settings className="h-4 w-4 text-gray-400 cursor-pointer" />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label className="text-red-500 font-medium">* Invoice Date</Label>
+                                        <Label className="text-red-500 font-medium">
+                                            {t("invoices.new.invoiceDateRequired")}
+                                        </Label>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button
@@ -348,7 +356,11 @@ export default function CreateInvoicePage() {
                                                     )}
                                                 >
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {date ? format(date, "dd/MM/yyyy") : <span>Pick a date</span>}
+                                                    {date ? (
+                                                        format(date, "dd/MM/yyyy")
+                                                    ) : (
+                                                        <span>{t("invoices.new.pickDate")}</span>
+                                                    )}
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0">
@@ -362,7 +374,7 @@ export default function CreateInvoicePage() {
                                         </Popover>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Due Date</Label>
+                                        <Label>{t("invoices.new.dueDate")}</Label>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button
@@ -373,7 +385,11 @@ export default function CreateInvoicePage() {
                                                     )}
                                                 >
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {dueDate ? format(dueDate, "dd/MM/yyyy") : <span>Pick a date</span>}
+                                                    {dueDate ? (
+                                                        format(dueDate, "dd/MM/yyyy")
+                                                    ) : (
+                                                        <span>{t("invoices.new.pickDate")}</span>
+                                                    )}
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0">
@@ -396,7 +412,7 @@ export default function CreateInvoicePage() {
                                     onCheckedChange={(c) => setPreventOverdueReminders(c === true)}
                                 />
                                 <Label htmlFor="preventOverdue" className="text-gray-600 font-normal">
-                                    Prevent sending overdue reminders for this invoice
+                                    {t("invoices.new.preventOverdueReminders")}
                                 </Label>
                             </div>
                         </div>
@@ -405,18 +421,18 @@ export default function CreateInvoicePage() {
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <Label className="flex items-center gap-2">
-                                    <span className="h-4 w-4 rotate-45">🏷️</span> Tags
+                                    <span className="h-4 w-4 rotate-45">🏷️</span> {t("invoices.new.tags")}
                                 </Label>
                                 <Input
                                     value={tags}
                                     onChange={(e) => setTags(e.target.value)}
-                                    placeholder="Tag"
+                                    placeholder={t("invoices.new.tagPlaceholder")}
                                     className="border-gray-200"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Allowed payment modes for this invoice</Label>
+                                <Label>{t("invoices.new.allowedPaymentModes")}</Label>
                                 <div className="relative">
                                     <Input
                                         value={paymentModes}
@@ -429,7 +445,9 @@ export default function CreateInvoicePage() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label className="text-red-500 font-medium">* Currency</Label>
+                                    <Label className="text-red-500 font-medium">
+                                        {t("invoices.new.currencyRequired")}
+                                    </Label>
                                     <Select value={currency} onValueChange={setCurrency}>
                                         <SelectTrigger className="bg-gray-50 border-gray-200">
                                             <SelectValue />
@@ -441,10 +459,10 @@ export default function CreateInvoicePage() {
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Sale Agent</Label>
+                                    <Label>{t("invoices.new.saleAgent")}</Label>
                                     <Select value={saleAgent} onValueChange={setSaleAgent}>
                                         <SelectTrigger className="bg-gray-50 border-gray-200">
-                                            <SelectValue placeholder="Select Agent" />
+                                            <SelectValue placeholder={t("invoices.new.selectAgent")} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {staff.map((s) => (
@@ -459,36 +477,44 @@ export default function CreateInvoicePage() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Recurring Invoice?</Label>
+                                    <Label>{t("invoices.new.recurringInvoice")}</Label>
                                     <Select value={recurring} onValueChange={setRecurring}>
                                         <SelectTrigger className="bg-gray-50 border-gray-200">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="No">No</SelectItem>
-                                            <SelectItem value="Daily">Daily</SelectItem>
-                                            <SelectItem value="Weekly">Weekly</SelectItem>
-                                            <SelectItem value="Monthly">Monthly</SelectItem>
+                                            <SelectItem value="No">{t("invoices.new.recurring.no")}</SelectItem>
+                                            <SelectItem value="Daily">{t("invoices.new.recurring.daily")}</SelectItem>
+                                            <SelectItem value="Weekly">{t("invoices.new.recurring.weekly")}</SelectItem>
+                                            <SelectItem value="Monthly">
+                                                {t("invoices.new.recurring.monthly")}
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Discount Type</Label>
+                                    <Label>{t("invoices.new.discountType")}</Label>
                                     <Select value={discountType} onValueChange={setDiscountType}>
                                         <SelectTrigger className="bg-gray-50 border-gray-200">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="No discount">No discount</SelectItem>
-                                            <SelectItem value="Before Tax">Before Tax</SelectItem>
-                                            <SelectItem value="After Tax">After Tax</SelectItem>
+                                            <SelectItem value="No discount">
+                                                {t("invoices.new.discount.none")}
+                                            </SelectItem>
+                                            <SelectItem value="Before Tax">
+                                                {t("invoices.new.discount.beforeTax")}
+                                            </SelectItem>
+                                            <SelectItem value="After Tax">
+                                                {t("invoices.new.discount.afterTax")}
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Admin Note</Label>
+                                <Label>{t("invoices.new.adminNote")}</Label>
                                 <Textarea
                                     value={adminNote}
                                     onChange={(e) => setAdminNote(e.target.value)}
@@ -505,10 +531,10 @@ export default function CreateInvoicePage() {
                             <div className="flex items-center gap-2">
                                 <Select defaultValue="add_item">
                                     <SelectTrigger className="w-[140px] border-gray-200 h-9">
-                                        <SelectValue placeholder="Add Item" />
+                                        <SelectValue placeholder={t("invoices.new.addItem")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="add_item">Add Item</SelectItem>
+                                        <SelectItem value="add_item">{t("invoices.new.addItem")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <Button size="sm" variant="outline" className="h-9 w-9 p-0" onClick={addItem}>
@@ -517,16 +543,16 @@ export default function CreateInvoicePage() {
 
                                 <Select defaultValue="bill_tasks">
                                     <SelectTrigger className="w-[140px] border-gray-200 h-9 bg-gray-50">
-                                        <SelectValue placeholder="Bill Tasks" />
+                                        <SelectValue placeholder={t("invoices.new.billTasks")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="bill_tasks">Bill Tasks</SelectItem>
+                                        <SelectItem value="bill_tasks">{t("invoices.new.billTasks")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <span className="text-sm font-medium">Show quantity as:</span>
+                                <span className="text-sm font-medium">{t("invoices.new.showQuantityAs")}</span>
                                 <RadioGroup
                                     defaultValue="qty"
                                     value={qtyType}
@@ -536,19 +562,19 @@ export default function CreateInvoicePage() {
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="qty" id="qty" />
                                         <Label htmlFor="qty" className="font-normal text-gray-600">
-                                            Qty
+                                            {t("invoices.new.qty")}
                                         </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="hours" id="hours" />
                                         <Label htmlFor="hours" className="font-normal text-gray-600">
-                                            Hours
+                                            {t("invoices.new.hours")}
                                         </Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="qty_hours" id="qty_hours" />
                                         <Label htmlFor="qty_hours" className="font-normal text-gray-600">
-                                            Qty/Hours
+                                            {t("invoices.new.qtyHours")}
                                         </Label>
                                     </div>
                                 </RadioGroup>
@@ -557,11 +583,11 @@ export default function CreateInvoicePage() {
 
                         {/* Items Table Header */}
                         <div className="grid grid-cols-12 gap-4 bg-gray-50 p-2 text-sm font-semibold text-gray-700 border-y border-gray-200">
-                            <div className="col-span-12 md:col-span-5 pl-2">Item</div>
-                            <div className="col-span-12 md:col-span-2">Qty</div>
-                            <div className="col-span-12 md:col-span-2">Rate</div>
-                            <div className="col-span-12 md:col-span-1">Tax</div>
-                            <div className="col-span-12 md:col-span-1 text-right">Amount</div>
+                            <div className="col-span-12 md:col-span-5 pl-2">{t("invoices.new.colItem")}</div>
+                            <div className="col-span-12 md:col-span-2">{t("invoices.new.colQty")}</div>
+                            <div className="col-span-12 md:col-span-2">{t("invoices.new.colRate")}</div>
+                            <div className="col-span-12 md:col-span-1">{t("invoices.new.colTax")}</div>
+                            <div className="col-span-12 md:col-span-1 text-right">{t("invoices.new.colAmount")}</div>
                             <div className="col-span-12 md:col-span-1 text-center">
                                 <Settings className="h-4 w-4 mx-auto" />
                             </div>
@@ -576,13 +602,13 @@ export default function CreateInvoicePage() {
                                 >
                                     <div className="col-span-12 md:col-span-5 space-y-2">
                                         <Input
-                                            placeholder="Description"
+                                            placeholder={t("invoices.new.descriptionPlaceholder")}
                                             className="border-gray-200 h-9"
                                             value={item.description}
                                             onChange={(e) => handleItemChange(item.id, "description", e.target.value)}
                                         />
                                         <Textarea
-                                            placeholder="Long description"
+                                            placeholder={t("invoices.new.longDescriptionPlaceholder")}
                                             className="border-gray-200 min-h-[60px] resize-none text-sm"
                                             value={item.longDescription}
                                             onChange={(e) =>
@@ -604,7 +630,7 @@ export default function CreateInvoicePage() {
                                                     )
                                                 }
                                             />
-                                            <span className="text-xs text-gray-400">Unit</span>
+                                            <span className="text-xs text-gray-400">{t("invoices.new.unit")}</span>
                                         </div>
                                     </div>
                                     <div className="col-span-12 md:col-span-2">
@@ -623,7 +649,7 @@ export default function CreateInvoicePage() {
                                             onValueChange={(val) => handleItemChange(item.id, "tax", val)}
                                         >
                                             <SelectTrigger className="border-gray-200 h-9">
-                                                <SelectValue placeholder="Tax" />
+                                                <SelectValue placeholder={t("invoices.new.colTax")} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="0">0%</SelectItem>
@@ -654,7 +680,7 @@ export default function CreateInvoicePage() {
                         {/* Left Side: Notes */}
                         <div className="flex-1 space-y-6">
                             <div className="space-y-2">
-                                <Label>Client Note</Label>
+                                <Label>{t("invoices.new.clientNote")}</Label>
                                 <Textarea
                                     className="border-gray-200 min-h-[80px]"
                                     value={clientNote}
@@ -662,7 +688,7 @@ export default function CreateInvoicePage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Terms & Conditions</Label>
+                                <Label>{t("invoices.new.termsConditions")}</Label>
                                 <Textarea
                                     className="border-gray-200 min-h-[80px]"
                                     value={termsConditions}
@@ -674,14 +700,14 @@ export default function CreateInvoicePage() {
                         {/* Right Side: Calculation */}
                         <div className="w-full md:w-[400px] space-y-4">
                             <div className="flex justify-between text-sm py-2 border-b border-gray-50">
-                                <span className="font-semibold text-gray-700">Sub Total :</span>
+                                <span className="font-semibold text-gray-700">{t("invoices.new.subTotal")}</span>
                                 <span className="text-gray-700">
                                     {currency} {calculateSubTotal().toFixed(2)}
                                 </span>
                             </div>
 
                             <div className="flex items-center justify-between gap-4 py-2 border-b border-gray-50">
-                                <span className="font-semibold text-gray-700 w-24">Discount</span>
+                                <span className="font-semibold text-gray-700 w-24">{t("invoices.new.discount")}</span>
                                 <div className="flex gap-2 flex-1">
                                     <Input
                                         type="number"
@@ -705,7 +731,7 @@ export default function CreateInvoicePage() {
                             </div>
 
                             <div className="flex items-center justify-between gap-4 py-2 border-b border-gray-50">
-                                <span className="font-semibold text-gray-700 w-24">Adjustment</span>
+                                <span className="font-semibold text-gray-700 w-24">{t("invoices.new.adjustment")}</span>
                                 <div className="flex-1">
                                     <Input
                                         type="number"
@@ -720,7 +746,7 @@ export default function CreateInvoicePage() {
                             </div>
 
                             <div className="flex justify-between text-base py-2">
-                                <span className="font-bold text-gray-800">Total :</span>
+                                <span className="font-bold text-gray-800">{t("invoices.new.total")}</span>
                                 <span className="font-bold text-gray-800">
                                     {currency} {calculateTotal().toFixed(2)}
                                 </span>
@@ -733,7 +759,7 @@ export default function CreateInvoicePage() {
             {/* Sticky/Fixed Bottom Action Bar */}
             <div className="fixed bottom-0 left-0 lg:left-64 right-0 bg-white border-t border-gray-200 p-4 flex justify-end gap-2 z-10 shadow-lg">
                 <Button variant="outline" className="border-gray-200" onClick={() => handleSubmit("draft")}>
-                    Save as Draft
+                    {t("invoices.new.saveAsDraft")}
                 </Button>
 
                 <div className="flex">
@@ -741,7 +767,7 @@ export default function CreateInvoicePage() {
                         className="rounded-r-none bg-slate-900 text-white hover:bg-slate-800"
                         onClick={() => handleSubmit("send")}
                     >
-                        Save
+                        {t("common.save")}
                     </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -750,12 +776,14 @@ export default function CreateInvoicePage() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleSubmit("send")}>Save & Send</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSubmit("send")}>
+                                {t("invoices.new.saveAndSend")}
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleSubmit("send_later")}>
-                                Save & Send Later
+                                {t("invoices.new.saveAndSendLater")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleSubmit("record_payment")}>
-                                Save & Record Payment
+                                {t("invoices.new.saveAndRecordPayment")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

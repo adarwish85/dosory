@@ -20,8 +20,10 @@ import { Calendar as CalendarIcon, Loader2, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 export default function CreateContractPage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const searchParams = useSearchParams();
     const customerIdParam = searchParams.get("customerId");
@@ -56,7 +58,7 @@ export default function CreateContractPage() {
         setIsSubmitting(true);
         try {
             const contractId = await createContract(data);
-            toast.success("Contract created successfully");
+            toast.success(t("contracts.toast.created"));
 
             if (customerIdParam) {
                 router.push(`/dashboard/customers/${customerIdParam}/contracts`);
@@ -65,7 +67,7 @@ export default function CreateContractPage() {
             }
         } catch (error) {
             console.error("Error creating contract:", error);
-            toast.error("Failed to create contract");
+            toast.error(t("contracts.toast.createFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -79,27 +81,27 @@ export default function CreateContractPage() {
                     className="flex items-center hover:text-gray-900 transition-colors"
                 >
                     <ChevronLeft className="h-4 w-4 mr-1" />
-                    Back to Contracts
+                    {t("contracts.new.back")}
                 </Link>
             </div>
 
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">New Contract</h1>
-                <p className="text-gray-500 mt-1">Draft a new contract for a customer.</p>
+                <h1 className="text-3xl font-bold text-gray-900">{t("contracts.new.title")}</h1>
+                <p className="text-gray-500 mt-1">{t("contracts.new.subtitle")}</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Contract Information</CardTitle>
+                        <CardTitle>{t("contracts.form.sectionInfo")}</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-6">
                         {/* Subject */}
                         <div className="grid gap-2">
-                            <Label htmlFor="subject">Subject <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="subject">{t("contracts.form.subject")} <span className="text-red-500">*</span></Label>
                             <Input
                                 id="subject"
-                                placeholder="e.g. Annual Maintenance Agreement"
+                                placeholder={t("contracts.form.subjectPlaceholder")}
                                 {...register("subject")}
                                 className={cn(errors.subject && "border-red-500")}
                             />
@@ -109,14 +111,14 @@ export default function CreateContractPage() {
                         {/* Customer & Type */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="customerId">Customer <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="customerId">{t("contracts.form.customer")} <span className="text-red-500">*</span></Label>
                                 <Select
                                     value={watch("customerId")}
                                     onValueChange={(val) => setValue("customerId", val, { shouldValidate: true })}
                                     disabled={!!customerIdParam}
                                 >
                                     <SelectTrigger className={cn(errors.customerId && "border-red-500")}>
-                                        <SelectValue placeholder="Select Customer" />
+                                        <SelectValue placeholder={t("contracts.form.customerPlaceholder")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {customers.map((c) => (
@@ -128,10 +130,10 @@ export default function CreateContractPage() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="contractType">Contract Type</Label>
+                                <Label htmlFor="contractType">{t("contracts.form.type")}</Label>
                                 <Input
                                     id="contractType"
-                                    placeholder="e.g. NDA, SLA"
+                                    placeholder={t("contracts.form.typePlaceholder")}
                                     {...register("contractType")}
                                 />
                             </div>
@@ -140,7 +142,7 @@ export default function CreateContractPage() {
                         {/* Value & Dates */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="contractValue">Value</Label>
+                                <Label htmlFor="contractValue">{t("contracts.form.value")}</Label>
                                 <Input
                                     type="number"
                                     min="0"
@@ -150,7 +152,7 @@ export default function CreateContractPage() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label>Start Date <span className="text-red-500">*</span></Label>
+                                <Label>{t("contracts.form.startDate")} <span className="text-red-500">*</span></Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -162,7 +164,7 @@ export default function CreateContractPage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                                            {startDate ? format(startDate, "PPP") : <span>{t("contracts.form.pickDate")}</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -178,7 +180,7 @@ export default function CreateContractPage() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label>End Date</Label>
+                                <Label>{t("contracts.form.endDate")}</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -189,7 +191,7 @@ export default function CreateContractPage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
+                                            {endDate ? format(endDate, "PPP") : <span>{t("contracts.form.pickDate")}</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -206,10 +208,10 @@ export default function CreateContractPage() {
 
                         {/* Description */}
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">{t("contracts.form.description")}</Label>
                             <Textarea
                                 id="description"
-                                placeholder="Summary of the contract..."
+                                placeholder={t("contracts.form.descriptionPlaceholder")}
                                 className="min-h-[80px]"
                                 {...register("description")}
                             />
@@ -217,10 +219,10 @@ export default function CreateContractPage() {
 
                         {/* Content - Placeholder for Rich Text */}
                         <div className="grid gap-2">
-                            <Label htmlFor="content">Contract Content</Label>
+                            <Label htmlFor="content">{t("contracts.form.content")}</Label>
                             <Textarea
                                 id="content"
-                                placeholder="Full contract terms..."
+                                placeholder={t("contracts.form.contentPlaceholder")}
                                 className="min-h-[300px] font-mono text-sm"
                                 {...register("content")}
                             />
@@ -229,11 +231,11 @@ export default function CreateContractPage() {
                     </CardContent>
                     <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
                         <Button type="button" variant="ghost" className="mr-2" onClick={() => router.back()}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Contract
+                            {t("contracts.new.submit")}
                         </Button>
                     </CardFooter>
                 </Card>

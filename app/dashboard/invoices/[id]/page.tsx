@@ -38,6 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useInvoice, useInvoices } from "@/lib/hooks";
+import { useTranslation } from "@/lib/i18n";
 import { InvoiceStatus, LineItem } from "@/lib/types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,6 +55,7 @@ const formatDate = (date: any): string => {
 };
 
 export default function InvoiceDetailsPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const router = useRouter();
     const id = params.id as string;
@@ -68,10 +70,10 @@ export default function InvoiceDetailsPage() {
         setActionLoading(newStatus);
         try {
             await updateStatus(id, newStatus);
-            toast.success(`Invoice marked as ${newStatus}`);
+            toast.success(t("invoices.detail.toast.statusUpdated", { status: newStatus }));
         } catch (error) {
             console.error("Error updating status:", error);
-            toast.error("Failed to update invoice status");
+            toast.error(t("invoices.detail.toast.statusFailed"));
         } finally {
             setActionLoading(null);
         }
@@ -94,26 +96,26 @@ export default function InvoiceDetailsPage() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
 
-            toast.success("Invoice copied successfully");
+            toast.success(t("invoices.detail.toast.copied"));
             router.push(`/dashboard/invoices/${newId}`);
         } catch (error) {
             console.error("Error copying invoice:", error);
-            toast.error("Failed to copy invoice");
+            toast.error(t("invoices.detail.toast.copyFailed"));
         } finally {
             setActionLoading(null);
         }
     };
 
     const handleDelete = async () => {
-        if (!invoice || !confirm("Are you sure you want to delete this invoice? This action cannot be undone.")) return;
+        if (!invoice || !confirm(t("invoices.detail.confirmDelete"))) return;
         setActionLoading("delete");
         try {
             await deleteInvoice(id);
-            toast.success("Invoice deleted");
+            toast.success(t("invoices.detail.toast.deleted"));
             router.push("/dashboard/invoices");
         } catch (error) {
             console.error("Error deleting invoice:", error);
-            toast.error("Failed to delete invoice");
+            toast.error(t("invoices.detail.toast.deleteFailed"));
         } finally {
             setActionLoading(null);
         }
@@ -133,7 +135,8 @@ export default function InvoiceDetailsPage() {
                 <Loader2 className="h-6 w-6 animate-spin" />
             </div>
         );
-    if (!invoice) return <div className="p-8 flex items-center justify-center">Invoice not found</div>;
+    if (!invoice)
+        return <div className="p-8 flex items-center justify-center">{t("invoices.detail.notFound")}</div>;
 
     // Derived or Default Data placeholders
     const projectName = invoice.projectName || "EGIC Export";
@@ -177,7 +180,7 @@ export default function InvoiceDetailsPage() {
                             onClick={() => router.push("/dashboard/invoices")}
                             className="gap-2 text-gray-600 hover:text-gray-900"
                         >
-                            <ArrowLeft className="h-4 w-4" /> Back to Invoices
+                            <ArrowLeft className="h-4 w-4" /> {t("invoices.detail.backToInvoices")}
                         </Button>
                         <Badge
                             variant="outline"
@@ -186,12 +189,17 @@ export default function InvoiceDetailsPage() {
                                 getStatusColor(invoice.status)
                             )}
                         >
-                            {invoice.status}
+                            {t(`invoices.status.${invoice.status}`)}
                         </Badge>
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
-                        <Button variant="outline" size="icon" className="h-9 w-9 bg-white" title="Edit Invoice">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 bg-white"
+                            title={t("invoices.detail.editInvoice")}
+                        >
                             <Pencil
                                 className="h-4 w-4 text-gray-600"
                                 onClick={() => router.push(`/dashboard/invoices/${id}/edit`)}
@@ -207,59 +215,66 @@ export default function InvoiceDetailsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem>
-                                    <Eye className="mr-2 h-4 w-4" /> View PDF
+                                    <Eye className="mr-2 h-4 w-4" /> {t("invoices.detail.viewPdf")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
-                                    <ExternalLink className="mr-2 h-4 w-4" /> View in New Tab
+                                    <ExternalLink className="mr-2 h-4 w-4" /> {t("invoices.detail.viewInNewTab")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
-                                    <Download className="mr-2 h-4 w-4" /> Download
+                                    <Download className="mr-2 h-4 w-4" /> {t("invoices.detail.download")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
-                                    <Printer className="mr-2 h-4 w-4" /> Print
+                                    <Printer className="mr-2 h-4 w-4" /> {t("invoices.detail.print")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
 
-                        <Button variant="outline" size="icon" className="h-9 w-9 bg-white" title="Send Email">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 bg-white"
+                            title={t("invoices.detail.sendEmail")}
+                        >
                             <Mail className="h-4 w-4 text-gray-600" />
                         </Button>
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="h-9 gap-1 bg-white px-3 text-gray-700">
-                                    More
+                                    {t("invoices.detail.more")}
                                     <ChevronDown className="h-3 w-3 opacity-50" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-60">
                                 <DropdownMenuItem onClick={handleViewAsCustomer}>
-                                    <User className="mr-2 h-4 w-4" /> View as Customer
+                                    <User className="mr-2 h-4 w-4" /> {t("invoices.detail.viewAsCustomer")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={handleCreateCreditNote}>
-                                    <CreditCard className="mr-2 h-4 w-4" /> Create Credit Note
+                                    <CreditCard className="mr-2 h-4 w-4" /> {t("invoices.detail.createCreditNote")}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => toast.info("Attach file coming soon")}>
-                                    <File className="mr-2 h-4 w-4" /> Attach File
+                                <DropdownMenuItem onClick={() => toast.info(t("invoices.detail.toast.attachFileSoon"))}>
+                                    <File className="mr-2 h-4 w-4" /> {t("invoices.detail.attachFile")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={handleCopyInvoice} disabled={actionLoading === "copy"}>
                                     <Copy className="mr-2 h-4 w-4" />{" "}
-                                    {actionLoading === "copy" ? "Copying..." : "Copy Invoice"}
+                                    {actionLoading === "copy"
+                                        ? t("invoices.detail.copying")
+                                        : t("invoices.detail.copyInvoice")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={() => handleUpdateStatus("sent")}
                                     disabled={actionLoading === "sent"}
                                 >
-                                    <Send className="mr-2 h-4 w-4" /> Mark as Sent
+                                    <Send className="mr-2 h-4 w-4" /> {t("invoices.detail.markAsSent")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={() => handleUpdateStatus("cancelled")}
                                     disabled={actionLoading === "cancelled"}
                                 >
-                                    <Ban className="mr-2 h-4 w-4" /> Mark as Cancelled
+                                    <Ban className="mr-2 h-4 w-4" /> {t("invoices.detail.markAsCancelled")}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => toast.info("Reminder pause coming soon")}>
-                                    <Clock className="mr-2 h-4 w-4" /> Pause Overdue Reminders
+                                <DropdownMenuItem onClick={() => toast.info(t("invoices.detail.toast.reminderPauseSoon"))}>
+                                    <Clock className="mr-2 h-4 w-4" /> {t("invoices.detail.pauseOverdueReminders")}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -268,13 +283,13 @@ export default function InvoiceDetailsPage() {
                                     className="text-red-600"
                                 >
                                     <Trash2 className="mr-2 h-4 w-4" />{" "}
-                                    {actionLoading === "delete" ? "Deleting..." : "Delete"}
+                                    {actionLoading === "delete" ? t("invoices.detail.deleting") : t("common.delete")}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
 
                         <Button className="h-9 bg-green-500 hover:bg-green-600 text-white gap-2">
-                            <Plus className="h-4 w-4" /> Payment
+                            <Plus className="h-4 w-4" /> {t("invoices.detail.payment")}
                         </Button>
                     </div>
                 </div>
@@ -283,7 +298,7 @@ export default function InvoiceDetailsPage() {
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 md:p-12 min-h-[800px] text-gray-900">
                     {/* Project Relation Banner */}
                     <div className="mb-10 text-gray-700">
-                        This invoice is related to project:{" "}
+                        {t("invoices.detail.relatedToProject")}{" "}
                         <Link href="#" className="text-blue-600 hover:underline font-medium">
                             {projectName}
                         </Link>
@@ -307,7 +322,7 @@ export default function InvoiceDetailsPage() {
                         <div className="text-right space-y-8">
                             {/* Bill To */}
                             <div>
-                                <p className="text-sm font-bold text-gray-900 mb-1">Bill To</p>
+                                <p className="text-sm font-bold text-gray-900 mb-1">{t("invoices.detail.billTo")}</p>
                                 <p className="text-blue-600 font-medium mb-1">{billToName}</p>
                                 <div className="text-sm text-gray-500 space-y-0.5">
                                     {billToAddress.map((line: string, i: number) => (
@@ -318,7 +333,7 @@ export default function InvoiceDetailsPage() {
 
                             {/* Ship To */}
                             <div>
-                                <p className="text-sm font-bold text-gray-900 mb-1">Ship to</p>
+                                <p className="text-sm font-bold text-gray-900 mb-1">{t("invoices.detail.shipTo")}</p>
                                 <div className="text-sm text-gray-500 space-y-0.5">
                                     {shipToAddress.map((line: string, i: number) => (
                                         <p key={i}>{line}</p>
@@ -332,15 +347,15 @@ export default function InvoiceDetailsPage() {
                     <div className="flex justify-end mb-12">
                         <div className="text-right space-y-1 text-sm">
                             <div className="flex justify-end gap-2">
-                                <span className="font-semibold text-gray-900">Invoice Date:</span>
+                                <span className="font-semibold text-gray-900">{t("invoices.detail.invoiceDate")}</span>
                                 <span className="text-gray-700">{formatDate(invoice.date)}</span>
                             </div>
                             <div className="flex justify-end gap-2">
-                                <span className="font-semibold text-gray-900">Due Date:</span>
+                                <span className="font-semibold text-gray-900">{t("invoices.detail.dueDate")}</span>
                                 <span className="text-gray-700">{formatDate(invoice.dueDate)}</span>
                             </div>
                             <div className="flex justify-end gap-2">
-                                <span className="font-semibold text-gray-900">Project:</span>
+                                <span className="font-semibold text-gray-900">{t("invoices.detail.project")}</span>
                                 <span className="text-gray-700">{projectName}</span>
                             </div>
                         </div>
@@ -352,12 +367,18 @@ export default function InvoiceDetailsPage() {
                             <TableHeader>
                                 <TableRow className="bg-gray-50 hover:bg-gray-50 border-y border-gray-100">
                                     <TableHead className="w-[50px] font-bold text-gray-900">#</TableHead>
-                                    <TableHead className="font-bold text-gray-900">Item</TableHead>
-                                    <TableHead className="text-right font-bold text-gray-900 w-[80px]">Qty</TableHead>
-                                    <TableHead className="text-right font-bold text-gray-900 w-[120px]">Rate</TableHead>
-                                    <TableHead className="text-center font-bold text-gray-900 w-[100px]">Tax</TableHead>
+                                    <TableHead className="font-bold text-gray-900">{t("invoices.detail.colItem")}</TableHead>
+                                    <TableHead className="text-right font-bold text-gray-900 w-[80px]">
+                                        {t("invoices.detail.colQty")}
+                                    </TableHead>
                                     <TableHead className="text-right font-bold text-gray-900 w-[120px]">
-                                        Amount
+                                        {t("invoices.detail.colRate")}
+                                    </TableHead>
+                                    <TableHead className="text-center font-bold text-gray-900 w-[100px]">
+                                        {t("invoices.detail.colTax")}
+                                    </TableHead>
+                                    <TableHead className="text-right font-bold text-gray-900 w-[120px]">
+                                        {t("invoices.detail.colAmount")}
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -380,7 +401,7 @@ export default function InvoiceDetailsPage() {
                                                 {item.rate.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                             </TableCell>
                                             <TableCell className="text-center text-gray-500 text-sm align-top py-4">
-                                                <div>VAT</div>
+                                                <div>{t("invoices.detail.vat")}</div>
                                                 <div>{taxPercentage.toFixed(2)}%</div>
                                             </TableCell>
                                             <TableCell className="text-right text-gray-700 align-top py-4">
@@ -398,25 +419,27 @@ export default function InvoiceDetailsPage() {
                     <div className="flex justify-end pt-4 mb-20">
                         <div className="w-72 space-y-3">
                             <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                                <span className="font-medium text-gray-700">Sub Total</span>
+                                <span className="font-medium text-gray-700">{t("invoices.detail.subTotal")}</span>
                                 <span className="text-gray-600">
                                     EGP{subTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                                <span className="font-medium text-gray-700">VAT ({taxPercentage.toFixed(2)}%)</span>
+                                <span className="font-medium text-gray-700">
+                                    {t("invoices.detail.vatPercent", { percent: taxPercentage.toFixed(2) })}
+                                </span>
                                 <span className="text-gray-600">
                                     EGP{taxTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                                <span className="font-medium text-gray-700">Total</span>
+                                <span className="font-medium text-gray-700">{t("invoices.detail.total")}</span>
                                 <span className="text-gray-600">
                                     EGP{total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                             <div className="flex justify-between text-base py-2 font-bold">
-                                <span className="text-red-500">Amount Due</span>
+                                <span className="text-red-500">{t("invoices.detail.amountDue")}</span>
                                 <span className="text-red-500">
                                     EGP{total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                 </span>
@@ -426,8 +449,8 @@ export default function InvoiceDetailsPage() {
 
                     <div className="mt-8 border-t pt-8">
                         <div className="text-sm">
-                            <span className="font-bold text-gray-900 block mb-2">Note:</span>
-                            <p className="text-gray-500">Thank you for doing business with WasilaDev</p>
+                            <span className="font-bold text-gray-900 block mb-2">{t("invoices.detail.note")}</span>
+                            <p className="text-gray-500">{t("invoices.detail.thankYou", { sender: senderName })}</p>
                         </div>
                     </div>
                 </div>

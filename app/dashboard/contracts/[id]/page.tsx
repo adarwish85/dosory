@@ -19,6 +19,7 @@ import { useContract, useContracts } from "@/lib/hooks";
 import dynamic from "next/dynamic";
 import ContractPDF from "@/components/pdf/ContractPDF";
 import { ContractStatus } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 const PDFDownloadLink = dynamic(() => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink), {
     ssr: false,
@@ -26,6 +27,7 @@ const PDFDownloadLink = dynamic(() => import("@react-pdf/renderer").then((mod) =
 });
 
 export default function ContractDetailsPage() {
+    const { t } = useTranslation();
     const params = useParams();
     const router = useRouter();
     const id = params.id as string;
@@ -44,21 +46,21 @@ export default function ContractDetailsPage() {
     if (error || !contract) {
         return (
             <div className="p-8 text-center">
-                <h2 className="text-xl font-semibold mb-2">Contract not found</h2>
-                <Button onClick={() => router.push("/dashboard/contracts")}>Back to Contracts</Button>
+                <h2 className="text-xl font-semibold mb-2">{t("contracts.detail.notFound")}</h2>
+                <Button onClick={() => router.push("/dashboard/contracts")}>{t("contracts.detail.backToList")}</Button>
             </div>
         );
     }
 
     const handleSign = async () => {
-        if (!confirm("Confirm signing this contract?")) return;
+        if (!confirm(t("contracts.detail.confirmSign"))) return;
         setActionLoading(true);
         try {
             await signContract(id, { signedBy: "org_user_id" });
-            toast.success("Contract signed successfully");
+            toast.success(t("contracts.toast.signed"));
         } catch (err) {
             console.error("Error signing contract:", err);
-            toast.error("Failed to sign contract");
+            toast.error(t("contracts.toast.signFailed"));
         } finally {
             setActionLoading(false);
         }
@@ -68,25 +70,25 @@ export default function ContractDetailsPage() {
         setActionLoading(true);
         try {
             await updateStatus(id, status);
-            toast.success(`Marked as ${status}`);
+            toast.success(t("contracts.toast.statusUpdated", { status }));
         } catch (err) {
             console.error("Error updating status:", err);
-            toast.error("Failed to update status");
+            toast.error(t("contracts.toast.statusFailed"));
         } finally {
             setActionLoading(false);
         }
     };
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this contract?")) return;
+        if (!confirm(t("contracts.delete.confirm"))) return;
         setActionLoading(true);
         try {
             await deleteContract(id);
-            toast.success("Contract deleted");
+            toast.success(t("contracts.toast.deleted"));
             router.push("/dashboard/contracts");
         } catch (err) {
             console.error("Error deleting contract:", err);
-            toast.error("Failed to delete contract");
+            toast.error(t("contracts.toast.deleteFailed"));
         } finally {
             setActionLoading(false);
         }
@@ -114,12 +116,12 @@ export default function ContractDetailsPage() {
                         onClick={() => router.push("/dashboard/contracts")}
                         className="gap-2 text-gray-600 hover:text-gray-900 pl-0"
                     >
-                        <ArrowLeft className="h-4 w-4" /> Back
+                        <ArrowLeft className="h-4 w-4" /> {t("contracts.detail.back")}
                     </Button>
                     <div className="h-6 w-px bg-gray-200" />
                     <h1 className="text-xl font-semibold text-gray-900">{contract.subject}</h1>
                     <Badge variant="outline" className="capitalize ml-2">
-                        {contract.status}
+                        {t(`contracts.status.${contract.status}`)}
                     </Badge>
                 </div>
 
@@ -130,7 +132,7 @@ export default function ContractDetailsPage() {
                         onClick={() => router.push(`/dashboard/contracts/${id}/edit`)}
                         disabled={actionLoading}
                     >
-                        <PenLine className="mr-2 h-4 w-4" /> Edit
+                        <PenLine className="mr-2 h-4 w-4" /> {t("common.edit")}
                     </Button>
 
                     {/* PDF Download Button */}
@@ -147,10 +149,10 @@ export default function ContractDetailsPage() {
                         >
                             {({ loading: pdfLoading }) =>
                                 pdfLoading ? (
-                                    <span>Loading...</span>
+                                    <span>{t("common.loading")}</span>
                                 ) : (
                                     <>
-                                        <Download className="mr-2 h-4 w-4" /> PDF
+                                        <Download className="mr-2 h-4 w-4" /> {t("contracts.detail.pdf")}
                                     </>
                                 )
                             }
@@ -158,27 +160,27 @@ export default function ContractDetailsPage() {
                     </div>
 
                     <Button variant="outline" size="sm" onClick={() => window.print()} disabled={actionLoading}>
-                        <Printer className="mr-2 h-4 w-4" /> Print
+                        <Printer className="mr-2 h-4 w-4" /> {t("contracts.detail.print")}
                     </Button>
 
                     <Button variant="outline" size="sm" disabled={actionLoading}>
-                        <Mail className="mr-2 h-4 w-4" /> Send
+                        <Mail className="mr-2 h-4 w-4" /> {t("contracts.detail.send")}
                     </Button>
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="sm" disabled={actionLoading}>
-                                More <ChevronDown className="ml-2 h-4 w-4" />
+                                {t("contracts.detail.more")} <ChevronDown className="ml-2 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleStatusChange("sent")}>Mark as Sent</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange("sent")}>{t("contracts.detail.markSent")}</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleStatusChange("signed")}>
-                                Mark as Signed
+                                {t("contracts.detail.markSigned")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-red-600" onClick={handleDelete}>
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete Contract
+                                <Trash2 className="mr-2 h-4 w-4" /> {t("contracts.detail.delete")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -190,7 +192,7 @@ export default function ContractDetailsPage() {
                             onClick={handleSign}
                             disabled={actionLoading}
                         >
-                            Sign Now
+                            {t("contracts.detail.signNow")}
                         </Button>
                     )}
                 </div>
@@ -204,14 +206,14 @@ export default function ContractDetailsPage() {
                             {/* Contract Header on Paper */}
                             <div className="border-b pb-8">
                                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{contract.subject}</h1>
-                                <p className="text-gray-500">Contract #{contract.id}</p>
+                                <p className="text-gray-500">{t("contracts.detail.contractNumber", { id: contract.id })}</p>
                             </div>
 
                             {/* Parties */}
                             <div className="grid grid-cols-2 gap-8">
                                 <div>
                                     <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-                                        Client
+                                        {t("contracts.detail.client")}
                                     </h3>
                                     <div className="text-gray-700">
                                         <p className="font-medium text-lg">{contract.customerName}</p>
@@ -220,11 +222,11 @@ export default function ContractDetailsPage() {
                                 </div>
                                 <div>
                                     <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-                                        Details
+                                        {t("contracts.detail.details")}
                                     </h3>
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
-                                            <span className="text-gray-500">Value:</span>
+                                            <span className="text-gray-500">{t("contracts.detail.valueLabel")}</span>
                                             <span className="font-medium">
                                                 {new Intl.NumberFormat("en-US", {
                                                     style: "currency",
@@ -233,11 +235,11 @@ export default function ContractDetailsPage() {
                                             </span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-gray-500">Start Date:</span>
+                                            <span className="text-gray-500">{t("contracts.detail.startDateLabel")}</span>
                                             <span className="font-medium">{formatDate(contract.startDate)}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-gray-500">End Date:</span>
+                                            <span className="text-gray-500">{t("contracts.detail.endDateLabel")}</span>
                                             <span className="font-medium">{formatDate(contract.endDate)}</span>
                                         </div>
                                     </div>
@@ -249,7 +251,7 @@ export default function ContractDetailsPage() {
                                 {contract.content ? (
                                     <div dangerouslySetInnerHTML={{ __html: contract.content }} />
                                 ) : (
-                                    <p className="text-gray-400 italic">No content added yet.</p>
+                                    <p className="text-gray-400 italic">{t("contracts.detail.noContent")}</p>
                                 )}
                             </div>
 
@@ -260,13 +262,13 @@ export default function ContractDetailsPage() {
                                         {contract.status === "signed" && (
                                             <div className="absolute inset-0 flex items-center justify-center">
                                                 <span className="text-green-600 font-script text-2xl opacity-80 rotate-[-5deg] border-2 border-green-600 px-4 py-1 rounded">
-                                                    Signed Digital
+                                                    {t("contracts.detail.signedDigital")}
                                                 </span>
                                             </div>
                                         )}
                                     </div>
-                                    <p className="font-semibold text-sm">Authorized Signature</p>
-                                    <p className="text-xs text-gray-500">Organization Representative</p>
+                                    <p className="font-semibold text-sm">{t("contracts.detail.authorizedSignature")}</p>
+                                    <p className="text-xs text-gray-500">{t("contracts.detail.orgRepresentative")}</p>
                                 </div>
                                 <div className="space-y-4">
                                     <div className="h-20 border-b border-gray-300 relative">
@@ -278,7 +280,7 @@ export default function ContractDetailsPage() {
                                             </div>
                                         )}
                                     </div>
-                                    <p className="font-semibold text-sm">Client Signature</p>
+                                    <p className="font-semibold text-sm">{t("contracts.detail.clientSignature")}</p>
                                     <p className="text-xs text-gray-500">{contract.customerName}</p>
                                 </div>
                             </div>
@@ -290,14 +292,14 @@ export default function ContractDetailsPage() {
                 <div className="space-y-6">
                     <Card>
                         <CardContent className="p-6">
-                            <h3 className="font-semibold mb-4">Activity</h3>
+                            <h3 className="font-semibold mb-4">{t("contracts.detail.activity")}</h3>
                             <div className="space-y-4">
                                 <div className="flex gap-3 text-sm">
                                     <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                                         <CheckCircle2 className="h-4 w-4 text-blue-600" />
                                     </div>
                                     <div>
-                                        <p className="font-medium">Contract Created</p>
+                                        <p className="font-medium">{t("contracts.detail.contractCreated")}</p>
                                         <p className="text-gray-500 text-xs">{formatDate(contract.createdAt)}</p>
                                     </div>
                                 </div>
@@ -307,7 +309,7 @@ export default function ContractDetailsPage() {
                                             <CheckCircle2 className="h-4 w-4 text-green-600" />
                                         </div>
                                         <div>
-                                            <p className="font-medium">Contract Signed</p>
+                                            <p className="font-medium">{t("contracts.detail.contractSigned")}</p>
                                             <p className="text-gray-500 text-xs">
                                                 {formatDate(contract.signedAt || new Date())}
                                             </p>
@@ -320,16 +322,16 @@ export default function ContractDetailsPage() {
 
                     <Card>
                         <CardContent className="p-6">
-                            <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-500">Meta</h3>
+                            <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-500">{t("contracts.detail.meta")}</h3>
                             <div className="space-y-2 text-sm">
                                 <p>
-                                    <span className="text-gray-500">ID:</span> {contract.id}
+                                    <span className="text-gray-500">{t("contracts.detail.idLabel")}</span> {contract.id}
                                 </p>
                                 <p>
-                                    <span className="text-gray-500">Created:</span> {formatDate(contract.createdAt)}
+                                    <span className="text-gray-500">{t("contracts.detail.createdLabel")}</span> {formatDate(contract.createdAt)}
                                 </p>
                                 <p>
-                                    <span className="text-gray-500">Type:</span> {contract.contractType || "N/A"}
+                                    <span className="text-gray-500">{t("contracts.detail.typeLabel")}</span> {contract.contractType || t("contracts.detail.notAvailable")}
                                 </p>
                             </div>
                         </CardContent>

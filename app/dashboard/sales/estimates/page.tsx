@@ -11,6 +11,7 @@ import { useEstimates } from "@/lib/hooks";
 import type { EstimateStatus } from "@/lib/types";
 import { format } from "date-fns";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 const statusColors: Record<EstimateStatus, { bg: string; text: string; border: string }> = {
     draft: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
@@ -21,18 +22,19 @@ const statusColors: Record<EstimateStatus, { bg: string; text: string; border: s
     expired: { bg: "bg-orange-50", text: "text-orange-600", border: "border-orange-200" },
 };
 
-const statusLabels: Record<EstimateStatus, string> = {
-    draft: "Draft",
-    sent: "Sent",
-    viewed: "Viewed",
-    accepted: "Accepted",
-    declined: "Declined",
-    expired: "Expired",
-};
-
 export default function SalesEstimatesPage() {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const { estimates, loading, estimateStats, deleteEstimate } = useEstimates();
+
+    const statusLabels: Record<EstimateStatus, string> = {
+        draft: t("sales.estimates.status.draft"),
+        sent: t("sales.estimates.status.sent"),
+        viewed: t("sales.estimates.status.viewed"),
+        accepted: t("sales.estimates.status.accepted"),
+        declined: t("sales.estimates.status.declined"),
+        expired: t("sales.estimates.status.expired"),
+    };
 
     const filteredEstimates = estimates.filter(
         (est) =>
@@ -67,8 +69,8 @@ export default function SalesEstimatesPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-xl font-bold text-gray-900">Estimates</h2>
-                <button className="text-sm text-gray-500 hover:text-gray-900">View Financial Stats</button>
+                <h2 className="text-xl font-bold text-gray-900">{t("sales.estimates.title")}</h2>
+                <button className="text-sm text-gray-500 hover:text-gray-900">{t("sales.estimates.viewFinancialStats")}</button>
             </div>
 
             {/* Stats Cards */}
@@ -94,7 +96,7 @@ export default function SalesEstimatesPage() {
                 <div className="flex items-center gap-2">
                     <Link href="/dashboard/sales/estimates/new">
                         <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
-                            <Plus className="mr-2 h-4 w-4" /> Create New Estimate
+                            <Plus className="mr-2 h-4 w-4" /> {t("sales.estimates.createNew")}
                         </Button>
                     </Link>
                     <div className="flex items-center border rounded-md bg-white">
@@ -120,7 +122,7 @@ export default function SalesEstimatesPage() {
                                 <SelectItem value="50">50</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline">Export</Button>
+                        <Button variant="outline">{t("common.export")}</Button>
                         <Button variant="outline" size="icon">
                             <RefreshCw className="h-4 w-4" />
                         </Button>
@@ -128,7 +130,7 @@ export default function SalesEstimatesPage() {
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search..."
+                            placeholder={t("common.searchPlaceholder")}
                             className="pl-9"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -140,12 +142,12 @@ export default function SalesEstimatesPage() {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                <TableHead className="font-semibold text-gray-900">Estimate #</TableHead>
-                                <TableHead className="font-semibold text-gray-900">Amount</TableHead>
-                                <TableHead className="font-semibold text-gray-900">Customer</TableHead>
-                                <TableHead className="font-semibold text-gray-900">Date</TableHead>
-                                <TableHead className="font-semibold text-gray-900">Expiry Date</TableHead>
-                                <TableHead className="font-semibold text-gray-900">Status</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("sales.estimates.column.estimateNumber")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("common.amount")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("sales.estimates.column.customer")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("common.date")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("sales.estimates.column.expiryDate")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("common.status")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -153,8 +155,8 @@ export default function SalesEstimatesPage() {
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                                         {searchQuery
-                                            ? "No estimates match your search."
-                                            : "No estimates found. Create your first one!"}
+                                            ? t("sales.estimates.empty.noMatch")
+                                            : t("sales.estimates.empty.none")}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -170,31 +172,31 @@ export default function SalesEstimatesPage() {
                                                     >
                                                         {est.number}
                                                     </Link>
-                                                    <span className="text-xs text-gray-400">View Details</span>
+                                                    <span className="text-xs text-gray-400">{t("sales.estimates.viewDetails")}</span>
                                                     <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
                                                         <Link
                                                             href={`/dashboard/sales/estimates/${est.id}`}
                                                             className="hover:text-blue-600 hover:underline px-0.5"
                                                         >
-                                                            View
+                                                            {t("common.view")}
                                                         </Link>
                                                         <span className="text-gray-300">|</span>
                                                         <Link
                                                             href={`/dashboard/sales/estimates/${est.id}/edit`}
                                                             className="hover:text-blue-600 hover:underline px-0.5"
                                                         >
-                                                            Edit
+                                                            {t("common.edit")}
                                                         </Link>
                                                         <span className="text-gray-300">|</span>
                                                         <button
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
-                                                                if (confirm("Delete this estimate?"))
+                                                                if (confirm(t("sales.estimates.deleteConfirm")))
                                                                     await deleteEstimate(est.id);
                                                             }}
                                                             className="hover:text-red-600 hover:underline px-0.5"
                                                         >
-                                                            Delete
+                                                            {t("common.delete")}
                                                         </button>
                                                     </div>
                                                 </div>

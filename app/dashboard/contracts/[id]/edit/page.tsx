@@ -17,8 +17,10 @@ import { useContract, useContracts, useCustomers } from "@/lib/hooks";
 import { ContractFormData } from "@/lib/schemas";
 import { toast } from "sonner";
 import { Timestamp } from "firebase/firestore";
+import { useTranslation } from "@/lib/i18n";
 
 export default function EditContractPage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const params = useParams();
     const id = params.id as string;
@@ -67,11 +69,11 @@ export default function EditContractPage() {
         e.preventDefault();
 
         if (!selectedClientId) {
-            toast.error("Please select a client");
+            toast.error(t("contracts.edit.selectClientError"));
             return;
         }
         if (!startDate) {
-            toast.error("Start date is required");
+            toast.error(t("contracts.edit.startDateError"));
             return;
         }
 
@@ -88,11 +90,11 @@ export default function EditContractPage() {
             };
 
             await updateContract(id, formData);
-            toast.success("Contract updated successfully");
+            toast.success(t("contracts.toast.updated"));
             router.push(`/dashboard/contracts/${id}`);
         } catch (error) {
             console.error("Error updating contract:", error);
-            toast.error("Failed to update contract");
+            toast.error(t("contracts.toast.updateFailed"));
         } finally {
             setSubmitting(false);
         }
@@ -107,7 +109,7 @@ export default function EditContractPage() {
     }
 
     if (!contract) {
-        return <div className="p-8 text-center text-gray-500">Contract not found.</div>;
+        return <div className="p-8 text-center text-gray-500">{t("contracts.detail.notFound")}</div>;
     }
 
     return (
@@ -116,34 +118,34 @@ export default function EditContractPage() {
                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <h2 className="text-3xl font-bold tracking-tight">Edit Contract</h2>
+                <h2 className="text-3xl font-bold tracking-tight">{t("contracts.edit.title")}</h2>
             </div>
 
             <form onSubmit={handleSubmit}>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Contract Details</CardTitle>
+                        <CardTitle>{t("contracts.edit.sectionDetails")}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="space-y-2">
                             <Label>
-                                Subject <span className="text-red-500">*</span>
+                                {t("contracts.form.subject")} <span className="text-red-500">*</span>
                             </Label>
                             <Input
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
-                                placeholder="Contract subject..."
+                                placeholder={t("contracts.edit.subjectPlaceholder")}
                                 required
                             />
                         </div>
 
                         <div className="space-y-2">
                             <Label>
-                                Client <span className="text-red-500">*</span>
+                                {t("contracts.edit.client")} <span className="text-red-500">*</span>
                             </Label>
                             <Select onValueChange={setSelectedClientId} value={selectedClientId}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a client" />
+                                    <SelectValue placeholder={t("contracts.edit.selectClient")} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {customers.map((c) => (
@@ -156,7 +158,7 @@ export default function EditContractPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Contract Value</Label>
+                            <Label>{t("contracts.form.value")}</Label>
                             <Input
                                 type="number"
                                 min="0"
@@ -169,7 +171,7 @@ export default function EditContractPage() {
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label>
-                                    Start Date <span className="text-red-500">*</span>
+                                    {t("contracts.form.startDate")} <span className="text-red-500">*</span>
                                 </Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
@@ -181,7 +183,7 @@ export default function EditContractPage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                                            {startDate ? format(startDate, "PPP") : <span>{t("contracts.form.pickDate")}</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
@@ -195,7 +197,7 @@ export default function EditContractPage() {
                                 </Popover>
                             </div>
                             <div className="space-y-2">
-                                <Label>End Date</Label>
+                                <Label>{t("contracts.form.endDate")}</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -206,7 +208,7 @@ export default function EditContractPage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
+                                            {endDate ? format(endDate, "PPP") : <span>{t("contracts.form.pickDate")}</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
@@ -217,36 +219,36 @@ export default function EditContractPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Description</Label>
+                            <Label>{t("contracts.form.description")}</Label>
                             <Textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Contract summary..."
+                                placeholder={t("contracts.edit.descriptionPlaceholder")}
                                 className="h-24"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Contract Content</Label>
+                            <Label>{t("contracts.form.content")}</Label>
                             <Textarea
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
-                                placeholder="Full contract text (can be HTML or Markdown later)..."
+                                placeholder={t("contracts.edit.contentPlaceholder")}
                                 className="h-48 font-mono text-sm"
                             />
                         </div>
                     </CardContent>
                     <div className="flex justify-end p-6 border-t bg-gray-50 rounded-b-lg">
                         <Button type="button" variant="outline" className="mr-2" onClick={() => router.back()}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button type="submit" disabled={submitting}>
                             {submitting ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("contracts.edit.updating")}
                                 </>
                             ) : (
-                                "Update Contract"
+                                t("contracts.edit.submit")
                             )}
                         </Button>
                     </div>

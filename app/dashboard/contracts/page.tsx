@@ -11,6 +11,7 @@ import { useContracts, useSettings } from "@/lib/hooks";
 import type { ContractStatus } from "@/lib/types";
 import { format } from "date-fns";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 const statusColors: Record<ContractStatus, { bg: string; text: string; border: string }> = {
     draft: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
@@ -20,15 +21,16 @@ const statusColors: Record<ContractStatus, { bg: string; text: string; border: s
     trash: { bg: "bg-gray-50", text: "text-gray-400", border: "border-gray-200" },
 };
 
-const statusLabels: Record<ContractStatus, string> = {
-    draft: "Draft",
-    sent: "Sent",
-    signed: "Signed",
-    expired: "Expired",
-    trash: "Trash",
+const statusLabelKeys: Record<ContractStatus, string> = {
+    draft: "contracts.status.draft",
+    sent: "contracts.status.sent",
+    signed: "contracts.status.signed",
+    expired: "contracts.status.expired",
+    trash: "contracts.status.trash",
 };
 
 export default function ContractsPage() {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const { contracts, loading, contractStats, deleteContract } = useContracts();
     const { settings } = useSettings();
@@ -68,10 +70,10 @@ export default function ContractsPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">Contracts</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{t("contracts.list.title")}</h2>
                 <Link href="/dashboard/contracts/new">
                     <Button className="bg-gray-900 text-white hover:bg-gray-800 rounded-md">
-                        <Plus className="mr-2 h-4 w-4" /> New Contract
+                        <Plus className="mr-2 h-4 w-4" /> {t("contracts.list.new")}
                     </Button>
                 </Link>
             </div>
@@ -87,7 +89,7 @@ export default function ContractsPage() {
                             className={`${colors.bg} ${colors.border} border rounded-full px-3 py-1 text-sm`}
                         >
                             <span className="font-bold text-gray-900">{count}</span>{" "}
-                            <span className={colors.text}>{statusLabels[status]}</span>
+                            <span className={colors.text}>{t(statusLabelKeys[status])}</span>
                         </div>
                     );
                 })}
@@ -106,7 +108,7 @@ export default function ContractsPage() {
                                 <SelectItem value="50">50</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Button variant="outline">Export</Button>
+                        <Button variant="outline">{t("contracts.list.export")}</Button>
                         <Button variant="outline" size="icon">
                             <RefreshCw className="h-4 w-4" />
                         </Button>
@@ -114,7 +116,7 @@ export default function ContractsPage() {
                     <div className="relative w-64">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search..."
+                            placeholder={t("common.search")}
                             className="pl-9"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -127,12 +129,12 @@ export default function ContractsPage() {
                         <TableHeader>
                             <TableRow className="bg-gray-50 hover:bg-gray-50">
                                 <TableHead className="w-10 font-semibold text-gray-900">#</TableHead>
-                                <TableHead className="font-semibold text-gray-900">Subject</TableHead>
-                                <TableHead className="font-semibold text-gray-900">Customer</TableHead>
-                                <TableHead className="font-semibold text-gray-900">Value</TableHead>
-                                <TableHead className="font-semibold text-gray-900">Start Date</TableHead>
-                                <TableHead className="font-semibold text-gray-900">End Date</TableHead>
-                                <TableHead className="font-semibold text-gray-900">Status</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("contracts.table.subject")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("contracts.table.customer")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("contracts.table.value")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("contracts.table.startDate")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("contracts.table.endDate")}</TableHead>
+                                <TableHead className="font-semibold text-gray-900">{t("common.status")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -140,8 +142,8 @@ export default function ContractsPage() {
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                                         {searchQuery
-                                            ? "No contracts match your search."
-                                            : "No contracts found. Create your first one!"}
+                                            ? t("contracts.list.emptySearch")
+                                            : t("contracts.list.empty")}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -166,25 +168,25 @@ export default function ContractsPage() {
                                                             href={`/dashboard/contracts/${contract.id}`}
                                                             className="hover:text-blue-600 hover:underline px-0.5"
                                                         >
-                                                            View
+                                                            {t("contracts.actions.view")}
                                                         </Link>
                                                         <span className="text-gray-300">|</span>
                                                         <Link
                                                             href={`/dashboard/contracts/${contract.id}/edit`}
                                                             className="hover:text-blue-600 hover:underline px-0.5"
                                                         >
-                                                            Edit
+                                                            {t("common.edit")}
                                                         </Link>
                                                         <span className="text-gray-300">|</span>
                                                         <button
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
-                                                                if (confirm("Delete this contract?"))
+                                                                if (confirm(t("contracts.delete.confirmShort")))
                                                                     await deleteContract(contract.id);
                                                             }}
                                                             className="hover:text-red-600 hover:underline px-0.5"
                                                         >
-                                                            Delete
+                                                            {t("common.delete")}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -203,7 +205,7 @@ export default function ContractsPage() {
                                                 <Badge
                                                     className={`${colors.bg} ${colors.text} ${colors.border} border`}
                                                 >
-                                                    {statusLabels[contract.status]}
+                                                    {t(statusLabelKeys[contract.status])}
                                                 </Badge>
                                             </TableCell>
                                         </TableRow>

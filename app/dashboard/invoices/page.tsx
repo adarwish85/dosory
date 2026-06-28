@@ -21,6 +21,7 @@ import {
     AlertCircle,
 } from "lucide-react";
 import { useInvoices, useSettings, usePermission } from "@/lib/hooks";
+import { useTranslation } from "@/lib/i18n";
 import type { Invoice, InvoiceStatus } from "@/lib/types";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -148,6 +149,7 @@ function QuickStatsBar({
     currency: string;
     totalCount?: number;
 }) {
+    const { t } = useTranslation();
     const total = totalCount ?? invoices.length;
     const paid = invoices.filter((i) => i.status === "paid").reduce((sum, i) => sum + (i.total || 0), 0);
     const overdue = invoices.filter((i) => i.status === "overdue").length;
@@ -157,14 +159,14 @@ function QuickStatsBar({
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-blue-600 mb-1">
                     <FileText className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Total</span>
+                    <span className="text-xs font-medium uppercase">{t("invoices.stats.total")}</span>
                 </div>
                 <div className="text-2xl font-bold text-blue-900">{total}</div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1">
                     <DollarSign className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Paid</span>
+                    <span className="text-xs font-medium uppercase">{t("invoices.stats.paid")}</span>
                 </div>
                 <div className="text-2xl font-bold text-green-900">
                     {new Intl.NumberFormat("en-US", { style: "currency", currency }).format(paid)}
@@ -173,14 +175,14 @@ function QuickStatsBar({
             <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-red-600 mb-1">
                     <AlertCircle className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Overdue</span>
+                    <span className="text-xs font-medium uppercase">{t("invoices.stats.overdue")}</span>
                 </div>
                 <div className="text-2xl font-bold text-red-900">{overdue}</div>
             </div>
             <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-gray-600 mb-1">
                     <Clock className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">Draft</span>
+                    <span className="text-xs font-medium uppercase">{t("invoices.stats.draft")}</span>
                 </div>
                 <div className="text-2xl font-bold text-gray-900">{draft}</div>
             </div>
@@ -189,6 +191,7 @@ function QuickStatsBar({
 }
 
 export default function InvoicesPage() {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
     const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
@@ -258,8 +261,12 @@ export default function InvoicesPage() {
     const currentPageIds = paginatedInvoices.map((i) => i.id);
     const allFilteredIds = filteredInvoices.map((i) => i.id);
     const orderedColumns = useMemo(
-        () => columnOrder.map((key) => DEFAULT_COLUMNS.find((c) => c.key === key)!).filter(Boolean),
-        [columnOrder]
+        () =>
+            columnOrder
+                .map((key) => DEFAULT_COLUMNS.find((c) => c.key === key)!)
+                .filter(Boolean)
+                .map((col) => ({ ...col, label: t(`invoices.column.${col.key}`) })),
+        [columnOrder, t]
     );
     const visibleColumnsCount = Object.values(columnVisibility).filter(Boolean).length;
 
@@ -333,19 +340,19 @@ export default function InvoicesPage() {
 
     const handleDelete = useCallback(
         async (id: string) => {
-            if (window.confirm("Delete this invoice?")) await deleteInvoice(id);
+            if (window.confirm(t("invoices.confirm.deleteOne"))) await deleteInvoice(id);
         },
-        [deleteInvoice]
+        [deleteInvoice, t]
     );
 
     const handleBulkDelete = useCallback(async () => {
         if (selectedInvoices.length === 0) return;
-        if (window.confirm(`Delete ${selectedInvoices.length} invoices?`)) {
+        if (window.confirm(t("invoices.confirm.deleteMany", { count: selectedInvoices.length }))) {
             for (const id of selectedInvoices) await deleteInvoice(id);
             setSelectedInvoices([]);
             setSelectionMode("none");
         }
-    }, [selectedInvoices, deleteInvoice]);
+    }, [selectedInvoices, deleteInvoice, t]);
 
     const handleSelectAllOnPage = useCallback(() => {
         setSelectedInvoices(currentPageIds);
@@ -446,14 +453,14 @@ export default function InvoicesPage() {
                                 href={`/dashboard/invoices/${invoice.id}`}
                                 className="hover:text-blue-600 hover:underline px-0.5"
                             >
-                                View
+                                {t("common.view")}
                             </Link>
                             <span className="text-gray-300">|</span>
                             <Link
                                 href={`/dashboard/invoices/${invoice.id}/edit`}
                                 className="hover:text-blue-600 hover:underline px-0.5"
                             >
-                                Edit
+                                {t("common.edit")}
                             </Link>
                             {can("invoices-delete") && (
                                 <>
@@ -465,7 +472,7 @@ export default function InvoicesPage() {
                                         }}
                                         className="hover:text-red-600 hover:underline px-0.5"
                                     >
-                                        Delete
+                                        {t("common.delete")}
                                     </button>
                                 </>
                             )}
@@ -488,7 +495,9 @@ export default function InvoicesPage() {
                 const colors = statusColors[invoice.status as InvoiceStatus] || statusColors.draft;
                 return (
                     <Badge className={`${colors.bg} ${colors.text} ${colors.border} border shadow-none font-medium`}>
-                        {statusLabels[invoice.status as InvoiceStatus] || invoice.status}
+                        {statusLabels[invoice.status as InvoiceStatus]
+                            ? t(`invoices.status.${invoice.status}`)
+                            : invoice.status}
                     </Badge>
                 );
             }
@@ -514,13 +523,14 @@ export default function InvoicesPage() {
                             <Link href="/dashboard/invoices/new">
                                 <Button className="bg-gray-900 text-white hover:bg-gray-800">
                                     <span className="hidden sm:inline">
-                                        <span className="mr-2">+</span>Create New Invoice
+                                        <span className="mr-2">+</span>
+                                        {t("invoices.toolbar.createNew")}
                                     </span>
-                                    <span className="sm:hidden">+ Invoice</span>
+                                    <span className="sm:hidden">{t("invoices.toolbar.createShort")}</span>
                                 </Button>
                             </Link>
                         )}
-                        <span className="text-sm text-gray-500">Show</span>
+                        <span className="text-sm text-gray-500">{t("invoices.toolbar.show")}</span>
                         <Select
                             value={recordsPerPage.toString()}
                             onValueChange={(v) => {
@@ -540,22 +550,25 @@ export default function InvoicesPage() {
                         </Select>
                         <Button variant="outline" onClick={exportInvoices}>
                             <Download className="mr-2 h-4 w-4" />
-                            Export
+                            {t("common.export")}
                         </Button>
                         {selectedInvoices.length > 0 && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-                                        <Badge className="mr-2 bg-blue-600">{selectedInvoices.length}</Badge>Bulk{" "}
+                                        <Badge className="mr-2 bg-blue-600">{selectedInvoices.length}</Badge>
+                                        {t("invoices.toolbar.bulk")}{" "}
                                         <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuLabel>With {selectedInvoices.length} selected</DropdownMenuLabel>
+                                    <DropdownMenuLabel>
+                                        {t("invoices.bulk.withSelected", { count: selectedInvoices.length })}
+                                    </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     {can("invoices-delete") && (
                                         <DropdownMenuItem className="text-red-600" onClick={handleBulkDelete}>
-                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                            <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                                         </DropdownMenuItem>
                                     )}
                                 </DropdownMenuContent>
@@ -569,7 +582,7 @@ export default function InvoicesPage() {
                         <div className="relative w-full sm:w-64">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Search..."
+                                placeholder={t("common.search")}
                                 className="pl-9"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -582,15 +595,21 @@ export default function InvoicesPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Density</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t("invoices.density.label")}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuRadioGroup
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="spacious">Spacious</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">
+                                        {t("invoices.density.compact")}
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">
+                                        {t("invoices.density.comfortable")}
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="spacious">
+                                        {t("invoices.density.spacious")}
+                                    </DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -602,7 +621,10 @@ export default function InvoicesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuLabel>
-                                    Columns ({visibleColumnsCount}/{DEFAULT_COLUMNS.length})
+                                    {t("invoices.columns.label", {
+                                        visible: visibleColumnsCount,
+                                        total: DEFAULT_COLUMNS.length,
+                                    })}
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {DEFAULT_COLUMNS.map((col) => (
@@ -612,7 +634,7 @@ export default function InvoicesPage() {
                                         onCheckedChange={() => toggleColumn(col.key)}
                                         disabled={col.required}
                                     >
-                                        {col.label}
+                                        {t(`invoices.column.${col.key}`)}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
@@ -685,7 +707,7 @@ export default function InvoicesPage() {
                                             colSpan={visibleColumnsCount + 1}
                                             className="text-center py-10 text-muted-foreground"
                                         >
-                                            {searchQuery ? "No matches" : "No invoices"}
+                                            {searchQuery ? t("invoices.empty.noMatches") : t("invoices.empty.none")}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -729,7 +751,9 @@ export default function InvoicesPage() {
 
                 <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-4">
-                        <span className="text-sm text-gray-600 font-medium">Total: {totalRecords}</span>
+                        <span className="text-sm text-gray-600 font-medium">
+                            {t("invoices.footer.total", { count: totalRecords })}
+                        </span>
                         <DataTablePagination
                             currentPage={currentPage}
                             totalPages={totalPages}
@@ -741,7 +765,7 @@ export default function InvoicesPage() {
                         />
                     </div>
                 </div>
-                <div className="text-xs text-gray-400 text-center">↑↓ Navigate • Drag headers • Fix columns</div>
+                <div className="text-xs text-gray-400 text-center">{t("invoices.footer.hint")}</div>
             </div>
         </TooltipProvider>
     );

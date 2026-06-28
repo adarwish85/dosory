@@ -22,8 +22,10 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { useTranslation } from "@/lib/i18n";
 
 export default function CreateEstimatePage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const searchParams = useSearchParams();
     const customerIdParam = searchParams.get("customerId");
@@ -83,7 +85,7 @@ export default function CreateEstimatePage() {
         setIsSubmitting(true);
         try {
             await createEstimate(data);
-            toast.success("Estimate created successfully");
+            toast.success(t("sales.estimates.new.toast.success"));
 
             if (customerIdParam) {
                 router.push(`/dashboard/customers/${customerIdParam}/estimates`);
@@ -92,7 +94,7 @@ export default function CreateEstimatePage() {
             }
         } catch (error) {
             console.error("Error creating estimate:", error);
-            toast.error("Failed to create estimate");
+            toast.error(t("sales.estimates.new.toast.error"));
         } finally {
             setIsSubmitting(false);
         }
@@ -106,31 +108,31 @@ export default function CreateEstimatePage() {
                     className="flex items-center hover:text-gray-900 transition-colors"
                 >
                     <ChevronLeft className="h-4 w-4 mr-1" />
-                    Back to Estimates
+                    {t("sales.estimates.new.back")}
                 </Link>
             </div>
 
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">New Estimate</h1>
-                <p className="text-gray-500 mt-1">Create a quote for services or products.</p>
+                <h1 className="text-3xl font-bold text-gray-900">{t("sales.estimates.new.title")}</h1>
+                <p className="text-gray-500 mt-1">{t("sales.estimates.new.subtitle")}</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Estimate Details</CardTitle>
+                        <CardTitle>{t("sales.estimates.new.detailsTitle")}</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="customerId">Customer <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="customerId">{t("sales.estimates.new.customer")} <span className="text-red-500">*</span></Label>
                                 <Select
                                     value={watch("customerId")}
                                     onValueChange={(val) => setValue("customerId", val, { shouldValidate: true })}
                                     disabled={!!customerIdParam}
                                 >
                                     <SelectTrigger className={cn(errors.customerId && "border-red-500")}>
-                                        <SelectValue placeholder="Select Customer" />
+                                        <SelectValue placeholder={t("sales.estimates.new.selectCustomer")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {customers.map((c) => (
@@ -142,7 +144,7 @@ export default function CreateEstimatePage() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="currency">Currency</Label>
+                                <Label htmlFor="currency">{t("sales.estimates.new.currency")}</Label>
                                 <Select
                                     value={watch("currency")}
                                     onValueChange={(val) => setValue("currency", val)}
@@ -161,7 +163,7 @@ export default function CreateEstimatePage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
-                                <Label>Estimate Date</Label>
+                                <Label>{t("sales.estimates.new.estimateDate")}</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -172,7 +174,7 @@ export default function CreateEstimatePage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                            {date ? format(date, "PPP") : <span>{t("sales.estimates.new.pickDate")}</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -187,7 +189,7 @@ export default function CreateEstimatePage() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label>Expiry Date</Label>
+                                <Label>{t("sales.estimates.new.expiryDate")}</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -198,7 +200,7 @@ export default function CreateEstimatePage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {expiryDate ? format(expiryDate, "PPP") : <span>Pick a date</span>}
+                                            {expiryDate ? format(expiryDate, "PPP") : <span>{t("sales.estimates.new.pickDate")}</span>}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -217,29 +219,29 @@ export default function CreateEstimatePage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Items</CardTitle>
+                        <CardTitle>{t("sales.estimates.new.itemsTitle")}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="hidden md:grid grid-cols-12 gap-4 text-sm font-medium text-gray-500 mb-2">
-                            <div className="col-span-6">Description</div>
-                            <div className="col-span-2">Quantity</div>
-                            <div className="col-span-2">Rate</div>
-                            <div className="col-span-1">Amount</div>
+                            <div className="col-span-6">{t("sales.estimates.new.itemDescription")}</div>
+                            <div className="col-span-2">{t("sales.estimates.new.quantity")}</div>
+                            <div className="col-span-2">{t("sales.estimates.new.rate")}</div>
+                            <div className="col-span-1">{t("common.amount")}</div>
                             <div className="col-span-1"></div>
                         </div>
 
                         {fields.map((field, index) => (
                             <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end border-b pb-4 md:border-0 md:pb-0">
                                 <div className="md:col-span-6">
-                                    <Label className="md:hidden">Description</Label>
+                                    <Label className="md:hidden">{t("sales.estimates.new.itemDescription")}</Label>
                                     <Input
                                         {...register(`items.${index}.description` as const)}
-                                        placeholder="Item description"
+                                        placeholder={t("sales.estimates.new.itemDescriptionPlaceholder")}
                                         className={cn(errors.items?.[index]?.description && "border-red-500")}
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <Label className="md:hidden">Quantity</Label>
+                                    <Label className="md:hidden">{t("sales.estimates.new.quantity")}</Label>
                                     <Input
                                         type="number"
                                         min="0"
@@ -248,7 +250,7 @@ export default function CreateEstimatePage() {
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <Label className="md:hidden">Rate</Label>
+                                    <Label className="md:hidden">{t("sales.estimates.new.rate")}</Label>
                                     <Input
                                         type="number"
                                         min="0"
@@ -257,7 +259,7 @@ export default function CreateEstimatePage() {
                                     />
                                 </div>
                                 <div className="md:col-span-1 py-2 md:py-0 text-right md:text-left font-medium">
-                                    <span className="md:hidden mr-2 text-gray-500">Amount:</span>
+                                    <span className="md:hidden mr-2 text-gray-500">{t("sales.estimates.new.amountLabel")}</span>
                                     {((watch(`items.${index}.quantity`) || 0) * (watch(`items.${index}.rate`) || 0)).toFixed(2)}
                                 </div>
                                 <div className="md:col-span-1 flex justify-end md:justify-center">
@@ -276,12 +278,12 @@ export default function CreateEstimatePage() {
                             className="mt-2"
                         >
                             <Plus className="h-4 w-4 mr-2" />
-                            Add Item
+                            {t("sales.estimates.new.addItem")}
                         </Button>
 
                         <div className="flex justify-end pt-4 border-t mt-4">
                             <div className="text-right">
-                                <p className="text-gray-500 text-sm">Subtotal</p>
+                                <p className="text-gray-500 text-sm">{t("common.subtotal")}</p>
                                 <p className="text-2xl font-bold">{subtotal.toFixed(2)} {watch("currency")}</p>
                             </div>
                         </div>
@@ -290,25 +292,25 @@ export default function CreateEstimatePage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Notes & Terms</CardTitle>
+                        <CardTitle>{t("sales.estimates.new.notesTermsTitle")}</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="notes">Notes</Label>
-                            <Textarea {...register("notes")} placeholder="Additional notes for the customer..." />
+                            <Label htmlFor="notes">{t("sales.estimates.new.notes")}</Label>
+                            <Textarea {...register("notes")} placeholder={t("sales.estimates.new.notesPlaceholder")} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="terms">Terms & Conditions</Label>
-                            <Textarea {...register("terms")} placeholder="Payment terms, delivery schedule, etc." />
+                            <Label htmlFor="terms">{t("sales.estimates.new.terms")}</Label>
+                            <Textarea {...register("terms")} placeholder={t("sales.estimates.new.termsPlaceholder")} />
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
                         <Button type="button" variant="ghost" className="mr-2" onClick={() => router.back()}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Estimate
+                            {t("sales.estimates.new.submit")}
                         </Button>
                     </CardFooter>
                 </Card>

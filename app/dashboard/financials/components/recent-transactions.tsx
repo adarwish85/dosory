@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePayments } from "@/lib/hooks/use-payments";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export function RecentTransactions() {
+    const { t } = useTranslation();
     const { payments, loading } = usePayments({ limit: 10 });
 
     if (loading) {
@@ -21,24 +23,24 @@ export function RecentTransactions() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
+                <CardTitle>{t("financials.transactions.title")}</CardTitle>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Invoice</TableHead>
-                            <TableHead>Mode</TableHead>
-                            <TableHead className="text-right">Amount</TableHead>
+                            <TableHead>{t("common.date")}</TableHead>
+                            <TableHead>{t("financials.transactions.customer")}</TableHead>
+                            <TableHead>{t("financials.transactions.invoice")}</TableHead>
+                            <TableHead>{t("financials.transactions.mode")}</TableHead>
+                            <TableHead className="text-right">{t("financials.transactions.amount")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {payments.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                                    No transactions found
+                                    {t("financials.transactions.empty")}
                                 </TableCell>
                             </TableRow>
                         ) : (

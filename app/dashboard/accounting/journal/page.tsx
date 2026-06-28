@@ -9,8 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, RefreshCcw } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export default function JournalPage() {
+    const { t } = useTranslation();
     const { entries, loading, fetchEntries } = useJournalEntries();
 
     const formatCurrency = (amount: number, currency = "USD") => {
@@ -22,15 +24,15 @@ export default function JournalPage() {
 
     return (
         <div className="space-y-6">
-            <PageHeader title="General Journal" description="View all double-entry accounting records.">
+            <PageHeader title={t("accounting.journal.title")} description={t("accounting.journal.description")}>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => fetchEntries(true)} disabled={loading}>
                         <RefreshCcw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                        Refresh
+                        {t("accounting.journal.refresh")}
                     </Button>
                     <Link href="/dashboard/accounting/journal/new">
                         <Button size="sm">
-                            <Plus className="mr-2 h-4 w-4" /> New Entry
+                            <Plus className="mr-2 h-4 w-4" /> {t("accounting.journal.newEntry")}
                         </Button>
                     </Link>
                 </div>
@@ -38,32 +40,32 @@ export default function JournalPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Journal Entries</CardTitle>
-                    <CardDescription>Chronological list of financial transactions</CardDescription>
+                    <CardTitle>{t("accounting.journal.entriesTitle")}</CardTitle>
+                    <CardDescription>{t("accounting.journal.entriesDescription")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[120px]">Date</TableHead>
-                                <TableHead className="w-[150px]">Reference</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead className="w-[100px]">Currency</TableHead>
-                                <TableHead className="text-right w-[150px]">Amount</TableHead>
-                                <TableHead className="w-[100px]">Status</TableHead>
+                                <TableHead className="w-[120px]">{t("common.date")}</TableHead>
+                                <TableHead className="w-[150px]">{t("accounting.journal.reference")}</TableHead>
+                                <TableHead>{t("accounting.journal.descriptionColumn")}</TableHead>
+                                <TableHead className="w-[100px]">{t("accounting.journal.currency")}</TableHead>
+                                <TableHead className="text-right w-[150px]">{t("common.amount")}</TableHead>
+                                <TableHead className="w-[100px]">{t("common.status")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading && entries.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-10">
-                                        Loading...
+                                        {t("common.loading")}
                                     </TableCell>
                                 </TableRow>
                             ) : entries.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                                        No journal entries found.
+                                        {t("accounting.journal.empty")}
                                     </TableCell>
                                 </TableRow>
                             ) : (
