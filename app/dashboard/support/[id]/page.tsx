@@ -30,9 +30,11 @@ import {
 import { useSupportTicket, useSupportTicketMessages, usePermission, useStaff } from "@/lib/hooks";
 import { format } from "date-fns";
 import { SupportTicket, SupportTicketStatus, SupportTicketPriority } from "@/lib/types/support";
+import { useTranslation } from "@/lib/i18n";
 
 // Helper components
 function StatusBadge({ status }: { status: SupportTicketStatus }) {
+    const { t } = useTranslation();
     const colors = {
         open: "bg-blue-100 text-blue-800",
         in_progress: "bg-purple-100 text-purple-800",
@@ -42,12 +44,13 @@ function StatusBadge({ status }: { status: SupportTicketStatus }) {
     };
     return (
         <Badge variant="secondary" className={colors[status] || "bg-gray-100"}>
-            {status.replace(/_/g, " ")}
+            {t(`support.statuses.${status}`)}
         </Badge>
     );
 }
 
 function PriorityBadge({ priority }: { priority: SupportTicketPriority }) {
+    const { t } = useTranslation();
     const colors = {
         low: "bg-gray-100 text-gray-800",
         medium: "bg-blue-100 text-blue-800",
@@ -56,17 +59,18 @@ function PriorityBadge({ priority }: { priority: SupportTicketPriority }) {
     };
     return (
         <Badge variant="outline" className={colors[priority] || "bg-gray-100"}>
-            {priority}
+            {t(`support.priorities.${priority}`)}
         </Badge>
     );
 }
 
 // Timeline Component
 function TicketTimeline({ ticketId }: { ticketId: string }) {
+    const { t } = useTranslation();
     const { messages, loading } = useSupportTicketMessages(ticketId);
 
-    if (loading) return <div className="p-4 text-center text-gray-500">Loading timeline...</div>;
-    if (messages.length === 0) return <div className="p-4 text-center text-gray-500">No messages yet.</div>;
+    if (loading) return <div className="p-4 text-center text-gray-500">{t("support.detail.loadingTimeline")}</div>;
+    if (messages.length === 0) return <div className="p-4 text-center text-gray-500">{t("support.detail.noMessages")}</div>;
 
     return (
         <div className="space-y-6">
@@ -84,7 +88,7 @@ function TicketTimeline({ ticketId }: { ticketId: string }) {
                     >
                         <div className="flex items-center gap-2 mb-1">
                             <span className="text-sm font-medium">
-                                {msg.senderName || (msg.senderType === "agent" ? "Support Agent" : "Customer")}
+                                {msg.senderName || (msg.senderType === "agent" ? t("support.detail.supportAgent") : t("support.detail.customer"))}
                             </span>
                             <span className="text-xs text-gray-400">
                                 {format(msg.createdAt.toDate(), "MMM dd, HH:mm")}
@@ -94,7 +98,7 @@ function TicketTimeline({ ticketId }: { ticketId: string }) {
                                     variant="outline"
                                     className="text-[10px] px-1 py-0 h-4 bg-yellow-50 text-yellow-700 border-yellow-200"
                                 >
-                                    Internal Note
+                                    {t("support.detail.internalNote")}
                                 </Badge>
                             )}
                         </div>
@@ -118,6 +122,7 @@ function TicketTimeline({ ticketId }: { ticketId: string }) {
 
 // Reply Component
 function ReplyBox({ ticketId }: { ticketId: string }) {
+    const { t } = useTranslation();
     const [body, setBody] = useState("");
     const [isInternal, setIsInternal] = useState(false);
     const { sendMessage } = useSupportTicketMessages(ticketId);
@@ -132,7 +137,7 @@ function ReplyBox({ ticketId }: { ticketId: string }) {
         <Card className={`border-t ${isInternal ? "bg-yellow-50/50" : "bg-gray-50/50"}`}>
             <CardContent className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Reply</span>
+                    <span className="text-sm font-medium text-gray-700">{t("support.detail.reply")}</span>
                     <Button
                         variant="ghost"
                         size="sm"
@@ -140,18 +145,18 @@ function ReplyBox({ ticketId }: { ticketId: string }) {
                         className={isInternal ? "text-yellow-600 bg-yellow-100" : "text-gray-500"}
                     >
                         <Lock className="h-3 w-3 mr-1" />
-                        Internal Note
+                        {t("support.detail.internalNote")}
                     </Button>
                 </div>
                 <Textarea
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
-                    placeholder={isInternal ? "Add an internal note..." : "Type your reply..."}
+                    placeholder={isInternal ? t("support.detail.internalNotePlaceholder") : t("support.detail.replyPlaceholder")}
                     className="min-h-[100px] bg-white"
                 />
                 <div className="flex justify-end gap-2">
                     <Button variant="outline" size="sm">
-                        <Paperclip className="h-4 w-4 mr-2" /> Attach
+                        <Paperclip className="h-4 w-4 mr-2" /> {t("support.detail.attach")}
                     </Button>
                     <Button
                         size="sm"
@@ -159,7 +164,7 @@ function ReplyBox({ ticketId }: { ticketId: string }) {
                         className={isInternal ? "bg-yellow-600 hover:bg-yellow-700" : ""}
                     >
                         <Send className="h-4 w-4 mr-2" />
-                        {isInternal ? "Add Note" : "Send Reply"}
+                        {isInternal ? t("support.detail.addNote") : t("support.detail.sendReply")}
                     </Button>
                 </div>
             </CardContent>
@@ -194,12 +199,13 @@ function useResult<T>(promise: Promise<T>): T {
 }
 
 function TicketDetailContent({ ticketId }: { ticketId: string }) {
+    const { t } = useTranslation();
     const { ticket, loading, updateStatus } = useSupportTicket(ticketId);
     const { can } = usePermission();
     const { staff } = useStaff();
 
-    if (loading) return <div className="p-8 text-center">Loading ticket...</div>;
-    if (!ticket) return <div className="p-8 text-center">Ticket not found</div>;
+    if (loading) return <div className="p-8 text-center">{t("support.detail.loadingTicket")}</div>;
+    if (!ticket) return <div className="p-8 text-center">{t("support.detail.ticketNotFound")}</div>;
 
     const assignedAgent = staff.find((s) => s.id === ticket.assignedAgentId);
 
@@ -237,7 +243,7 @@ function TicketDetailContent({ ticketId }: { ticketId: string }) {
                 <div className="flex items-center gap-2">
                     {can("tickets-close") && ticket.status !== "closed" && (
                         <Button variant="outline" onClick={() => updateStatus("closed")}>
-                            Close Ticket
+                            {t("support.closeTicket")}
                         </Button>
                     )}
                     <DropdownMenu>
@@ -248,10 +254,10 @@ function TicketDetailContent({ ticketId }: { ticketId: string }) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => updateStatus("in_progress")}>
-                                Mark In Progress
+                                {t("support.detail.markInProgress")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => updateStatus("waiting_on_customer")}>
-                                Mark Waiting on Customer
+                                {t("support.detail.markWaiting")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -264,7 +270,7 @@ function TicketDetailContent({ ticketId }: { ticketId: string }) {
                     {/* Description */}
                     <Card>
                         <CardContent className="p-6">
-                            <h3 className="text-sm font-medium text-gray-500 mb-2">Description</h3>
+                            <h3 className="text-sm font-medium text-gray-500 mb-2">{t("common.description")}</h3>
                             <div className="prose prose-sm max-w-none text-gray-800">{ticket.description}</div>
                         </CardContent>
                     </Card>
@@ -286,15 +292,15 @@ function TicketDetailContent({ ticketId }: { ticketId: string }) {
                 <div className="space-y-6">
                     <Card>
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">Ticket Details</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("support.new.detailsTitle")}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4 text-sm">
                             <div>
-                                <div className="text-gray-500 mb-1">Priority</div>
+                                <div className="text-gray-500 mb-1">{t("support.priority")}</div>
                                 <PriorityBadge priority={ticket.priority} />
                             </div>
                             <div>
-                                <div className="text-gray-500 mb-1">Assignee</div>
+                                <div className="text-gray-500 mb-1">{t("support.table.assignee")}</div>
                                 <div className="flex items-center gap-2">
                                     <Avatar className="h-6 w-6">
                                         <AvatarFallback>{assignedAgent?.firstName?.charAt(0) || "?"}</AvatarFallback>
@@ -302,16 +308,16 @@ function TicketDetailContent({ ticketId }: { ticketId: string }) {
                                     <span>
                                         {assignedAgent
                                             ? `${assignedAgent.firstName} ${assignedAgent.lastName}`
-                                            : "Unassigned"}
+                                            : t("support.unassigned")}
                                     </span>
                                 </div>
                             </div>
                             <div>
-                                <div className="text-gray-500 mb-1">Category</div>
+                                <div className="text-gray-500 mb-1">{t("support.category")}</div>
                                 <div className="font-medium">{ticket.category}</div>
                             </div>
                             <div>
-                                <div className="text-gray-500 mb-1">Source</div>
+                                <div className="text-gray-500 mb-1">{t("support.detail.source")}</div>
                                 <div className="capitalize">{ticket.source.replace(/_/g, " ")}</div>
                             </div>
                         </CardContent>
@@ -319,7 +325,7 @@ function TicketDetailContent({ ticketId }: { ticketId: string }) {
 
                     <Card>
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">Customer</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("support.detail.customer")}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4 text-sm">
                             {/* Mock Customer Info - In real app fetch customer */}
@@ -328,13 +334,13 @@ function TicketDetailContent({ ticketId }: { ticketId: string }) {
                                     <AvatarFallback>C</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <div className="font-medium">Customer Name</div>
+                                    <div className="font-medium">{t("support.detail.customerNamePlaceholder")}</div>
                                     <div className="text-gray-500">customer@example.com</div>
                                 </div>
                             </div>
                             <div className="pt-2">
                                 <Link href="#" className="text-blue-600 hover:underline flex items-center gap-1">
-                                    <User className="h-3 w-3" /> View Profile
+                                    <User className="h-3 w-3" /> {t("support.detail.viewProfile")}
                                 </Link>
                             </div>
                         </CardContent>
@@ -344,18 +350,18 @@ function TicketDetailContent({ ticketId }: { ticketId: string }) {
                         <Card className={ticket.slaStatus === "breached" ? "border-red-200 bg-red-50" : ""}>
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                    <Clock className="h-4 w-4" /> SLA Target
+                                    <Clock className="h-4 w-4" /> {t("support.detail.slaTarget")}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-2 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-500">Response Due</span>
+                                    <span className="text-gray-500">{t("support.detail.responseDue")}</span>
                                     <span className="font-medium">
                                         {format(ticket.slaResponseDueAt!.toDate(), "MMM dd, HH:mm")}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-500">Resolution Due</span>
+                                    <span className="text-gray-500">{t("support.detail.resolutionDue")}</span>
                                     <span className="font-medium">
                                         {format(ticket.slaResolutionDueAt!.toDate(), "MMM dd, HH:mm")}
                                     </span>

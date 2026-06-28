@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 
 export default function KnowledgeBasePage() {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<"articles" | "categories">("articles");
     const {
@@ -120,25 +122,25 @@ export default function KnowledgeBasePage() {
         try {
             if (editingArticle) {
                 await updateArticle(editingArticle.id, articleForm);
-                toast.success("Article updated successfully");
+                toast.success(t("knowledgeBase.toast.articleUpdated"));
             } else {
                 await createArticle(articleForm);
-                toast.success("Article created successfully");
+                toast.success(t("knowledgeBase.toast.articleCreated"));
             }
             setArticleDialogOpen(false);
         } catch (error) {
-            toast.error("Failed to save article");
+            toast.error(t("knowledgeBase.toast.articleSaveFailed"));
             console.error(error);
         }
     };
 
     const handleDeleteArticle = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this article?")) return;
+        if (!confirm(t("knowledgeBase.confirm.deleteArticle"))) return;
         try {
             await deleteArticle(id);
-            toast.success("Article deleted");
+            toast.success(t("knowledgeBase.toast.articleDeleted"));
         } catch (error) {
-            toast.error("Failed to delete article");
+            toast.error(t("knowledgeBase.toast.articleDeleteFailed"));
         }
     };
 
@@ -163,30 +165,28 @@ export default function KnowledgeBasePage() {
         try {
             if (editingCategory) {
                 await updateGroup(editingCategory.id, categoryForm);
-                toast.success("Category updated successfully");
+                toast.success(t("knowledgeBase.toast.categoryUpdated"));
             } else {
                 await createGroup(categoryForm);
-                toast.success("Category created successfully");
+                toast.success(t("knowledgeBase.toast.categoryCreated"));
             }
             setCategoryDialogOpen(false);
         } catch (error) {
-            toast.error("Failed to save category");
+            toast.error(t("knowledgeBase.toast.categorySaveFailed"));
             console.error(error);
         }
     };
 
     const handleDeleteCategory = async (id: string) => {
         if (
-            !confirm(
-                "Are you sure you want to delete this category? Articles in this category will become uncategorized."
-            )
+            !confirm(t("knowledgeBase.confirm.deleteCategory"))
         )
             return;
         try {
             await deleteGroup(id);
-            toast.success("Category deleted");
+            toast.success(t("knowledgeBase.toast.categoryDeleted"));
         } catch (error) {
-            toast.error("Failed to delete category");
+            toast.error(t("knowledgeBase.toast.categoryDeleteFailed"));
         }
     };
 
@@ -211,7 +211,7 @@ export default function KnowledgeBasePage() {
                                 : "border-transparent text-gray-500 hover:text-gray-700"
                         }`}
                     >
-                        Articles ({articles.length})
+                        {t("knowledgeBase.tabs.articles")} ({articles.length})
                     </button>
                     <button
                         onClick={() => setActiveTab("categories")}
@@ -221,7 +221,7 @@ export default function KnowledgeBasePage() {
                                 : "border-transparent text-gray-500 hover:text-gray-700"
                         }`}
                     >
-                        Categories ({groups.length})
+                        {t("knowledgeBase.tabs.categories")} ({groups.length})
                     </button>
                 </div>
             </div>
@@ -234,7 +234,7 @@ export default function KnowledgeBasePage() {
                         <div className="flex items-center gap-2 flex-wrap">
                             <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={handleNewArticle}>
                                 <Plus className="mr-2 h-4 w-4" />
-                                New Article
+                                {t("knowledgeBase.newArticle")}
                             </Button>
                         </div>
 
@@ -242,7 +242,7 @@ export default function KnowledgeBasePage() {
                             <div className="relative flex-1">
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                                 <Input
-                                    placeholder="Search articles..."
+                                    placeholder={t("knowledgeBase.searchArticles")}
                                     className="pl-9"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -262,11 +262,11 @@ export default function KnowledgeBasePage() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                    <TableHead className="font-semibold text-gray-900">Article Name</TableHead>
-                                    <TableHead className="font-semibold text-gray-900">Category</TableHead>
-                                    <TableHead className="font-semibold text-gray-900">Views</TableHead>
-                                    <TableHead className="font-semibold text-gray-900">Status</TableHead>
-                                    <TableHead className="font-semibold text-gray-900">Published</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("knowledgeBase.table.articleName")}</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("knowledgeBase.table.category")}</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("knowledgeBase.table.views")}</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("common.status")}</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("knowledgeBase.table.published")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -274,8 +274,8 @@ export default function KnowledgeBasePage() {
                                     <TableRow>
                                         <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
                                             {searchQuery
-                                                ? "No articles match your search."
-                                                : "No articles found. Create your first one!"}
+                                                ? t("knowledgeBase.empty.noArticlesMatch")
+                                                : t("knowledgeBase.empty.noArticles")}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -294,21 +294,21 @@ export default function KnowledgeBasePage() {
                                                             href={`/dashboard/knowledge-base/${article.id}`}
                                                             className="hover:text-blue-600 hover:underline px-0.5"
                                                         >
-                                                            View
+                                                            {t("common.view")}
                                                         </Link>
                                                         <span className="text-gray-300">|</span>
                                                         <button
                                                             onClick={() => handleEditArticle(article)}
                                                             className="hover:text-blue-600 hover:underline px-0.5"
                                                         >
-                                                            Edit
+                                                            {t("common.edit")}
                                                         </button>
                                                         <span className="text-gray-300">|</span>
                                                         <button
                                                             onClick={() => handleDeleteArticle(article.id)}
                                                             className="hover:text-red-600 hover:underline px-0.5"
                                                         >
-                                                            Delete
+                                                            {t("common.delete")}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -330,7 +330,7 @@ export default function KnowledgeBasePage() {
                                                             : "bg-gray-100 text-gray-600 border-0"
                                                     }
                                                 >
-                                                    {article.isActive ? "Active" : "Draft"}
+                                                    {article.isActive ? t("knowledgeBase.status.active") : t("knowledgeBase.status.draft")}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-gray-500">
@@ -344,7 +344,7 @@ export default function KnowledgeBasePage() {
                     </div>
 
                     <div className="flex items-center justify-between py-2">
-                        <span className="text-sm text-gray-600 font-medium">Total: {filteredArticles.length}</span>
+                        <span className="text-sm text-gray-600 font-medium">{t("knowledgeBase.total")}: {filteredArticles.length}</span>
                     </div>
                 </>
             )}
@@ -356,7 +356,7 @@ export default function KnowledgeBasePage() {
                     <div className="flex items-center justify-between gap-4">
                         <Button className="bg-gray-900 text-white hover:bg-gray-800" onClick={handleNewCategory}>
                             <Plus className="mr-2 h-4 w-4" />
-                            New Category
+                            {t("knowledgeBase.newCategory")}
                         </Button>
                         <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
                             <RefreshCw className="h-4 w-4" />
@@ -368,17 +368,17 @@ export default function KnowledgeBasePage() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                    <TableHead className="font-semibold text-gray-900">Name</TableHead>
-                                    <TableHead className="font-semibold text-gray-900">Description</TableHead>
-                                    <TableHead className="font-semibold text-gray-900">Color</TableHead>
-                                    <TableHead className="font-semibold text-gray-900">Articles</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("common.name")}</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("common.description")}</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("knowledgeBase.table.color")}</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">{t("knowledgeBase.tabs.articles")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {groups.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
-                                            No categories found. Create your first one!
+                                            {t("knowledgeBase.empty.noCategories")}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -394,14 +394,14 @@ export default function KnowledgeBasePage() {
                                                                 onClick={() => handleEditCategory(group)}
                                                                 className="hover:text-blue-600 hover:underline px-0.5"
                                                             >
-                                                                Edit
+                                                                {t("common.edit")}
                                                             </button>
                                                             <span className="text-gray-300">|</span>
                                                             <button
                                                                 onClick={() => handleDeleteCategory(group.id)}
                                                                 className="hover:text-red-600 hover:underline px-0.5"
                                                             >
-                                                                Delete
+                                                                {t("common.delete")}
                                                             </button>
                                                         </div>
                                                     </div>
@@ -443,32 +443,32 @@ export default function KnowledgeBasePage() {
             <Dialog open={articleDialogOpen} onOpenChange={setArticleDialogOpen}>
                 <DialogContent className="max-w-2xl">
                     <DialogHeader>
-                        <DialogTitle>{editingArticle ? "Edit Article" : "New Article"}</DialogTitle>
+                        <DialogTitle>{editingArticle ? t("knowledgeBase.dialog.editArticle") : t("knowledgeBase.newArticle")}</DialogTitle>
                         <DialogDescription>
                             {editingArticle
-                                ? "Update the article details below."
-                                : "Create a new knowledge base article."}
+                                ? t("knowledgeBase.dialog.editArticleDescription")
+                                : t("knowledgeBase.dialog.newArticleDescription")}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label htmlFor="subject">Title *</Label>
+                            <Label htmlFor="subject">{t("knowledgeBase.form.titleRequired")}</Label>
                             <Input
                                 id="subject"
                                 value={articleForm.subject}
                                 onChange={(e) => setArticleForm({ ...articleForm, subject: e.target.value })}
-                                placeholder="Article title"
+                                placeholder={t("knowledgeBase.form.articleTitlePlaceholder")}
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Category *</Label>
+                                <Label>{t("knowledgeBase.form.categoryRequired")}</Label>
                                 <Select
                                     value={articleForm.groupId}
                                     onValueChange={(v) => setArticleForm({ ...articleForm, groupId: v })}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select category" />
+                                        <SelectValue placeholder={t("knowledgeBase.form.selectCategory")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {groups.map((g) => (
@@ -480,54 +480,54 @@ export default function KnowledgeBasePage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Status</Label>
+                                <Label>{t("common.status")}</Label>
                                 <div className="flex items-center gap-4 h-10">
                                     <div className="flex items-center gap-2">
                                         <Switch
                                             checked={articleForm.isActive}
                                             onCheckedChange={(v) => setArticleForm({ ...articleForm, isActive: v })}
                                         />
-                                        <span className="text-sm">{articleForm.isActive ? "Active" : "Draft"}</span>
+                                        <span className="text-sm">{articleForm.isActive ? t("knowledgeBase.status.active") : t("knowledgeBase.status.draft")}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Switch
                                             checked={articleForm.internalOnly}
                                             onCheckedChange={(v) => setArticleForm({ ...articleForm, internalOnly: v })}
                                         />
-                                        <span className="text-sm">Internal Only</span>
+                                        <span className="text-sm">{t("knowledgeBase.form.internalOnly")}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">{t("common.description")}</Label>
                             <Input
                                 id="description"
                                 value={articleForm.description}
                                 onChange={(e) => setArticleForm({ ...articleForm, description: e.target.value })}
-                                placeholder="Short description"
+                                placeholder={t("knowledgeBase.form.shortDescriptionPlaceholder")}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="content">Content *</Label>
+                            <Label htmlFor="content">{t("knowledgeBase.form.contentRequired")}</Label>
                             <Textarea
                                 id="content"
                                 value={articleForm.content}
                                 onChange={(e) => setArticleForm({ ...articleForm, content: e.target.value })}
-                                placeholder="Article content..."
+                                placeholder={t("knowledgeBase.form.contentPlaceholder")}
                                 className="min-h-[200px]"
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setArticleDialogOpen(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button
                             onClick={handleSaveArticle}
                             disabled={!articleForm.subject || !articleForm.groupId || !articleForm.content}
                         >
-                            {editingArticle ? "Save Changes" : "Create Article"}
+                            {editingArticle ? t("common.saveChanges") : t("knowledgeBase.dialog.createArticle")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -537,35 +537,35 @@ export default function KnowledgeBasePage() {
             <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>{editingCategory ? "Edit Category" : "New Category"}</DialogTitle>
+                        <DialogTitle>{editingCategory ? t("knowledgeBase.dialog.editCategory") : t("knowledgeBase.newCategory")}</DialogTitle>
                         <DialogDescription>
                             {editingCategory
-                                ? "Update the category details."
-                                : "Create a new category to organize articles."}
+                                ? t("knowledgeBase.dialog.editCategoryDescription")
+                                : t("knowledgeBase.dialog.newCategoryDescription")}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Name *</Label>
+                            <Label htmlFor="name">{t("knowledgeBase.form.nameRequired")}</Label>
                             <Input
                                 id="name"
                                 value={categoryForm.name}
                                 onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                                placeholder="Category name"
+                                placeholder={t("knowledgeBase.form.categoryNamePlaceholder")}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="cat-description">Description</Label>
+                            <Label htmlFor="cat-description">{t("common.description")}</Label>
                             <Textarea
                                 id="cat-description"
                                 value={categoryForm.description}
                                 onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                                placeholder="Optional description"
+                                placeholder={t("knowledgeBase.form.optionalDescriptionPlaceholder")}
                                 className="min-h-[80px]"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="color">Color</Label>
+                            <Label htmlFor="color">{t("knowledgeBase.table.color")}</Label>
                             <div className="flex items-center gap-2">
                                 <input
                                     type="color"
@@ -584,10 +584,10 @@ export default function KnowledgeBasePage() {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setCategoryDialogOpen(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button onClick={handleSaveCategory} disabled={!categoryForm.name}>
-                            {editingCategory ? "Save Changes" : "Create Category"}
+                            {editingCategory ? t("common.saveChanges") : t("knowledgeBase.dialog.createCategory")}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

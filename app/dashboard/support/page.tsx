@@ -34,6 +34,7 @@ import { useSupportTickets, usePermission, useStaff } from "@/lib/hooks";
 import { SupportTicket, SupportTicketStatus, SupportTicketPriority } from "@/lib/types/support";
 import { format } from "date-fns";
 import { TableSkeleton } from "@/components/ui/skeleton-loaders";
+import { useTranslation } from "@/lib/i18n";
 
 const STATUS_COLORS: Record<SupportTicketStatus, string> = {
     open: "bg-blue-100 text-blue-800",
@@ -51,6 +52,7 @@ const PRIORITY_ICONS: Record<SupportTicketPriority, React.ReactNode> = {
 };
 
 export default function SupportPage() {
+    const { t } = useTranslation();
     const { can } = usePermission();
     const { staff } = useStaff();
 
@@ -67,10 +69,10 @@ export default function SupportPage() {
 
     // Client-side search & filtering
     const filteredTickets = useMemo(() => {
-        return tickets.filter((t) => {
+        return tickets.filter((ticket) => {
             const matchesSearch =
-                t.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                t.id.toLowerCase().includes(searchQuery.toLowerCase());
+                ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                ticket.id.toLowerCase().includes(searchQuery.toLowerCase());
             return matchesSearch;
         });
     }, [tickets, searchQuery]);
@@ -86,31 +88,31 @@ export default function SupportPage() {
     };
 
     const getAgentName = (id: string | null) => {
-        if (!id) return "Unassigned";
+        if (!id) return t("support.unassigned");
         const agent = staff.find((s) => s.id === id);
-        return agent ? `${agent.firstName} ${agent.lastName}` : "Unknown";
+        return agent ? `${agent.firstName} ${agent.lastName}` : t("support.unknown");
     };
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold tracking-tight">Support Tickets</h1>
+                <h1 className="text-2xl font-bold tracking-tight">{t("support.title")}</h1>
                 <div className="flex items-center gap-2">
                     {can("tickets-create") && (
                         <Link href="/dashboard/support/new">
                             <Button>
-                                <Plus className="mr-2 h-4 w-4" /> New Ticket
+                                <Plus className="mr-2 h-4 w-4" /> {t("support.newTicket")}
                             </Button>
                         </Link>
                     )}
                     <Link href="/dashboard/support/reports">
                         <Button variant="outline">
-                            <BarChart3 className="mr-2 h-4 w-4" /> Reports
+                            <BarChart3 className="mr-2 h-4 w-4" /> {t("support.reportsButton")}
                         </Button>
                     </Link>
                     <Link href="/dashboard/support/kb">
                         <Button variant="outline">
-                            <BookOpen className="mr-2 h-4 w-4" /> Knowledge Base
+                            <BookOpen className="mr-2 h-4 w-4" /> {t("support.knowledgeBase")}
                         </Button>
                     </Link>
                     <Link href="/dashboard/setup/support">
@@ -124,22 +126,22 @@ export default function SupportPage() {
             {/* Stats Cards (Simple V1) */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white p-4 rounded-lg border shadow-sm">
-                    <div className="text-sm font-medium text-gray-500">Open Tickets</div>
-                    <div className="text-2xl font-bold">{tickets.filter((t) => t.status === "open").length}</div>
+                    <div className="text-sm font-medium text-gray-500">{t("support.stats.openTickets")}</div>
+                    <div className="text-2xl font-bold">{tickets.filter((ticket) => ticket.status === "open").length}</div>
                 </div>
                 <div className="bg-white p-4 rounded-lg border shadow-sm">
-                    <div className="text-sm font-medium text-gray-500">My Tickets</div>
+                    <div className="text-sm font-medium text-gray-500">{t("support.stats.myTickets")}</div>
                     <div className="text-2xl font-bold">-</div>
                     {/* Simplified for now, would need userId filtering */}
                 </div>
                 <div className="bg-white p-4 rounded-lg border shadow-sm">
-                    <div className="text-sm font-medium text-gray-500">SLA Breached</div>
+                    <div className="text-sm font-medium text-gray-500">{t("support.stats.slaBreached")}</div>
                     <div className="text-2xl font-bold text-red-600">
-                        {tickets.filter((t) => t.slaStatus === "breached").length}
+                        {tickets.filter((ticket) => ticket.slaStatus === "breached").length}
                     </div>
                 </div>
                 <div className="bg-white p-4 rounded-lg border shadow-sm">
-                    <div className="text-sm font-medium text-gray-500">Avg Response</div>
+                    <div className="text-sm font-medium text-gray-500">{t("support.stats.avgResponse")}</div>
                     <div className="text-2xl font-bold">4.2h</div>
                     {/* Placeholder for reports */}
                 </div>
@@ -151,7 +153,7 @@ export default function SupportPage() {
                     <div className="relative flex-1 max-w-sm">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                         <Input
-                            placeholder="Search tickets..."
+                            placeholder={t("support.searchPlaceholder")}
                             className="pl-9"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -160,28 +162,28 @@ export default function SupportPage() {
                     <div className="flex gap-2">
                         <Select value={status} onValueChange={(v) => setStatus(v as SupportTicketStatus | "all")}>
                             <SelectTrigger className="w-[150px]">
-                                <SelectValue placeholder="Status" />
+                                <SelectValue placeholder={t("support.status")} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Statuses</SelectItem>
-                                <SelectItem value="open">Open</SelectItem>
-                                <SelectItem value="in_progress">In Progress</SelectItem>
-                                <SelectItem value="waiting_on_customer">Waiting on Customer</SelectItem>
-                                <SelectItem value="resolved">Resolved</SelectItem>
-                                <SelectItem value="closed">Closed</SelectItem>
+                                <SelectItem value="all">{t("support.statuses.all")}</SelectItem>
+                                <SelectItem value="open">{t("support.statuses.open")}</SelectItem>
+                                <SelectItem value="in_progress">{t("support.statuses.in_progress")}</SelectItem>
+                                <SelectItem value="waiting_on_customer">{t("support.statuses.waiting_on_customer")}</SelectItem>
+                                <SelectItem value="resolved">{t("support.statuses.resolved")}</SelectItem>
+                                <SelectItem value="closed">{t("support.statuses.closed")}</SelectItem>
                             </SelectContent>
                         </Select>
 
                         <Select value={priority} onValueChange={(v) => setPriority(v as SupportTicketPriority | "all")}>
                             <SelectTrigger className="w-[150px]">
-                                <SelectValue placeholder="Priority" />
+                                <SelectValue placeholder={t("support.priority")} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Priorities</SelectItem>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                                <SelectItem value="critical">Critical</SelectItem>
+                                <SelectItem value="all">{t("support.priorities.all")}</SelectItem>
+                                <SelectItem value="low">{t("support.priorities.low")}</SelectItem>
+                                <SelectItem value="medium">{t("support.priorities.medium")}</SelectItem>
+                                <SelectItem value="high">{t("support.priorities.high")}</SelectItem>
+                                <SelectItem value="critical">{t("support.priorities.critical")}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -195,12 +197,12 @@ export default function SupportPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[100px]">ID</TableHead>
-                                <TableHead>Subject</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Priority</TableHead>
-                                <TableHead>Assignee</TableHead>
-                                <TableHead>Created</TableHead>
+                                <TableHead className="w-[100px]">{t("support.table.id")}</TableHead>
+                                <TableHead>{t("support.table.subject")}</TableHead>
+                                <TableHead>{t("support.status")}</TableHead>
+                                <TableHead>{t("support.priority")}</TableHead>
+                                <TableHead>{t("support.table.assignee")}</TableHead>
+                                <TableHead>{t("support.table.created")}</TableHead>
                                 <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -214,7 +216,7 @@ export default function SupportPage() {
                             ) : filteredTickets.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                                        No tickets found.
+                                        {t("support.noTickets")}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -228,20 +230,20 @@ export default function SupportPage() {
                                                 <span className="font-medium">{ticket.subject}</span>
                                                 {ticket.slaStatus === "breached" && (
                                                     <span className="text-xs text-red-600 font-medium">
-                                                        SLA Breached
+                                                        {t("support.stats.slaBreached")}
                                                     </span>
                                                 )}
                                             </div>
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="outline" className={STATUS_COLORS[ticket.status]}>
-                                                {ticket.status.replace(/_/g, " ")}
+                                                {t(`support.statuses.${ticket.status}`)}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 {PRIORITY_ICONS[ticket.priority]}
-                                                <span className="capitalize">{ticket.priority}</span>
+                                                <span>{t(`support.priorities.${ticket.priority}`)}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell>
@@ -256,7 +258,7 @@ export default function SupportPage() {
                                                     {staff.find(
                                                         (s: { id: string; firstName?: string }) =>
                                                             s.id === ticket.assignedAgentId
-                                                    )?.firstName || "Unassigned"}
+                                                    )?.firstName || t("support.unassigned")}
                                                 </span>
                                             </div>
                                         </TableCell>
@@ -272,14 +274,14 @@ export default function SupportPage() {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <Link href={`/dashboard/support/${ticket.id}`}>
-                                                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                                                        <DropdownMenuItem>{t("support.viewDetails")}</DropdownMenuItem>
                                                     </Link>
                                                     {can("tickets-edit") && (
-                                                        <DropdownMenuItem>Edit Properties</DropdownMenuItem>
+                                                        <DropdownMenuItem>{t("support.editProperties")}</DropdownMenuItem>
                                                     )}
                                                     {can("tickets-close") && ticket.status !== "closed" && (
                                                         <DropdownMenuItem className="text-red-600">
-                                                            Close Ticket
+                                                            {t("support.closeTicket")}
                                                         </DropdownMenuItem>
                                                     )}
                                                 </DropdownMenuContent>

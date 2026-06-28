@@ -15,8 +15,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { Plus, Search, FileText, Globe, Lock, Edit2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { useTranslation } from "@/lib/i18n";
 
 export default function KnowledgeBasePage() {
+    const { t } = useTranslation();
     const { profile } = useUserProfile();
     const [loading, setLoading] = useState(true);
     const [articles, setArticles] = useState<KbArticle[]>([]);
@@ -54,7 +56,7 @@ export default function KnowledgeBasePage() {
             setCategories(cats);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to load knowledge base");
+            toast.error(t("support.kb.toast.loadFailed"));
         } finally {
             setLoading(false);
         }
@@ -66,7 +68,7 @@ export default function KnowledgeBasePage() {
         try {
             if (currentArticle.id) {
                 await KbService.updateArticle(currentArticle.id, currentArticle);
-                toast.success("Article updated");
+                toast.success(t("support.kb.toast.articleUpdated"));
             } else {
                 await KbService.createArticle({
                     tenantId: profile.orgId,
@@ -75,24 +77,24 @@ export default function KnowledgeBasePage() {
                     category: currentArticle.category || "General",
                     visibility: currentArticle.visibility || "internal",
                 });
-                toast.success("Article published");
+                toast.success(t("support.kb.toast.articlePublished"));
             }
             setIsEditing(false);
             setCurrentArticle({ title: "", body: "", category: "General", visibility: "internal" });
             loadData();
         } catch (error) {
-            toast.error("Failed to save article");
+            toast.error(t("support.kb.toast.saveFailed"));
         }
     };
 
     const handleDeleteArticle = async (id: string) => {
-        if (!confirm("Are you sure?")) return;
+        if (!confirm(t("support.kb.confirmDeleteArticle"))) return;
         try {
             await KbService.deleteArticle(id);
             loadData();
-            toast.success("Article deleted");
+            toast.success(t("support.kb.toast.articleDeleted"));
         } catch (error) {
-            toast.error("Failed to delete article");
+            toast.error(t("support.kb.toast.deleteFailed"));
         }
     };
 
@@ -102,20 +104,20 @@ export default function KnowledgeBasePage() {
             await KbService.createCategory(profile.orgId, newCategoryName);
             setNewCategoryName("");
             loadData();
-            toast.success("Category added");
+            toast.success(t("support.kb.toast.categoryAdded"));
         } catch (error) {
-            toast.error("Failed to add category");
+            toast.error(t("support.kb.toast.categoryAddFailed"));
         }
     };
 
     const handleDeleteCategory = async (id: string) => {
-        if (!confirm("Delete category?")) return;
+        if (!confirm(t("support.kb.confirmDeleteCategory"))) return;
         try {
             await KbService.deleteCategory(id);
             loadData();
-            toast.success("Category deleted");
+            toast.success(t("support.kb.toast.categoryDeleted"));
         } catch (error) {
-            toast.error("Delete failed");
+            toast.error(t("support.kb.toast.deleteFailed"));
         }
     };
 
@@ -129,52 +131,52 @@ export default function KnowledgeBasePage() {
         return (
             <div className="space-y-6 max-w-4xl mx-auto">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">{currentArticle.id ? "Edit Article" : "New Article"}</h1>
+                    <h1 className="text-2xl font-bold">{currentArticle.id ? t("support.kb.editArticle") : t("support.kb.newArticle")}</h1>
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={() => setIsEditing(false)}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
-                        <Button onClick={handleSaveArticle}>Save Article</Button>
+                        <Button onClick={handleSaveArticle}>{t("support.kb.saveArticle")}</Button>
                     </div>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-3">
                     <div className="md:col-span-2 space-y-4">
                         <div className="space-y-2">
-                            <Label>Title</Label>
+                            <Label>{t("support.kb.titleLabel")}</Label>
                             <Input
                                 value={currentArticle.title}
                                 onChange={(e) => setCurrentArticle({ ...currentArticle, title: e.target.value })}
-                                placeholder="Article Title"
+                                placeholder={t("support.kb.titlePlaceholder")}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Content (HTML supported)</Label>
+                            <Label>{t("support.kb.contentLabel")}</Label>
                             <Textarea
                                 className="min-h-[400px] font-mono"
                                 value={currentArticle.body}
                                 onChange={(e) => setCurrentArticle({ ...currentArticle, body: e.target.value })}
-                                placeholder="<p>Write your article here...</p>"
+                                placeholder={t("support.kb.contentPlaceholder")}
                             />
                         </div>
                     </div>
                     <div className="space-y-4">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Settings</CardTitle>
+                                <CardTitle>{t("support.kb.settings")}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label>Category</Label>
+                                    <Label>{t("support.category")}</Label>
                                     <Select
                                         value={currentArticle.category}
                                         onValueChange={(v) => setCurrentArticle({ ...currentArticle, category: v })}
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select Category" />
+                                            <SelectValue placeholder={t("support.new.selectCategory")} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="General">General</SelectItem>
+                                            <SelectItem value="General">{t("support.categories.General")}</SelectItem>
                                             {categories.map((c) => (
                                                 <SelectItem key={c.id} value={c.name}>
                                                     {c.name}
@@ -184,7 +186,7 @@ export default function KnowledgeBasePage() {
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Visibility</Label>
+                                    <Label>{t("support.kb.visibility")}</Label>
                                     <Select
                                         value={currentArticle.visibility}
                                         onValueChange={(v: "public" | "internal") =>
@@ -197,12 +199,12 @@ export default function KnowledgeBasePage() {
                                         <SelectContent>
                                             <SelectItem value="public">
                                                 <div className="flex items-center gap-2">
-                                                    <Globe className="h-4 w-4 text-green-500" /> Public
+                                                    <Globe className="h-4 w-4 text-green-500" /> {t("support.kb.public")}
                                                 </div>
                                             </SelectItem>
                                             <SelectItem value="internal">
                                                 <div className="flex items-center gap-2">
-                                                    <Lock className="h-4 w-4 text-orange-500" /> Internal Only
+                                                    <Lock className="h-4 w-4 text-orange-500" /> {t("support.kb.internalOnly")}
                                                 </div>
                                             </SelectItem>
                                         </SelectContent>
@@ -220,26 +222,26 @@ export default function KnowledgeBasePage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Knowledge Base</h1>
-                    <p className="text-muted-foreground">Manage help articles and documentation.</p>
+                    <h1 className="text-2xl font-bold tracking-tight">{t("support.knowledgeBase")}</h1>
+                    <p className="text-muted-foreground">{t("support.kb.subtitle")}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline">Manage Categories</Button>
+                            <Button variant="outline">{t("support.kb.manageCategories")}</Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>KB Categories</DialogTitle>
+                                <DialogTitle>{t("support.kb.categoriesTitle")}</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
                                 <div className="flex gap-2">
                                     <Input
-                                        placeholder="New Category"
+                                        placeholder={t("support.kb.newCategory")}
                                         value={newCategoryName}
                                         onChange={(e) => setNewCategoryName(e.target.value)}
                                     />
-                                    <Button onClick={handleAddCategory}>Add</Button>
+                                    <Button onClick={handleAddCategory}>{t("common.add")}</Button>
                                 </div>
                                 <div className="space-y-2">
                                     {categories.map((cat) => (
@@ -272,7 +274,7 @@ export default function KnowledgeBasePage() {
                             setIsEditing(true);
                         }}
                     >
-                        <Plus className="mr-2 h-4 w-4" /> New Article
+                        <Plus className="mr-2 h-4 w-4" /> {t("support.kb.newArticle")}
                     </Button>
                 </div>
             </div>
@@ -281,7 +283,7 @@ export default function KnowledgeBasePage() {
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                     <Input
-                        placeholder="Search articles..."
+                        placeholder={t("support.kb.searchPlaceholder")}
                         className="pl-9"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -293,10 +295,10 @@ export default function KnowledgeBasePage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Title</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead>Visibility</TableHead>
-                            <TableHead>Last Updated</TableHead>
+                            <TableHead>{t("support.kb.titleLabel")}</TableHead>
+                            <TableHead>{t("support.category")}</TableHead>
+                            <TableHead>{t("support.kb.visibility")}</TableHead>
+                            <TableHead>{t("support.kb.lastUpdated")}</TableHead>
                             <TableHead className="w-[100px]"></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -304,13 +306,13 @@ export default function KnowledgeBasePage() {
                         {loading ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                    Loading...
+                                    {t("common.loading")}
                                 </TableCell>
                             </TableRow>
                         ) : filteredArticles.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                    No articles found.
+                                    {t("support.kb.noArticles")}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -326,11 +328,11 @@ export default function KnowledgeBasePage() {
                                     <TableCell>
                                         {article.visibility === "public" ? (
                                             <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                                                <Globe className="h-3 w-3" /> Public
+                                                <Globe className="h-3 w-3" /> {t("support.kb.public")}
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-1 text-orange-600 text-xs font-medium">
-                                                <Lock className="h-3 w-3" /> Internal
+                                                <Lock className="h-3 w-3" /> {t("support.kb.internal")}
                                             </div>
                                         )}
                                     </TableCell>

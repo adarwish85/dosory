@@ -12,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useSupportTickets, useStaff, useCustomers } from "@/lib/hooks";
 import { SupportTicketPriority } from "@/lib/types/support";
+import { useTranslation } from "@/lib/i18n";
 
 export default function NewTicketPage() {
+    const { t } = useTranslation();
     const router = useRouter();
     const { createTicket, loading } = useSupportTickets();
     const { staff } = useStaff();
@@ -57,20 +59,20 @@ export default function NewTicketPage() {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                 </Link>
-                <h1 className="text-2xl font-bold tracking-tight">Create New Ticket</h1>
+                <h1 className="text-2xl font-bold tracking-tight">{t("support.new.title")}</h1>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Ticket Details</CardTitle>
-                    <CardDescription>Create a new support ticket.</CardDescription>
+                    <CardTitle>{t("support.new.detailsTitle")}</CardTitle>
+                    <CardDescription>{t("support.new.detailsDescription")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-2">
-                            <Label>Subject</Label>
+                            <Label>{t("support.new.subject")}</Label>
                             <Input
-                                placeholder="Brief summary of the issue"
+                                placeholder={t("support.new.subjectPlaceholder")}
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
                                 required
@@ -79,40 +81,40 @@ export default function NewTicketPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Category</Label>
+                                <Label>{t("support.category")}</Label>
                                 <Select value={category} onValueChange={setCategory}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select category" />
+                                        <SelectValue placeholder={t("support.new.selectCategory")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {CATEGORIES.map((c) => (
                                             <SelectItem key={c} value={c}>
-                                                {c}
+                                                {t(`support.categories.${c}`)}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Priority</Label>
+                                <Label>{t("support.priority")}</Label>
                                 <Select value={priority} onValueChange={(v) => setPriority(v as SupportTicketPriority)}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select priority" />
+                                        <SelectValue placeholder={t("support.new.selectPriority")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="low">Low</SelectItem>
-                                        <SelectItem value="medium">Medium</SelectItem>
-                                        <SelectItem value="high">High</SelectItem>
-                                        <SelectItem value="critical">Critical</SelectItem>
+                                        <SelectItem value="low">{t("support.priorities.low")}</SelectItem>
+                                        <SelectItem value="medium">{t("support.priorities.medium")}</SelectItem>
+                                        <SelectItem value="high">{t("support.priorities.high")}</SelectItem>
+                                        <SelectItem value="critical">{t("support.priorities.critical")}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Description</Label>
+                            <Label>{t("common.description")}</Label>
                             <Textarea
-                                placeholder="Detailed description of the problem..."
+                                placeholder={t("support.new.descriptionPlaceholder")}
                                 className="min-h-[150px]"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
@@ -122,10 +124,10 @@ export default function NewTicketPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Customer (Optional)</Label>
+                                <Label>{t("support.new.customerOptional")}</Label>
                                 <Select value={customerId} onValueChange={setCustomerId}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select customer" />
+                                        <SelectValue placeholder={t("support.new.selectCustomer")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {customers.map((c) => (
@@ -137,13 +139,13 @@ export default function NewTicketPage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Assign Agent (Optional)</Label>
+                                <Label>{t("support.new.assignAgentOptional")}</Label>
                                 <Select value={assignedAgentId} onValueChange={setAssignedAgentId}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Unassigned" />
+                                        <SelectValue placeholder={t("support.unassigned")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                                        <SelectItem value="unassigned">{t("support.unassigned")}</SelectItem>
                                         {staff.map((s) => (
                                             <SelectItem key={s.id} value={s.id}>
                                                 {s.firstName} {s.lastName}
@@ -157,7 +159,7 @@ export default function NewTicketPage() {
                         <div className="flex justify-end pt-4">
                             <Button type="submit" disabled={loading}>
                                 <Save className="mr-2 h-4 w-4" />
-                                {loading ? "Creating..." : "Create Ticket"}
+                                {loading ? t("support.new.creating") : t("support.new.createButton")}
                             </Button>
                         </div>
                     </form>
