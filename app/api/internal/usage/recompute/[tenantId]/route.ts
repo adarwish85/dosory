@@ -2,15 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { BillingService } from "@/lib/services/billing-service";
 
-export async function POST(
-    request: NextRequest,
-    { params }: { params: Promise<{ tenantId: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ tenantId: string }> }) {
+    // Internal service-to-service route (no UI caller). Gate with the shared-secret
+    // header used by /api/internal/superadmin/set-claims. Deny-by-default: a missing/wrong
+    // secret OR an unconfigured INTERNAL_ADMIN_SECRET both return 403 (fails closed, and —
+    // unlike set-claims — no NODE_ENV=development bypass, so the gate is locally verifiable).
+    const secret = request.headers.get("x-internal-admin-secret");
+    const expectedSecret = process.env.INTERNAL_ADMIN_SECRET;
+    if (!expectedSecret || secret !== expectedSecret) {
+        return NextResponse.json({ error: "Forbidden: invalid or missing internal secret" }, { status: 403 });
+    }
+
     try {
         const { tenantId } = await params;
-
-        // Basic auth check (should be enhanced for production internal APIs)
-        // For now, assuming this is called by admin or secure task
 
         if (!tenantId) {
             return NextResponse.json({ error: "Tenant ID required" }, { status: 400 });
@@ -21,7 +25,7 @@ export async function POST(
         const staffSnapshot = await adminDb
             .collection("staff")
             .where("orgId", "==", tenantId)
-            // .where("status", "==", "active") // Optional: only count active staff? 
+            // .where("status", "==", "active") // Optional: only count active staff?
             .count()
             .get();
 
@@ -39,7 +43,7 @@ export async function POST(
         // Update usage
         await BillingService.updateTenantUsage(tenantId, {
             usersCount,
-            storageUsedGB
+            storageUsedGB,
         });
 
         return NextResponse.json({
@@ -47,12 +51,14 @@ export async function POST(
             tenantId,
             computed: {
                 usersCount,
-                storageUsedGB
-            }
+                storageUsedGB,
+            },
         });
-
-    } catch (error: any) {
+    } catch (error) {
         console.error("Recompute Usage Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : "Internal server error" },
+            { status: 500 }
+        );
     }
 }

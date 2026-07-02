@@ -1,8 +1,13 @@
-
 import { NextRequest, NextResponse } from "next/server";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 import { ImpersonationService } from "@/lib/impersonation/impersonationService";
 
 export async function POST(req: NextRequest) {
+    // Mirror impersonation/start: ending an impersonation session is a Super Admin
+    // operation. Previously unauthenticated (anyone could end any active session).
+    const authResult = await requireSuperAdmin(req);
+    if (!authResult.success) return authResult.response;
+
     try {
         // We can end session by ID provided in body, or the one in the header
         const body = await req.json().catch(() => ({}));
@@ -17,8 +22,10 @@ export async function POST(req: NextRequest) {
         await ImpersonationService.endSession(sessionId, "manual");
 
         return NextResponse.json({ success: true });
-
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : "Internal server error" },
+            { status: 500 }
+        );
     }
 }

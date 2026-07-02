@@ -1,7 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { adminDb, adminAuth } from "@/lib/firebase-admin";
+import { requireSuperAdmin } from "@/lib/auth/requireSuperAdmin";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+    // Force-logging-out every user of an arbitrary tenant is a platform operation —
+    // Super Admin only. Previously unauthenticated (anyone could DoS any tenant).
+    const authResult = await requireSuperAdmin(req);
+    if (!authResult.success) return authResult.response;
+
     try {
         const body = await req.json();
         const { tenantId } = body;
