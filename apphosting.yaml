@@ -65,6 +65,15 @@ env:
   - variable: SMTP_FROM_NAME
     value: Dosory Support
     availability: [BUILD, RUNTIME]
+  # Resend API key — used by the App Hosting server route /api/email/send
+  # (lib/email/resend.ts) for welcome / team-invite / password-reset emails.
+  # Without it that route 500s "RESEND_API_KEY environment variable is not set"
+  # (confirmed by the prod send-test). The secret already exists in Secret Manager;
+  # IAM secretAccessor must be granted to the App Hosting compute SA before runtime
+  # can read it (gated IAM op — see closeout report).
+  - variable: RESEND_API_KEY
+    secret: RESEND_API_KEY
+    availability: [BUILD, RUNTIME]
   # Observability — Sentry error tracking (A6). The DSN is a public client key (safe to
   # inline, like NEXT_PUBLIC_FIREBASE_API_KEY). Uncomment and set the value from your Sentry
   # project (Settings -> Client Keys / DSN) to turn capture on; until then it is a no-op.
