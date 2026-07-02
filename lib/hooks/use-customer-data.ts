@@ -236,6 +236,11 @@ export function useReminders(options: UseRemindersOptions = {}) {
                 ...data,
                 orgId: profile.orgId,
                 isNotified: false,
+                // checkReminders (Cloud Function) queries sendEmail==true && emailSent==false.
+                // Firestore equality skips docs missing the field, so both MUST exist or the
+                // reminder is invisible to the mailer. Mirror use-reminders.ts.
+                sendEmail: data.sendEmail ?? false,
+                emailSent: false,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
             });

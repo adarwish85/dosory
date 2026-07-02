@@ -62,8 +62,13 @@ export const trialExpiryCheck = functions.pubsub
 
         try {
             const subscriptionsRef = db.collection("subscriptions");
+            // Canonical status is "trialing" (lib/types/billing.ts SubscriptionStatus +
+            // seed-tenant-defaults.ts). The old "trial" literal matched nothing, so trials
+            // never expired. NOTE (flagged for a product decision): this transitions to
+            // status:"expired", which ensureWriteAccess does NOT block (it blocks only
+            // canceled/suspended/past_due) — so expiry currently does not lock the tenant out.
             const expiredTrials = await subscriptionsRef
-                .where("status", "==", "trial")
+                .where("status", "==", "trialing")
                 .where("trialEndsAt", "<", now)
                 .get();
 
