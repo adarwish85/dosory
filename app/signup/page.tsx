@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+import { createUserWithEmailAndPassword, deleteUser, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
@@ -245,6 +245,16 @@ export default function SignupPage() {
             const isLocal = host.includes("localhost");
             const rootDomain = isLocal ? "localhost:3000" : "dosory.com";
             const loginUrl = `${protocol}//${subdomain}.${rootDomain}/dashboard`;
+
+            // 6c. Email verification (fire-and-forget). Uses Firebase Auth's OWN email
+            // infrastructure (independent of our Resend/SMTP wiring). Gated on the platform
+            // setting; the continue URL lands the user on the branded /verify page, which then
+            // routes into the dashboard. Signup already sets org status to pending_verification.
+            if (settings.requireEmailVerification) {
+                sendEmailVerification(user, {
+                    url: `${protocol}//${subdomain}.${rootDomain}/verify`,
+                }).catch((err) => console.warn("Verification email failed:", err));
+            }
 
             fetch("/api/email/send", {
                 method: "POST",
