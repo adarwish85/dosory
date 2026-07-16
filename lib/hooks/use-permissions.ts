@@ -96,20 +96,7 @@ export function usePermissions(): StaffPermissions {
     return { permissions, isAdmin, roleId, loading };
 }
 
-/**
- * Check if user has a specific permission
- * Admins always return true
- */
-export function hasPermission(permissions: string[], isAdmin: boolean, requiredPermission: string): boolean {
-    if (isAdmin) return true;
-    return permissions.includes(requiredPermission);
-}
-
-/**
- * Check if user can access a module (has any view permission for it)
- * Example: canAccessModule(perms, isAdmin, "customers") checks for "customers-view"
- */
-export function canAccessModule(permissions: string[], isAdmin: boolean, module: string): boolean {
-    if (isAdmin) return true;
-    return permissions.includes(`${module}-view`);
-}
+// Pure permission-resolution logic lives in lib/rbac/view-scope.ts (no React/Firebase deps,
+// so it is unit-testable). Re-exported here so existing `@/lib/hooks/use-permissions` imports
+// keep working.
+export { hasPermission, canAccessModule, getViewScope, type ViewScope } from "@/lib/rbac/view-scope";
