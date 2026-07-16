@@ -3,7 +3,10 @@ import * as admin from "firebase-admin";
 import { Resend } from "resend";
 
 // Initialize Resend
-const resend = new Resend(functions.config().resend?.api_key || process.env.RESEND_API_KEY);
+// Lazy init — see emailNotifications.ts: `new Resend(undefined)` at module scope throws and
+// breaks deploy discovery. Constructed on first send instead.
+let _resend: Resend | null = null;
+const getResend = (): Resend => (_resend ??= new Resend(functions.config().resend?.api_key || process.env.RESEND_API_KEY));
 const FROM_EMAIL = functions.config().email?.from || "notifications@yourdomain.com";
 
 export const checkReminders = functions.pubsub.schedule("every 15 minutes").onRun(async (context) => {
@@ -62,7 +65,7 @@ export const checkReminders = functions.pubsub.schedule("every 15 minutes").onRu
 
         if (toEmail) {
             promises.push(
-                resend.emails.send({
+                getResend().emails.send({
                     from: FROM_EMAIL,
                     to: toEmail,
                     subject: `Reminder: ${reminder.description || "New Reminder"}`,

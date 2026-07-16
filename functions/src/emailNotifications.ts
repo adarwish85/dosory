@@ -9,7 +9,11 @@ import {
 } from "./emailTemplates";
 
 // Initialize Resend with API key from environment
-const resend = new Resend(functions.config().resend?.api_key || process.env.RESEND_API_KEY);
+// Lazy init: constructing `new Resend(undefined)` at module scope throws "Missing API key",
+// which broke `firebase deploy` discovery (it executes the module to enumerate exports). The
+// key is read at first send instead — it is present in the prod functions runtime config.
+let _resend: Resend | null = null;
+const getResend = (): Resend => (_resend ??= new Resend(functions.config().resend?.api_key || process.env.RESEND_API_KEY));
 
 // Default from email - update this to your verified domain
 const FROM_EMAIL = functions.config().email?.from || "notifications@yourdomain.com";
@@ -75,7 +79,7 @@ export const onInvoiceSent = functions.firestore
         const { subject, html } = getInvoiceSentEmail(emailData);
 
         try {
-            await resend.emails.send({
+            await getResend().emails.send({
                 from: FROM_EMAIL,
                 to: customer.email,
                 subject,
@@ -124,7 +128,7 @@ export const onContractCreated = functions.firestore
         const { subject, html } = getContractCreatedEmail(emailData);
 
         try {
-            await resend.emails.send({
+            await getResend().emails.send({
                 from: FROM_EMAIL,
                 to: customer.email,
                 subject,

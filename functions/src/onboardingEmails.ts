@@ -6,7 +6,10 @@ import * as admin from "firebase-admin";
 import { Resend } from "resend";
 
 // Initialize Resend with API key from environment
-const resend = new Resend(functions.config().resend?.api_key);
+// Lazy init — see emailNotifications.ts: `new Resend(undefined)` at module scope throws and
+// breaks deploy discovery. Constructed on first send instead.
+let _resend: Resend | null = null;
+const getResend = (): Resend => (_resend ??= new Resend(functions.config().resend?.api_key));
 
 interface OnboardingState {
     completed: boolean;
@@ -196,7 +199,7 @@ export const sendOnboardingEmails = functions.pubsub
                 }
 
                 // Send email via Resend
-                await resend.emails.send({
+                await getResend().emails.send({
                     from: "Dosory <noreply@dosory.com>",
                     to: userEmail,
                     subject: template.subject,
