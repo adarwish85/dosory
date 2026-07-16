@@ -10,6 +10,13 @@ export interface StaffPermissions {
     permissions: string[];
     isAdmin: boolean;
     roleId: string;
+    /**
+     * The current user's staff DOC id. This is the value stored in ownership fields like
+     * lead.assignedTo (the assignment <Select> stores `staff.id`), so view-own data-layer
+     * filters must match `assignedTo == staffId` — NOT the auth uid. Empty for admins
+     * (always global scope) and users with no staff doc.
+     */
+    staffId: string;
     loading: boolean;
 }
 
@@ -23,6 +30,7 @@ export function usePermissions(): StaffPermissions {
     const [permissions, setPermissions] = useState<string[]>([]);
     const [isAdmin, setIsAdmin] = useState(false);
     const [roleId, setRoleId] = useState("");
+    const [staffId, setStaffId] = useState("");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -56,6 +64,7 @@ export function usePermissions(): StaffPermissions {
                     setPermissions(staffDoc.permissions || []);
                     setIsAdmin(staffDoc.isAdmin || false);
                     setRoleId(staffDoc.roleId || "employee");
+                    setStaffId(snapshot.docs[0].id);
                 } else if (user.email) {
                     // Fallback: Try finding by email
                     const emailQuery = query(
@@ -70,6 +79,7 @@ export function usePermissions(): StaffPermissions {
                         setPermissions(staffDoc.permissions || []);
                         setIsAdmin(staffDoc.isAdmin || false);
                         setRoleId(staffDoc.roleId || "employee");
+                        setStaffId(emailSnapshot.docs[0].id);
                     } else {
                         console.warn("No staff document found for user:", user.uid);
                         setPermissions([]);
@@ -93,7 +103,7 @@ export function usePermissions(): StaffPermissions {
         }
     }, [user, profile, profileLoading]);
 
-    return { permissions, isAdmin, roleId, loading };
+    return { permissions, isAdmin, roleId, staffId, loading };
 }
 
 // Pure permission-resolution logic lives in lib/rbac/view-scope.ts (no React/Firebase deps,

@@ -21,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { usePermissions, getViewScope } from "@/lib/hooks/use-permissions";
 import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Lead, LeadStatus } from "@/lib/types";
 
@@ -48,8 +49,30 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
     } = options;
     const { profile, loading: profileLoading } = useUserProfile();
 
-    // Cache key for stale-while-revalidate
-    const cacheKey = buildCacheKey("leads", profile?.orgId, status, assignedTo, source, orderByField, orderDirection, pageSize, page, searchQuery);
+    // view-own enforcement (§2.4): a user with only `leads-view-own` (or no leads-view code)
+    // may see ONLY leads assigned to them. Owner identity is the staff DOC id (that is what
+    // lead.assignedTo stores), NOT the auth uid. Admins / `leads-view-global` → scope "global"
+    // → no ownership filter. Owner enforcement takes precedence over a caller-supplied
+    // assignedTo filter.
+    const { permissions, isAdmin, staffId, loading: permsLoading } = usePermissions();
+    const restrictToOwn = getViewScope(permissions, isAdmin, "leads") !== "global";
+    const ownerId = staffId;
+
+    // Cache key for stale-while-revalidate — include the scope so an own-scoped view never
+    // reads a global-scoped cache entry (or vice versa).
+    const cacheKey = buildCacheKey(
+        "leads",
+        profile?.orgId,
+        restrictToOwn ? `own:${ownerId}` : "global",
+        status,
+        assignedTo,
+        source,
+        orderByField,
+        orderDirection,
+        pageSize,
+        page,
+        searchQuery
+    );
     const cached = getCachedData<Lead>(cacheKey);
 
     // Data State — initialize from cache if available
@@ -73,7 +96,12 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
         const c: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (status !== "all") c.push(where("status", "==", status));
-        if (assignedTo) c.push(where("assignedTo", "==", assignedTo));
+        // Ownership filter wins over the caller's assignedTo (can't have two assignedTo clauses).
+        if (restrictToOwn && ownerId) {
+            c.push(where("assignedTo", "==", ownerId));
+        } else if (assignedTo) {
+            c.push(where("assignedTo", "==", assignedTo));
+        }
         if (source) c.push(where("source", "==", source));
 
         // Search (Prefix only, Case-Insensitive)
@@ -84,17 +112,20 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
         }
 
         return c;
-    }, [profile?.orgId, status, assignedTo, source, searchQuery]);
+    }, [profile?.orgId, status, assignedTo, source, searchQuery, restrictToOwn, ownerId]);
 
     // Effect: Fetch Stats & Total Count
     useEffect(() => {
-        if (profileLoading) return;
+        if (profileLoading || permsLoading) return;
         let isMounted = true;
         const fetchStatsAndCount = async () => {
             if (!profile?.orgId) return;
             try {
-                // 1. Aggregation for global stats
-                const globalQ = query(collection(db, "leads"), where("orgId", "==", profile.orgId));
+                // 1. Aggregation for global stats — respect view-own so the headline "total"
+                //    reflects the user's own records, not the whole org.
+                const globalConstraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
+                if (restrictToOwn && ownerId) globalConstraints.push(where("assignedTo", "==", ownerId));
+                const globalQ = query(collection(db, "leads"), ...globalConstraints);
 
                 // We'll wrap in try/catch individual parts to ensure partial success
                 let globalTotal = 0;
@@ -140,14 +171,14 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
         return () => {
             isMounted = false;
         };
-    }, [profile?.orgId, profileLoading, getBaseConstraints]);
+    }, [profile?.orgId, profileLoading, permsLoading, restrictToOwn, ownerId, getBaseConstraints]);
 
     // Effect: Fetch Paginated Data
     useEffect(() => {
         // Increment version to invalidate previous listeners
         const currentVersion = ++listenerVersionRef.current;
 
-        if (profileLoading) return;
+        if (profileLoading || permsLoading) return;
 
         if (!profile?.orgId) {
             setLoading(false);
@@ -199,7 +230,16 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
 
         return () => unsubscribe();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [profile?.orgId, profileLoading, getBaseConstraints, orderByField, orderDirection, pageSize, page]);
+    }, [
+        profile?.orgId,
+        profileLoading,
+        permsLoading,
+        getBaseConstraints,
+        orderByField,
+        orderDirection,
+        pageSize,
+        page,
+    ]);
 
     // Reconcile totalRecords with actual fetched leads to prevent count mismatch
     useEffect(() => {
