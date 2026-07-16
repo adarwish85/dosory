@@ -16,43 +16,67 @@ export class ReportsService {
      * Get Business Health Overview
      * Aggregates Revenue, Expenses, Net Profit, and Active Projects
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async getBusinessHealth(_filter: ReportFilter): Promise<ReportResponse> {
+    async getBusinessHealth(filter: ReportFilter): Promise<ReportResponse> {
         try {
-            // Define date range
-            // const now = new Date();
-            // const startDate = filter.startDate || startOfMonth(now);
-            // const endDate = filter.endDate || endOfMonth(now);
+            if (!filter.orgId) return this.getEmptyResponse();
 
-            // 1. Aggregations (Mocked for now)
-            // TODO: Replace with real Firestore aggregations
-            // const invoicesRef = collection(db, "invoices");
-            // const expensesRef = collection(db, "expenses");
-            // const projectsRef = collection(db, "projects");
+            const [invSnap, expSnap, projSnap] = await Promise.all([
+                getDocs(query(collection(db, "invoices"), where("orgId", "==", filter.orgId))),
+                getDocs(query(collection(db, "expenses"), where("orgId", "==", filter.orgId))),
+                getDocs(query(collection(db, "projects"), where("orgId", "==", filter.orgId))),
+            ]);
 
-            // Mock Data for Demo
-            const kpis = {
-                revenue: { value: 125000, change: 12, label: "Revenue", prefix: "$", trend: "up" as const },
-                expenses: { value: 45000, change: -5, label: "Expenses", prefix: "$", trend: "down" as const },
-                netProfit: { value: 80000, change: 25, label: "Net Profit", prefix: "$", trend: "up" as const },
-                activeProjects: { value: 14, change: 2, label: "Active Projects", trend: "up" as const },
+            const monthly: Record<string, { revenue: number; expenses: number }> = {};
+            const bucket = (ts: Timestamp | undefined, key: "revenue" | "expenses", amt: number) => {
+                const date = ts?.toDate ? ts.toDate() : new Date();
+                const m = date.toLocaleString("default", { month: "short", year: "2-digit" });
+                if (!monthly[m]) monthly[m] = { revenue: 0, expenses: 0 };
+                monthly[m][key] += amt;
             };
 
-            const series = [
-                { date: "Jan", revenue: 90000, expenses: 40000, netProfit: 50000 },
-                { date: "Feb", revenue: 110000, expenses: 42000, netProfit: 68000 },
-                { date: "Mar", revenue: 125000, expenses: 45000, netProfit: 80000 },
-            ];
+            let revenue = 0;
+            invSnap.docs.forEach((d) => {
+                const inv = d.data();
+                const paid = Number(inv.amountPaid || 0); // "revenue" = cash collected
+                revenue += paid;
+                bucket(inv.date, "revenue", paid);
+            });
+
+            let expenses = 0;
+            expSnap.docs.forEach((d) => {
+                const amt = Number(d.data().amount || 0);
+                expenses += amt;
+                bucket(d.data().date, "expenses", amt);
+            });
+
+            const activeProjects = projSnap.docs.filter((d) => {
+                const s = String(d.data().status || "");
+                return s === "active" || s === "in_progress" || s === "in-progress";
+            }).length;
+
+            const netProfit = revenue - expenses;
+            const series = Object.entries(monthly).map(([date, s]) => ({
+                date,
+                revenue: s.revenue,
+                expenses: s.expenses,
+                netProfit: s.revenue - s.expenses,
+            }));
 
             return {
-                kpis,
+                kpis: {
+                    revenue: { value: revenue, label: "Revenue (Collected)", prefix: "$", trend: "up" },
+                    expenses: { value: expenses, label: "Expenses", prefix: "$", trend: "down" },
+                    netProfit: {
+                        value: netProfit,
+                        label: "Net Profit",
+                        prefix: "$",
+                        trend: netProfit >= 0 ? "up" : "down",
+                    },
+                    activeProjects: { value: activeProjects, label: "Active Projects", trend: "neutral" },
+                },
                 series,
                 breakdowns: [],
-                table: {
-                    columns: [],
-                    rows: [],
-                    total: 0,
-                },
+                table: { columns: [], rows: [], total: 0 },
             };
         } catch (error) {
             console.error("Error fetching business health:", error);
@@ -117,37 +141,57 @@ export class ReportsService {
     /**
      * Get Revenue Summary Report
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async getRevenueSummary(_filter: ReportFilter): Promise<ReportResponse> {
+    async getRevenueSummary(filter: ReportFilter): Promise<ReportResponse> {
         try {
-            // TODO: Real Firestore Aggregation on 'invoices' collection
+            if (!filter.orgId) return this.getEmptyResponse();
 
-            const kpis = {
-                totalRevenue: { label: "Total Revenue", value: 450000, prefix: "$", trend: "up" as const, change: 15 },
-                paidInvoices: { label: "Paid Invoices", value: 380000, prefix: "$", trend: "up" as const },
-                outstanding: { label: "Outstanding (AR)", value: 70000, prefix: "$", trend: "down" as const }, // Good that AR is down? context dependent, usually good.
-                avgInvoice: { label: "Avg Invoice Value", value: 3500, prefix: "$", trend: "neutral" as const },
-            };
+            const snap = await getDocs(query(collection(db, "invoices"), where("orgId", "==", filter.orgId)));
+            const monthly: Record<string, { revenue: number; paid: number }> = {};
+            const byCustomer: Record<string, { revenue: number; paid: number }> = {};
+            let totalRevenue = 0;
+            let totalPaid = 0;
+            let count = 0;
 
-            const series = [
-                { date: "Jan", revenue: 100000, paid: 90000 },
-                { date: "Feb", revenue: 120000, paid: 110000 },
-                { date: "Mar", revenue: 115000, paid: 80000 }, // High outstanding
-                { date: "Apr", revenue: 115000, paid: 100000 },
-            ];
+            snap.docs.forEach((d) => {
+                const inv = d.data();
+                const status = String(inv.status || "draft");
+                if (status === "draft" || status === "void") return; // not real revenue yet
+                const total = Number(inv.total || 0);
+                const amountPaid = Number(inv.amountPaid || 0);
+                totalRevenue += total;
+                totalPaid += amountPaid;
+                count += 1;
 
-            const customerBreakdown = [
-                { label: "Acme Corp", value: 85000 },
-                { label: "Globex Inc", value: 65000 },
-                { label: "Soylent Corp", value: 45000 },
-                { label: "Initech", value: 30000 },
-                { label: "Umbrella Corp", value: 25000 },
-            ];
+                const date = inv.date?.toDate ? inv.date.toDate() : new Date();
+                const m = date.toLocaleString("default", { month: "short", year: "2-digit" });
+                if (!monthly[m]) monthly[m] = { revenue: 0, paid: 0 };
+                monthly[m].revenue += total;
+                monthly[m].paid += amountPaid;
+
+                const cust = String(inv.customerName || inv.customerId || "Unknown");
+                if (!byCustomer[cust]) byCustomer[cust] = { revenue: 0, paid: 0 };
+                byCustomer[cust].revenue += total;
+                byCustomer[cust].paid += amountPaid;
+            });
+
+            const outstanding = totalRevenue - totalPaid;
+            const series = Object.entries(monthly).map(([date, s]) => ({ date, revenue: s.revenue, paid: s.paid }));
+            const custEntries = Object.entries(byCustomer).sort((a, b) => b[1].revenue - a[1].revenue);
 
             return {
-                kpis,
+                kpis: {
+                    totalRevenue: { label: "Total Revenue", value: totalRevenue, prefix: "$", trend: "up" },
+                    paidInvoices: { label: "Collected", value: totalPaid, prefix: "$", trend: "up" },
+                    outstanding: { label: "Outstanding (AR)", value: outstanding, prefix: "$", trend: "down" },
+                    avgInvoice: {
+                        label: "Avg Invoice Value",
+                        value: count > 0 ? Math.round(totalRevenue / count) : 0,
+                        prefix: "$",
+                        trend: "neutral",
+                    },
+                },
                 series,
-                breakdowns: customerBreakdown,
+                breakdowns: custEntries.slice(0, 8).map(([label, s]) => ({ label, value: s.revenue })),
                 table: {
                     columns: [
                         { key: "customer", label: "Customer" },
@@ -155,14 +199,13 @@ export class ReportsService {
                         { key: "paid", label: "Paid", type: "currency" },
                         { key: "outstanding", label: "Outstanding", type: "currency" },
                     ],
-                    rows: [
-                        { customer: "Acme Corp", revenue: 85000, paid: 80000, outstanding: 5000 },
-                        { customer: "Globex Inc", revenue: 65000, paid: 60000, outstanding: 5000 },
-                        { customer: "Soylent Corp", revenue: 45000, paid: 30000, outstanding: 15000 },
-                        { customer: "Initech", revenue: 30000, paid: 30000, outstanding: 0 },
-                        { customer: "Umbrella Corp", revenue: 25000, paid: 20000, outstanding: 5000 },
-                    ],
-                    total: 5,
+                    rows: custEntries.map(([customer, s]) => ({
+                        customer,
+                        revenue: s.revenue,
+                        paid: s.paid,
+                        outstanding: s.revenue - s.paid,
+                    })),
+                    total: custEntries.length,
                 },
             };
         } catch (error) {
@@ -173,36 +216,64 @@ export class ReportsService {
     /**
      * Get Invoices Report
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async getInvoicesReport(_filter: ReportFilter): Promise<ReportResponse> {
+    async getInvoicesReport(filter: ReportFilter): Promise<ReportResponse> {
         try {
-            // TODO: Real Firestore Aggregation
+            if (!filter.orgId) return this.getEmptyResponse();
 
-            const kpis = {
-                totalInvoiced: { label: "Total Invoiced", value: 520000, prefix: "$", trend: "up" as const },
-                paid: { label: "Paid Amount", value: 380000, prefix: "$", trend: "up" as const },
-                overdueAmount: { label: "Overdue Amount", value: 45000, prefix: "$", trend: "down" as const },
-                overdueCount: { label: "Overdue Count", value: 12, trend: "down" as const },
-            };
+            const snap = await getDocs(query(collection(db, "invoices"), where("orgId", "==", filter.orgId)));
+            const now = new Date();
+            const monthly: Record<string, { invoiced: number; paid: number }> = {};
+            const statusAgg: Record<string, { count: number; value: number }> = {};
+            let totalInvoiced = 0;
+            let paid = 0;
+            let overdueAmount = 0;
+            let overdueCount = 0;
 
-            const series = [
-                { date: "Jan", invoiced: 110000, paid: 90000 },
-                { date: "Feb", invoiced: 130000, paid: 110000 },
-                { date: "Mar", invoiced: 140000, paid: 80000 },
-                { date: "Apr", invoiced: 140000, paid: 100000 },
-            ];
+            snap.docs.forEach((d) => {
+                const inv = d.data();
+                const status = String(inv.status || "draft");
+                const total = Number(inv.total || 0);
+                const amountPaid = Number(inv.amountPaid || 0);
+                const amountDue = Number(inv.amountDue ?? total - amountPaid);
+                const counts = status !== "draft" && status !== "void";
+                if (counts) {
+                    totalInvoiced += total;
+                    paid += amountPaid;
+                }
 
-            const statusBreakdown = [
-                { label: "Paid", value: 380000 },
-                { label: "Pending", value: 95000 },
-                { label: "Overdue", value: 45000 },
-                { label: "Draft", value: 15000 },
-            ];
+                const due = inv.dueDate?.toDate ? inv.dueDate.toDate() : null;
+                const isOverdue = counts && amountDue > 0 && !!due && due < now && status !== "paid";
+                if (isOverdue) {
+                    overdueAmount += amountDue;
+                    overdueCount += 1;
+                }
+
+                const date = inv.date?.toDate ? inv.date.toDate() : new Date();
+                const m = date.toLocaleString("default", { month: "short", year: "2-digit" });
+                if (!monthly[m]) monthly[m] = { invoiced: 0, paid: 0 };
+                if (counts) {
+                    monthly[m].invoiced += total;
+                    monthly[m].paid += amountPaid;
+                }
+
+                const label = isOverdue ? "Overdue" : status.charAt(0).toUpperCase() + status.slice(1);
+                if (!statusAgg[label]) statusAgg[label] = { count: 0, value: 0 };
+                statusAgg[label].count += 1;
+                statusAgg[label].value += total;
+            });
+
+            const series = Object.entries(monthly).map(([date, s]) => ({ date, invoiced: s.invoiced, paid: s.paid }));
+            const totalValue = Object.values(statusAgg).reduce((a, s) => a + s.value, 0);
 
             return {
-                kpis,
+                kpis: {
+                    totalInvoiced: { label: "Total Invoiced", value: totalInvoiced, prefix: "$", trend: "up" },
+                    paid: { label: "Paid Amount", value: paid, prefix: "$", trend: "up" },
+                    overdueAmount: { label: "Overdue Amount", value: overdueAmount, prefix: "$", trend: "down" },
+                    overdueCount: { label: "Overdue Count", value: overdueCount, trend: "down" },
+                },
                 series,
-                breakdowns: statusBreakdown,
+                breakdowns: Object.entries(statusAgg).map(([label, s]) => ({ label, value: s.value })),
                 table: {
                     columns: [
                         { key: "status", label: "Status" },
@@ -210,13 +281,13 @@ export class ReportsService {
                         { key: "value", label: "Total Value", type: "currency" },
                         { key: "percent", label: "Percent", type: "percent" },
                     ],
-                    rows: [
-                        { status: "Paid", count: 85, value: 380000, percent: 71 },
-                        { status: "Pending", count: 20, value: 95000, percent: 18 },
-                        { status: "Overdue", count: 12, value: 45000, percent: 8 },
-                        { status: "Draft", count: 5, value: 15000, percent: 3 },
-                    ],
-                    total: 4,
+                    rows: Object.entries(statusAgg).map(([status, s]) => ({
+                        status,
+                        count: s.count,
+                        value: s.value,
+                        percent: totalValue > 0 ? (s.value / totalValue) * 100 : 0,
+                    })),
+                    total: Object.keys(statusAgg).length,
                 },
             };
         } catch (error) {
