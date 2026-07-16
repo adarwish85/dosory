@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Settings, Plus, ChevronDown } from "lucide-react";
+import { CalendarIcon, Settings, Plus, ChevronDown, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -104,6 +104,10 @@ export default function CreateInvoicePage() {
     const [adjustment, setAdjustment] = useState(0);
 
     const [loading, setLoading] = useState(false);
+    // Synchronous submit guard: a rapid same-tick double-click would both read a STALE
+    // `loading` closure (state hasn't re-rendered yet), so the state check alone can't stop
+    // the race that created duplicate invoices (bug #8). A ref flips synchronously.
+    const submittingRef = useRef(false);
 
     // Initial Data Fetch
     useEffect(() => {
@@ -179,7 +183,10 @@ export default function CreateInvoicePage() {
     };
 
     const calculateDiscountAmount = (subTotal: number) => {
-        if (discountType === "No discount") return 0;
+        // Apply whenever a discount VALUE is entered. Previously this was gated on the
+        // separate "Discount Type" dropdown (default "No discount") which is decoupled from
+        // the footer Discount field — so a typed discount was silently dropped (bug #1).
+        if (discountValue <= 0) return 0;
         if (discountKind === "percentage") {
             return subTotal * (discountValue / 100);
         }
@@ -193,6 +200,10 @@ export default function CreateInvoicePage() {
     };
 
     const handleSubmit = async (action: "draft" | "send" | "send_later" | "record_payment") => {
+        // Guard against duplicate invoices from repeated/rapid Save clicks (bug #8). The ref
+        // flips synchronously so a same-tick double-click can't slip past (unlike the `loading`
+        // state, which is stale until re-render). Buttons also carry disabled={loading} for UX.
+        if (submittingRef.current) return;
         if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) return;
         if (!profile?.orgId || !selectedClient) {
             toast.error(t("invoices.new.toast.selectClient"));
@@ -204,6 +215,9 @@ export default function CreateInvoicePage() {
             return;
         }
 
+        // Commit synchronously BEFORE the first await, so a concurrent second click is blocked
+        // by the guard above. Set only after validation so a validation failure doesn't lock the form.
+        submittingRef.current = true;
         setLoading(true);
         try {
             // Map items to schema format
@@ -227,7 +241,7 @@ export default function CreateInvoicePage() {
                 currency,
                 items: lineItems,
                 discount:
-                    discountType !== "No discount"
+                    discountValue > 0
                         ? {
                             type: discountKind,
                             value: discountValue,
@@ -256,6 +270,7 @@ export default function CreateInvoicePage() {
             toast.error(t("invoices.new.toast.failed"));
         } finally {
             setLoading(false);
+            submittingRef.current = false;
         }
     };
 
@@ -758,15 +773,23 @@ export default function CreateInvoicePage() {
 
             {/* Sticky/Fixed Bottom Action Bar */}
             <div className="fixed bottom-0 left-0 lg:left-64 right-0 bg-white border-t border-gray-200 p-4 flex justify-end gap-2 z-10 shadow-lg">
-                <Button variant="outline" className="border-gray-200" onClick={() => handleSubmit("draft")}>
+                <Button
+                    variant="outline"
+                    className="border-gray-200"
+                    disabled={loading}
+                    onClick={() => handleSubmit("draft")}
+                >
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {t("invoices.new.saveAsDraft")}
                 </Button>
 
                 <div className="flex">
                     <Button
                         className="rounded-r-none bg-slate-900 text-white hover:bg-slate-800"
+                        disabled={loading}
                         onClick={() => handleSubmit("send")}
                     >
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {t("common.save")}
                     </Button>
                     <DropdownMenu>

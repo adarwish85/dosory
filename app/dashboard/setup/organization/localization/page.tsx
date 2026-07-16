@@ -74,7 +74,9 @@ export default function LocalizationPage() {
                         onValueChange={(val) => setLocalizationForm({ ...localizationForm, timeFormat: val as "12" | "24" })}
                     >
                         <SelectTrigger>
-                            <SelectValue>{t("setup.localization.time12")}</SelectValue>
+                            {/* Childless so it shows the SELECTED value; a hardcoded child made
+                                the trigger always read "12 Hour" regardless of the saved setting (bug #9a). */}
+                            <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="12">{t("setup.localization.time12")}</SelectItem>
@@ -127,7 +129,8 @@ export default function LocalizationPage() {
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue>{t("setup.localization.langEnglish")}</SelectValue>
+                            {/* Childless so it reflects the saved value (bug #9a — was pinned to "English"). */}
+                            <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="english">{t("setup.localization.langEnglish")}</SelectItem>
