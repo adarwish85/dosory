@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth/getAuthenticatedUser";
 import { provisionTenant } from "@/lib/provisioning/seed-tenant-defaults";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/tenants/provision
@@ -14,6 +15,10 @@ import { provisionTenant } from "@/lib/provisioning/seed-tenant-defaults";
  * claim hasn't refreshed yet, so the ownership check holds on the first call.
  */
 export async function POST(request: NextRequest) {
+    // Throttle bulk tenant creation per-IP (idempotent, but each call does seed writes).
+    const limited = await enforceRateLimit(request, { key: "provision", limit: 10, windowMs: 60_000 });
+    if (limited) return limited;
+
     const auth = await getAuthenticatedUser(request);
     if (!auth.isAuthenticated || !auth.userId) {
         return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.status || 401 });

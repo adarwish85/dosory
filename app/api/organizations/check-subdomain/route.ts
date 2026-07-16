@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getAuthenticatedUser } from "@/lib/auth/getAuthenticatedUser";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 // Subdomains that must never be claimed by a tenant (route/app collisions).
 const RESERVED = new Set([
@@ -48,6 +49,11 @@ const VALID = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
  * a subdomain exists (already discoverable by visiting it); abuse is handled by rate limiting.
  */
 export async function POST(req: NextRequest) {
+    // Unauthenticated signup surface — throttle per-IP enumeration. Generous limit so a
+    // legitimate signup's debounced typeahead is never blocked.
+    const limited = await enforceRateLimit(req, { key: "check-subdomain", limit: 30, windowMs: 60_000 });
+    if (limited) return limited;
+
     const auth = await getAuthenticatedUser(req);
     const ownOrg = auth.isAuthenticated ? auth.orgId : undefined;
 
