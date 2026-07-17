@@ -492,6 +492,17 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin() || isOrgMember(orgId);
     }
 
+    // Numbering counters (generateInvoiceNumber runs a get+set transaction on
+    // organizations/{orgId}/counters/invoices). Without this rule that path fell through to
+    // the final deny-all, so the counter transaction was permission-denied and every invoice
+    // fell back to Date.now() (bug #11, confirmed by a live client repro). Path-scoped to the
+    // org exactly like settings/activities. Unconstrained shape by design: a monotonic-increment
+    // constraint would break the legitimate configured-next-number jump-ahead + first-create,
+    // and the blast radius of a mis-set counter is the org's OWN numbering, not isolation/money.
+    match /organizations/{orgId}/counters/{docId} {
+      allow read, write: if isSuperAdmin() || isOrgMember(orgId);
+    }
+
     // User Onboarding State Subcollection
     match /users/{userId}/onboarding/{docId} {
       allow read, write: if isSuperAdmin() || isOwner(userId);

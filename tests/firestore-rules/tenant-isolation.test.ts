@@ -561,3 +561,47 @@ describe("Staff create — middle clause requires org ownership", () => {
         );
     });
 });
+
+// Bug #11: organizations/{orgId}/counters/{docId} had no rule → the generateInvoiceNumber
+// get+set transaction was permission-denied and every invoice fell back to Date.now().
+// This suite would FAIL before the counters rule was added and passes after.
+describe("Numbering counters subcollection — bug #11 (path-orgId gate)", () => {
+    const counterDoc = (ctx: ReturnType<typeof alice>, orgId: string) =>
+        ctx.firestore().collection("organizations").doc(orgId).collection("counters").doc("invoices");
+
+    it("same-org member CAN read their org's counter (ALLOW)", async () => {
+        await assertSucceeds(counterDoc(alice(), TENANT_A).get());
+    });
+
+    it("same-org member CAN run the generateInvoiceNumber get+set transaction (ALLOW)", async () => {
+        const a = alice();
+        const ref = a.firestore().collection("organizations").doc(TENANT_A).collection("counters").doc("invoices");
+        await assertSucceeds(
+            a.firestore().runTransaction(async (tx) => {
+                const snap = await tx.get(ref);
+                const cur = (snap.data() as { currentNumber?: number } | undefined)?.currentNumber ?? 0;
+                tx.set(ref, { currentNumber: cur + 1 }, { merge: true });
+            })
+        );
+    });
+
+    it("cross-tenant: org B member CANNOT read org A's counter (DENY)", async () => {
+        await assertFails(counterDoc(bob(), TENANT_A).get());
+    });
+
+    it("cross-tenant: org B member CANNOT write org A's counter (DENY)", async () => {
+        await assertFails(counterDoc(bob(), TENANT_A).set({ currentNumber: 99 }, { merge: true }));
+    });
+
+    it("same-org ALLOW pair: org B member CAN write org B's own counter", async () => {
+        await assertSucceeds(counterDoc(bob(), TENANT_B).set({ currentNumber: 1 }, { merge: true }));
+    });
+
+    it("anonymous CANNOT read a counter (DENY)", async () => {
+        await assertFails(counterDoc(anon(), TENANT_A).get());
+    });
+
+    it("super-admin CAN read any org's counter (SA bypass)", async () => {
+        await assertSucceeds(counterDoc(sa(), TENANT_A).get());
+    });
+});
