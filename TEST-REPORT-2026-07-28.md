@@ -467,3 +467,46 @@ commit and shipped with the final rollout:
 | Signup                     | ✅ HTTP 200                                                                                                                                                                    |
 | Leads page                 | ✅ lead renders; the `failed-precondition` metrics console error is GONE (F5 index). Residual: this page's own stat cards read 0 from a separate source — pre-existing, logged |
 | Tasks                      | ✅ renders; QA task status normalized `todo`→`to_do` (valid TaskStatus enum)                                                                                                   |
+
+---
+
+# Orphan cleanup — EXECUTION BLOCKED by pre-flight (2026-07-28, round 5)
+
+The approved two-doc deletion (staff `uI7Ufz…` + legacy org `org_uI7Ufz…_1765902729459`)
+was dry-run and then **deliberately NOT executed**. The script's pre-flight found the §4
+premise incomplete in two ways, and the approval's own condition — "verify my real
+account's login is unaffected" — cannot be certified under them:
+
+1. **The live superadmin account still routes through the legacy org.**
+   `users/{uI7Ufz…}.orgId == org_uI7Ufz…` (the auth claims are pure
+   `{isSuperAdmin, PlatformAdmin}` — no tenant orgId — but `useUserProfile` reads the
+   users doc, so the tenant-dashboard view of Ahmed's own account resolves through this
+   org, including its live `settings/general` subcollection doc). Deleting the org would
+   leave the profile dangling in the known orgId-drift state.
+2. **The org is not empty at the root level.** 7 root-collection docs carry its orgId —
+   `subscriptions/{orgId}` plus seeded `currencies`(1)/`taxes`(1)/`paymentModes`(2)/
+   `emailTemplates`(2), created by the A2/A3 backfill. A two-doc deletion would orphan
+   them all.
+
+**Nothing was deleted. No data changed.** Rules suite re-run anyway: 187/187.
+
+## The corrected cleanup (one approval away)
+
+`scripts/cleanup-legacy-orphan-org.ts` (committed) encodes both scopes:
+
+- Default / `--execute`: the approved two-doc scope — but it **refuses to run** while the
+  account routes through the org (the exact guard that fired today).
+- `--execute --full-scope` (needs your approval): first clears the legacy `orgId` field
+  from `users/{uid}` (your SA access is claims-based; the field is a relic of the old
+  signup flow), then deletes the staff doc, the org doc recursively, and the 7 root
+  strays. Everything is exported to `backups/orphan-cleanup-<ts>.json` before any write,
+  and post-verify confirms the auth account intact with unchanged claims.
+
+**To execute after approving:**
+
+```
+npx tsx scripts/cleanup-legacy-orphan-org.ts --execute --full-scope
+```
+
+If you'd rather keep a tenant workspace attached to your gmail account, say which orgId
+and the users-doc step becomes a repoint instead of a field removal.
