@@ -142,6 +142,10 @@ export default function SignupPage() {
         }
 
         setSubmitting(true);
+        // R4 guard: once the org doc exists, deleting the auth user would STRAND the org
+        // (subdomain taken forever, staff doc pointing at a dead uid, and no account left for
+        // the convergence guard to heal through). Rollback is only safe before that point.
+        let orgCreated = false;
         try {
             // 0. Re-check availability server-side right before creating (the UI flag can be
             // stale / racing). Prevents creating an auth user and then failing the org write
@@ -175,6 +179,7 @@ export default function SignupPage() {
                 plan: "trial",
                 trialEndsAt: new Date(Date.now() + settings.defaultTrialDays * 24 * 60 * 60 * 1000).toISOString(),
             });
+            orgCreated = true;
 
             // 3. Create User Profile
             const userRef = doc(db, "users", user.uid);
@@ -272,9 +277,18 @@ export default function SignupPage() {
             // Redirect to subdomain
             window.location.href = loginUrl;
         } catch (err: unknown) {
-            // If we created a user but failed to setup Firestore, delete the user so they can try again
-            if (auth.currentUser) {
-                await deleteUser(auth.currentUser);
+            // R4: rollback (delete the just-created auth user so the email can retry) is only
+            // safe BEFORE the org doc exists. After that, deleting the user would strand a
+            // live org (subdomain permanently taken, no owner account left for the dashboard
+            // convergence guard to heal through) — so keep the account and let the guard
+            // finish provisioning on next login instead.
+            if (auth.currentUser && !orgCreated) {
+                try {
+                    await deleteUser(auth.currentUser);
+                } catch (rollbackErr) {
+                    // Rollback itself failing must not mask the original error or freeze the form.
+                    console.error("Signup rollback (deleteUser) failed:", rollbackErr);
+                }
             }
             setError((err as Error).message);
             setSubmitting(false);

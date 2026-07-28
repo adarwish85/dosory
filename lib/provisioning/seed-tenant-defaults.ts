@@ -74,18 +74,26 @@ async function seedDefaults(orgId: string, createdBy: string): Promise<void> {
     // Seed a collection only if this tenant has no doc there yet (idempotent per-collection).
     // Every doc carries the field its hook orderBy()s on (currencies→code, the rest→name),
     // or it would not surface in the snapshot.
-    const seedIfEmpty = async (coll: string, docs: Record<string, unknown>[]) => {
+    //
+    // CONCURRENCY (R1, 2026-07-28 review): the empty-check is not transactional, and two
+    // provision calls CAN overlap (signup retry racing a still-running handler; two dashboard
+    // tabs healing at once). Deterministic org-scoped doc IDs make overlapping writers
+    // converge on the SAME docs (last write wins, identical content) instead of minting
+    // duplicates via auto-IDs. Existing tenants keep their auto-ID docs — the empty-check
+    // still skips seeded tenants, so IDs only apply to fresh seeding.
+    const seedIfEmpty = async (coll: string, docs: Array<{ __seedId: string } & Record<string, unknown>>) => {
         const existing = await adminDb.collection(coll).where("orgId", "==", orgId).limit(1).get();
         if (!existing.empty) return;
         const batch = adminDb.batch();
-        for (const d of docs) {
-            batch.set(adminDb.collection(coll).doc(), { ...d, ...stamp() });
+        for (const { __seedId, ...d } of docs) {
+            batch.set(adminDb.collection(coll).doc(`${orgId}__${__seedId}`), { ...d, ...stamp() });
         }
         await batch.commit();
     };
 
     await seedIfEmpty("currencies", [
         {
+            __seedId: "cur-usd",
             code: "USD",
             name: "US Dollar",
             symbol: "$",
@@ -96,15 +104,16 @@ async function seedDefaults(orgId: string, createdBy: string): Promise<void> {
         },
     ]);
 
-    await seedIfEmpty("taxes", [{ name: "No Tax", rate: 0, isDefault: true }]);
+    await seedIfEmpty("taxes", [{ __seedId: "tax-none", name: "No Tax", rate: 0, isDefault: true }]);
 
     await seedIfEmpty("paymentModes", [
-        { name: "Bank Transfer", showOnInvoice: true, isActive: true },
-        { name: "Cash", showOnInvoice: true, isActive: true },
+        { __seedId: "pm-bank-transfer", name: "Bank Transfer", showOnInvoice: true, isActive: true },
+        { __seedId: "pm-cash", name: "Cash", showOnInvoice: true, isActive: true },
     ]);
 
     await seedIfEmpty("emailTemplates", [
         {
+            __seedId: "tpl-invoice-email",
             name: "Invoice Email",
             slug: "invoice-email",
             type: "invoice",
@@ -113,6 +122,7 @@ async function seedDefaults(orgId: string, createdBy: string): Promise<void> {
             isActive: true,
         },
         {
+            __seedId: "tpl-estimate-email",
             name: "Estimate Email",
             slug: "estimate-email",
             type: "estimate",

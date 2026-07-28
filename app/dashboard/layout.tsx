@@ -640,6 +640,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <div className="bg-white rounded-lg shadow-sm border border-[#E0E0E0] min-w-0">
                                 <div className="p-4 overflow-x-auto">
                                     <SystemBanners />
+                                    {/* R3: persistent provisioning failure must not be silent — without the
+                                        subscription doc every write 403s "No subscription found". Reload re-runs
+                                        the healing guard (its once-per-mount ref resets). */}
+                                    {provisioningStatus === "failed" && (
+                                        <div className="mb-4 flex items-center justify-between gap-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                                            <span>{t("navigation.provisioning.setupIncomplete")}</span>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => window.location.reload()}
+                                            >
+                                                {t("navigation.provisioning.retry")}
+                                            </Button>
+                                        </div>
+                                    )}
                                     {children}
                                 </div>
                             </div>

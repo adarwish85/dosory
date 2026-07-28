@@ -216,6 +216,8 @@
     "navigation.impersonation.viewingAs": "أنت تشاهد بصفة:",
     "navigation.impersonation.exit": "الخروج والعودة إلى المشرف",
     "navigation.provisioning.finishingSetup": "جارٍ إكمال إعداد مساحة العمل…",
+    "navigation.provisioning.setupIncomplete": "إعداد مساحة العمل غير مكتمل — قد تفشل بعض الإجراءات حتى يكتمل.",
+    "navigation.provisioning.retry": "إعادة المحاولة",
     "navigation.maintenance.title": "تحت الصيانة",
     "navigation.maintenance.description": "يخضع {platformName} حاليًا لصيانة مجدولة. يُرجى المحاولة مرة أخرى لاحقًا.",
     "navigation.maintenance.refresh": "تحديث الصفحة",

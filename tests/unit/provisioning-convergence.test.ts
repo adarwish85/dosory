@@ -126,6 +126,14 @@ d("provisionTenant convergence (F1)", () => {
         await assertFullyProvisioned();
     });
 
+    test("CONCURRENT calls converge without duplicate seeds (R1)", async () => {
+        // The real-world race: signup's retry overlapping a still-running handler, or two
+        // dashboard tabs healing at once. Deterministic org-scoped seed doc IDs make the
+        // writers converge on the same docs; auto-IDs would duplicate here.
+        await Promise.all([provisionTenant(ORG, UID), provisionTenant(ORG, UID), provisionTenant(ORG, UID)]);
+        await assertFullyProvisioned(); // exact counts: 1 currency, 1 tax, 2 modes, 2 templates
+    });
+
     test("does not leak into another org's namespace", async () => {
         const OTHER = "conv-other-org";
         await adminDb.collection("currencies").add({ orgId: OTHER, code: "EUR", name: "Euro" });

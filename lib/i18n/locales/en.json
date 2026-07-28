@@ -216,6 +216,8 @@
     "navigation.impersonation.viewingAs": "You are viewing as:",
     "navigation.impersonation.exit": "Exit & Return to Admin",
     "navigation.provisioning.finishingSetup": "Finishing your workspace setup…",
+    "navigation.provisioning.setupIncomplete": "Workspace setup is incomplete — some actions may fail until it finishes.",
+    "navigation.provisioning.retry": "Retry setup",
     "navigation.maintenance.title": "Under Maintenance",
     "navigation.maintenance.description": "{platformName} is currently undergoing scheduled maintenance. Please check back later.",
     "navigation.maintenance.refresh": "Refresh Page",

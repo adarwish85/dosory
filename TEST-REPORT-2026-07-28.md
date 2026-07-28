@@ -444,3 +444,26 @@ not a route shim — it should drive the processPayment callable). Logged in CLA
 - CLAUDE.md updated (§7 gaps, route-fall-through rule, §11 ops log / standing checks /
   dated ledger: functions.config() migration <2027-03, Node 20 <2026-10, checkReminders
   500-op batch, 5 expired trials transitioning at next 02:00 UTC — expected).
+
+## Round-4 post-ship adversarial review → hotfix (same day)
+
+A 3-lens adversarial review panel (16 agents, refute-style verification) ran against
+`301a6a4b` while the rollout built. **4 findings confirmed; all fixed** in the follow-up
+commit and shipped with the final rollout:
+
+| #   | Sev  | Finding                                                                                                                                                                                                              | Fix                                                                                                                                                                                                      |
+| --- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1  | HIGH | `seedIfEmpty` check-then-write with auto-IDs duplicates seeds under CONCURRENT provision calls (signup retry racing a still-running handler; two healing tabs)                                                       | Deterministic org-scoped seed doc IDs (`{orgId}__cur-usd` …) — concurrent writers converge on the same docs. New emulator test: 3 concurrent `provisionTenant` calls → exact seed counts. Suite now 6/6. |
+| R2  | MED  | No fetch timeout — a stalled provision request pins the "finishing setup" screen for minutes                                                                                                                         | `AbortSignal.timeout(15s)` per attempt, then backoff/retry as designed                                                                                                                                   |
+| R3  | MED  | `failed` status was consumed nowhere → silent broken dashboard (every write 403s "No subscription found")                                                                                                            | Amber banner + "Retry setup" button in the dashboard layout when status === failed (EN+AR keys)                                                                                                          |
+| R4  | MED  | Signup's catch-all rollback survived the removed throw: a post-provisioning throw (e.g. token refresh during welcome email) would `deleteUser` against a FULLY provisioned org — permanently stranding the subdomain | Rollback now gated on `orgCreated` flag (only before the org doc exists) and `deleteUser` wrapped so rollback failure can't freeze the form                                                              |
+
+## Post-rollout verification (revision @ 301a6a4b, then hotfix rollout)
+
+| Check                      | Result                                                                                                                                                                         |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Payments page on qa-smoke  | ✅ **exactly 1 real payment** — #1, INV-000001, Bank, QA Smoke Customer Ltd, $150.00, "Showing 1 to 1 of 1 entries"; server HTML contains 0 mock strings                       |
+| `/dashboard/customers/new` | ✅ opens AddCustomerPanel directly (no `[id]` hang)                                                                                                                            |
+| Signup                     | ✅ HTTP 200                                                                                                                                                                    |
+| Leads page                 | ✅ lead renders; the `failed-precondition` metrics console error is GONE (F5 index). Residual: this page's own stat cards read 0 from a separate source — pre-existing, logged |
+| Tasks                      | ✅ renders; QA task status normalized `todo`→`to_do` (valid TaskStatus enum)                                                                                                   |

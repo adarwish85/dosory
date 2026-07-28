@@ -36,6 +36,9 @@ export async function provisionWithRetry(user: User, orgId: string): Promise<{ o
                     Authorization: `Bearer ${await user.getIdToken()}`,
                 },
                 body: JSON.stringify({ orgId }),
+                // R2: a stalled request must not pin the "finishing setup" screen for
+                // browser-timeout minutes — bound each attempt, then back off and retry.
+                signal: AbortSignal.timeout(15_000),
             });
             if (res.ok) return { ok: true };
             lastError = `HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`;
