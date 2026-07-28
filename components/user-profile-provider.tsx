@@ -130,26 +130,56 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
         // Fire-and-forget
         (async () => {
             try {
-                const staffRef = doc(db, "staff", user.uid);
-                const staffSnap = await getDoc(staffRef);
+                const orgId = profile.actualOrgId || profile.orgId;
+                if (!orgId || !profile.email) return;
 
-                if (!staffSnap.exists()) {
-                    await setDoc(staffRef, {
-                        firstName: profile.displayName?.split(" ")[0] || "Admin",
-                        lastName: profile.displayName?.split(" ").slice(1).join(" ") || "User",
-                        email: profile.email,
-                        phone: profile.phone || "",
-                        roleId: "admin",
-                        isAdmin: true,
-                        status: "active",
-                        orgId: profile.actualOrgId || profile.orgId,
-                        departmentIds: [],
-                        createdAt: serverTimestamp(),
-                        updatedAt: serverTimestamp(),
-                        createdBy: user.uid,
-                        profileImageUrl: profile.photoURL || user.photoURL,
-                    });
+                const { collection, query, where, getDocs, limit } = await import("firebase/firestore");
+
+                // Canonical, forgery-resistant lookup: a user's staff doc is found by `authUid`
+                // (the same key usePermissions and /api/auth/set-claims use), NOT by a uid-keyed
+                // doc id. Provisioning (signup + set-claims) already owns staff/{email} with
+                // authUid, so in the normal case this finds it and we create nothing. The previous
+                // code created a duplicate staff/{user.uid} doc (missing authUid) on every admin
+                // login — polluting the staff list and never linkable by authUid.
+                const byAuthUid = await getDocs(
+                    query(
+                        collection(db, "staff"),
+                        where("authUid", "==", user.uid),
+                        where("orgId", "==", orgId),
+                        limit(1)
+                    )
+                );
+                if (!byAuthUid.empty) return; // already provisioned — never create a second doc
+
+                // No staff doc links this authUid yet. Repair/create the canonical email-keyed
+                // doc (never staff/{uid}). If an email-keyed doc already exists but lacks authUid,
+                // just backfill authUid instead of duplicating.
+                const emailRef = doc(db, "staff", profile.email.toLowerCase());
+                const emailSnap = await getDoc(emailRef);
+                if (emailSnap.exists()) {
+                    await setDoc(emailRef, { authUid: user.uid, updatedAt: serverTimestamp() }, { merge: true });
+                    return;
                 }
+
+                // Genuinely missing — create the canonical doc, mirroring signup's shape
+                // (authUid + permissions included).
+                await setDoc(emailRef, {
+                    authUid: user.uid,
+                    firstName: profile.displayName?.split(" ")[0] || "Admin",
+                    lastName: profile.displayName?.split(" ").slice(1).join(" ") || "User",
+                    email: profile.email,
+                    phone: profile.phone || "",
+                    roleId: "admin",
+                    isAdmin: true,
+                    status: "active",
+                    orgId,
+                    departmentIds: [],
+                    permissions: [],
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    createdBy: user.uid,
+                    profileImageUrl: profile.photoURL || user.photoURL,
+                });
             } catch (error) {
                 console.error("UserProvider: Error syncing admin to staff:", error);
             }

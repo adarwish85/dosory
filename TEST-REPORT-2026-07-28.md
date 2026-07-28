@@ -181,3 +181,96 @@ low value. Happy to do it if you want the artifact (item §5.5).
 - No secrets written or read for value.
 - No App Hosting deploy, no functions deploy (no functions **source** changed), no rules
   or index **deploy** (source only).
+
+---
+
+# Remediation pass — 2026-07-28 (part 2)
+
+Authorized follow-up: deploy the committed indexes, fix the duplicate-staff-doc bug + clean
+up the data, backfill reminder `emailSent`, and commit/push. Constraints held: no secrets
+touched, no App Hosting deploy, nothing deleted beyond the defined scope.
+
+## R1 — Indexes deployed & verified ✅ (Finding H1 CLOSED)
+
+- `firebase deploy --only firestore:indexes` → all 4 new composite indexes reached **READY**
+  (no `--force`; the 23 console-only indexes were left intact).
+- **`checkReminders` confirmed green in prod logs**: the 09:36 UTC run still errored
+  (mid-build), the **09:51 UTC run finished `ok`** (1574 ms).
+- The 3 daily functions last ran 00:00–02:00 UTC (before the deploy). Rather than force-run
+  `subscriptionAutoBilling` (real billing side-effects), the fix was proven **read-only** by
+  executing each function's exact query against prod — all four resolve with **no
+  FAILED_PRECONDITION**:
+
+    | Query                                                                 | Result                                 |
+    | --------------------------------------------------------------------- | -------------------------------------- |
+    | trialExpiryCheck (subscriptions: trialing & trialEndsAt<now)          | OK — 5 would act on next 02:00 UTC run |
+    | subscriptionAutoBilling (subscriptions: active & nextBillingDate≤now) | OK — 0                                 |
+    | contractAutoExpiry (contracts: active & endDate<now)                  | OK — 0                                 |
+    | checkReminders (reminders: sendEmail & !emailSent & date≤now)         | OK — 0                                 |
+
+## R2 — Duplicate staff docs: code fixed + data cleaned ✅ (Finding M2 CLOSED)
+
+**Code fix.** `components/user-profile-provider.tsx` no longer mints `staff/{uid}`: it looks a
+staff doc up by `authUid` (the canonical, forgery-resistant key) and bails if found; if a
+stale email-keyed doc lacks `authUid` it repairs it in place; only otherwise does it create
+the canonical `staff/{email}` doc. `app/dashboard/layout.tsx` now reads the canonical
+email-keyed doc instead of `staff/{uid}` (also fixes the sidebar for non-admin staff, whose
+uid-keyed doc never existed). `npm run build` → exit 0.
+
+**Cleanup script** (`scripts/dedupe-staff-docs.ts`, backup→dry-run→`--execute`, staff-only).
+It was adversarially reviewed by a 4-lens agent panel before running; the review confirmed 2
+real issues in the first draft (uid/orgId-drift dups missed by (orgId,email) grouping; and
+potential data-loss on auto-ID `staff-form` docs). Both were fixed by rewriting the delete
+predicate to the **exact, unforgeable invariant**: delete an authUid-less doc **iff its id
+equals some keeper's `authUid`**. That can never match an admin-added auto-ID staff row and
+catches drift-orgId dups regardless of orgId.
+
+**Executed against prod:**
+
+- Deleted **9** duplicate uid-keyed docs (each id == its keeper's authUid); **0** merges
+  needed; backup written to `backups/staff-dedupe-<ts>.json` (gitignored — contains PII).
+- Total staff docs **20 → 11** (10 canonical keepers + 1 protected doc).
+- **moaz now has exactly ONE staff doc** (`mohamedmoaaz100@gmail.com`, with authUid); the
+  duplicate `t3Rr…` is gone.
+- **1 doc left untouched**: `uI7Ufzr4bXZLYQXLpfruSEXPKAI2` — authUid-less and not any keeper's
+  authUid (likely an orphan whose keeper differs). The script deliberately never deletes what
+  it can't prove is a duplicate. → **flagged for Ahmed to inspect** (§ below).
+- Rules regression suite re-run: **187/187 pass**.
+
+## R3 — Reminder `emailSent` backfill ✅ (Finding M1 addressed)
+
+`scripts/backfill-reminder-emailsent.ts` (same backup→dry-run→`--execute` pattern): recent
+(≥ now−30d) missing-flag reminders → `emailSent:false` (eligible); older → `true` (consumed),
+preventing an ancient-send burst. **Prod result: 0 rows** — only one `sendEmail==true`
+reminder exists and it already carries the flag. The script is committed for future/other
+data; it is a no-op today.
+
+## R4 — Functions redeploy: not needed
+
+No `functions/src` file changed (only client code, `scripts/`, and `firestore.indexes.json`).
+`firebase deploy --only functions` intentionally skipped.
+
+## Status of findings after this pass
+
+| Finding                                    | Before  | Now                                           |
+| ------------------------------------------ | ------- | --------------------------------------------- |
+| H1 — scheduled fns crash (missing indexes) | 🔴 open | ✅ **closed** (deployed + verified)           |
+| M2 — duplicate staff docs                  | 🟠 open | ✅ **closed** (code fixed + 9 dups removed)   |
+| M1 — checkReminders emailSent no-op        | 🟠 open | ✅ addressed (backfill ready; 0 rows today)   |
+| H2 — `RESEND_API_KEY` invalid              | 🔴 open | 🔴 **still open — the one remaining blocker** |
+
+## New items for Ahmed
+
+1. **RESEND_API_KEY (the only remaining blocker).** Value is invalid across v1/v2/v3. Add a
+   valid version and trigger a fresh App Hosting rollout (App Hosting pins the secret version
+   at rollout). Until then: no invoice/contract/onboarding/reminder email, and signup email
+   verification can't complete. _(I cannot see/write secrets or deploy App Hosting.)_
+2. **Inspect 1 orphan staff doc** `uI7Ufzr4bXZLYQXLpfruSEXPKAI2` — authUid-less, matches no
+   keeper. Decide: repair (attach the right authUid) or delete. Left untouched by design.
+3. **Latent (pre-existing) in `functions/src/reminders.ts`:** `checkReminders` sends inside a
+   single Firestore batch (500-op hard limit). Harmless today (≤1 eligible), but if a backfill
+   or growth ever makes >500 reminders eligible at once, the run would fail — chunk the batch.
+4. **Pre-existing uncommitted E2E harness** (`playwright.config.ts`, `tests/e2e/`,
+   `scripts/seed-demo-tenant.ts`, `scripts/backfill-provision.ts`, and the `package.json`/
+   `package-lock.json` playwright dep) remains uncommitted — left as-is (predates this pass;
+   committing unreviewed dependency changes was out of scope). Commit or discard as you see fit.

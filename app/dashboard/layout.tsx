@@ -188,19 +188,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
     }, [profile, loading, settingsLoading, settings.subdomain]);
 
-    // Subscribe to staff profile for real-time updates
+    // Subscribe to the canonical staff profile for real-time display updates.
+    // Staff docs are keyed by email (with authUid), never by uid — the previous
+    // doc(db,"staff",user.uid) read depended on a duplicate uid-keyed doc that
+    // provisioning never created and that the dedupe cleanup removes. Reading by
+    // email also fixes the sidebar for non-admin staff, whose uid-keyed doc never existed.
     useEffect(() => {
-        if (!user?.uid) return;
+        const email = user?.email?.toLowerCase();
+        if (!email) return;
 
-        const staffRef = doc(db, "staff", user.uid);
-        const unsubscribe = onSnapshot(staffRef, (doc) => {
-            if (doc.exists()) {
-                setStaffProfile(doc.data() as StaffProfile);
+        const staffRef = doc(db, "staff", email);
+        const unsubscribe = onSnapshot(staffRef, (snap) => {
+            if (snap.exists()) {
+                setStaffProfile(snap.data() as StaffProfile);
             }
         });
 
         return () => unsubscribe();
-    }, [user?.uid]);
+    }, [user?.email]);
 
     // Get display name from staff profile or fall back to auth user
     const displayName =
@@ -212,9 +217,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     // Only block on auth loading — settings/profile load in parallel, modules show their own skeletons
     if (loading)
-        return (
-            <div className="flex h-screen items-center justify-center bg-[#F3F2EF]">{t("common.loading")}</div>
-        );
+        return <div className="flex h-screen items-center justify-center bg-[#F3F2EF]">{t("common.loading")}</div>;
 
     if (!user) {
         router.push("/login");
