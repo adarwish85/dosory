@@ -128,8 +128,10 @@ Gaps:
 - **Reports** — `lib/services/reports-service.ts` is 100% mock (6 TODO markers; gated "coming soon" in A8).
 - Minor TODOs: journal vendor hook, expense currency hard-coded "USD",
   payroll→accounting expense records, chat participant creation.
-- `/dashboard/payments/new` route absent — the "Record Payment" quick action 404s
-  (found 2026-07-28; the payments **list** was de-mocked the same day).
+- ~~`/dashboard/payments/new` route absent~~ — CLOSED 2026-07-28: real record-payment form
+  built over the processPayment callable (invoice picker scoped to payable invoices, amount
+  validated against remaining balance, EN/AR). Leads stat cards fixed the same day (combined
+  count+sum aggregation excluded value-less docs; split via lib/hooks/leads/fetch-lead-stats.ts).
 
 **Route-fall-through rule (3 incidents: /leads/import, /customers/import, /customers/new):**
 quick actions must link only to routes that exist as static segments — a missing static page

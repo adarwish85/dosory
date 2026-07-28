@@ -273,10 +273,16 @@ function formatFullDate(timestamp: Timestamp | undefined): string {
 // HighlightText moved to leads-table.tsx
 
 // Quick Stats
-function QuickStatsBar({ leads, totalValue, totalCount }: { leads: Lead[]; totalValue: number; totalCount?: number }) {
+function QuickStatsBar({
+    stats,
+}: {
+    stats: { total: number; totalValue: number; starred: number; qualified: number };
+}) {
     const { t } = useTranslation();
-    const qualifiedCount = leads.filter((l) => l.status === "qualified").length;
-    const starredCount = leads.filter((l) => l.isStarred).length;
+    // All four numbers come from the same orgId-scoped server aggregation
+    // (fetchLeadStats) the list reads from — starred/qualified were previously
+    // computed off the current page slice and under-counted beyond page 1.
+    const { total: totalCount, totalValue, starred: starredCount, qualified: qualifiedCount } = stats;
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
@@ -284,9 +290,7 @@ function QuickStatsBar({ leads, totalValue, totalCount }: { leads: Lead[]; total
                     <Users className="h-4 w-4" />
                     <span className="text-xs font-medium uppercase">{t("leads.stats.total")}</span>
                 </div>
-                <div className="text-2xl font-bold text-blue-900">
-                    {totalCount !== undefined ? totalCount : leads.length}
-                </div>
+                <div className="text-2xl font-bold text-blue-900">{totalCount}</div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2 text-green-600 mb-1">
@@ -415,9 +419,7 @@ function SelectionBanner({
             <CheckSquare className="h-4 w-4 text-blue-600" />
             {selectionMode === "page" ? (
                 <>
-                    <span className="text-blue-800">
-                        {t("leads.selection.onPage", { count: selectedCount })}
-                    </span>
+                    <span className="text-blue-800">{t("leads.selection.onPage", { count: selectedCount })}</span>
                     {totalCount > pageCount && (
                         <button onClick={onSelectAll} className="text-blue-600 font-medium hover:underline">
                             {t("leads.selection.selectAll", { count: totalCount })}
@@ -426,9 +428,7 @@ function SelectionBanner({
                 </>
             ) : (
                 <>
-                    <span className="text-blue-800">
-                        {t("leads.selection.allSelected", { count: totalCount })}
-                    </span>
+                    <span className="text-blue-800">{t("leads.selection.allSelected", { count: totalCount })}</span>
                     <button onClick={onClearSelection} className="text-blue-600 font-medium hover:underline">
                         {t("leads.selection.clear")}
                     </button>
@@ -1316,7 +1316,7 @@ export default function LeadsPage() {
     return (
         <TooltipProvider>
             <div className="space-y-4">
-                <QuickStatsBar leads={processedLeads} totalValue={leadStats.totalValue} totalCount={leadStats.total} />
+                <QuickStatsBar stats={leadStats} />
 
                 {/* Header */}
                 {/* Header Actions Row */}

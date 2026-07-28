@@ -9,6 +9,20 @@
                     "order": "ASCENDING"
                 },
                 {
+                    "fieldPath": "isStarred",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "leads",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
                     "fieldPath": "createdAt",
                     "order": "ASCENDING"
                 }

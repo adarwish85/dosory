@@ -5640,5 +5640,19 @@
     "site.pricing.year": "year",
     "site.pricing.unlimitedUsers": "Unlimited users",
     "site.pricing.upToUsers": "Up to {count} users",
-    "site.pricing.getStarted": "Get Started"
+    "site.pricing.getStarted": "Get Started",
+    "payments.new.title": "Record Payment",
+    "payments.new.invoice": "Invoice",
+    "payments.new.selectInvoice": "Select an invoice…",
+    "payments.new.noOpenInvoices": "No open invoices — nothing to pay",
+    "payments.new.due": "{amount} due",
+    "payments.new.balanceHint": "Remaining balance: {balance}",
+    "payments.new.amountNotPositive": "Amount must be greater than zero",
+    "payments.new.amountExceeds": "Amount exceeds the remaining balance ({balance})",
+    "payments.new.selectMode": "Select payment mode…",
+    "payments.new.note": "Note",
+    "payments.new.submit": "Record Payment",
+    "payments.new.success": "Payment recorded",
+    "payments.new.failed": "Failed to record payment",
+    "common.pickDate": "Pick a date"
 }

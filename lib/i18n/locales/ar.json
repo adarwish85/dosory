@@ -5640,5 +5640,19 @@
     "site.pricing.year": "سنة",
     "site.pricing.unlimitedUsers": "مستخدمون غير محدودين",
     "site.pricing.upToUsers": "حتى {count} مستخدم",
-    "site.pricing.getStarted": "ابدأ الآن"
+    "site.pricing.getStarted": "ابدأ الآن",
+    "payments.new.title": "تسجيل دفعة",
+    "payments.new.invoice": "الفاتورة",
+    "payments.new.selectInvoice": "اختر فاتورة…",
+    "payments.new.noOpenInvoices": "لا توجد فواتير مفتوحة — لا يوجد ما يُدفع",
+    "payments.new.due": "المستحق {amount}",
+    "payments.new.balanceHint": "الرصيد المتبقي: {balance}",
+    "payments.new.amountNotPositive": "يجب أن يكون المبلغ أكبر من صفر",
+    "payments.new.amountExceeds": "المبلغ يتجاوز الرصيد المتبقي ({balance})",
+    "payments.new.selectMode": "اختر طريقة الدفع…",
+    "payments.new.note": "ملاحظة",
+    "payments.new.submit": "تسجيل الدفعة",
+    "payments.new.success": "تم تسجيل الدفعة",
+    "payments.new.failed": "فشل تسجيل الدفعة",
+    "common.pickDate": "اختر تاريخًا"
 }

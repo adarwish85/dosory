@@ -510,3 +510,45 @@ npx tsx scripts/cleanup-legacy-orphan-org.ts --execute --full-scope
 
 If you'd rather keep a tenant workspace attached to your gmail account, say which orgId
 and the users-doc step becomes a repoint instead of a field removal.
+
+---
+
+# Feature round — 2026-07-28 (F6 record-payment + leads stat cards)
+
+## F6 — /dashboard/payments/new ✅
+
+Real record-payment form (was a 404ing quick action). Deliberately THIN over the existing
+payment path: submission goes through `useInvoices().recordPayment` → the **processPayment
+callable**, which owns the whole data contract (transactional payment doc in the exact shape
+`usePayments` reads, invoice `amountPaid/amountDue/status` transitions paid/partial, auto
+journal entry vs AR). The page never writes Firestore directly.
+
+- Invoice picker: org-scoped, filtered to payable invoices (`lib/payments/record-payment-utils.ts`
+  — excludes paid/void/cancelled and zero-balance; tolerates legacy docs without `amountDue`).
+- Amount: prefilled with remaining balance; validated > 0 and ≤ balance with the server's own
+  0.01 epsilon; server still re-validates.
+- Mode from seeded `paymentModes`; date picker; note; EN+AR keys (13 new); `?invoiceId=` deep-link
+  support for the invoice-detail quick action.
+- Tests: 5/5 pure-logic suite (`tests/unit/record-payment-utils.test.ts`).
+
+## Leads stat cards showing 0 ✅ (root cause found + fixed)
+
+**Root cause** (proved live on qa-smoke via REST aggregation): the cards' combined
+`getAggregateFromServer(q, {count(), sum("value")})` **excludes every doc missing the summed
+field from the whole aggregation** — leads created without a `value` field (like qa-smoke's)
+were excluded from `totalCount` too → TOTAL 0 while the table (plain query) showed rows. The
+silent fallback masked nothing because the call _succeeded_ — with the wrong semantics.
+**Fix**: `lib/hooks/leads/fetch-lead-stats.ts` splits count from sum (count() counts all docs)
+and adds real org-scoped server counts for starred/qualified (previously computed from the
+current page slice — under-counted beyond page 1). QuickStatsBar now renders all four numbers
+from this single source; view-own scoping preserved. New index `leads(orgId,isStarred)`
+(104th) for the starred count; qualified rides the existing `(orgId,status,createdAt)` prefix.
+
+- Tests: 3/3 emulator suite (`tests/unit/lead-stats.test.ts`) — pins the exact regression
+  (combined aggregation would return 2; split returns 4), org isolation, view-own scoping.
+
+## Ship gate
+
+- Build exit 0 (**190 pages** — new route). ESLint changed files: 0 errors.
+- Rules 187/187 · convergence 6/6 (prior) · payment utils 5/5 · lead stats 3/3.
+- Index deploy + App Hosting rollout: below (post-rollout verification appended after).

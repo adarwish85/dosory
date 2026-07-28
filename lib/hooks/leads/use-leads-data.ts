@@ -13,13 +13,11 @@ import {
     // getDoc,
     QueryConstraint,
     getCountFromServer,
-    getAggregateFromServer,
-    sum,
-    count,
     startAfter,
     QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { fetchLeadStats } from "./fetch-lead-stats";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { usePermissions, getViewScope } from "@/lib/hooks/use-permissions";
 import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
@@ -121,31 +119,15 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
         const fetchStatsAndCount = async () => {
             if (!profile?.orgId) return;
             try {
-                // 1. Aggregation for global stats — respect view-own so the headline "total"
-                //    reflects the user's own records, not the whole org.
-                const globalConstraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
-                if (restrictToOwn && ownerId) globalConstraints.push(where("assignedTo", "==", ownerId));
-                const globalQ = query(collection(db, "leads"), ...globalConstraints);
-
-                // We'll wrap in try/catch individual parts to ensure partial success
-                let globalTotal = 0;
-                let globalValue = 0;
-
-                try {
-                    const aggSnap = await getAggregateFromServer(globalQ, {
-                        totalCount: count(),
-                        totalValue: sum("value"),
-                    });
-                    globalTotal = aggSnap.data().totalCount;
-                    globalValue = aggSnap.data().totalValue;
-                } catch (aggErr) {
-                    console.warn("Aggregation failed (likely missing index), falling back to basic count:", aggErr);
-                    // Fallback for count only
-                    try {
-                        const countSnap = await getCountFromServer(globalQ);
-                        globalTotal = countSnap.data().count;
-                    } catch {}
-                }
+                // 1. Global stats — respect view-own so the headline "total" reflects the
+                //    user's own records, not the whole org. Count/sum/starred/qualified are
+                //    computed by fetchLeadStats, which keeps count() and sum("value") in
+                //    SEPARATE requests: a combined {count,sum} aggregation excludes every
+                //    doc lacking `value` from the count too, which made the cards read 0
+                //    for tenants whose leads carry no value field (2026-07-28 bug).
+                const extra: QueryConstraint[] = [];
+                if (restrictToOwn && ownerId) extra.push(where("assignedTo", "==", ownerId));
+                const stats = await fetchLeadStats(db, profile.orgId, extra);
 
                 if (!isMounted) return;
 
@@ -155,11 +137,7 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
                 const filterCountSnap = await getCountFromServer(filterQ);
 
                 if (isMounted) {
-                    setLeadStats((prev) => ({
-                        ...prev,
-                        total: globalTotal,
-                        totalValue: globalValue,
-                    }));
+                    setLeadStats(stats);
                     setTotalRecords(filterCountSnap.data().count);
                 }
             } catch (err) {
