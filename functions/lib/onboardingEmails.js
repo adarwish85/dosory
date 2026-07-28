@@ -1,14 +1,16 @@
 "use strict";
 // Onboarding Email Sequences Cloud Function
 // Sends automated follow-up emails on Day 1, 3, and 7
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onUserCreated = exports.sendOnboardingEmails = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const resend_1 = require("resend");
 // Initialize Resend with API key from environment
-const resend = new resend_1.Resend((_a = functions.config().resend) === null || _a === void 0 ? void 0 : _a.api_key);
+// Lazy init — see emailNotifications.ts: `new Resend(undefined)` at module scope throws and
+// breaks deploy discovery. Constructed on first send instead.
+let _resend = null;
+const getResend = () => { var _a; return (_resend !== null && _resend !== void 0 ? _resend : (_resend = new resend_1.Resend((_a = functions.config().resend) === null || _a === void 0 ? void 0 : _a.api_key))); };
 // Email templates
 const EMAIL_TEMPLATES = {
     day1: {
@@ -174,7 +176,7 @@ exports.sendOnboardingEmails = functions.pubsub
                     break;
             }
             // Send email via Resend
-            await resend.emails.send({
+            await getResend().emails.send({
                 from: "Dosory <noreply@dosory.com>",
                 to: userEmail,
                 subject: template.subject,

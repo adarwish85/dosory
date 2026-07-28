@@ -552,3 +552,40 @@ from this single source; view-own scoping preserved. New index `leads(orgId,isSt
 - Build exit 0 (**190 pages** — new route). ESLint changed files: 0 errors.
 - Rules 187/187 · convergence 6/6 (prior) · payment utils 5/5 · lead stats 3/3.
 - Index deploy + App Hosting rollout: below (post-rollout verification appended after).
+
+## Post-rollout live verification (qa-smoke) — and 3 more prod bugs found & fixed
+
+Exercising the new form end-to-end flushed out three pre-existing prod defects that had
+never been hit because no one could reach this flow before:
+
+1. **4 callables had EMPTY IAM policies** (`processPayment`, `finalizeInvoice`,
+   `voidInvoice`, `recalculateAnalytics`) — no `allUsers` invoker, so every browser call
+   403'd at preflight without CORS headers → the SDK surfaced "internal". This is the
+   grant `firebase deploy` normally sets automatically; restored via
+   `gcloud functions add-invoker-policy-binding` (auth still enforced in-function via
+   `context.auth` — the standard callable model). **Every callable-backed flow (record
+   payment, finalize/void invoice) was browser-dead until today.**
+2. **`processPayment` itself was broken**: its transaction ran the journal-entry account
+   lookups (`t.get`) AFTER the payment/invoice writes — Firestore forbids reads-after-writes
+   in a transaction, so EVERY payment 500'd ("Payment processing failed"). Fixed by moving
+   the account reads before the writes (`functions/src/finance.ts`); deployed
+   (`--only functions:processPayment`).
+3. **4 settings hooks had NO composite index** (`paymentModes/taxes/currencies/emailTemplates`
+   × orgId+orderBy; + `customFields(orgId,order)`) — their onSnapshots have been silently
+   erroring for every tenant (stuck "loading", empty settings pages, disabled payment-mode
+   pickers). 5 indexes added + deployed + READY (113 total... 108 report: 103+5).
+
+**E2E result (all live on qa-smoke):**
+| Check | Result |
+|---|---|
+| /dashboard/payments/new renders | ✅ form with picker/amount/mode/date/note |
+| Picker scoping | ✅ shows ONLY "INV-000002 — $50.00 due"; paid INV-000001 excluded |
+| Amount prefill + balance hint | ✅ 50 / "Remaining balance: $50.00" |
+| Payment modes load | ✅ seeded "Bank Transfer"/"Cash" (post-index) |
+| Submit → processPayment | ✅ "Payment recorded" toast |
+| Invoice contract | ✅ INV-000002 → status=paid, amountPaid=50, amountDue=0 |
+| Payments list | ✅ 2 real rows ($50 Bank Transfer + $150 legacy) |
+| Leads stat cards | ✅ TOTAL **1** (was 0), VALUE $0 (no value field — correct), STARRED/QUALIFIED 0 |
+
+Residual (cosmetic): the new payment row shows the customerId (processPayment's contract
+stores no customerName) — the list's tolerant renderer falls back correctly; enrich later.

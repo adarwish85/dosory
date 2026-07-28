@@ -1,15 +1,18 @@
 "use strict";
-var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onContractCreated = exports.onProposalStatusChange = exports.onProposalCreated = exports.onInvoiceSent = void 0;
+exports.onContractCreated = exports.onInvoiceSent = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const resend_1 = require("resend");
 const emailTemplates_1 = require("./emailTemplates");
 // Initialize Resend with API key from environment
-const resend = new resend_1.Resend(((_a = functions.config().resend) === null || _a === void 0 ? void 0 : _a.api_key) || process.env.RESEND_API_KEY);
+// Lazy init: constructing `new Resend(undefined)` at module scope throws "Missing API key",
+// which broke `firebase deploy` discovery (it executes the module to enumerate exports). The
+// key is read at first send instead — it is present in the prod functions runtime config.
+let _resend = null;
+const getResend = () => { var _a; return (_resend !== null && _resend !== void 0 ? _resend : (_resend = new resend_1.Resend(((_a = functions.config().resend) === null || _a === void 0 ? void 0 : _a.api_key) || process.env.RESEND_API_KEY))); };
 // Default from email - update this to your verified domain
-const FROM_EMAIL = ((_b = functions.config().email) === null || _b === void 0 ? void 0 : _b.from) || "notifications@yourdomain.com";
+const getFromEmail = () => { var _a; return ((_a = functions.config().email) === null || _a === void 0 ? void 0 : _a.from) || "notifications@yourdomain.com"; };
 // Helper to get organization name
 async function getOrgName(orgId) {
     var _a;
@@ -66,8 +69,8 @@ exports.onInvoiceSent = functions.firestore
     };
     const { subject, html } = (0, emailTemplates_1.getInvoiceSentEmail)(emailData);
     try {
-        await resend.emails.send({
-            from: FROM_EMAIL,
+        await getResend().emails.send({
+            from: getFromEmail(),
             to: customer.email,
             subject,
             html,
@@ -80,102 +83,6 @@ exports.onInvoiceSent = functions.firestore
     }
     catch (error) {
         console.error("Failed to send invoice email:", error);
-    }
-    return null;
-});
-/**
- * Send email when proposal is created
- */
-exports.onProposalCreated = functions.firestore
-    .document("proposals/{proposalId}")
-    .onCreate(async (snap, context) => {
-    var _a, _b, _c, _d;
-    const proposal = snap.data();
-    console.log(`Proposal ${context.params.proposalId} created, sending email...`);
-    const customer = await getCustomerEmail(proposal.customerId);
-    if (!customer) {
-        console.log("No customer email found, skipping");
-        return null;
-    }
-    const orgName = await getOrgName(proposal.orgId);
-    const portalUrl = `${((_a = functions.config().app) === null || _a === void 0 ? void 0 : _a.url) || 'https://yourapp.com'}/portal/${context.params.proposalId}`;
-    const emailData = {
-        to: customer.email,
-        customerName: customer.name,
-        orgName,
-        proposalNumber: proposal.number || context.params.proposalId,
-        subject: proposal.subject || "New Proposal",
-        total: proposal.total || 0,
-        currency: proposal.currency || "USD",
-        validUntil: ((_d = (_c = (_b = proposal.openTill) === null || _b === void 0 ? void 0 : _b.toDate) === null || _c === void 0 ? void 0 : _c.call(_b)) === null || _d === void 0 ? void 0 : _d.toLocaleDateString()) || "N/A",
-        viewUrl: portalUrl,
-    };
-    const { subject, html } = (0, emailTemplates_1.getProposalCreatedEmail)(emailData);
-    try {
-        await resend.emails.send({
-            from: FROM_EMAIL,
-            to: customer.email,
-            subject,
-            html,
-        });
-        console.log(`Proposal email sent to ${customer.email}`);
-        await snap.ref.update({
-            emailSentAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-    }
-    catch (error) {
-        console.error("Failed to send proposal email:", error);
-    }
-    return null;
-});
-/**
- * Send email when proposal is accepted or declined (notify org admin)
- */
-exports.onProposalStatusChange = functions.firestore
-    .document("proposals/{proposalId}")
-    .onUpdate(async (change, context) => {
-    var _a, _b, _c;
-    const before = change.before.data();
-    const after = change.after.data();
-    // Only trigger when status changes to accepted or declined
-    const statusChanged = before.status !== after.status;
-    const isRelevantStatus = after.status === "accepted" || after.status === "declined";
-    if (!statusChanged || !isRelevantStatus) {
-        return null;
-    }
-    console.log(`Proposal ${context.params.proposalId} ${after.status}, notifying org...`);
-    // Get org admin email
-    const orgDoc = await admin.firestore().collection("organizations").doc(after.orgId).get();
-    const orgData = orgDoc.data();
-    const adminEmail = (orgData === null || orgData === void 0 ? void 0 : orgData.email) || (orgData === null || orgData === void 0 ? void 0 : orgData.adminEmail);
-    if (!adminEmail) {
-        console.log("No org admin email found, skipping");
-        return null;
-    }
-    const customer = await getCustomerEmail(after.customerId);
-    const emailData = {
-        to: adminEmail,
-        customerName: (customer === null || customer === void 0 ? void 0 : customer.name) || "Customer",
-        proposalNumber: after.number || context.params.proposalId,
-        subject: after.subject || "Proposal",
-        total: after.total || 0,
-        currency: after.currency || "USD",
-        validUntil: ((_c = (_b = (_a = after.openTill) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.toLocaleDateString()) || "N/A",
-        viewUrl: "",
-        status: after.status,
-    };
-    const { subject, html } = (0, emailTemplates_1.getProposalStatusEmail)(emailData);
-    try {
-        await resend.emails.send({
-            from: FROM_EMAIL,
-            to: adminEmail,
-            subject,
-            html,
-        });
-        console.log(`Proposal status email sent to ${adminEmail}`);
-    }
-    catch (error) {
-        console.error("Failed to send proposal status email:", error);
     }
     return null;
 });
@@ -205,8 +112,8 @@ exports.onContractCreated = functions.firestore
     };
     const { subject, html } = (0, emailTemplates_1.getContractCreatedEmail)(emailData);
     try {
-        await resend.emails.send({
-            from: FROM_EMAIL,
+        await getResend().emails.send({
+            from: getFromEmail(),
             to: customer.email,
             subject,
             html,

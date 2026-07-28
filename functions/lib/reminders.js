@@ -1,13 +1,15 @@
 "use strict";
-var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkReminders = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const resend_1 = require("resend");
 // Initialize Resend
-const resend = new resend_1.Resend(((_a = functions.config().resend) === null || _a === void 0 ? void 0 : _a.api_key) || process.env.RESEND_API_KEY);
-const FROM_EMAIL = ((_b = functions.config().email) === null || _b === void 0 ? void 0 : _b.from) || "notifications@yourdomain.com";
+// Lazy init — see emailNotifications.ts: `new Resend(undefined)` at module scope throws and
+// breaks deploy discovery. Constructed on first send instead.
+let _resend = null;
+const getResend = () => { var _a; return (_resend !== null && _resend !== void 0 ? _resend : (_resend = new resend_1.Resend(((_a = functions.config().resend) === null || _a === void 0 ? void 0 : _a.api_key) || process.env.RESEND_API_KEY))); };
+const getFromEmail = () => { var _a; return ((_a = functions.config().email) === null || _a === void 0 ? void 0 : _a.from) || "notifications@yourdomain.com"; };
 exports.checkReminders = functions.pubsub.schedule("every 15 minutes").onRun(async (context) => {
     var _a, _b, _c;
     const now = admin.firestore.Timestamp.now();
@@ -59,8 +61,8 @@ exports.checkReminders = functions.pubsub.schedule("every 15 minutes").onRun(asy
             continue;
         }
         if (toEmail) {
-            promises.push(resend.emails.send({
-                from: FROM_EMAIL,
+            promises.push(getResend().emails.send({
+                from: getFromEmail(),
                 to: toEmail,
                 subject: `Reminder: ${reminder.description || "New Reminder"}`,
                 html: `

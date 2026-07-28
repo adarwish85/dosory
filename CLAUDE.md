@@ -271,6 +271,13 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 
 **Remaining ledger (dated):**
 
+- 2026-07-28 (feature round): 4 callables were browser-dead (empty IAM — invoker grant
+  restored via gcloud; check IAM after every functions deploy), processPayment had a
+  reads-after-writes transaction bug (fixed + deployed), and 4 settings hooks
+  (paymentModes/taxes/currencies/emailTemplates) had no composite indexes (added, 108
+  total). New standing check: after adding any orgId+orderBy hook, add its composite
+  index in the same commit.
+
 - `functions.config()` API is removed in firebase-functions v6+ / deprecated server-side —
   migrate functions/src to env-based config **before 2027-03** (checkReminders,
   emailNotifications, onboarding still read it).

@@ -3,7 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.subscriptionAutoBilling = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-admin.initializeApp();
+// Guard against double-init: index.ts already calls initializeApp() before importing this
+// module, so an unguarded call here threw "default Firebase app already exists" at module
+// load — which broke `firebase deploy` DISCOVERY (it executes the code to enumerate exports),
+// leaving the whole functions codebase un-analyzable. Matches analytics/finance/contractExpiry.
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
 const db = admin.firestore();
 /**
  * Subscription Auto-Billing

@@ -62,7 +62,18 @@ exports.processPayment = functions.https.onCall(async (data, context) => {
             if (newAmountPaid > currentTotal + 0.01) {
                 throw new functions.https.HttpsError("failed-precondition", `Payment amount (${amount}) exceeds amount due (${currentTotal - currentPaid}).`);
             }
-            // 4. Create Payment Record (Reference Subcollection or Root Collection with strict rules)
+            // 4. AUTO-ACCOUNTING LOOKUPS — must run BEFORE any t.set/t.update below:
+            // Firestore transactions require ALL reads before ANY write. These t.get()s
+            // used to sit after the payment/invoice writes (step 6), which made the whole
+            // transaction throw "reads before writes" and 500'd EVERY payment in prod
+            // (found live 2026-07-28 exercising /dashboard/payments/new).
+            const isBank = ["bank_transfer", "cheque", "card"].includes(paymentMode.toLowerCase());
+            const assetCode = isBank ? "1010" : "1000"; // Bank or Cash
+            const [assetAccount, arAccount] = await Promise.all([
+                findAccountByCode(t, orgId, assetCode),
+                findAccountByCode(t, orgId, "1200") // Accounts Receivable
+            ]);
+            // 5. Create Payment Record (Reference Subcollection or Root Collection with strict rules)
             // Using Root "payments" collection as per schema
             const paymentRef = db.collection("payments").doc();
             const paymentData = {
@@ -81,7 +92,7 @@ exports.processPayment = functions.https.onCall(async (data, context) => {
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             };
             t.set(paymentRef, paymentData);
-            // 5. Update Invoice
+            // 6. Update Invoice
             let newStatus = invoice === null || invoice === void 0 ? void 0 : invoice.status;
             if (newAmountPaid >= currentTotal - 0.01) {
                 newStatus = "paid";
@@ -95,14 +106,7 @@ exports.processPayment = functions.https.onCall(async (data, context) => {
                 status: newStatus,
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
-            // 6. AUTO-ACCOUNTING: Create Journal Entry (Cash/Bank vs AR)
-            // Payment Mode Mapping
-            const isBank = ["bank_transfer", "cheque", "card"].includes(paymentMode.toLowerCase());
-            const assetCode = isBank ? "1010" : "1000"; // Bank or Cash
-            const [assetAccount, arAccount] = await Promise.all([
-                findAccountByCode(t, orgId, assetCode),
-                findAccountByCode(t, orgId, "1200") // Accounts Receivable
-            ]);
+            // 7. Journal Entry (Cash/Bank vs AR) — accounts were read in step 4.
             if (assetAccount && arAccount) {
                 const jeRef = db.collection("journal_entries").doc();
                 const jeData = {
