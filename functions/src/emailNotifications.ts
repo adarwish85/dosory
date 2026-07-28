@@ -16,7 +16,7 @@ let _resend: Resend | null = null;
 const getResend = (): Resend => (_resend ??= new Resend(functions.config().resend?.api_key || process.env.RESEND_API_KEY));
 
 // Default from email - update this to your verified domain
-const FROM_EMAIL = functions.config().email?.from || "notifications@yourdomain.com";
+const getFromEmail = (): string => functions.config().email?.from || "notifications@yourdomain.com";
 
 // Helper to get organization name
 async function getOrgName(orgId: string): Promise<string> {
@@ -80,7 +80,7 @@ export const onInvoiceSent = functions.firestore
 
         try {
             await getResend().emails.send({
-                from: FROM_EMAIL,
+                from: getFromEmail(),
                 to: customer.email,
                 subject,
                 html,
@@ -129,7 +129,7 @@ export const onContractCreated = functions.firestore
 
         try {
             await getResend().emails.send({
-                from: FROM_EMAIL,
+                from: getFromEmail(),
                 to: customer.email,
                 subject,
                 html,
