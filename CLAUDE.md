@@ -125,10 +125,16 @@ Super Admin, Chat, Signup/Portal.
 
 Gaps:
 
-- **Reports** — `lib/services/reports-service.ts` is 100% mock (6 TODO markers).
-- **Proposals** — stub; being removed.
+- **Reports** — `lib/services/reports-service.ts` is 100% mock (6 TODO markers; gated "coming soon" in A8).
 - Minor TODOs: journal vendor hook, expense currency hard-coded "USD",
   payroll→accounting expense records, chat participant creation.
+- `/dashboard/payments/new` route absent — the "Record Payment" quick action 404s
+  (found 2026-07-28; the payments **list** was de-mocked the same day).
+
+**Route-fall-through rule (3 incidents: /leads/import, /customers/import, /customers/new):**
+quick actions must link only to routes that exist as static segments — a missing static page
+silently falls through to `[id]` and renders a not-found/hang. When adding a quick action,
+create the page.
 
 ---
 
@@ -225,3 +231,50 @@ Sequenced from the 2026-06-03 readiness recon. Two finish lines: Milestone A (fr
 3.4.4 ~12 "coming soon" UI corners — label-and-defer acceptable.
 
 **Loose end (not Phase 3):** Phase 2 lint tail — 2.2.b-iii (8 `no-explicit-any`) + 2.2.b-iv (2 `react-hooks/set-state-in-effect`), 10 errors across 5 files. Mechanical; does not block Phase 3; slot after 3.0.
+
+---
+
+## 11. Ops Log & Standing Checks (updated 2026-07-28)
+
+**Standing QA infrastructure:** tenant `qasmoke20260728131942` (subdomain
+`qasmoke20260728131942.dosory.com`, owner `ahmeddarwesh+qasmoke20260728131942@gmail.com`,
+creds in gitignored `qa-smoke-credentials.txt`) is **reserved** as the permanent smoke-test
+tenant. Future smoke passes reuse it — do NOT mint new prod tenants, do NOT delete it. Its
+data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
+
+**Incidents resolved 2026-07-28 (see TEST-REPORT-2026-07-28.md for detail):**
+
+- functions lockfile drift + `functions.config()` v2 container boot crash (lazy reads; 571a6c53).
+- Pre-commit hook crash on tracked node_modules (lint-staged `--config`; 7f3e153c).
+- 4 scheduled functions silently crashing for want of composite indexes (55490116 + deploy);
+  +2 more (leads/payments metrics ASC) found live in the smoke (36bd10e7).
+- Duplicate `staff/{uid}` docs on every admin login — root cause of "moaz" (9f0a5feb + dedupe;
+  verified live). Invariant: staff docs are keyed by lowercased email and carry `authUid`;
+  never key by uid.
+- `RESEND_API_KEY` invalid across v1–v3 → v4 + App Hosting rollout; live send 200 + message id.
+  NOTE: signup email-verification is Firebase-native — never Resend-dependent.
+- Payments list page was hardcoded mock data (EGIC fixtures) → wired to usePayments.
+- Provisioning made convergent: idempotent route + signup retry/backoff + login-time
+  self-heal guard (`useEnsureProvisioned`) + 5-test emulator convergence suite.
+
+**Standing checks (do these every time):**
+
+1. After changing any scheduled function's query → check its next prod run's logs for
+   FAILED_PRECONDITION (missing index errors are silent from the UI).
+2. After any dependency edit → resync the matching lockfile in the same commit.
+3. After every App Hosting rollout → run the quick smoke against the qa-smoke tenant
+   (login, customers/leads/invoices/tasks lists render real data, signup page 200).
+4. Emulator suites: tenant-isolation (187) + provisioning-convergence (5) must be green
+   before any rules/provisioning commit.
+
+**Remaining ledger (dated):**
+
+- `functions.config()` API is removed in firebase-functions v6+ / deprecated server-side —
+  migrate functions/src to env-based config **before 2027-03** (checkReminders,
+  emailNotifications, onboarding still read it).
+- Cloud Functions Node 20 runtime → upgrade path planned **before 2026-10**.
+- `checkReminders` sends inside a single 500-op batch — chunk before any reminder backfill
+  or growth makes >500 due at once.
+- 5 expired trials will be transitioned by `trialExpiryCheck` at its next 02:00 UTC run
+  (first healthy run after the index fix) — expected, not an incident. Expiry sets
+  status:"expired", which ensureWriteAccess does NOT currently block (product decision open).

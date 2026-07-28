@@ -372,3 +372,75 @@ sibling payments query needs `payments (orgId ASC, date ASC)`. Both added to
 (fake financial data in front of real tenants), F1 provisioning self-heal, qa-smoke tenant
 disposition (left in place per instructions), orphan staff doc `uI7Ufz…`, F4 hardening,
 next App Hosting rollout to ship the F3 route fix.
+
+---
+
+# Remediation round 4 — 2026-07-28 (F2/F1/F4 + orphan verdict + reserved QA tenant)
+
+## F2 — Payments page de-mocked ✅
+
+`app/dashboard/accounting/payments/page.tsx` rewritten: the hardcoded EGIC/INV-0001xx fixture
+array is deleted; the table now renders the tenant's real payments via `usePayments`
+(orgId-scoped `onSnapshot`, date desc — served by the existing `payments(orgId,date DESC)`
+index). Loading state, "No payments yet" empty state (EN+AR keys added), error state, live
+search, real pagination. Renders both real write shapes (processPayment callable:
+`paymentMode`; client records: `method`/`customerName`). Verified post-rollout against
+qa-smoke (§ verification below).
+
+## F1 — Provisioning made convergent ✅ (5/5 emulator tests)
+
+- **(a) Idempotent route** — `/api/tenants/provision` → `provisionTenant` was already
+  check-before-create per doc (subscription existence check; `seedIfEmpty` per collection;
+  settings merge). Verified by test rather than rewritten.
+- **(b) Signup retry** — `provisionWithRetry` (new `lib/provisioning/ensure-provisioned-client.ts`):
+  4 attempts, 1s/2s/4s backoff, fresh token per attempt (first attempt races claim refresh),
+  fail-fast only on deterministic 400. **Deliberate change:** total provision failure no longer
+  deletes the just-created auth user — claims + org already exist and rollback could itself
+  fail; instead the login-time guard converges the tenant. Logged, not fatal.
+- **(c) Login-time guard** — `useEnsureProvisioned` mounted in the dashboard layout: one cheap
+  `getDoc(subscriptions/{orgId})` per session (readable by the tenant per rules); if missing →
+  "Finishing your workspace setup…" screen (EN+AR) while the idempotent route is invoked with
+  backoff; re-checks, then falls open on persistent failure (broken-but-visible beats an
+  infinite spinner). Skips cleanly under impersonation/claim-drift (token orgId mismatch).
+- **Emulator convergence suite** — `tests/unit/provisioning-convergence.test.ts` (5 tests,
+  all green): stranded tenant converges; killed-after-subscription converges;
+  killed-after-partial-defaults converges without double-seeding; second call is a byte-level
+  no-op (createdAt unchanged, zero duplicate seeds); no cross-org namespace leakage.
+
+## F4 — Tasks page hardened ✅
+
+`(task.name ?? "").toLowerCase()` — one malformed doc can no longer blank the tasks module.
+(Sibling fields in the same filter — `status` — are enum-compared, no crash surface.)
+
+## Orphan staff doc `uI7Ufzr4bXZLYQXLpfruSEXPKAI2` — verdict (read-only, nothing deleted)
+
+It is **Ahmed's own account**: auth user `ahmeddarwesh@gmail.com` (uid == doc id, created
+2025-12-16). The doc was minted 2026-01-11 by the old dup-writing provider code, keyed by uid,
+no `authUid`, and points at legacy org `org_uI7Ufz…_1765902729459` (org doc exists but has no
+name/ownerId — pre-current-signup format). It is that account's ONLY staff doc (no email-keyed
+canonical exists), which is exactly why the dedupe invariant spared it.
+**Recommendation: delete both the staff doc and the empty legacy org** — it's an abandoned
+dev-era artifact; the account's real workspace access doesn't route through it (authUid
+lookups can't match it). If you instead want this gmail account usable as staff somewhere,
+say which org and I'll migrate it properly (create `staff/{email}` with authUid, then retire
+the uid-keyed doc). Ahmed's trigger either way.
+
+## qa-smoke tenant — now reserved infrastructure ✅
+
+`qasmoke20260728131942` is the permanent standing smoke-test tenant (creds in gitignored
+`qa-smoke-credentials.txt`). Recorded in CLAUDE.md §11. Future smoke passes reuse it.
+
+## New finding
+
+**F6 — `/dashboard/payments/new` does not exist** — the "Record Payment" quick action
+(invoices sidebar) links to it and 404s. Needs a record-payment form page (real feature work,
+not a route shim — it should drive the processPayment callable). Logged in CLAUDE.md §7.
+
+## Ship gate
+
+- `npm run build` → exit 0 (189 pages).
+- ESLint on changed files → 0 errors.
+- Rules suite 187/187; provisioning convergence 5/5.
+- CLAUDE.md updated (§7 gaps, route-fall-through rule, §11 ops log / standing checks /
+  dated ledger: functions.config() migration <2027-03, Node 20 <2026-10, checkReminders
+  500-op batch, 5 expired trials transitioning at next 02:00 UTC — expected).

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createUserWithEmailAndPassword, deleteUser, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { provisionWithRetry } from "@/lib/provisioning/ensure-provisioned-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -226,17 +227,14 @@ export default function SignupPage() {
             // 6b. Provision subscription + default settings server-side (A2 + A3).
             // Runs AFTER set-claims + token refresh so the bearer token carries the orgId
             // claim. Without the subscription doc every write 403s ("No subscription found");
-            // without the seed the tenant lands bare. A throw here triggers the rollback below.
-            const provisionResponse = await fetch("/api/tenants/provision", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${await user.getIdToken()}`,
-                },
-                body: JSON.stringify({ orgId }),
-            });
-            if (!provisionResponse.ok) {
-                throw new Error("Provisioning failed: " + (await provisionResponse.text()));
+            // without the seed the tenant lands bare.
+            // F1: retried with backoff (the route is idempotent) — a single flaky fetch used
+            // to strand a half-provisioned tenant. If it STILL fails, we no longer roll the
+            // user back: claims + org already exist, and the dashboard's login-time
+            // provisioning guard (useEnsureProvisioned) converges the tenant on next load.
+            const provisionResult = await provisionWithRetry(user, orgId);
+            if (!provisionResult.ok) {
+                console.error("Provisioning incomplete after retries:", provisionResult.lastError);
             }
 
             // 7. Send Welcome Email (fire-and-forget)

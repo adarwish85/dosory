@@ -280,7 +280,9 @@ export default function TasksPage() {
     const { tasks, loading, taskStats, updateTask, updateTaskStatus, deleteTask } = useTasks();
 
     const filteredTasks = useMemo(() => {
-        let result = tasks.filter((task) => task.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        // F4: nullish-guard name — one malformed doc (missing `name`) used to throw inside
+        // this useMemo and blank the whole page behind the error boundary.
+        let result = tasks.filter((task) => (task.name ?? "").toLowerCase().includes(searchQuery.toLowerCase()));
         if (statusFilter !== "all") result = result.filter((t) => t.status === statusFilter);
         return result;
     }, [tasks, searchQuery, statusFilter]);
@@ -443,22 +445,20 @@ export default function TasksPage() {
 
                 {/* Status Tabs */}
                 <div className="flex flex-wrap gap-2">
-                    {(["to_do", "in_progress", "blocked", "done"] as TaskStatus[]).map(
-                        (status) => {
-                            const colors = statusColors[status];
-                            const count = taskStats[status] || 0;
-                            const isActive = statusFilter === status;
-                            return (
-                                <button
-                                    key={status}
-                                    onClick={() => setStatusFilter(isActive ? "all" : status)}
-                                    className={`border rounded-full px-3 py-1 text-sm font-medium flex items-center gap-2 cursor-pointer transition-colors ${isActive ? `${colors.bg} ${colors.text}` : "bg-white text-gray-500 hover:bg-gray-50"}`}
-                                >
-                                    <span className="font-bold text-gray-900">{count}</span> {t(`tasks.status.${status}`)}
-                                </button>
-                            );
-                        }
-                    )}
+                    {(["to_do", "in_progress", "blocked", "done"] as TaskStatus[]).map((status) => {
+                        const colors = statusColors[status];
+                        const count = taskStats[status] || 0;
+                        const isActive = statusFilter === status;
+                        return (
+                            <button
+                                key={status}
+                                onClick={() => setStatusFilter(isActive ? "all" : status)}
+                                className={`border rounded-full px-3 py-1 text-sm font-medium flex items-center gap-2 cursor-pointer transition-colors ${isActive ? `${colors.bg} ${colors.text}` : "bg-white text-gray-500 hover:bg-gray-50"}`}
+                            >
+                                <span className="font-bold text-gray-900">{count}</span> {t(`tasks.status.${status}`)}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* Toolbar */}
@@ -490,12 +490,14 @@ export default function TasksPage() {
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-                                        <Badge className="mr-2 bg-blue-600">{selectedTasks.length}</Badge>{t("tasks.bulk.button")}{" "}
-                                        <ChevronDown className="ml-2 h-4 w-4" />
+                                        <Badge className="mr-2 bg-blue-600">{selectedTasks.length}</Badge>
+                                        {t("tasks.bulk.button")} <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuLabel>{t("tasks.bulk.withSelected", { count: selectedTasks.length })}</DropdownMenuLabel>
+                                    <DropdownMenuLabel>
+                                        {t("tasks.bulk.withSelected", { count: selectedTasks.length })}
+                                    </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => setBulkAssignOpen(true)}>
                                         <LayoutList className="mr-2 h-4 w-4" /> {t("tasks.bulk.assignTo")}
@@ -533,9 +535,15 @@ export default function TasksPage() {
                                     value={rowDensity}
                                     onValueChange={(v) => setRowDensity(v as RowDensity)}
                                 >
-                                    <DropdownMenuRadioItem value="compact">{t("tasks.density.compact")}</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="comfortable">{t("tasks.density.comfortable")}</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="spacious">{t("tasks.density.spacious")}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="compact">
+                                        {t("tasks.density.compact")}
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="comfortable">
+                                        {t("tasks.density.comfortable")}
+                                    </DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="spacious">
+                                        {t("tasks.density.spacious")}
+                                    </DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -547,7 +555,10 @@ export default function TasksPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuLabel>
-                                    {t("tasks.columns.label", { visible: visibleColumnsCount, total: DEFAULT_COLUMNS.length })}
+                                    {t("tasks.columns.label", {
+                                        visible: visibleColumnsCount,
+                                        total: DEFAULT_COLUMNS.length,
+                                    })}
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {DEFAULT_COLUMNS.map((col) => (
@@ -605,7 +616,9 @@ export default function TasksPage() {
                                 </TableHead>
                                 {columnVisibility.id && <TableHead className="w-10">#</TableHead>}
                                 {columnVisibility.name && (
-                                    <TableHead className="font-semibold text-gray-900">{t("tasks.column.name")}</TableHead>
+                                    <TableHead className="font-semibold text-gray-900">
+                                        {t("tasks.column.name")}
+                                    </TableHead>
                                 )}
                                 {columnVisibility.status && <TableHead>{t("tasks.column.status")}</TableHead>}
                                 {columnVisibility.startDate && <TableHead>{t("tasks.column.startDate")}</TableHead>}
@@ -706,10 +719,18 @@ export default function TasksPage() {
                                                             </SelectValue>
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="to_do">{t("tasks.status.to_do")}</SelectItem>
-                                                            <SelectItem value="in_progress">{t("tasks.status.in_progress")}</SelectItem>
-                                                            <SelectItem value="blocked">{t("tasks.status.blocked")}</SelectItem>
-                                                            <SelectItem value="done">{t("tasks.status.done")}</SelectItem>
+                                                            <SelectItem value="to_do">
+                                                                {t("tasks.status.to_do")}
+                                                            </SelectItem>
+                                                            <SelectItem value="in_progress">
+                                                                {t("tasks.status.in_progress")}
+                                                            </SelectItem>
+                                                            <SelectItem value="blocked">
+                                                                {t("tasks.status.blocked")}
+                                                            </SelectItem>
+                                                            <SelectItem value="done">
+                                                                {t("tasks.status.done")}
+                                                            </SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </TableCell>
@@ -774,7 +795,9 @@ export default function TasksPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600 font-medium">{t("tasks.footer.total", { total: totalRecords })}</div>
+                    <div className="text-sm text-gray-600 font-medium">
+                        {t("tasks.footer.total", { total: totalRecords })}
+                    </div>
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}

@@ -71,6 +71,7 @@ import { StickyNotesBoard } from "@/components/dashboard/StickyNotes";
 import { NotificationsPopover } from "@/components/dashboard/notifications-popover";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { usePermissions, canAccessModule } from "@/lib/hooks/use-permissions";
+import { useEnsureProvisioned } from "@/lib/provisioning/ensure-provisioned-client";
 import { SystemBanners } from "@/components/dashboard/system-banners";
 import { useNotifications } from "@/lib/hooks/use-notifications";
 import { useUnreadMessages } from "@/lib/hooks/use-chat";
@@ -91,6 +92,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const pathname = usePathname();
     const { settings, loading: settingsLoading } = useOrganizationSettings(); // Contains subdomain
     const { profile } = useUserProfile();
+    // F1c: login-time provisioning guard. If this org has no subscriptions/{orgId} doc
+    // (half-provisioned tenant — signup's provision call never landed), heal it via the
+    // idempotent provision route instead of presenting a broken dashboard where every
+    // write 403s. Healthy tenants: one cheap getDoc, no UI.
+    const provisioningStatus = useEnsureProvisioned(user, profile?.actualOrgId || profile?.orgId);
     const { permissions, isAdmin, loading: permissionsLoading } = usePermissions();
     const { unreadCount: notificationUnreadCount } = useNotifications();
     const { unreadCount: messagesUnreadCount } = useUnreadMessages();
@@ -222,6 +228,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (!user) {
         router.push("/login");
         return null;
+    }
+
+    // F1c: half-provisioned tenant detected — the guard is converging it via the idempotent
+    // provision route. Brief; only shown when subscriptions/{orgId} is confirmed missing.
+    // "failed" falls through (broken-but-visible beats an infinite setup screen).
+    if (provisioningStatus === "healing") {
+        return (
+            <div className="flex h-screen flex-col items-center justify-center gap-3 bg-[#F3F2EF]">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <p className="text-gray-700 font-medium">{t("navigation.provisioning.finishingSetup")}</p>
+            </div>
+        );
     }
 
     if (settings.maintenanceMode) {
