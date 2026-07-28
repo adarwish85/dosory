@@ -274,3 +274,101 @@ No `functions/src` file changed (only client code, `scripts/`, and `firestore.in
    `scripts/seed-demo-tenant.ts`, `scripts/backfill-provision.ts`, and the `package.json`/
    `package-lock.json` playwright dep) remains uncommitted — left as-is (predates this pass;
    committing unreviewed dependency changes was out of scope). Commit or discard as you see fit.
+
+---
+
+# Resend key + rollout + Phase 3B prod smoke — 2026-07-28 (part 3)
+
+Ahmed added `RESEND_API_KEY` **v4** himself (value never entered this session's context);
+everything downstream ran autonomously. Constraint note: the single App Hosting rollout below
+was explicitly requested this turn for the new key — no other App Hosting deploys were made.
+
+## R5 — Rollout + live email: H2 CLOSED ✅
+
+- **Secret:** v4 confirmed enabled (created 10:11 UTC). IAM already correct (compute SA
+  `secretAccessor`, App Hosting service agent `secretVersionManager`) — no grants needed.
+- **Rollout:** `firebase apphosting:rollouts:create dosory -g 9f0a5feb -f` → "Successfully
+  created a new rollout"; backend serving (signup + root HTTP 200). Pinning to `9f0a5feb`
+  also put the staff-dup code fix into prod.
+- **Live send — the money shot:** authenticated POST to prod `/api/email/send` (welcome
+  template) → **HTTP 200, Resend message id `eb6f089d-9db0-4a73-a93a-504931542615`**.
+  Transactional email is live. (The same endpoint returned `500 "API key is invalid"` in
+  part 1.)
+- **Correction to part 1:** signup email-verification uses **Firebase Auth's own email
+  infra** (`sendEmailVerification`, signup/page.tsx) — it was never Resend-dependent, and the
+  dashboard does not hard-gate on `emailVerified`. Verification-link generation confirmed
+  working. What the invalid key actually killed was invoice/contract/reminder/onboarding/
+  welcome mail — all Resend paths, now live.
+
+## R6 — Phase 3B prod smoke (tenant `qasmoke20260728131942`) — PASS with findings
+
+Additive only; nothing deleted. Credentials in gitignored `qa-smoke-credentials.txt`.
+
+| Flow                                           | Result                                                                                                                                                            |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signup form (real browser, prod)               | ✅ subdomain "Available!" check, account + org + claims created (`set-claims` 200 ×3)                                                                             |
+| Tenant-subdomain login + dashboard             | ✅ onboarding wizard shows; sidebar/stats render                                                                                                                  |
+| Customer create (UI, client SDK through rules) | ✅ "QA Smoke Customer Ltd" — list Total 1, seeded USD currency visible in form                                                                                    |
+| Lead create (UI, client SDK through rules)     | ✅ "QA Smoke Lead" — list Total 1                                                                                                                                 |
+| Invoice + payment + task                       | ✅ created in client shape (INV-000001 via the counters path, paid, $150) — invoices list renders **PAID $150.00**; tasks list renders after a field fix (see F4) |
+| Email verification                             | ✅ Firebase-native link generates; not a Resend dependency                                                                                                        |
+| Staff-dup regression check                     | ✅ **exactly 1 staff doc** (email-keyed, authUid set) after admin login on the fixed build — the 9f0a5feb fix is verified live                                    |
+| checkReminders post-index                      | ✅ 3 consecutive `ok` runs (10:21, 10:36, 10:51 UTC)                                                                                                              |
+
+Screenshots: every flow captured live in the headed browser session (embedded in the session
+transcript). Headless file re-capture was blocked — prod login silently resets for headless
+Chromium while identical credentials work headed (bot/App-Check protection working as
+intended; evidence at `test-results/qa-smoke-headless-login-blocked.png`, notes in
+`test-results/qa-smoke-README.md`).
+
+## New findings from the smoke
+
+**F1 — HIGH · Signup can strand a half-provisioned tenant.** During the automated signup the
+client-side `await fetch("/api/tenants/provision")` never reached the server (Cloud Run logs
+show set-claims ×3 at 10:23 but zero provision calls until my manual one at 10:27), yet the
+user was NOT rolled back — the tenant landed with **no subscription doc and no seeded
+defaults** (every write would 403). Provisioning itself is healthy: calling the route with
+the user's own token returned 200 and fully seeded the tenant (trialing subscription, 1 tax,
+1 currency, 2 payment modes, 2 templates). Likely automation-environment interference
+(App Check), but the failure mode is real for flaky networks: **recommend making
+`/api/tenants/provision` idempotently callable on first dashboard load** (self-heal), or
+moving provisioning server-side into signup.
+
+**F2 — HIGH (product, not security) · Payments page is 100% hardcoded mock data.**
+`app/dashboard/accounting/payments/page.tsx` renders a literal array (EGIC, INV-000111–119,
+EGP amounts) for every tenant — it looked like a cross-tenant leak until source inspection.
+Firestore rules are fine (scoped `payments` rule verified; an unscoped client query would be
+denied). Same class as the A8 mock-Reports issue: **gate it "coming soon" or wire
+`usePayments`**. The real payment I created renders nowhere on this page.
+
+\*\*F3 — MEDIUM · `/dashboard/customers/new` fell through to `[id]` ("Loading overview…" hang
+
+- permission-denied console noise). FIXED this pass\*\* — created
+  `app/dashboard/customers/new/page.tsx` opening the existing `AddCustomerPanel` (mirrors
+  `leads/new`, same pattern as the committed `/import` fixes). `tsc --noEmit` clean. Lands on
+  prod with the next rollout (not rolled out this turn — the authorized rollout predates the fix).
+
+**F4 — LOW · Tasks page crashes on one malformed doc.** `task.name.toLowerCase()`
+(tasks/page.tsx:283) took down the whole page behind the error boundary when my QA task
+initially used `title` instead of `name` (my data error, fixed). A defensive
+`(task.name ?? "")` would keep one bad doc from blanking the module.
+
+**F5 — MEDIUM · Two more missing composite indexes (H1 class), found live: FIXED + DEPLOYED**
+— the dashboard "today" metrics query (`today-service.ts`) needs `leads (orgId ASC,
+createdAt ASC)` (console showed `failed-precondition`; only DESC variants existed) and its
+sibling payments query needs `payments (orgId ASC, date ASC)`. Both added to
+`firestore.indexes.json` (now 102) and deployed to prod.
+
+## Status after part 3
+
+| Blocker                 | Status                                                  |
+| ----------------------- | ------------------------------------------------------- |
+| H1 scheduled-fn indexes | ✅ closed (part 2) + F5 sweep deployed                  |
+| H2 RESEND_API_KEY       | ✅ **CLOSED — live 200 + message id**                   |
+| M1 reminders backfill   | ✅ addressed (0 rows)                                   |
+| M2 duplicate staff docs | ✅ closed + **verified live on prod** (qa-smoke: 1 doc) |
+
+**No platform blockers remain.** Open items for Ahmed, by priority: F2 payments mock page
+(fake financial data in front of real tenants), F1 provisioning self-heal, qa-smoke tenant
+disposition (left in place per instructions), orphan staff doc `uI7Ufz…`, F4 hardening,
+next App Hosting rollout to ship the F3 route fix.
