@@ -651,3 +651,22 @@ saved views, rendered active-filter badges!) but **nothing consumed them** —
 Built and E2E-verified earlier today (commit `d952c8cf`): payable-invoice picker, balance
 validation, processPayment contract, EN+AR. A live $50 payment was recorded through it
 (INV-000002 → paid). Re-verified serving in this round's post-rollout pass — no rebuild.
+
+## Bug-fix round — post-rollout live verification (qa-smoke, EN + AR)
+
+| Check                                    | EN                                                                                     | AR                                       |
+| ---------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------- |
+| BUG1: dashboard Add Task → New Task form | ✅ real anchor, navigates                                                              | ✅ «إضافة مهمة» → «مهمة جديدة», full RTL |
+| BUG2: no 404ing Log Time quick action    | ✅ gone (projects/tasks context)                                                       | ✅ gone                                  |
+| BUG3: stat cards                         | ✅ TOTAL 3 · VALUE $3,300 · STARRED 1 · QUALIFIED 1 (exact)                            | — same data layer                        |
+| BUG3: status filter (SQL/qualified)      | ✅ 3 rows → exactly 1 (QA Qualified Lead), active badge + count                        | —                                        |
+| BUG3: search "qa c"                      | ✅ exactly QA Contacted Lead, highlighted (previously an INVALID query — never worked) | —                                        |
+| F6 payments/new                          | ✅ HTTP 200 on the new revision (E2E-verified prior round)                             | —                                        |
+
+Round shipped as `f3eef314` (single App Hosting rollout). Emulator/unit gates at commit:
+build 190 pages exit 0 · rules 187/187 · apply-lead-filters 9/9. The adversarial panel
+(21 agents) confirmed 14 findings pre-commit; the critical bulk-delete divergence, the
+broken-search root cause, silent query errors, stale selections, saved-view sanitization,
+and formatted-number tolerance were all fixed IN the shipped commit. Known documented
+limitations: advanced filters apply per loaded page; status + non-default sort needs
+per-column indexes (pre-existing gap — now surfaces an error toast instead of silence).
