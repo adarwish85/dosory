@@ -9,6 +9,7 @@ import { FocusSection } from "./focus-section";
 import { ActionsList } from "./actions-list";
 import { MetricsGrid } from "./metrics-grid";
 import { AlertsSection } from "./alerts-section";
+import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,8 +53,14 @@ export function TodayView() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button className="shadow-lg hover:shadow-xl transition-all bg-blue-600 hover:bg-blue-700">
-                        <Plus className="h-4 w-4 mr-2" /> {t("dashboard.today.addTask")}
+                    {/* BUG1 (2026-07-28): this button had no onClick/Link in any locale — pure
+                        decoration. Routes to the same create-task flow as the Tasks page and
+                        the RightSidebar quick action. asChild renders a real <a>, so it works
+                        identically in EN/AR (RTL flips mr-2 via the app's rtl handling). */}
+                    <Button asChild className="shadow-lg hover:shadow-xl transition-all bg-blue-600 hover:bg-blue-700">
+                        <Link href="/dashboard/tasks/new">
+                            <Plus className="h-4 w-4 mr-2" /> {t("dashboard.today.addTask")}
+                        </Link>
                     </Button>
                 </div>
             </div>

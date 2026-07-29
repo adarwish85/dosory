@@ -5654,5 +5654,6 @@
     "payments.new.submit": "Record Payment",
     "payments.new.success": "Payment recorded",
     "payments.new.failed": "Failed to record payment",
-    "common.pickDate": "Pick a date"
+    "common.pickDate": "Pick a date",
+    "leads.loadError": "Failed to load leads — check your connection and retry"
 }

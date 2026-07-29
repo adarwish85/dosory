@@ -271,6 +271,12 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 
 **Remaining ledger (dated):**
 
+- 2026-07-28 (bug-fix round): dashboard "Add Task" was a decoration button (no onClick —
+  wired to /dashboard/tasks/new); "Log Time" quick action removed (route never existed —
+  4th route-fall-through incident); leads filters were collected-but-never-applied (status
+  → server-side via useLeads, advanced rows → lib/hooks/leads/apply-lead-filters.ts).
+  Orphan-org cleanup EXECUTED full-scope by Ahmed (staff invariant saga closed).
+
 - 2026-07-28 (feature round): 4 callables were browser-dead (empty IAM — invoker grant
   restored via gcloud; check IAM after every functions deploy), processPayment had a
   reads-after-writes transaction bug (fixed + deployed), and 4 settings hooks

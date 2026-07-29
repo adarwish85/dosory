@@ -589,3 +589,65 @@ never been hit because no one could reach this flow before:
 
 Residual (cosmetic): the new payment row shows the customerId (processPayment's contract
 stores no customerName) — the list's tolerant renderer falls back correctly; enrich later.
+
+---
+
+# Orphan cleanup — EXECUTED by Ahmed (full scope) ✅
+
+Ahmed ran `cleanup-legacy-orphan-org.ts --execute --full-scope` at 12:18 UTC. Result
+(backup `backups/orphan-cleanup-2026-07-28T12-18-56-793Z.json`, verified against live data):
+
+- `users/{uI7Ufz…}`: legacy `orgId` field **removed** (SA access is claims-based — claims
+  untouched: `{isSuperAdmin, PlatformAdmin}`).
+- Deleted: `staff/uI7Ufz…` (the last authUid-less orphan), the legacy org doc **+**
+  `settings/general` subcollection doc, and all **7 root strays** (subscriptions ×1,
+  currencies ×1, taxes ×1, paymentModes ×2, emailTemplates ×2).
+- Live verification this round: staff orphan gone, legacy org gone, users-doc orgId
+  cleared. **The staff collection now contains only canonical email-keyed docs.** The
+  staff-doc invariant saga is fully closed.
+
+---
+
+# Bug-fix round — 2026-07-28 (BUG1/BUG2/BUG3 + F6 status)
+
+## BUG 1 — Dashboard "Add Task" button dead ✅
+
+**Repro'd live** (EN): click → nothing (no dialog, no nav, no console error).
+**Root cause**: `components/dashboard/today/today-view.tsx:55` — the header button had
+**no onClick and no Link in any locale**; it was pure decoration since the Today dashboard
+was built. Not RTL/i18n-conditional — the AR report was simply where a user first noticed.
+**Fix**: `Button asChild` wrapping `Link href="/dashboard/tasks/new"` — the same
+create-task flow the Tasks page and the RightSidebar quick action use (real `<a>`,
+locale-independent).
+
+## BUG 2 — "Time Tracking" → 404 ✅ (case: feature never built at that route)
+
+The 404ing link is the RightSidebar **"Log Time"** quick action (AR: "تسجيل وقت") shown in
+the projects/tasks context → `/dashboard/timesheets/new`, a route that **never existed**
+(timesheets live only per-project under `projects/[id]/timesheets`; there is no global
+log-time flow and no "Time Tracking" main-nav entry). Same class as the 3 prior
+route-fall-through incidents. **Fix**: removed the dead quick action (documented in-code)
+until a global log-time flow exists — per the CLAUDE.md §7 rule, no nav item may 404.
+
+## BUG 3 — Leads filters never applied ✅
+
+**Root cause**: the page collected `statusFilter` + `advancedFilters` (persisted them in
+saved views, rendered active-filter badges!) but **nothing consumed them** —
+`processedLeads = leads` verbatim, and `useLeads` was called without `status`.
+**Fix**, one org-scoped source of truth:
+
+- `status` now passes into `useLeads` → **server-side** filter on the existing
+  `leads(orgId,status,createdAt)` index; pagination counts stay consistent (the hook's
+  `getBaseConstraints` already included status).
+- Advanced field/op/value rows (AND/OR) apply client-side via new pure module
+  `lib/hooks/leads/apply-lead-filters.ts` (all 8 operators, tags arrays, computed score
+  column, blank-row tolerance). **7/7 unit tests** pin the semantics.
+- Stat cards keep last round's `fetchLeadStats` server aggregation — same collection,
+  same org scope as the list.
+- Search (name_lower prefix) unchanged and still server-side alongside.
+
+## F6 — /dashboard/payments/new: ALREADY SHIPPED (prior round)
+
+Built and E2E-verified earlier today (commit `d952c8cf`): payable-invoice picker, balance
+validation, processPayment contract, EN+AR. A live $50 payment was recorded through it
+(INV-000002 → paid). Re-verified serving in this round's post-rollout pass — no rebuild.

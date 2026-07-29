@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
     Calendar,
-    Clock,
     FolderKanban,
     CheckSquare,
     LifeBuoy,
@@ -48,7 +47,11 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
         if (pathname.includes("/dashboard/customers")) {
             return [
                 { label: t("dashboard.quickActions.addCustomer"), href: "/dashboard/customers/new", icon: Users },
-                { label: t("dashboard.quickActions.importCustomers"), href: "/dashboard/customers/import", icon: FileText },
+                {
+                    label: t("dashboard.quickActions.importCustomers"),
+                    href: "/dashboard/customers/import",
+                    icon: FileText,
+                },
                 ...defaults.slice(0, 1), // Keep "New Project" as backup
             ];
         }
@@ -56,7 +59,11 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
         if (pathname.includes("/dashboard/invoices") || pathname.includes("/dashboard/sales/estimates")) {
             return [
                 { label: t("dashboard.quickActions.newInvoice"), href: "/dashboard/invoices/new", icon: Receipt },
-                { label: t("dashboard.quickActions.newEstimate"), href: "/dashboard/sales/estimates/new", icon: FileSignature },
+                {
+                    label: t("dashboard.quickActions.newEstimate"),
+                    href: "/dashboard/sales/estimates/new",
+                    icon: FileSignature,
+                },
                 { label: t("dashboard.quickActions.recordPayment"), href: "/dashboard/payments/new", icon: DollarSign },
             ];
         }
@@ -65,7 +72,10 @@ export function RightSidebar({ isOpen, topOffset }: RightSidebarProps) {
             return [
                 { label: t("dashboard.quickActions.newProject"), href: "/dashboard/projects/new", icon: FolderKanban },
                 { label: t("dashboard.quickActions.newTask"), href: "/dashboard/tasks/new", icon: CheckSquare },
-                { label: t("dashboard.quickActions.logTime"), href: "/dashboard/timesheets/new", icon: Clock },
+                // BUG2 (2026-07-28): "Log Time" pointed at /dashboard/timesheets/new, which was
+                // never built (timesheets exist only per-project under projects/[id]/timesheets)
+                // — a guaranteed 404 quick action. Removed per the route-fall-through rule
+                // (CLAUDE.md §7) until a global log-time flow exists.
             ];
         }
 

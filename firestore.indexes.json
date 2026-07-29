@@ -1,6 +1,24 @@
 {
     "indexes": [
         {
+            "collectionGroup": "leads",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "orgId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "status",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "name_lower",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
             "collectionGroup": "customFields",
             "queryScope": "COLLECTION",
             "fields": [

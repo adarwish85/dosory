@@ -5654,5 +5654,6 @@
     "payments.new.submit": "تسجيل الدفعة",
     "payments.new.success": "تم تسجيل الدفعة",
     "payments.new.failed": "فشل تسجيل الدفعة",
-    "common.pickDate": "اختر تاريخًا"
+    "common.pickDate": "اختر تاريخًا",
+    "leads.loadError": "فشل تحميل العملاء المحتملين — تحقق من الاتصال وأعد المحاولة"
 }

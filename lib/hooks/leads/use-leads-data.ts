@@ -166,7 +166,15 @@ export function useLeadsData(options: UseLeadsOptions = {}) {
         setLoading(true);
 
         const constraints = getBaseConstraints();
-        constraints.push(orderBy(orderByField, orderDirection));
+        // Firestore requires a range filter's field to be the FIRST orderBy. The search
+        // constraint ranges on name_lower, so a search must order by name_lower — with the
+        // old unconditional orderBy(createdAt) every search query was INVALID and the error
+        // was swallowed: search never returned results (found by the 2026-07-28 review).
+        if (searchQuery) {
+            constraints.push(orderBy("name_lower", "asc"));
+        } else {
+            constraints.push(orderBy(orderByField, orderDirection));
+        }
 
         // Pagination Logic
         if (page > 1) {

@@ -224,6 +224,8 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
 
 // Calculate lead score - now using shared utility
 import { calculateLeadScore, getScoreColor } from "@/lib/utils/lead-score";
+import { applyAdvancedFilters, hasActiveAdvancedFilters } from "@/lib/hooks/leads/apply-lead-filters";
+import { toast } from "sonner";
 
 const FILTER_OPERATORS: { value: FilterOperator; label: string }[] = [
     { value: "contains", label: "Contains" },
@@ -774,7 +776,20 @@ export default function LeadsPage() {
         setSortDirection(view.sortDirection);
         setAdvancedFilters(view.advancedFilters);
         setFilterLogic(view.filterLogic);
-        setStatusFilter(view.statusFilter);
+        // Stale saved views can carry removed statuses (e.g. pre-2.1 "proposal") — sanitize
+        // so the server query never filters on a value that matches nothing.
+        const VALID_STATUSES = [
+            "new",
+            "contacted",
+            "qualified",
+            "offer-sent",
+            "negotiation",
+            "won",
+            "lost",
+            "junk",
+            "all",
+        ];
+        setStatusFilter(VALID_STATUSES.includes(view.statusFilter) ? view.statusFilter : "all");
         setRowDensity(view.rowDensity);
         if (view.columnWidths) setColumnWidths(view.columnWidths);
         if (view.recordsPerPage) setRecordsPerPage(view.recordsPerPage);
@@ -898,7 +913,12 @@ export default function LeadsPage() {
         bulkDeleteAllMatches,
         leadStats,
         totalRecords: serverTotal,
+        error: leadsError,
     } = useLeads({
+        // BUG3: the status filter was collected but never reached the query — pass it
+        // through so it filters SERVER-side (rides the leads(orgId,status,createdAt)
+        // index; pagination counts already respect it via getBaseConstraints).
+        status: statusFilter,
         limit: isClientMode ? 1000 : recordsPerPage,
         page: isClientMode ? 1 : currentPage,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -917,8 +937,28 @@ export default function LeadsPage() {
         [columnOrder]
     );
 
-    // Server-side loaded data is ALREADY processed.
-    const processedLeads = leads;
+    // Status/search/sort/pagination are applied server-side; advanced filters (arbitrary
+    // field/op/value rows with AND/OR) can't compose into a Firestore query, so they
+    // apply client-side to the loaded page. BUG3: this used to be `= leads` verbatim —
+    // the filter UI collected state that nothing consumed.
+    const processedLeads = useMemo(
+        () => applyAdvancedFilters(leads, advancedFilters, filterLogic),
+        [leads, advancedFilters, filterLogic]
+    );
+    const advancedActive = hasActiveAdvancedFilters(advancedFilters);
+
+    // Review finding (2026-07-28): the hook's query errors (e.g. a missing composite index)
+    // were console-only — the table silently showed stale/empty rows. Surface them.
+    useEffect(() => {
+        if (leadsError) toast.error(t("leads.loadError"));
+    }, [leadsError, t]);
+
+    // Review finding: filter changes must clear the selection, or bulk actions can hit rows
+    // that are no longer visible (including a lingering selectionMode="all").
+    useEffect(() => {
+        setSelectedLeads([]);
+        setSelectionMode("none");
+    }, [statusFilter, advancedFilters, filterLogic, searchQuery]);
 
     // Total records come from server
     const totalRecords = serverTotal;
@@ -1107,16 +1147,26 @@ export default function LeadsPage() {
     const handleBulkDelete = useCallback(async () => {
         if (selectedLeads.length === 0 && selectionMode !== "all") return;
 
-        // Safety check
-        const isAll = selectionMode === "all";
-        const count = isAll ? totalRecords : selectedLeads.length;
+        // Safety check. CRITICAL review finding (2026-07-28): with advanced filters active
+        // the visible rows are a client-side subset — bulkDeleteAllMatches only forwards
+        // server-known filters (status/search/...) and would delete leads the user's filter
+        // EXCLUDED from view. In that case delete exactly the visible filtered rows instead.
+        const isAll = selectionMode === "all" && !advancedActive;
+        const count =
+            selectionMode === "all" && advancedActive
+                ? processedLeads.length
+                : isAll
+                  ? totalRecords
+                  : selectedLeads.length;
 
         if (!window.confirm(t("leads.confirm.bulkDelete", { count }))) {
             return;
         }
 
         try {
-            if (isAll) {
+            if (selectionMode === "all" && advancedActive) {
+                await bulkDeleteLeads(processedLeads.map((l) => l.id));
+            } else if (isAll) {
                 await bulkDeleteAllMatches();
                 alert(t("leads.bulkDelete.success", { count }));
             } else {
@@ -1127,7 +1177,17 @@ export default function LeadsPage() {
             console.error("Bulk delete failed:", error);
             alert(t("leads.bulkDelete.error"));
         }
-    }, [selectedLeads, selectionMode, totalRecords, bulkDeleteLeads, bulkDeleteAllMatches, handleClearSelection, t]);
+    }, [
+        selectedLeads,
+        selectionMode,
+        totalRecords,
+        advancedActive,
+        processedLeads,
+        bulkDeleteLeads,
+        bulkDeleteAllMatches,
+        handleClearSelection,
+        t,
+    ]);
     const handleInlineEdit = useCallback(
         async (id: string, field: ColumnKey, value: string) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1741,7 +1801,7 @@ export default function LeadsPage() {
                     selectionMode={selectionMode}
                     selectedCount={selectedLeads.length}
                     pageCount={paginatedLeads.length}
-                    totalCount={totalRecords}
+                    totalCount={advancedActive ? processedLeads.length : totalRecords}
                     onSelectAll={handleSelectAllRecords}
                     onClearSelection={handleClearSelection}
                 />
