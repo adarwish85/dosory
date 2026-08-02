@@ -52,7 +52,14 @@ export default function CreateEstimatePage() {
         },
     });
 
-    const { register, control, handleSubmit, formState: { errors }, setValue, watch } = form;
+    const {
+        register,
+        control,
+        handleSubmit,
+        formState: { errors },
+        setValue,
+        watch,
+    } = form;
     const { fields, append, remove } = useFieldArray({
         control,
         name: "items",
@@ -63,17 +70,16 @@ export default function CreateEstimatePage() {
     const items = watch("items");
 
     // Calculate totals for display
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity || 0) * (item.rate || 0), 0);
 
-    // Update item amount when qty/rate changes
-    useEffect(() => {
-        items.forEach((item, index) => {
-            const amount = item.quantity * item.rate;
-            if (item.amount !== amount) {
-                setValue(`items.${index}.amount`, amount);
-            }
-        });
-    }, [items, setValue]);
+    // FAMILY A (#4) — the amount-sync useEffect that used to live here is GONE on purpose.
+    // It called setValue for every row on every render pass, guarded by `item.amount !== amount`.
+    // Two failure modes, both real: (1) a cleared qty/rate produced NaN (valueAsNumber), and
+    // NaN !== NaN meant the guard could never settle — an unbounded setValue/render loop that
+    // froze the whole tab (the client's "app freezes on create" report); (2) `watch("items")`
+    // is reference-STABLE in react-hook-form 7.70, so on the paths where it did NOT loop the
+    // effect never re-ran at all and each row persisted amount: 0. Deriving the amounts once at
+    // submit time is loop-proof by construction and always stores the right number.
 
     useEffect(() => {
         if (customerIdParam) {
@@ -84,7 +90,13 @@ export default function CreateEstimatePage() {
     const onSubmit = async (data: EstimateFormData) => {
         setIsSubmitting(true);
         try {
-            await createEstimate(data);
+            const normalizedItems = data.items.map((i) => ({
+                ...i,
+                quantity: i.quantity || 0,
+                rate: i.rate || 0,
+                amount: (i.quantity || 0) * (i.rate || 0),
+            }));
+            await createEstimate({ ...data, items: normalizedItems });
             toast.success(t("sales.estimates.new.toast.success"));
 
             if (customerIdParam) {
@@ -104,7 +116,11 @@ export default function CreateEstimatePage() {
         <div className="max-w-4xl mx-auto py-8 px-4">
             <div className="mb-6 flex items-center gap-2 text-gray-500 text-sm">
                 <Link
-                    href={customerIdParam ? `/dashboard/customers/${customerIdParam}/estimates` : "/dashboard/sales/estimates"}
+                    href={
+                        customerIdParam
+                            ? `/dashboard/customers/${customerIdParam}/estimates`
+                            : "/dashboard/sales/estimates"
+                    }
                     className="flex items-center hover:text-gray-900 transition-colors"
                 >
                     <ChevronLeft className="h-4 w-4 mr-1" />
@@ -125,7 +141,9 @@ export default function CreateEstimatePage() {
                     <CardContent className="grid gap-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="customerId">{t("sales.estimates.new.customer")} <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="customerId">
+                                    {t("sales.estimates.new.customer")} <span className="text-red-500">*</span>
+                                </Label>
                                 <Select
                                     value={watch("customerId")}
                                     onValueChange={(val) => setValue("customerId", val, { shouldValidate: true })}
@@ -136,19 +154,20 @@ export default function CreateEstimatePage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {customers.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>{c.company}</SelectItem>
+                                            <SelectItem key={c.id} value={c.id}>
+                                                {c.company}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {errors.customerId && <p className="text-red-500 text-xs">{errors.customerId.message}</p>}
+                                {errors.customerId && (
+                                    <p className="text-red-500 text-xs">{errors.customerId.message}</p>
+                                )}
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="currency">{t("sales.estimates.new.currency")}</Label>
-                                <Select
-                                    value={watch("currency")}
-                                    onValueChange={(val) => setValue("currency", val)}
-                                >
+                                <Select value={watch("currency")} onValueChange={(val) => setValue("currency", val)}>
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
@@ -174,7 +193,11 @@ export default function CreateEstimatePage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {date ? format(date, "PPP") : <span>{t("sales.estimates.new.pickDate")}</span>}
+                                            {date ? (
+                                                format(date, "PPP")
+                                            ) : (
+                                                <span>{t("sales.estimates.new.pickDate")}</span>
+                                            )}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -200,7 +223,11 @@ export default function CreateEstimatePage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {expiryDate ? format(expiryDate, "PPP") : <span>{t("sales.estimates.new.pickDate")}</span>}
+                                            {expiryDate ? (
+                                                format(expiryDate, "PPP")
+                                            ) : (
+                                                <span>{t("sales.estimates.new.pickDate")}</span>
+                                            )}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -231,7 +258,10 @@ export default function CreateEstimatePage() {
                         </div>
 
                         {fields.map((field, index) => (
-                            <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end border-b pb-4 md:border-0 md:pb-0">
+                            <div
+                                key={field.id}
+                                className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end border-b pb-4 md:border-0 md:pb-0"
+                            >
                                 <div className="md:col-span-6">
                                     <Label className="md:hidden">{t("sales.estimates.new.itemDescription")}</Label>
                                     <Input
@@ -259,8 +289,12 @@ export default function CreateEstimatePage() {
                                     />
                                 </div>
                                 <div className="md:col-span-1 py-2 md:py-0 text-right md:text-left font-medium">
-                                    <span className="md:hidden mr-2 text-gray-500">{t("sales.estimates.new.amountLabel")}</span>
-                                    {((watch(`items.${index}.quantity`) || 0) * (watch(`items.${index}.rate`) || 0)).toFixed(2)}
+                                    <span className="md:hidden mr-2 text-gray-500">
+                                        {t("sales.estimates.new.amountLabel")}
+                                    </span>
+                                    {(
+                                        (watch(`items.${index}.quantity`) || 0) * (watch(`items.${index}.rate`) || 0)
+                                    ).toFixed(2)}
                                 </div>
                                 <div className="md:col-span-1 flex justify-end md:justify-center">
                                     <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
@@ -274,7 +308,9 @@ export default function CreateEstimatePage() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => append({ id: Date.now().toString(), description: "", quantity: 1, rate: 0, amount: 0 })}
+                            onClick={() =>
+                                append({ id: Date.now().toString(), description: "", quantity: 1, rate: 0, amount: 0 })
+                            }
                             className="mt-2"
                         >
                             <Plus className="h-4 w-4 mr-2" />
@@ -284,7 +320,9 @@ export default function CreateEstimatePage() {
                         <div className="flex justify-end pt-4 border-t mt-4">
                             <div className="text-right">
                                 <p className="text-gray-500 text-sm">{t("common.subtotal")}</p>
-                                <p className="text-2xl font-bold">{subtotal.toFixed(2)} {watch("currency")}</p>
+                                <p className="text-2xl font-bold">
+                                    {subtotal.toFixed(2)} {watch("currency")}
+                                </p>
                             </div>
                         </div>
                     </CardContent>

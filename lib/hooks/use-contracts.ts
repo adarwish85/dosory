@@ -117,7 +117,17 @@ export function useContracts(options: UseContractsOptions = {}) {
     const { logActivity } = useActivity({ enabled: false });
 
     // Cache key for stale-while-revalidate
-    const cacheKey = buildCacheKey("contracts", profile?.orgId, status, customerId, projectId, pageSize, page, orderByField, orderDirection);
+    const cacheKey = buildCacheKey(
+        "contracts",
+        profile?.orgId,
+        status,
+        customerId,
+        projectId,
+        pageSize,
+        page,
+        orderByField,
+        orderDirection
+    );
     const cached = getCachedData<Contract>(cacheKey);
 
     // Data State — initialize from cache if available
@@ -160,7 +170,6 @@ export function useContracts(options: UseContractsOptions = {}) {
     // Fetch Contracts
     useEffect(() => {
         if (!profile?.orgId) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }
@@ -214,7 +223,12 @@ export function useContracts(options: UseContractsOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, status, customerId, projectId, pageSize, page, orderByField, orderDirection, cursors]);
+        // FAMILY A (#5): `cursors` MUST NOT be a dep — the snapshot callback calls setCursors with a
+        // fresh object every fire, so including it re-ran this effect, tore down and recreated the
+        // Firestore listener, fired again... an unbounded resubscribe loop that froze the app on any
+        // page mounting useContracts (list AND /contracts/new). Mirrors use-customers.ts:141.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [profile?.orgId, status, customerId, projectId, pageSize, page, orderByField, orderDirection]);
 
     // Calculate stats
     const contractStats = contracts.reduce(

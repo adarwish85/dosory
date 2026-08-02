@@ -111,6 +111,18 @@ async function seedDefaults(orgId: string, createdBy: string): Promise<void> {
         { __seedId: "pm-cash", name: "Cash", showOnInvoice: true, isActive: true },
     ]);
 
+    // FAMILY D (#8): expense categories were never seeded, so the REQUIRED Category select on
+    // /dashboard/expenses/new had zero options for every tenant — expenses could not be created
+    // at all. Same deterministic-ID pattern as the other seeds (concurrency-safe).
+    await seedIfEmpty("expenseCategories", [
+        { __seedId: "exp-general", name: "General", description: "Uncategorized business expenses" },
+        { __seedId: "exp-travel", name: "Travel", description: "Flights, transport, accommodation" },
+        { __seedId: "exp-office", name: "Office Supplies", description: "Stationery, equipment, consumables" },
+        { __seedId: "exp-software", name: "Software & Subscriptions", description: "SaaS tools and licences" },
+        { __seedId: "exp-marketing", name: "Marketing", description: "Advertising and promotion" },
+        { __seedId: "exp-utilities", name: "Utilities", description: "Internet, phone, electricity" },
+    ]);
+
     await seedIfEmpty("emailTemplates", [
         {
             __seedId: "tpl-invoice-email",

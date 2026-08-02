@@ -5655,5 +5655,12 @@
     "payments.new.success": "تم تسجيل الدفعة",
     "payments.new.failed": "فشل تسجيل الدفعة",
     "common.pickDate": "اختر تاريخًا",
-    "leads.loadError": "فشل تحميل العملاء المحتملين — تحقق من الاتصال وأعد المحاولة"
+    "leads.loadError": "فشل تحميل العملاء المحتملين — تحقق من الاتصال وأعد المحاولة",
+    "common.validationFailed": "يرجى مراجعة الحقول المميزة",
+    "support.new.createFailed": "تعذر إنشاء التذكرة",
+    "hr.leaves.noEmployeeRecord": "حسابك غير مرتبط بسجل موظف بعد — اطلب من مسؤول الموارد البشرية إنشاء سجل قبل طلب الإجازة.",
+    "hr.leaves.leaveType": "نوع الإجازة",
+    "hr.leaves.startDate": "تاريخ البداية",
+    "hr.leaves.endDate": "تاريخ النهاية",
+    "hr.leaves.endBeforeStart": "يجب أن يكون تاريخ النهاية بعد تاريخ البداية أو مساويًا له"
 }

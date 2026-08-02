@@ -9,20 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -36,7 +24,8 @@ export default function LeavesPage() {
     const { t } = useTranslation();
     const { employee: currentEmployee, loading: employeeLoading } = useCurrentEmployee();
     const { leaveTypes, loading: typesLoading } = useLeaveTypes();
-    const { requests, loading, pendingCount, submitRequest, approveRequest, rejectRequest, cancelRequest } = useLeaveRequests();
+    const { requests, loading, pendingCount, submitRequest, approveRequest, rejectRequest, cancelRequest } =
+        useLeaveRequests();
     const { balances } = useLeaveBalances(currentEmployee?.id || null);
 
     const [showRequestDialog, setShowRequestDialog] = useState(false);
@@ -57,8 +46,24 @@ export default function LeavesPage() {
     const isManager = currentEmployee?.hrRole === "manager" || currentEmployee?.hrRole === "hr_admin";
 
     const handleSubmitRequest = async () => {
-        if (!currentEmployee || !requestForm.leaveTypeId || !requestForm.startDate || !requestForm.endDate) {
-            toast.error(t("hr.toast.fillRequired"));
+        // FAMILY B (#10): this guard lumped an INVISIBLE requirement (currentEmployee — the
+        // employee record linked to the signed-in user, which the modal never renders or sets)
+        // together with the three visible fields, so a fully-filled form was rejected with
+        // "fill all required fields". Report each cause distinctly.
+        if (!currentEmployee) {
+            toast.error(t("hr.leaves.noEmployeeRecord"));
+            return;
+        }
+        const missing: string[] = [];
+        if (!requestForm.leaveTypeId) missing.push(t("hr.leaves.leaveType"));
+        if (!requestForm.startDate) missing.push(t("hr.leaves.startDate"));
+        if (!requestForm.endDate) missing.push(t("hr.leaves.endDate"));
+        if (missing.length) {
+            toast.error(`${t("hr.toast.fillRequired")}: ${missing.join("، ")}`);
+            return;
+        }
+        if (new Date(requestForm.endDate) < new Date(requestForm.startDate)) {
+            toast.error(t("hr.leaves.endBeforeStart"));
             return;
         }
 
@@ -83,8 +88,8 @@ export default function LeavesPage() {
             toast.success(t("hr.leaves.requestSubmitted"));
             setShowRequestDialog(false);
             setRequestForm({ leaveTypeId: "", startDate: "", endDate: "", reason: "", isHalfDay: false });
-        } catch (error: any) {
-            toast.error(error.message || t("hr.leaves.submitFailed"));
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : t("hr.leaves.submitFailed"));
         } finally {
             setIsSubmitting(false);
         }
@@ -179,7 +184,11 @@ export default function LeavesPage() {
                                     <div className="text-right text-sm text-gray-500">
                                         <p>{t("hr.leaves.entitled", { count: balance.entitled })}</p>
                                         <p>{t("hr.leaves.used", { count: balance.used })}</p>
-                                        {balance.pending > 0 && <p className="text-amber-600">{t("hr.leaves.pending", { count: balance.pending })}</p>}
+                                        {balance.pending > 0 && (
+                                            <p className="text-amber-600">
+                                                {t("hr.leaves.pending", { count: balance.pending })}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </CardContent>
@@ -230,7 +239,9 @@ export default function LeavesPage() {
                                                 <p className="text-sm text-gray-500 mt-1">
                                                     {format(request.startDate.toDate(), "MMM d, yyyy")} -{" "}
                                                     {format(request.endDate.toDate(), "MMM d, yyyy")}
-                                                    <span className="ml-2">({t("hr.leaves.daysCount", { count: request.totalDays })})</span>
+                                                    <span className="ml-2">
+                                                        ({t("hr.leaves.daysCount", { count: request.totalDays })})
+                                                    </span>
                                                 </p>
                                                 {request.reason && (
                                                     <p className="text-sm text-gray-400 mt-1">{request.reason}</p>
@@ -274,7 +285,9 @@ export default function LeavesPage() {
                                                         {request.leaveTypeName} •{" "}
                                                         {format(request.startDate.toDate(), "MMM d")} -{" "}
                                                         {format(request.endDate.toDate(), "MMM d, yyyy")}
-                                                        <span className="ml-2">({t("hr.leaves.daysCount", { count: request.totalDays })})</span>
+                                                        <span className="ml-2">
+                                                            ({t("hr.leaves.daysCount", { count: request.totalDays })})
+                                                        </span>
                                                     </p>
                                                     {request.reason && (
                                                         <p className="text-sm text-gray-400 mt-1">{request.reason}</p>
@@ -323,12 +336,13 @@ export default function LeavesPage() {
                                                 {getStatusBadge(request.status)}
                                             </div>
                                             <p className="text-sm text-gray-500">
-                                                {request.leaveTypeName} •{" "}
-                                                {format(request.startDate.toDate(), "MMM d")} -{" "}
-                                                {format(request.endDate.toDate(), "MMM d, yyyy")}
+                                                {request.leaveTypeName} • {format(request.startDate.toDate(), "MMM d")}{" "}
+                                                - {format(request.endDate.toDate(), "MMM d, yyyy")}
                                             </p>
                                         </div>
-                                        <p className="text-sm text-gray-400">{t("hr.leaves.daysCount", { count: request.totalDays })}</p>
+                                        <p className="text-sm text-gray-400">
+                                            {t("hr.leaves.daysCount", { count: request.totalDays })}
+                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -380,6 +394,9 @@ export default function LeavesPage() {
                                 />
                             </div>
                         </div>
+                        {!currentEmployee && !employeeLoading && (
+                            <p className="text-sm text-red-600">{t("hr.leaves.noEmployeeRecord")}</p>
+                        )}
                         <div className="space-y-2">
                             <Label>{t("hr.leaves.reasonOptional")}</Label>
                             <Textarea
@@ -393,7 +410,7 @@ export default function LeavesPage() {
                         <Button variant="outline" onClick={() => setShowRequestDialog(false)}>
                             {t("common.cancel")}
                         </Button>
-                        <Button onClick={handleSubmitRequest} disabled={isSubmitting}>
+                        <Button onClick={handleSubmitRequest} disabled={isSubmitting || !currentEmployee}>
                             {isSubmitting ? t("hr.leaves.submitting") : t("hr.leaves.submitRequest")}
                         </Button>
                     </DialogFooter>

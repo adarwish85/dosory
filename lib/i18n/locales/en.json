@@ -5655,5 +5655,12 @@
     "payments.new.success": "Payment recorded",
     "payments.new.failed": "Failed to record payment",
     "common.pickDate": "Pick a date",
-    "leads.loadError": "Failed to load leads — check your connection and retry"
+    "leads.loadError": "Failed to load leads — check your connection and retry",
+    "common.validationFailed": "Please check the highlighted fields",
+    "support.new.createFailed": "Could not create the ticket",
+    "hr.leaves.noEmployeeRecord": "Your user isn't linked to an employee record yet — ask an HR admin to create one before requesting leave.",
+    "hr.leaves.leaveType": "Leave type",
+    "hr.leaves.startDate": "Start date",
+    "hr.leaves.endDate": "End date",
+    "hr.leaves.endBeforeStart": "End date must be on or after the start date"
 }

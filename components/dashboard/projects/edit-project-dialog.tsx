@@ -14,10 +14,23 @@ import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useTranslation } from "@/lib/i18n";
 
+/** Firestore stores project dates as string | Timestamp depending on doc vintage. */
+function toDateInputValue(v: unknown): string {
+    if (!v) return "";
+    if (typeof v === "string") return v;
+    if (typeof (v as { toDate?: () => Date }).toDate === "function") {
+        return (v as { toDate: () => Date }).toDate().toISOString().slice(0, 10);
+    }
+    return "";
+}
+
 interface EditProjectDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    project?: any;
+    // The dialog reads ProjectFormData's fields plus id and the vintage-dependent date
+    // shapes. Typed structurally (no `any`) — the stored doc carries more settings fields
+    // than the Project interface declares.
+    project?: Partial<Record<keyof ProjectFormData, unknown>> & { id?: string };
 }
 
 interface ProjectFormData {
@@ -41,7 +54,7 @@ const defaultFormData: ProjectFormData = {
     name: "",
     customerId: "",
     billingType: "fixed",
-    status: "in-progress",
+    status: "draft",
     estimatedHours: "",
     startDate: "",
     deadline: "",
@@ -65,20 +78,23 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
     useEffect(() => {
         if (project && open) {
             setFormData({
-                name: project.name || "",
-                customerId: project.customerId || "",
-                billingType: project.billingType || "fixed",
-                status: project.status || "in-progress",
-                estimatedHours: project.estimatedHours?.toString() || "",
-                startDate: project.startDate || "",
-                deadline: project.deadline || "",
-                description: project.description || "",
-                calculateProgressFromTasks: project.calculateProgressFromTasks ?? true,
-                sendNotifications: project.sendNotifications || "all",
-                allowCustomerViewTasks: project.allowCustomerViewTasks ?? false,
-                allowCustomerCreateTasks: project.allowCustomerCreateTasks ?? false,
-                allowCustomerUploadFiles: project.allowCustomerUploadFiles ?? true,
-                allowCustomerViewMilestones: project.allowCustomerViewMilestones ?? true,
+                name: String(project.name || ""),
+                customerId: String(project.customerId || ""),
+                billingType: String(project.billingType || "fixed"),
+                status: String(project.status || "draft"),
+                estimatedHours: project.estimatedHours != null ? String(project.estimatedHours) : "",
+                // Project stores these as string | Timestamp (older docs carry Timestamps);
+                // the form's inputs are date strings. Normalize instead of the `any` that
+                // used to hide the mismatch.
+                startDate: toDateInputValue(project.startDate),
+                deadline: toDateInputValue(project.deadline),
+                description: String(project.description || ""),
+                calculateProgressFromTasks: (project.calculateProgressFromTasks as boolean) ?? true,
+                sendNotifications: String(project.sendNotifications || "all"),
+                allowCustomerViewTasks: (project.allowCustomerViewTasks as boolean) ?? false,
+                allowCustomerCreateTasks: (project.allowCustomerCreateTasks as boolean) ?? false,
+                allowCustomerUploadFiles: (project.allowCustomerUploadFiles as boolean) ?? true,
+                allowCustomerViewMilestones: (project.allowCustomerViewMilestones as boolean) ?? true,
             });
         }
     }, [project, open]);
@@ -92,7 +108,7 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
         }
     };
 
-    const updateField = (field: keyof ProjectFormData, value: any) => {
+    const updateField = (field: keyof ProjectFormData, value: ProjectFormData[keyof ProjectFormData]) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
@@ -229,11 +245,17 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="not-started">{t("projects.status.notStarted")}</SelectItem>
-                                            <SelectItem value="in-progress">{t("projects.status.inProgress")}</SelectItem>
-                                            <SelectItem value="on-hold">{t("projects.status.onHold")}</SelectItem>
-                                            <SelectItem value="cancelled">{t("projects.status.cancelled")}</SelectItem>
-                                            <SelectItem value="finished">{t("projects.status.finished")}</SelectItem>
+                                            {/* FAMILY B (#6, review finding): this dialog offered a FOURTH
+                                                status vocabulary (not-started/in-progress/on-hold/cancelled/
+                                                finished) and wrote it straight to Firestore via updateDoc with
+                                                no zod check — so editing a project undid the create-form fix and
+                                                left the row unmatchable by every status filter. Aligned to
+                                                projectStatusSchema. */}
+                                            <SelectItem value="draft">{t("projects.status.notStarted")}</SelectItem>
+                                            <SelectItem value="active">{t("projects.status.inProgress")}</SelectItem>
+                                            <SelectItem value="on_hold">{t("projects.status.onHold")}</SelectItem>
+                                            <SelectItem value="archived">{t("projects.status.cancelled")}</SelectItem>
+                                            <SelectItem value="completed">{t("projects.status.finished")}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -310,7 +332,10 @@ export function EditProjectDialog({ open, onOpenChange, project }: EditProjectDi
                                     { id: "allowCustomerViewTasks", label: t("projects.edit.allowViewTasks") },
                                     { id: "allowCustomerCreateTasks", label: t("projects.edit.allowCreateTasks") },
                                     { id: "allowCustomerUploadFiles", label: t("projects.edit.allowUploadFiles") },
-                                    { id: "allowCustomerViewMilestones", label: t("projects.edit.allowViewMilestones") },
+                                    {
+                                        id: "allowCustomerViewMilestones",
+                                        label: t("projects.edit.allowViewMilestones"),
+                                    },
                                 ].map((item) => (
                                     <div key={item.id} className="flex items-center gap-2">
                                         <Checkbox

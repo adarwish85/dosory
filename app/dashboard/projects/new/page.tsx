@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { projectFormSchema, type ProjectFormData } from "@/lib/schemas";
 import { useProjects } from "@/lib/hooks/use-projects";
@@ -36,7 +36,7 @@ export default function CreateProjectPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<ProjectFormData>({
-        resolver: zodResolver(projectFormSchema) as any,
+        resolver: zodResolver(projectFormSchema) as Resolver<ProjectFormData>,
         defaultValues: {
             name: "",
             customerId: customerIdParam || "",
@@ -50,7 +50,7 @@ export default function CreateProjectPage() {
             tags: [],
             currency: "USD",
             pinned: false,
-        } as any,
+        } as ProjectFormData,
     });
 
     const {
@@ -68,6 +68,14 @@ export default function CreateProjectPage() {
             setValue("customerId", customerIdParam);
         }
     }, [customerIdParam, setValue]);
+
+    // FAMILY B (#6): without an onInvalid handler, react-hook-form's handleSubmit silently
+    // no-ops on a validation failure — the user sees NOTHING. Name the offending field(s) so
+    // schema/form drift can never again present as a dead button.
+    const onInvalid = (formErrors: Record<string, { message?: string }>) => {
+        const first = Object.entries(formErrors)[0];
+        toast.error(first?.[1]?.message || t("common.validationFailed"));
+    };
 
     const onSubmit = async (data: ProjectFormData) => {
         setIsSubmitting(true);
@@ -107,7 +115,7 @@ export default function CreateProjectPage() {
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-8">
                 <Card>
                     <CardHeader>
                         <CardTitle>{t("projects.new.detailsTitle")}</CardTitle>
@@ -183,7 +191,11 @@ export default function CreateProjectPage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {startDate ? format(startDate, "PPP") : <span>{t("projects.new.pickDate")}</span>}
+                                            {startDate ? (
+                                                format(startDate, "PPP")
+                                            ) : (
+                                                <span>{t("projects.new.pickDate")}</span>
+                                            )}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -209,7 +221,11 @@ export default function CreateProjectPage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {deadline ? format(deadline, "PPP") : <span>{t("projects.new.pickDate")}</span>}
+                                            {deadline ? (
+                                                format(deadline, "PPP")
+                                            ) : (
+                                                <span>{t("projects.new.pickDate")}</span>
+                                            )}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -242,13 +258,19 @@ export default function CreateProjectPage() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="to_do">{t("projects.new.status.notStarted")}</SelectItem>
-                                    <SelectItem value="in_progress">{t("projects.new.status.inProgress")}</SelectItem>
+                                    {/* FAMILY B (#6): these carried the TASK status vocabulary (to_do/
+                                        in_progress) while projectFormSchema requires the PROJECT enum
+                                        (draft|active|on_hold|completed|archived). Picking either of the
+                                        first two failed zod, and with no error rendered handleSubmit
+                                        silently no-op'd — the "button does nothing" report. */}
+                                    <SelectItem value="draft">{t("projects.new.status.notStarted")}</SelectItem>
+                                    <SelectItem value="active">{t("projects.new.status.inProgress")}</SelectItem>
                                     <SelectItem value="on_hold">{t("projects.new.status.onHold")}</SelectItem>
                                     <SelectItem value="completed">{t("projects.new.status.finished")}</SelectItem>
                                     <SelectItem value="archived">{t("projects.new.status.cancelled")}</SelectItem>
                                 </SelectContent>
                             </Select>
+                            {errors.status && <p className="text-red-500 text-xs">{errors.status.message}</p>}
                         </div>
 
                         <div className="grid gap-2">

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +18,12 @@ import { useTranslation } from "@/lib/i18n";
 export default function NewTicketPage() {
     const { t } = useTranslation();
     const router = useRouter();
-    const { createTicket, loading } = useSupportTickets();
+    // FAMILY B (#9): the submit button was disabled={loading} where `loading` is the TICKET
+    // LIST hook's flag — foreign state that stays true while the list query is pending (and
+    // support_tickets(orgId,createdAt) had no index, so it could hang). The button now owns
+    // its own submitting state.
+    const { createTicket } = useSupportTickets();
+    const [submitting, setSubmitting] = useState(false);
     const { staff } = useStaff();
     const { customers } = useCustomers();
 
@@ -33,6 +39,8 @@ export default function NewTicketPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (submitting) return;
+        setSubmitting(true);
         try {
             await createTicket({
                 subject,
@@ -48,6 +56,8 @@ export default function NewTicketPage() {
             router.push("/dashboard/support");
         } catch (error) {
             console.error("Failed to create ticket", error);
+            toast.error(error instanceof Error ? error.message : t("support.new.createFailed"));
+            setSubmitting(false);
         }
     };
 
@@ -157,9 +167,9 @@ export default function NewTicketPage() {
                         </div>
 
                         <div className="flex justify-end pt-4">
-                            <Button type="submit" disabled={loading}>
+                            <Button type="submit" disabled={submitting}>
                                 <Save className="mr-2 h-4 w-4" />
-                                {loading ? t("support.new.creating") : t("support.new.createButton")}
+                                {submitting ? t("support.new.creating") : t("support.new.createButton")}
                             </Button>
                         </div>
                     </form>

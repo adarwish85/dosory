@@ -50,7 +50,14 @@ export default function CreateCreditNotePage() {
         },
     });
 
-    const { register, control, handleSubmit, formState: { errors }, setValue, watch } = form;
+    const {
+        register,
+        control,
+        handleSubmit,
+        formState: { errors },
+        setValue,
+        watch,
+    } = form;
     const { fields, append, remove } = useFieldArray({
         control,
         name: "items",
@@ -60,17 +67,14 @@ export default function CreateCreditNotePage() {
     const items = watch("items");
 
     // Calculate totals for display
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity || 0) * (item.rate || 0), 0);
 
-    // Update item amount
-    useEffect(() => {
-        items.forEach((item, index) => {
-            const amount = item.quantity * item.rate;
-            if (item.amount !== amount) {
-                setValue(`items.${index}.amount`, amount);
-            }
-        });
-    }, [items, setValue]);
+    // FAMILY A (#4) — the amount-sync useEffect that used to live here is GONE on purpose.
+    // It setValue'd every row on every render behind an `item.amount !== amount` guard that a
+    // cleared qty/rate (NaN via valueAsNumber) could never satisfy — an unbounded loop that
+    // froze the tab — while on non-NaN paths react-hook-form 7.70's reference-stable
+    // watch("items") meant it never re-ran and each row persisted amount: 0. Amounts are now
+    // derived once at submit time: loop-proof, and always the right number.
 
     useEffect(() => {
         if (customerIdParam) {
@@ -81,7 +85,29 @@ export default function CreateCreditNotePage() {
     const onSubmit = async (data: CreditNoteFormData) => {
         setIsSubmitting(true);
         try {
-            await createCreditNote(data);
+            const normalizedItems = data.items.map((i) => ({
+                ...i,
+                quantity: i.quantity || 0,
+                rate: i.rate || 0,
+                amount: (i.quantity || 0) * (i.rate || 0),
+            }));
+            // Review finding (HIGH): createCreditNote addDoc's the payload VERBATIM — it computes
+            // nothing. Without these, every credit note rendered as "Draft" / "Unknown" / blank
+            // amount in the list, detail page and customer statement. Compute them here.
+            const cnSubtotal = normalizedItems.reduce((sum, i) => sum + i.amount, 0);
+            // Customer's display field is `company` (lib/types.ts Customer) — there is no `name`.
+            const customerName = customers.find((c) => c.id === data.customerId)?.company || "";
+            await createCreditNote({
+                ...data,
+                items: normalizedItems,
+                number: `CN-${Date.now().toString().slice(-6)}`,
+                customerName,
+                subtotal: cnSubtotal,
+                taxTotal: 0,
+                total: cnSubtotal,
+                creditsUsed: 0,
+                creditsRemaining: cnSubtotal,
+            });
             toast.success(t("accounting.creditNotes.createSuccess"));
 
             if (customerIdParam) {
@@ -101,7 +127,11 @@ export default function CreateCreditNotePage() {
         <div className="max-w-4xl mx-auto py-8 px-4">
             <div className="mb-6 flex items-center gap-2 text-gray-500 text-sm">
                 <Link
-                    href={customerIdParam ? `/dashboard/customers/${customerIdParam}/credit-notes` : "/dashboard/accounting/credit-notes"}
+                    href={
+                        customerIdParam
+                            ? `/dashboard/customers/${customerIdParam}/credit-notes`
+                            : "/dashboard/accounting/credit-notes"
+                    }
                     className="flex items-center hover:text-gray-900 transition-colors"
                 >
                     <ChevronLeft className="h-4 w-4 mr-1" />
@@ -122,7 +152,9 @@ export default function CreateCreditNotePage() {
                     <CardContent className="grid gap-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="customerId">{t("accounting.payments.customer")} <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="customerId">
+                                    {t("accounting.payments.customer")} <span className="text-red-500">*</span>
+                                </Label>
                                 <Select
                                     value={watch("customerId")}
                                     onValueChange={(val) => setValue("customerId", val, { shouldValidate: true })}
@@ -133,19 +165,20 @@ export default function CreateCreditNotePage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {customers.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>{c.company}</SelectItem>
+                                            <SelectItem key={c.id} value={c.id}>
+                                                {c.company}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                {errors.customerId && <p className="text-red-500 text-xs">{errors.customerId.message}</p>}
+                                {errors.customerId && (
+                                    <p className="text-red-500 text-xs">{errors.customerId.message}</p>
+                                )}
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="currency">{t("accounting.journal.currency")}</Label>
-                                <Select
-                                    value={watch("currency")}
-                                    onValueChange={(val) => setValue("currency", val)}
-                                >
+                                <Select value={watch("currency")} onValueChange={(val) => setValue("currency", val)}>
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
@@ -170,7 +203,11 @@ export default function CreateCreditNotePage() {
                                         )}
                                     >
                                         <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {date ? format(date, "PPP") : <span>{t("accounting.journal.new.pickDate")}</span>}
+                                        {date ? (
+                                            format(date, "PPP")
+                                        ) : (
+                                            <span>{t("accounting.journal.new.pickDate")}</span>
+                                        )}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
@@ -200,7 +237,10 @@ export default function CreateCreditNotePage() {
                         </div>
 
                         {fields.map((field, index) => (
-                            <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end border-b pb-4 md:border-0 md:pb-0">
+                            <div
+                                key={field.id}
+                                className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end border-b pb-4 md:border-0 md:pb-0"
+                            >
                                 <div className="md:col-span-6">
                                     <Label className="md:hidden">{t("accounting.journal.descriptionColumn")}</Label>
                                     <Input
@@ -228,8 +268,12 @@ export default function CreateCreditNotePage() {
                                     />
                                 </div>
                                 <div className="md:col-span-1 py-2 md:py-0 text-right md:text-left font-medium">
-                                    <span className="md:hidden mr-2 text-gray-500">{t("accounting.creditNotes.amountLabel")}</span>
-                                    {((watch(`items.${index}.quantity`) || 0) * (watch(`items.${index}.rate`) || 0)).toFixed(2)}
+                                    <span className="md:hidden mr-2 text-gray-500">
+                                        {t("accounting.creditNotes.amountLabel")}
+                                    </span>
+                                    {(
+                                        (watch(`items.${index}.quantity`) || 0) * (watch(`items.${index}.rate`) || 0)
+                                    ).toFixed(2)}
                                 </div>
                                 <div className="md:col-span-1 flex justify-end md:justify-center">
                                     <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
@@ -243,7 +287,9 @@ export default function CreateCreditNotePage() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => append({ id: Date.now().toString(), description: "", quantity: 1, rate: 0, amount: 0 })}
+                            onClick={() =>
+                                append({ id: Date.now().toString(), description: "", quantity: 1, rate: 0, amount: 0 })
+                            }
                             className="mt-2"
                         >
                             <Plus className="h-4 w-4 mr-2" />
@@ -253,7 +299,9 @@ export default function CreateCreditNotePage() {
                         <div className="flex justify-end pt-4 border-t mt-4">
                             <div className="text-right">
                                 <p className="text-gray-500 text-sm">{t("accounting.creditNotes.totalCredit")}</p>
-                                <p className="text-2xl font-bold">{subtotal.toFixed(2)} {watch("currency")}</p>
+                                <p className="text-2xl font-bold">
+                                    {subtotal.toFixed(2)} {watch("currency")}
+                                </p>
                             </div>
                         </div>
                     </CardContent>
@@ -266,7 +314,10 @@ export default function CreateCreditNotePage() {
                     <CardContent className="grid gap-6">
                         <div className="grid gap-2">
                             <Label htmlFor="notes">{t("accounting.creditNotes.notes")}</Label>
-                            <Textarea {...register("notes")} placeholder={t("accounting.creditNotes.notesPlaceholder")} />
+                            <Textarea
+                                {...register("notes")}
+                                placeholder={t("accounting.creditNotes.notesPlaceholder")}
+                            />
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
