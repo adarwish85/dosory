@@ -670,3 +670,122 @@ broken-search root cause, silent query errors, stale selections, saved-view sani
 and formatted-number tolerance were all fixed IN the shipped commit. Known documented
 limitations: advanced filters apply per loaded page; status + non-default sort needs
 per-column indexes (pre-existing gap — now surfaces an error toast instead of silence).
+
+---
+
+# Client QA round 2 — items 4-10 (2026-07-28)
+
+All 7 diagnosed to root cause and fixed by FAMILY, not symptom. Shipped as `01f36edc`
+(one App Hosting rollout). **All 7 reproduced on qa-smoke** — none were moaz-only.
+
+## FAMILY A — whole-app freeze on create (#4 Estimates, #5 Contracts)
+
+Two DIFFERENT causes that presented identically:
+
+- **#5 Contracts**: `lib/hooks/use-contracts.ts` listed `cursors` in its subscription
+  effect's deps while its own onSnapshot callback `setCursors`'d a **fresh object every
+  fire** → effect re-runs → listener torn down + recreated → fires again → unbounded
+  resubscribe loop that pegs the main thread. Both `/contracts` and `/contracts/new`
+  mount the hook, so entering the create flow froze the tab. (`use-customers.ts` has the
+  same setCursors pattern but correctly omits `cursors` from deps — the proof.)
+- **#4 Estimates**: the amount-sync `useEffect` called `setValue` for every row behind an
+  `item.amount !== amount` guard. A cleared qty/rate yields **NaN** (valueAsNumber), and
+  `NaN !== NaN` is always true → the guard can never settle → unbounded setValue/render
+  loop. **The adversarial panel then proved a second defect in the same effect**: RHF
+  7.70's `watch("items")` is reference-STABLE, so on non-NaN paths the effect never re-ran
+  at all and each row persisted `amount: 0`. Fix: the effect is **deleted**; amounts are
+  derived once at submit — loop-proof by construction and always correct. Same copy-pasted
+  effect existed in credit-notes/new; fixed there too.
+
+## FAMILY B — submit dead / validation never passes (#6, #9, #10)
+
+- **#6 Projects**: the status Select offered the **TASK** vocabulary (`to_do`,
+  `in_progress`) while `projectFormSchema` requires the **PROJECT** enum
+  (draft|active|on_hold|completed|archived). Picking either failed zod, and with no
+  `onInvalid` handler and `errors.status` never rendered, `handleSubmit` **silently
+  no-op'd** — a dead button. Fixed the values, render the error, and added an onInvalid
+  that names the offending field.
+  **Panel finding**: `edit-project-dialog.tsx` shipped a **FOURTH** vocabulary
+  (`not-started`/`in-progress`/…) written via a raw `updateDoc` with no zod check — one
+  edit undid the create fix and left the project unmatchable by every status filter.
+  Aligned, and the new contract test scans that file too.
+- **#9 Tickets**: the submit button was `disabled={loading}` where `loading` is the
+  **ticket LIST hook's** flag — foreign state, true while the list query is pending. Now a
+  local `submitting` state + failure toast. Also added the missing index
+  `support_tickets(orgId,createdAt DESC)` — the list's base query had none.
+- **#10 HR Leave**: the guard was
+  `if (!currentEmployee || !leaveTypeId || !startDate || !endDate) → "fill all required
+fields"`. `currentEmployee` is an **invisible requirement** the modal never renders or
+  sets (it resolves the employee record linked to the signed-in user — qa-smoke has 0
+  employees), so a fully-filled form was rejected. Exactly the client's screenshot. Split
+  per cause: distinct message for "no employee record linked", a per-field missing list,
+  an end<start check, and the button is disabled with an inline explanation when unlinked.
+
+## FAMILY C — invoice customer picker crashes the section (#7)
+
+**Captured live**: `React error #31 — object with keys {state, street, country, zipCode,
+city}`. `Customer.billingAddress` is an **Address OBJECT**, rendered straight into JSX;
+React refuses objects as children and the section error boundary swallowed the form
+("Unable to load this page" / «تعذر تحميل هذه الصفحة»). Fix: `lib/utils/format-address.ts`
+(accepts object OR legacy string, always returns a string). **Panel finding**: nothing in
+the repo ever _writes_ `billingAddress` — the add-customer panel stores what the user types
+on `customer.address` — so the panel would have shown the placeholder forever; now falls
+back. The page's local `Client` interface also mistyped these as `string`, which is what
+hid the bug from the compiler.
+
+## FAMILY D — expense Category empty (#8)
+
+`expenseCategories` was **never in provisioning's seed set** — every tenant had zero, and
+the Category select is required, so **no expense could ever be created by anyone**. The
+index existed; only the data was missing. Fixed both ends: provisioning seeds 6 defaults
+(deterministic IDs, concurrency-safe like R1) and `scripts/backfill-expense-categories.ts`
+covers existing orgs. **Backfill executed**: 13 orgs seeded (incl. the client's `moaz`);
+`wasiladev` correctly SKIPPED — it already had 5 of its own (additive-only guard proven).
+
+## Extra defects found and fixed in passing (panel)
+
+- Credit-note create persisted **no** number/customerName/subtotal/total —
+  `createCreditNote` addDoc's the payload verbatim and computes nothing, so every credit
+  note rendered "Draft"/"Unknown"/blank. Now computed at submit.
+- The 8 `no-explicit-any` in the touched files were replaced with real types, so this
+  round's commit passed the pre-commit hook **with no `--no-verify`**.
+- `jest.config.mjs` now ignores macOS `._*` sidecars that were faking **7 suite failures**
+  on every run (the Phase-1.1 class, never applied to Jest) — a red run now means a real
+  failure.
+
+## Gate
+
+build 190 pages exit 0 · unit **91 passing** · rules **187/187** · contract + address suites
+new · 0 lint errors · index deployed · backfill executed · one rollout.
+
+## Round-2 post-rollout live verification (qa-smoke, EN)
+
+| #   | Report                                  | Verified live                                                                                                                                     |
+| --- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 4   | Estimates create freezes app            | ✅ clearing + retyping qty/rate (the exact NaN trigger) leaves the page responsive; no NaN rendered                                               |
+| 5   | Contracts create freezes app            | ✅ **0 new Firestore streams in 6s** on /contracts/new (the loop created one per cycle); page renders "New Contract"                              |
+| 6   | Projects create does nothing            | ✅ filled → **"created"** toast → navigated to /dashboard/projects/QxNofv4NjyH6GmvgRh7V                                                           |
+| 7   | Invoice customer picker crashes section | ✅ customer selected, form intact, **no error boundary** (this exact click blanked it before)                                                     |
+| 8   | Expense Category empty                  | ✅ select now lists all **6** seeded categories (General/Marketing/Office Supplies/Software & Subscriptions/Travel/Utilities)                     |
+| 9   | Ticket submit button stays disabled     | ✅ **button now enables** with fields filled (the reported symptom). ⚠️ see below                                                                 |
+| 10  | HR leave rejects a filled form          | ✅ code path fixed + distinct messages; qa-smoke has 0 employee records so the modal now says so explicitly instead of "fill all required fields" |
+
+### ⚠️ NEW, SEPARATE defect found while verifying #9 (not the reported bug)
+
+With the button fixed, submitting a ticket now surfaces its real failure:
+`FirebaseError: permission-denied` on the `support_tickets` create. Evidence that this is
+**not** a rules-file gap: a REST write to `support_tickets` carrying `orgId = the token's
+own claim` **succeeds (HTTP 200)** with the same user, and the deployed rules were refreshed
+this round. So the SDK write is sending an `orgId` that does not equal the token claim at
+write time — the orgId/claim-drift class. This was previously invisible because the button
+could never be clicked. **Not fixed this round** (it is a different root cause than the
+reported #9 and needs its own diagnosis of `useSupportTickets.createTicket`'s `profile.orgId`
+timing). Logged as the top item for the next round.
+Note: the diagnostic REST probe left one doc `support_tickets/Q1qWUW7m8Do6603RjQMk`
+(subject "QA rules probe") in qa-smoke — left in place per the no-deletions rule.
+
+### Verification method note
+
+Event-loop lag sampling was NOT a valid freeze detector here: the instrumented browser pane
+shows ~700 ms lag on EVERY page including a known-good control (/dashboard/customers), so the
+freeze checks used Firestore stream churn and live input responsiveness instead.

@@ -271,6 +271,17 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 
 **Remaining ledger (dated):**
 
+- 2026-07-28 (client QA round 2, items 4-10): freeze family = effect-dep loops
+  (use-contracts `cursors` in deps; estimates/credit-notes amount-sync NaN guard) — the
+  standing lesson is **never put state written by a snapshot callback in that effect's deps**,
+  and **derive computed row fields at submit, not in an effect**. Dead-submit family = zod
+  schema vs rendered form drift (projects status enum; a 4th vocabulary in the EDIT dialog)
+  and invisible required fields (HR leave `currentEmployee`) — every form MUST render an
+  onInvalid/error for the field that failed. Address OBJECTS must go through
+  lib/utils/format-address.ts (React #31). expenseCategories now seeded + backfilled (13 orgs).
+  New drift guard: tests/unit/form-select-schema-contract.test.ts scans Select values against
+  the zod enum — extend it whenever a new status/enum select ships.
+
 - 2026-07-28 (bug-fix round): dashboard "Add Task" was a decoration button (no onClick —
   wired to /dashboard/tasks/new); "Log Time" quick action removed (route never existed —
   4th route-fall-through incident); leads filters were collected-but-never-applied (status
