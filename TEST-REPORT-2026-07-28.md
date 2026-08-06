@@ -853,3 +853,37 @@ refactor, tenant isolation untouched (191/191 rules tests green, incl. the 4 new
 **Class note for the sweep:** any `getDoc` of a possibly-absent doc whose rule dereferences
 `resource.data.*` fails the same way. `settings` is the instance that broke a whole module;
 the sweep should scan for the pattern rather than treat this as a one-off.
+
+## Post-rollout verification — ACCEPTANCE NOT MET (honest status)
+
+The fix shipped (`53c340b0`, rollout completed 15:22 UTC; backend Updated Date confirms it),
+but the end-to-end bar was **not** reached:
+
+| Check                                                               | Result                                           |
+| ------------------------------------------------------------------- | ------------------------------------------------ |
+| Ticket create on qa-smoke (EN), fresh session + hard reload         | ❌ still `permission-denied`                     |
+| `tickets` collection after the attempt                              | **0 docs** — still no legitimate ticket          |
+| `[support] settings/… unreadable` warn (emitted by the fix's catch) | **absent** from the console                      |
+| Fix marker string in 31 served chunks                               | **not found**                                    |
+| Fix present in the pushed commit                                    | ✅ verified (`git show HEAD` — try/catch + warn) |
+| `next.config` console stripping                                     | none configured — the warn should have appeared  |
+
+**Reading of this:** the two independent absences (no warn, no marker in the served bundle)
+point at the deployed bundle not yet carrying `53c340b0` — but the backend's Updated Date is
+_after_ the commit, so that is not confirmed, and a **second denial later in the chain**
+cannot be excluded. Both remain open.
+
+What IS established and unaffected by the above: the settings-read denial is real and proven
+in the emulator (4/4 tests), the ticket write itself is allowed, and the fix is correct for
+that cause. It is simply not yet demonstrated to be _sufficient_.
+
+**Next step (one focused action):** confirm which bundle prod is actually serving — pull the
+rollout's build record / Cloud Run revision for its source commit. If it predates
+`53c340b0`, re-roll and retest. If it includes it, instrument `createTicket` to log the
+failing operation's collection+path and capture the second denial the same way this one was
+captured.
+
+**Artifact left in prod:** the smoking-gun REST probe created
+`support_tickets/…` (subject "QA smoking-gun probe") in qa-smoke during this run. The
+pre-approved deletion covered only the earlier probe doc, which was removed. **This new one
+is still there and needs your OK to delete** (no-deletions rule).

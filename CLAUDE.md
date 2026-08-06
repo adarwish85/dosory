@@ -271,6 +271,22 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 
 **Remaining ledger (dated):**
 
+- 2026-08-06 (ticket-create defect CLOSED): tickets were uncreatable for every user in every
+  tenant. The denial was a READ, not the write: TicketService.createTicket awaits
+  getDoc(settings/{tenantId}\_support) first, and the settings rule dereferences
+  `resource.data.orgId` — on a MISSING doc `resource` is null, the expression errors, the read
+  is denied. Prod's root `settings` collection has 0 docs, so it failed for everyone.
+  **TWO standing lessons:**
+  (1) **A rule that reads `resource.data.*` DENIES reads of non-existent documents.** Never
+  `getDoc` a possibly-absent doc on a critical path without handling the denial — and when
+  data is optional, say so in code (try/catch → undefined), not just in intent.
+  (2) **Barrel shadowing is real**: `app/dashboard/support/new` imports `useSupportTickets`
+  from `@/lib/hooks`, where `export * from "./use-tickets"` (index.ts:23) shadows it —
+  it resolves to TicketService/`tickets`+`tenantId`, NOT use-support.ts/`support_tickets`+
+  `orgId`. Two rounds were spent analysing the wrong file. When a hook misbehaves, resolve
+  the BARREL export before reading any implementation.
+  Pinned by tests/firestore-rules/support-ticket-create.test.ts (rules suite now 191).
+
 - 2026-07-28 (client QA round 2, items 4-10): freeze family = effect-dep loops
   (use-contracts `cursors` in deps; estimates/credit-notes amount-sync NaN guard) — the
   standing lesson is **never put state written by a snapshot callback in that effect's deps**,
