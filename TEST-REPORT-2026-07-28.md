@@ -789,3 +789,67 @@ Note: the diagnostic REST probe left one doc `support_tickets/Q1qWUW7m8Do6603RjQ
 Event-loop lag sampling was NOT a valid freeze detector here: the instrumented browser pane
 shows ~700 ms lag on EVERY page including a known-good control (/dashboard/customers), so the
 freeze checks used Firestore stream churn and live input responsiveness instead.
+
+---
+
+# Ticket create permission-denied — SMOKING GUN (2026-08-06)
+
+## Verdict: the denial was never on the ticket write
+
+**The denying operation is a READ of a document that does not exist.**
+
+`TicketService.createTicket` (lib/services/ticket-service.ts:90) awaits
+`SupportSettingsService.getSettings(tenantId)` → `getDoc(settings/{tenantId}_support)`
+**before** its `addDoc`. The rule is:
+
+```
+match /settings/{docId} {
+  allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);   // firestore.rules:331
+```
+
+On a **missing** document `resource` is null, so `resource.data.orgId` errors and the read is
+DENIED. The rejection propagates out of `createTicket` before any write is attempted and
+surfaces via the page's catch as "Failed to create ticket … permission-denied".
+
+**Prod state that made this universal:** the root `settings` collection contains **0
+documents** — `settings/{tenantId}_support` has never existed for ANY tenant
+(qasmoke/moaz/wasiladev all verified absent). So this read failed for every user, in every
+tenant, on every attempt.
+
+### Why the earlier investigation pointed at the wrong file
+
+`app/dashboard/support/new/page.tsx` imports `useSupportTickets` from the **barrel**
+`@/lib/hooks`. The barrel exports `useTickets…` from `./use-support` on line 22 and then
+`export * from "./use-tickets"` on line 23 — so `useSupportTickets` resolves to
+**lib/hooks/use-tickets.ts** → `TicketService` → collection **`tickets`** keyed by
+**`tenantId`**. All prior analysis (and the "orgId drift" hypothesis) was reading
+lib/hooks/use-support.ts → `support_tickets`/`orgId`, which the page never calls. That
+shadowing is the reason `support_tickets` was empty: **nothing writes to it from this flow.**
+
+### Evidence chain
+
+| Probe                                                                   | Result                                                                   |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Emulator: the ticket write itself (`tickets` + `tenantId`, real claims) | ✅ ALLOWED — the write was never the problem                             |
+| Emulator: `getDoc(settings/{org}_support)` when the doc is MISSING      | ❌ DENIED ← **the bug**                                                  |
+| Emulator: same read once the doc exists with matching orgId             | ✅ ALLOWED                                                               |
+| Emulator: foreign tenant reading another org's settings doc             | ❌ DENIED (isolation intact)                                             |
+| Prod: root `settings` collection                                        | **0 docs** — absent for every tenant                                     |
+| Prod: App Check enforcement on Firestore                                | **OFF** (no services configured) — ruled out                             |
+| Prod: token at the denied write                                         | valid, `orgId=qasmoke…`, `aud=goalo-6a269`, 2513 s remaining — ruled out |
+| Prod: users doc orgId == claim == staff orgId == owned org              | all match — orgId drift **ruled out**                                    |
+| Prod: REST write, same token/instant/payload                            | ✅ 200 — rules+payload exonerated                                        |
+
+Pinned by `tests/firestore-rules/support-ticket-create.test.ts` (4 tests).
+
+## Fix (small, matches existing intent)
+
+Support settings are OPTIONAL by design — `getSettings` already returned `undefined` for a
+missing doc and `calculateSlaDates` falls back to `getDefaultSlaRules`. The read simply never
+survived the rules error. `getSettings` now catches the denial and returns `undefined` (with a
+console.warn), which is exactly what "no settings doc" already meant. No rule change, no
+refactor, tenant isolation untouched (191/191 rules tests green, incl. the 4 new).
+
+**Class note for the sweep:** any `getDoc` of a possibly-absent doc whose rule dereferences
+`resource.data.*` fails the same way. `settings` is the instance that broke a whole module;
+the sweep should scan for the pattern rather than treat this as a one-off.

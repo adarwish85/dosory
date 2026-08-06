@@ -202,8 +202,23 @@ export class TicketService {
 
     static async getSettings(tenantId: string): Promise<SupportSettings | undefined> {
         const docRef = doc(db, SETTINGS_COLLECTION, `${tenantId}_support`);
-        const snapshot = await getDoc(docRef);
-        if (!snapshot.exists()) return undefined;
-        return snapshot.data() as SupportSettings;
+        try {
+            const snapshot = await getDoc(docRef);
+            if (!snapshot.exists()) return undefined;
+            return snapshot.data() as SupportSettings;
+        } catch (err) {
+            // ROOT CAUSE of "ticket create is permission-denied for every user, in every
+            // tenant" (2026-08-06). Support settings are OPTIONAL — every caller uses
+            // `settings?.` and calculateSlaDates falls back to defaults. But the
+            // settings/{docId} rule reads `resource.data.orgId`, and on a MISSING document
+            // `resource` is null, so the expression errors and the READ is denied. No tenant
+            // has ever had a settings/{tenantId}_support doc, so this getDoc threw for
+            // everyone — inside createTicket, BEFORE addDoc — and surfaced as a failed
+            // ticket create. Proven in tests/firestore-rules/support-ticket-create.test.ts.
+            // Treat an unreadable/absent settings doc as "no custom settings", which is
+            // exactly what a missing doc already meant.
+            console.warn(`[support] settings/${tenantId}_support unreadable; using defaults`, err);
+            return undefined;
+        }
     }
 }
