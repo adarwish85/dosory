@@ -7,9 +7,26 @@ const SETTINGS_COLLECTION = "settings";
 export class SupportSettingsService {
     static async getSettings(tenantId: string): Promise<SupportSettings> {
         const docRef = doc(db, SETTINGS_COLLECTION, `${tenantId}_support`);
-        const snapshot = await getDoc(docRef);
+        // ROOT CAUSE of "ticket create is permission-denied for every user, in every tenant"
+        // (2026-08-06). TicketService.createTicket awaits THIS method before its addDoc. The
+        // settings/{docId} rule reads `resource.data.orgId`; on a MISSING document `resource`
+        // is null, the expression errors, and the READ is denied. No tenant has ever had a
+        // settings/{tenantId}_support doc, so this getDoc threw for everyone and surfaced as a
+        // failed ticket create. Support settings are OPTIONAL (the defaults below are the
+        // contract), so an unreadable doc must degrade to those defaults, never throw.
+        //
+        // NOTE: there is a SECOND, unused `getSettings` on TicketService itself. An earlier
+        // pass hardened that one — same name, wrong class, no effect on this path. Resolve the
+        // call target before patching (same trap as the @/lib/hooks barrel shadowing).
+        let snapshot;
+        try {
+            snapshot = await getDoc(docRef);
+        } catch (err) {
+            console.warn(`[support] settings/${tenantId}_support unreadable; using defaults`, err);
+            snapshot = null;
+        }
 
-        if (!snapshot.exists()) {
+        if (!snapshot || !snapshot.exists()) {
             return {
                 id: `${tenantId}_support`,
                 tenantId: tenantId,
