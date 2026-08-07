@@ -25,7 +25,10 @@ export function TodayView() {
             if (profile && profile.uid && profile.orgId) {
                 // Determine simplistic role for now, in real app use robust permissions
                 const role = profile.role === "admin" || profile.role === "superadmin" ? "admin" : "staff";
-                const result = await todayService.getDashboardData(profile.uid, role, profile.orgId);
+                // profile.email is passed so the service can match assignee fields that hold
+                // the email-keyed staff doc id as well as the auth uid — see
+                // TodayService.assigneeIdsFor.
+                const result = await todayService.getDashboardData(profile.uid, role, profile.orgId, profile.email);
                 setData(result);
                 setLoading(false);
             }

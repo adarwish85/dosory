@@ -174,7 +174,12 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
 
         const fetchCounts = async () => {
             const orgId = profile.orgId;
-            const collections = [
+            // `tenantField` is per-collection on purpose: `tickets` is scoped by `tenantId`,
+            // everything else by `orgId`. Hardcoding "orgId" for all of them made the Tickets
+            // badge permanently 0 — ticket documents have no orgId field, so the count query
+            // matched nothing and the catch below reported it as zero. Same silent-empty class
+            // as the read/write split-brain this migration closed (CLAUDE.md Sweep E).
+            const collections: Array<{ key: string; collection: string; tenantField?: string }> = [
                 { key: "invoices", collection: "invoices" },
                 { key: "payments", collection: "payments" },
                 { key: "creditNotes", collection: "credit_notes" }, // fixed name
@@ -183,7 +188,7 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
                 { key: "contracts", collection: "contracts" },
                 { key: "projects", collection: "projects" },
                 { key: "tasks", collection: "tasks" },
-                { key: "tickets", collection: "tickets" },
+                { key: "tickets", collection: "tickets", tenantField: "tenantId" },
                 { key: "files", collection: "customer_files" }, // fixed name
                 { key: "reminders", collection: "reminders" },
                 { key: "activities", collection: "activities" }, // added
@@ -193,17 +198,19 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
 
             // Handle root collections
             await Promise.all(
-                collections.map(async ({ key, collection: collName }) => {
+                collections.map(async ({ key, collection: collName, tenantField }) => {
                     try {
                         const q = query(
                             collection(db, collName),
-                            where("orgId", "==", orgId),
+                            where(tenantField ?? "orgId", "==", orgId),
                             where("customerId", "==", customerId)
                         );
                         const snapshot = await getCountFromServer(q);
                         counts[key as keyof RecordCounts] = snapshot.data().count;
-                    } catch {
-                        // Collection may not have customerId field - ignore silently
+                    } catch (err) {
+                        // Collection may not have a customerId field. Log it — a swallowed
+                        // failure here is indistinguishable from a genuine zero.
+                        console.warn(`[customer-counts] ${collName} count failed; reporting 0`, err);
                         counts[key as keyof RecordCounts] = 0;
                     }
                 })

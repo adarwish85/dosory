@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -27,12 +27,20 @@ export default function NewTicketPage() {
     const { staff } = useStaff();
     const { customers } = useCustomers();
 
+    // The customer- and project-ticket tabs link here as
+    // /dashboard/support/new?customerId=…(&projectId=…). Before 2026-08-07 the params were
+    // ignored, so a ticket raised from a customer's tab came back unlinked and never
+    // appeared in the tab that created it.
+    const searchParams = useSearchParams();
+    const presetCustomerId = searchParams.get("customerId") || "";
+    const presetProjectId = searchParams.get("projectId") || null;
+
     const [subject, setSubject] = useState("");
     const [description, setDescription] = useState("");
     const [priority, setPriority] = useState<SupportTicketPriority>("medium");
     const [category, setCategory] = useState("General");
     const [assignedAgentId, setAssignedAgentId] = useState<string>("unassigned");
-    const [customerId, setCustomerId] = useState<string>("");
+    const [customerId, setCustomerId] = useState<string>(presetCustomerId);
 
     // Mock categories for V1
     const CATEGORIES = ["General", "Billing", "Technical", "Feature Request", "Bug"];
@@ -51,6 +59,7 @@ export default function NewTicketPage() {
                 status: "open",
                 assignedAgentId: assignedAgentId === "unassigned" ? null : assignedAgentId,
                 customerId: customerId || null,
+                projectId: presetProjectId,
                 metadata: {},
             });
             router.push("/dashboard/support");

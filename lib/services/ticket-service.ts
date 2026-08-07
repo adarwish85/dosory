@@ -121,6 +121,7 @@ export class TicketService {
             priority?: SupportTicketPriority;
             agentId?: string;
             customerId?: string;
+            projectId?: string;
         } = {}
     ): Promise<SupportTicket[]> {
         let q = query(
@@ -140,6 +141,12 @@ export class TicketService {
         }
         if (filters.customerId) {
             q = query(q, where("customerId", "==", filters.customerId));
+        }
+        // Every added filter needs its own composite index in firestore.indexes.json
+        // (tenantId, <field>, createdAt DESC) — see the checkReminders class of silent
+        // FAILED_PRECONDITION failures in CLAUDE.md §11.
+        if (filters.projectId) {
+            q = query(q, where("projectId", "==", filters.projectId));
         }
 
         const snapshot = await getDocs(q);

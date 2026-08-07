@@ -25,6 +25,10 @@ export interface SupportTicket {
     // Assignment
     assignedAgentId: string | null;
     customerId: string | null; // Optional link to CRM Customer
+    // First-class (queryable) link to a Project. Added 2026-08-07 when the project-tickets
+    // tab was migrated off the legacy `support_tickets` collection — a nested metadata key
+    // would not have supported the tab's `where("projectId","==",…)` query cleanly.
+    projectId: string | null;
 
     // SLA Tracking
     slaResponseDueAt: Timestamp | null;

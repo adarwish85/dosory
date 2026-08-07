@@ -382,6 +382,14 @@ service cloud.firestore {
       }
     }
 
+    // DEPRECATED — PENDING REMOVAL (needs Ahmed's go-ahead; listed under approvals in
+    // TEST-REPORT-2026-07-28.md). Superseded by /tickets below. As of the 2026-08-07
+    // Sweep E migration NO code path reads or writes this collection: the customer-tickets
+    // tab, project-tickets tab and dashboard Today view were moved to `tickets`/`tenantId`,
+    // and use-support.ts's `useTickets`/`useTicketReplies` (the only writers) were deleted.
+    // The collection is empty in prod. Rules are retained deliberately for one release so
+    // that any doc discovered later stays tenant-scoped rather than falling to deny-all
+    // before we have confirmed there is nothing to migrate.
     match /support_tickets/{docId} {
       allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
       allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));

@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef, KeyboardEvent } from "react";
+import { useState, useMemo, useRef, KeyboardEvent } from "react";
 import { useCustomer } from "@/components/dashboard/customers/customer-context";
-import { useTickets } from "@/lib/hooks/use-support";
+// MIGRATED 2026-08-07 (Sweep E): was `useTickets` from use-support, which queried
+// `support_tickets`/`orgId` — a collection no write path has targeted since the support
+// module moved to TicketService. This tab could never show a ticket the app created.
+// Now reads the same `tickets`/`tenantId` collection the support list and writer use.
+import { useSupportTickets } from "@/lib/hooks/use-tickets";
 import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +39,6 @@ import {
     RotateCcw,
     Loader2,
     Eye,
-    Pencil,
     ChevronLeft,
     ChevronRight,
     ChevronsLeft,
@@ -43,16 +46,19 @@ import {
     Ticket,
     MessageCircle,
     CheckCircle2,
-    RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import type { Timestamp } from "firebase/firestore";
 import { toast } from "sonner";
 
 // Types
 type SortDirection = "asc" | "desc" | null;
 type RowDensity = "compact" | "comfortable";
-type ColumnKey = "id" | "subject" | "department" | "priority" | "lastReply" | "status";
+// `category` replaces the legacy `department` column: the canonical ticket shape
+// (lib/types/support.ts) routes on `category`, which is also what SLA auto-assign rules
+// key off. `lastActivity` replaces `lastReply` — the canonical shape tracks `updatedAt`.
+type ColumnKey = "id" | "subject" | "category" | "priority" | "lastActivity" | "status";
 
 interface ColumnDef {
     key: ColumnKey;
@@ -65,9 +71,9 @@ interface ColumnDef {
 const DEFAULT_COLUMNS: ColumnDef[] = [
     { key: "id", label: "#", defaultVisible: true, sortable: true, width: 80 },
     { key: "subject", label: "Subject", defaultVisible: true, sortable: true, width: 250 },
-    { key: "department", label: "Department", defaultVisible: true, sortable: true, width: 120 },
+    { key: "category", label: "Category", defaultVisible: true, sortable: true, width: 120 },
     { key: "priority", label: "Priority", defaultVisible: true, sortable: true, width: 100 },
-    { key: "lastReply", label: "Last Reply", defaultVisible: true, sortable: true, width: 140 },
+    { key: "lastActivity", label: "Last Activity", defaultVisible: true, sortable: true, width: 140 },
     { key: "status", label: "Status", defaultVisible: true, sortable: true, width: 100 },
 ];
 
@@ -162,7 +168,13 @@ function Pagination({
 
 export default function TicketsPage() {
     const { customer, loading: customerLoading, customerId } = useCustomer();
-    const { tickets, loading: ticketsLoading, ticketStats } = useTickets({ customerId: customerId || undefined });
+    const {
+        tickets,
+        loading: ticketsLoading,
+        error: ticketsError,
+        ticketStats,
+        refresh,
+    } = useSupportTickets({ customerId: customerId || undefined });
     const { t } = useTranslation();
     const tableRef = useRef<HTMLDivElement>(null);
 
@@ -174,9 +186,9 @@ export default function TicketsPage() {
     const [columnVisibility, setColumnVisibility] = useState<Record<ColumnKey, boolean>>({
         id: true,
         subject: true,
-        department: true,
+        category: true,
         priority: true,
-        lastReply: true,
+        lastActivity: true,
         status: true,
     });
     const [sortKey, setSortKey] = useState<ColumnKey | null>(null);
@@ -185,22 +197,28 @@ export default function TicketsPage() {
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
 
     // Helpers
-    const formatDate = (timestamp: any) => {
+    const formatDate = (timestamp: Timestamp | Date | string | null | undefined) => {
         if (!timestamp) return "-";
         try {
-            const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+            const date =
+                typeof timestamp === "object" && timestamp !== null && "toDate" in timestamp
+                    ? timestamp.toDate()
+                    : new Date(timestamp as string | Date);
             return format(date, "dd/MM/yyyy HH:mm");
         } catch {
             return "-";
         }
     };
 
+    // Canonical SupportTicketStatus vocabulary (open | in_progress | waiting_on_customer |
+    // resolved | closed) — the legacy `answered`/`on_hold` values belonged to the retired
+    // support_tickets shape and can no longer occur.
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
             open: "bg-blue-50 text-blue-600 border-blue-100",
             in_progress: "bg-orange-50 text-orange-600 border-orange-100",
-            answered: "bg-green-50 text-green-600 border-green-100",
-            on_hold: "bg-yellow-50 text-yellow-600 border-yellow-100",
+            waiting_on_customer: "bg-yellow-50 text-yellow-600 border-yellow-100",
+            resolved: "bg-green-50 text-green-600 border-green-100",
             closed: "bg-gray-50 text-gray-500 border-gray-100",
         };
         return styles[status] || "bg-gray-50 text-gray-600 border-gray-100";
@@ -211,12 +229,16 @@ export default function TicketsPage() {
             low: "bg-gray-50 text-gray-600 border-gray-100",
             medium: "bg-blue-50 text-blue-600 border-blue-100",
             high: "bg-orange-50 text-orange-600 border-orange-100",
-            urgent: "bg-red-50 text-red-600 border-red-100",
+            critical: "bg-red-50 text-red-600 border-red-100",
         };
         return styles[priority] || "bg-gray-50 text-gray-600 border-gray-100";
     };
 
-    const formatStatus = (status: string) => status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    // Both vocabularies are closed unions with a translation key for every member
+    // (support.statuses.* / support.priorities.* exist in en.json and ar.json), so these
+    // always resolve — the same keys the main support list renders.
+    const statusLabel = (status: string) => t(`support.statuses.${status}`);
+    const priorityLabel = (priority: string) => t(`support.priorities.${priority}`);
 
     // Sort handler
     const handleSort = (key: ColumnKey) => {
@@ -239,15 +261,15 @@ export default function TicketsPage() {
             const lowerQuery = searchQuery.toLowerCase();
             result = result.filter(
                 (t) =>
-                    t.subject.toLowerCase().includes(lowerQuery) ||
-                    t.status.toLowerCase().includes(lowerQuery) ||
-                    (t.departmentId || "").toLowerCase().includes(lowerQuery) ||
-                    t.priority.toLowerCase().includes(lowerQuery)
+                    (t.subject || "").toLowerCase().includes(lowerQuery) ||
+                    (t.status || "").toLowerCase().includes(lowerQuery) ||
+                    (t.category || "").toLowerCase().includes(lowerQuery) ||
+                    (t.priority || "").toLowerCase().includes(lowerQuery)
             );
         }
         if (sortKey && sortDirection) {
             result.sort((a, b) => {
-                let aVal: any, bVal: any;
+                let aVal: string | number, bVal: string | number;
                 switch (sortKey) {
                     case "id":
                         aVal = a.id || "";
@@ -257,17 +279,17 @@ export default function TicketsPage() {
                         aVal = a.subject || "";
                         bVal = b.subject || "";
                         break;
-                    case "department":
-                        aVal = a.departmentId || "";
-                        bVal = b.departmentId || "";
+                    case "category":
+                        aVal = a.category || "";
+                        bVal = b.category || "";
                         break;
                     case "priority":
                         aVal = a.priority || "";
                         bVal = b.priority || "";
                         break;
-                    case "lastReply":
-                        aVal = a.lastReply?.toMillis?.() || 0;
-                        bVal = b.lastReply?.toMillis?.() || 0;
+                    case "lastActivity":
+                        aVal = a.updatedAt?.toMillis?.() || 0;
+                        bVal = b.updatedAt?.toMillis?.() || 0;
                         break;
                     case "status":
                         aVal = a.status || "";
@@ -305,10 +327,10 @@ export default function TicketsPage() {
         const dataToExport =
             selectedIds.length > 0 ? tickets.filter((t) => selectedIds.includes(t.id)) : processedTickets;
         const csv = [
-            "ID,Subject,Department,Priority,Last Reply,Status",
+            "ID,Subject,Category,Priority,Last Activity,Status",
             ...dataToExport.map(
                 (t) =>
-                    `"${t.id}","${t.subject}","${t.departmentId || "-"}","${t.priority}","${formatDate(t.lastReply)}","${t.status}"`
+                    `"${t.id}","${t.subject}","${t.category || "-"}","${t.priority}","${formatDate(t.updatedAt)}","${t.status}"`
             ),
         ].join("\n");
         const blob = new Blob([csv], { type: "text/csv" });
@@ -323,27 +345,26 @@ export default function TicketsPage() {
 
     const columnLabel = (key: ColumnKey) => t(`customers.tickets.columns.${key}`);
 
-    // Keyboard navigation
-    const handleKeyDown = useCallback(
-        (e: KeyboardEvent<HTMLDivElement>) => {
-            if (focusedRowIndex === null || paginatedTickets.length === 0) return;
-            switch (e.key) {
-                case "ArrowDown":
-                    e.preventDefault();
-                    setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedTickets.length - 1));
-                    break;
-                case "ArrowUp":
-                    e.preventDefault();
-                    setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0));
-                    break;
-                case " ":
-                    e.preventDefault();
-                    toggleSelect(paginatedTickets[focusedRowIndex].id);
-                    break;
-            }
-        },
-        [focusedRowIndex, paginatedTickets]
-    );
+    // Keyboard navigation. Deliberately NOT wrapped in useCallback: the hand-written dep
+    // list omitted `toggleSelect`, which React Compiler flagged as unpreservable manual
+    // memoization. The compiler memoizes this handler on its own.
+    const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+        if (focusedRowIndex === null || paginatedTickets.length === 0) return;
+        switch (e.key) {
+            case "ArrowDown":
+                e.preventDefault();
+                setFocusedRowIndex(Math.min(focusedRowIndex + 1, paginatedTickets.length - 1));
+                break;
+            case "ArrowUp":
+                e.preventDefault();
+                setFocusedRowIndex(Math.max(focusedRowIndex - 1, 0));
+                break;
+            case " ":
+                e.preventDefault();
+                toggleSelect(paginatedTickets[focusedRowIndex].id);
+                break;
+        }
+    };
 
     const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]);
 
@@ -352,6 +373,20 @@ export default function TicketsPage() {
             <div className="p-8 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 {t("customers.tickets.loading")}
+            </div>
+        );
+    }
+
+    // Distinguish "query failed" from "no tickets" — an empty table after a failed read is
+    // the silent-empty failure mode this migration exists to remove (CLAUDE.md Sweep E).
+    if (ticketsError) {
+        return (
+            <div className="p-8 flex flex-col items-start gap-2">
+                <p className="font-medium">{t("customers.tickets.loadFailed")}</p>
+                <p className="text-sm text-gray-500">{ticketsError.message}</p>
+                <Button variant="outline" onClick={() => refresh()}>
+                    {t("common.retry")}
+                </Button>
             </div>
         );
     }
@@ -544,7 +579,9 @@ export default function TicketsPage() {
                                     <Checkbox
                                         checked={isAllSelected}
                                         ref={(el) => {
-                                            if (el) (el as any).indeterminate = isSomeSelected;
+                                            if (el)
+                                                (el as HTMLButtonElement & { indeterminate?: boolean }).indeterminate =
+                                                    isSomeSelected;
                                         }}
                                         onCheckedChange={(checked) => {
                                             if (checked) handleSelectPage();
@@ -625,24 +662,26 @@ export default function TicketsPage() {
                                                         <HighlightText text={ticket.subject} search={searchQuery} />
                                                     </span>
                                                 )}
-                                                {col.key === "department" && (
-                                                    <span className="text-gray-600">{ticket.departmentId || "-"}</span>
+                                                {col.key === "category" && (
+                                                    <span className="text-gray-600">{ticket.category || "-"}</span>
                                                 )}
                                                 {col.key === "priority" && (
                                                     <Badge
                                                         className={`${getPriorityBadge(ticket.priority)} font-normal`}
                                                     >
                                                         <HighlightText
-                                                            text={formatStatus(ticket.priority)}
+                                                            text={priorityLabel(ticket.priority)}
                                                             search={searchQuery}
                                                         />
                                                     </Badge>
                                                 )}
-                                                {col.key === "lastReply" && <span>{formatDate(ticket.lastReply)}</span>}
+                                                {col.key === "lastActivity" && (
+                                                    <span>{formatDate(ticket.updatedAt)}</span>
+                                                )}
                                                 {col.key === "status" && (
                                                     <Badge className={`${getStatusBadge(ticket.status)} font-normal`}>
                                                         <HighlightText
-                                                            text={formatStatus(ticket.status)}
+                                                            text={statusLabel(ticket.status)}
                                                             search={searchQuery}
                                                         />
                                                     </Badge>

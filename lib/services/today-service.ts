@@ -1,15 +1,40 @@
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, Timestamp, orderBy, limit } from "firebase/firestore";
 import { TodayDashboardData, TodayItem, MetricTile, AlertItem, ActivityFeedItem } from "@/lib/types/today";
-import { Task, Ticket, Invoice } from "@/lib/types";
+import { Task, Invoice } from "@/lib/types";
+import { SupportTicket } from "@/lib/types/support";
 
 export class TodayService {
-    async getDashboardData(userId: string, role: string, orgId: string): Promise<TodayDashboardData> {
+    /**
+     * The ids a row's assignee field can legitimately hold for this user.
+     *
+     * Assignee pickers across the app store `staff.id` — and staff docs are keyed by
+     * LOWERCASED EMAIL, carrying `authUid` as a field (see the staff invariant in
+     * CLAUDE.md §11). The Today view is handed `profile.uid`, the Firebase auth uid.
+     * Those two never match, so querying assignees by uid alone returned zero rows for
+     * every user — the second reason this view rendered "All Caught Up!" while open,
+     * assigned work existed. Match on both, since a deduped staff record may be keyed
+     * either way.
+     */
+    private assigneeIdsFor(userId: string, userEmail?: string): string[] {
+        // Never empty: Firestore throws on an `in`/`array-contains-any` with zero values.
+        const ids = new Set([userId, userEmail?.toLowerCase()].filter(Boolean) as string[]);
+        return ids.size > 0 ? Array.from(ids) : [userId || "__none__"];
+    }
+
+    async getDashboardData(
+        userId: string,
+        role: string,
+        orgId: string,
+        userEmail?: string
+    ): Promise<TodayDashboardData> {
         try {
+            const assigneeIds = this.assigneeIdsFor(userId, userEmail);
+
             // 1. Fetch actionable items (Parallel)
             const [tasks, tickets, invoices] = await Promise.all([
-                this.getTasks(userId, orgId),
-                this.getTickets(userId, orgId),
+                this.getTasks(assigneeIds, orgId),
+                this.getTickets(assigneeIds, orgId),
                 role === "admin" || role === "finance" ? this.getOverdueInvoices(orgId) : Promise.resolve([]),
             ]);
 
@@ -43,68 +68,82 @@ export class TodayService {
         }
     }
 
-    private async getTasks(userId: string, orgId: string): Promise<TodayItem[]> {
-        // Fetch tasks assigned to user that are NOT done
+    private async getTasks(assigneeIds: string[], orgId: string): Promise<TodayItem[]> {
+        // Fetch tasks assigned to this user that are NOT done.
+        // `status` is filtered in memory rather than with where("status","!=","done"):
+        // Firestore rejects a second disjunctive clause alongside array-contains-any, and a
+        // `!=` filter also silently drops documents that have no `status` field at all.
         const ref = collection(db, "tasks");
-        const q = query(
-            ref,
-            where("orgId", "==", orgId),
-            where("assignees", "array-contains", userId),
-            where("status", "!=", "done")
-        );
+        const q = query(ref, where("orgId", "==", orgId), where("assignees", "array-contains-any", assigneeIds));
 
         try {
             const snap = await getDocs(q);
-            return snap.docs.map((d) => {
-                const t = d.data() as Task;
-                const dueDate = t.dueDate?.toDate() || null;
-                const isOverdue = dueDate ? dueDate < new Date() : false;
-                const isToday = dueDate ? this.isDateToday(dueDate) : false;
+            return snap.docs
+                .filter((d) => d.data().status !== "done")
+                .map((d) => {
+                    const t = d.data() as Task;
+                    const dueDate = t.dueDate?.toDate?.() || null;
+                    const isOverdue = dueDate ? dueDate < new Date() : false;
+                    const isToday = dueDate ? this.isDateToday(dueDate) : false;
 
-                return {
-                    id: d.id,
-                    title: t.name,
-                    type: "task",
-                    priority: t.priority === "urgent" ? "critical" : t.priority === "high" ? "high" : "medium",
-                    dueDate: t.dueDate || null,
-                    status: isOverdue ? "overdue" : isToday ? "today" : "upcoming",
-                    relatedEntity: t.customerId
-                        ? { id: t.customerId, name: t.projectName || "Unknown", type: "project" }
-                        : undefined, // Simplify mapping
-                    actionUrl: `/dashboard/tasks/${d.id}`,
-                };
-            });
-        } catch {
-            console.error("Error fetching tasks");
+                    return {
+                        id: d.id,
+                        title: t.name,
+                        type: "task",
+                        priority: t.priority === "urgent" ? "critical" : t.priority === "high" ? "high" : "medium",
+                        dueDate: t.dueDate || null,
+                        status: isOverdue ? "overdue" : isToday ? "today" : "upcoming",
+                        relatedEntity: t.customerId
+                            ? { id: t.customerId, name: t.projectName || "Unknown", type: "project" }
+                            : undefined, // Simplify mapping
+                        actionUrl: `/dashboard/tasks/${d.id}`,
+                    };
+                });
+        } catch (error) {
+            // Was `catch { console.error("Error fetching tasks") }` — the bare catch discarded
+            // the error object, so the dashboard logged a bare string every load with nothing
+            // to diagnose. The underlying failure was a missing composite index for
+            // tasks(orgId, assignees ARRAY_CONTAINS, status): a FAILED_PRECONDITION is
+            // invisible from the UI and only names the index it needs in the error itself.
+            console.error("Error fetching tasks for Today view:", error);
             return [];
         }
     }
 
-    private async getTickets(userId: string, orgId: string): Promise<TodayItem[]> {
-        const ref = collection(db, "support_tickets");
-        const q = query(
-            ref,
-            where("orgId", "==", orgId),
-            where("assignedTo", "==", userId),
-            where("status", "!=", "closed")
-        );
+    private async getTickets(assigneeIds: string[], orgId: string): Promise<TodayItem[]> {
+        // Reads `tickets`/`tenantId` — the collection the support UI actually writes.
+        // Until 2026-08-07 this read `support_tickets`/`orgId`, which no write path had
+        // targeted since the support module moved to TicketService: the query always
+        // returned zero rows, so the dashboard rendered "All Caught Up!" while open tickets
+        // existed. Silent because the catch below swallowed everything. See CLAUDE.md Sweep E.
+        // Status is filtered in memory for the same reason as getTasks above.
+        const ref = collection(db, "tickets");
+        const q = query(ref, where("tenantId", "==", orgId), where("assignedAgentId", "in", assigneeIds));
 
         try {
             const snap = await getDocs(q);
-            return snap.docs.map((d) => {
-                const t = d.data() as Ticket;
-                return {
-                    id: d.id,
-                    title: t.subject,
-                    type: "ticket",
-                    priority: t.priority === "high" ? "high" : "medium",
-                    dueDate: null, // Tickets usually rely on SLA/Last Reply
-                    status: "today", // Assume actionable if open
-                    relatedEntity: t.customerId ? { id: t.customerId, name: "Customer", type: "customer" } : undefined,
-                    actionUrl: `/dashboard/support/${d.id}`,
-                };
-            });
-        } catch {
+            return snap.docs
+                .filter((d) => {
+                    const status = d.data().status;
+                    return status !== "closed" && status !== "resolved";
+                })
+                .map((d) => {
+                    const t = d.data() as SupportTicket;
+                    return {
+                        id: d.id,
+                        title: t.subject,
+                        type: "ticket",
+                        priority: t.priority === "critical" ? "critical" : t.priority === "high" ? "high" : "medium",
+                        dueDate: null, // Tickets usually rely on SLA/Last Reply
+                        status: "today", // Assume actionable if open
+                        relatedEntity: t.customerId
+                            ? { id: t.customerId, name: "Customer", type: "customer" }
+                            : undefined,
+                        actionUrl: `/dashboard/support/${d.id}`,
+                    };
+                });
+        } catch (error) {
+            console.error("Error fetching tickets for Today view:", error);
             return [];
         }
     }

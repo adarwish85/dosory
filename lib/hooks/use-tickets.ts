@@ -9,6 +9,7 @@ interface UseTicketsOptions {
     priority?: SupportTicketPriority;
     agentId?: string;
     customerId?: string;
+    projectId?: string;
 }
 
 export function useSupportTickets(options: UseTicketsOptions = {}) {
@@ -18,7 +19,12 @@ export function useSupportTickets(options: UseTicketsOptions = {}) {
     const [error, setError] = useState<Error | null>(null);
 
     const fetchTickets = useCallback(async () => {
-        if (!profile?.orgId) return;
+        if (!profile?.orgId) {
+            // Must clear `loading`, not just bail: consumers gate their whole page on it, so
+            // returning early with loading still true leaves them on a spinner forever.
+            setLoading(false);
+            return;
+        }
 
         setLoading(true);
         try {
@@ -36,7 +42,10 @@ export function useSupportTickets(options: UseTicketsOptions = {}) {
         } finally {
             setLoading(false);
         }
-    }, [profile?.orgId, options.status, options.priority, options.agentId, options.customerId]);
+        // options is a fresh object literal on every render, so it must NOT be a dep —
+        // only the primitive filters are (Sweep A: never depend on an unstable identity).
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [profile?.orgId, options.status, options.priority, options.agentId, options.customerId, options.projectId]);
 
     useEffect(() => {
         if (!profileLoading && profile?.orgId) {
@@ -66,17 +75,48 @@ export function useSupportTickets(options: UseTicketsOptions = {}) {
         await fetchTickets();
     };
 
+    const updateTicketStatus = useCallback(
+        async (id: string, status: SupportTicketStatus) => {
+            await TicketService.updateTicket(id, { status });
+            await fetchTickets();
+        },
+        [fetchTickets]
+    );
+
+    const assignTicket = useCallback(
+        async (id: string, agentId: string) => {
+            await TicketService.updateTicket(id, { assignedAgentId: agentId, status: "in_progress" });
+            await fetchTickets();
+        },
+        [fetchTickets]
+    );
+
+    // Counts keyed by status + `priority_<p>` + total, matching the shape the customer and
+    // project ticket tabs render. Derived from the loaded page, not a separate aggregation.
+    const ticketStats = tickets.reduce(
+        (acc, ticket) => {
+            acc[ticket.status] = (acc[ticket.status] || 0) + 1;
+            acc[`priority_${ticket.priority}`] = (acc[`priority_${ticket.priority}`] || 0) + 1;
+            acc.total++;
+            return acc;
+        },
+        { total: 0 } as Record<string, number>
+    );
+
     return {
         tickets,
         loading: loading || profileLoading,
         error,
+        ticketStats,
         refresh: fetchTickets,
         createTicket,
+        updateTicketStatus,
+        assignTicket,
     };
 }
 
 export function useSupportTicket(id: string) {
-    const { profile, loading: profileLoading } = useUserProfile();
+    const { loading: profileLoading } = useUserProfile();
     const [ticket, setTicket] = useState<SupportTicket | null>(null);
     const [loading, setLoading] = useState(true);
 

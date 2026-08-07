@@ -512,9 +512,9 @@
     "customers.tickets.empty": "لا توجد تذاكر لـ {customer}.",
     "customers.tickets.columns.id": "#",
     "customers.tickets.columns.subject": "الموضوع",
-    "customers.tickets.columns.department": "القسم",
+    "customers.tickets.columns.category": "الفئة",
+    "customers.tickets.columns.lastActivity": "آخر نشاط",
     "customers.tickets.columns.priority": "الأولوية",
-    "customers.tickets.columns.lastReply": "آخر رد",
     "customers.tickets.columns.status": "الحالة",
     "customers.tasks.title": "المهام",
     "customers.tasks.loading": "جارٍ تحميل المهام...",
@@ -5662,5 +5662,8 @@
     "hr.leaves.leaveType": "نوع الإجازة",
     "hr.leaves.startDate": "تاريخ البداية",
     "hr.leaves.endDate": "تاريخ النهاية",
-    "hr.leaves.endBeforeStart": "يجب أن يكون تاريخ النهاية بعد تاريخ البداية أو مساويًا له"
+    "hr.leaves.endBeforeStart": "يجب أن يكون تاريخ النهاية بعد تاريخ البداية أو مساويًا له",
+    "common.retry": "إعادة المحاولة",
+    "projects.tickets.loadFailed": "تعذّر تحميل التذاكر",
+    "customers.tickets.loadFailed": "تعذّر تحميل التذاكر"
 }

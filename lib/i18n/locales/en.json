@@ -512,9 +512,9 @@
     "customers.tickets.empty": "No tickets found for {customer}.",
     "customers.tickets.columns.id": "#",
     "customers.tickets.columns.subject": "Subject",
-    "customers.tickets.columns.department": "Department",
+    "customers.tickets.columns.category": "Category",
+    "customers.tickets.columns.lastActivity": "Last Activity",
     "customers.tickets.columns.priority": "Priority",
-    "customers.tickets.columns.lastReply": "Last Reply",
     "customers.tickets.columns.status": "Status",
     "customers.tasks.title": "Tasks",
     "customers.tasks.loading": "Loading tasks...",
@@ -5662,5 +5662,8 @@
     "hr.leaves.leaveType": "Leave type",
     "hr.leaves.startDate": "Start date",
     "hr.leaves.endDate": "End date",
-    "hr.leaves.endBeforeStart": "End date must be on or after the start date"
+    "hr.leaves.endBeforeStart": "End date must be on or after the start date",
+    "common.retry": "Retry",
+    "projects.tickets.loadFailed": "Couldn't load tickets",
+    "customers.tickets.loadFailed": "Couldn't load tickets"
 }

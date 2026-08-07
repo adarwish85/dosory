@@ -19,7 +19,11 @@ export { useExpenses, useExpenseCategories } from "./use-expenses";
 export { useContracts, useContract } from "./use-contracts";
 
 // Support & Knowledge Base
-export { useTickets, useTicketReplies, useDepartments, useKnowledgeBase } from "./use-support";
+// use-support no longer exports ticket hooks — every ticket surface goes through
+// ./use-tickets (TicketService → `tickets`/`tenantId`). See Sweep E in CLAUDE.md §12.
+// NOTE: `useDepartments` is ALSO exported by ./use-hr-settings; HR pages import that one
+// directly by path. Resolve the barrel before assuming which implementation you get.
+export { useDepartments, useKnowledgeBase } from "./use-support";
 export * from "./use-tickets";
 // Staff, Roles & Settings
 export {
