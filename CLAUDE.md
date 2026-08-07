@@ -126,6 +126,10 @@ Super Admin, Chat, Signup/Portal.
 Gaps:
 
 - **Reports** — `lib/services/reports-service.ts` is 100% mock (6 TODO markers; gated "coming soon" in A8).
+- **Support tickets read/write split-brain (OPEN, 2026-08-07)** — writes land in
+  `tickets`/`tenantId`; the customer-tickets tab, project-tickets tab, and dashboard Today
+  view still read `support_tickets`/`orgId` and are therefore permanently empty. Decision
+  needed (recommend: migrate the 3 readers). See §11 ledger + Sweep E.
 - Minor TODOs: journal vendor hook, expense currency hard-coded "USD",
   payroll→accounting expense records, chat participant creation.
 - ~~`/dashboard/payments/new` route absent~~ — CLOSED 2026-07-28: real record-payment form
@@ -287,6 +291,33 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
   the BARREL export before reading any implementation.
   Pinned by tests/firestore-rules/support-ticket-create.test.ts (rules suite now 191).
 
+- 2026-08-07 (ticket saga CLOSED — acceptance MET): the 2026-08-06 fix (53c340b0) shipped to
+  prod and changed nothing, because it patched `TicketService.getSettings` — a same-named,
+  **unused** duplicate — while `createTicket` awaits `SupportSettingsService.getSettings`.
+  Same shadowing trap as the barrel, one level down: _two methods, same name, different class._
+  Real fix in `lib/services/support-settings-service.ts` (b4d6c9d0): try/catch → built-in
+  defaults. Verified live on qa-smoke post-rollout (`dosory-build-2026-08-07-001`): the
+  `tickets` collection gained its first-ever legitimate app-written documents — EN
+  (`u2ngJHmBEb08aDWO9qTq`) and AR (`sfYD4kss…`, `dir=rtl`). Evidence:
+  test-results/ticket-create-verified-{en,ar}.png.
+  **Standing lesson (3):** when a fix produces no behaviour change, verify the patched symbol
+  is the one the call path actually invokes _before_ re-diagnosing — pinned by
+  tests/unit/ticket-create-call-path.test.ts, which asserts the guard lives on the invoked
+  implementation.
+  **NEW DEFECT found while confirming dead code — `support_tickets` is NOT dead, it is a
+  SPLIT-BRAIN (open, unfixed):** writes go to `tickets`/`tenantId` (support list + new-ticket
+  page, via TicketService), but three read surfaces still query `support_tickets`/`orgId` —
+  `app/dashboard/customers/[id]/tickets`, `app/dashboard/projects/[id]/tickets` (both via
+  use-support's `useTickets`), and the dashboard Today view (`lib/services/today-service.ts:84`
+  → `components/dashboard/today/today-view.tsx`). Those three will NEVER show a ticket created
+  by the app, silently and without error — confirmed live: 2 open tickets exist, Today renders
+  "All Caught Up!". Rules for `support_tickets` were correctly NOT removed this run. Decision
+  needed: migrate the 3 readers to `tickets`/`tenantId` (recommended — one write path already
+  wins) or migrate the writer back. Generalized as **Sweep E** in §12.
+  Scoped cleanup done: the QA probe doc was deleted from `support_tickets` (backup at
+  backups/support-tickets-probe-2026-08-07T10-22-22-924Z.json); that collection is now empty.
+  Also observed, unrelated and unfixed: dashboard logs "Error fetching tasks" on load.
+
 - 2026-07-28 (client QA round 2, items 4-10): freeze family = effect-dep loops
   (use-contracts `cursors` in deps; estimates/credit-notes amount-sync NaN guard) — the
   standing lesson is **never put state written by a snapshot callback in that effect's deps**,
@@ -320,3 +351,51 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 - 5 expired trials will be transitioned by `trialExpiryCheck` at its next 02:00 UTC run
   (first healthy run after the index fix) — expected, not an incident. Expiry sets
   status:"expired", which ensureWriteAccess does NOT currently block (product decision open).
+
+---
+
+## 12. Standing UI-Contract Sweep (Sweeps A–D)
+
+Each sweep generalizes a bug **class** that has already shipped to a client at least once.
+Run the full set after any round that touches forms, hooks, or rules; run the single
+relevant sweep whenever its trigger pattern is introduced. Every sweep ends in a
+_committed test_, not a fixed symptom — the test is what stops the class from returning.
+
+**Sweep A — effect-dependency loops (freeze family).**
+Scan every `useEffect` whose dependency array contains state that a Firestore
+`onSnapshot`/async callback inside that same effect writes. That is a re-subscribe loop and
+it freezes the page (`use-contracts` `cursors`). Also flag computed row fields synced by an
+effect (estimates/credit-notes `amount`) — derive them at submit instead.
+_Rule:_ never put state written by a snapshot callback in that effect's deps.
+
+**Sweep B — form ↔ schema contract drift (dead-submit family).**
+For every form: diff each `<Select>`/radio value set against the zod enum it feeds, in
+**every** dialog that writes the entity (the projects EDIT dialog carried a 4th, unique
+status vocabulary). Then confirm each required field is actually _rendered_ — HR leave's
+`currentEmployee` was required and invisible, so submit silently no-op'd. Guard:
+`tests/unit/form-select-schema-contract.test.ts` — **extend it whenever a new status/enum
+select ships**.
+_Rule:_ every `handleSubmit` MUST pass an `onInvalid` that surfaces the failing field.
+
+**Sweep C — data-layer landmines (permission-denied / render-crash family).**
+
+- Scan every `getDoc`/`getDocs` target whose matching rule dereferences `resource.data.*` —
+  each is a missing-doc → permission-denied landmine; fix pattern: guard rule with
+  `exists()` or restructure read.
+- **Resolve barrel exports to the real implementation file before static analysis.**
+  `@/lib/hooks` re-exports collide (`index.ts:23` `export * from "./use-tickets"` shadows
+  `useSupportTickets`); two investigation rounds were spent reading the wrong file, and a
+  third shipped a fix to a same-named method on the wrong class.
+- Any value rendered as a React child that could be an object (Address, etc.) must go
+  through a formatter — `lib/utils/format-address.ts` (React #31).
+
+**Sweep D — reference-data seeding (empty-select family).**
+For every required `<Select>` sourced from a Firestore collection, confirm that collection
+is in `lib/provisioning/seed-tenant-defaults.ts`'s seed set AND backfilled for existing
+orgs. `expenseCategories` was in neither, so no tenant — new or old — could file an expense.
+
+**Sweep E — read/write collection agreement (split-brain family, added 2026-08-07).**
+For every entity, confirm the collection + tenant key that the _write_ path uses is the one
+every _read_ surface queries. `tickets`/`tenantId` (support UI) vs `support_tickets`/`orgId`
+(customer tab, project tab, Today view) diverged silently: writes succeed, three read
+surfaces stay permanently empty, and nothing errors.

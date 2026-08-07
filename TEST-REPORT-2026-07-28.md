@@ -887,3 +887,102 @@ captured.
 `support_tickets/…` (subject "QA smoking-gun probe") in qa-smoke during this run. The
 pre-approved deletion covered only the earlier probe doc, which was removed. **This new one
 is still there and needs your OK to delete** (no-deletions rule).
+
+---
+
+# Round: close the ticket saga (2026-08-07) — ACCEPTANCE MET
+
+## 1. What prod was actually serving
+
+`gcloud run services describe` showed `dosory-build-2026-08-06-003` at 100% traffic, created
+**12:53:35 UTC** — _after_ the 12:11:58 UTC fix commit `53c340b0`. So branch (b) of the plan
+applied: the fix was deployed, and a second denial had to exist.
+
+Reading the code proved something sharper than a second denial — **the first fix never
+touched the executed path**:
+
+| symbol                               | file                                       | called by createTicket?          | patched by 53c340b0? |
+| ------------------------------------ | ------------------------------------------ | -------------------------------- | -------------------- |
+| `TicketService.getSettings`          | `lib/services/ticket-service.ts:~202`      | **no** (zero call sites)         | yes                  |
+| `SupportSettingsService.getSettings` | `lib/services/support-settings-service.ts` | **yes** (`ticket-service.ts:90`) | no                   |
+
+Two methods, same name, different class. The rollout shipped a no-op: no `console.warn`, no
+bundle marker, `tickets` still at 0 documents. This is the barrel-shadowing trap one level
+down — the earlier round resolved the barrel correctly, then patched the wrong _class_.
+
+## 2. The fix
+
+`lib/services/support-settings-service.ts` — the `getDoc(settings/{tenantId}_support)` now
+sits in a try/catch that degrades to built-in defaults. The settings doc is genuinely
+optional; the code now says so, instead of only intending it.
+
+Guard test `tests/unit/ticket-create-call-path.test.ts` (3/3) pins all three invariants:
+createTicket still resolves settings via `SupportSettingsService`; that method cannot throw
+on a missing/unreadable doc; and no _new_ unguarded `getDoc`/`getDocs` may appear before the
+`addDoc`. If the call target ever moves again, the first test fails loudly.
+
+Shipped as **b4d6c9d0** — build 190 pages exit 0, 0 lint errors, hook-clean (no `--no-verify`).
+Rolled out; polled until `dosory-build-2026-08-07-001` served 100%.
+
+## 3. Acceptance bar — MET
+
+The `tickets` collection gained its **first-ever legitimate app-written documents**:
+
+| locale | doc id                 | subject                           | verified                                     |
+| ------ | ---------------------- | --------------------------------- | -------------------------------------------- |
+| EN     | `u2ngJHmBEb08aDWO9qTq` | "QA EN — first legitimate ticket" | submitted via real UI → `/dashboard/support` |
+| AR     | `sfYD4kss…`            | "تذكرة اختبار — القبول بالعربية"  | `dir=rtl`, submitted via real UI             |
+
+Both `status:"open"`, `slaStatus:"on_track"`, `tenantId:"qasmoke20260728131942"`.
+Screenshots: `test-results/ticket-create-verified-en.png`, `…-ar.png`.
+
+_(The AR language switcher did not respond to synthetic clicks; locale was set via
+`localStorage["dosory.locale"]="ar"` — the key from `lib/i18n/config.ts:10` — then reloaded.
+Whether the switcher is broken for real users or only resists automation is **not** settled
+and is worth its own check.)_
+
+## 4. Scoped cleanup — done
+
+Both probe docs are gone. The one flagged at the end of the previous round was deleted this
+run under the pre-approved scope (exactly one doc, matched on subject "QA smoking-gun probe",
+`support_tickets/O5kbrkH9iCuO3PQTHNtR`), backed up first to
+`backups/support-tickets-probe-2026-08-07T10-22-22-924Z.json`. `support_tickets` is now empty
+in prod. **No rules were removed**, as instructed.
+
+## 5. Is legacy `support_tickets` dead code? — NO. It is a live split-brain.
+
+This is the answer to the question asked, and it is worse than "dead code":
+
+| surface                                                            | collection        | tenant key |
+| ------------------------------------------------------------------ | ----------------- | ---------- |
+| `app/dashboard/support/page.tsx` (list)                            | `tickets`         | `tenantId` |
+| `app/dashboard/support/new/page.tsx` (**the only writer**)         | `tickets`         | `tenantId` |
+| `app/dashboard/customers/[id]/tickets/page.tsx`                    | `support_tickets` | `orgId`    |
+| `app/dashboard/projects/[id]/tickets/page.tsx`                     | `support_tickets` | `orgId`    |
+| Today view (`lib/services/today-service.ts:84` → `today-view.tsx`) | `support_tickets` | `orgId`    |
+
+Three read surfaces can never show a ticket the app creates. It fails silently — no error, no
+empty-state distinction between "none exist" and "wrong collection". **Confirmed live:** with
+2 open tickets in `tickets`, the dashboard renders "All Caught Up! You have no urgent focus
+items for today."
+
+`use-support.ts` also carries its own `createTicket`, so `support_tickets` could still gain
+writes from a future call site — deleting its rules would have been the wrong move, and they
+were left in place.
+
+**Decision needed (not taken this run):** migrate the 3 readers to `tickets`/`tenantId`
+(recommended — the write path and the main list already agree), or migrate the writer back.
+Either way one collection must lose. Recorded in CLAUDE.md §7 as an open gap.
+
+## 6. Generalized into the standing sweep spec
+
+The sweep spec did not exist in any file — it had only ever been described in conversation.
+It is now written into **CLAUDE.md §12** as Sweeps A–E. Sweep C gained both requested lines
+(scan every `getDoc`/`getDocs` whose rule dereferences `resource.data.*`; resolve barrel
+exports to the real implementation file before static analysis), and the split-brain found
+above is generalized as the new **Sweep E — read/write collection agreement**.
+
+## 7. Also observed, unfixed and out of scope
+
+Dashboard logs `Error fetching tasks` on every load (console error, page still renders).
+Not investigated.
