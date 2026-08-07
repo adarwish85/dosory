@@ -986,3 +986,140 @@ above is generalized as the new **Sweep E — read/write collection agreement**.
 
 Dashboard logs `Error fetching tasks` on every load (console error, page still renders).
 Not investigated.
+
+---
+
+# Round: heal the tickets split-brain + two loose threads (2026-08-07) — ALL ACCEPTANCE MET
+
+Commit `08839d8b` · rollout `dosory-build-2026-08-07-005` · 4 indexes deployed (136 READY)
+
+## 1. The migration — converged on `tickets`/`tenantId`
+
+| surface                                 | before                            | after                                                      |
+| --------------------------------------- | --------------------------------- | ---------------------------------------------------------- |
+| support list + new-ticket page (writer) | `tickets`/`tenantId`              | unchanged (canonical)                                      |
+| customer-tickets tab                    | `support_tickets`/`orgId`         | migrated                                                   |
+| project-tickets tab                     | `support_tickets`/`orgId`         | migrated                                                   |
+| dashboard Today view                    | `support_tickets`/`orgId`         | migrated                                                   |
+| **customer sidebar count badge**        | **`tickets` filtered by `orgId`** | **migrated — found by the panel, missed by my first pass** |
+
+The fourth reader is the interesting one. `customer-context.tsx` counts twelve collections in
+one shared loop that hardcoded `where("orgId","==",orgId)`. Ticket docs have no `orgId`, so
+the Tickets badge counted zero forever — and the loop's `catch { count = 0 }` turned the
+failure into a plausible-looking zero. The tenant field is now per-collection and the catch
+logs.
+
+Both tabs also adopted the canonical `SupportTicket` shape and the shared
+`support.statuses.*` / `support.priorities.*` keys, so the app no longer carries two
+divergent ticket status enums (the legacy `answered`/`on_hold` vs canonical
+`waiting_on_customer`/`resolved`). `SupportTicket` gained a first-class `projectId`.
+
+`use-support.ts`'s `useTickets`/`useTicketReplies` were **deleted**, not left unused. An
+exported hook still pointing at the retired collection is exactly how a fifth surface forks
+again. `support_tickets` rules were **not** removed — they carry a deprecation comment and
+are listed under approvals.
+
+## 2. The collection was only half the bug — the identity key was the other half
+
+Migrating the Today view to `tickets`/`tenantId` still returned zero rows.
+
+Assignee pickers write `staff.id`. Staff docs are keyed by **lowercased email** (§11 staff
+invariant). The Today view was handed `profile.uid`, the Firebase auth uid. Confirmed on prod:
+
+```
+tickets/PVsPHrsl9zeH9lUWWWAh
+  assignedAgentId = "ahmeddarwesh+qasmoke20260728131942@gmail.com"
+staff/ahmeddarwesh+qasmoke20260728131942@gmail.com
+  authUid        = "mdp62bAtwMg2z7GEjYXjXQunNEB2"
+```
+
+An email compared to a uid matches nothing, the query succeeds with zero docs, and nothing is
+logged. Both Today queries now match the full id set via `TodayService.assigneeIdsFor`
+(`in [uid, email]` / `array-contains-any`), which also covers tenants provisioned by the
+Super-Admin route, where the staff doc _is_ uid-keyed.
+
+**This is now standing lesson (4): when two surfaces exchange an entity reference, diff the
+KEY as well as the collection.**
+
+## 3. "Error fetching tasks" — root-caused
+
+Two faults, both required:
+
+1. No composite index for `tasks(orgId, assignees ARRAY_CONTAINS, status)`. A
+   FAILED_PRECONDITION is invisible from the UI and names the index it needs only in the
+   error object.
+2. `catch { console.error("Error fetching tasks") }` — the bare catch **discarded that error
+   object**, so the message the user saw every load was the whole diagnostic.
+
+Index added, error logged, `!=` replaced with in-memory filtering (a `!=` also silently drops
+documents that lack the field, and Firestore rejects it alongside `array-contains-any`).
+Verified live: **zero console errors on dashboard load.**
+
+## 4. AR language switcher — automation-resistance, not a bug. No code changed.
+
+| interaction                 | menu items                   |
+| --------------------------- | ---------------------------- |
+| synthetic `element.click()` | **0**                        |
+| trusted Playwright click    | **2** — "English", "العربية" |
+
+Selecting العربية flips `dir=rtl` and persists the locale. Radix's `DropdownMenuTrigger`
+opens on `pointerdown`, which a synthetic `click` never dispatches — true of **every** Radix
+menu/select in the app. Documented with both correct test techniques in
+`test-results/qa-smoke-README.md`. No speculative changes made.
+
+## 5. Adversarial panel — 34 agents, 6 lenses, 24/28 findings confirmed
+
+Beyond the identity bug (raised independently by 4 of 6 lenses), the panel caught real
+defects I had introduced or left standing:
+
+- project detail pane **unmounted on every status change/assign** — the `loading` gate ran
+  before the detail branch, and every mutation refetches
+- after a mutation the pane rendered the **stale pre-change ticket** (whole object held in
+  state); now keyed by id and re-derived
+- the ticket body was written to `description` and **never displayed anywhere**
+- both tabs **discarded the hook's `error`**, rendering a failed query as "no tickets" — the
+  exact silent-empty class this migration exists to remove
+- the support list's **status+priority** filter combination had no composite index at all
+- `useSupportTickets` could leave `loading` true forever when the profile has no orgId
+
+Four findings were refuted on verification (hardcoded categories — the departments they
+replaced carried no routing; the `?customerId=` prefill — not cross-tenant reachable; and two
+others), and are recorded rather than acted on.
+
+## 6. Live acceptance — qa-smoke, EN + AR, 12/12 PASS
+
+```
+PASS  dashboard: no 'Error fetching tasks'
+PASS  new-ticket page honours ?customerId (customer preselected)
+PASS  ticket created (navigated to support list)
+PASS  SUPPORT LIST shows the ticket
+PASS  CUSTOMER TAB shows the ticket
+PASS  TODAY VIEW shows the ticket
+PASS  'All Caught Up!' is gone
+PASS  PROJECT TAB shows its own new ticket
+PASS  project ticket DETAIL renders the body
+PASS  AR dashboard dir=rtl
+PASS  AR TODAY VIEW shows the ticket
+PASS  AR CUSTOMER TAB shows the ticket
+
+console errors during run: []
+```
+
+Screenshots: `test-results/split-brain-{support-list,customer-tab,today-view,project-tab,project-detail,today-ar,customer-tab-ar}.png`.
+`support_tickets` remains empty (0 docs) in prod.
+
+## 7. Gates
+
+tsc clean · build 190 pages exit 0 · eslint clean on every touched file (hook passed with **no
+`--no-verify`**) · jest unit 111 pass · emulator 197 pass (191 rules + 6 provisioning).
+
+While clearing the touched files I also closed 12 pre-existing lint errors in them, including
+the 5 React Compiler regressions in `use-support.ts` from the Phase 2 lint tail.
+
+## 8. Noted, not actioned
+
+- `package.json` gained `@playwright/test` in devDependencies (the repo already ships a
+  Playwright suite; the lockfile is in sync). Flagging it because it was not part of the ask.
+- `lib/types.ts` still exports `Ticket`/`TicketReply`/`TicketStatus`/`TicketPriority` with
+  zero importers now. Left in place — removing them is a separate, purely cosmetic change.
+- **Approval needed:** delete the `support_tickets` rules block (see §11 approvals).

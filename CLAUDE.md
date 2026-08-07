@@ -126,10 +126,13 @@ Super Admin, Chat, Signup/Portal.
 Gaps:
 
 - **Reports** — `lib/services/reports-service.ts` is 100% mock (6 TODO markers; gated "coming soon" in A8).
-- **Support tickets read/write split-brain (OPEN, 2026-08-07)** — writes land in
-  `tickets`/`tenantId`; the customer-tickets tab, project-tickets tab, and dashboard Today
-  view still read `support_tickets`/`orgId` and are therefore permanently empty. Decision
-  needed (recommend: migrate the 3 readers). See §11 ledger + Sweep E.
+- ~~Support tickets read/write split-brain~~ — CLOSED 2026-08-07 (`08839d8b`): all six ticket
+  surfaces converged on `tickets`/`tenantId`. Live-verified 12/12 on qa-smoke. See §11.
+- **Field-name normalization `tenantId` → `orgId` (OPEN, consolidation item, 2026-08-07)** —
+  `tickets` is the only collection tenant-scoped by `tenantId`; every other collection uses
+  `orgId`. That inconsistency is what let the split-brain hide, and it still forces a
+  per-collection `tenantField` in the customer-sidebar count loop. Renaming needs a data
+  migration + rules + index rebuild, so it is deliberately deferred, not forgotten.
 - Minor TODOs: journal vendor hook, expense currency hard-coded "USD",
   payroll→accounting expense records, chat participant creation.
 - ~~`/dashboard/payments/new` route absent~~ — CLOSED 2026-07-28: real record-payment form
@@ -273,7 +276,55 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 4. Emulator suites: tenant-isolation (187) + provisioning-convergence (5) must be green
    before any rules/provisioning commit.
 
+**Awaiting Ahmed's go-ahead (approvals):**
+
+- **Remove the `support_tickets` Firestore rules block.** Marked
+  deprecated-pending-removal in `firestore.rules` on 2026-08-07. Zero code paths read or
+  write it, the collection is empty in prod, and its hooks are deleted. Rules were retained
+  for one release so anything discovered later stays tenant-scoped instead of falling to
+  deny-all. Say the word and it goes.
+
 **Remaining ledger (dated):**
+
+- 2026-08-07 (tickets split-brain HEALED — commit `08839d8b`, rollout
+  `dosory-build-2026-08-07-005`): every ticket surface now reads and writes
+  `tickets`/`tenantId`. Migrated: customer-tickets tab, project-tickets tab, Today view
+  (`today-service`), **and a fourth reader the first pass missed** — the customer sidebar
+  count badge (`customer-context.tsx`), whose shared loop forced `where("orgId")` on every
+  collection, so the Tickets badge read 0 forever and its `catch` reported the failure as a
+  zero. Both tabs also adopted the canonical `SupportTicket` shape and the shared
+  `support.statuses.*` / `support.priorities.*` vocabulary, collapsing two divergent status
+  enums into one. `SupportTicket` gained a first-class `projectId`. `use-support.ts`'s
+  `useTickets`/`useTicketReplies` were **deleted**, not just unused — an exported hook aimed
+  at an abandoned collection is how a fifth surface forks again.
+  **Standing lesson (4) — the identity key is a split-brain surface too.** Fixing the
+  collection was not enough: the Today view matched assignee fields against
+  `profile.uid` (Firebase auth uid) while every assignee picker writes `staff.id`, and staff
+  docs are keyed by **lowercased email**. Proven on prod: the qa-smoke ticket's
+  `assignedAgentId` is `ahmeddarwesh+…@gmail.com` while `authUid` is
+  `mdp62bAtwMg2z7GEjYXjXQunNEB2`. Both Today queries now match the full id set
+  (`in [uid, email]`) via `TodayService.assigneeIdsFor`. **Whenever two surfaces exchange an
+  entity reference, check the KEY as well as the collection.**
+  Also fixed here: `getTasks` had no composite index and a bare `catch {}` that discarded the
+  error object — that pair _was_ the "Error fetching tasks" console message on every
+  dashboard load (index added, error logged, console now clean). Adversarial panel (34
+  agents, 24/28 findings confirmed) additionally caught: the project detail pane unmounting
+  on every status change and then rendering a stale ticket; the ticket body written to
+  `description` but never displayed; both tabs discarding the hook's `error` so failures
+  rendered as "no tickets"; and a missing index for the support list's status+priority
+  combination. 4 composite indexes deployed (136 READY).
+  Live acceptance on qa-smoke, 12/12 PASS, EN + AR, zero console errors — one ticket created
+  through the real UI appears in the support list, the customer tab, the project tab and the
+  Today view, and "All Caught Up!" is gone. Evidence: `test-results/split-brain-*.png`.
+  Pinned by `tests/unit/ticket-collection-agreement.test.ts` (all six surfaces + tenant key +
+  assignee-id contract + index coverage).
+
+- 2026-08-07 (harness note, not a bug): **Radix menus ignore synthetic `element.click()`.**
+  The AR language switcher looked broken under automation; a trusted Playwright click opens
+  it and flips `dir=rtl` correctly. Radix triggers fire on `pointerdown`, which a synthetic
+  `click` never dispatches — this applies to every Radix menu/select in the app. Never file a
+  Radix control as broken from a failed `.click()`. Details + the `localStorage` locale
+  shortcut: `test-results/qa-smoke-README.md`.
 
 - 2026-08-06 (ticket-create defect CLOSED): tickets were uncreatable for every user in every
   tenant. The denial was a READ, not the write: TicketService.createTicket awaits
@@ -394,8 +445,23 @@ For every required `<Select>` sourced from a Firestore collection, confirm that 
 is in `lib/provisioning/seed-tenant-defaults.ts`'s seed set AND backfilled for existing
 orgs. `expenseCategories` was in neither, so no tenant — new or old — could file an expense.
 
-**Sweep E — read/write collection agreement (split-brain family, added 2026-08-07).**
-For every entity, confirm the collection + tenant key that the _write_ path uses is the one
-every _read_ surface queries. `tickets`/`tenantId` (support UI) vs `support_tickets`/`orgId`
-(customer tab, project tab, Today view) diverged silently: writes succeed, three read
-surfaces stay permanently empty, and nothing errors.
+**Sweep E — read/write agreement (split-brain family, added 2026-08-07).**
+For every entity, confirm the collection + tenant key the _write_ path uses is the one every
+_read_ surface queries. `tickets`/`tenantId` (support UI) vs `support_tickets`/`orgId`
+(customer tab, project tab, Today view) diverged silently: writes succeed, read surfaces stay
+permanently empty, and nothing errors.
+
+- **Enumerate read surfaces exhaustively before declaring the sweep done.** The first pass of
+  the 2026-08-07 migration found three readers and missed a fourth — a _count badge_ in
+  `customer-context.tsx`. Grep for the collection name AND for every count/aggregate helper.
+- **The identity key is a split-brain surface too (lesson 4).** Same collection, same tenant
+  key, still zero rows: the Today view matched `assignedAgentId` against the auth uid while
+  every picker writes `staff.id` (a lowercased email). Whenever two surfaces exchange an
+  entity reference — assignee, owner, agent, author — diff the KEY, not just the collection.
+- **A `catch` that returns a default IS the bug.** Every silent-empty in this family was
+  wearing a `catch { return [] }` or `catch { count = 0 }`. Log the error object; a swallowed
+  failure is indistinguishable from a legitimate zero.
+- **Deleting the abandoned accessor is part of the fix.** An exported hook still pointing at
+  the retired collection is precisely how a fifth surface forks again.
+  _Guard:_ `tests/unit/ticket-collection-agreement.test.ts` pins all six ticket surfaces, the
+  tenant key, the assignee-id contract, and index coverage — extend it, don't allow-list around it.
