@@ -48,20 +48,26 @@ export interface Conversation {
     createdAt: Date;
 }
 
+export interface ChatAttachment {
+    url: string;
+    name: string;
+    type: string;
+}
+
 export interface Message {
     id: string;
     conversationId: string;
     senderId: string;
     content: string;
     type: "text" | "image" | "file";
-    attachments?: { url: string; name: string; type: string }[];
+    attachments?: ChatAttachment[];
     readBy: string[];
     timestamp: Date;
 }
 
 // --- Helpers ---
 
-const convertTimestamp = (ts: any): Date => {
+const convertTimestamp = (ts: Timestamp | Date | null | undefined): Date => {
     if (!ts) return new Date();
     if (ts instanceof Timestamp) return ts.toDate();
     // Handle serialized dates if necessary, or just return as is if already Date
@@ -80,7 +86,10 @@ export function useConversations() {
 
     useEffect(() => {
         if (!profile?.uid || !profile?.orgId) {
-            setLoading(false);
+            // Deferred a microtask: setting state synchronously in an effect body triggers
+            // the React Compiler's cascading-render rule (same pattern already used by the
+            // sibling hooks in use-customer-data.ts).
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 
@@ -154,11 +163,15 @@ export function useChatMessages(conversationId: string | null) {
 
     useEffect(() => {
         if (!conversationId || !profile?.uid) {
-            setMessages([]);
+            // Deferred a microtask — a synchronous setState in an effect body trips the
+            // React Compiler's cascading-render rule.
+            Promise.resolve().then(() => setMessages([]));
             return;
         }
 
-        setLoading(true);
+        // Same reason as above — deferred so it is not a synchronous setState in the effect
+        // body. onSnapshot clears it again on first delivery.
+        Promise.resolve().then(() => setLoading(true));
         const q = query(collection(db, "conversations", conversationId, "messages"), orderBy("timestamp", "asc"));
 
         const unsubscribe = onSnapshot(
@@ -190,17 +203,51 @@ export function useChatMessages(conversationId: string | null) {
         return () => unsubscribe();
     }, [conversationId, profile?.uid]);
 
+    // Declared BEFORE the effect that calls it: React Compiler's immutability rule
+    // flags a function referenced above its own declaration, even though the const is
+    // initialised by the time any effect runs.
+    const markAsRead = async (convId: string, messageId: string) => {
+        if (!profile) return;
+
+        // We only really need to update the conversation `unreadCounts` for this user to 0
+        // And optionally add user to `readBy` array of the message (for read receipts)
+
+        const batch = writeBatch(db);
+
+        // 1. Reset unread count for user in conversation
+        const convRef = doc(db, "conversations", convId);
+        batch.update(convRef, {
+            [`unreadCounts.${profile.uid}`]: 0,
+        });
+
+        // 2. Add to readBy in message
+        // const msgRef = doc(db, "conversations", convId, "messages", messageId);
+        // batch.update(msgRef, {
+        //     readBy: arrayUnion(profile.uid)
+        // });
+        // NOTE: arrayUnion import needed if uncommented.
+        // For efficiency, maybe just resetting unread count is enough for the Badge.
+        // Read receipts might be overkill for now but good to have schema ready.
+
+        await batch.commit(); // Only conversation update for now to save writes
+    };
+
     // Mark as read effect
     useEffect(() => {
         if (!conversationId || !profile?.uid || messages.length === 0) return;
 
         const lastMessage = messages[messages.length - 1];
-        if (lastMessage.senderId !== profile.uid && !lastMessage.readBy.includes(profile.uid)) {
+        const readBy = lastMessage.readBy ?? [];
+        if (lastMessage.senderId !== profile.uid && !readBy.includes(profile.uid)) {
             markAsRead(conversationId, lastMessage.id);
         }
     }, [conversationId, messages, profile?.uid]);
 
-    const sendMessage = async (content: string, type: "text" | "image" | "file" = "text", attachments: any[] = []) => {
+    const sendMessage = async (
+        content: string,
+        type: "text" | "image" | "file" = "text",
+        attachments: ChatAttachment[] = []
+    ) => {
         if (!conversationId || !profile) return;
 
         const batch = writeBatch(db);
@@ -229,7 +276,7 @@ export function useChatMessages(conversationId: string | null) {
 
         if (convSnap.exists()) {
             const convData = convSnap.data();
-            const updates: any = {
+            const updates: Record<string, unknown> = {
                 lastMessage: {
                     content: type === "text" ? content : `Sent an ${type}`,
                     senderId: profile.uid,
@@ -251,32 +298,6 @@ export function useChatMessages(conversationId: string | null) {
         }
 
         await batch.commit();
-    };
-
-    const markAsRead = async (convId: string, messageId: string) => {
-        if (!profile) return;
-
-        // We only really need to update the conversation `unreadCounts` for this user to 0
-        // And optionally add user to `readBy` array of the message (for read receipts)
-
-        const batch = writeBatch(db);
-
-        // 1. Reset unread count for user in conversation
-        const convRef = doc(db, "conversations", convId);
-        batch.update(convRef, {
-            [`unreadCounts.${profile.uid}`]: 0,
-        });
-
-        // 2. Add to readBy in message
-        // const msgRef = doc(db, "conversations", convId, "messages", messageId);
-        // batch.update(msgRef, {
-        //     readBy: arrayUnion(profile.uid)
-        // });
-        // NOTE: arrayUnion import needed if uncommented.
-        // For efficiency, maybe just resetting unread count is enough for the Badge.
-        // Read receipts might be overkill for now but good to have schema ready.
-
-        await batch.commit(); // Only conversation update for now to save writes
     };
 
     return { messages, loading, sendMessage };
@@ -346,14 +367,37 @@ export async function getOrCreateConversation(
     // Let's use deterministic ID for 1:1 conversations to ensure uniqueness easily.
 
     const docRef = doc(db, "conversations", deterministicId);
-    const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
+    // SWEEP C — missing-doc permission-denied landmine. This is a get-or-create, so on the
+    // very first chat between two people the document does NOT exist by definition. The
+    // conversations read rule is `isOrgMember(resource.data.orgId)`, and on a missing document
+    // `resource` is null: the expression errors and the READ is DENIED rather than returning
+    // an empty snapshot. That threw here, before setDoc could run, so starting a NEW 1:1 chat
+    // failed for every user in every tenant. Same root cause as the 2026-08-06 ticket-create
+    // saga (settings/{tenantId}_support) — see CLAUDE.md §11.
+    // A denied/absent read means "no conversation yet"; fall through and create it. The
+    // create is authorised independently by request.resource.data.orgId, and if the document
+    // does exist under another tenant the setDoc is an update and its own rule denies it.
+    let docSnap;
+    try {
+        docSnap = await getDoc(docRef);
+    } catch (err) {
+        // NARROW deliberately. `permission-denied` is the missing-doc landmine described above
+        // and means "create it". Anything else — `unavailable` when offline, an App Check
+        // hiccup, deadline-exceeded — must RETHROW: falling through on those reaches the
+        // non-merging setDoc below, which on an EXISTING conversation would delete
+        // `lastMessage`, reset both participants' `unreadCounts` and rewrite `createdAt`.
+        if ((err as { code?: string })?.code !== "permission-denied") throw err;
+        console.warn(`[chat] conversations/${deterministicId} unreadable; treating as new`, err);
+        docSnap = null;
+    }
+
+    if (docSnap?.exists()) {
         return docSnap.id;
     }
 
     // Create new
-    const initialData: any = {
+    const initialData: Record<string, unknown> = {
         orgId,
         participants: [currentUser.uid, otherUser.uid],
         participantDetails: {

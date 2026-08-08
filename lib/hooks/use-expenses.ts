@@ -43,7 +43,16 @@ export function useExpenses(options: UseExpensesOptions = {}) {
     const { recordJournalEntry, accounts } = useFinance(); // Finance Integration
 
     // Cache key for stale-while-revalidate
-    const cacheKey = buildCacheKey("expenses", profile?.orgId, categoryId, customerId, projectId, String(billable), orderByField, orderDirection);
+    const cacheKey = buildCacheKey(
+        "expenses",
+        profile?.orgId,
+        categoryId,
+        customerId,
+        projectId,
+        String(billable),
+        orderByField,
+        orderDirection
+    );
     const cached = getCachedData<Expense>(cacheKey);
 
     const [expenses, setExpenses] = useState<Expense[]>(cached || []);
@@ -220,6 +229,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 export function useExpenseCategories() {
     const { profile } = useUserProfile();
     const [categories, setCategories] = useState<ExpenseCategory[]>([]);
+    const [error, setError] = useState<Error | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -235,19 +245,31 @@ export function useExpenseCategories() {
             orderBy("name", "asc")
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            })) as ExpenseCategory[];
-            setCategories(data);
-            setLoading(false);
-        });
+        // Sweep D: this feeds a REQUIRED select on the expense form. With no error callback a
+        // failed read left `categories` empty forever, which renders exactly like "this tenant
+        // has no categories" — the same silent-empty that made expenses unfileable before.
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                })) as ExpenseCategory[];
+                setCategories(data);
+                setError(null);
+                setLoading(false);
+            },
+            (err) => {
+                console.error("Error fetching expense categories:", err);
+                setError(err);
+                setLoading(false);
+            }
+        );
 
         return () => unsubscribe();
     }, [profile?.orgId]);
 
-    return { categories, loading };
+    return { categories, loading, error };
 }
 
 // ============================================

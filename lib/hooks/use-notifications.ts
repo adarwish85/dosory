@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
+import { identityKeysFor } from "@/lib/utils/identity-keys";
 
 // Notification types corresponding to business events
 export type NotificationType =
@@ -84,12 +85,23 @@ export function useNotifications() {
             return;
         }
 
+        // SWEEP E — notifications are addressed with `staff.id` (a lowercased email) by every
+        // producer (lead assignment, task assignment, …) while this reader compared against
+        // profile.uid. They never matched, so the bell was permanently empty for everyone.
+        // Match the full identity set instead of rewriting historical rows.
+        //
+        // The orderBy is restored at the same time: it had been commented out "to avoid a
+        // composite index", which silently changed the semantics — without it Firestore falls
+        // back to __name__ order, so limit(50) returned an ARBITRARY 50 notifications rather
+        // than the newest 50. The covering index is declared in firestore.indexes.json.
+        // The `read in [true, false]` clause is also gone: it selected everything (a no-op),
+        // and Firestore permits only one disjunctive clause per query, so it would now
+        // conflict with the `userId in` above.
         const q = query(
             collection(db, "notifications"),
-            where("userId", "==", profile.uid),
             where("orgId", "==", profile.orgId),
-            // orderBy("createdAt", "desc"), // Constraint removed to avoid composite index
-            where("read", "in", [true, false]),
+            where("userId", "in", identityKeysFor(profile.uid, profile.email)),
+            orderBy("createdAt", "desc"),
             limit(50)
         );
 
@@ -119,7 +131,7 @@ export function useNotifications() {
         );
 
         return () => unsubscribe();
-    }, [profile?.uid, profile?.orgId, profileLoading]);
+    }, [profile?.uid, profile?.email, profile?.orgId, profileLoading]);
 
     // Mark a single notification as read
     const markAsRead = useCallback(async (notificationId: string): Promise<void> => {

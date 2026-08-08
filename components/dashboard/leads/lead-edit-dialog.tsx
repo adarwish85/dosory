@@ -21,6 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLeads, usePermission } from "@/lib/hooks";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useTranslation } from "@/lib/i18n";
+import { toast } from "sonner";
 
 // World Countries
 const COUNTRIES = [
@@ -234,6 +235,13 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
         setDuplicateWarning(null);
     }, [watchedEmail, watchedPhone, leads, lead]);
 
+    // SWEEP B: this sheet renders no <FormMessage> anywhere, so a zod failure produced no
+    // visible feedback at all — Save simply did nothing. Surface the first failing field.
+    const handleInvalid = (errors: Record<string, { message?: string }>) => {
+        const first = Object.keys(errors)[0];
+        toast.error(errors[first]?.message || t("leads.edit.validationFailed"));
+    };
+
     const handleSubmit = async (data: LeadFormData) => {
         if (!lead) return;
         try {
@@ -251,7 +259,9 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
             <Sheet open={open} onOpenChange={onClose}>
                 <SheetContent className="w-[90%] sm:max-w-[800px] p-0 gap-0 bg-white flex flex-col">
                     <SheetHeader className="px-4 py-3 border-b flex flex-row items-center justify-between sticky top-0 bg-white z-10 shrink-0">
-                        <SheetTitle className="text-lg font-bold">{t("leads.edit.title", { name: lead.name })}</SheetTitle>
+                        <SheetTitle className="text-lg font-bold">
+                            {t("leads.edit.title", { name: lead.name })}
+                        </SheetTitle>
                         <div className="flex items-center gap-2">
                             <Button
                                 variant="ghost"
@@ -268,7 +278,10 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                         <ScrollArea className="flex-1">
                             <div className="p-4">
                                 <Form {...form}>
-                                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
+                                    <form
+                                        onSubmit={form.handleSubmit(handleSubmit, handleInvalid)}
+                                        className="space-y-3"
+                                    >
                                         {/* Duplicate Warning */}
                                         {duplicateWarning && (
                                             <Alert
@@ -299,12 +312,18 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="status"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-red-500 text-xs">{t("leads.edit.statusLabel")}</FormLabel>
+                                                        <FormLabel className="text-red-500 text-xs">
+                                                            {t("leads.edit.statusLabel")}
+                                                        </FormLabel>
                                                         <div className="flex gap-1">
                                                             <Select onValueChange={field.onChange} value={field.value}>
                                                                 <FormControl>
                                                                     <SelectTrigger className="h-9">
-                                                                        <SelectValue placeholder={t("leads.edit.selectPlaceholder")} />
+                                                                        <SelectValue
+                                                                            placeholder={t(
+                                                                                "leads.edit.selectPlaceholder"
+                                                                            )}
+                                                                        />
                                                                     </SelectTrigger>
                                                                 </FormControl>
                                                                 <SelectContent>
@@ -337,12 +356,18 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="source"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-red-500 text-xs">{t("leads.edit.sourceLabel")}</FormLabel>
+                                                        <FormLabel className="text-red-500 text-xs">
+                                                            {t("leads.edit.sourceLabel")}
+                                                        </FormLabel>
                                                         <div className="flex gap-1">
                                                             <Select onValueChange={field.onChange} value={field.value}>
                                                                 <FormControl>
                                                                     <SelectTrigger className="h-9">
-                                                                        <SelectValue placeholder={t("leads.edit.selectPlaceholder")} />
+                                                                        <SelectValue
+                                                                            placeholder={t(
+                                                                                "leads.edit.selectPlaceholder"
+                                                                            )}
+                                                                        />
                                                                     </SelectTrigger>
                                                                 </FormControl>
                                                                 <SelectContent>
@@ -372,15 +397,21 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="assignedTo"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">{t("leads.edit.assigned")}</FormLabel>
+                                                        <FormLabel className="text-xs">
+                                                            {t("leads.edit.assigned")}
+                                                        </FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value}>
                                                             <FormControl>
                                                                 <SelectTrigger className="h-9">
-                                                                    <SelectValue placeholder={t("leads.edit.selectStaff")} />
+                                                                    <SelectValue
+                                                                        placeholder={t("leads.edit.selectStaff")}
+                                                                    />
                                                                 </SelectTrigger>
                                                             </FormControl>
                                                             <SelectContent>
-                                                                <SelectItem value="unassigned">{t("leads.edit.unassigned")}</SelectItem>
+                                                                <SelectItem value="unassigned">
+                                                                    {t("leads.edit.unassigned")}
+                                                                </SelectItem>
                                                                 {staff.map((member) => (
                                                                     <SelectItem key={member.id} value={member.id}>
                                                                         {member.firstName} {member.lastName}
@@ -400,7 +431,9 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="name"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-red-500 text-xs">{t("leads.edit.nameLabel")}</FormLabel>
+                                                        <FormLabel className="text-red-500 text-xs">
+                                                            {t("leads.edit.nameLabel")}
+                                                        </FormLabel>
                                                         <FormControl>
                                                             <Input {...field} className="h-9" />
                                                         </FormControl>
@@ -440,7 +473,9 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="position"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">{t("leads.edit.position")}</FormLabel>
+                                                        <FormLabel className="text-xs">
+                                                            {t("leads.edit.position")}
+                                                        </FormLabel>
                                                         <FormControl>
                                                             <Input {...field} className="h-9" />
                                                         </FormControl>
@@ -452,7 +487,9 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="company"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">{t("leads.edit.company")}</FormLabel>
+                                                        <FormLabel className="text-xs">
+                                                            {t("leads.edit.company")}
+                                                        </FormLabel>
                                                         <FormControl>
                                                             <Input {...field} className="h-9" />
                                                         </FormControl>
@@ -468,7 +505,9 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="website"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">{t("leads.edit.website")}</FormLabel>
+                                                        <FormLabel className="text-xs">
+                                                            {t("leads.edit.website")}
+                                                        </FormLabel>
                                                         <FormControl>
                                                             <Input {...field} className="h-9" />
                                                         </FormControl>
@@ -506,7 +545,9 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                 name="tags"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs">{t("leads.edit.tags")}</FormLabel>
+                                                        <FormLabel className="text-xs">
+                                                            {t("leads.edit.tags")}
+                                                        </FormLabel>
                                                         <FormControl>
                                                             <Input
                                                                 placeholder={t("leads.edit.tagsPlaceholder")}
@@ -539,7 +580,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                         </Button>
                         <Button
                             size="sm"
-                            onClick={form.handleSubmit(handleSubmit)}
+                            onClick={form.handleSubmit(handleSubmit, handleInvalid)}
                             className="bg-gray-900 text-white hover:bg-gray-800"
                             disabled={!can("leads-edit")}
                         >

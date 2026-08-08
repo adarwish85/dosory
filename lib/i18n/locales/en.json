@@ -5665,5 +5665,7 @@
     "hr.leaves.endBeforeStart": "End date must be on or after the start date",
     "common.retry": "Retry",
     "projects.tickets.loadFailed": "Couldn't load tickets",
-    "customers.tickets.loadFailed": "Couldn't load tickets"
+    "customers.tickets.loadFailed": "Couldn't load tickets",
+    "customers.add.validationFailed": "Please fix the highlighted field",
+    "leads.edit.validationFailed": "Please fix the highlighted field"
 }

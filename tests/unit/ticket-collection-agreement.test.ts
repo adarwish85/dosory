@@ -148,7 +148,7 @@ describe("Today view — assignee identity keys", () => {
     const today = read("lib/services/today-service.ts");
 
     test("both Today queries match on the full set of assignee ids, not the auth uid alone", () => {
-        expect(today).toMatch(/assigneeIdsFor\(userId, userEmail\)/);
+        expect(today).toMatch(/identityKeysFor\(userId, userEmail\)/);
         expect(today).toMatch(/where\("assignees", "array-contains-any", assigneeIds\)/);
         expect(today).toMatch(/where\("assignedAgentId", "in", assigneeIds\)/);
         // The single-value forms are what broke it; they must not come back.

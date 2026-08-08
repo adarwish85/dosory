@@ -179,7 +179,13 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
             // badge permanently 0 — ticket documents have no orgId field, so the count query
             // matched nothing and the catch below reported it as zero. Same silent-empty class
             // as the read/write split-brain this migration closed (CLAUDE.md Sweep E).
-            const collections: Array<{ key: string; collection: string; tenantField?: string }> = [
+            const collections: Array<{
+                key: string;
+                collection: string;
+                tenantField?: string;
+                customerField?: string;
+                relatedType?: string;
+            }> = [
                 { key: "invoices", collection: "invoices" },
                 { key: "payments", collection: "payments" },
                 { key: "creditNotes", collection: "credit_notes" }, // fixed name
@@ -190,7 +196,10 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
                 { key: "tasks", collection: "tasks" },
                 { key: "tickets", collection: "tickets", tenantField: "tenantId" },
                 { key: "files", collection: "customer_files" }, // fixed name
-                { key: "reminders", collection: "reminders" },
+                // `reminders` links to its subject via relatedTo.{id,type}, not a top-level
+                // customerId — same Sweep E disagreement the useReminders READER had. Filtering
+                // on customerId here kept this badge at 0 forever.
+                { key: "reminders", collection: "reminders", customerField: "relatedTo.id", relatedType: "customer" },
                 { key: "activities", collection: "activities" }, // added
             ];
 
@@ -198,13 +207,14 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
 
             // Handle root collections
             await Promise.all(
-                collections.map(async ({ key, collection: collName, tenantField }) => {
+                collections.map(async ({ key, collection: collName, tenantField, customerField, relatedType }) => {
                     try {
-                        const q = query(
-                            collection(db, collName),
+                        const constraints = [
                             where(tenantField ?? "orgId", "==", orgId),
-                            where("customerId", "==", customerId)
-                        );
+                            where(customerField ?? "customerId", "==", customerId),
+                        ];
+                        if (relatedType) constraints.push(where("relatedTo.type", "==", relatedType));
+                        const q = query(collection(db, collName), ...constraints);
                         const snapshot = await getCountFromServer(q);
                         counts[key as keyof RecordCounts] = snapshot.data().count;
                     } catch (err) {

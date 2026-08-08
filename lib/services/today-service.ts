@@ -3,25 +3,11 @@ import { collection, query, where, getDocs, Timestamp, orderBy, limit } from "fi
 import { TodayDashboardData, TodayItem, MetricTile, AlertItem, ActivityFeedItem } from "@/lib/types/today";
 import { Task, Invoice } from "@/lib/types";
 import { SupportTicket } from "@/lib/types/support";
+// Shared with the notification bell and any other reader of an assignee-style
+// reference field — see the lesson-4 note in that file (Sweep E).
+import { identityKeysFor } from "@/lib/utils/identity-keys";
 
 export class TodayService {
-    /**
-     * The ids a row's assignee field can legitimately hold for this user.
-     *
-     * Assignee pickers across the app store `staff.id` — and staff docs are keyed by
-     * LOWERCASED EMAIL, carrying `authUid` as a field (see the staff invariant in
-     * CLAUDE.md §11). The Today view is handed `profile.uid`, the Firebase auth uid.
-     * Those two never match, so querying assignees by uid alone returned zero rows for
-     * every user — the second reason this view rendered "All Caught Up!" while open,
-     * assigned work existed. Match on both, since a deduped staff record may be keyed
-     * either way.
-     */
-    private assigneeIdsFor(userId: string, userEmail?: string): string[] {
-        // Never empty: Firestore throws on an `in`/`array-contains-any` with zero values.
-        const ids = new Set([userId, userEmail?.toLowerCase()].filter(Boolean) as string[]);
-        return ids.size > 0 ? Array.from(ids) : [userId || "__none__"];
-    }
-
     async getDashboardData(
         userId: string,
         role: string,
@@ -29,7 +15,7 @@ export class TodayService {
         userEmail?: string
     ): Promise<TodayDashboardData> {
         try {
-            const assigneeIds = this.assigneeIdsFor(userId, userEmail);
+            const assigneeIds = identityKeysFor(userId, userEmail);
 
             // 1. Fetch actionable items (Parallel)
             const [tasks, tickets, invoices] = await Promise.all([
@@ -168,7 +154,11 @@ export class TodayService {
                     meta: { amount: inv.amountDue },
                 };
             });
-        } catch {
+        } catch (error) {
+            // Sweep E: a catch that returns a default IS the bug. Its two siblings in this
+            // file were repaired earlier; this one still reported a failed query as
+            // "no overdue invoices", which is indistinguishable from good news.
+            console.error("Error fetching overdue invoices for Today view:", error);
             return [];
         }
     }

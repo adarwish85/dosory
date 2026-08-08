@@ -382,17 +382,21 @@ service cloud.firestore {
       }
     }
 
-    // DEPRECATED — PENDING REMOVAL (needs Ahmed's go-ahead; listed under approvals in
-    // TEST-REPORT-2026-07-28.md). Superseded by /tickets below. As of the 2026-08-07
-    // Sweep E migration NO code path reads or writes this collection: the customer-tickets
-    // tab, project-tickets tab and dashboard Today view were moved to `tickets`/`tenantId`,
-    // and use-support.ts's `useTickets`/`useTicketReplies` (the only writers) were deleted.
-    // The collection is empty in prod. Rules are retained deliberately for one release so
-    // that any doc discovered later stays tenant-scoped rather than falling to deny-all
-    // before we have confirmed there is nothing to migrate.
-    match /support_tickets/{docId} {
-      allow read, update, delete: if isSuperAdmin() || (isOrgMember(resource.data.orgId));
-      allow create: if isSuperAdmin() || (isOrgMember(request.resource.data.orgId));
+    // RETIRED 2026-08-08. Superseded by /tickets (tenantId) below. Verified before removal:
+    // 0 documents in prod, 0 nested messages, and zero Firestore references anywhere in the
+    // codebase (only historical comments remain). Pinned by
+    // tests/unit/ticket-collection-agreement.test.ts.
+    //
+    // This block DECLARES the intent; it is NOT what enforces it. Firestore grants access
+    // when any matching rule allows, so `allow read, write: if false` cannot override
+    // anything — deleting the old permissive block, or replacing it with this one, both left
+    // the collection just as reachable via the generic `match /{collection}/{docId}`
+    // fall-through at the bottom of this file. Enforcement lives in isRetiredCollection(),
+    // which excludes it there. Both failed attempts and the working one are recorded in
+    // tests/firestore-rules/support-tickets-retirement.test.ts.
+    // Keep the two in sync: retiring a collection means a deny here AND a name there.
+    match /support_tickets/{document=**} {
+      allow read, write: if false;
     }
 
     // Support tickets (ticket-service.ts writes here, tenant-scoped by `tenantId`).
@@ -527,13 +531,25 @@ service cloud.firestore {
     // Allow authenticated users to access documents where orgId matches their token claim
     // This catches any tenant-isolated collections not explicitly defined above
     
+    // RETIRED COLLECTIONS — must be excluded HERE, in the catch-all itself.
+    // Firestore grants access when ANY matching rule allows it, so a separate
+    // `match /x/{id} { allow read, write: if false; }` block is a NO-OP: this rule still
+    // grants. Adding a collection to this list is the only way to actually deny it.
+    // Verified in tests/firestore-rules/support-tickets-retirement.test.ts, which failed
+    // against both the original block AND a standalone deny block before this line existed.
+    function isRetiredCollection(collection) {
+      return collection == "support_tickets";
+    }
+
     match /{collection}/{docId} {
       // Allow read/write if authenticated and document's orgId matches user's token orgId
-      allow read, write: if isAuthenticated() 
-        && resource.data.orgId != null 
+      allow read, write: if isAuthenticated()
+        && !isRetiredCollection(collection)
+        && resource.data.orgId != null
         && request.auth.token.orgId == resource.data.orgId;
-      // Allow create if authenticated and new document's orgId matches user's token orgId  
+      // Allow create if authenticated and new document's orgId matches user's token orgId
       allow create: if isAuthenticated()
+        && !isRetiredCollection(collection)
         && request.resource.data.orgId != null
         && request.auth.token.orgId == request.resource.data.orgId;
     }

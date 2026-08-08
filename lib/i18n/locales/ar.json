@@ -5665,5 +5665,7 @@
     "hr.leaves.endBeforeStart": "يجب أن يكون تاريخ النهاية بعد تاريخ البداية أو مساويًا له",
     "common.retry": "إعادة المحاولة",
     "projects.tickets.loadFailed": "تعذّر تحميل التذاكر",
-    "customers.tickets.loadFailed": "تعذّر تحميل التذاكر"
+    "customers.tickets.loadFailed": "تعذّر تحميل التذاكر",
+    "customers.add.validationFailed": "يرجى تصحيح الحقل المحدَّد",
+    "leads.edit.validationFailed": "يرجى تصحيح الحقل المحدَّد"
 }

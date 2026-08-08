@@ -26,6 +26,7 @@ import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
 import { createBulkNotifications } from "@/lib/hooks/use-notifications";
+import { identityKeysFor } from "@/lib/utils/identity-keys";
 import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Project, ProjectStatus, ProjectHealthStatus, Task, TaskStatus } from "@/lib/types";
 import type { ProjectFormData, TaskFormData } from "@/lib/schemas";
@@ -90,7 +91,15 @@ export function useProjects(options: UseProjectsOptions = {}) {
     const { logActivity } = useActivity({ enabled: false });
 
     // Cache key for stale-while-revalidate
-    const cacheKey = buildCacheKey("projects", profile?.orgId, status, customerId, orderByField, orderDirection, queryLimit);
+    const cacheKey = buildCacheKey(
+        "projects",
+        profile?.orgId,
+        status,
+        customerId,
+        orderByField,
+        orderDirection,
+        queryLimit
+    );
     const cached = getCachedData<Project>(cacheKey);
 
     const [projects, setProjects] = useState<Project[]>(cached || []);
@@ -151,7 +160,14 @@ export function useProjects(options: UseProjectsOptions = {}) {
             const customerDoc = await getDoc(doc(db, "customers", data.customerId));
             const customerName = customerDoc.exists() ? customerDoc.data().company : "Unknown Customer";
 
-            const slugify = (text: string) => text.toString().toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w-]+/g, "").replace(/--+/g, "-");
+            const slugify = (text: string) =>
+                text
+                    .toString()
+                    .toLowerCase()
+                    .trim()
+                    .replace(/\s+/g, "-")
+                    .replace(/[^\w-]+/g, "")
+                    .replace(/--+/g, "-");
             const docRef = await addDoc(collection(db, "projects"), {
                 ...data,
                 customerName,
@@ -461,7 +477,19 @@ export function useTasks(options: UseTasksOptions = {}) {
     const { logActivity } = useActivity({ enabled: false });
 
     // Cache key for stale-while-revalidate
-    const taskCacheKey = buildCacheKey("tasks", profile?.orgId, status, projectId, customerId, assignee, orderByField, orderDirection, queryLimit, relatedTo?.id, relatedTo?.type);
+    const taskCacheKey = buildCacheKey(
+        "tasks",
+        profile?.orgId,
+        status,
+        projectId,
+        customerId,
+        assignee,
+        orderByField,
+        orderDirection,
+        queryLimit,
+        relatedTo?.id,
+        relatedTo?.type
+    );
     const cachedTasks = getCachedData<Task>(taskCacheKey);
 
     const [tasks, setTasks] = useState<Task[]>(cachedTasks || []);
@@ -527,6 +555,19 @@ export function useTasks(options: UseTasksOptions = {}) {
         );
 
         return () => unsubscribe();
+        // SWEEP A: `relatedTo` (the whole object) MUST NOT be a dep. Callers build it inline —
+        // e.g. useTasks({ relatedTo: { type: "lead", id: leadId } }) in lead-sidebar.tsx — so
+        // it is a new identity on every render. The snapshot callback above calls setTasks
+        // with a freshly mapped array, which always re-renders the caller, which rebuilds the
+        // object, which makes the deps unequal, which tears down and re-opens the Firestore
+        // listener — an unbounded resubscribe loop that pegs the CPU and bills reads forever
+        // on every /dashboard/leads/{id}/* page. It never throws "Maximum update depth
+        // exceeded" because the setState originates in an async callback, so it presents as a
+        // freeze, not a crash. Exactly the shipped use-contracts `cursors` bug (see that
+        // file's comment) and the same eslint-autofix regression path.
+        // `relatedTo?.id` and `relatedTo?.type` below fully describe the query — they are the
+        // only members the effect body reads. Same pattern as use-files.ts and use-reminders.ts.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
         profile?.orgId,
         status,
@@ -538,7 +579,6 @@ export function useTasks(options: UseTasksOptions = {}) {
         queryLimit,
         relatedTo?.id,
         relatedTo?.type,
-        relatedTo,
         profileLoading,
     ]);
 
@@ -558,8 +598,12 @@ export function useTasks(options: UseTasksOptions = {}) {
 
             // Create notifications for assignees
             if (data.assignees && data.assignees.length > 0) {
+                // The picker stores `staff.id` (a lowercased email); comparing it to
+                // profile.uid never matched, so this filter never removed anyone. Harmless
+                // while the bell was broken — visible now that notifications resolve.
+                const selfIds = identityKeysFor(profile.uid, profile.email);
                 const assigneesToNotify = data.assignees
-                    .filter((userId) => userId !== profile.uid) // Don't notify self
+                    .filter((userId) => !selfIds.includes(userId)) // Don't notify self
                     .map((userId) => ({ userId, orgId: profile.orgId }));
 
                 if (assigneesToNotify.length > 0) {

@@ -35,6 +35,10 @@ interface UsePaymentsOptions {
 export function usePayments(options: UsePaymentsOptions = {}) {
     const { customerId, invoiceId } = options;
     const { profile } = useUserProfile();
+    // Hoisted so React Compiler's inferred dependency matches the written one exactly
+    // (`orgId`, not the whole `profile` object) — otherwise it refuses to preserve the
+    // manual memoization below and skips optimizing the hook.
+    const orgId = profile?.orgId;
     const { logActivity } = useActivity({ enabled: false });
     const [payments, setPayments] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
@@ -77,15 +81,15 @@ export function usePayments(options: UsePaymentsOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, customerId, invoiceId]);
+    }, [orgId, customerId, invoiceId]);
 
     const createPayment = useCallback(
         async (data: Omit<Payment, "id" | "orgId" | "createdAt" | "updatedAt">) => {
-            if (!profile?.orgId) throw new Error("No organization");
+            if (!orgId) throw new Error("No organization");
 
             const docRef = await addDoc(collection(db, "payments"), {
                 ...data,
-                orgId: profile.orgId,
+                orgId,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
             });
@@ -99,7 +103,7 @@ export function usePayments(options: UsePaymentsOptions = {}) {
 
             return docRef;
         },
-        [profile?.orgId, logActivity]
+        [orgId, logActivity]
     );
 
     return { payments, loading, createPayment };
@@ -161,6 +165,12 @@ export function useCreditNotes(options: UseCreditNotesOptions = {}) {
     }, [profile?.orgId, customerId, status]);
 
     const createCreditNote = useCallback(
+        // MONEY-MODULE — left as `any` deliberately (diagnosis only this round).
+        // Tightening this to Omit<CreditNote, …> surfaces a real mismatch: the caller
+        // app/dashboard/accounting/credit-notes/new/page.tsx:100 passes `date` as a JS Date
+        // while CreditNote.date is a Firestore Timestamp. Fixing that touches credit-note
+        // amounts and persistence, so it is written up for Ahmed rather than changed here.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         async (data: any) => {
             if (!profile?.orgId) throw new Error("No organization");
 
@@ -189,6 +199,8 @@ interface UseRemindersOptions {
 export function useReminders(options: UseRemindersOptions = {}) {
     const { customerId } = options;
     const { profile } = useUserProfile();
+    // See the note in usePayments above.
+    const orgId = profile?.orgId;
     const [reminders, setReminders] = useState<Reminder[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -202,7 +214,14 @@ export function useReminders(options: UseRemindersOptions = {}) {
         const constraints: QueryConstraint[] = [where("orgId", "==", profile.orgId)];
 
         if (customerId) {
-            constraints.push(where("customerId", "==", customerId));
+            // SWEEP E — read/write disagreement. create-reminder-dialog.tsx writes
+            // `relatedTo: { type: "customer", id: customerId }` and NO top-level customerId
+            // field, so filtering on `customerId` matched nothing and the customer Reminders
+            // tab was permanently empty with no error. The deployed index
+            // reminders(orgId, relatedTo.id, relatedTo.type, date) confirms `relatedTo` is the
+            // intended shape, so the READER is what was wrong here.
+            constraints.push(where("relatedTo.id", "==", customerId));
+            constraints.push(where("relatedTo.type", "==", "customer"));
         }
 
         constraints.push(orderBy("date", "asc"));
@@ -226,15 +245,15 @@ export function useReminders(options: UseRemindersOptions = {}) {
         );
 
         return () => unsubscribe();
-    }, [profile?.orgId, customerId]);
+    }, [orgId, customerId]);
 
     const createReminder = useCallback(
         async (data: Omit<Reminder, "id" | "orgId" | "createdAt" | "updatedAt" | "isNotified">) => {
-            if (!profile?.orgId) throw new Error("No organization");
+            if (!orgId) throw new Error("No organization");
 
             return await addDoc(collection(db, "reminders"), {
                 ...data,
-                orgId: profile.orgId,
+                orgId,
                 isNotified: false,
                 // checkReminders (Cloud Function) queries sendEmail==true && emailSent==false.
                 // Firestore equality skips docs missing the field, so both MUST exist or the
@@ -245,7 +264,7 @@ export function useReminders(options: UseRemindersOptions = {}) {
                 updatedAt: serverTimestamp(),
             });
         },
-        [profile?.orgId]
+        [orgId]
     );
 
     const deleteReminder = useCallback(async (id: string) => {
@@ -271,7 +290,6 @@ export function useCustomerFiles(options: UseCustomerFilesOptions = {}) {
 
     useEffect(() => {
         if (!profile?.orgId) {
-             
             setLoading(false);
             return;
         }
@@ -312,7 +330,10 @@ export function useCustomerFiles(options: UseCustomerFilesOptions = {}) {
             // 1. Upload to Storage
             const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
             const { storage } = await import("@/lib/firebase");
-            const storageRef = ref(storage, `organizations/${profile.orgId}/customers/${customerId}/files/${file.name}`);
+            const storageRef = ref(
+                storage,
+                `organizations/${profile.orgId}/customers/${customerId}/files/${file.name}`
+            );
 
             await uploadBytes(storageRef, file);
             const url = await getDownloadURL(storageRef);

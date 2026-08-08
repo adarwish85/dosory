@@ -155,8 +155,27 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
                 // doc (never staff/{uid}). If an email-keyed doc already exists but lacks authUid,
                 // just backfill authUid instead of duplicating.
                 const emailRef = doc(db, "staff", profile.email.toLowerCase());
-                const emailSnap = await getDoc(emailRef);
-                if (emailSnap.exists()) {
+                // SWEEP C — missing-doc permission-denied landmine, on the one path where the
+                // document being absent is the WHOLE POINT. The staff read rule dereferences
+                // resource.data.orgId, so when the doc genuinely does not exist `resource` is
+                // null, the expression errors and the read is DENIED — throwing out of the
+                // self-heal before it can create anything. The guard could only ever repair a
+                // doc that already existed. Treat a denied/absent probe as "not there" and
+                // fall through to the create below, which the rule authorises separately via
+                // request.resource.data.orgId.
+                let emailSnap;
+                try {
+                    emailSnap = await getDoc(emailRef);
+                } catch (err) {
+                    // NARROW: only the missing-doc landmine (permission-denied) means "create".
+                    // On a transient failure we must rethrow — the create branch below is a
+                    // NON-MERGING setDoc, so falling through would overwrite an existing staff
+                    // doc's roleId/permissions/status with the admin defaults.
+                    if ((err as { code?: string })?.code !== "permission-denied") throw err;
+                    console.warn("[provisioning] staff probe read denied/absent; will create", err);
+                    emailSnap = null;
+                }
+                if (emailSnap?.exists()) {
                     await setDoc(emailRef, { authUid: user.uid, updatedAt: serverTimestamp() }, { merge: true });
                     return;
                 }

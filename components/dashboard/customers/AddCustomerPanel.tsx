@@ -22,6 +22,7 @@ import { customerFormSchema, type CustomerFormData } from "@/lib/schemas";
 import { CURRENCIES, LANGUAGES, COUNTRIES, CUSTOMER_GROUPS } from "@/lib/constants";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useTranslation } from "@/lib/i18n";
+import { toast } from "sonner";
 
 export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustomerPanelProps) {
     const { t } = useTranslation();
@@ -32,6 +33,10 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
     const [shouldOpenContact, setShouldOpenContact] = useState(false);
 
     const form = useForm<CustomerFormData>({
+        // customerFormSchema defaults `status`, so the schema's INPUT type (status optional)
+        // and OUTPUT type (status required) differ, and RHF's Resolver is invariant in that
+        // parameter — the cast is load-bearing, not laziness.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(customerFormSchema) as any,
         defaultValues: {
             company: "",
@@ -74,16 +79,33 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
             }
 
             form.reset();
-        } catch (error: any) {
+        } catch (error) {
             console.error("Failed to create customer:", error);
             // Form error handling would go here
         }
     };
 
+    // SWEEP B — dead-submit. The panel's tabs CONDITIONALLY RENDER their content
+    // (`{activeTab === "details" && …}`), so while the Billing tab is open the required
+    // `company` field is unmounted. handleSubmit had no onInvalid, so pressing Save from the
+    // Billing tab ran validation, failed on a field the user could not see, and did nothing
+    // at all — no error, no toast, no tab change.
+    // Switch back to the tab that owns the first failing field and say what is wrong.
+    // The Billing tab owns only the shippingAddress.* group; every other field — including
+    // the required `company` — lives on Details.
+    const handleInvalid = (errors: Record<string, { message?: string }>) => {
+        const firstField = Object.keys(errors)[0];
+        if (firstField) {
+            setActiveTab(firstField.startsWith("shippingAddress") ? "billing" : "details");
+        }
+        const message = errors[firstField]?.message;
+        toast.error(message || t("customers.add.validationFailed"));
+    };
+
     // Wrapper to handle the two save buttons
     const handleSaveClick = (openContact: boolean) => {
         setShouldOpenContact(openContact);
-        form.handleSubmit(onSubmit)();
+        form.handleSubmit(onSubmit, handleInvalid)();
     };
 
     return (
@@ -166,9 +188,14 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
                                     name="vatNumber"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-gray-700">{t("customers.add.vatNumber")}</FormLabel>
+                                            <FormLabel className="text-gray-700">
+                                                {t("customers.add.vatNumber")}
+                                            </FormLabel>
                                             <FormControl>
-                                                <Input {...field} placeholder={t("customers.add.vatNumberPlaceholder")} />
+                                                <Input
+                                                    {...field}
+                                                    placeholder={t("customers.add.vatNumberPlaceholder")}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -196,7 +223,9 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
                                     name="website"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-gray-700">{t("customers.add.website")}</FormLabel>
+                                            <FormLabel className="text-gray-700">
+                                                {t("customers.add.website")}
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input {...field} placeholder="https://example.com" />
                                             </FormControl>
@@ -246,11 +275,15 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
                                         name="currency"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-gray-700">{t("customers.add.currency")}</FormLabel>
+                                                <FormLabel className="text-gray-700">
+                                                    {t("customers.add.currency")}
+                                                </FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder={t("customers.add.systemDefault")} />
+                                                            <SelectValue
+                                                                placeholder={t("customers.add.systemDefault")}
+                                                            />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
@@ -270,11 +303,15 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
                                         name="defaultLanguage"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-gray-700">{t("customers.add.language")}</FormLabel>
+                                                <FormLabel className="text-gray-700">
+                                                    {t("customers.add.language")}
+                                                </FormLabel>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder={t("customers.add.systemDefault")} />
+                                                            <SelectValue
+                                                                placeholder={t("customers.add.systemDefault")}
+                                                            />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
@@ -301,7 +338,11 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
                                             <FormItem>
                                                 <FormLabel>{t("customers.add.streetAddress")}</FormLabel>
                                                 <FormControl>
-                                                    <Textarea {...field} rows={2} placeholder={t("customers.add.streetAddressPlaceholder")} />
+                                                    <Textarea
+                                                        {...field}
+                                                        rows={2}
+                                                        placeholder={t("customers.add.streetAddressPlaceholder")}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -353,7 +394,9 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
                                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                         <FormControl>
                                                             <SelectTrigger>
-                                                                <SelectValue placeholder={t("customers.add.selectCountry")} />
+                                                                <SelectValue
+                                                                    placeholder={t("customers.add.selectCountry")}
+                                                                />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
@@ -384,7 +427,11 @@ export default function AddCustomerPanel({ open, onClose, onSuccess }: AddCustom
                                         <FormItem>
                                             <FormLabel>{t("customers.add.shippingAddress")}</FormLabel>
                                             <FormControl>
-                                                <Textarea {...field} rows={3} placeholder={t("customers.add.shippingAddressPlaceholder")} />
+                                                <Textarea
+                                                    {...field}
+                                                    rows={3}
+                                                    placeholder={t("customers.add.shippingAddressPlaceholder")}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
