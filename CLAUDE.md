@@ -129,8 +129,8 @@ Gaps:
 - ~~Support tickets read/write split-brain~~ — CLOSED 2026-08-07 (`08839d8b`): all six ticket
   surfaces converged on `tickets`/`tenantId`. Live-verified 12/12 on qa-smoke. See §11.
 - **Field-name normalization `tenantId` → `orgId` (OPEN, consolidation item, 2026-08-07)** —
-  `tickets` is the only collection tenant-scoped by `tenantId`; every other collection uses
-  `orgId`. That inconsistency is what let the split-brain hide, and it still forces a
+  `tickets` and `kb_articles` are tenant-scoped by `tenantId`; every other collection uses
+  `orgId` (the second was found by the 2026-08-08 sweep). That inconsistency is what let the split-brain hide, and it still forces a
   per-collection `tenantField` in the customer-sidebar count loop. Renaming needs a data
   migration + rules + index rebuild, so it is deliberately deferred, not forgotten.
 - Minor TODOs: journal vendor hook, expense currency hard-coded "USD",
@@ -278,13 +278,44 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 
 **Awaiting Ahmed's go-ahead (approvals):**
 
-- **Remove the `support_tickets` Firestore rules block.** Marked
-  deprecated-pending-removal in `firestore.rules` on 2026-08-07. Zero code paths read or
-  write it, the collection is empty in prod, and its hooks are deleted. Rules were retained
-  for one release so anything discovered later stays tenant-scoped instead of falling to
-  deny-all. Say the word and it goes.
+- ~~Remove the `support_tickets` rules block~~ — DONE 2026-08-08 (`b80810c7`), see ledger.
+- **Money-flow findings from the 2026-08-08 sweep are diagnosis-only and unapplied** — 9 items
+  in TEST-REPORT §6, led by: the Chart of Accounts never loads (missing `accounts(orgId, code)`
+  index) and then client-side lazy-seeds duplicate ledger accounts with no idempotency guard.
+  Check prod for duplicate accounts BEFORE adding that index.
+- **7 product decisions** from the same sweep (TEST-REPORT §5) — lead "+ Add Status" bricks the
+  edit sheet, unreachable task statuses, the hardcoded Departments page, dead HR self-service.
 
 **Remaining ledger (dated):**
+
+- 2026-08-08 (first full-depth Sweeps A–E pass + `support_tickets` retired — `b80810c7`,
+  rollout `dosory-build-2026-08-08-001`): 8 lenses, 65 findings raised, **62 confirmed**.
+  **Standing lesson (5) — in this rules file you cannot deny a collection by adding a deny.**
+  `firestore.rules` ends with a generic `match /{collection}/{docId}` that grants on an orgId
+  match, and Firestore grants if ANY matching rule allows. Deleting the `support_tickets`
+  block was a no-op; replacing it with `allow read, write: if false` was ALSO a no-op. Only
+  excluding the collection INSIDE that catch-all (`isRetiredCollection()`) denies it. Proven
+  by three recorded emulator runs — the allowed/denied pair inverted only on the third.
+  Retiring a collection now means: a deny block for intent AND a name in that helper.
+  **Critical finds:** `useTasks` had the whole `relatedTo` OBJECT in its dep array, so every
+  `/dashboard/leads/{id}/*` page re-subscribed its Firestore listener without bound — a freeze,
+  not a crash, because the setState came from an async callback (identical to the shipped
+  `use-contracts` `cursors` bug, same eslint-autofix origin). Starting a NEW 1:1 chat was
+  permission-denied for everyone — the third instance of the missing-doc `resource.data.*`
+  landmine, alongside a fourth in the staff self-heal. The notification bell had never worked
+  for anyone: producers address notifications with `staff.id` (a lowercased email), the bell
+  queried `profile.uid` — now centralised in `lib/utils/identity-keys.ts`, shared with the
+  Today view. `firestore.indexes.json` had drifted **22 indexes behind prod**, i.e. the repo
+  could not recreate a working environment; synced + 12 new, 148 READY.
+  **The adversarial panel caught four regressions in the fixes themselves**, all repaired
+  before commit: both new `catch` blocks were unconditional, so a transient read failure would
+  fall through to a NON-MERGING `setDoc` and wipe a live conversation's `lastMessage`/unread
+  badges (and a staff doc's permissions) — narrowed to `permission-denied`; the new
+  identity-keys module was untracked; the task self-notify filter compared `staff.id` to `uid`;
+  and the test header credited the wrong enforcement mechanism.
+  Money-flow findings were **diagnosis-only by instruction** and are listed under approvals.
+  Live-verified EN+AR on qa-smoke: lead-detail listener flat at 0 new streams over 8s, no
+  index or permission errors, zero console errors. Evidence: `test-results/sweeps-*.png`.
 
 - 2026-08-07 (tickets split-brain HEALED — commit `08839d8b`, rollout
   `dosory-build-2026-08-07-005`): every ticket surface now reads and writes
@@ -439,6 +470,13 @@ _Rule:_ every `handleSubmit` MUST pass an `onInvalid` that surfaces the failing 
   third shipped a fix to a same-named method on the wrong class.
 - Any value rendered as a React child that could be an object (Address, etc.) must go
   through a formatter — `lib/utils/format-address.ts` (React #31).
+- **Cross-check every multi-clause query against `firestore.indexes.json`** — any second
+  `where()`, any `where`+`orderBy` on different fields, any array-contains/in/!= needs a
+  composite index or it throws FAILED_PRECONDITION, which is invisible from the UI. Also
+  reconcile the repo file against deployed truth (`firebase firestore:indexes`): on
+  2026-08-08 it was 22 indexes behind, so the checked-in file could not rebuild prod.
+- **A `!=` / `not-in` filter silently excludes documents that lack the field entirely** —
+  prefer an in-memory filter when the field may be absent.
 
 **Sweep D — reference-data seeding (empty-select family).**
 For every required `<Select>` sourced from a Firestore collection, confirm that collection

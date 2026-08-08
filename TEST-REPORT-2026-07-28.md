@@ -1123,3 +1123,189 @@ the 5 React Compiler regressions in `use-support.ts` from the Phase 2 lint tail.
 - `lib/types.ts` still exports `Ticket`/`TicketReply`/`TicketStatus`/`TicketPriority` with
   zero importers now. Left in place — removing them is a separate, purely cosmetic change.
 - **Approval needed:** delete the `support_tickets` rules block (see §11 approvals).
+
+---
+
+# Round: full-depth Sweeps A–E + support_tickets retirement (2026-08-08)
+
+Commit `b80810c7` · rollout `dosory-build-2026-08-08-001` · 148 indexes READY · rules deployed
+
+## 1. SECURITY — retiring `support_tickets`, and the two attempts that did nothing
+
+**Preconditions, verified before touching anything:**
+
+- prod (`goalo-6a269`, anchored by `tickets`=4 / `organizations`=14): **0 root docs, 0 nested
+  `messages` docs**.
+- code: `rg "(collection|doc|collectionGroup)\(.*support_tickets"` → **no matches**. Every
+  remaining mention in the repo is a historical comment. `ticket-collection-agreement` 17/17.
+
+**The fail-then-pass pair — three runs, because the first two changes were no-ops.**
+
+| run | rules state                                        | "org member is ALLOWED" | "denied"                |
+| --- | -------------------------------------------------- | ----------------------- | ----------------------- |
+| 1   | original permissive block                          | **PASS ×2**             | **FAIL ×3**             |
+| 2   | block replaced with `allow read, write: if false`  | **PASS ×2** (unchanged) | **FAIL ×3** (unchanged) |
+| 3   | `isRetiredCollection()` exclusion in the catch-all | **FAIL ×2**             | **PASS ×3**             |
+
+Run 2 is the finding worth keeping. `firestore.rules` ends with
+
+```
+match /{collection}/{docId} {
+  allow read, write: if isAuthenticated()
+    && resource.data.orgId != null
+    && request.auth.token.orgId == resource.data.orgId;
+```
+
+Firestore grants access if **any** matching rule allows it. So deleting the block falls
+through to this and changes nothing — and a `allow …: if false` block cannot override another
+rule's allow, so that changes nothing either. **In this rules file you cannot deny a collection
+by adding a deny.** Denial required excluding it inside the catch-all. Had I stopped after
+either of the first two edits, the report would have claimed a lockdown that did not exist.
+
+The standalone deny block is retained to declare intent at the collection's own path, with a
+comment saying plainly that it enforces nothing. Rules deployed to prod.
+
+## 2. The sweep — 8 lenses, 65 findings raised, 62 confirmed
+
+| sweep                      | raised | headline                                     |
+| -------------------------- | ------ | -------------------------------------------- |
+| A — effect-dep loops       | 3      | a **critical** freeze on every lead page     |
+| B — form↔schema drift      | 15     | dead submits, invisible required fields      |
+| C — data-layer landmines   | 24     | rules landmines + a 22-index repo/prod drift |
+| D — reference-data seeding | 11     | selects that can never populate              |
+| E — read/write + identity  | 12     | the bell, reminders, chat participants       |
+
+### Auto-fixed (mechanical)
+
+- **SWEEP A, critical — `useTasks` froze every `/dashboard/leads/{id}/*` page.** The whole
+  `relatedTo` **object** was in the effect's dep array; callers build it inline, so identity
+  changed every render → unsubscribe/resubscribe forever, pegging CPU and billing reads. It
+  never threw "Maximum update depth exceeded" because the setState comes from an async
+  Firestore callback — so it presented as a freeze, exactly like the shipped `use-contracts`
+  `cursors` bug, and from the same eslint-autofix origin. The verifier independently checked
+  and **disproved my prompt's own premise** that React Compiler was on (no `reactCompiler` in
+  next.config.ts, no plugin installed) — which is what makes the inline object unmemoized.
+- **SWEEP C, critical — starting a new 1:1 chat was impossible for everyone.** get-or-create
+  `getDoc`s a conversation that by definition does not exist; the rule dereferences
+  `resource.data.orgId`, so the read is _denied_, not empty. Third instance of the
+  2026-08-06 ticket-saga landmine. Same bug fixed in the staff self-heal — on the one path
+  where the document being missing is the entire point of the code.
+- **SWEEP E — the notification bell was empty for every user, ever.** Producers address
+  notifications with `staff.id` (a lowercased email); the bell queried `profile.uid`. New
+  `lib/utils/identity-keys.ts` matches both, and `today-service` now shares it. The restored
+  `orderBy` matters too: it had been commented out "to avoid a composite index", which
+  silently turned `limit(50)` into an _arbitrary_ 50 rather than the newest 50.
+- **SWEEP E — customer Reminders tab and its sidebar badge**: reader filtered `customerId`,
+  writer stores `relatedTo.{id,type}`. The deployed index proves which side was intended.
+- **SWEEP B — two dead submits**: `AddCustomerPanel` and `lead-edit-dialog` had `handleSubmit`
+  with no `onInvalid`. AddCustomerPanel additionally _unmounts_ the required `company` field
+  when the Billing tab is open, so its `onInvalid` now switches back to the failing tab.
+- **INDEXES — the repo file was 22 indexes behind prod.** It could not have recreated a
+  working environment from scratch. Synced, plus 12 new non-money composites. One prod index
+  (`conversations` keyed to a single user's uid) was deliberately left out as dead weight;
+  removing it from prod needs `--force`, which I did not run.
+- Silent failures closed: `use-expenses` category subscription now surfaces its error;
+  `today-service`'s last bare `catch` now logs.
+
+## 3. Adversarial panel — it caught four regressions in my own fixes
+
+23 agents, 19 findings, 15 confirmed. The four that mattered were all mine:
+
+1. **Both new `catch` blocks were unconditional.** A transient read failure (offline, App Check
+   hiccup) would fall through to a **non-merging `setDoc`** — wiping a live conversation's
+   `lastMessage`, zeroing both participants' unread badges and rewriting `createdAt`; and
+   resetting an existing staff doc's role/permissions. The rules _allow_ that write, so nothing
+   downstream would have stopped it. Narrowed to `permission-denied` only; everything else
+   rethrows.
+2. **`lib/utils/identity-keys.ts` was untracked** — two staged modules imported it. The commit
+   would have broken the build for everyone else.
+3. **The task self-notify filter compared `staff.id` to `uid`**, so it never filtered — you
+   would notify yourself. Harmless while the bell was broken; visible the moment I fixed it.
+4. **My own test header explained the wrong mechanism** (it credited the explicit deny block).
+   Corrected to record all three runs.
+
+## 4. Live verification — qa-smoke, EN + AR
+
+```
+PASS  SWEEP A: lead detail listener is stable (7 -> 7 over 8s) :: 0 new streams
+PASS  dashboard: no missing-index errors
+PASS  dashboard: no permission-denied
+PASS  customer tab still lists the migrated ticket
+PASS  AR dashboard dir=rtl
+PASS  AR dashboard: no console errors
+
+unique console errors: []
+```
+
+The Sweep A check is the meaningful one: the listener count is flat across 8 seconds on the
+page that previously re-subscribed without bound.
+
+## 5. FOR AHMED — product decisions (not touched, no features invented)
+
+1. **Lead "+ Add Status"** writes a slugified free-text value that `leadFormSchema` rejects —
+   the sheet is then permanently unsavable. Either add the value to the enum, persist custom
+   statuses, or remove the button.
+2. **Task status select** renders three options that all write the same value; "Testing" and
+   "Awaiting Feedback" are unreachable. "Blocked" is a first-class status everywhere _except_
+   the two forms that set status.
+3. **Setup → Departments** renders a hardcoded two-row fixture and never queries Firestore,
+   while its Add dialog writes to `supportDepartments`, which no reader queries.
+4. **`employees.userId` is never written by any code path**, so `useCurrentEmployee` always
+   returns null and HR self-service is dead.
+5. **`useStaff` and `useEmailTemplates` each name two different implementations** depending on
+   import path (barrel vs direct). Not currently mis-resolved, but it is the exact shape that
+   cost two rounds on `useSupportTickets`.
+6. **Today's Recent Activity** reads root `activities` while `logActivity` writes
+   `organizations/{orgId}/activities` — audit events can never reach the feed.
+7. **`departments` / `job_titles`** are required for employee creation and are in neither the
+   seed set nor any backfill.
+
+## 6. FOR AHMED — money-flow findings: diagnosis + proposed fix only, nothing applied
+
+Per this round's rules I did **not** touch these. Each is written to be applied as-is.
+
+1. **CRITICAL — Chart of Accounts never loads, and then seeds duplicates.**
+   `use-finance.ts:118` orders `accounts` by `code`; only `orgId+type` and `orgId+name` indexes
+   exist, so the query throws and the list is empty. The client then lazy-seeds a default chart
+   with auto-IDs and no idempotency guard, so every visit can add another full set of ledger
+   accounts. _Fix:_ add `accounts (orgId ASC, code ASC)`; make seeding server-side and
+   deterministic-ID'd before anyone opens the module again. **Check prod for duplicate accounts
+   before adding the index** — the index will make existing duplicates visible.
+2. **HIGH — every expense silently skips its journal entry.** `use-expenses.ts:43` reads
+   `accounts` from `useFinance` but never fetches them, so the double-entry write is skipped
+   with no error.
+3. **HIGH — invoice "Adjustment" is shown in the total but never saved**, and the preview total
+   omits tax entirely (`invoices/new/page.tsx:241`, `invoice-sheet.tsx:244`). Two different
+   dialogs; "Discount Type" also means opposite things between them.
+4. **HIGH — the invoice detail page renders hardcoded EGIC/WasilaDev sender, Bill-To and
+   Ship-To addresses on every tenant's invoice.** Six literal fallbacks at
+   `app/dashboard/invoices/[id]/page.tsx:142-147`, rendered in six places.
+5. **HIGH — currencies and taxes are hardcoded in every money form**, ignoring the seeded
+   tenant-managed `currencies`/`taxes` collections.
+6. **Missing money-module indexes** (ready to paste): `expenses (orgId, customerId, date DESC)`,
+   `invoices (orgId, total DESC)`, `invoices (orgId, amountDue)` for AR aging,
+   `financial_periods (orgId, endDate DESC)`, `financial_audit_logs (orgId, timestamp DESC)`.
+7. **Credit-note date type mismatch**: the create page passes a JS `Date` where `CreditNote.date`
+   is a `Timestamp`. Found because tightening the `any` broke the build — the cast is currently
+   hiding it. Left as `any` with a comment saying so.
+8. **Journal entry "Post" is dead-silent** when a line has no account selected
+   (`accounting/journal/new/page.tsx:291`).
+9. **Record-payment dialog** re-derives the amount in an effect keyed on a snapshot-rebuilt
+   array, so it can overwrite what the user typed.
+
+## 7. Deferred mechanical work (honest list)
+
+Real and confirmed, not done this round — the batch was already large and I would rather ship
+what is verified: leads-list sort passing arbitrary column keys through as Firestore field paths
+via `as any`; `use-employees` denormalisation lookups aborting an employee write when a
+referenced doc is missing; task lists rendering raw assignee ids (emails) instead of names;
+`leave_types` absent from the provisioning seed set (the index is now there, the seeding is not);
+and four stale `support_tickets` index definitions.
+
+## 8. Gates
+
+tsc clean · build 190 pages exit 0 · eslint **0 errors** on every touched file (baseline was 11
+pre-existing in those files; measured HEAD-vs-worktree per rule ID before and after, then
+cleared them — two "mechanical" fixes turned out to be load-bearing and were reverted with the
+reason recorded in-code) · 317 tests / 16 suites, 2 deliberately skipped (the recorded
+before-state) · hook passed with **no `--no-verify`**.
