@@ -29,6 +29,8 @@ import {
 import { toast } from "sonner";
 import { useInvoices } from "@/lib/hooks/use-invoices";
 import { useTranslation } from "@/lib/i18n";
+import { calculateInvoiceTotals } from "@/lib/services/invoice-service";
+
 import type { InvoiceFormData } from "@/lib/schemas";
 
 interface Client {
@@ -199,10 +201,26 @@ export default function CreateInvoicePage() {
         return discountValue;
     };
 
+    /**
+     * The displayed total MUST come from the same function that computes the persisted one.
+     * This used to be its own arithmetic — `subTotal - discount + adjustment` — which was
+     * wrong twice over: it omitted TAX entirely, while the value actually written to Firestore
+     * omitted the ADJUSTMENT. So the number on screen and the number the customer was billed
+     * could differ in both directions at once.
+     */
     const calculateTotal = () => {
-        const subTotal = calculateSubTotal();
-        const discAmount = calculateDiscountAmount(subTotal);
-        return subTotal - discAmount + adjustment;
+        const lineItems = items.map((item) => ({
+            id: item.id,
+            description: item.description,
+            quantity: item.quantity,
+            rate: item.rate,
+            amount: item.amount,
+            taxRate: item.tax ? parseFloat(String(item.tax)) : 0,
+            unit: "qty",
+        }));
+        const discount = discountValue > 0 ? { type: discountKind, value: discountValue } : undefined;
+        return calculateInvoiceTotals(lineItems as Parameters<typeof calculateInvoiceTotals>[0], discount, adjustment)
+            .total;
     };
 
     const handleSubmit = async (action: "draft" | "send" | "send_later" | "record_payment") => {
@@ -253,6 +271,7 @@ export default function CreateInvoicePage() {
                               value: discountValue,
                           }
                         : undefined,
+                adjustment,
                 notes: clientNote,
                 terms: termsConditions,
                 tags: tags

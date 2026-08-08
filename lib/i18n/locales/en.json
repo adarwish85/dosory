@@ -5667,5 +5667,8 @@
     "projects.tickets.loadFailed": "Couldn't load tickets",
     "customers.tickets.loadFailed": "Couldn't load tickets",
     "customers.add.validationFailed": "Please fix the highlighted field",
-    "leads.edit.validationFailed": "Please fix the highlighted field"
+    "leads.edit.validationFailed": "Please fix the highlighted field",
+    "invoices.detail.senderUnset": "Your company name — set it in Settings",
+    "invoices.detail.addressUnset": "No address on file",
+    "invoices.detail.customerUnset": "No customer"
 }

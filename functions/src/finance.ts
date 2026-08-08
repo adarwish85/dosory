@@ -57,17 +57,29 @@ interface JournalEntry {
 }
 
 
-// Helper to find account by code (simple scan or assumed index)
+/**
+ * Find a ledger account by its code, in the ROOT `accounts` collection scoped by orgId.
+ *
+ * FIXED 2026-08-08. This previously read `organizations/{orgId}/accounts` — a subcollection
+ * that is EMPTY in every org in prod (audited: 0 documents across all 14). The entire app —
+ * the chart-of-accounts UI, account creation, the expense posting path, and every existing
+ * journal line in the database — uses the ROOT `accounts` collection filtered by `orgId`.
+ * So this helper always returned null, and because both callers below are written as
+ * `if (accountA && accountB) { post }` with no else, processPayment and finalizeInvoice
+ * silently recorded NO journal entry for any tenant. Same silent-skip shape as the expense
+ * path, one layer down. See CLAUDE.md Sweep E.
+ */
 async function findAccountByCode(t: admin.firestore.Transaction, orgId: string, code: string): Promise<{ id: string, name: string } | null> {
-    const accountsRef = db.collection("organizations").doc(orgId).collection("accounts");
-    // Note: Transactional query requires an index on 'code' usually. 
-    // Fallback: This might be slow if many accounts, but usually CoAs are small < 100.
-    const q = accountsRef.where("code", "==", code).limit(1);
+    const q = db.collection("accounts")
+        .where("orgId", "==", orgId)
+        .where("code", "==", code)
+        .limit(1);
     const snap = await t.get(q);
     if (!snap.empty) {
         const doc = snap.docs[0];
         return { id: doc.id, name: doc.data().name };
     }
+    functions.logger.error("[accounting] account not found — journal entry will be SKIPPED", { orgId, code });
     return null;
 }
 
@@ -210,6 +222,11 @@ export const processPayment = functions.https.onCall(async (data: PaymentRequest
                     ]
                 };
                 t.set(jeRef, jeData);
+            } else {
+                functions.logger.error(
+                    "[accounting] payment recorded WITHOUT a journal entry — chart of accounts incomplete",
+                    { orgId, paymentId: paymentRef.id, missingAsset: !assetAccount, missingAR: !arAccount }
+                );
             }
         });
 
@@ -296,6 +313,11 @@ export const finalizeInvoice = functions.https.onCall(async (data: FinalizeInvoi
                         ]
                     };
                     t.set(jeRef, jeData);
+                } else {
+                    functions.logger.error(
+                        "[accounting] invoice finalized WITHOUT a journal entry — chart of accounts incomplete",
+                        { orgId, invoiceId, missingAR: !arAccount, missingIncome: !incomeAccount }
+                    );
                 }
             }
         });

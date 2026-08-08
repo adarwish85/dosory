@@ -40,7 +40,11 @@ interface UseExpensesOptions {
 export function useExpenses(options: UseExpensesOptions = {}) {
     const { categoryId, customerId, projectId, billable, orderByField = "date", orderDirection = "desc" } = options;
     const { profile } = useUserProfile();
-    const { recordJournalEntry, accounts } = useFinance(); // Finance Integration
+    // Finance integration. `fetchAccounts` matters: useFinance does NOT load the chart of
+    // accounts on mount, and every posting branch below is written as
+    // `if (debitAccount && creditAccount)` with no else — so an unloaded chart meant the
+    // journal entry was silently skipped and the expense was saved with no books behind it.
+    const { recordJournalEntry, accounts, fetchAccounts } = useFinance();
 
     // Cache key for stale-while-revalidate
     const cacheKey = buildCacheKey(
@@ -143,10 +147,14 @@ export function useExpenses(options: UseExpensesOptions = {}) {
             // FINANCE V1: Auto-create Journal Entry for Expense
             // We assume categoryId corresponds to an Expense Account ID in V1, or we just trust it.
             // Credit Account depends on Payment Method
+            //
+            // The chart is loaded ON DEMAND here rather than relied upon. useFinance has no
+            // mount effect, so `accounts` was [] for every caller that had not separately
+            // visited the Accounting pages — which is every expense ever filed.
+            const chart = accounts.length > 0 ? accounts : await fetchAccounts();
             const creditAccountCode = data.paymentMode === "cash" ? "1000" : "1010"; // 1000 Cash, 1010 Bank
-            const creditAccount = accounts.find((a) => a.code === creditAccountCode);
-            const debitAccount =
-                accounts.find((a) => a.id === data.categoryId) || accounts.find((a) => a.type === "expense");
+            const creditAccount = chart.find((a) => a.code === creditAccountCode);
+            const debitAccount = chart.find((a) => a.id === data.categoryId) || chart.find((a) => a.type === "expense");
 
             if (creditAccount && debitAccount) {
                 await recordJournalEntry({
@@ -177,11 +185,23 @@ export function useExpenses(options: UseExpensesOptions = {}) {
                         },
                     ],
                 }).catch((e) => console.error("Failed to record expense JE:", e));
+            } else {
+                // NEVER silent. Before this, a missing account meant the expense was written
+                // with no journal entry and nothing anywhere said so — the books just quietly
+                // diverged from the expense list. Name exactly which account could not be
+                // resolved so it is actionable.
+                console.error("[accounting] expense saved WITHOUT a journal entry — chart of accounts incomplete.", {
+                    expenseId: docRef.id,
+                    orgId: profile.orgId,
+                    chartSize: chart.length,
+                    missingCreditAccountCode: creditAccount ? null : creditAccountCode,
+                    missingDebitAccount: debitAccount ? null : `categoryId=${data.categoryId} or any type=expense`,
+                });
             }
 
             return docRef.id;
         },
-        [profile, accounts, recordJournalEntry]
+        [profile, accounts, fetchAccounts, recordJournalEntry]
     );
 
     const updateExpense = useCallback(async (id: string, data: Partial<ExpenseFormData>): Promise<void> => {

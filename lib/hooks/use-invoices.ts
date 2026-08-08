@@ -23,6 +23,7 @@ import {
     getCountFromServer,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { calculateInvoiceTotals } from "@/lib/services/invoice-service";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
 import { createNotification } from "@/lib/hooks/use-notifications";
@@ -127,27 +128,10 @@ async function generateInvoiceNumber(
 // Helper: Calculate Invoice Totals
 // ============================================
 
-function calculateInvoiceTotals(items: LineItem[], discount?: { type: "percentage" | "fixed"; value: number }) {
-    const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-
-    let discountAmount = 0;
-    if (discount) {
-        discountAmount = discount.type === "percentage" ? subtotal * (discount.value / 100) : discount.value;
-    }
-
-    const taxableAmount = subtotal - discountAmount;
-    const taxTotal = items.reduce((sum, item) => {
-        if (item.taxRate) {
-            const itemTaxable = item.amount * (taxableAmount / subtotal);
-            return sum + itemTaxable * (item.taxRate / 100);
-        }
-        return sum;
-    }, 0);
-
-    const total = taxableAmount + taxTotal;
-
-    return { subtotal, taxTotal, total };
-}
+// calculateInvoiceTotals used to be duplicated here, byte-identical to the copy in
+// lib/services/invoice-service.ts. Two same-named implementations of a money calculation is
+// exactly the trap that cost two rounds on TicketService.getSettings — a fix applied to one
+// copy silently does nothing to the other. Single source of truth now.
 
 // ============================================
 // useInvoices Hook
@@ -177,7 +161,17 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
     const { logActivity } = useActivity({ enabled: false });
 
     // Cache key for stale-while-revalidate
-    const cacheKey = buildCacheKey("invoices", profile?.orgId, status, customerId, projectId, orderByField, orderDirection, pageSize, page);
+    const cacheKey = buildCacheKey(
+        "invoices",
+        profile?.orgId,
+        status,
+        customerId,
+        projectId,
+        orderByField,
+        orderDirection,
+        pageSize,
+        page
+    );
     const cached = getCachedData<Invoice>(cacheKey);
 
     // Data State — initialize from cache if available (instant, no skeleton)
@@ -292,7 +286,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         });
 
         // Calculate totals
-        const { subtotal, taxTotal, total } = calculateInvoiceTotals(data.items, data.discount);
+        const { subtotal, taxTotal, total } = calculateInvoiceTotals(data.items, data.discount, data.adjustment);
 
         const docRef = await addDoc(collection(db, "invoices"), {
             ...data,
@@ -300,6 +294,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
             numberFormatted: invoiceNumberResult.formatted,
             customerName,
             subtotal,
+            adjustment: data.adjustment ?? 0,
             taxTotal,
             total,
             amountPaid: 0,
@@ -332,7 +327,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
 
         // Recalculate totals if items changed
         if (data.items) {
-            const { subtotal, taxTotal, total } = calculateInvoiceTotals(data.items, data.discount);
+            const { subtotal, taxTotal, total } = calculateInvoiceTotals(data.items, data.discount, data.adjustment);
             updateData.subtotal = subtotal;
             updateData.taxTotal = taxTotal;
             updateData.total = total;

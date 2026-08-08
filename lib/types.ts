@@ -145,6 +145,8 @@ export interface Invoice extends BaseEntity {
     currency: string;
     subtotal: number;
     discount?: DiscountInfo;
+    /** Signed manual correction applied after discount and tax (rounding, goodwill, fees). */
+    adjustment?: number;
     taxTotal: number;
     total: number;
     amountPaid: number;
@@ -677,15 +679,7 @@ export interface EmailTemplate extends BaseEntity {
     isActive: boolean;
 }
 
-export type EmailTemplateType =
-    | "invoice"
-    | "estimate"
-    | "contract"
-    | "ticket"
-    | "lead"
-    | "project"
-    | "task"
-    | "custom";
+export type EmailTemplateType = "invoice" | "estimate" | "contract" | "ticket" | "lead" | "project" | "task" | "custom";
 
 export interface ScheduledEmail extends BaseEntity {
     templateId?: string;

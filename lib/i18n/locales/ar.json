@@ -5667,5 +5667,8 @@
     "projects.tickets.loadFailed": "تعذّر تحميل التذاكر",
     "customers.tickets.loadFailed": "تعذّر تحميل التذاكر",
     "customers.add.validationFailed": "يرجى تصحيح الحقل المحدَّد",
-    "leads.edit.validationFailed": "يرجى تصحيح الحقل المحدَّد"
+    "leads.edit.validationFailed": "يرجى تصحيح الحقل المحدَّد",
+    "invoices.detail.senderUnset": "اسم شركتك — اضبطه من الإعدادات",
+    "invoices.detail.addressUnset": "لا يوجد عنوان مسجَّل",
+    "invoices.detail.customerUnset": "لا يوجد عميل"
 }

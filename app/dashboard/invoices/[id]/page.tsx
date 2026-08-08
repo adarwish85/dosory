@@ -37,7 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useInvoice, useInvoices } from "@/lib/hooks";
+import { useInvoice, useInvoices, useOrganizationSettings } from "@/lib/hooks";
 import { useTranslation } from "@/lib/i18n";
 import { InvoiceStatus, LineItem } from "@/lib/types";
 
@@ -61,6 +61,7 @@ export default function InvoiceDetailsPage() {
     const id = params.id as string;
 
     const { invoice, loading } = useInvoice(id);
+    const { settings: orgSettings } = useOrganizationSettings();
     const { updateStatus, createInvoice, deleteInvoice } = useInvoices(); // Hooks for actions
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -135,16 +136,31 @@ export default function InvoiceDetailsPage() {
                 <Loader2 className="h-6 w-6 animate-spin" />
             </div>
         );
-    if (!invoice)
-        return <div className="p-8 flex items-center justify-center">{t("invoices.detail.notFound")}</div>;
+    if (!invoice) return <div className="p-8 flex items-center justify-center">{t("invoices.detail.notFound")}</div>;
 
-    // Derived or Default Data placeholders
-    const projectName = invoice.projectName || "EGIC Export";
-    const senderName = invoice.senderName || "WasilaDev";
-    const senderAddress = invoice.senderAddress || ["3a Mabotheen Buildings, Nasr City", "Cairo, Cairo", "Egypt 11521"];
-    const billToName = invoice.billToName || invoice.customerName || "Egyptian German Industrial Corporation (EGIC)";
-    const billToAddress = invoice.billToAddress || ["53 EL-MANIAL ST", "Cairo, Cairo", "EG 11341"];
-    const shipToAddress = invoice.shipToAddress || ["53 EL-MANIAL ST", "Cairo, Cairo", "EG 11341"];
+    // Sender / Bill-To / Ship-To.
+    //
+    // These six values used to fall back to HARDCODED literals — "WasilaDev", an address in
+    // Nasr City, and "Egyptian German Industrial Corporation (EGIC)" — so every tenant whose
+    // invoice did not carry its own snapshot rendered, and printed, another company's name and
+    // postal address on its invoices. Now they fall back to THIS tenant's own organization
+    // settings, and when a field is genuinely unset they render an honest placeholder rather
+    // than someone else's data.
+    const orgAddressLines = [
+        orgSettings.address,
+        [orgSettings.city, orgSettings.state].filter(Boolean).join(", "),
+        [orgSettings.country, orgSettings.zipCode].filter(Boolean).join(" "),
+    ]
+        .map((l) => (l || "").trim())
+        .filter(Boolean);
+
+    const projectName = invoice.projectName || "";
+    const senderName = invoice.senderName || orgSettings.companyName || t("invoices.detail.senderUnset");
+    const senderAddress =
+        invoice.senderAddress || (orgAddressLines.length > 0 ? orgAddressLines : [t("invoices.detail.addressUnset")]);
+    const billToName = invoice.billToName || invoice.customerName || t("invoices.detail.customerUnset");
+    const billToAddress = invoice.billToAddress || [t("invoices.detail.addressUnset")];
+    const shipToAddress = invoice.shipToAddress || billToAddress;
 
     // Calculate totals if missing
     const subTotal =
@@ -273,7 +289,9 @@ export default function InvoiceDetailsPage() {
                                 >
                                     <Ban className="mr-2 h-4 w-4" /> {t("invoices.detail.markAsCancelled")}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => toast.info(t("invoices.detail.toast.reminderPauseSoon"))}>
+                                <DropdownMenuItem
+                                    onClick={() => toast.info(t("invoices.detail.toast.reminderPauseSoon"))}
+                                >
                                     <Clock className="mr-2 h-4 w-4" /> {t("invoices.detail.pauseOverdueReminders")}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
@@ -367,7 +385,9 @@ export default function InvoiceDetailsPage() {
                             <TableHeader>
                                 <TableRow className="bg-gray-50 hover:bg-gray-50 border-y border-gray-100">
                                     <TableHead className="w-[50px] font-bold text-gray-900">#</TableHead>
-                                    <TableHead className="font-bold text-gray-900">{t("invoices.detail.colItem")}</TableHead>
+                                    <TableHead className="font-bold text-gray-900">
+                                        {t("invoices.detail.colItem")}
+                                    </TableHead>
                                     <TableHead className="text-right font-bold text-gray-900 w-[80px]">
                                         {t("invoices.detail.colQty")}
                                     </TableHead>

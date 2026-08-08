@@ -159,9 +159,7 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
     );
 
     // Add Status/Source dialogs
-    const [showAddStatusDialog, setShowAddStatusDialog] = useState(false);
     const [showAddSourceDialog, setShowAddSourceDialog] = useState(false);
-    const [newStatusValue, setNewStatusValue] = useState("");
     const [newSourceValue, setNewSourceValue] = useState("");
     const [customStatuses, setCustomStatuses] = useState<{ value: string; label: string }[]>([]);
     const [customSources, setCustomSources] = useState<string[]>([]);
@@ -337,16 +335,6 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                                                                     ))}
                                                                 </SelectContent>
                                                             </Select>
-                                                            <Button
-                                                                type="button"
-                                                                variant="outline"
-                                                                size="icon"
-                                                                className="h-9 w-9 shrink-0"
-                                                                onClick={() => setShowAddStatusDialog(true)}
-                                                                disabled={!can("leads-edit")}
-                                                            >
-                                                                <Plus className="h-4 w-4" />
-                                                            </Button>
                                                         </div>
                                                     </FormItem>
                                                 )}
@@ -590,54 +578,16 @@ export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProp
                 </SheetContent>
             </Sheet>
 
-            {/* Add Status Dialog */}
-            <Dialog open={showAddStatusDialog} onOpenChange={setShowAddStatusDialog}>
-                <DialogContent className="sm:max-w-[400px]">
-                    <DialogHeader>
-                        <DialogTitle>{t("leads.edit.addStatusTitle")}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <Input
-                            placeholder={t("leads.edit.statusNamePlaceholder")}
-                            value={newStatusValue}
-                            onChange={(e) => setNewStatusValue(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && newStatusValue.trim()) {
-                                    const slug = newStatusValue.toLowerCase().replace(/\s+/g, "_");
-                                    setCustomStatuses((prev) => [
-                                        ...prev,
-                                        { value: slug, label: newStatusValue.trim() },
-                                    ]);
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    form.setValue("status", slug as any);
-                                    setNewStatusValue("");
-                                    setShowAddStatusDialog(false);
-                                }
-                            }}
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowAddStatusDialog(false)}>
-                            {t("common.cancel")}
-                        </Button>
-                        <Button
-                            disabled={!newStatusValue.trim()}
-                            onClick={() => {
-                                const slug = newStatusValue.toLowerCase().replace(/\s+/g, "_");
-                                setCustomStatuses((prev) => [...prev, { value: slug, label: newStatusValue.trim() }]);
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                form.setValue("status", slug as any);
-                                setNewStatusValue("");
-                                setShowAddStatusDialog(false);
-                            }}
-                        >
-                            {t("leads.edit.addStatusButton")}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* Add Source Dialog */}
+            {/* The "+ Add Status" affordance was REMOVED on 2026-08-08.
+                It slugified free text and called form.setValue("status", slug), but `status`
+                is a fixed zod enum (leadStatusSchema). The value never validated, so Save
+                silently did nothing from that moment on — the sheet was bricked until reload.
+                Per the CLAUDE.md rule, an affordance the schema rejects is a bug: it is either
+                wired end-to-end or removed. Persisting custom lead statuses would need a
+                per-tenant status collection plus dynamic validation everywhere status is read
+                — a feature, not a fix — so the fixed vocabulary stands and the button is gone.
+                NOTE: the "+ Add Source" dialog below is NOT the same case and stays: `source`
+                is z.string().optional(), so any value it writes validates. */}
             <Dialog open={showAddSourceDialog} onOpenChange={setShowAddSourceDialog}>
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>

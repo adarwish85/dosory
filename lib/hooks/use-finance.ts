@@ -10,6 +10,7 @@ import {
     serverTimestamp,
     orderBy,
     runTransaction,
+    writeBatch,
     Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -110,9 +111,11 @@ export function useFinance() {
     const { profile } = useUserProfile();
     const [loading, setLoading] = useState(false);
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [error, setError] = useState<Error | null>(null);
 
-    const fetchAccounts = useCallback(async () => {
-        if (!profile?.orgId) return;
+    /** Returns the chart as well as setting it, so callers that need it NOW can await it. */
+    const fetchAccounts = useCallback(async (): Promise<Account[]> => {
+        if (!profile?.orgId) return [];
         setLoading(true);
         try {
             const q = query(collection(db, "accounts"), where("orgId", "==", profile.orgId), orderBy("code"));
@@ -125,30 +128,59 @@ export function useFinance() {
                 // Re-fetch custom recursion usually bad, but here it's strictly one-level
                 const qRetry = query(collection(db, "accounts"), where("orgId", "==", profile.orgId), orderBy("code"));
                 const snapshotRetry = await getDocs(qRetry);
-                setAccounts(snapshotRetry.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Account));
-            } else {
-                setAccounts(fetchedAccounts);
+                const seeded = snapshotRetry.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Account);
+                setAccounts(seeded);
+                return seeded;
             }
+            setAccounts(fetchedAccounts);
+            return fetchedAccounts;
         } catch (error) {
-            console.error("Error fetching accounts:", error);
+            // Loud on purpose. An empty `accounts` array is not a harmless state: every
+            // journal-posting path in the app is written as `if (debitAccount && creditAccount)`
+            // with no else, so a failure here silently stops the books being written at all.
+            // The specific failure this hid was a missing accounts(orgId, code) composite index,
+            // which made the ordered query throw — so the chart never loaded AND the seed below
+            // never ran, for every tenant.
+            console.error("Error fetching chart of accounts (journal posting will be skipped):", error);
+            setError(error as Error);
+            return [];
         } finally {
             setLoading(false);
         }
     }, [profile?.orgId]);
 
+    /**
+     * Seed the default chart of accounts, IDEMPOTENTLY.
+     *
+     * This used to be `addDoc()` per account — auto-IDs, no guard — so two tabs, a double
+     * mount, or a slow first paint could each see "0 accounts" and seed a second full chart,
+     * leaving duplicate ledger accounts with no way to tell which one postings should use.
+     * The 2026-08-08 audit found zero duplicates in prod (the missing composite index made the
+     * query throw before seeding could ever run), so this is prevention, not cleanup.
+     *
+     * Deterministic org-scoped ids — the same pattern as
+     * lib/provisioning/seed-tenant-defaults.ts — make a concurrent double-seed converge on the
+     * same 10 documents instead of racing: `{orgId}__acc-{code}`. Account codes are unique
+     * within a chart by definition, so the code is the natural key.
+     */
     const seedDefaultAccounts = async (orgId: string) => {
-        const batchPromises = DEFAULT_ACCOUNTS.map((acc) =>
-            addDoc(collection(db, "accounts"), {
-                ...acc,
-                orgId,
-                balance: 0,
-                workspaceId: orgId, // Mapping orgId to workspaceId
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
-                createdBy: profile?.uid,
-            })
-        );
-        await Promise.all(batchPromises);
+        const batch = writeBatch(db);
+        for (const acc of DEFAULT_ACCOUNTS) {
+            batch.set(
+                doc(db, "accounts", `${orgId}__acc-${acc.code}`),
+                {
+                    ...acc,
+                    orgId,
+                    balance: 0,
+                    workspaceId: orgId, // Mapping orgId to workspaceId
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    createdBy: profile?.uid ?? null,
+                },
+                { merge: true }
+            );
+        }
+        await batch.commit();
     };
 
     const createAccount = async (data: Partial<Account>) => {
@@ -261,6 +293,7 @@ export function useFinance() {
     return {
         accounts,
         loading,
+        error,
         fetchAccounts,
         createAccount,
         recordJournalEntry,

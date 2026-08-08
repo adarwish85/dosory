@@ -145,6 +145,8 @@ export const invoiceFormSchema = z.object({
     currency: z.string().min(1, "Currency is required"),
     items: z.array(lineItemSchema).min(1, "At least one item is required"),
     discount: discountSchema.optional(),
+    /** Signed manual correction; part of the persisted total (see calculateInvoiceTotals). */
+    adjustment: z.number().optional(),
     notes: z.string().optional(),
     terms: z.string().optional(),
     tags: z.array(z.string()).optional(),

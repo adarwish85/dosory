@@ -15,7 +15,11 @@ import type { LineItem } from "@/lib/types";
 // Helper: Calculate Invoice Totals
 // ============================================
 
-export function calculateInvoiceTotals(items: LineItem[], discount?: { type: "percentage" | "fixed"; value: number }) {
+export function calculateInvoiceTotals(
+    items: LineItem[],
+    discount?: { type: "percentage" | "fixed"; value: number },
+    adjustment: number = 0
+) {
     const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
 
     let discountAmount = 0;
@@ -25,14 +29,21 @@ export function calculateInvoiceTotals(items: LineItem[], discount?: { type: "pe
 
     const taxableAmount = subtotal - discountAmount;
     const taxTotal = items.reduce((sum, item) => {
-        if (item.taxRate) {
+        // Guard subtotal === 0: the proration below divides by it, and a NaN here propagates
+        // straight into the persisted invoice total.
+        if (item.taxRate && subtotal > 0) {
             const itemTaxable = item.amount * (taxableAmount / subtotal);
             return sum + itemTaxable * (item.taxRate / 100);
         }
         return sum;
     }, 0);
 
-    const total = taxableAmount + taxTotal;
+    // `adjustment` is a signed manual correction (rounding, goodwill, a late fee). It was
+    // collected by both invoice forms and shown in the on-screen total, but never written —
+    // and the persisted total was recomputed WITHOUT it, so what the customer was billed
+    // silently differed from what the creator saw by exactly this amount. It is now part of
+    // the one shared calculation, so screen and database cannot drift again.
+    const total = taxableAmount + taxTotal + (adjustment || 0);
 
     return { subtotal, taxTotal, total };
 }
