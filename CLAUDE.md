@@ -281,18 +281,41 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 - ~~Remove the `support_tickets` rules block~~ — DONE 2026-08-08 (`b80810c7`), see ledger.
 - ~~Money-flow findings diagnosis-only~~ — worked 2026-08-08 (`e586b594`); see ledger. Two
   items remain open below.
-- **Expense journal-entry backfill — NOT executed, needs your go.** 8 entries, 14,550.00, all
-  `wasiladev`. The dry-run found **2 amount collisions** with existing expense journal entries
-  that carry no `referenceId`, so a blind run could double-post real money. The script refuses
-  `--execute` until they are resolved. `scripts/audit/backfill-expense-journal-entries.ts`.
-- **Cloud Functions deploy — NOT done, needs your go.** `findAccountByCode` was reading an
-  empty subcollection, so `processPayment` and `finalizeInvoice` record NO journal entries for
-  any tenant. Fix committed; **still broken in prod until functions are deployed.**
+- ~~Expense journal-entry backfill~~ — DONE 2026-08-08: 2 collisions linked (not posted),
+  6 entries backfilled (9,850.00). 8/8 expenses now have a journal entry, 0 pending.
+- ~~Cloud Functions deploy~~ — DONE 2026-08-08 and PROVEN live; see ledger.
 - **6 product recommendations** (TEST-REPORT §7) — task status vocabulary, Departments page,
   HR self-service linkage, activity-feed collection, departments/job_titles seeding, barrel
   renames. One paragraph each; nothing implemented.
 
 **Remaining ledger (dated):**
+
+- 2026-08-08 (money close-out — functions deployed + backfill executed):
+  **Standing lesson (7) — "Deploy complete!" is not evidence.** `firebase deploy --only
+functions` reported 21/21 successful updates while shipping **stale July build output**:
+  `firebase.json` had NO `predeploy` hook and `functions/main` is `lib/index.js`, so the deploy
+  uploads whatever was last compiled. `functions/lib/finance.js` was dated Jul 28 and still
+  contained the old `organizations/{orgId}/accounts` lookup. **Every previous "functions
+  deployed" in this project is suspect for the same reason.** A predeploy build hook is now in
+  `firebase.json`. Always verify the artifact, not the deploy message.
+  Second defect, found only because the bar was a live journal entry: **`finalizeInvoice` had a
+  reads-after-writes transaction violation** — `t.update()` ran before `findAccountByCode`'s
+  `t.get(query)`, which Firestore rejects, so it 500'd for every invoice, always. Its `catch`
+  discarded the error and rethrew a generic message, which is why the cause was invisible.
+  `processPayment` had been fixed this way in an earlier round; this callable never was.
+  **PROVEN LIVE on qa-smoke:** a new invoice finalized + paid through the real UI produced both
+  journal entries — invoice (AR 412 / Sales Income 412) and payment (Cash 412 / AR 412) — each
+  balanced, each resolving to root-collection accounts, invoice reconciling to
+  `total − payments − amountDue = 0`. 22/22 functions ACTIVE, callable IAM intact, zero
+  ERROR-severity logs in the following hour.
+  **Backfill executed under the collision policy:** the 2 amount-collisions were resolved by
+  LINKING each existing journal entry to its expense (setting the missing `referenceId`,
+  backup-first) rather than posting a duplicate; the remaining 6 were backfilled (9,850.00) with
+  deterministic ids. 8/8 expenses now have an entry, 0 pending, 14 entries on `wasiladev`, 0
+  unbalanced, re-run is a no-op.
+  Noted, NOT caused by this round: `wasiladev` has 8 invoices and **0 payment documents**, so
+  four seeded invoices carry an `amountDue` no payment explains — an artifact of
+  `scripts/seed-demo-tenant.ts`, flagged as demo-data quality.
 
 - 2026-08-08 (money/accounting round — `e586b594`, rollout `dosory-build-2026-08-08-005`):
   **The audit disproved the premise.** The predicted duplicate ledger accounts do not exist —

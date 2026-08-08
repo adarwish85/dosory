@@ -1471,3 +1471,100 @@ tsc clean (app **and** functions) · build 190 pages exit 0 · eslint 0 errors o
 (3 pre-existing in invoice-sheet cleared) · **331 tests / 17 suites**, including the new
 `accounting-invariants` (14): adjustment and tax are in the total, entries balance, no posting
 path may skip silently, exactly one `calculateInvoiceTotals`, no hardcoded tenant identity.
+
+---
+
+# Round: money close-out — functions deploy + backfill execution (2026-08-08)
+
+## 1. Functions deploy — and the two defects the proof requirement exposed
+
+`firebase deploy --only functions` reported **"Deploy complete!"** and 21/21 "Successful update
+operation". It had shipped **stale July code**. Two separate defects, both found only because
+the acceptance bar was a live journal entry rather than a green deploy message.
+
+**Defect A — the deploy did not build.** `firebase.json` had no `predeploy` hook and
+`functions/main` points at `lib/index.js`, so the deploy uploaded whatever was last compiled.
+`functions/lib/finance.js` was dated **Jul 28** and still contained
+`db.collection("organizations").doc(orgId).collection("accounts")` — the exact line this round
+was fixing. Every earlier "functions deployed" in this project is now suspect for the same
+reason. Fixed by adding a predeploy build hook:
+
+```json
+"functions": { "source": "functions", "runtime": "nodejs20",
+               "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"] }
+```
+
+**Defect B — `finalizeInvoice` had a reads-after-writes transaction violation.** It called
+`t.update(invoiceRef, …)` and only then `findAccountByCode`, which issues `t.get(query)`.
+Firestore rejects any read after a write in a transaction, so the call 500'd, retried, and
+failed — for every invoice, always. `processPayment` had been fixed this way in an earlier
+round ("accounts were read in step 4"); this callable never was. Reads are now hoisted above
+the first write.
+
+The 500 was opaque because the `catch` **discarded the error** and rethrew a generic
+"Could not finalize invoice." That catch now logs the real cause first.
+
+## 2. Post-deploy proof — live, through the real UI
+
+Created invoice #2 (EGP 412) on qa-smoke, marked it Sent, recorded a payment. Both callables
+succeeded, and **both journal entries now exist** in the root `accounts` convention:
+
+| journal entry          | type    | lines                              | DR     | CR     | balanced | accounts resolve |
+| ---------------------- | ------- | ---------------------------------- | ------ | ------ | -------- | ---------------- |
+| `QL5sXSAhZVBWQSBuS8v4` | invoice | Accounts Receivable / Sales Income | 412.00 | 412.00 | ✅       | ✅               |
+| `lQJSvSjBNFTyXPvlFo3r` | payment | Cash on Hand / Accounts Receivable | 412.00 | 412.00 | ✅       | ✅               |
+
+Invariants against live data (`scripts/audit/verify-live-accounting.ts`, read-only):
+
+- every journal entry balances to zero — **OK**
+- invoice reconciles: `total − payments − amountDue = 0.00` — **OK**
+- the finalized invoice has both its entries — **OK**
+
+`RESULT: ALL INVARIANTS HOLD` for qa-smoke. Screenshots: `test-results/je-proof-*.png`.
+
+qa-smoke's three older invoices have no journal entries — they predate the fix. Historical, and
+a separate decision from this round's expense backfill.
+
+## 3. No regression across the other functions
+
+| check                                 | result                                                                                        |
+| ------------------------------------- | --------------------------------------------------------------------------------------------- |
+| functions ACTIVE                      | **22 / 22** (21 functions + the App Hosting SSR service)                                      |
+| non-ACTIVE                            | none                                                                                          |
+| callable IAM invokers intact          | processPayment, finalizeInvoice, voidInvoice, recalculateAnalytics — all 1 `allUsers` binding |
+| ERROR-severity logs, deploy → +60 min | **none**                                                                                      |
+
+## 4. Expense backfill — executed under the collision policy
+
+**Step 1 — link, do not post.** The two amount-collisions were resolved by giving each existing
+journal entry the `referenceId` it was missing, rather than writing a second entry for the same
+money. Both documents backed up in full first (`backups/je-link-backup-*.json`); the script sets
+only `referenceId` and refuses if the amounts no longer match or the entry is already linked.
+
+| journal entry                                         | linked to expense                         | amount   |
+| ----------------------------------------------------- | ----------------------------------------- | -------- |
+| `rgtDZoRRhyXB0sxDmbVB` "Conference booth — marketing" | `DcSm4Ry3IGnpEDermouH` "Conference booth" | 3,200.00 |
+| `ItrTKMh8VURDjmsLWpM0` "Office rent — June"           | `hpEpoo8inGc3S7vybtUr` "Co-working space" | 1,500.00 |
+
+**Step 2 — backfill the rest.** Dry-run then confirmed 6 pending / 9,850.00 / **0 collisions**,
+and `--execute` wrote 6 entries with deterministic ids (`je-expense-{expenseId}`).
+
+|                               | before        | after        |
+| ----------------------------- | ------------- | ------------ |
+| expenses with a journal entry | 0 of 8        | **8 of 8**   |
+| pending backfill              | 8 (14,550.00) | **0 (0.00)** |
+| amount collisions             | 2             | **0**        |
+| unlinkable                    | —             | **0**        |
+
+**Post-run verification on `wasiladev`:** 14 journal entries, **0 unbalanced**, all account ids
+resolve, all 6 new entries carry their `referenceId`. Re-running the backfill is a no-op.
+
+**One pre-existing issue found, not caused by this round:** `wasiladev` has **8 invoices and 0
+payment documents**, so four invoices marked paid/partial carry an `amountDue` that no payment
+explains (`total − paid − due ≠ 0`). That is an artifact of `scripts/seed-demo-tenant.ts`
+setting `amountDue` directly. The backfill only wrote `journal_entries` and touched no invoice
+or payment. Flagging it as demo-data quality, not a code defect.
+
+## 5. Gates
+
+functions tsc clean · accounting-invariants 14/14 · no app change was required, so no rollout.

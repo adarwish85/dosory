@@ -261,6 +261,21 @@ export const finalizeInvoice = functions.https.onCall(async (data: FinalizeInvoi
                 throw new functions.https.HttpsError("failed-precondition", "Only draft invoices can be finalized.");
             }
 
+            // ALL READS FIRST. A Firestore transaction rejects any read issued after a write,
+            // and findAccountByCode below performs a query — so resolving the accounts AFTER
+            // t.update() made every finalizeInvoice call fail with a 500, which the catch at
+            // the bottom then reported as a generic "Could not finalize invoice." This is the
+            // same reads-after-writes defect already fixed in processPayment (see "accounts
+            // were read in step 4" there); this callable never got the same treatment.
+            const orgId = invoice?.orgId;
+            const [arAccount, incomeAccount] = orgId
+                ? await Promise.all([
+                      findAccountByCode(t, orgId, "1200"), // AR
+                      findAccountByCode(t, orgId, "4000")  // Sales Income
+                  ])
+                : [null, null];
+
+            // ---- writes begin here ----
             // Logic to assign permanent number could go here (e.g. atomic counter)
             // For now, we assume the draft number becomes final or we mark it 'sent/open'
 
@@ -272,13 +287,7 @@ export const finalizeInvoice = functions.https.onCall(async (data: FinalizeInvoi
             });
 
             // AUTO-ACCOUNTING: Create Journal Entry (AR vs Income)
-            const orgId = invoice?.orgId;
             if (orgId) {
-                const [arAccount, incomeAccount] = await Promise.all([
-                    findAccountByCode(t, orgId, "1200"), // AR
-                    findAccountByCode(t, orgId, "4000")  // Sales Income
-                ]);
-
                 if (arAccount && incomeAccount) {
                     const jeRef = db.collection("journal_entries").doc();
                     const jeData: JournalEntry = {
@@ -324,6 +333,10 @@ export const finalizeInvoice = functions.https.onCall(async (data: FinalizeInvoi
         return { success: true };
     } catch (error) {
         if (error instanceof functions.https.HttpsError) throw error;
+        // Log the real cause. This catch used to swallow it entirely and return a generic
+        // message, so a transaction-ordering violation surfaced to the UI as an opaque 500
+        // with nothing in the logs to act on.
+        functions.logger.error("[accounting] finalizeInvoice failed", { invoiceId, error: String(error) });
         throw new functions.https.HttpsError("internal", "Could not finalize invoice.");
     }
 });
