@@ -1309,3 +1309,165 @@ pre-existing in those files; measured HEAD-vs-worktree per rule ID before and af
 cleared them — two "mechanical" fixes turned out to be load-bearing and were reverted with the
 reason recorded in-code) · 317 tests / 16 suites, 2 deliberately skipped (the recorded
 before-state) · hook passed with **no `--no-verify`**.
+
+---
+
+# Round: money / accounting (2026-08-08)
+
+Commit `e586b594` · rollout `dosory-build-2026-08-08-005` · 153 indexes · **functions NOT deployed**
+
+## 1. Chart of accounts — the audit came first, and it disproved the premise
+
+The §5 finding predicted duplicate ledger accounts from an unguarded lazy-seed race. **There
+are none.** Read-only audit across all 14 orgs, before any change:
+
+|                                                             |                                                           |
+| ----------------------------------------------------------- | --------------------------------------------------------- |
+| duplicate-code groups                                       | **0**                                                     |
+| duplicates with journal lines attached (would block dedupe) | **0**                                                     |
+| journal lines referencing a missing account                 | **0**                                                     |
+| orgs with any accounts at all                               | **1** of 14 (`wasiladev`, 10 accounts, 10 distinct codes) |
+
+The mechanism explains it: the missing `accounts(orgId, code)` index made the ordered query
+throw straight into its `catch`, so the seed that follows it **never ran either**. The risk was
+real but unrealised. **No dedupe was needed and none was performed.** Snapshot kept at
+`backups/accounts-audit-2026-08-08T15-33-51-852Z.json`.
+
+Fixed anyway, in the order you set: seeding is now idempotent (deterministic
+`{orgId}__acc-{code}` ids + merge batch — the R1 pattern — instead of `addDoc` auto-ids), then
+the index was added and deployed. **Verified empirically**: loading the chart-of-accounts page
+twice on qa-smoke produced 14 accounts / 14 distinct codes / 0 duplicates.
+
+## 2. Journal entries were being skipped by THREE paths, not one
+
+All three share the shape `if (accountA && accountB) { post }` with no `else`.
+
+1. **Expenses (client).** `useExpenses` reads `accounts` from `useFinance` — which has no mount
+   effect and never loaded them. Both accounts were always `undefined`, so the expense row was
+   written and the books were left untouched, silently. Now the chart is fetched on demand and
+   a failure names the account it could not resolve.
+2. **`processPayment`** and 3. **`finalizeInvoice`** (Cloud Functions). `findAccountByCode` read
+   `organizations/{orgId}/accounts` — a subcollection with **zero documents in every org**. The
+   entire app, and every journal line already in the database, uses the **root** `accounts`
+   collection keyed by `orgId`. So both callables have been recording nothing, for every tenant.
+   This is a **fourth instance of the Sweep E split-brain class**, in the money module, and it
+   was not in the original 9 findings.
+
+**The functions fix is committed but NOT deployed** — see approvals below.
+
+## 3. Invoice adjustment — the number on screen was not the number billed
+
+Both invoice forms collected an adjustment, included it in the displayed total, and never
+persisted it; the stored total was recomputed without it. So screen and database differed by
+exactly the adjustment. The on-screen formula _also_ omitted tax, so the two could be wrong in
+opposite directions simultaneously.
+
+`adjustment` is now in the type, the zod schema, both write paths, and the **one** calculator
+that both the screen and the database use. `calculateInvoiceTotals` existed as two
+byte-identical copies (`lib/hooks/use-invoices.ts` and `lib/services/invoice-service.ts`) — the
+same two-implementations-one-name trap as the ticket saga — now single-source, plus a guard for
+`subtotal === 0`, which could put `NaN` into a persisted total.
+
+## 4. Tenant identity on invoices — verified fixed on qa-smoke, EN + AR
+
+Six hardcoded fallbacks (`WasilaDev`, an address in Nasr City, `Egyptian German Industrial
+Corporation (EGIC)`) now resolve to the tenant's own organization settings, with an honest
+placeholder when a field is unset.
+
+```
+PASS  EN: no 'WasilaDev' on the invoice          PASS  AR: dir=rtl
+PASS  EN: no 'EGIC' on the invoice               PASS  AR: no 'WasilaDev' / EGIC
+PASS  EN: no Nasr City / EL-MANIAL address       PASS  AR: no console errors
+PASS  accounting page: no missing-index error
+```
+
+Evidence: `test-results/money-invoice-{en,ar}.png`, `money-chart-of-accounts.png`.
+
+## 5. Remaining money findings
+
+**Done:** 5 more composite indexes deployed — `expenses(orgId,customerId,date)` (customer
+Expenses tab was permanently empty), `invoices(orgId,total)` (sorting by Amount threw),
+`invoices(orgId,amountDue)` (AR aging report threw), `financial_periods(orgId,endDate)`,
+`financial_audit_logs(orgId,timestamp)`.
+
+**Diagnosed, not changed** (posted-history or product semantics):
+
+- **Credit-note date type mismatch** — the create page passes a JS `Date` where `CreditNote.date`
+  is a `Timestamp`. Found because tightening the `any` broke the build; the cast is currently
+  hiding it. Left as `any` with the reason recorded in-code.
+- **Currencies and taxes are hardcoded** in every money form, ignoring the seeded tenant-managed
+  `currencies`/`taxes` collections. Fixing this changes what tax rate applies to new invoices —
+  your call, not a mechanical edit.
+- **Journal "Post" is dead-silent** when a line has no account selected — a Sweep B onInvalid
+  case, but on the double-entry form I would rather you confirm the intended behaviour
+  (block vs. warn) than guess.
+- **Record-payment dialog** re-derives the amount in an effect keyed on a snapshot-rebuilt
+  array, so it can overwrite a typed value. Same family as the estimates freeze; the correct
+  fix is to derive at submit, which touches payment amounts.
+
+## 6. Product decisions
+
+- **(a) Lead "+ Add Status" — REMOVED.** It slugified free text into `form.setValue("status",…)`,
+  but `status` is a fixed zod enum, so Save silently bricked from first use. Persisting custom
+  statuses end-to-end would need a per-tenant status collection plus dynamic validation
+  everywhere status is read — a feature, not a fix. The **"+ Add Source" twin stays**: `source`
+  is `z.string().optional()`, so what it writes validates. Save can no longer brick.
+- **(b)/(c) Not implemented, recommendations only** — see §7.
+
+## 7. FOR AHMED — one paragraph each, decide from this list
+
+1. **Task status vocabulary.** Three options in the task form write the same value ("Testing"
+   and "Awaiting Feedback" are unreachable) and "Blocked" is a first-class status everywhere
+   except the two forms that set it. _Recommendation:_ align the form to the `TaskStatus` enum
+   exactly — five options, one value each — and extend the existing
+   `form-select-schema-contract` guard to cover tasks. That is mechanical once you confirm the
+   five statuses you actually want.
+2. **Setup → Departments.** The page renders a hardcoded two-row fixture and never queries
+   Firestore, while its Add dialog writes to `supportDepartments`, which nothing reads.
+   _Recommendation:_ gate the page behind the existing "coming soon" treatment until departments
+   are a real entity; shipping a list that ignores what the user just created is worse than
+   showing nothing.
+3. **HR self-service.** `employees.userId` is never written by any code path, so
+   `useCurrentEmployee` always returns null. _Recommendation:_ decide whether an employee record
+   is linked at invite time or claimed by the user; until then the self-service surfaces should
+   be gated rather than rendering permanent blanks.
+4. **Today's activity feed** reads root `activities` while `logActivity` writes
+   `organizations/{orgId}/activities`. _Recommendation:_ pick the subcollection (it is the one
+   with an orgId in its path and the better rules story) and migrate the reader — one collection,
+   the Sweep E rule.
+5. **`departments` / `job_titles` seeding.** Both are required to create an employee and are in
+   neither the seed set nor any backfill. _Recommendation:_ add them to
+   `seed-tenant-defaults.ts` with the deterministic-id pattern; a backfill for the 13 existing
+   orgs is a one-liner afterwards.
+6. **Barrel shadowing on `useStaff` / `useEmailTemplates`.** Two implementations each, chosen by
+   import path. Not currently mis-resolved. _Recommendation:_ rename the platform-scoped ones
+   (`usePlatformEmailTemplates`) so the collision cannot be re-introduced silently.
+7. **Pricing/plan display** — genuinely a taste call, untouched.
+
+## 8. AWAITING YOUR GO-AHEAD
+
+1. **Expense journal-entry backfill — 8 entries, 14,550.00, all `wasiladev`. NOT executed.**
+   The dry-run found **2 amount collisions** against existing expense journal entries that carry
+   **no `referenceId`** (unlinked seed rows), so id-based idempotency cannot see them and a blind
+   run could double-post real money:
+    - expense `DcSm4Ry3IGnpEDermouH` 3200.00 "Conference booth" ↔ JE `rgtDZoRRhyXB0sxDmbVB`
+      "Conference booth — marketing" (3200.00)
+    - expense `hpEpoo8inGc3S7vybtUr` 1500.00 "Co-working space" ↔ JE `ItrTKMh8VURDjmsLWpM0`
+      "Office rent — June" (1500.00)
+
+    The script now **refuses `--execute`** while collisions are unresolved. Resolve by either
+    setting `referenceId` on the existing entry (link it) or confirming they are unrelated.
+    Plan: `backups/expense-je-backfill-plan-*.json`.
+
+2. **Cloud Functions deploy.** The `findAccountByCode` fix is committed but not deployed — this
+   round authorised rollout and index deploys, not a functions deploy, and it changes money
+   behaviour in prod. **Until it ships, `processPayment` and `finalizeInvoice` still record no
+   journal entries.** Command: `npx firebase deploy --only functions:processPayment,functions:finalizeInvoice --project goalo-6a269`
+   (then check IAM invokers per the §11 standing check).
+
+## 9. Gates
+
+tsc clean (app **and** functions) · build 190 pages exit 0 · eslint 0 errors on touched files
+(3 pre-existing in invoice-sheet cleared) · **331 tests / 17 suites**, including the new
+`accounting-invariants` (14): adjustment and tax are in the total, entries balance, no posting
+path may skip silently, exactly one `calculateInvoiceTotals`, no hardcoded tenant identity.

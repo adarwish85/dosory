@@ -279,14 +279,50 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 **Awaiting Ahmed's go-ahead (approvals):**
 
 - ~~Remove the `support_tickets` rules block~~ — DONE 2026-08-08 (`b80810c7`), see ledger.
-- **Money-flow findings from the 2026-08-08 sweep are diagnosis-only and unapplied** — 9 items
-  in TEST-REPORT §6, led by: the Chart of Accounts never loads (missing `accounts(orgId, code)`
-  index) and then client-side lazy-seeds duplicate ledger accounts with no idempotency guard.
-  Check prod for duplicate accounts BEFORE adding that index.
-- **7 product decisions** from the same sweep (TEST-REPORT §5) — lead "+ Add Status" bricks the
-  edit sheet, unreachable task statuses, the hardcoded Departments page, dead HR self-service.
+- ~~Money-flow findings diagnosis-only~~ — worked 2026-08-08 (`e586b594`); see ledger. Two
+  items remain open below.
+- **Expense journal-entry backfill — NOT executed, needs your go.** 8 entries, 14,550.00, all
+  `wasiladev`. The dry-run found **2 amount collisions** with existing expense journal entries
+  that carry no `referenceId`, so a blind run could double-post real money. The script refuses
+  `--execute` until they are resolved. `scripts/audit/backfill-expense-journal-entries.ts`.
+- **Cloud Functions deploy — NOT done, needs your go.** `findAccountByCode` was reading an
+  empty subcollection, so `processPayment` and `finalizeInvoice` record NO journal entries for
+  any tenant. Fix committed; **still broken in prod until functions are deployed.**
+- **6 product recommendations** (TEST-REPORT §7) — task status vocabulary, Departments page,
+  HR self-service linkage, activity-feed collection, departments/job_titles seeding, barrel
+  renames. One paragraph each; nothing implemented.
 
 **Remaining ledger (dated):**
+
+- 2026-08-08 (money/accounting round — `e586b594`, rollout `dosory-build-2026-08-08-005`):
+  **The audit disproved the premise.** The predicted duplicate ledger accounts do not exist —
+  0 duplicate codes and 0 duplicates-with-postings across all 14 orgs; only 1 org had any
+  accounts at all. Cause: the missing `accounts(orgId, code)` index made the ordered query
+  throw into its catch, so the lazy-seed never ran either. No dedupe needed, none performed.
+  **Standing lesson (6) — audit before you remediate; the fix for a race is not the same as
+  evidence the race happened.**
+  **Journal entries were being skipped by THREE paths**, all shaped `if (a && b) { post }` with
+  no else: expenses (client — `useFinance` never loaded the chart, so both accounts were always
+  undefined) and BOTH Cloud Functions (`findAccountByCode` read
+  `organizations/{orgId}/accounts`, a subcollection with **zero documents in every org**, while
+  the whole app and every existing journal line use the ROOT `accounts` collection). That is a
+  **fourth Sweep E split-brain, in the money module** — and it was not among the 9 reported
+  findings. All three now log loudly instead of skipping.
+  Chart seeding is idempotent (deterministic `{orgId}__acc-{code}`, R1 pattern) — proven by
+  loading the page twice on qa-smoke: 14 accounts, 14 distinct codes, 0 duplicates.
+  **Invoice `adjustment` was displayed but never persisted**, while the stored total was
+  recomputed without it — screen and billed amount differed by exactly that value, and the
+  on-screen formula also omitted tax, so both could be wrong at once. `calculateInvoiceTotals`
+  was duplicated byte-for-byte in two files (the ticket-saga trap again) — now single-source,
+  with a `subtotal === 0` guard that could otherwise persist NaN.
+  **Hardcoded "WasilaDev"/EGIC/Nasr-City addresses** on every tenant's invoice detail replaced
+  with that tenant's own org settings; verified live on qa-smoke EN + AR.
+  Product: lead "+ Add Status" REMOVED (it wrote free text into a fixed zod enum, bricking Save
+  from first use); the "+ Add Source" twin stays because `source` is `z.string()`.
+  Guard: `tests/unit/accounting-invariants.test.ts` (14).
+  **Two things are deliberately NOT done and are listed under approvals: the expense backfill
+  (2 amount collisions could double-post) and the functions deploy (payments/invoices still
+  post nothing in prod until it ships).**
 
 - 2026-08-08 (first full-depth Sweeps A–E pass + `support_tickets` retired — `b80810c7`,
   rollout `dosory-build-2026-08-08-001`): 8 lenses, 65 findings raised, **62 confirmed**.
