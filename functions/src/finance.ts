@@ -58,6 +58,27 @@ interface JournalEntry {
 
 
 /**
+ * Drop keys whose value is `undefined`.
+ *
+ * FIXED 2026-08-09, found by tests/backend/finance.test.ts on its first ever run. Firestore
+ * REJECTS `undefined` (the admin SDK is not configured with `ignoreUndefinedProperties`), so
+ * a single absent field on the invoice — `number`, `currency`, `customerId` — made the whole
+ * transaction throw, and the catch at the bottom reported it as "Payment processing failed."
+ * with the real cause only in console.error. Prod has one such invoice today (org `moaz`,
+ * no `number`, no `currency`), so this was not hypothetical: that invoice could never be
+ * paid or finalized.
+ *
+ * Stripping (rather than substituting null) keeps the written document byte-identical for
+ * every invoice that already worked — an absent field stays absent, so no `!=`/`not-in`
+ * query changes meaning (CLAUDE.md Sweep C).
+ */
+function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) if (v !== undefined) out[k] = v;
+    return out as T;
+}
+
+/**
  * Find a ledger account by its code, in the ROOT `accounts` collection scoped by orgId.
  *
  * FIXED 2026-08-08. This previously read `organizations/{orgId}/accounts` — a subcollection
@@ -169,7 +190,7 @@ export const processPayment = functions.https.onCall(async (data: PaymentRequest
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             };
 
-            t.set(paymentRef, paymentData);
+            t.set(paymentRef, stripUndefined(paymentData));
 
             // 6. Update Invoice
             let newStatus = invoice?.status;
@@ -216,8 +237,12 @@ export const processPayment = functions.https.onCall(async (data: PaymentRequest
                             debit: 0,
                             credit: amount,
                             description: `Payment applied to #${invoice?.numberFormatted || invoice?.number}`,
-                            entityType: "customer",
-                            entityId: invoice?.customerId
+                            // An invoice with no customer has no entity to attribute the line
+                            // to; omit the pair rather than writing `entityId: undefined`,
+                            // which Firestore rejects outright.
+                            ...(invoice?.customerId
+                                ? { entityType: "customer" as const, entityId: invoice.customerId }
+                                : {})
                         }
                     ]
                 };
@@ -232,9 +257,18 @@ export const processPayment = functions.https.onCall(async (data: PaymentRequest
 
         return { success: true, message: "Payment processed successfully." };
     } catch (error) {
-        console.error("Payment processing error:", error);
         // Re-throw valid HTTPS errors, wrap others
         if (error instanceof functions.https.HttpsError) throw error;
+        // functions.logger (not console.error) so the cause is queryable in Cloud Logging with
+        // ERROR severity. The undefined-field crash below lived here invisibly for months —
+        // every payment on an invoice missing `number` or `currency` 500'd, and the only
+        // record was an unstructured console line. Same lesson as finalizeInvoice.
+        functions.logger.error("[accounting] processPayment failed", {
+            invoiceId,
+            amount,
+            paymentMode,
+            error: String(error)
+        });
         throw new functions.https.HttpsError("internal", "Payment processing failed.");
     }
 });
@@ -309,8 +343,12 @@ export const finalizeInvoice = functions.https.onCall(async (data: FinalizeInvoi
                                 debit: invoice?.total || 0,
                                 credit: 0,
                                 description: `Invoice #${invoice?.numberFormatted || invoice?.number || "INV"}`,
-                                entityType: "customer",
-                                entityId: invoice?.customerId
+                                // Same undefined-rejection guard as processPayment: an invoice
+                                // with no customerId used to make this whole transaction throw,
+                                // surfaced as an opaque "Could not finalize invoice."
+                                ...(invoice?.customerId
+                                    ? { entityType: "customer" as const, entityId: invoice.customerId }
+                                    : {})
                             },
                             {
                                 accountId: incomeAccount.id,

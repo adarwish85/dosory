@@ -9,6 +9,28 @@ if (!admin.apps.length) {
 }
 const db = admin.firestore();
 /**
+ * Drop keys whose value is `undefined`.
+ *
+ * FIXED 2026-08-09, found by tests/backend/finance.test.ts on its first ever run. Firestore
+ * REJECTS `undefined` (the admin SDK is not configured with `ignoreUndefinedProperties`), so
+ * a single absent field on the invoice — `number`, `currency`, `customerId` — made the whole
+ * transaction throw, and the catch at the bottom reported it as "Payment processing failed."
+ * with the real cause only in console.error. Prod has one such invoice today (org `moaz`,
+ * no `number`, no `currency`), so this was not hypothetical: that invoice could never be
+ * paid or finalized.
+ *
+ * Stripping (rather than substituting null) keeps the written document byte-identical for
+ * every invoice that already worked — an absent field stays absent, so no `!=`/`not-in`
+ * query changes meaning (CLAUDE.md Sweep C).
+ */
+function stripUndefined(obj) {
+    const out = {};
+    for (const [k, v] of Object.entries(obj))
+        if (v !== undefined)
+            out[k] = v;
+    return out;
+}
+/**
  * Find a ledger account by its code, in the ROOT `accounts` collection scoped by orgId.
  *
  * FIXED 2026-08-08. This previously read `organizations/{orgId}/accounts` — a subcollection
@@ -103,7 +125,7 @@ exports.processPayment = functions.https.onCall(async (data, context) => {
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             };
-            t.set(paymentRef, paymentData);
+            t.set(paymentRef, stripUndefined(paymentData));
             // 6. Update Invoice
             let newStatus = invoice === null || invoice === void 0 ? void 0 : invoice.status;
             if (newAmountPaid >= currentTotal - 0.01) {
@@ -141,15 +163,9 @@ exports.processPayment = functions.https.onCall(async (data, context) => {
                             credit: 0,
                             description: `Payment received via ${paymentMode}`
                         },
-                        {
-                            accountId: arAccount.id,
-                            accountName: arAccount.name,
-                            debit: 0,
-                            credit: amount,
-                            description: `Payment applied to #${(invoice === null || invoice === void 0 ? void 0 : invoice.numberFormatted) || (invoice === null || invoice === void 0 ? void 0 : invoice.number)}`,
-                            entityType: "customer",
-                            entityId: invoice === null || invoice === void 0 ? void 0 : invoice.customerId
-                        }
+                        Object.assign({ accountId: arAccount.id, accountName: arAccount.name, debit: 0, credit: amount, description: `Payment applied to #${(invoice === null || invoice === void 0 ? void 0 : invoice.numberFormatted) || (invoice === null || invoice === void 0 ? void 0 : invoice.number)}` }, ((invoice === null || invoice === void 0 ? void 0 : invoice.customerId)
+                            ? { entityType: "customer", entityId: invoice.customerId }
+                            : {}))
                     ]
                 };
                 t.set(jeRef, jeData);
@@ -161,10 +177,19 @@ exports.processPayment = functions.https.onCall(async (data, context) => {
         return { success: true, message: "Payment processed successfully." };
     }
     catch (error) {
-        console.error("Payment processing error:", error);
         // Re-throw valid HTTPS errors, wrap others
         if (error instanceof functions.https.HttpsError)
             throw error;
+        // functions.logger (not console.error) so the cause is queryable in Cloud Logging with
+        // ERROR severity. The undefined-field crash below lived here invisibly for months —
+        // every payment on an invoice missing `number` or `currency` 500'd, and the only
+        // record was an unstructured console line. Same lesson as finalizeInvoice.
+        functions.logger.error("[accounting] processPayment failed", {
+            invoiceId,
+            amount,
+            paymentMode,
+            error: String(error)
+        });
         throw new functions.https.HttpsError("internal", "Payment processing failed.");
     }
 });
@@ -226,15 +251,9 @@ exports.finalizeInvoice = functions.https.onCall(async (data, context) => {
                         createdAt: admin.firestore.FieldValue.serverTimestamp(),
                         createdBy: ((_b = context.auth) === null || _b === void 0 ? void 0 : _b.uid) || "system",
                         lines: [
-                            {
-                                accountId: arAccount.id,
-                                accountName: arAccount.name,
-                                debit: (invoice === null || invoice === void 0 ? void 0 : invoice.total) || 0,
-                                credit: 0,
-                                description: `Invoice #${(invoice === null || invoice === void 0 ? void 0 : invoice.numberFormatted) || (invoice === null || invoice === void 0 ? void 0 : invoice.number) || "INV"}`,
-                                entityType: "customer",
-                                entityId: invoice === null || invoice === void 0 ? void 0 : invoice.customerId
-                            },
+                            Object.assign({ accountId: arAccount.id, accountName: arAccount.name, debit: (invoice === null || invoice === void 0 ? void 0 : invoice.total) || 0, credit: 0, description: `Invoice #${(invoice === null || invoice === void 0 ? void 0 : invoice.numberFormatted) || (invoice === null || invoice === void 0 ? void 0 : invoice.number) || "INV"}` }, ((invoice === null || invoice === void 0 ? void 0 : invoice.customerId)
+                                ? { entityType: "customer", entityId: invoice.customerId }
+                                : {})),
                             {
                                 accountId: incomeAccount.id,
                                 accountName: incomeAccount.name,
