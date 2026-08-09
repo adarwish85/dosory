@@ -278,28 +278,22 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 
 **Awaiting Ahmed's go-ahead (approvals):**
 
-- **Functions deploy for the `stripUndefined` fix** (`54cc4eae`). Until it ships, the one prod
-  invoice with no `number`/`currency` (org `moaz`) can be neither paid nor finalized.
-  `firebase deploy --only functions` — the predeploy build hook is in place, so verify the
-  artifact, not the message (lesson 7).
-- **Three money-flow rulings**, each recorded as an `it.failing` marker in
-  `tests/backend/finance.test.ts` and each changing what lands in the books:
-  (1) the payments picker writes the mode's DISPLAY NAME while `finance.ts` matches snake_case
-  codes, so **every** payment posts to Cash — fix at the writer (a stable code on the payment
-  mode) or at the callable, and decide whether the 3 existing entries are restated;
-  (2) `processPayment` accepts DRAFT invoices, crediting a receivable that was never debited;
-  (3) `voidInvoice` posts no reversing entry, leaving the AR debit on the books forever.
-- **Untrack `functions/node_modules`** — tracked because `.gitignore` only ignores the root
-  `/node_modules`, 8282 files, and already stale (jest/ts-jest/@babel declared but absent).
-  Vendoring the new test dep would have meant ~18k files.
-
-- ~~Remove the `support_tickets` rules block~~ — DONE 2026-08-08 (`b80810c7`), see ledger.
-- ~~Money-flow findings diagnosis-only~~ — worked 2026-08-08 (`e586b594`); see ledger. Two
-  items remain open below.
-- ~~Expense journal-entry backfill~~ — DONE 2026-08-08: 2 collisions linked (not posted),
-  6 entries backfilled (9,850.00). 8/8 expenses now have a journal entry, 0 pending.
-- ~~Cloud Functions deploy~~ — DONE 2026-08-08 and PROVEN live; see ledger.
-- ~~6 product recommendations~~ — ALL SIX RULED AND SHIPPED 2026-08-09 (`78a8caec`); see ledger.
+- ~~Functions deploy for the `stripUndefined` fix~~ — DONE 2026-08-09, artifact verified
+  byte-identical (SHA-256) and 15-min log watch clean.
+- ~~Three money-flow rulings~~ — ALL THREE SHIPPED 2026-08-09 (`733586fa`, `4e57e93c`) and
+  proven live on qa-smoke.
+- ~~Untrack `functions/node_modules`~~ — DONE 2026-08-09 (`ded7786d`), 8282 paths.
+- **EXECUTE THE JE CORRECTION PLAN** (`scripts/audit/audit-payment-je-corrections.ts`, dry-run
+  only, no `--execute` flag exists). §1: ONE mis-posted entry — qa-smoke, 412.00, "Bank
+  Transfer" posted to `1000 Cash on Hand`, should be `1010 Bank Account`; proposed as
+  reversal + repost with deterministic ids, never an in-place edit. §2 is empty (prod has zero
+  void/cancelled invoices). §3: 3 qa-smoke payments (150/50/275) that never got a journal entry
+  at all — a BACKFILL question, same class as the 2026-08-08 expense backfill. §4: 2 `wasiladev`
+  entries (6000 + 7400) with no `referenceId`, unmatchable to a payment.
+- **Prepayment reclassification.** Killing an invoice with payments applied leaves AR negative
+  by the amount received. That is balanced and standard (it represents a customer prepayment),
+  and voidInvoice now logs a warning, but whether it should be reclassified into a dedicated
+  prepayment account is a product decision.
 
 **Open feature work (designed, not defects):**
 
@@ -313,6 +307,44 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
   pointer. Decide: wire it read-only, or retire the route.
 
 **Remaining ledger (dated):**
+
+- 2026-08-09 (money integrity — `ded7786d`, `733586fa`, `4e57e93c`, `7710091a`; two functions
+  deploys; rollout `dosory-build-2026-08-09-005`): the three recorded money defects fixed and
+  PROVEN LIVE on qa-smoke through the real UI — finalize posts DR AR / CR Income, a "Bank
+  Transfer" payment posts to **1010 Bank** (not Cash) with `paymentModeType: "bank"`, and
+  "Mark as Cancelled" reverses the receivable to **AR net 0** while keeping the status the user
+  chose. Both deploys verified byte-identical to the local build via `generateDownloadUrl`
+  (lesson 7 satisfied by SHA-256, not by "Deploy complete!"); 22/22 ACTIVE; two 15-minute log
+  watches, zero ERROR lines.
+  **Standing lesson (11) — fixing the branch nobody can reach is not a fix.** The void reversal
+  shipped in the morning was INERT: nothing in the product ever sets status `void`. The only
+  kill action the UI offers is "Mark as Cancelled", which fell through `use-invoices.ts`'s
+  callable routing to a bare client-side `updateDoc` — no reversal, `amountDue` left intact so
+  the AR aging query (`amountDue > 0`, no status filter) kept billing a killed invoice, and
+  analytics kept counting it. **Before fixing a callable, grep for who actually calls it.**
+  Found by the panel, not by any gate.
+  **A reversal looks exactly like what it reverses.** `je-void-{id}` carries the same
+  orgId/referenceType/referenceId as the original, so (a) voidInvoice's own `limit(1)` lookup
+  could select its own reversal and write a self-referencing link — hidden because the amounts
+  matched and the id is deterministic, so the double-void test still passed — and (b) the
+  correction-plan audit counted every reversal as another unreversed receivable, i.e. the
+  artifact a human approves would have proposed double-reversing. Both filter reversals out
+  **in memory**: a `where("reversesEntryId", …)` filter drops every legitimate original, which
+  carries no such field (Sweep C).
+  **Payment modes are classified by DATA now.** The picker writes the DISPLAY NAME and the
+  server matched `["bank_transfer","cheque","card"]`, so `"bank transfer"` (a SPACE) matched
+  nothing and every payment posted to Cash. Order is now: the tenant's `paymentModes` document
+  (`type`/`slug`) → the normalized name → `unknown`, which still posts to Cash but is logged and
+  stamped on the payment. 24 modes across 12 orgs backfilled additively (re-run is a no-op).
+  **The audit disproved the premise a fourth time:** prod has ZERO void/cancelled invoices, so
+  the "+250 unreversed receivable" exists only in the emulator, and only ONE of the three
+  "Bank Transfer" payments ever got a journal entry — so the correction scope is 1 entry, not 3.
+  Corrections are NOT executed; the plan stops for approval (see above).
+  Repo hygiene: `functions/node_modules` untracked (8282 paths, files untouched on disk — it was
+  never ignored because `.gitignore` has the root-anchored `/node_modules`, and it was already
+  stale); the `.git/objects/pack/._*.idx` sidecar deleted (git is quiet again; `git fsck` still
+  shows `refs/heads/._main` and friends, same harmless class); `tests/e2e/` gitignored after a
+  broad `git add tests` swept it into an unrelated commit for the second time.
 
 - 2026-08-09 (housekeeping — `54cc4eae`): `tests/backend/finance.test.ts` had **never run**
   (`firebase-functions-test` was never a devDependency, so `npx jest` said "Test suite failed to
@@ -646,6 +678,12 @@ in it, and emit a loud marker for anything unparseable instead of skipping it.
   composite index or it throws FAILED_PRECONDITION, which is invisible from the UI. Also
   reconcile the repo file against deployed truth (`firebase firestore:indexes`): on
   2026-08-08 it was 22 indexes behind, so the checked-in file could not rebuild prod.
+- **A record that ANNOTATES another record looks exactly like it.** A journal reversal carries
+  the same orgId/referenceType/referenceId as the entry it reverses, so every query written for
+  the original also matches the annotation — the writer can select its own output, and an
+  auditor counts the annotation as another unhandled item. Exclude by the marker field IN MEMORY:
+  filtering on `where("marker", "==", null)` drops every legitimate original, which has no such
+  field at all.
 - **A `!=` / `not-in` filter silently excludes documents that lack the field entirely** —
   prefer an in-memory filter when the field may be absent.
 

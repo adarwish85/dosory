@@ -1823,3 +1823,143 @@ functions tsc clean · root tsc clean · eslint 0 errors on touched files · **j
 emulator 19/19 suites, 374 passed** (was 18 passed + 1 failed-to-load, 352) · hook clean, no
 `--no-verify` · adversarial panel 35 agents, 29 raised, 3 confirmed (all the same defect, found
 independently by three lenses), folded in before the commit.
+
+---
+
+# ROUND — money integrity, 2026-08-09 (`ded7786d`, `733586fa`, `4e57e93c`, `7710091a`)
+
+Six items, all authorized. Two functions deploys, one App Hosting rollout
+(`dosory-build-2026-08-09-005`), every fix proven on live prod through the real UI.
+
+## 1. The stuck invoice — deployed and proven
+
+`firebase deploy --only functions` shipped the `stripUndefined` fix. **"Deploy complete!" was
+not treated as evidence** (standing lesson 7): the deployed source archive was pulled back via
+`generateDownloadUrl` and its `lib/finance.js` is **byte-identical to the local build**
+(`040c8e77…`, SHA-256 match). 22/22 functions ACTIVE. 15-minute log watch: **zero
+ERROR-severity lines**.
+
+Behaviour proven against a faithful clone of the stuck invoice's shape — org `moaz`, draft,
+total 60000, no `number` / `currency` / `amountPaid` / `amountDue` / `isFinalized`, captured
+read-only by `scripts/audit/inspect-stuck-invoice.ts` with identifying values redacted. That
+shape now finalizes and pays, and the payment document still omits the absent fields rather
+than carrying nulls (Sweep C).
+
+**The real invoice was NOT touched.** It belongs to a client tenant, and finalizing or paying
+it would post real entries to their books. It is ready for the client to retry: the invoice
+also carries `invoiceNumber` where the callables read `number`, which is a separate naming
+split-brain worth a look.
+
+## 2. Payment mode — canonicalized, and the correction plan stops for approval
+
+Classification is now, in order: the tenant's own `paymentModes` **document** (`type`/`slug`),
+the **normalized name** (case- and separator-insensitive), then `unknown` — which still posts
+to Cash exactly as before but is logged and stamped on the payment as `paymentModeType`. The
+document wins because a display name is renameable, and matching one is what broke this.
+
+Seeds carry `slug`+`type`; all **24 existing modes across 12 orgs** were backfilled (additive,
+backup-first, idempotent — re-run reports 0 to write, 24 skipped). Contract test: every seeded
+mode, in two orgs, resolves to the intended account.
+
+**Corrective audit — DRY RUN, nothing executed, no `--execute` flag exists:**
+
+| §   | finding                                                            | count                                                                                          |
+| --- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| 1   | payment entries whose debit account contradicts the payment's mode | **1** — qa-smoke, 412.00, "Bank Transfer" → `1000 Cash on Hand`, should be `1010 Bank Account` |
+| 2   | voided invoices whose receivable was never reversed                | **0**                                                                                          |
+| 3   | payments with no journal entry at all                              | 3 (150, 50, 275) — a backfill question, not a correction                                       |
+| 4   | payment entries with no `referenceId`                              | 2 (`wasiladev`, 6000 + 7400) — unmatchable, listed rather than guessed                         |
+
+Proposed shape per item: reversal (`je-corr-rev-{id}`) + repost (`je-corr-new-{id}`), never an
+in-place edit, deterministic ids, `correctionBatch` on both. **Awaiting your approval.**
+
+Note the scope correction: the earlier round said "all 3 real payments carry Bank Transfer", and
+that is true — but only ONE of them ever got a journal entry, so only one is correctable. The
+other two are in §3.
+
+## 3 & 4. Draft payments blocked; void/cancel reverses
+
+`processPayment` rejects a draft with "Finalize it before recording a payment", keyed on
+`status` and deliberately **not** on `isFinalized` — that flag is only written by
+finalizeInvoice, which itself failed for every tenant until 2026-08-08, so most legitimately-sent
+prod invoices lack it and requiring it would block real payments. The form lists drafts as
+**disabled with the reason**, EN + AR, instead of dropping them silently.
+
+`voidInvoice` posts the mirror entry — DR Sales Income / CR Accounts Receivable — linked to the
+original by `reversesEntryId`, deterministic id, all reads before any write.
+
+**The +250 case is emulator-only.** Prod has **zero** void or cancelled invoices (17 invoices:
+6 draft, 7 paid, 1 partial, 2 sent, 1 overdue), so §2 of the correction plan is legitimately
+empty. The audit disproved the premise again.
+
+## 5. The panel caught the round's headline fix being inert
+
+53 agents, 47 findings raised, **6 confirmed** — three distinct defects:
+
+- **HIGH — nothing in the product ever sets status "void".** The only kill action the UI offers
+  is "Mark as Cancelled", which fell through `use-invoices.ts`'s callable routing to a bare
+  client-side `updateDoc`: no reversal, `amountDue` untouched (so the AR aging query, which
+  filters on `amountDue > 0` with no status filter, kept billing a killed invoice), and
+  analytics kept counting it. **The reversal I shipped fixed the branch nobody can reach.**
+  Both terminal statuses now go through the callable, which takes an explicit
+  `status: "void" | "cancelled"` so the invoice keeps the status the user chose; `cancelled`
+  also joins `void` in analytics' `isValidStatus`.
+- **MEDIUM — the void lookup could select its own reversal.** The reversal carries the same
+  `orgId`/`referenceType`/`referenceId`, so with `limit(1)` and Firestore's implicit `__name__`
+  ordering a second void could pick it as the "original" and write a self-referencing link. The
+  deterministic id hid it: amounts matched, so the double-void test still passed. Reversals are
+  now filtered **in memory** — a `where("reversesEntryId", …)` filter would drop every
+  legitimate original, which has no such field (Sweep C).
+- **MEDIUM — the correction plan counted reversals as unreversed receivables**, so the artifact
+  a human approves would have proposed double-reversing. Verified fixed against live data: prod
+  now contains a real reversal and §2 still reports 0.
+
+An invoice killed while payments are applied now logs a warning — the reversal is balanced and
+standard (AR nets negative by the amount received, i.e. a customer prepayment), but whether that
+should be **reclassified to a prepayment account** is a product decision, listed below.
+
+## 6. Live verification — qa-smoke, EN + AR
+
+Serving revision `dosory-build-2026-08-09-005`; second functions deploy verified byte-identical
+(`finance.js`, `payment-modes.js`, `analytics.js` all SHA-256 matched); 22/22 ACTIVE; second
+15-minute log watch **zero ERROR lines**.
+
+| step                                              | result                                                                                                                                      |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| draft invoice in the payment picker               | **disabled**, "Draft — finalize it first" (EN) / "مسودة — قم باعتمادها أولاً" (AR), with the hint below the picker in both                  |
+| finalize through the real UI                      | `sent`, `isFinalized: true`, JE **DR AR 321 / CR Sales Income 321**                                                                         |
+| pay "Bank Transfer" through the real UI           | `paymentModeType: "bank"`, JE **DR 1010 Bank Account 321 / CR AR 321** — not Cash                                                           |
+| after payment                                     | `paid`, `total − paid − due = 0`, **AR net 0**                                                                                              |
+| "Mark as Cancelled" on a second finalized invoice | status stays **`cancelled`**, `amountDue: 0`, reversal `je-void-…` **DR Sales Income 321 / CR AR 321** linked to the original, **AR net 0** |
+| console errors                                    | 0                                                                                                                                           |
+
+Evidence: `test-results/money-invoice-picker-{en,ar}.png`, `money-payment-{form,done}.png`,
+`money-invoice-{draft,finalized}.png`.
+
+## 7. Repo hygiene
+
+`functions/node_modules` untracked in its own commit — 8282 paths out of the index, files
+untouched on disk. It was never ignored (`.gitignore` has the root-anchored `/node_modules`) and
+was already unusable: `jest`, `ts-jest` and `@babel/*` were declared in `functions/package.json`
+and absent from the tracked tree. The `.git/objects/pack/._*.idx` AppleDouble sidecar is gone and
+git commands are quiet again — `git fsck` still reports `refs/heads/._main` and similar sidecars,
+same harmless class, left alone as out of scope.
+
+`tests/e2e/` is now gitignored: a broad `git add tests` swept it into an unrelated commit twice,
+and both times it had to be amended back out.
+
+## 8. Gates
+
+functions tsc clean · root tsc clean · `npm run build` clean · eslint **0 errors** on every
+touched file · **jest 19/19 suites, 402 passed** (finance suite 22 → 31, accounting-invariants
++18 guards) · hook clean on the code commits · adversarial panel on a **committed** tree per the
+new process rule, with no working-tree mutation observed.
+
+## 9. Awaiting your approval
+
+1. **Execute the correction plan** — reclassify the single 412.00 entry (reversal + repost).
+2. **§3 backfill** — 3 qa-smoke payments (150 / 50 / 275) that never got a journal entry.
+3. **§4** — 2 unlinked `wasiladev` entries (6000 + 7400) that cannot be matched to a payment.
+4. **Prepayment reclassification** — when an invoice is killed with payments applied, AR nets
+   negative by the amount received. Balanced and standard, but it may belong in a dedicated
+   customer-prepayment account.

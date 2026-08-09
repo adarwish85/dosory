@@ -1,0 +1,42 @@
+[
+    {
+        "n": "login",
+        "ok": true,
+        "d": "https://qasmoke20260728131942.dosory.com/dashboard"
+    },
+    {
+        "n": "[en] dir",
+        "ok": true,
+        "d": "ltr"
+    },
+    {
+        "n": "[en] drafts listed as DISABLED with a finalize-first reason",
+        "ok": true,
+        "d": "[x] INV-MONEY-174210 — Draft — finalize it first"
+    },
+    {
+        "n": "[en] the hint under the picker renders",
+        "ok": true,
+        "d": "present"
+    },
+    {
+        "n": "[ar] dir",
+        "ok": true,
+        "d": "rtl"
+    },
+    {
+        "n": "[ar] drafts listed as DISABLED with a finalize-first reason",
+        "ok": true,
+        "d": "[x] INV-MONEY-174210 — مسودة — قم باعتمادها أولاً"
+    },
+    {
+        "n": "[ar] the hint under the picker renders",
+        "ok": true,
+        "d": "present"
+    },
+    {
+        "n": "console errors",
+        "ok": true,
+        "d": "none"
+    }
+]
