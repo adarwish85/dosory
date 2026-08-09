@@ -19,6 +19,7 @@ import { format, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 import type { LeaveRequestStatus } from "@/lib/types/hr-types";
 import { useTranslation } from "@/lib/i18n";
+import { HrSelfServiceUnavailable } from "@/components/dashboard/hr/self-service-unavailable";
 
 export default function LeavesPage() {
     const { t } = useTranslation();
@@ -163,13 +164,17 @@ export default function LeavesPage() {
                     <h2 className="text-xl font-semibold">{t("hr.leaves.title")}</h2>
                     <p className="text-gray-500">{t("hr.leaves.subtitle")}</p>
                 </div>
-                <Button onClick={() => setShowRequestDialog(true)}>
+                {/* Disabled without a linked employee record: handleSubmitRequest rejects
+                    that case anyway, so offering the button led users into a dead dialog. */}
+                <Button onClick={() => setShowRequestDialog(true)} disabled={!currentEmployee}>
                     <Plus className="h-4 w-4 mr-2" />
                     {t("hr.leaves.requestLeave")}
                 </Button>
             </div>
 
-            {/* My Leave Balances */}
+            {/* My Leave Balances. Without a linked employee record this whole section — and
+                the request flow — silently did not exist; say why instead. */}
+            {!employeeLoading && !currentEmployee && <HrSelfServiceUnavailable context="leaves" />}
             {currentEmployee && balances.length > 0 && (
                 <div className="grid gap-4 md:grid-cols-3">
                     {balances.map((balance) => (

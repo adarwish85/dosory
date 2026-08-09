@@ -8,7 +8,7 @@ import { taskFormSchema, type TaskFormData } from "@/lib/schemas";
 import { useTasks, useProjects, useTaskLists } from "@/lib/hooks";
 import { useMilestones } from "@/lib/hooks/use-project-data";
 import { useCustomers } from "@/lib/hooks/use-customers";
-import { useStaff } from "@/lib/hooks/use-staff";
+import { useAssignableStaff } from "@/lib/hooks/use-staff";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, isAfter } from "date-fns";
-import { Calendar as CalendarIcon, Loader2, ChevronLeft, AlertTriangle, FolderTree, ListTodo, Trash2 } from "lucide-react";
+import {
+    Calendar as CalendarIcon,
+    Loader2,
+    ChevronLeft,
+    AlertTriangle,
+    FolderTree,
+    ListTodo,
+    Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -36,13 +44,13 @@ export default function EditTaskPage() {
     const { tasks, updateTask, deleteTask, loading: tasksLoading } = useTasks();
     const { customers } = useCustomers({ status: "active" });
     const { projects } = useProjects();
-    const { staff } = useStaff();
+    const { staff } = useAssignableStaff();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     // Find the task
-    const task = useMemo(() => tasks.find(t => t.id === taskId), [tasks, taskId]);
+    const task = useMemo(() => tasks.find((t) => t.id === taskId), [tasks, taskId]);
 
     const form = useForm<TaskFormData>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,7 +70,14 @@ export default function EditTaskPage() {
         },
     });
 
-    const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = form;
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        setValue,
+        watch,
+        reset,
+    } = form;
     const customerId = watch("customerId");
     const projectId = watch("projectId");
     const milestoneId = watch("milestoneId");
@@ -97,18 +112,18 @@ export default function EditTaskPage() {
     // Filter projects based on selected customer
     const filteredProjects = useMemo(() => {
         if (!customerId) return projects;
-        return projects.filter(p => p.customerId === customerId);
+        return projects.filter((p) => p.customerId === customerId);
     }, [projects, customerId]);
 
     // Get task lists for selected milestone only
     const filteredTaskLists = useMemo(() => {
         if (!milestoneId) return [];
-        return taskLists.filter(tl => tl.milestoneId === milestoneId);
+        return taskLists.filter((tl) => tl.milestoneId === milestoneId);
     }, [taskLists, milestoneId]);
 
     // Find selected milestone to check due date
     const selectedMilestone = useMemo(() => {
-        return milestones.find(m => m.id === milestoneId);
+        return milestones.find((m) => m.id === milestoneId);
     }, [milestones, milestoneId]);
 
     // Check if due date is after milestone
@@ -191,13 +206,12 @@ export default function EditTaskPage() {
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     {t("tasks.backToTasks")}
                 </Link>
-                <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                >
-                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
+                    {isDeleting ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Trash2 className="mr-2 h-4 w-4" />
+                    )}
                     {t("common.delete")}
                 </Button>
             </div>
@@ -215,7 +229,9 @@ export default function EditTaskPage() {
                     <CardContent className="grid gap-6">
                         {/* Name */}
                         <div className="grid gap-2">
-                            <Label htmlFor="name">{t("tasks.form.taskName")} <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="name">
+                                {t("tasks.form.taskName")} <span className="text-red-500">*</span>
+                            </Label>
                             <Input
                                 id="name"
                                 placeholder={t("tasks.form.taskNamePlaceholder")}
@@ -244,7 +260,9 @@ export default function EditTaskPage() {
                                     <SelectContent>
                                         <SelectItem value="none">{t("tasks.form.noCustomer")}</SelectItem>
                                         {customers.map((c) => (
-                                            <SelectItem key={c.id} value={c.id}>{c.company}</SelectItem>
+                                            <SelectItem key={c.id} value={c.id}>
+                                                {c.company}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -266,7 +284,9 @@ export default function EditTaskPage() {
                                     <SelectContent>
                                         <SelectItem value="none">{t("tasks.form.noProject")}</SelectItem>
                                         {filteredProjects.map((p) => (
-                                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                            <SelectItem key={p.id} value={p.id}>
+                                                {p.name}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -302,7 +322,12 @@ export default function EditTaskPage() {
                                                         />
                                                         {m.name}
                                                         {m.status === "complete" && (
-                                                            <Badge variant="secondary" className="text-[10px] px-1 py-0 ml-1">{t("tasks.status.done")}</Badge>
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="text-[10px] px-1 py-0 ml-1"
+                                                            >
+                                                                {t("tasks.status.done")}
+                                                            </Badge>
                                                         )}
                                                     </div>
                                                 </SelectItem>
@@ -311,7 +336,12 @@ export default function EditTaskPage() {
                                     </Select>
                                     {selectedMilestone && (
                                         <p className="text-xs text-muted-foreground">
-                                            {t("tasks.form.due")} {format(selectedMilestone.dueDate?.toDate?.() || selectedMilestone.dueDate as unknown as Date, "MMM d, yyyy")}
+                                            {t("tasks.form.due")}{" "}
+                                            {format(
+                                                selectedMilestone.dueDate?.toDate?.() ||
+                                                    (selectedMilestone.dueDate as unknown as Date),
+                                                "MMM d, yyyy"
+                                            )}
                                         </p>
                                     )}
                                 </div>
@@ -327,12 +357,20 @@ export default function EditTaskPage() {
                                         disabled={!milestoneId}
                                     >
                                         <SelectTrigger className={!milestoneId ? "opacity-50" : ""}>
-                                            <SelectValue placeholder={milestoneId ? t("tasks.form.selectTaskList") : t("tasks.form.selectMilestoneFirst")} />
+                                            <SelectValue
+                                                placeholder={
+                                                    milestoneId
+                                                        ? t("tasks.form.selectTaskList")
+                                                        : t("tasks.form.selectMilestoneFirst")
+                                                }
+                                            />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="none">{t("tasks.form.noTaskList")}</SelectItem>
                                             {filteredTaskLists.map((tl) => (
-                                                <SelectItem key={tl.id} value={tl.id}>{tl.name}</SelectItem>
+                                                <SelectItem key={tl.id} value={tl.id}>
+                                                    {tl.name}
+                                                </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -392,7 +430,11 @@ export default function EditTaskPage() {
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {watch("dueDate") ? format(watch("dueDate")!, "PPP") : <span>{t("tasks.form.pickDate")}</span>}
+                                            {watch("dueDate") ? (
+                                                format(watch("dueDate")!, "PPP")
+                                            ) : (
+                                                <span>{t("tasks.form.pickDate")}</span>
+                                            )}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
@@ -416,7 +458,9 @@ export default function EditTaskPage() {
                                 <Label>{t("tasks.form.priority")}</Label>
                                 <Select
                                     value={watch("priority")}
-                                    onValueChange={(val) => setValue("priority", val as "low" | "medium" | "high" | "urgent")}
+                                    onValueChange={(val) =>
+                                        setValue("priority", val as "low" | "medium" | "high" | "urgent")
+                                    }
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
@@ -434,16 +478,24 @@ export default function EditTaskPage() {
                                 <Label>{t("tasks.form.status")}</Label>
                                 <Select
                                     value={watch("status")}
-                                    onValueChange={(val) => setValue("status", val as "to_do" | "in_progress" | "in_progress" | "in_progress" | "done")}
+                                    onValueChange={(val) => setValue("status", val as TaskFormData["status"])}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        {/* One option per TaskStatus member, exactly. Three of these
+                                            used to write the SAME value ("Testing" and "Awaiting Feedback"
+                                            were both `in_progress`), so picking them silently did nothing
+                                            and they could never be read back — while `blocked`, a
+                                            first-class status everywhere else, was unreachable from the
+                                            only forms that set status. Guarded by
+                                            tests/unit/form-select-schema-contract.test.ts. */}
                                         <SelectItem value="to_do">{t("tasks.statusOption.notStarted")}</SelectItem>
-                                        <SelectItem value="in_progress">{t("tasks.statusOption.inProgress")}</SelectItem>
-                                        <SelectItem value="in_progress">{t("tasks.statusOption.testing")}</SelectItem>
-                                        <SelectItem value="in_progress">{t("tasks.statusOption.awaitingFeedback")}</SelectItem>
+                                        <SelectItem value="in_progress">
+                                            {t("tasks.statusOption.inProgress")}
+                                        </SelectItem>
+                                        <SelectItem value="blocked">{t("tasks.statusOption.blocked")}</SelectItem>
                                         <SelectItem value="done">{t("tasks.statusOption.completed")}</SelectItem>
                                     </SelectContent>
                                 </Select>
@@ -469,7 +521,6 @@ export default function EditTaskPage() {
                                 <Label htmlFor="billable">{t("tasks.form.billable")}</Label>
                             </div>
                         </div>
-
                     </CardContent>
                     <CardFooter className="justify-end border-t border-gray-100 px-6 py-4 bg-gray-50/50 rounded-b-xl">
                         <Button type="button" variant="ghost" className="mr-2" onClick={() => router.back()}>

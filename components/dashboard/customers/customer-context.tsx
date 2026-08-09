@@ -200,7 +200,10 @@ export function CustomerProvider({ children }: CustomerProviderProps) {
                 // customerId — same Sweep E disagreement the useReminders READER had. Filtering
                 // on customerId here kept this badge at 0 forever.
                 { key: "reminders", collection: "reminders", customerField: "relatedTo.id", relatedType: "customer" },
-                { key: "activities", collection: "activities" }, // added
+                // The CRM Activity entity links via relatedTo.{id,type}, not a top-level
+                // customerId — same disagreement the reminders badge had. Filtering on
+                // customerId kept this badge at 0 regardless of how many activities existed.
+                { key: "activities", collection: "activities", customerField: "relatedTo.id", relatedType: "customer" },
             ];
 
             const counts: Partial<RecordCounts> = {};

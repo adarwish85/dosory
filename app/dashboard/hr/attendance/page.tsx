@@ -13,6 +13,7 @@ import { format, startOfDay, endOfDay } from "date-fns";
 import { toast } from "sonner";
 import type { AttendanceStatus } from "@/lib/types/hr-types";
 import { useTranslation } from "@/lib/i18n";
+import { HrSelfServiceUnavailable } from "@/components/dashboard/hr/self-service-unavailable";
 
 export default function AttendancePage() {
     const { t } = useTranslation();
@@ -90,7 +91,9 @@ export default function AttendancePage() {
 
     return (
         <div className="space-y-6">
-            {/* My Clock In/Out Card */}
+            {/* My Clock In/Out Card. When the signed-in user has no linked employee record
+                this used to render NOTHING at all — see HrSelfServiceUnavailable. */}
+            {!employeeLoading && !currentEmployee && <HrSelfServiceUnavailable context="attendance" />}
             {currentEmployee && (
                 <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
                     <CardContent className="p-6">
@@ -110,13 +113,17 @@ export default function AttendancePage() {
                                         {myTodayAttendance.clockIn && (
                                             <span className="flex items-center gap-1">
                                                 <LogIn className="h-4 w-4" />
-                                                {t("hr.attendance.inLabel", { time: format(myTodayAttendance.clockIn.toDate(), "hh:mm a") })}
+                                                {t("hr.attendance.inLabel", {
+                                                    time: format(myTodayAttendance.clockIn.toDate(), "hh:mm a"),
+                                                })}
                                             </span>
                                         )}
                                         {myTodayAttendance.clockOut && (
                                             <span className="flex items-center gap-1">
                                                 <LogOut className="h-4 w-4" />
-                                                {t("hr.attendance.outLabel", { time: format(myTodayAttendance.clockOut.toDate(), "hh:mm a") })}
+                                                {t("hr.attendance.outLabel", {
+                                                    time: format(myTodayAttendance.clockOut.toDate(), "hh:mm a"),
+                                                })}
                                             </span>
                                         )}
                                         {myTodayAttendance.workedMinutes && (
@@ -176,9 +183,7 @@ export default function AttendancePage() {
                 </Card>
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <p className="text-3xl font-bold text-amber-600">
-                            {logs.filter((l) => l.isLate).length}
-                        </p>
+                        <p className="text-3xl font-bold text-amber-600">{logs.filter((l) => l.isLate).length}</p>
                         <p className="text-sm text-gray-500">{t("hr.attendanceStatus.late")}</p>
                     </CardContent>
                 </Card>
@@ -192,9 +197,7 @@ export default function AttendancePage() {
                 </Card>
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <p className="text-3xl font-bold text-red-600">
-                            {employees.length - logs.length}
-                        </p>
+                        <p className="text-3xl font-bold text-red-600">{employees.length - logs.length}</p>
                         <p className="text-sm text-gray-500">{t("hr.attendance.notClocked")}</p>
                     </CardContent>
                 </Card>
@@ -251,7 +254,9 @@ export default function AttendancePage() {
                                     <div className="flex items-center gap-3">
                                         {log.hasOvertime && (
                                             <Badge className="bg-purple-100 text-purple-800">
-                                                {t("hr.attendance.overtime", { hours: Math.floor((log.overtimeMinutes || 0) / 60) })}
+                                                {t("hr.attendance.overtime", {
+                                                    hours: Math.floor((log.overtimeMinutes || 0) / 60),
+                                                })}
                                             </Badge>
                                         )}
                                         {log.isLate && (

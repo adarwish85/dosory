@@ -8,7 +8,7 @@ import { taskFormSchema, type TaskFormData } from "@/lib/schemas";
 import { useTasks, useProjects, useTaskLists, useProject } from "@/lib/hooks";
 import { useMilestones } from "@/lib/hooks/use-project-data";
 import { useCustomers } from "@/lib/hooks/use-customers";
-import { useStaff } from "@/lib/hooks/use-staff";
+import { useAssignableStaff } from "@/lib/hooks/use-staff";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +37,7 @@ export default function CreateTaskPage() {
     const { customers } = useCustomers({ status: "active" });
     const { projects } = useProjects({ status: "active", customerId: customerIdParam || undefined });
     const { project: contextProject } = useProject(projectIdParam || null); // Fetch context project
-    const { staff } = useStaff();
+    const { staff } = useAssignableStaff();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -289,7 +289,11 @@ export default function CreateTaskPage() {
                                     >
                                         <SelectTrigger className={!milestoneId ? "opacity-50" : ""}>
                                             <SelectValue
-                                                placeholder={milestoneId ? t("tasks.form.noTaskList") : t("tasks.form.selectMilestoneFirst")}
+                                                placeholder={
+                                                    milestoneId
+                                                        ? t("tasks.form.noTaskList")
+                                                        : t("tasks.form.selectMilestoneFirst")
+                                                }
                                             />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -395,26 +399,24 @@ export default function CreateTaskPage() {
                                 <Label>{t("tasks.form.status")}</Label>
                                 <Select
                                     value={watch("status")}
-                                    onValueChange={(val) =>
-                                        setValue(
-                                            "status",
-                                            val as
-                                            | "to_do"
-                                            | "in_progress"
-                                            | "in_progress"
-                                            | "in_progress"
-                                            | "done"
-                                        )
-                                    }
+                                    onValueChange={(val) => setValue("status", val as TaskFormData["status"])}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        {/* One option per TaskStatus member, exactly. Three of these
+                                            used to write the SAME value ("Testing" and "Awaiting Feedback"
+                                            were both `in_progress`), so picking them silently did nothing
+                                            and they could never be read back — while `blocked`, a
+                                            first-class status everywhere else, was unreachable from the
+                                            only forms that set status. Guarded by
+                                            tests/unit/form-select-schema-contract.test.ts. */}
                                         <SelectItem value="to_do">{t("tasks.statusOption.notStarted")}</SelectItem>
-                                        <SelectItem value="in_progress">{t("tasks.statusOption.inProgress")}</SelectItem>
-                                        <SelectItem value="in_progress">{t("tasks.statusOption.testing")}</SelectItem>
-                                        <SelectItem value="in_progress">{t("tasks.statusOption.awaitingFeedback")}</SelectItem>
+                                        <SelectItem value="in_progress">
+                                            {t("tasks.statusOption.inProgress")}
+                                        </SelectItem>
+                                        <SelectItem value="blocked">{t("tasks.statusOption.blocked")}</SelectItem>
                                         <SelectItem value="done">{t("tasks.statusOption.completed")}</SelectItem>
                                     </SelectContent>
                                 </Select>

@@ -5670,5 +5670,16 @@
     "leads.edit.validationFailed": "Please fix the highlighted field",
     "invoices.detail.senderUnset": "Your company name — set it in Settings",
     "invoices.detail.addressUnset": "No address on file",
-    "invoices.detail.customerUnset": "No customer"
+    "invoices.detail.customerUnset": "No customer",
+    "tasks.statusOption.blocked": "Blocked",
+    "common.comingSoon.heading": "Coming soon",
+    "common.comingSoon.body": "This area is being built with live data from your workspace. It will appear here once ready.",
+    "setup.departments.title": "Departments",
+    "setup.departments.description": "Organise your team into departments.",
+    "setup.departments.note": "Department management lives under HR → Settings, which reads and writes your workspace's real departments. This page isn't wired to them yet, so it shows nothing rather than a placeholder list.",
+    "hr.selfService.unavailableTitle": "Not linked to an employee record",
+    "hr.selfService.unavailable.attendance": "Clocking in and out needs your user account linked to an employee record. Your workspace's attendance data below is unaffected.",
+    "hr.selfService.unavailable.leaves": "Requesting leave and viewing your balances needs your user account linked to an employee record. Your workspace's leave requests below are unaffected.",
+    "hr.selfService.unavailable.performance": "Adding performance notes needs your user account linked to an employee record with a manager or HR role. The team's performance notes below are unaffected.",
+    "hr.selfService.unavailableHint": "An admin can link it from the Employees page once employee↔user linking ships."
 }

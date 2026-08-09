@@ -93,8 +93,13 @@ export function TodayView() {
                                     </div>
                                     <div>
                                         <p className="text-gray-900">
-                                            <span className="font-semibold">{item.actorName}</span> {item.action}{" "}
-                                            <span className="font-medium text-blue-600">{item.target}</span>
+                                            <span className="font-semibold">{item.actorName}</span> {item.action}
+                                            {/* `target` is empty when `action` is already a complete
+                                                phrase naming the entity — rendering it unconditionally
+                                                appended a stray noun ("…created project Acme site project"). */}
+                                            {item.target && (
+                                                <span className="font-medium text-blue-600"> {item.target}</span>
+                                            )}
                                         </p>
                                         <p className="text-xs text-gray-400 mt-0.5">
                                             {item.timestamp

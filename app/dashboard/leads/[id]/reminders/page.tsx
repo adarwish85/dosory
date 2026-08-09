@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useReminders } from "@/lib/hooks/use-reminders"; // Created in previous step
-import { useStaff } from "@/lib/hooks/use-staff";
+import { useAssignableStaff } from "@/lib/hooks/use-staff";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Loader2, Bell, Trash2 } from "lucide-react";
@@ -18,10 +18,10 @@ export default function LeadRemindersPage() {
 
     // Fetch reminders related to this lead
     const { reminders, loading, deleteReminder } = useReminders({
-        relatedTo: { type: "lead", id: leadId }
+        relatedTo: { type: "lead", id: leadId },
     });
 
-    const { staff } = useStaff();
+    const { staff } = useAssignableStaff();
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -33,10 +33,13 @@ export default function LeadRemindersPage() {
         );
     }
 
-    const formatDate = (timestamp: any) => {
+    const formatDate = (timestamp: { toDate?: () => Date } | Date | string | null | undefined) => {
         if (!timestamp) return "-";
         try {
-            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            const date =
+                typeof timestamp === "object" && "toDate" in timestamp && typeof timestamp.toDate === "function"
+                    ? timestamp.toDate()
+                    : new Date(timestamp as string | Date);
             return format(date, "PP p"); // Date and Time
         } catch {
             return "-";
@@ -44,7 +47,7 @@ export default function LeadRemindersPage() {
     };
 
     const getStaffName = (id: string) => {
-        const member = staff.find(s => s.id === id);
+        const member = staff.find((s) => s.id === id);
         return member ? `${member.firstName} ${member.lastName}` : t("leads.reminders.unknown");
     };
 
@@ -67,10 +70,18 @@ export default function LeadRemindersPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-gray-50 hover:bg-gray-50">
-                            <TableHead className="font-semibold text-gray-900">{t("leads.reminders.table.description")}</TableHead>
-                            <TableHead className="font-semibold text-gray-900">{t("leads.reminders.table.dateTime")}</TableHead>
-                            <TableHead className="font-semibold text-gray-900">{t("leads.reminders.table.assignedTo")}</TableHead>
-                            <TableHead className="font-semibold text-gray-900">{t("leads.reminders.table.createdBy")}</TableHead>
+                            <TableHead className="font-semibold text-gray-900">
+                                {t("leads.reminders.table.description")}
+                            </TableHead>
+                            <TableHead className="font-semibold text-gray-900">
+                                {t("leads.reminders.table.dateTime")}
+                            </TableHead>
+                            <TableHead className="font-semibold text-gray-900">
+                                {t("leads.reminders.table.assignedTo")}
+                            </TableHead>
+                            <TableHead className="font-semibold text-gray-900">
+                                {t("leads.reminders.table.createdBy")}
+                            </TableHead>
                             <TableHead className="w-[100px]"></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -87,16 +98,10 @@ export default function LeadRemindersPage() {
                         ) : (
                             reminders.map((reminder) => (
                                 <TableRow key={reminder.id} className="group hover:bg-gray-50">
-                                    <TableCell className="font-medium">
-                                        {reminder.description}
-                                    </TableCell>
+                                    <TableCell className="font-medium">{reminder.description}</TableCell>
                                     <TableCell className="text-gray-500">{formatDate(reminder.date)}</TableCell>
-                                    <TableCell className="text-gray-500">
-                                        {getStaffName(reminder.assignedTo)}
-                                    </TableCell>
-                                    <TableCell className="text-gray-500">
-                                        {getStaffName(reminder.createdBy)}
-                                    </TableCell>
+                                    <TableCell className="text-gray-500">{getStaffName(reminder.assignedTo)}</TableCell>
+                                    <TableCell className="text-gray-500">{getStaffName(reminder.createdBy)}</TableCell>
                                     <TableCell>
                                         <Button variant="ghost" size="sm" onClick={() => handleDelete(reminder.id)}>
                                             <Trash2 className="h-4 w-4 text-red-500" />
@@ -109,11 +114,7 @@ export default function LeadRemindersPage() {
                 </Table>
             </div>
 
-            <CreateReminderDialog
-                open={isCreateOpen}
-                onOpenChange={setIsCreateOpen}
-                leadId={leadId}
-            />
+            <CreateReminderDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} leadId={leadId} />
         </div>
     );
 }

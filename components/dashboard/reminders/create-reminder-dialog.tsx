@@ -3,28 +3,15 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { reminderFormSchema, ReminderFormData } from "@/lib/schemas";
 import { useReminders } from "@/lib/hooks/use-reminders";
-import { useStaff } from "@/lib/hooks/use-staff";
+import { useAssignableStaff } from "@/lib/hooks/use-staff";
 import { useEffect, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -41,16 +28,10 @@ interface CreateReminderDialogProps {
     customerId?: string;
 }
 
-export function CreateReminderDialog({
-    open,
-    onOpenChange,
-    leadId,
-    leadName,
-    customerId,
-}: CreateReminderDialogProps) {
+export function CreateReminderDialog({ open, onOpenChange, leadId, leadName, customerId }: CreateReminderDialogProps) {
     const { t } = useTranslation();
     const { createReminder } = useReminders();
-    const { staff } = useStaff();
+    const { staff } = useAssignableStaff();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [selectedTime, setSelectedTime] = useState<string>("09:00");
@@ -62,7 +43,11 @@ export function CreateReminderDialog({
             assignedTo: "",
             sendEmail: false,
             date: new Date(),
-            relatedTo: leadId ? { type: "lead", id: leadId } : customerId ? { type: "customer", id: customerId } : undefined,
+            relatedTo: leadId
+                ? { type: "lead", id: leadId }
+                : customerId
+                  ? { type: "customer", id: customerId }
+                  : undefined,
         },
     });
 
@@ -73,7 +58,11 @@ export function CreateReminderDialog({
                 assignedTo: "", // Will need to default to current user if possible, but leaving empty forces selection
                 sendEmail: false,
                 date: new Date(),
-                relatedTo: leadId ? { type: "lead", id: leadId } : customerId ? { type: "customer", id: customerId } : undefined,
+                relatedTo: leadId
+                    ? { type: "lead", id: leadId }
+                    : customerId
+                      ? { type: "customer", id: customerId }
+                      : undefined,
             });
             setSelectedDate(new Date());
             setSelectedTime("09:00");
@@ -84,8 +73,8 @@ export function CreateReminderDialog({
     const timeOptions = [];
     for (let i = 0; i < 24; i++) {
         for (let j = 0; j < 60; j += 30) {
-            const hour = i.toString().padStart(2, '0');
-            const minute = j.toString().padStart(2, '0');
+            const hour = i.toString().padStart(2, "0");
+            const minute = j.toString().padStart(2, "0");
             timeOptions.push(`${hour}:${minute}`);
         }
     }
@@ -96,7 +85,7 @@ export function CreateReminderDialog({
 
             // combine date and time
             if (selectedDate) {
-                const [hours, minutes] = selectedTime.split(':');
+                const [hours, minutes] = selectedTime.split(":");
                 const combinedDate = new Date(selectedDate);
                 combinedDate.setHours(parseInt(hours), parseInt(minutes));
                 data.date = combinedDate;
@@ -146,9 +135,7 @@ export function CreateReminderDialog({
                                             mode="single"
                                             selected={selectedDate}
                                             onSelect={setSelectedDate}
-                                            disabled={(date) =>
-                                                date < new Date("1900-01-01")
-                                            }
+                                            disabled={(date) => date < new Date("1900-01-01")}
                                             initialFocus
                                         />
                                     </PopoverContent>
@@ -221,15 +208,10 @@ export function CreateReminderDialog({
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                     <FormControl>
-                                        <Checkbox
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
+                                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                     </FormControl>
                                     <div className="space-y-1 leading-none">
-                                        <FormLabel>
-                                            {t("reminders.field.sendEmail")}
-                                        </FormLabel>
+                                        <FormLabel>{t("reminders.field.sendEmail")}</FormLabel>
                                     </div>
                                 </FormItem>
                             )}

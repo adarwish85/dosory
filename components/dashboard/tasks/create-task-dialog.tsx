@@ -13,7 +13,7 @@ import { Task } from "@/lib/types";
 import { useTasks, useProjects } from "@/lib/hooks/use-projects";
 import { useMilestones } from "@/lib/hooks/use-project-data";
 import { useTaskLists } from "@/lib/hooks/use-task-lists";
-import { useStaff } from "@/lib/hooks/use-staff";
+import { useAssignableStaff } from "@/lib/hooks/use-staff";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
@@ -34,6 +34,14 @@ interface CreateTaskDialogProps {
     taskId?: string; // ID of task being edited
 }
 
+/** Firestore Timestamp | Date | undefined -> Date, without an `any` cast. */
+function toDateValue(v: unknown): Date {
+    if (v && typeof v === "object" && "toDate" in v && typeof (v as { toDate: unknown }).toDate === "function") {
+        return (v as { toDate: () => Date }).toDate();
+    }
+    return v as Date;
+}
+
 export function CreateTaskDialog({
     open,
     onOpenChange,
@@ -48,7 +56,7 @@ export function CreateTaskDialog({
     const { t } = useTranslation();
     const { createTask, updateTask } = useTasks();
     const { projects } = useProjects();
-    const { staff } = useStaff();
+    const { staff } = useAssignableStaff();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Contextual State
@@ -96,14 +104,8 @@ export function CreateTaskDialog({
             if (initialData) {
                 form.reset({
                     ...initialData,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    startDate: ((initialData.startDate as any)?.toDate
-                        ? (initialData.startDate as any).toDate()
-                        : initialData.startDate) as Date,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    dueDate: ((initialData.dueDate as any)?.toDate
-                        ? (initialData.dueDate as any).toDate()
-                        : initialData.dueDate) as Date,
+                    startDate: toDateValue(initialData.startDate),
+                    dueDate: toDateValue(initialData.dueDate),
                 });
             } else {
                 form.reset({
@@ -252,7 +254,9 @@ export function CreateTaskDialog({
                                                 >
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder={t("tasks.field.selectMilestone")} />
+                                                            <SelectValue
+                                                                placeholder={t("tasks.field.selectMilestone")}
+                                                            />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
@@ -283,7 +287,9 @@ export function CreateTaskDialog({
                                                 >
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder={t("tasks.field.selectTaskList")} />
+                                                            <SelectValue
+                                                                placeholder={t("tasks.field.selectTaskList")}
+                                                            />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
@@ -543,7 +549,11 @@ export function CreateTaskDialog({
                                 <FormItem>
                                     <FormLabel>{t("tasks.field.taskDescription")}</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder={t("tasks.field.addDescription")} className="min-h-[100px]" {...field} />
+                                        <Textarea
+                                            placeholder={t("tasks.field.addDescription")}
+                                            className="min-h-[100px]"
+                                            {...field}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

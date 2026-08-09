@@ -1,99 +1,31 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Search, RefreshCw, Pen, Trash2 } from "lucide-react";
-import { AddDepartmentDialog } from "@/components/dashboard/setup/support/add-department-dialog";
+import { ComingSoonPanel } from "@/components/ui/coming-soon";
 import { useTranslation } from "@/lib/i18n";
 
+/**
+ * GATED 2026-08-09 (§7 decision 2).
+ *
+ * This page previously rendered a hardcoded two-row fixture ("Development",
+ * "Technical Support") and never queried Firestore, while its Add dialog wrote to a
+ * `supportDepartments` collection that no reader anywhere queries. So a user could add a
+ * department, see the list not change, and have no way to tell whether it saved. Showing a
+ * fabricated list that ignores what the user just created is worse than showing nothing.
+ *
+ * Both the fixture and the orphan write are gone. Departments themselves ARE real — the same
+ * §7 round seeds the `departments` collection, `useDepartments` does live CRUD on it from
+ * HR → Settings, and firestore.rules scopes it per tenant. What is not wired is THIS page,
+ * a second departments surface under Setup. So the note points at the page that works
+ * instead of claiming the entity does not exist; wiring or retiring this duplicate is
+ * tracked in CLAUDE.md §11.
+ */
 export default function DepartmentsPage() {
     const { t } = useTranslation();
-    const departments = [
-        { id: 2, name: "Development", email: "dev@example.com", calendarId: "" },
-        { id: 1, name: "Technical Support", email: "support@example.com", calendarId: "" },
-    ];
-
     return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-2">
-                <AddDepartmentDialog />
-            </div>
-
-            <div className="space-y-4">
-                <div className="flex justify-between items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <Select defaultValue="25">
-                            <SelectTrigger className="w-[70px]">
-                                <SelectValue placeholder="25" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="25">25</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline">{t("common.export")}</Button>
-                        <Button variant="outline" size="icon">
-                            <RefreshCw className="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <div className="relative w-64">
-                        <div className="relative">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                            <Input placeholder={t("common.search")} className="pl-9" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-md border shadow-sm">
-                    <div className="px-6 py-3 border-b bg-gray-50">
-                        <div className="grid grid-cols-12 gap-4">
-                            <div className="col-span-1 font-bold text-gray-900 text-sm">{t("setup.departments.id")}</div>
-                            <div className="col-span-3 font-bold text-gray-900 text-sm">{t("common.name")}</div>
-                            <div className="col-span-4 font-bold text-gray-900 text-sm">{t("setup.departments.departmentEmail")}</div>
-                            <div className="col-span-3 font-bold text-gray-900 text-sm">{t("setup.departments.googleCalendarId")}</div>
-                            <div className="col-span-1 font-bold text-gray-900 text-sm text-right">{t("setup.departments.options")}</div>
-                        </div>
-                    </div>
-                    <div className="divide-y">
-                        {departments.map((dept) => (
-                            <div key={dept.id} className="px-6 py-4 h-16 group hover:bg-gray-50 transition-colors">
-                                <div className="grid grid-cols-12 gap-4 items-center">
-                                    <div className="col-span-1 text-gray-700">{dept.id}</div>
-                                    <div className="col-span-3 font-medium text-gray-900">{dept.name}</div>
-                                    <div className="col-span-4 text-gray-700">{dept.email}</div>
-                                    <div className="col-span-3 text-gray-700">{dept.calendarId || "-"}</div>
-                                    <div className="col-span-1 flex items-center justify-end gap-2 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Pen className="h-4 w-4 cursor-pointer hover:text-blue-600" />
-                                        <Trash2 className="h-4 w-4 cursor-pointer hover:text-red-600" />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="px-6 py-4 border-t bg-gray-50 rounded-b-md">
-                        <div className="text-xs text-gray-500 flex justify-end items-center gap-4">
-                            <span>
-                                {t("setup.departments.showingEntries", {
-                                    from: 1,
-                                    to: departments.length,
-                                    total: departments.length,
-                                })}
-                            </span>
-                            <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    {t("setup.departments.previous")}
-                                </Button>
-                                <div className="bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs font-medium">
-                                    1
-                                </div>
-                                <Button variant="ghost" size="sm" disabled className="text-xs">
-                                    {t("setup.departments.next")}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <ComingSoonPanel
+            title={t("setup.departments.title")}
+            description={t("setup.departments.description")}
+            note={t("setup.departments.note")}
+        />
     );
 }

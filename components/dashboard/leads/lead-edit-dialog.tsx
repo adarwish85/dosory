@@ -16,7 +16,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Printer, X, Plus, AlertTriangle } from "lucide-react";
 import { LEAD_STATUSES, LEAD_SOURCES } from "@/lib/constants";
 import { DatePicker } from "@/components/ui/date-picker";
-import { useStaff } from "@/lib/hooks/use-staff";
+import { useAssignableStaff } from "@/lib/hooks/use-staff";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLeads, usePermission } from "@/lib/hooks";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -151,7 +151,7 @@ interface LeadEditSheetProps {
 
 export function LeadEditSheet({ open, onClose, lead, onSave }: LeadEditSheetProps) {
     const { t } = useTranslation();
-    const { staff } = useStaff();
+    const { staff } = useAssignableStaff();
     const { leads } = useLeads({});
     const { can } = usePermission();
     const [duplicateWarning, setDuplicateWarning] = useState<{ type: "email" | "phone"; duplicates: Lead[] } | null>(

@@ -1,3 +1,11 @@
+/**
+ * PLATFORM-scoped email templates — `platform/emailTemplates/templates`, the Super Admin's
+ * template library. RENAMED 2026-08-09 (§7 decision 6) from useEmailTemplates/useEmailTemplate,
+ * which collided by name with the TENANT hooks of the same names in use-settings.ts (those read
+ * the per-org `emailTemplates` collection). Two same-named hooks over different collections in
+ * different tenancy domains is precisely the shape that cost two rounds on useSupportTickets:
+ * whichever the barrel re-exported last silently won. The names now say which is which.
+ */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -63,7 +71,7 @@ export const TEMPLATE_CATEGORIES = {
 };
 
 // Hook: Fetch all templates
-export function useEmailTemplates() {
+export function usePlatformEmailTemplates() {
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -92,7 +100,7 @@ export function useEmailTemplates() {
             },
             (err) => {
                 console.error("Error fetching templates:", err);
-                setError(err.message);
+                setError(err instanceof Error ? err.message : String(err));
                 setLoading(false);
             }
         );
@@ -104,7 +112,7 @@ export function useEmailTemplates() {
 }
 
 // Hook: Single template with versions
-export function useEmailTemplate(templateId: string) {
+export function usePlatformEmailTemplate(templateId: string) {
     const [template, setTemplate] = useState<EmailTemplate | null>(null);
     const [versions, setVersions] = useState<TemplateVersion[]>([]);
     const [loading, setLoading] = useState(true);
@@ -125,9 +133,9 @@ export function useEmailTemplate(templateId: string) {
                 } else {
                     setError("Template not found");
                 }
-            } catch (err: any) {
+            } catch (err) {
                 console.error("Error fetching template:", err);
-                setError(err.message);
+                setError(err instanceof Error ? err.message : String(err));
             } finally {
                 setLoading(false);
             }
@@ -196,9 +204,9 @@ export function useEmailTemplate(templateId: string) {
                 setTemplate((prev) => (prev ? { ...prev, ...updates, version: (prev.version || 0) + 1 } : null));
 
                 return true;
-            } catch (err: any) {
+            } catch (err) {
                 console.error("Error updating template:", err);
-                setError(err.message);
+                setError(err instanceof Error ? err.message : String(err));
                 return false;
             } finally {
                 setSaving(false);
@@ -222,9 +230,9 @@ export function useEmailTemplate(templateId: string) {
                 });
                 setTemplate((prev) => (prev ? { ...prev, enabled: !prev.enabled } : null));
                 return true;
-            } catch (err: any) {
+            } catch (err) {
                 console.error("Error toggling template:", err);
-                setError(err.message);
+                setError(err instanceof Error ? err.message : String(err));
                 return false;
             } finally {
                 setSaving(false);
@@ -276,9 +284,9 @@ export function useEmailTemplate(templateId: string) {
                 );
 
                 return true;
-            } catch (err: any) {
+            } catch (err) {
                 console.error("Error resetting template:", err);
-                setError(err.message);
+                setError(err instanceof Error ? err.message : String(err));
                 return false;
             } finally {
                 setSaving(false);

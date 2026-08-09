@@ -7,6 +7,17 @@ import { SupportTicket } from "@/lib/types/support";
 // reference field — see the lesson-4 note in that file (Sweep E).
 import { identityKeysFor } from "@/lib/utils/identity-keys";
 
+/**
+ * Activity messages are written as standalone sentences ("Created project Acme site"), but the
+ * feed renders them directly after a bolded actor name, where a capital verb reads as a new
+ * sentence. Lower-case the first letter only when it is a plain capitalised word — never touch
+ * an acronym or an id like "INV-000012", and a no-op for non-cased scripts such as Arabic.
+ */
+function lowerCaseLeadingVerb(message: string): string {
+    if (!/^[A-Z][a-z]/.test(message)) return message;
+    return message.charAt(0).toLowerCase() + message.slice(1);
+}
+
 export class TodayService {
     async getDashboardData(
         userId: string,
@@ -259,25 +270,46 @@ export class TodayService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async getActivityFeed(orgId: string, userId: string): Promise<ActivityFeedItem[]> {
         try {
-            const ref = collection(db, "activities");
-            const q = query(ref, where("orgId", "==", orgId), orderBy("createdAt", "desc"), limit(5));
+            // MIGRATED 2026-08-09 (§7 decision 4). This read the ROOT `activities` collection,
+            // but the audit events it renders are written by useActivity's logActivity() into
+            // `organizations/{orgId}/activities`. Two different collections that happen to
+            // share a name: the root one is the CRM Activities ENTITY (scheduled calls and
+            // meetings against a lead/customer, with its own CRUD UI), the subcollection is
+            // the audit/event log. No audit event could ever reach this feed.
+            //
+            // The subcollection is already org-scoped by its path, so the where("orgId") that
+            // used to be here is both unnecessary and wrong — those documents carry no orgId
+            // field. A single orderBy on a subcollection needs no composite index.
+            const ref = collection(db, "organizations", orgId, "activities");
+            const q = query(ref, orderBy("createdAt", "desc"), limit(5));
 
             const snap = await getDocs(q);
             if (snap.empty) return [];
 
+            // Field names come from logActivity's write: { type, message, entityId,
+            // entityType, userId, userName, createdAt, metadata }.
+            //
+            // `message` is a COMPLETE phrase that already names the entity ("Created project
+            // Website Redesign"), so there is no separate target NAME to render here:
+            // `entityType` is a type noun ("project"), and appending it produced
+            // "Ahmed Darwish Created project Website Redesign project". `target` is therefore
+            // deliberately empty and the renderer omits it (today-view.tsx). The leading verb
+            // is lower-cased so the line reads as one sentence after the bolded actor name.
             return snap.docs.map((doc) => {
                 const data = doc.data();
+                const message = typeof data.message === "string" ? data.message.trim() : "";
+                const type = typeof data.type === "string" ? data.type.replace(/_/g, " ") : "";
                 return {
                     id: doc.id,
-                    actorName: data.actorName || "User",
-                    action: data.action || "performed action",
-                    target: data.targetName || data.targetId || "item",
-                    targetUrl: "#", // Could be dynamic based on targetType
+                    actorName: data.userName || "User",
+                    action: lowerCaseLeadingVerb(message) || type || "performed an action",
+                    target: "",
+                    targetUrl: "#", // Could be dynamic based on entityType
                     timestamp: data.createdAt as Timestamp,
                 };
             });
         } catch (error) {
-            console.warn("Failed to fetch activity feed:", error);
+            console.error("Failed to fetch activity feed:", error);
             return [];
         }
     }

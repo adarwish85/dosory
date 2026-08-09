@@ -123,6 +123,58 @@ async function seedDefaults(orgId: string, createdBy: string): Promise<void> {
         { __seedId: "exp-utilities", name: "Utilities", description: "Internet, phone, electricity" },
     ]);
 
+    // §7 decision 5 (2026-08-09): `departments` and `job_titles` are BOTH required to create
+    // an employee — the HR employee form's selects are sourced from them — and neither was in
+    // the seed set nor backfilled, so no tenant could add its first employee. Same Sweep D
+    // class as expenseCategories, same deterministic-ID fix.
+    // Field names mirror what useHRDepartments/useJobTitles actually write and query:
+    // both use `name` (each hook does orderBy("name")), carry status:"active", and
+    // departments carry employeeCount. A seed shaped differently would sort or filter out.
+    await seedIfEmpty("departments", [
+        {
+            __seedId: "dept-general",
+            name: "General",
+            description: "Default department",
+            status: "active",
+            employeeCount: 0,
+        },
+        {
+            __seedId: "dept-engineering",
+            name: "Engineering",
+            description: "Product and engineering",
+            status: "active",
+            employeeCount: 0,
+        },
+        {
+            __seedId: "dept-sales",
+            name: "Sales",
+            description: "Sales and business development",
+            status: "active",
+            employeeCount: 0,
+        },
+        {
+            __seedId: "dept-support",
+            name: "Support",
+            description: "Customer support",
+            status: "active",
+            employeeCount: 0,
+        },
+        {
+            __seedId: "dept-operations",
+            name: "Operations",
+            description: "Operations and admin",
+            status: "active",
+            employeeCount: 0,
+        },
+    ]);
+
+    await seedIfEmpty("job_titles", [
+        { __seedId: "jt-manager", name: "Manager", description: "Team or department manager", status: "active" },
+        { __seedId: "jt-team-lead", name: "Team Lead", description: "Leads a working group", status: "active" },
+        { __seedId: "jt-specialist", name: "Specialist", description: "Individual contributor", status: "active" },
+        { __seedId: "jt-associate", name: "Associate", description: "Junior individual contributor", status: "active" },
+    ]);
+
     await seedIfEmpty("emailTemplates", [
         {
             __seedId: "tpl-invoice-email",

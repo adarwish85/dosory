@@ -1,3 +1,13 @@
+/**
+ * Staff eligible to be ASSIGNED to something — active only, ordered by first name, and
+ * deduplicated so a person with both a uid-keyed and an email-keyed staff doc appears once.
+ *
+ * RENAMED from `useStaff` on 2026-08-09 (§7 decision 6). A second, different `useStaff` lives
+ * in use-settings.ts — the staff-MANAGEMENT list, filterable by status/roleId and NOT
+ * deduplicated — and that is the one the barrel re-exports. Two same-named hooks with
+ * different semantics over the same collection meant the behaviour you got depended on your
+ * import path, silently. Neither is platform-scoped, so they are named for what they do.
+ */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,7 +26,7 @@ export interface Staff {
     isAdmin?: boolean;
 }
 
-export function useStaff() {
+export function useAssignableStaff() {
     const { profile } = useUserProfile();
     const [staff, setStaff] = useState<Staff[]>([]);
     const [loading, setLoading] = useState(true);
@@ -24,7 +34,9 @@ export function useStaff() {
 
     useEffect(() => {
         if (!profile?.orgId) {
-            setLoading(false);
+            // Deferred a microtask: a synchronous setState in an effect body trips the
+            // React Compiler's cascading-render rule.
+            Promise.resolve().then(() => setLoading(false));
             return;
         }
 

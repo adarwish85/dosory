@@ -8,17 +8,29 @@ if (!admin.apps.length) {
     admin.initializeApp();
 }
 const db = admin.firestore();
-// Helper to find account by code (simple scan or assumed index)
+/**
+ * Find a ledger account by its code, in the ROOT `accounts` collection scoped by orgId.
+ *
+ * FIXED 2026-08-08. This previously read `organizations/{orgId}/accounts` — a subcollection
+ * that is EMPTY in every org in prod (audited: 0 documents across all 14). The entire app —
+ * the chart-of-accounts UI, account creation, the expense posting path, and every existing
+ * journal line in the database — uses the ROOT `accounts` collection filtered by `orgId`.
+ * So this helper always returned null, and because both callers below are written as
+ * `if (accountA && accountB) { post }` with no else, processPayment and finalizeInvoice
+ * silently recorded NO journal entry for any tenant. Same silent-skip shape as the expense
+ * path, one layer down. See CLAUDE.md Sweep E.
+ */
 async function findAccountByCode(t, orgId, code) {
-    const accountsRef = db.collection("organizations").doc(orgId).collection("accounts");
-    // Note: Transactional query requires an index on 'code' usually. 
-    // Fallback: This might be slow if many accounts, but usually CoAs are small < 100.
-    const q = accountsRef.where("code", "==", code).limit(1);
+    const q = db.collection("accounts")
+        .where("orgId", "==", orgId)
+        .where("code", "==", code)
+        .limit(1);
     const snap = await t.get(q);
     if (!snap.empty) {
         const doc = snap.docs[0];
         return { id: doc.id, name: doc.data().name };
     }
+    functions.logger.error("[accounting] account not found — journal entry will be SKIPPED", { orgId, code });
     return null;
 }
 // ----------------------------------------------------------------------------
@@ -142,6 +154,9 @@ exports.processPayment = functions.https.onCall(async (data, context) => {
                 };
                 t.set(jeRef, jeData);
             }
+            else {
+                functions.logger.error("[accounting] payment recorded WITHOUT a journal entry — chart of accounts incomplete", { orgId, paymentId: paymentRef.id, missingAsset: !assetAccount, missingAR: !arAccount });
+            }
         });
         return { success: true, message: "Payment processed successfully." };
     }
@@ -172,6 +187,20 @@ exports.finalizeInvoice = functions.https.onCall(async (data, context) => {
             if ((invoice === null || invoice === void 0 ? void 0 : invoice.status) !== "draft") {
                 throw new functions.https.HttpsError("failed-precondition", "Only draft invoices can be finalized.");
             }
+            // ALL READS FIRST. A Firestore transaction rejects any read issued after a write,
+            // and findAccountByCode below performs a query — so resolving the accounts AFTER
+            // t.update() made every finalizeInvoice call fail with a 500, which the catch at
+            // the bottom then reported as a generic "Could not finalize invoice." This is the
+            // same reads-after-writes defect already fixed in processPayment (see "accounts
+            // were read in step 4" there); this callable never got the same treatment.
+            const orgId = invoice === null || invoice === void 0 ? void 0 : invoice.orgId;
+            const [arAccount, incomeAccount] = orgId
+                ? await Promise.all([
+                    findAccountByCode(t, orgId, "1200"), // AR
+                    findAccountByCode(t, orgId, "4000") // Sales Income
+                ])
+                : [null, null];
+            // ---- writes begin here ----
             // Logic to assign permanent number could go here (e.g. atomic counter)
             // For now, we assume the draft number becomes final or we mark it 'sent/open'
             t.update(invoiceRef, {
@@ -181,12 +210,7 @@ exports.finalizeInvoice = functions.https.onCall(async (data, context) => {
                 finalizedBy: (_a = context.auth) === null || _a === void 0 ? void 0 : _a.uid
             });
             // AUTO-ACCOUNTING: Create Journal Entry (AR vs Income)
-            const orgId = invoice === null || invoice === void 0 ? void 0 : invoice.orgId;
             if (orgId) {
-                const [arAccount, incomeAccount] = await Promise.all([
-                    findAccountByCode(t, orgId, "1200"), // AR
-                    findAccountByCode(t, orgId, "4000") // Sales Income
-                ]);
                 if (arAccount && incomeAccount) {
                     const jeRef = db.collection("journal_entries").doc();
                     const jeData = {
@@ -222,6 +246,9 @@ exports.finalizeInvoice = functions.https.onCall(async (data, context) => {
                     };
                     t.set(jeRef, jeData);
                 }
+                else {
+                    functions.logger.error("[accounting] invoice finalized WITHOUT a journal entry — chart of accounts incomplete", { orgId, invoiceId, missingAR: !arAccount, missingIncome: !incomeAccount });
+                }
             }
         });
         return { success: true };
@@ -229,6 +256,10 @@ exports.finalizeInvoice = functions.https.onCall(async (data, context) => {
     catch (error) {
         if (error instanceof functions.https.HttpsError)
             throw error;
+        // Log the real cause. This catch used to swallow it entirely and return a generic
+        // message, so a transaction-ordering violation surfaced to the UI as an opaque 500
+        // with nothing in the logs to act on.
+        functions.logger.error("[accounting] finalizeInvoice failed", { invoiceId, error: String(error) });
         throw new functions.https.HttpsError("internal", "Could not finalize invoice.");
     }
 });

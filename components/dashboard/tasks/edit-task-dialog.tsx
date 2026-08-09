@@ -13,7 +13,7 @@ import { taskFormSchema, TaskFormData } from "@/lib/schemas";
 import { useTasks, useProjects } from "@/lib/hooks/use-projects";
 import { useMilestones } from "@/lib/hooks/use-project-data";
 import { useTaskLists } from "@/lib/hooks/use-task-lists";
-import { useStaff } from "@/lib/hooks/use-staff";
+import { useAssignableStaff } from "@/lib/hooks/use-staff";
 import { useEffect, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -32,7 +32,7 @@ interface EditTaskDialogProps {
 export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps) {
     const { t } = useTranslation();
     const { updateTask } = useTasks();
-    const { staff } = useStaff();
+    const { staff } = useAssignableStaff();
     const { projects } = useProjects();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -219,7 +219,9 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                                 >
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder={t("tasks.field.selectMilestone")} />
+                                                            <SelectValue
+                                                                placeholder={t("tasks.field.selectMilestone")}
+                                                            />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
@@ -250,7 +252,9 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                                 >
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder={t("tasks.field.selectTaskList")} />
+                                                            <SelectValue
+                                                                placeholder={t("tasks.field.selectTaskList")}
+                                                            />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
@@ -494,7 +498,11 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                                 <FormItem>
                                     <FormLabel>{t("tasks.field.taskDescription")}</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder={t("tasks.field.addDescription")} className="min-h-[100px]" {...field} />
+                                        <Textarea
+                                            placeholder={t("tasks.field.addDescription")}
+                                            className="min-h-[100px]"
+                                            {...field}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

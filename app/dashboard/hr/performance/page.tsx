@@ -8,20 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +18,7 @@ import { Star, Plus, TrendingUp, AlertTriangle, MessageSquare, Calendar } from "
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "@/lib/i18n";
+import { HrSelfServiceUnavailable } from "@/components/dashboard/hr/self-service-unavailable";
 import type { PerformanceRating, PerformanceFlag } from "@/lib/types/hr-types";
 
 export default function PerformancePage() {
@@ -139,6 +128,12 @@ export default function PerformancePage() {
                 )}
             </div>
 
+            {/* Unlike attendance and leaves, nothing on THIS page is a self-service view — the
+                org-wide stats and notes below render either way. The one thing a missing employee
+                link costs here is `isManager`, i.e. the Add-note action, so the notice says that
+                and sits under the header rather than claiming the page is broken. */}
+            {!employeeLoading && !currentEmployee && <HrSelfServiceUnavailable context="performance" />}
+
             {/* Stats */}
             <div className="grid gap-4 md:grid-cols-4">
                 <Card>
@@ -151,9 +146,7 @@ export default function PerformancePage() {
                 <Card>
                     <CardContent className="p-4 text-center">
                         <Star className="h-6 w-6 mx-auto mb-2 text-yellow-500" />
-                        <p className="text-2xl font-bold">
-                            {performanceStats.averageRating?.toFixed(1) || "-"}
-                        </p>
+                        <p className="text-2xl font-bold">{performanceStats.averageRating?.toFixed(1) || "-"}</p>
                         <p className="text-sm text-gray-500">{t("hr.performance.avgRating")}</p>
                     </CardContent>
                 </Card>
@@ -300,7 +293,10 @@ export default function PerformancePage() {
                             <Select
                                 value={formData.rating?.toString() || ""}
                                 onValueChange={(v) =>
-                                    setFormData({ ...formData, rating: v ? (parseInt(v) as PerformanceRating) : undefined })
+                                    setFormData({
+                                        ...formData,
+                                        rating: v ? (parseInt(v) as PerformanceRating) : undefined,
+                                    })
                                 }
                             >
                                 <SelectTrigger>
@@ -327,8 +323,12 @@ export default function PerformancePage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none">{t("hr.performance.flagNone")}</SelectItem>
-                                    <SelectItem value="promotion_candidate">{t("hr.performance.flagPromotion")}</SelectItem>
-                                    <SelectItem value="performance_concern">{t("hr.performance.flagConcern")}</SelectItem>
+                                    <SelectItem value="promotion_candidate">
+                                        {t("hr.performance.flagPromotion")}
+                                    </SelectItem>
+                                    <SelectItem value="performance_concern">
+                                        {t("hr.performance.flagConcern")}
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

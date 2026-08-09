@@ -48,7 +48,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useEstimates } from "@/lib/hooks/use-sales";
 import { useTasks } from "@/lib/hooks/use-projects";
 import { useLeads } from "@/lib/hooks/use-leads";
-import { useStaff } from "@/lib/hooks/use-staff";
+import { useAssignableStaff } from "@/lib/hooks/use-staff";
 import { useActivities } from "@/lib/hooks/use-activities";
 import { useFiles } from "@/lib/hooks/use-files";
 import { usePermission } from "@/lib/hooks";
@@ -151,7 +151,7 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
     const { estimates } = useEstimates({ leadId: lead?.id });
     const { tasks } = useTasks();
     const { convertToCustomer } = useLeads();
-    const { staff } = useStaff();
+    const { staff } = useAssignableStaff();
     const { activities } = useActivities({ relatedToType: "lead", relatedToId: lead?.id });
     const {
         files,
@@ -517,7 +517,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     <div className="flex items-center justify-between mb-2">
                                                         <div className="flex items-center gap-2">
                                                             <Zap className={`h-5 w-5 ${scoreColor}`} />
-                                                            <h3 className="font-semibold text-gray-900">{t("leads.details.leadScore")}</h3>
+                                                            <h3 className="font-semibold text-gray-900">
+                                                                {t("leads.details.leadScore")}
+                                                            </h3>
                                                         </div>
                                                         <span className={`text-3xl font-bold ${scoreColor}`}>
                                                             {score}
@@ -571,7 +573,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         <div className="p-3 bg-white border rounded-lg shadow-sm lg:col-span-2">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <TrendingUp className="h-5 w-5 text-blue-600" />
-                                                <h3 className="font-semibold text-gray-900">{t("leads.details.quickActions")}</h3>
+                                                <h3 className="font-semibold text-gray-900">
+                                                    {t("leads.details.quickActions")}
+                                                </h3>
                                             </div>
                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                 {lead.phone && (
@@ -580,7 +584,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         className="flex flex-col items-center gap-1 p-3 rounded-lg bg-green-50 hover:bg-green-100 border border-green-200 transition-colors"
                                                     >
                                                         <Phone className="h-5 w-5 text-green-600" />
-                                                        <span className="text-xs font-medium text-green-700">{t("leads.details.call")}</span>
+                                                        <span className="text-xs font-medium text-green-700">
+                                                            {t("leads.details.call")}
+                                                        </span>
                                                     </a>
                                                 )}
                                                 {lead.email && (
@@ -589,7 +595,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         className="flex flex-col items-center gap-1 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
                                                     >
                                                         <Mail className="h-5 w-5 text-blue-600" />
-                                                        <span className="text-xs font-medium text-blue-700">{t("common.email")}</span>
+                                                        <span className="text-xs font-medium text-blue-700">
+                                                            {t("common.email")}
+                                                        </span>
                                                     </a>
                                                 )}
                                                 <button
@@ -621,7 +629,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-2">
                                                 <ArrowRight className="h-5 w-5 text-blue-600" />
-                                                <h3 className="font-semibold text-gray-900">{t("leads.details.conversionPipeline")}</h3>
+                                                <h3 className="font-semibold text-gray-900">
+                                                    {t("leads.details.conversionPipeline")}
+                                                </h3>
                                             </div>
                                             {can("leads-edit") && (
                                                 <Button
@@ -629,7 +639,8 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     variant="outline"
                                                     onClick={() => setShowConvertWizard(true)}
                                                 >
-                                                    <User className="mr-1 h-4 w-4" /> {t("leads.details.convertToCustomer")}
+                                                    <User className="mr-1 h-4 w-4" />{" "}
+                                                    {t("leads.details.convertToCustomer")}
                                                 </Button>
                                             )}
                                         </div>
@@ -657,19 +668,22 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         </div>
                                         {lead.status === "new" && (
                                             <p className="mt-3 text-sm text-blue-600 flex items-center gap-1">
-                                                <AlertTriangle className="h-4 w-4" /> {t("leads.details.suggestedAction")}{" "}
+                                                <AlertTriangle className="h-4 w-4" />{" "}
+                                                {t("leads.details.suggestedAction")}{" "}
                                                 <strong>{t("leads.details.actionMakeFirstContact")}</strong>
                                             </p>
                                         )}
                                         {lead.status === "contacted" && (
                                             <p className="mt-3 text-sm text-purple-600 flex items-center gap-1">
-                                                <AlertTriangle className="h-4 w-4" /> {t("leads.details.suggestedAction")}{" "}
+                                                <AlertTriangle className="h-4 w-4" />{" "}
+                                                {t("leads.details.suggestedAction")}{" "}
                                                 <strong>{t("leads.details.actionQualifyLead")}</strong>
                                             </p>
                                         )}
                                         {lead.status === "qualified" && (
                                             <p className="mt-3 text-sm text-yellow-600 flex items-center gap-1">
-                                                <AlertTriangle className="h-4 w-4" /> {t("leads.details.suggestedAction")}{" "}
+                                                <AlertTriangle className="h-4 w-4" />{" "}
+                                                {t("leads.details.suggestedAction")}{" "}
                                                 <strong>{t("leads.details.actionSendEstimate")}</strong>
                                             </p>
                                         )}
@@ -770,7 +784,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         <div className="p-4 bg-white border rounded-lg shadow-sm">
                                             <div className="flex items-center gap-2 mb-3">
                                                 <FileText className="h-5 w-5 text-purple-600" />
-                                                <h3 className="font-semibold text-gray-900">{t("leads.details.relatedItems")}</h3>
+                                                <h3 className="font-semibold text-gray-900">
+                                                    {t("leads.details.relatedItems")}
+                                                </h3>
                                             </div>
                                             <div className="space-y-3">
                                                 <button
@@ -778,7 +794,8 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                                                 >
                                                     <span className="flex items-center gap-2 text-sm">
-                                                        <CheckSquare className="h-4 w-4 text-green-500" /> {t("leads.details.tabTasks")}
+                                                        <CheckSquare className="h-4 w-4 text-green-500" />{" "}
+                                                        {t("leads.details.tabTasks")}
                                                     </span>
                                                     <div className="flex items-center gap-1">
                                                         <Badge variant="outline" className="text-orange-600">
@@ -802,7 +819,8 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                                                 >
                                                     <span className="flex items-center gap-2 text-sm">
-                                                        <Bell className="h-4 w-4 text-yellow-500" /> {t("leads.details.tabReminders")}
+                                                        <Bell className="h-4 w-4 text-yellow-500" />{" "}
+                                                        {t("leads.details.tabReminders")}
                                                     </span>
                                                     <Badge variant="secondary">{reminders.length}</Badge>
                                                 </button>
@@ -811,7 +829,8 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                     className="w-full flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                                                 >
                                                     <span className="flex items-center gap-2 text-sm">
-                                                        <StickyNote className="h-4 w-4 text-orange-500" /> {t("leads.details.tabNotes")}
+                                                        <StickyNote className="h-4 w-4 text-orange-500" />{" "}
+                                                        {t("leads.details.tabNotes")}
                                                     </span>
                                                     <Badge variant="secondary">{notes.length}</Badge>
                                                 </button>
@@ -922,7 +941,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             </span>
                                                         </>
                                                     ) : (
-                                                        <span className="text-gray-400">{t("leads.details.notAssigned")}</span>
+                                                        <span className="text-gray-400">
+                                                            {t("leads.details.notAssigned")}
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
@@ -932,7 +953,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     {/* Description */}
                                     {lead.description && (
                                         <div className="p-4 bg-white border rounded-lg shadow-sm">
-                                            <h3 className="text-sm font-semibold text-gray-900 mb-2">{t("common.description")}</h3>
+                                            <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                                                {t("common.description")}
+                                            </h3>
                                             <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700 whitespace-pre-wrap">
                                                 {lead.description}
                                             </div>
@@ -946,7 +969,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center gap-2">
                                                 <Briefcase className="h-5 w-5 text-indigo-600" />
-                                                <h3 className="font-semibold text-gray-900">{t("leads.details.dealDetails")}</h3>
+                                                <h3 className="font-semibold text-gray-900">
+                                                    {t("leads.details.dealDetails")}
+                                                </h3>
                                             </div>
                                             <EditDealDialog
                                                 lead={lead}
@@ -970,7 +995,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                             items: [
                                                                 {
                                                                     id: Math.random().toString(),
-                                                                    description: lead.deal?.description || t("leads.details.dealValue"),
+                                                                    description:
+                                                                        lead.deal?.description ||
+                                                                        t("leads.details.dealValue"),
                                                                     quantity: 1,
                                                                     rate: lead.deal?.value || 0,
                                                                     amount: lead.deal?.value || 0,
@@ -983,7 +1010,8 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                                         setShowCreateEstimate(true);
                                                     }}
                                                 >
-                                                    <Plus className="mr-2 h-4 w-4" /> {t("leads.details.createEstimate")}
+                                                    <Plus className="mr-2 h-4 w-4" />{" "}
+                                                    {t("leads.details.createEstimate")}
                                                 </Button>
                                             )}
                                         </div>
@@ -991,14 +1019,18 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             <div className="space-y-3">
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="p-2 bg-gray-50 rounded border">
-                                                        <div className="text-xs text-gray-500">{t("leads.details.value")}</div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {t("leads.details.value")}
+                                                        </div>
                                                         <div className="font-medium flex items-center">
                                                             <DollarSign className="h-3 w-3 mr-1 text-green-600" />
                                                             {lead.deal.value?.toLocaleString() || "0"}
                                                         </div>
                                                     </div>
                                                     <div className="p-2 bg-gray-50 rounded border">
-                                                        <div className="text-xs text-gray-500">{t("leads.details.closeDate")}</div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {t("leads.details.closeDate")}
+                                                        </div>
                                                         <div className="font-medium flex items-center">
                                                             <CalendarIcon className="h-3 w-3 mr-1 text-gray-400" />
                                                             {lead.deal.expectedCloseDate
@@ -1020,7 +1052,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                             </div>
                                         ) : (
                                             <div className="text-center py-4 bg-gray-50 rounded border border-dashed">
-                                                <p className="text-xs text-gray-500">{t("leads.details.noDealDetails")}</p>
+                                                <p className="text-xs text-gray-500">
+                                                    {t("leads.details.noDealDetails")}
+                                                </p>
                                             </div>
                                         )}
                                     </div>
@@ -1037,7 +1071,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         {estimates.length === 0 ? (
                                             <div className="text-center py-8 bg-white border rounded-lg border-dashed">
                                                 <Calculator className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                                                <p className="text-sm text-gray-500">{t("leads.details.noEstimatesFound")}</p>
+                                                <p className="text-sm text-gray-500">
+                                                    {t("leads.details.noEstimatesFound")}
+                                                </p>
                                             </div>
                                         ) : (
                                             estimates.map((est) => (
@@ -1084,7 +1120,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     {relatedTasks.length === 0 ? (
                                         <div className="text-center py-12 border-2 border-dashed rounded-lg bg-gray-50">
                                             <CheckSquare className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                                            <p className="text-gray-500 font-medium">{t("leads.details.noTasksFound")}</p>
+                                            <p className="text-gray-500 font-medium">
+                                                {t("leads.details.noTasksFound")}
+                                            </p>
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
@@ -1155,7 +1193,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                         </div>
 
                                         {notes.length === 0 ? (
-                                            <p className="text-center text-gray-400 text-sm py-4">{t("leads.details.noPastNotes")}</p>
+                                            <p className="text-center text-gray-400 text-sm py-4">
+                                                {t("leads.details.noPastNotes")}
+                                            </p>
                                         ) : (
                                             <div className="space-y-3">
                                                 {notes.map((note) => (
@@ -1193,7 +1233,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     {files.length === 0 ? (
                                         <div className="border-2 border-dashed rounded-lg p-10 flex flex-col items-center justify-center">
                                             <Paperclip className="h-10 w-10 text-gray-300 mb-2" />
-                                            <p className="text-sm text-gray-500 mb-4">{t("leads.details.noFilesAttached")}</p>
+                                            <p className="text-sm text-gray-500 mb-4">
+                                                {t("leads.details.noFilesAttached")}
+                                            </p>
                                             <input
                                                 type="file"
                                                 ref={fileInputRef}
@@ -1306,7 +1348,9 @@ export function LeadDetailsSheet({ open, onClose, lead, onEdit }: LeadDetailsShe
                                     {reminders.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-10">
                                             <Bell className="h-10 w-10 text-gray-300 mb-2" />
-                                            <p className="text-sm text-gray-500 mb-4">{t("leads.details.noActiveReminders")}</p>
+                                            <p className="text-sm text-gray-500 mb-4">
+                                                {t("leads.details.noActiveReminders")}
+                                            </p>
                                         </div>
                                     ) : (
                                         <div className="space-y-3">

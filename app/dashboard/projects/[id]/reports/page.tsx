@@ -4,20 +4,13 @@ import { useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { useTasks, useProject } from "@/lib/hooks/use-projects";
 import { useMilestones } from "@/lib/hooks/use-project-data";
-import { useStaff } from "@/lib/hooks/use-staff";
+import { useAssignableStaff } from "@/lib/hooks/use-staff";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
     BarChart3,
     Download,
@@ -49,7 +42,7 @@ export default function ProjectReportsPage() {
     const { tasks, loading: tasksLoading } = useTasks({ projectId });
     const { milestones, loading: milestonesLoading } = useMilestones(projectId);
     const { project, loading: projectLoading } = useProject(projectId);
-    const { staff } = useStaff();
+    const { staff } = useAssignableStaff();
 
     const loading = tasksLoading || milestonesLoading || projectLoading;
 
@@ -58,9 +51,7 @@ export default function ProjectReportsPage() {
         const now = new Date();
         const totalTasks = tasks.length;
         const completedTasks = tasks.filter((t) => t.status === "done").length;
-        const overdueTasks = tasks.filter(
-            (t) => t.dueDate && t.dueDate.toDate() < now && t.status !== "done"
-        );
+        const overdueTasks = tasks.filter((t) => t.dueDate && t.dueDate.toDate() < now && t.status !== "done");
         const blockedTasks = tasks.filter((t) => t.status === "blocked");
         const inProgressTasks = tasks.filter((t) => t.status === "in_progress");
 
@@ -81,9 +72,7 @@ export default function ProjectReportsPage() {
                     byAssignee[assigneeId] = {
                         total: 0,
                         completed: 0,
-                        name: staffMember?.firstName
-                            ? `${staffMember.firstName} ${staffMember.lastName}`
-                            : assigneeId,
+                        name: staffMember?.firstName ? `${staffMember.firstName} ${staffMember.lastName}` : assigneeId,
                     };
                 }
                 byAssignee[assigneeId].total++;
@@ -409,7 +398,9 @@ export default function ProjectReportsPage() {
                                             <TableCell className="font-medium">{task.name}</TableCell>
                                             <TableCell>{format(task.dueDate!.toDate(), "MMM d, yyyy")}</TableCell>
                                             <TableCell className="text-red-600">
-                                                {t("projects.reports.daysCount", { count: differenceInDays(new Date(), task.dueDate!.toDate()) })}
+                                                {t("projects.reports.daysCount", {
+                                                    count: differenceInDays(new Date(), task.dueDate!.toDate()),
+                                                })}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge

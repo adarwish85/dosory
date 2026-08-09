@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { leadFormSchema, type LeadFormData } from "@/lib/schemas";
 import { ArrowLeft, Save, Loader2, AlertTriangle } from "lucide-react";
 import { LEAD_STATUSES, LEAD_SOURCES } from "@/lib/constants";
-import { useStaff } from "@/lib/hooks/use-staff";
+import { useAssignableStaff } from "@/lib/hooks/use-staff";
 import { useLeads } from "@/lib/hooks/use-leads";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -23,7 +23,7 @@ import { useTranslation } from "@/lib/i18n";
 export default function NewLeadPage() {
     const { t } = useTranslation();
     const router = useRouter();
-    const { staff } = useStaff();
+    const { staff } = useAssignableStaff();
     const { createLead, leads } = useLeads();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [duplicateWarning, setDuplicateWarning] = useState<{ type: "email" | "phone"; duplicates: Lead[] } | null>(
@@ -166,7 +166,10 @@ export default function NewLeadPage() {
                                         <FormItem>
                                             <FormLabel>{t("leads.new.field.company")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder={t("leads.new.field.companyPlaceholder")} {...field} />
+                                                <Input
+                                                    placeholder={t("leads.new.field.companyPlaceholder")}
+                                                    {...field}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -205,7 +208,10 @@ export default function NewLeadPage() {
                                         <FormItem>
                                             <FormLabel>{t("leads.new.field.position")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder={t("leads.new.field.positionPlaceholder")} {...field} />
+                                                <Input
+                                                    placeholder={t("leads.new.field.positionPlaceholder")}
+                                                    {...field}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -240,7 +246,9 @@ export default function NewLeadPage() {
                                             <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder={t("leads.new.field.statusPlaceholder")} />
+                                                        <SelectValue
+                                                            placeholder={t("leads.new.field.statusPlaceholder")}
+                                                        />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -264,7 +272,9 @@ export default function NewLeadPage() {
                                             <Select onValueChange={field.onChange} value={field.value || ""}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder={t("leads.new.field.sourcePlaceholder")} />
+                                                        <SelectValue
+                                                            placeholder={t("leads.new.field.sourcePlaceholder")}
+                                                        />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -311,7 +321,9 @@ export default function NewLeadPage() {
                                             <Select onValueChange={field.onChange} value={field.value || ""}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder={t("leads.new.field.assignedToPlaceholder")} />
+                                                        <SelectValue
+                                                            placeholder={t("leads.new.field.assignedToPlaceholder")}
+                                                        />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -340,7 +352,10 @@ export default function NewLeadPage() {
                                         <FormItem className="md:col-span-2">
                                             <FormLabel>{t("leads.new.field.street")}</FormLabel>
                                             <FormControl>
-                                                <Input placeholder={t("leads.new.field.streetPlaceholder")} {...field} />
+                                                <Input
+                                                    placeholder={t("leads.new.field.streetPlaceholder")}
+                                                    {...field}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -431,9 +446,7 @@ export default function NewLeadPage() {
                                         </FormControl>
                                         <div className="space-y-1 leading-none">
                                             <FormLabel>{t("leads.new.field.public")}</FormLabel>
-                                            <p className="text-sm text-gray-500">
-                                                {t("leads.new.field.publicHint")}
-                                            </p>
+                                            <p className="text-sm text-gray-500">{t("leads.new.field.publicHint")}</p>
                                         </div>
                                     </FormItem>
                                 )}

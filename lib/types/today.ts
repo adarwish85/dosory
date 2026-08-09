@@ -43,7 +43,13 @@ export interface ActivityFeedItem {
     id: string;
     actorName: string;
     actorAvatar?: string;
-    action: string; // e.g., "commented on", "updated"
+    /**
+     * Either a bare verb phrase ("commented on") that needs `target` to complete it, OR a
+     * complete phrase that already names the entity ("created project Acme site"). The audit
+     * log writes the latter, so `target` is empty for those rows.
+     */
+    action: string;
+    /** The target's NAME. Empty when `action` is already a complete phrase — never a type noun. */
     target: string;
     targetUrl: string;
     timestamp: Timestamp;

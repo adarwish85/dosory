@@ -5670,5 +5670,16 @@
     "leads.edit.validationFailed": "يرجى تصحيح الحقل المحدَّد",
     "invoices.detail.senderUnset": "اسم شركتك — اضبطه من الإعدادات",
     "invoices.detail.addressUnset": "لا يوجد عنوان مسجَّل",
-    "invoices.detail.customerUnset": "لا يوجد عميل"
+    "invoices.detail.customerUnset": "لا يوجد عميل",
+    "tasks.statusOption.blocked": "متوقّف",
+    "common.comingSoon.heading": "قريبًا",
+    "common.comingSoon.body": "يجري بناء هذا القسم ببيانات حقيقية من مساحة عملك، وسيظهر هنا فور جاهزيته.",
+    "setup.departments.title": "الأقسام",
+    "setup.departments.description": "نظّم فريقك في أقسام.",
+    "setup.departments.note": "تتم إدارة الأقسام من الموارد البشرية ← الإعدادات، حيث تُقرأ وتُكتب أقسام مساحة عملك الفعلية. هذه الصفحة غير مرتبطة بها بعد، لذلك لا تعرض قائمة تجريبية.",
+    "hr.selfService.unavailableTitle": "غير مرتبط بسجل موظف",
+    "hr.selfService.unavailable.attendance": "تسجيل الحضور والانصراف يتطلب ربط حسابك بسجل موظف. بيانات حضور مساحة العمل أدناه غير متأثرة.",
+    "hr.selfService.unavailable.leaves": "طلب الإجازة وعرض أرصدتك يتطلب ربط حسابك بسجل موظف. طلبات إجازات مساحة العمل أدناه غير متأثرة.",
+    "hr.selfService.unavailable.performance": "إضافة ملاحظات الأداء تتطلب ربط حسابك بسجل موظف بدور مدير أو موارد بشرية. ملاحظات أداء الفريق أدناه غير متأثرة.",
+    "hr.selfService.unavailableHint": "يمكن للمشرف ربطه من صفحة الموظفين فور إتاحة ربط الموظف بالمستخدم."
 }
