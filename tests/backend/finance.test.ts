@@ -646,6 +646,48 @@ d("finance callables (emulator)", () => {
             expect(await arNetOf()).toBeCloseTo(0, 6);
         });
 
+        it("CANCELLING reverses the receivable too — it is the only kill action the UI offers", async () => {
+            // FOUND BY THE PANEL 2026-08-09. The reversal above was unreachable in production:
+            // /dashboard/invoices/[id] only ever calls updateStatus("cancelled"), which fell
+            // through to a bare client-side updateDoc — no reversal, and `amountDue` left
+            // intact so the AR aging report kept billing a killed invoice. Both terminal
+            // statuses now go through this callable.
+            await seedChart();
+            const invoiceRef = await makeInvoice({ status: "draft", total: 300, customerId: "cust_1" });
+            await testEnv.wrap(finalizeInvoice)({ invoiceId: invoiceRef.id }, AUTH);
+            await testEnv.wrap(voidInvoice)(
+                { invoiceId: invoiceRef.id, reason: "changed mind", status: "cancelled" },
+                AUTH
+            );
+
+            const invoice = (await invoiceRef.get()).data()!;
+            expect(invoice.status).toBe("cancelled"); // NOT silently converted to "void"
+            expect(invoice.amountDue).toBe(0); // the aging report agrees with the ledger
+            expect(await arNetOf()).toBeCloseTo(0, 6);
+            const reversal = (await db.collection("journal_entries").doc(`je-void-${invoiceRef.id}`).get()).data()!;
+            expect(reversal.description).toMatch(/^Cancellation of Invoice/);
+        });
+
+        it("a second void picks the ORIGINAL entry, never its own reversal", async () => {
+            // The lookup matches on orgId + referenceType + referenceId — which the reversal
+            // ALSO satisfies. With limit(1) and Firestore's implicit __name__ ordering, a second
+            // call could select its own reversal as the "original" and write a self-referencing
+            // link. The deterministic id hid it: the amounts matched, so the old double-void
+            // test still passed.
+            await seedChart();
+            const invoiceRef = await makeInvoice({ status: "draft", total: 90, customerId: "cust_1" });
+            await testEnv.wrap(finalizeInvoice)({ invoiceId: invoiceRef.id }, AUTH);
+            await testEnv.wrap(voidInvoice)({ invoiceId: invoiceRef.id, reason: "one" }, AUTH);
+            await testEnv.wrap(voidInvoice)({ invoiceId: invoiceRef.id, reason: "two" }, AUTH);
+
+            const reversal = (await db.collection("journal_entries").doc(`je-void-${invoiceRef.id}`).get()).data()!;
+            expect(reversal.reversesEntryId).not.toBe(`je-void-${invoiceRef.id}`); // not itself
+            const target = (await db.collection("journal_entries").doc(reversal.reversesEntryId).get()).data()!;
+            expect(target.reversesEntryId).toBeUndefined(); // it points at a REAL original
+            expect(target.referenceId).toBe(invoiceRef.id);
+            expect(await arNetOf()).toBeCloseTo(0, 6);
+        });
+
         it("voiding an invoice that was never finalized posts nothing and is not an error", async () => {
             await seedChart();
             const invoiceRef = await makeInvoice({ status: "sent", total: 40 });

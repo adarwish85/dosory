@@ -96,13 +96,23 @@ async function main() {
     }
 
     // ------------------------------------------------- 2. voided invoices with no reversal
-    const invoiceEntries = entries.docs.filter((d) => d.data().referenceType === "invoice");
+    // A REVERSAL also carries referenceType "invoice" and the same referenceId as the entry it
+    // reverses, so scanning invoice entries naively counts each reversal as another unreversed
+    // receivable — and the plan would propose reversing it a second time. Exclude reversals from
+    // the candidate set, and treat an invoice as settled if ANY reversal points at it.
+    const invoiceEntries = entries.docs.filter(
+        (d) => d.data().referenceType === "invoice" && !d.data().reversesEntryId
+    );
     const reversedIds = new Set(entries.docs.map((d) => d.data().reversesEntryId).filter(Boolean));
+    const reversedInvoiceIds = new Set(
+        entries.docs.filter((d) => d.data().reversesEntryId).map((d) => d.data().referenceId)
+    );
     const unreversed: Record<string, unknown>[] = [];
 
     for (const je of invoiceEntries) {
         const j = je.data();
         if (reversedIds.has(je.id)) continue;
+        if (reversedInvoiceIds.has(j.referenceId)) continue;
         const invoice = invoices.docs.find((i) => i.id === j.referenceId);
         if (!invoice) continue;
         const inv = invoice.data();

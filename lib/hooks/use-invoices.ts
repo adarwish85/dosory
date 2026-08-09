@@ -372,9 +372,18 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
             return;
         }
 
-        if (newStatus === "void") {
+        // Both terminal kill statuses go through the callable. "cancelled" used to fall through
+        // to the bare updateDoc below, which posted NO reversing journal entry and never zeroed
+        // `amountDue` — so a killed invoice kept its receivable on the books and kept appearing
+        // in the AR aging report. It is also the ONLY kill action the UI offers, so the void
+        // reversal shipped on 2026-08-09 was unreachable in practice until this routing.
+        if (newStatus === "void" || newStatus === "cancelled") {
             const voidInvoiceFn = httpsCallable(functions, "voidInvoice");
-            await voidInvoiceFn({ invoiceId: id, reason: "Voided via Dashboard" });
+            await voidInvoiceFn({
+                invoiceId: id,
+                reason: newStatus === "cancelled" ? "Cancelled via Dashboard" : "Voided via Dashboard",
+                status: newStatus,
+            });
             return;
         }
 

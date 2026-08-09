@@ -106,8 +106,11 @@ export const onInvoiceWrite = functions.firestore
         let receivableDelta = 0;
         let countDelta = 0;
 
+        // "cancelled" belongs here with "void": it is a terminal kill status (the only one the
+        // UI actually offers), so a cancelled invoice must stop counting towards revenue and
+        // outstanding receivables. Omitting it kept cancelled invoices in the aggregates.
         const isValidStatus = (status: string) =>
-            status && status !== "void" && status !== "draft";
+            status && status !== "void" && status !== "cancelled" && status !== "draft";
 
         // CASE 1: Creation
         if (!before && after) {

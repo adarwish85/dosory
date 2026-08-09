@@ -25,6 +25,13 @@ interface PaymentRequest {
 interface VoidInvoiceRequest {
     invoiceId: string;
     reason?: string;
+    /**
+     * Terminal status to write. "cancelled" is what the product's ONLY kill action sets, and it
+     * used to be written by a bare client-side updateDoc that posted no reversal and never
+     * zeroed `amountDue` — so the receivable stayed on the books AND kept aging. Both statuses
+     * mean the same thing to the ledger, so both come through here.
+     */
+    status?: "void" | "cancelled";
 }
 
 interface FinalizeInvoiceRequest {
@@ -449,6 +456,7 @@ export const voidInvoice = functions.https.onCall(async (data: VoidInvoiceReques
         throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
     }
     const { invoiceId, reason } = data;
+    const terminalStatus = data.status === "cancelled" ? "cancelled" : "void";
     const invoiceRef = db.collection("invoices").doc(invoiceId);
 
     try {
@@ -471,6 +479,12 @@ export const voidInvoice = functions.https.onCall(async (data: VoidInvoiceReques
             // DEBIT Sales Income — and is linked to the original entry so the pair can be read
             // as one story. Deterministic id: voiding twice cannot double-reverse.
             const orgId = invoice?.orgId;
+            // NOTE the absent limit(1): this query also matches the REVERSAL, which carries the
+            // same orgId/referenceType/referenceId. With limit(1) and Firestore's implicit
+            // __name__ ordering, a second void could pick its own reversal as the "original"
+            // and write a self-referencing link. Filter reversals out in memory rather than
+            // with `where("reversesEntryId","==",null)` — a != / == null filter drops documents
+            // that lack the field entirely, which is every legitimate original (Sweep C).
             const originalSnap = orgId
                 ? await t.get(
                       db
@@ -478,10 +492,12 @@ export const voidInvoice = functions.https.onCall(async (data: VoidInvoiceReques
                           .where("orgId", "==", orgId)
                           .where("referenceType", "==", "invoice")
                           .where("referenceId", "==", invoiceId)
-                          .limit(1)
                   )
                 : null;
-            const original = originalSnap && !originalSnap.empty ? originalSnap.docs[0] : null;
+            const original = originalSnap ? originalSnap.docs.find((d) => !d.data().reversesEntryId) ?? null : null;
+            const alreadyReversed = originalSnap
+                ? originalSnap.docs.some((d) => d.data().reversesEntryId)
+                : false;
 
             const [arAccount, incomeAccount] = orgId && original
                 ? await Promise.all([
@@ -492,12 +508,20 @@ export const voidInvoice = functions.https.onCall(async (data: VoidInvoiceReques
 
             // ---- writes begin here ----
             t.update(invoiceRef, {
-                status: "void",
+                status: terminalStatus,
                 voidReason: reason || "Voided by user",
                 voidedAt: admin.firestore.FieldValue.serverTimestamp(),
                 voidedBy: context.auth?.uid,
                 amountDue: 0 // Clear due amount so it doesn't show in aging reports
             });
+
+            if (original && alreadyReversed) {
+                functions.logger.info("[accounting] void: receivable already reversed, nothing to post", {
+                    orgId,
+                    invoiceId
+                });
+                return;
+            }
 
             if (!original) {
                 // Nothing was ever posted for this invoice (never finalized, or the chart was
@@ -519,11 +543,23 @@ export const voidInvoice = functions.https.onCall(async (data: VoidInvoiceReques
 
             const amount = Number(original.data().totalAmount) || 0;
             const label = invoice?.numberFormatted || invoice?.number || "INV";
+            if ((Number(invoice?.amountPaid) || 0) > 0) {
+                // Reversing the invoice while payments remain applied is balanced and standard —
+                // the receivable nets negative by the amount received, which is a customer
+                // prepayment. Whether that should be RECLASSIFIED to a prepayment/credit account
+                // is a product decision, so log it loudly rather than deciding here.
+                functions.logger.warn("[accounting] terminal status on an invoice with payments applied", {
+                    orgId,
+                    invoiceId,
+                    amountPaid: invoice?.amountPaid,
+                    terminalStatus
+                });
+            }
             const reversalRef = db.collection("journal_entries").doc(`je-void-${invoiceId}`);
             const reversal: JournalEntry & { reversesEntryId: string } = {
                 orgId,
                 date: admin.firestore.Timestamp.now(),
-                description: `Void of Invoice #${label}`,
+                description: `${terminalStatus === "cancelled" ? "Cancellation" : "Void"} of Invoice #${label}`,
                 referenceId: invoiceId,
                 referenceType: "invoice",
                 reversesEntryId: original.id,

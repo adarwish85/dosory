@@ -342,10 +342,11 @@ exports.voidInvoice = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
     }
     const { invoiceId, reason } = data;
+    const terminalStatus = data.status === "cancelled" ? "cancelled" : "void";
     const invoiceRef = db.collection("invoices").doc(invoiceId);
     try {
         await db.runTransaction(async (t) => {
-            var _a, _b;
+            var _a, _b, _c;
             // ---- ALL READS FIRST (Firestore rejects a read issued after any write) ----
             const invoiceDoc = await t.get(invoiceRef);
             if (!invoiceDoc.exists)
@@ -363,15 +364,23 @@ exports.voidInvoice = functions.https.onCall(async (data, context) => {
             // DEBIT Sales Income — and is linked to the original entry so the pair can be read
             // as one story. Deterministic id: voiding twice cannot double-reverse.
             const orgId = invoice === null || invoice === void 0 ? void 0 : invoice.orgId;
+            // NOTE the absent limit(1): this query also matches the REVERSAL, which carries the
+            // same orgId/referenceType/referenceId. With limit(1) and Firestore's implicit
+            // __name__ ordering, a second void could pick its own reversal as the "original"
+            // and write a self-referencing link. Filter reversals out in memory rather than
+            // with `where("reversesEntryId","==",null)` — a != / == null filter drops documents
+            // that lack the field entirely, which is every legitimate original (Sweep C).
             const originalSnap = orgId
                 ? await t.get(db
                     .collection("journal_entries")
                     .where("orgId", "==", orgId)
                     .where("referenceType", "==", "invoice")
-                    .where("referenceId", "==", invoiceId)
-                    .limit(1))
+                    .where("referenceId", "==", invoiceId))
                 : null;
-            const original = originalSnap && !originalSnap.empty ? originalSnap.docs[0] : null;
+            const original = originalSnap ? (_a = originalSnap.docs.find((d) => !d.data().reversesEntryId)) !== null && _a !== void 0 ? _a : null : null;
+            const alreadyReversed = originalSnap
+                ? originalSnap.docs.some((d) => d.data().reversesEntryId)
+                : false;
             const [arAccount, incomeAccount] = orgId && original
                 ? await Promise.all([
                     findAccountByCode(t, orgId, "1200"), // AR
@@ -380,12 +389,19 @@ exports.voidInvoice = functions.https.onCall(async (data, context) => {
                 : [null, null];
             // ---- writes begin here ----
             t.update(invoiceRef, {
-                status: "void",
+                status: terminalStatus,
                 voidReason: reason || "Voided by user",
                 voidedAt: admin.firestore.FieldValue.serverTimestamp(),
-                voidedBy: (_a = context.auth) === null || _a === void 0 ? void 0 : _a.uid,
+                voidedBy: (_b = context.auth) === null || _b === void 0 ? void 0 : _b.uid,
                 amountDue: 0 // Clear due amount so it doesn't show in aging reports
             });
+            if (original && alreadyReversed) {
+                functions.logger.info("[accounting] void: receivable already reversed, nothing to post", {
+                    orgId,
+                    invoiceId
+                });
+                return;
+            }
             if (!original) {
                 // Nothing was ever posted for this invoice (never finalized, or the chart was
                 // incomplete at the time) — there is no receivable to reverse. Not an error.
@@ -401,11 +417,23 @@ exports.voidInvoice = functions.https.onCall(async (data, context) => {
             }
             const amount = Number(original.data().totalAmount) || 0;
             const label = (invoice === null || invoice === void 0 ? void 0 : invoice.numberFormatted) || (invoice === null || invoice === void 0 ? void 0 : invoice.number) || "INV";
+            if ((Number(invoice === null || invoice === void 0 ? void 0 : invoice.amountPaid) || 0) > 0) {
+                // Reversing the invoice while payments remain applied is balanced and standard —
+                // the receivable nets negative by the amount received, which is a customer
+                // prepayment. Whether that should be RECLASSIFIED to a prepayment/credit account
+                // is a product decision, so log it loudly rather than deciding here.
+                functions.logger.warn("[accounting] terminal status on an invoice with payments applied", {
+                    orgId,
+                    invoiceId,
+                    amountPaid: invoice === null || invoice === void 0 ? void 0 : invoice.amountPaid,
+                    terminalStatus
+                });
+            }
             const reversalRef = db.collection("journal_entries").doc(`je-void-${invoiceId}`);
             const reversal = {
                 orgId,
                 date: admin.firestore.Timestamp.now(),
-                description: `Void of Invoice #${label}`,
+                description: `${terminalStatus === "cancelled" ? "Cancellation" : "Void"} of Invoice #${label}`,
                 referenceId: invoiceId,
                 referenceType: "invoice",
                 reversesEntryId: original.id,
@@ -414,7 +442,7 @@ exports.voidInvoice = functions.https.onCall(async (data, context) => {
                 currency: original.data().currency || (invoice === null || invoice === void 0 ? void 0 : invoice.currency) || "USD",
                 fxRate: 1.0,
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                createdBy: ((_b = context.auth) === null || _b === void 0 ? void 0 : _b.uid) || "system",
+                createdBy: ((_c = context.auth) === null || _c === void 0 ? void 0 : _c.uid) || "system",
                 lines: [
                     {
                         accountId: incomeAccount.id,

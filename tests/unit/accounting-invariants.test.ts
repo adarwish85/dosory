@@ -211,7 +211,8 @@ describe("rule (c) — voiding a finalized invoice reverses its receivable", () 
         const body = voidFn();
         expect(body).toMatch(/where\("referenceType", "==", "invoice"\)/);
         expect(body).toMatch(/reversesEntryId/);
-        expect(body).toMatch(/Void of Invoice/);
+        expect(body).toMatch(/of Invoice #\$\{label\}/);
+        expect(body).toMatch(/terminalStatus === "cancelled" \? "Cancellation" : "Void"/);
     });
 
     test("the reversal is the MIRROR of the finalize entry: DR income, CR receivable", () => {
@@ -269,5 +270,44 @@ describe("payment modes are classified by DATA, not by a display name", () => {
         const modes = body.match(/name: "[^"]+"/g) || [];
         expect(modes.length).toBeGreaterThan(0);
         expect((body.match(/type: "(bank|cash)"/g) || []).length).toBe(modes.length);
+    });
+});
+
+describe("every terminal invoice status posts its reversal (panel finding, 2026-08-09)", () => {
+    test("the client routes BOTH void and cancelled through the callable", () => {
+        // `cancelled` is the only kill action the UI offers, and it used to fall through to a
+        // bare updateDoc: no reversal, and `amountDue` left intact so AR aging kept billing it.
+        const src = read("lib/hooks/use-invoices.ts");
+        expect(src).toMatch(/newStatus === "void" \|\| newStatus === "cancelled"/);
+        const fn = src.slice(src.indexOf("const updateStatus"));
+        const body = fn.slice(0, fn.indexOf("\n    );"));
+        // the direct updateDoc fallback must come AFTER the callable branch
+        expect(body.indexOf('httpsCallable(functions, "voidInvoice")')).toBeLessThan(body.indexOf("updateDoc(doc(db"));
+    });
+
+    test("analytics stops counting a cancelled invoice, as it does a void", () => {
+        const src = read("functions/src/analytics.ts");
+        const fn = src.slice(src.indexOf("const isValidStatus"));
+        expect(fn.slice(0, 220)).toMatch(/status !== "cancelled"/);
+    });
+
+    test("the void lookup cannot select its own reversal", () => {
+        // Comment-stripped: the comment explaining why a `where("reversesEntryId", …)` filter is
+        // WRONG here would otherwise satisfy the negative assertion below.
+        const src = read("functions/src/finance.ts")
+            .split("\n")
+            .filter((l) => !l.trim().startsWith("//") && !l.trim().startsWith("*") && !l.trim().startsWith("/*"))
+            .join("\n");
+        const fn = src.slice(src.indexOf("export const voidInvoice"));
+        // reversals are filtered in memory — a `== null` filter would drop every legitimate
+        // original, which has no such field at all (Sweep C).
+        expect(fn).toMatch(/docs\.find\(\(d\) => !d\.data\(\)\.reversesEntryId\)/);
+        expect(fn).not.toMatch(/where\("reversesEntryId"/);
+    });
+
+    test("the correction plan does not count a reversal as an unreversed receivable", () => {
+        const src = read("scripts/audit/audit-payment-je-corrections.ts");
+        expect(src).toMatch(/referenceType === "invoice" && !d\.data\(\)\.reversesEntryId/);
+        expect(src).toMatch(/reversedInvoiceIds/);
     });
 });
