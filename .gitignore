@@ -1,5 +1,10 @@
 # dependencies
 /node_modules
+# The nested one was never ignored — `/node_modules` is root-anchored — so 8282 files of
+# functions/ dependencies were tracked, and already stale (jest/ts-jest/@babel were
+# declared in functions/package.json and absent from the tree). package-lock.json is the
+# source of truth: run `npm --prefix functions ci`.
+functions/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
