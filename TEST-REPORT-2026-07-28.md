@@ -1709,3 +1709,117 @@ fixed here.
 now-unused locale keys (`tasks.statusOption.testing` / `.awaitingFeedback`, orphaned when those
 options were deleted — zero references outside the locale files). No rendered output changes; it
 ships with the next rollout.
+
+---
+
+# ROUND — housekeeping, 2026-08-09 (commit `54cc4eae`)
+
+Three asks: make `tests/backend/finance.test.ts` load and pass, fold the pending docs-only
+commit into the next rollout, standard gate.
+
+## 1. The suite that had never run
+
+`firebase-functions-test` was never in any `package.json`, so `npx jest` reported
+"Test suite failed to run" and it read as background noise. Meanwhile the two callables it
+covers shipped two separate production defects that this suite would have caught
+(reads-after-writes on 2026-08-08; the empty accounts subcollection on the same day).
+
+**Dependency choice matters here.** `firebase-functions-test@^3.1.1` resolves to 3.5.0, whose
+peer requires `firebase-functions >= 4.9.0` — npm would have bumped the DEPLOYED runtime
+dependency from 4.3.0 as a side effect of adding a test tool. Pinned to exactly **3.1.1**,
+whose peers (fn >= 4.3.0, admin ^8–^12, jest >= 28) match what `functions/` already has. 3
+packages added, production dependencies untouched.
+
+**Version fidelity.** The suite imports `firebase-admin` and `firebase-functions-test` through
+`functions/node_modules`, not the repo root. The root has firebase-admin **13** and no
+firebase-functions; the deployed functions run **11** + 4.3. A root import would have given the
+test a different admin SDK instance than the code under test — two `Timestamp` classes, and
+timestamps written as `{_seconds}` maps. One copy, the one production uses.
+
+22 tests, emulator-gated (`npx jest` alone still skips it, and says why).
+
+## 2. What the first run found
+
+| #   | Finding                                                                                                                                                                  | Status                      |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| 1   | Firestore rejects `undefined`; both callables copied `invoiceNumber` / `currency` / `entityId` straight off the invoice, so one absent field threw the whole transaction | **FIXED**                   |
+| 2   | `processPayment`'s catch used `console.error`, so the cause never reached Cloud Logging at ERROR severity                                                                | **FIXED**                   |
+| 3   | The payments picker writes the mode's DISPLAY NAME; `finance.ts` matches snake_case codes                                                                                | **RECORDED** — Ahmed's call |
+| 4   | `processPayment` accepts DRAFT invoices; only `finalizeInvoice` debits AR                                                                                                | **RECORDED** — Ahmed's call |
+| 5   | `voidInvoice` posts no reversing entry                                                                                                                                   | **RECORDED** — Ahmed's call |
+
+**#1 is live, not hypothetical.** `scripts/audit/audit-payment-modes.ts` (read-only) found one
+prod invoice — org `moaz`, no `number`, no `currency` — that can be neither paid nor finalized;
+the user would see "Payment processing failed." with the cause only in an unstructured console
+line. Fixed with `stripUndefined()` plus a conditional `entityType`/`entityId` pair. **Stripping,
+not nulling**: an absent field stays absent, so no `!=`/`not-in` query changes meaning (Sweep C).
+
+**#3 is the widest.** `/dashboard/payments/new` writes `value={m.name}` — the tenant-editable
+DISPLAY name. `finance.ts` classifies with
+`["bank_transfer","cheque","card"].includes(paymentMode.toLowerCase())`, and
+`"Bank Transfer".toLowerCase()` is `"bank transfer"` — a **space**, not an underscore. It matches
+nothing, so every payment posts to **Cash 1000**. Audited on prod: all 12 orgs offer exactly
+"Bank Transfer" and "Cash", and all 3 real payments carry "Bank Transfer". A third convention
+exists in `lib/hooks/use-expenses.ts` (`=== "cash" ? Cash : Bank`), where all 8 prod expenses
+have no `paymentMode` at all and therefore post to Bank.
+
+**#4 and #5 are ledger asymmetries**, measured not inferred: paying a draft leaves AR at
+**-100** (a credit with no debit); voiding a finalized invoice leaves **+250** on the books
+while `amountDue: 0` hides it from aging reports.
+
+All three are left for Ahmed because each changes what lands in the books. They are recorded as
+`it.failing` markers rather than as comments, so they cannot be forgotten.
+
+## 3. The panel caught my own guard failing in one direction
+
+Jest's `test.failing` passes whenever the body fails **for any reason** — a thrown rejection is
+indistinguishable from a failed assertion. So a marker whose body calls the callable bare stays
+green _both_ while the defect exists _and_ after someone fixes it by making the callable reject.
+An agent proved it by applying the prescribed draft fix and watching the marker stay green,
+which falsified this commit's own claim.
+
+That is **standing lesson 9 reproduced inside the guard written to record a money-flow defect.**
+Fixed: the calls capture their rejection (`attempt()`) so the assertion always decides; the void
+marker accepts either legitimate resolution (post a reversal, or refuse to void a finalized
+invoice); the payment-mode marker pins BOTH ends so a writer-side fix flips it too.
+
+Re-proved by applying each prescribed fix in turn — every marker reports _"Failing test passed
+even though it was supposed to fail"_ — then reverting all three probes (`functions/src` and
+`functions/lib` verified clean).
+
+**Process note, worth keeping:** the first panel run edited the live working tree. `orgId` briefly
+vanished from `findAccountByCode`'s query — a cross-tenant account lookup — before being put
+back. It was caught by reading the diff rather than by any gate. The re-run was launched only
+after committing, so any agent edit would show as a diff. **Never review a dirty tree with
+write-capable agents.**
+
+## 4. The pending rollout — already shipped
+
+Pushing to `main` triggers an App Hosting rollout automatically, so the docs-only commit
+(`6091560e`) went out as **`dosory-build-2026-08-09-003`** without anyone asking for it.
+Verified at the artifact level, not from a deploy message: the exact removed keys
+(`tasks.statusOption.awaitingFeedback` / `.testing`) appear in **0** of the 36 served JS chunks,
+while their sibling `tasks.statusOption.notStarted` appears in 2 — so the locale file is bundled
+in those chunks and the removal is live. (A substring grep for `awaitingFeedback` does hit one
+chunk: `projects.taskStatus.awaitingFeedback`, a different key that still exists.)
+
+This round changes no app code, so it needs no rollout of its own — but pushing it will trigger
+one anyway.
+
+## 5. Not done, and why
+
+The finance fix **is not deployed**. It needs `firebase deploy --only functions`, which was not
+authorized in this round. Until then, that one prod invoice still cannot be paid or finalized.
+
+`functions/node_modules` was **not** updated in git. It is tracked (`.gitignore` only ignores the
+root `/node_modules`) but already stale — `jest`, `ts-jest` and `@babel/*` are declared in
+`functions/package.json` and were absent from the tracked tree. Vendoring this dependency would
+have meant ~18k files / 1.85M lines, so the suite's header documents `npm --prefix functions ci`
+instead, and untracking the directory is raised as its own task.
+
+## 6. Gates
+
+functions tsc clean · root tsc clean · eslint 0 errors on touched files · **jest under the
+emulator 19/19 suites, 374 passed** (was 18 passed + 1 failed-to-load, 352) · hook clean, no
+`--no-verify` · adversarial panel 35 agents, 29 raised, 3 confirmed (all the same defect, found
+independently by three lenses), folded in before the commit.

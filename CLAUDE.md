@@ -278,6 +278,21 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 
 **Awaiting Ahmed's go-ahead (approvals):**
 
+- **Functions deploy for the `stripUndefined` fix** (`54cc4eae`). Until it ships, the one prod
+  invoice with no `number`/`currency` (org `moaz`) can be neither paid nor finalized.
+  `firebase deploy --only functions` — the predeploy build hook is in place, so verify the
+  artifact, not the message (lesson 7).
+- **Three money-flow rulings**, each recorded as an `it.failing` marker in
+  `tests/backend/finance.test.ts` and each changing what lands in the books:
+  (1) the payments picker writes the mode's DISPLAY NAME while `finance.ts` matches snake_case
+  codes, so **every** payment posts to Cash — fix at the writer (a stable code on the payment
+  mode) or at the callable, and decide whether the 3 existing entries are restated;
+  (2) `processPayment` accepts DRAFT invoices, crediting a receivable that was never debited;
+  (3) `voidInvoice` posts no reversing entry, leaving the AR debit on the books forever.
+- **Untrack `functions/node_modules`** — tracked because `.gitignore` only ignores the root
+  `/node_modules`, 8282 files, and already stale (jest/ts-jest/@babel declared but absent).
+  Vendoring the new test dep would have meant ~18k files.
+
 - ~~Remove the `support_tickets` rules block~~ — DONE 2026-08-08 (`b80810c7`), see ledger.
 - ~~Money-flow findings diagnosis-only~~ — worked 2026-08-08 (`e586b594`); see ledger. Two
   items remain open below.
@@ -298,6 +313,37 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
   pointer. Decide: wire it read-only, or retire the route.
 
 **Remaining ledger (dated):**
+
+- 2026-08-09 (housekeeping — `54cc4eae`): `tests/backend/finance.test.ts` had **never run**
+  (`firebase-functions-test` was never a devDependency, so `npx jest` said "Test suite failed to
+  run" and it read as noise). Now 22 emulator-backed tests over the real callables; jest is
+  **19/19 suites, 374 passed** (was 18 + 1 failed-to-load, 352).
+  **The dependency itself was a trap:** `^3.1.1` resolves to 3.5.0, whose peer wants
+  firebase-functions >= 4.9.0 — adding a TEST tool would have bumped the DEPLOYED runtime dep
+  from 4.3.0. Pinned to exactly 3.1.1. **A test tool must never move a production dependency.**
+  **Version fidelity:** the suite imports firebase-admin through `functions/node_modules`, not
+  the root. Root is admin 13, functions run admin 11 — two copies means two `Timestamp` classes
+  and timestamps silently written as `{_seconds}` maps.
+  **Fixed, found on the first run:** Firestore REJECTS `undefined`, and both callables copied
+  `invoiceNumber` / `currency` / `entityId` straight off the invoice, so ONE absent field threw
+  the whole transaction and surfaced as "Payment processing failed." Prod has one such invoice
+  (org `moaz`) that can be neither paid nor finalized. `stripUndefined()` strips rather than
+  nulls, so an absent field stays absent and no `!=`/`not-in` query changes meaning (Sweep C).
+  processPayment's catch now uses `functions.logger.error`.
+  **Standing lesson (10) — `test.failing` passes when the body fails FOR ANY REASON.** A marker
+  whose body calls the callable bare stays green both while the defect exists AND after someone
+  fixes it by making the callable reject. The panel proved it by applying the prescribed fix and
+  watching the marker stay green — **standing lesson 9 reproduced inside the guard written to
+  record a money-flow defect.** Capture the rejection so the ASSERTION always decides, accept
+  every legitimate resolution, and pin BOTH ends of a two-sided contract. Re-proved by applying
+  each fix in turn and reverting the probes.
+  **Process lesson — never review a dirty tree with write-capable agents.** The first panel run
+  edited the live working tree: `orgId` briefly vanished from `findAccountByCode`'s query (a
+  cross-tenant account lookup) before being restored. No gate caught it; reading the diff did.
+  Re-run only after committing.
+  **Pushing to main auto-triggers an App Hosting rollout** — the docs-only commit `6091560e`
+  shipped as `dosory-build-2026-08-09-003` unasked. Verified at the artifact level: the removed
+  keys appear in 0 of 36 served chunks while their sibling appears in 2.
 
 - 2026-08-09 (§7 decisions round — `78a8caec`, rollout `dosory-build-2026-08-09-002`): all six
   §7 recommendations implemented + the demo-seed consistency item. 27-agent panel: 23 raised,
@@ -573,6 +619,11 @@ status vocabulary). Then confirm each required field is actually _rendered_ — 
 `tests/unit/form-select-schema-contract.test.ts` — **extend it whenever a new status/enum
 select ships**.
 _Rule:_ every `handleSubmit` MUST pass an `onInvalid` that surfaces the failing field.
+_Rule (added 2026-08-09, housekeeping round):_ **`test.failing` passes when the body fails for
+ANY reason.** A marker that records a known defect must CAPTURE the rejection so the assertion
+decides, and must accept every legitimate resolution — otherwise it stays green after the fix and
+the finding is never closed. Prove both directions by applying the prescribed fix and watching it
+turn red.
 _Rule (added 2026-08-09):_ **a guard that identifies items by an incidental property blesses
 everything written differently.** The extractor keyed on the option's translation-key prefix, so
 a MISSING option failed loudly while an EXTRA out-of-enum one was invisible — asymmetric, and
