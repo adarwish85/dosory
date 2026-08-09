@@ -1568,3 +1568,144 @@ or payment. Flagging it as demo-data quality, not a code defect.
 ## 5. Gates
 
 functions tsc clean · accounting-invariants 14/14 · no app change was required, so no rollout.
+
+---
+
+# ROUND — §7 decisions, 2026-08-09 (commit `78a8caec`, rollout `dosory-build-2026-08-09-002`)
+
+All six §7 recommendations ruled by Ahmed, plus the low-priority demo-seed item. Implemented,
+then run past a 27-agent adversarial panel: **23 findings raised, 14 confirmed**, every
+confirmed one folded in before the commit.
+
+## 1. What each decision turned into
+
+| #   | Decision                                                     | What shipped                                                                                        |
+| --- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| 1   | Align task forms to the TaskStatus enum                      | Both forms now offer exactly `to_do / in_progress / blocked / done`                                 |
+| 2   | Gate Setup → Departments                                     | `ComingSoonPanel`; fixture rows + `AddDepartmentDialog` (orphan `supportDepartments` write) deleted |
+| 3   | Gate HR self-service                                         | `HrSelfServiceUnavailable` on attendance / leaves / performance                                     |
+| 4   | Migrate the Today feed to `organizations/{orgId}/activities` | Reader migrated; root copy **not** performed — see below                                            |
+| 5   | Seed `departments` + `job_titles`                            | Seeded (deterministic ids) + backfilled 12 orgs                                                     |
+| 6   | Rename the barrel twins                                      | `usePlatformEmailTemplates`, `useAssignableStaff`                                                   |
+| 7   | Demo seeds internally consistent                             | A payment doc per non-zero `amountPaid`                                                             |
+
+**The brief said five TaskStatus values; `taskStatusSchema` has four.** Aligned to the real
+enum (`to_do | in_progress | blocked | done`) and flagged the discrepancy rather than inventing
+a fifth. The old forms offered five options for those four members: "Testing" and "Awaiting
+Feedback" both wrote `in_progress` — silently unrecordable — while `blocked`, a status the
+filters, badges and Today view all use, was unreachable from the only two forms that set it.
+
+## 2. Decision 4: the audit changed the instruction
+
+The authorised step was "count existing root `activities` docs and additively copy them into the
+correct subcollections". The count was **0 root documents** (subcollection: 35 across 6 orgs), so
+the copy was a no-op — **and doing it would have been wrong**. The two collections are different
+entities that happen to share a name:
+
+- `organizations/{orgId}/activities` — the **audit log**, written by `logActivity`, org-scoped by
+  path, no `orgId` field.
+- `activities` (root) — the **CRM Activity entity**: a scheduled call or meeting against a lead or
+  customer, with `relatedTo`, `outcome`, `dateTime` and its own CRUD UI.
+
+Copying either way pours meeting records into the audit feed. Both paths are now pinned apart by
+`tests/unit/activities-collection-contract.test.ts` (7 tests). **Third time this round that
+auditing before remediating changed the work** — the same shape as the money round's
+non-existent duplicate accounts.
+
+## 3. Decision 6: renamed by behaviour, not by guess
+
+The brief's `usePlatformStaff` pattern did not apply: **neither `useStaff` twin is
+platform-scoped** — both read the tenant `staff` collection; they differ in whether they filter
+to assignable members. So the twin became `useAssignableStaff`. The email-template twin genuinely
+is platform-scoped, so it became `usePlatformEmailTemplates`. Verified at all 10 import sites
+that the only change is the import specifier — the module path is unchanged, so **no call site
+moved between implementations** (the failure mode this rename exists to prevent).
+
+## 4. What the adversarial panel caught in my own work
+
+- **Three new modules were untracked in git.** `components/ui/coming-soon.tsx`,
+  `components/dashboard/hr/self-service-unavailable.tsx` and the new activities contract test were
+  on disk but not staged; a clean checkout of the commit would have failed `next build` on four
+  routes, and the new guard would never have run in CI. Local "build clean / tests pass" cannot
+  see this. **Second occurrence** (identity-keys.ts, 2026-08-08) — it is now a pre-commit check:
+  every module named in an import must be tracked.
+- **The Today feed rendered a garbled sentence.** `today-view` composes
+  `{actorName} {action} {target}`, and the migration mapped `action` = the audit `message`
+  (already a complete phrase naming the entity) and `target` = `entityType` (a type noun), giving
+  "Ahmed Darwish Created project Acme site **project**". `target` is now empty for these rows, the
+  renderer omits it, the leading verb is lower-cased, and `ActivityFeedItem` documents the
+  contract.
+- **The form-select guard had a hole in exactly one direction.** It matched
+  `<SelectItem value="x">{t("<prefix>.…")}</SelectItem>` as a single pattern, so a **missing**
+  option failed loudly but an **extra** out-of-enum option — different key prefix, literal label,
+  any attribute before `value` — was invisible, and the "exactly the enum" assertion passed
+  anyway. Verified first-hand, not taken on the panel's word: with
+  `<SelectItem className="x" value="archived">Archived</SelectItem>` injected into
+  `tasks/new`, the **old** extractor returned exactly `["to_do","in_progress","blocked","done"]`.
+  The new extractor locates the block by prefix and then reads every `<SelectItem>` in it,
+  label-agnostic and attribute-order tolerant, and emits a loud `<UNPARSEABLE:…>` /
+  `<AMBIGUOUS:…>` marker instead of skipping anything it cannot read. With the same injection the
+  guard now **fails 2 tests**; removing it returns to green. Four tests now cover the extractor
+  itself.
+- **A Sweep E split-brain in seed data.** `scripts/seed-demo-tenant.ts` wrote job titles to
+  `jobTitles` while every reader uses `job_titles`, and wrote `department`/`jobTitle` on employee
+  docs where the employees list renders the denormalised `departmentName`/`jobTitleName`. Fixed;
+  `jobTitles` is retained in the wipe list only to clean up what earlier runs wrote.
+- **The seeder's header advertised an idempotency guard that does not exist** while `main()`
+  unconditionally wipes the demo tenant. The header now says so in capitals.
+- **The HR performance gate overclaimed.** Unlike attendance and leaves, nothing on that page is
+  a self-service view — the stats and notes render org-wide either way; the only thing a missing
+  employee link costs is the Add-note action. Reworded to that, and moved below the header.
+- **The Setup → Departments note contradicted decision 5.** It said departments "aren't wired to
+  your workspace data yet" — but HR → Settings does live CRUD on that same collection, which this
+  round also seeds. It now points there.
+
+Refuted and not acted on (9): among them the claim that the `val as "to_do" | …` cast was a new
+defect (it predates this change and is a type assertion with no runtime effect) — though the cast
+had drifted out of agreement with the options directly below it, so it is now
+`TaskFormData["status"]`.
+
+## 5. Live verification — qa-smoke, EN + AR, 12/12
+
+Served revision confirmed **before** trusting it: Cloud Run shows 100% traffic on
+`dosory-build-2026-08-09-002`, and the live JS bundle
+(`/_next/static/chunks/b5103a246ee40f73.js`) contains the new EN **and** AR strings — the
+artifact, not the deploy message (standing lesson 7).
+
+| check                                                  | EN                                                | AR                                        |
+| ------------------------------------------------------ | ------------------------------------------------- | ----------------------------------------- |
+| login → dashboard, `dir` correct                       | ✓ ltr                                             | ✓ rtl                                     |
+| Setup → Departments gated, no fixture rows, new note   | ✓                                                 | ✓                                         |
+| HR → Performance notice **below** the header, new copy | ✓                                                 | ✓                                         |
+| Task status options = exactly 4, `Blocked` present     | ✓ Not Started / In Progress / Blocked / Completed | ✓ لم تبدأ / قيد التنفيذ / متوقّف / مكتملة |
+| console errors                                         | 0                                                 | 0                                         |
+
+**The activity feed proven end-to-end:** a project created through the real form on qa-smoke
+produced the feed line
+
+> **ahmeddarwesh+qasmoke…@gmail.com** created project Feed Proof 135859
+
+— no trailing type noun, verb lower-cased. The panel now shows five real audit rows (project,
+payments, invoices) where before this round it read a collection with zero documents and was
+empty for every user. Evidence: `test-results/decisions-*.png`.
+
+Also observed while there (not fixed, not a regression): the feed shows the actor's **email**
+because `logActivity` writes `displayName || email` and this account has no display name.
+
+## 6. Gates
+
+`tsc` clean · `npm run build` 190 pages · eslint **0 errors** on every touched file (5
+pre-existing warnings) · jest **352 passed / 18 suites**, hook clean (no `--no-verify`) · one
+rollout · live-verified EN + AR.
+
+`tests/backend/finance.test.ts` fails to _load_ — `Cannot find module 'firebase-functions-test'`.
+Confirmed pre-existing by stashing every working-tree change and re-running at HEAD; the package
+has never been in `package.json`, so that suite has never executed. Raised as separate work, not
+fixed here.
+
+## 7. Ahead of the deployed build
+
+`main` carries one commit more than the verified rollout: documentation plus the removal of two
+now-unused locale keys (`tasks.statusOption.testing` / `.awaitingFeedback`, orphaned when those
+options were deleted — zero references outside the locale files). No rendered output changes; it
+ships with the next rollout.

@@ -284,11 +284,67 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 - ~~Expense journal-entry backfill~~ — DONE 2026-08-08: 2 collisions linked (not posted),
   6 entries backfilled (9,850.00). 8/8 expenses now have a journal entry, 0 pending.
 - ~~Cloud Functions deploy~~ — DONE 2026-08-08 and PROVEN live; see ledger.
-- **6 product recommendations** (TEST-REPORT §7) — task status vocabulary, Departments page,
-  HR self-service linkage, activity-feed collection, departments/job_titles seeding, barrel
-  renames. One paragraph each; nothing implemented.
+- ~~6 product recommendations~~ — ALL SIX RULED AND SHIPPED 2026-08-09 (`78a8caec`); see ledger.
+
+**Open feature work (designed, not defects):**
+
+- **Invite-time `employees.userId` linking** (opened 2026-08-09). `useCurrentEmployee` matches
+  `employees.userId == profile.uid` and NO code path has ever written that field, so every HR
+  self-service surface is dark for every user in every tenant. Gated honestly for now
+  (`HrSelfServiceUnavailable`); the real fix is to write `userId` when a staff invite is accepted
+  and to offer an admin "link to employee" action. Feature work, not a bug fix.
+- **Setup → Departments is a second departments surface.** The entity is real (seeded, CRUD'd
+  from HR → Settings, rule-scoped); this Setup page is not wired to it and is gated with a
+  pointer. Decide: wire it read-only, or retire the route.
 
 **Remaining ledger (dated):**
+
+- 2026-08-09 (§7 decisions round — `78a8caec`, rollout `dosory-build-2026-08-09-002`): all six
+  §7 recommendations implemented + the demo-seed consistency item. 27-agent panel: 23 raised,
+  **14 confirmed**, all folded in before commit. Live-verified 12/12 on qa-smoke EN + AR, zero
+  console errors.
+  **Standing lesson (8) — an untracked file passes every local gate.** Three new modules
+  (`components/ui/coming-soon.tsx`, `components/dashboard/hr/self-service-unavailable.tsx`, the
+  new activities contract test) were on disk but never `git add`ed. `tsc`, `next build` and jest
+  all read the working tree, so all three were green while a clean checkout would have failed
+  `next build` on four routes and silently skipped the new guard. **Second occurrence**
+  (`identity-keys.ts`, 2026-08-08). Before every commit: every module named in an import must be
+  tracked (`git ls-files --error-unmatch`).
+  **Standing lesson (9) — a drift guard can fail in only one direction.** The
+  form-select-schema guard matched `<SelectItem value="x">{t("<prefix>.…")}</SelectItem>` as one
+  pattern, so a MISSING option failed loudly while an EXTRA out-of-enum option (different key
+  prefix, literal label, any attribute before `value`) was invisible — and the "exactly the
+  enum" assertion passed anyway. Proven by injecting
+  `<SelectItem className="x" value="archived">` into `tasks/new`: the old extractor still
+  returned exactly the four enum values. **When a guard identifies items by an incidental
+  property (a label, a comment, a naming convention), it blesses everything written differently.**
+  Extractor is now label-agnostic and emits `<UNPARSEABLE:…>` / `<AMBIGUOUS:…>` markers rather
+  than skipping what it cannot read; four tests cover the extractor itself.
+  **The audit disproved the migration instruction, for the third round running.** Root
+  `activities` had **0 documents** (subcollection: 35 across 6 orgs), so the authorised additive
+  copy was a no-op — and would have been WRONG: `activities` names two different entities, the
+  audit log (`organizations/{orgId}/activities`, written by `logActivity`, org-scoped by path,
+  no `orgId` field) and the CRM Activity entity (root, `relatedTo`/`outcome`/`dateTime`, own CRUD
+  UI). Copying either way corrupts the other. Pinned apart by
+  `tests/unit/activities-collection-contract.test.ts`.
+  **The Today feed's field mapping is part of the collection contract.** Pointing the reader at
+  the right collection was not enough: `message` is already a complete phrase naming the entity,
+  so mapping `target` to `entityType` rendered "…created project Acme site **project**". `target`
+  is now empty for those rows and the renderer omits it. Proven live: a project created through
+  the real UI on qa-smoke renders "…created project Feed Proof 135859", and the panel — empty for
+  every user before this round — now shows five real audit rows.
+  **A fifth Sweep E split-brain, in seed data:** `seed-demo-tenant.ts` wrote `jobTitles` (app
+  reads `job_titles`) and `department`/`jobTitle` (list renders `departmentName`/`jobTitleName`).
+  Its header also advertised an idempotency guard that never existed while `main()` unconditionally
+  wipes the tenant — corrected in capitals. **Seed scripts are read surfaces too; sweep them.**
+  Renames were done **by behaviour, not by the brief's guess**: neither `useStaff` twin is
+  platform-scoped (both read tenant `staff`), so it became `useAssignableStaff`; only the
+  email-template twin is platform-scoped. Verified the sole diff at all 10 import sites is the
+  specifier, so no site moved between implementations.
+  Also: TaskStatus is **four** values, not five as the brief stated — aligned to the enum rather
+  than inventing a fifth. HR backfill: **55 departments + 48 job titles across 12 orgs**, re-run
+  is a no-op. `tests/backend/finance.test.ts` cannot load (`firebase-functions-test` was never a
+  devDependency) — confirmed pre-existing by stashing; raised separately, not fixed here.
 
 - 2026-08-08 (money close-out — functions deployed + backfill executed):
   **Standing lesson (7) — "Deploy complete!" is not evidence.** `firebase deploy --only
@@ -517,6 +573,11 @@ status vocabulary). Then confirm each required field is actually _rendered_ — 
 `tests/unit/form-select-schema-contract.test.ts` — **extend it whenever a new status/enum
 select ships**.
 _Rule:_ every `handleSubmit` MUST pass an `onInvalid` that surfaces the failing field.
+_Rule (added 2026-08-09):_ **a guard that identifies items by an incidental property blesses
+everything written differently.** The extractor keyed on the option's translation-key prefix, so
+a MISSING option failed loudly while an EXTRA out-of-enum one was invisible — asymmetric, and
+invisible in the direction that matters. Identify the BLOCK by the marker, then read every item
+in it, and emit a loud marker for anything unparseable instead of skipping it.
 
 **Sweep C — data-layer landmines (permission-denied / render-crash family).**
 
@@ -558,6 +619,9 @@ permanently empty, and nothing errors.
 - **A `catch` that returns a default IS the bug.** Every silent-empty in this family was
   wearing a `catch { return [] }` or `catch { count = 0 }`. Log the error object; a swallowed
   failure is indistinguishable from a legitimate zero.
+- **Seed and demo scripts are write surfaces too.** `seed-demo-tenant.ts` wrote `jobTitles` while
+  every reader queries `job_titles`, and denormalised `department`/`jobTitle` where the list
+  renders `departmentName`/`jobTitleName` — invisible because nobody diffs a script against the UI.
 - **Deleting the abandoned accessor is part of the fix.** An exported hook still pointing at
   the retired collection is precisely how a fifth surface forks again.
   _Guard:_ `tests/unit/ticket-collection-agreement.test.ts` pins all six ticket surfaces, the

@@ -1,0 +1,60 @@
+[
+    {
+        "name": "login → dashboard",
+        "ok": true,
+        "detail": "https://qasmoke20260728131942.dosory.com/dashboard"
+    },
+    {
+        "name": "locale en: dir=ltr",
+        "ok": true
+    },
+    {
+        "name": "[en] today view rendered",
+        "ok": true,
+        "detail": "(no project activity row)"
+    },
+    {
+        "name": "[en] departments gated, no fixture rows",
+        "ok": true,
+        "detail": "new note present"
+    },
+    {
+        "name": "[en] hr performance notice below header + new copy",
+        "ok": true,
+        "detail": "header@235 notice@514"
+    },
+    {
+        "name": "[en] task status options = 4",
+        "ok": true,
+        "detail": "Not Started | In Progress | Blocked | Completed"
+    },
+    {
+        "name": "locale ar: dir=rtl",
+        "ok": true
+    },
+    {
+        "name": "[ar] today view rendered",
+        "ok": true,
+        "detail": "(no project activity row)"
+    },
+    {
+        "name": "[ar] departments gated, no fixture rows",
+        "ok": true,
+        "detail": "new AR note present"
+    },
+    {
+        "name": "[ar] hr performance notice below header + new copy",
+        "ok": true,
+        "detail": "header@263 notice@531"
+    },
+    {
+        "name": "[ar] task status options = 4",
+        "ok": true,
+        "detail": "لم تبدأ | قيد التنفيذ | متوقّف | مكتملة"
+    },
+    {
+        "name": "console errors",
+        "ok": true,
+        "detail": "none"
+    }
+]

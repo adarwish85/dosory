@@ -1885,8 +1885,6 @@
     "tasks.form.status": "Status",
     "tasks.statusOption.notStarted": "Not Started",
     "tasks.statusOption.inProgress": "In Progress",
-    "tasks.statusOption.testing": "Testing",
-    "tasks.statusOption.awaitingFeedback": "Awaiting Feedback",
     "tasks.statusOption.completed": "Completed",
     "tasks.form.visibleToCustomer": "Visible to Customer",
     "tasks.form.billable": "Billable",

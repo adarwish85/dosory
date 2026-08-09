@@ -1885,8 +1885,6 @@
     "tasks.form.status": "الحالة",
     "tasks.statusOption.notStarted": "لم تبدأ",
     "tasks.statusOption.inProgress": "قيد التنفيذ",
-    "tasks.statusOption.testing": "قيد الاختبار",
-    "tasks.statusOption.awaitingFeedback": "بانتظار الملاحظات",
     "tasks.statusOption.completed": "مكتملة",
     "tasks.form.visibleToCustomer": "مرئية للعميل",
     "tasks.form.billable": "قابلة للفوترة",
