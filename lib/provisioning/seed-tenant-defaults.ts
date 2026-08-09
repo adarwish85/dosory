@@ -106,9 +106,21 @@ async function seedDefaults(orgId: string, createdBy: string): Promise<void> {
 
     await seedIfEmpty("taxes", [{ __seedId: "tax-none", name: "No Tax", rate: 0, isDefault: true }]);
 
+    // `slug` + `type` added 2026-08-09. The accounting side must NOT classify a payment by its
+    // display name: a tenant can rename "Bank Transfer" to "Wire" or "تحويل بنكي" and every
+    // payment silently becomes a cash sale (which is exactly what happened — the server matched
+    // "bank_transfer" while the picker wrote "Bank Transfer"). `type` is the authority;
+    // functions/src/payment-modes.ts falls back to the name only when it is absent.
     await seedIfEmpty("paymentModes", [
-        { __seedId: "pm-bank-transfer", name: "Bank Transfer", showOnInvoice: true, isActive: true },
-        { __seedId: "pm-cash", name: "Cash", showOnInvoice: true, isActive: true },
+        {
+            __seedId: "pm-bank-transfer",
+            name: "Bank Transfer",
+            slug: "bank_transfer",
+            type: "bank",
+            showOnInvoice: true,
+            isActive: true,
+        },
+        { __seedId: "pm-cash", name: "Cash", slug: "cash", type: "cash", showOnInvoice: true, isActive: true },
     ]);
 
     // FAMILY D (#8): expense categories were never seeded, so the REQUIRED Category select on

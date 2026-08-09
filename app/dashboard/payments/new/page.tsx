@@ -17,7 +17,12 @@ import { toast } from "sonner";
 import { useInvoices } from "@/lib/hooks/use-invoices";
 import { usePaymentModes } from "@/lib/hooks/use-settings";
 import { useTranslation } from "@/lib/i18n";
-import { payableInvoices, remainingBalance, validateAmount } from "@/lib/payments/record-payment-utils";
+import {
+    draftInvoicesAwaitingFinalize,
+    payableInvoices,
+    remainingBalance,
+    validateAmount,
+} from "@/lib/payments/record-payment-utils";
 
 /**
  * F6: real route for the "Record Payment" quick action (was a 404 — route-fall-through
@@ -43,6 +48,10 @@ export default function RecordPaymentPage() {
     const [submitting, setSubmitting] = useState(false);
 
     const openInvoices = useMemo(() => payableInvoices(invoices), [invoices]);
+    // Drafts are NOT payable — processPayment rejects them, because finalizing is what debits
+    // Accounts Receivable. Listing them as disabled with a reason beats dropping them silently:
+    // a user looking for an invoice that is simply missing has no way to tell why.
+    const draftInvoices = useMemo(() => draftInvoicesAwaitingFinalize(invoices), [invoices]);
     const selected = openInvoices.find((i) => i.id === invoiceId);
     const balance = selected ? remainingBalance(selected) : 0;
     const amount = parseFloat(amountStr);
@@ -109,12 +118,22 @@ export default function RecordPaymentPage() {
                                                 })}
                                         </SelectItem>
                                     ))}
+                                    {draftInvoices.map((inv) => (
+                                        <SelectItem key={inv.id} value={inv.id} disabled>
+                                            {(inv.numberFormatted || inv.number || inv.id) +
+                                                " — " +
+                                                t("payments.new.finalizeFirst")}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                             {selected && (
                                 <p className="text-sm text-gray-500">
                                     {t("payments.new.balanceHint", { balance: currencyFmt(balance) })}
                                 </p>
+                            )}
+                            {draftInvoices.length > 0 && (
+                                <p className="text-sm text-amber-600">{t("payments.new.finalizeFirstHint")}</p>
                             )}
                         </div>
 

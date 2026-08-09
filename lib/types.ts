@@ -621,6 +621,10 @@ export interface Currency extends BaseEntity {
 
 export interface PaymentMode extends BaseEntity {
     name: string;
+    /** Stable identifier, independent of the display name a tenant can rename at will. */
+    slug?: string;
+    /** Ledger treatment. The accounting authority — see functions/src/payment-modes.ts. */
+    type?: "cash" | "bank";
     description?: string;
     showOnInvoice: boolean;
     isActive: boolean;

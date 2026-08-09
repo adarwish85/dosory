@@ -29,14 +29,10 @@
  * committing ~18k files, so it is NOT vendored; run the install instead. Untracking
  * functions/node_modules entirely is the real fix and is listed for Ahmed.
  */
-import { readFileSync } from "fs";
-import { join } from "path";
-
 import type * as AdminNS from "../../functions/node_modules/firebase-admin";
 
 // Must be set BEFORE functions/src/index.ts runs `admin.initializeApp()`. A demo project id
 // keeps this pointed at the emulator even if someone's ADC happens to be live.
-const REPO_ROOT = join(__dirname, "..", "..");
 const PROJECT_ID = "demo-finance-callables";
 process.env.GCLOUD_PROJECT = PROJECT_ID;
 process.env.FIREBASE_CONFIG = JSON.stringify({ projectId: PROJECT_ID });
@@ -128,25 +124,6 @@ d("finance callables (emulator)", () => {
         const credit = entry.lines.reduce((s: number, l: any) => s + (l.credit || 0), 0);
         return Math.abs(debit - credit) < 0.005;
     };
-
-    /**
-     * Call a callable and CAPTURE its rejection instead of letting it propagate.
-     *
-     * This matters for the `it.failing` markers below. Jest's `test.failing` passes whenever
-     * the body fails FOR ANY REASON — a thrown rejection is indistinguishable from a failed
-     * assertion. So a marker whose body calls the callable bare stays green both while the
-     * defect exists AND after someone fixes it by making the callable reject: it fails in only
-     * one direction, which is CLAUDE.md standing lesson 9 reproduced inside the guard written
-     * to record the defect. (Caught by the 2026-08-09 adversarial panel, which proved it by
-     * applying the prescribed fix and watching the marker stay green.)
-     *
-     * With the rejection captured, the ASSERTION is always what decides the outcome.
-     */
-    const attempt = async (fn: any, ...args: any[]): Promise<unknown | null> =>
-        fn(...args).then(
-            () => null,
-            (e: unknown) => e
-        );
 
     const arNetOf = async () =>
         (await db.collection("journal_entries").get()).docs
@@ -268,43 +245,66 @@ d("finance callables (emulator)", () => {
             expect("entityId" in lineFor(noEntity, "1200")).toBe(false);
         });
 
-        it.failing("classifies the payment mode the PICKER actually writes", async () => {
-            // FINDING (2026-08-09), open for Ahmed — deliberately marked `it.failing` so the
-            // suite is green while the defect is on the record, and turns RED the moment it is
-            // fixed (at which point flip it to `it`).
-            //
-            // /dashboard/payments/new writes the payment mode's DISPLAY NAME (`m.name`,
-            // "Bank Transfer"), while finance.ts classifies with
-            //   ["bank_transfer","cheque","card"].includes(paymentMode.toLowerCase())
-            // "Bank Transfer".toLowerCase() === "bank transfer" — a SPACE, not an underscore —
-            // so it matches nothing and every payment posts to CASH. Audited on prod: all 12
-            // orgs offer exactly "Bank Transfer" and "Cash", and all 3 real payments carry
-            // "Bank Transfer", i.e. 100% of real bank transfers sit in the Cash account.
+        it("classifies the payment mode the PICKER actually writes", async () => {
+            // FIXED 2026-08-09. /dashboard/payments/new writes the mode's DISPLAY NAME
+            // ("Bank Transfer"); the old code matched ["bank_transfer","cheque","card"] against
+            // paymentMode.toLowerCase(), and "bank transfer" has a SPACE — so it matched nothing
+            // and EVERY payment posted to Cash. Audited on prod: all 12 orgs offer exactly
+            // "Bank Transfer"/"Cash", and all 3 real payments carried "Bank Transfer".
             await seedChart();
             const invoiceRef = await makeInvoice({ total: 100, amountPaid: 0, status: "sent" });
 
-            await attempt(
-                testEnv.wrap(processPayment),
+            await testEnv.wrap(processPayment)(
+                { invoiceId: invoiceRef.id, amount: 100, paymentMode: "Bank Transfer", date: new Date().toISOString() },
+                AUTH
+            );
+
+            const entry = (await db.collection("journal_entries").get()).docs[0].data();
+            expect(lineFor(entry, "1010")?.debit).toBe(100); // Bank
+            expect(lineFor(entry, "1000")).toBeUndefined(); // not Cash
+            expect((await db.collection("payments").get()).docs[0].data().paymentModeType).toBe("bank");
+        });
+
+        it("prefers the paymentModes DOCUMENT over the display name", async () => {
+            // The document is the authority precisely because a tenant can rename a mode. Here
+            // the name is deliberately unclassifiable; only `type` can resolve it.
+            await seedChart();
+            await db.collection("paymentModes").doc(`${ORG}__pm-wallet`).set({
+                orgId: ORG,
+                name: "محفظة إلكترونية",
+                slug: "e_wallet",
+                type: "bank",
+                isActive: true,
+            });
+            const invoiceRef = await makeInvoice({ total: 80, amountPaid: 0, status: "sent" });
+
+            await testEnv.wrap(processPayment)(
                 {
                     invoiceId: invoiceRef.id,
-                    amount: 100,
-                    paymentMode: "Bank Transfer",
+                    amount: 80,
+                    paymentMode: "محفظة إلكترونية",
                     date: new Date().toISOString(),
                 },
                 AUTH
             );
 
-            const entry = (await db.collection("journal_entries").get()).docs[0]?.data();
-            const callableClassifiesIt = entry ? lineFor(entry, "1010")?.debit === 100 : false;
+            const entry = (await db.collection("journal_entries").get()).docs[0].data();
+            expect(lineFor(entry, "1010")?.debit).toBe(80);
+            expect((await db.collection("payments").get()).docs[0].data().paymentModeType).toBe("bank");
+        });
 
-            // Pin BOTH ends of the contract, so the marker turns red whichever side is fixed:
-            // widen the callable's list, or make the picker write a stable code instead of the
-            // tenant-editable display name. Asserting only the callable would leave this green
-            // forever if the writer were fixed instead.
-            const picker = readFileSync(join(REPO_ROOT, "app/dashboard/payments/new/page.tsx"), "utf8");
-            const pickerWritesDisplayName = /<SelectItem[^>]*value=\{m\.name\}/.test(picker);
+        it("posts an unrecognised mode to Cash but STAMPS it, instead of silently calling it cash", async () => {
+            await seedChart();
+            const invoiceRef = await makeInvoice({ total: 10, amountPaid: 0, status: "sent" });
 
-            expect(callableClassifiesIt || !pickerWritesDisplayName).toBe(true);
+            await testEnv.wrap(processPayment)(
+                { invoiceId: invoiceRef.id, amount: 10, paymentMode: "Barter", date: new Date().toISOString() },
+                AUTH
+            );
+
+            const entry = (await db.collection("journal_entries").get()).docs[0].data();
+            expect(lineFor(entry, "1000")?.debit).toBe(10); // unchanged default
+            expect((await db.collection("payments").get()).docs[0].data().paymentModeType).toBe("unknown");
         });
 
         it("marks the invoice paid when the balance reaches zero", async () => {
@@ -410,6 +410,37 @@ d("finance callables (emulator)", () => {
             const ids = entries[0].lines.map((l: any) => l.accountId);
             for (const id of ids) expect((await db.collection("accounts").doc(id).get()).data()!.orgId).toBe(ORG);
         });
+
+        it("resolves every mode the provisioning seeds create, in the intended direction", async () => {
+            // CONTRACT: what seed-tenant-defaults writes must classify to a real account, in
+            // every org. Mirrors lib/provisioning/seed-tenant-defaults.ts.
+            const SEEDED = [
+                { name: "Bank Transfer", slug: "bank_transfer", type: "bank", expect: "1010" },
+                { name: "Cash", slug: "cash", type: "cash", expect: "1000" },
+            ];
+            for (const org of [ORG, "org_second_tenant"]) {
+                for (const m of SEEDED) {
+                    await wipe();
+                    await seedChart(org);
+                    await db
+                        .collection("paymentModes")
+                        .doc(`${org}__pm-${m.slug}`)
+                        .set({ orgId: org, name: m.name, slug: m.slug, type: m.type, isActive: true });
+                    const ref = db.collection("invoices").doc();
+                    await ref.set({ orgId: org, total: 25, amountPaid: 0, status: "sent", currency: "USD" });
+
+                    await testEnv.wrap(processPayment)(
+                        { invoiceId: ref.id, amount: 25, paymentMode: m.name, date: new Date().toISOString() },
+                        AUTH
+                    );
+
+                    const entry = (await db.collection("journal_entries").get()).docs[0].data();
+                    const debited = entry.lines.find((l: any) => (l.debit || 0) > 0);
+                    const account = await db.collection("accounts").doc(debited.accountId).get();
+                    expect([org, m.name, account.data()!.code]).toEqual([org, m.name, m.expect]);
+                }
+            }
+        });
     });
 
     // ------------------------------------------------------------------
@@ -491,58 +522,138 @@ d("finance callables (emulator)", () => {
             expect(invoice.total - invoice.amountPaid - invoice.amountDue).toBeCloseTo(0, 6);
         });
 
-        it.failing("paying a DRAFT invoice must not credit a receivable that was never debited", async () => {
-            // FINDING (2026-08-09), open for Ahmed — `it.failing` keeps the suite green while
-            // the defect is on the record, and turns RED the moment it is fixed.
-            //
-            // processPayment rejects paid/void/cancelled but NOT draft.
-            // finalizeInvoice is the only path that DEBITS AR, so a payment taken against a
-            // draft credits AR with no matching debit: the receivable goes negative and the
-            // books stop meaning anything. Nothing in the UI prevents it — the payment form
-            // scopes to "payable" invoices, but the callable is the contract.
+        it("REJECTS a payment against a draft invoice, and writes nothing", async () => {
+            // FIXED 2026-08-09. finalizeInvoice is the only path that DEBITS Accounts
+            // Receivable, so paying a draft credited AR with no matching debit — measured at
+            // -100 before the fix. The rejection is keyed on `status`, not `isFinalized`:
+            // that flag is only written by finalizeInvoice, which itself failed for every
+            // tenant until 2026-08-08, so most legitimately-sent prod invoices lack it and
+            // requiring it would block real payments.
             await seedChart();
             const invoiceRef = await makeInvoice({ status: "draft", total: 100, amountPaid: 0 });
 
-            // Captured, not propagated — see `attempt`. Today the call SUCCEEDS and leaves
-            // AR at -100, so the assertion fails and this marker is green. The likely fix is
-            // to add "draft" to processPayment's rejected-status list, after which the call
-            // rejects, nothing is written, AR is 0, the assertion PASSES and this marker turns
-            // red — which is the signal to delete the marker and promote it to a plain `it`.
-            await attempt(
-                testEnv.wrap(processPayment),
+            await expect(
+                testEnv.wrap(processPayment)(
+                    { invoiceId: invoiceRef.id, amount: 100, paymentMode: "cash", date: new Date().toISOString() },
+                    AUTH
+                )
+            ).rejects.toThrow(/still a draft/i);
+
+            expect((await db.collection("payments").get()).size).toBe(0);
+            expect((await db.collection("journal_entries").get()).size).toBe(0);
+            expect(await arNetOf()).toBeCloseTo(0, 6);
+            expect((await invoiceRef.get()).data()!.status).toBe("draft");
+        });
+
+        it("finalize THEN pay: the receivable is debited and cleared, and the books balance", async () => {
+            await seedChart();
+            const invoiceRef = await makeInvoice({ status: "draft", total: 100, customerId: "cust_1" });
+
+            await testEnv.wrap(finalizeInvoice)({ invoiceId: invoiceRef.id }, AUTH);
+            await testEnv.wrap(processPayment)(
+                { invoiceId: invoiceRef.id, amount: 100, paymentMode: "Bank Transfer", date: new Date().toISOString() },
+                AUTH
+            );
+
+            const entries = (await db.collection("journal_entries").get()).docs.map((d) => d.data());
+            expect(entries).toHaveLength(2);
+            for (const e of entries) expect(balanced(e)).toBe(true);
+            expect(await arNetOf()).toBeCloseTo(0, 6);
+
+            const invoice = (await invoiceRef.get()).data()!;
+            expect(invoice.status).toBe("paid");
+            expect(invoice.total - invoice.amountPaid - invoice.amountDue).toBeCloseTo(0, 6);
+        });
+
+        it("the STUCK PROD INVOICE shape (org moaz: no number, currency, amountPaid or amountDue) finalizes and pays", async () => {
+            // Faithful clone of invoice t2WoqbmauMnLaPg8hbXP, captured read-only by
+            // scripts/audit/inspect-stuck-invoice.ts — a draft with total 60000 and NO
+            // `number`, `currency`, `amountPaid`, `amountDue` or `isFinalized`. Every one of
+            // those absent fields used to make the callables throw on an undefined write, so
+            // that invoice could be neither finalized nor paid. Values other than the shape
+            // are redacted; the shape is what reproduces the crash.
+            await seedChart();
+            const invoiceRef = db.collection("invoices").doc();
+            await invoiceRef.set({
+                orgId: ORG,
+                status: "draft",
+                total: 60000,
+                subtotal: 60000,
+                tax: 0,
+                customerId: "redacted_customerId",
+                invoiceNumber: "redacted_invoiceNumber", // NOTE: the writer's field name, not `number`
+                lineItems: [],
+                isOnboardingDemo: true,
+            });
+
+            await expect(testEnv.wrap(finalizeInvoice)({ invoiceId: invoiceRef.id }, AUTH)).resolves.toEqual({
+                success: true,
+            });
+            await testEnv.wrap(processPayment)(
                 {
                     invoiceId: invoiceRef.id,
-                    amount: 100,
-                    paymentMode: "cash",
+                    amount: 60000,
+                    paymentMode: "Bank Transfer",
                     date: new Date().toISOString(),
                 },
                 AUTH
             );
 
+            const invoice = (await invoiceRef.get()).data()!;
+            expect(invoice.status).toBe("paid");
+            expect(invoice.amountPaid).toBe(60000);
+            expect(invoice.amountDue).toBeCloseTo(0, 6);
             expect(await arNetOf()).toBeCloseTo(0, 6);
+            const payment = (await db.collection("payments").get()).docs[0].data();
+            expect("invoiceNumber" in payment).toBe(false); // absent stays absent
+            expect("currency" in payment).toBe(false);
         });
 
-        it.failing("voiding a finalized invoice must reverse the receivable it created", async () => {
-            // FINDING (2026-08-09), open for Ahmed — `it.failing`, same convention as above.
-            //
-            // voidInvoice zeroes `amountDue` and flips the status but
-            // posts NO reversing entry, so the AR debit from finalizeInvoice stays on the
-            // books forever. Aging reports hide it (amountDue is 0) while the balance sheet
-            // still carries it.
+        it("voiding a finalized invoice REVERSES the receivable it created", async () => {
+            // FIXED 2026-08-09. Voiding zeroed `amountDue` and stopped there, so the AR debit
+            // stayed on the books forever: aging showed nothing while the balance sheet still
+            // carried it. Measured at +250.
             await seedChart();
             const invoiceRef = await makeInvoice({ status: "draft", total: 250, customerId: "cust_1" });
             await testEnv.wrap(finalizeInvoice)({ invoiceId: invoiceRef.id }, AUTH);
-            const refusal = await attempt(
-                testEnv.wrap(voidInvoice),
-                { invoiceId: invoiceRef.id, reason: "test" },
-                AUTH
-            );
+            await testEnv.wrap(voidInvoice)({ invoiceId: invoiceRef.id, reason: "test" }, AUTH);
 
-            // Accept EITHER legitimate resolution, so the marker turns red whichever way the
-            // ruling goes: post a reversing entry (AR nets to zero), or refuse to void a
-            // finalized invoice at all (the receivable stays, but so does the invoice).
-            const resolved = refusal !== null || Math.abs(await arNetOf()) < 0.005;
-            expect(resolved).toBe(true);
+            const invoice = (await invoiceRef.get()).data()!;
+            expect(invoice.status).toBe("void");
+            expect(invoice.amountDue).toBe(0); // aging report agrees with the ledger
+
+            const entries = (await db.collection("journal_entries").get()).docs.map((d) => d.data());
+            expect(entries).toHaveLength(2);
+            for (const e of entries) expect(balanced(e)).toBe(true);
+            expect(await arNetOf()).toBeCloseTo(0, 6);
+
+            const reversal = entries.find((e) => e.reversesEntryId)!;
+            expect(reversal.description).toMatch(/^Void of Invoice/);
+            expect(lineFor(reversal, "1200").credit).toBe(250); // CR Accounts Receivable
+            expect(lineFor(reversal, "4000").debit).toBe(250); // DR Sales Income
+            const original = (await db.collection("journal_entries").doc(reversal.reversesEntryId).get()).data()!;
+            expect(original.referenceId).toBe(invoiceRef.id);
+        });
+
+        it("voiding twice cannot double-reverse (deterministic reversal id)", async () => {
+            await seedChart();
+            const invoiceRef = await makeInvoice({ status: "draft", total: 90, customerId: "cust_1" });
+            await testEnv.wrap(finalizeInvoice)({ invoiceId: invoiceRef.id }, AUTH);
+            await testEnv.wrap(voidInvoice)({ invoiceId: invoiceRef.id, reason: "one" }, AUTH);
+            await testEnv.wrap(voidInvoice)({ invoiceId: invoiceRef.id, reason: "two" }, AUTH);
+
+            expect((await db.collection("journal_entries").get()).size).toBe(2);
+            expect(await arNetOf()).toBeCloseTo(0, 6);
+        });
+
+        it("voiding an invoice that was never finalized posts nothing and is not an error", async () => {
+            await seedChart();
+            const invoiceRef = await makeInvoice({ status: "sent", total: 40 });
+            await expect(
+                testEnv.wrap(voidInvoice)({ invoiceId: invoiceRef.id, reason: "never posted" }, AUTH)
+            ).resolves.toEqual({ success: true });
+            expect((await db.collection("journal_entries").get()).size).toBe(0);
+            expect((await invoiceRef.get()).data()!.status).toBe("void");
         });
     });
 

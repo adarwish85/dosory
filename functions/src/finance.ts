@@ -1,6 +1,7 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import { PaymentModeType, accountCodeFor, classifyByName, classifyFromDoc } from "./payment-modes";
 
 // Initialize admin if not already initialized
 if (!admin.apps.length) {
@@ -104,6 +105,38 @@ async function findAccountByCode(t: admin.firestore.Transaction, orgId: string, 
     return null;
 }
 
+/**
+ * Resolve a payment mode to its ledger treatment.
+ *
+ * The tenant's own `paymentModes` document wins; the display name is only a fallback, because
+ * a tenant can rename a mode at any time and the old code matched the name alone (see
+ * ./payment-modes for the full defect note). This is a READ, so every caller must invoke it in
+ * the reads phase of its transaction, before any write.
+ */
+async function resolvePaymentModeType(
+    t: admin.firestore.Transaction,
+    orgId: string,
+    rawMode: string
+): Promise<PaymentModeType> {
+    try {
+        const snap = await t.get(
+            db.collection("paymentModes").where("orgId", "==", orgId).where("name", "==", rawMode).limit(1)
+        );
+        if (!snap.empty) {
+            const fromDoc = classifyFromDoc(snap.docs[0].data() as { type?: unknown; slug?: unknown });
+            if (fromDoc !== "unknown") return fromDoc;
+        }
+    } catch (error) {
+        // A lookup failure must not block the payment; fall through to the name.
+        functions.logger.error("[accounting] paymentModes lookup failed; falling back to the name", {
+            orgId,
+            rawMode,
+            error: String(error)
+        });
+    }
+    return classifyByName(rawMode);
+}
+
 // ----------------------------------------------------------------------------
 // 1. Process Payment (Callable)
 // ----------------------------------------------------------------------------
@@ -146,6 +179,22 @@ export const processPayment = functions.https.onCall(async (data: PaymentRequest
                 throw new functions.https.HttpsError("failed-precondition", "Invoice is already fully paid or voided.");
             }
 
+            // A DRAFT invoice has no receivable yet: finalizeInvoice is the only path that
+            // DEBITS Accounts Receivable. Taking a payment first credits AR with no matching
+            // debit, so the receivable goes negative and the books stop reconciling (measured
+            // at -100 on 2026-08-09). Reject, and say what to do about it.
+            //
+            // Deliberately keyed on `status`, NOT on `isFinalized`: that flag is only written
+            // by finalizeInvoice, which itself failed for every tenant until 2026-08-08, so
+            // most legitimately-sent prod invoices do not carry it. Requiring it would block
+            // payment on real invoices.
+            if (invoice?.status === "draft") {
+                throw new functions.https.HttpsError(
+                    "failed-precondition",
+                    "This invoice is still a draft. Finalize it before recording a payment."
+                );
+            }
+
             // 3. Overpayment Check
             const currentPaid = invoice?.amountPaid || 0;
             const currentTotal = invoice?.total || 0;
@@ -164,8 +213,17 @@ export const processPayment = functions.https.onCall(async (data: PaymentRequest
             // used to sit after the payment/invoice writes (step 6), which made the whole
             // transaction throw "reads before writes" and 500'd EVERY payment in prod
             // (found live 2026-07-28 exercising /dashboard/payments/new).
-            const isBank = ["bank_transfer", "cheque", "card"].includes(paymentMode.toLowerCase());
-            const assetCode = isBank ? "1010" : "1000"; // Bank or Cash
+            const paymentModeType = await resolvePaymentModeType(t, orgId, paymentMode);
+            if (paymentModeType === "unknown") {
+                // Posts to Cash exactly as before, but says so — an unrecognised mode silently
+                // becoming a cash sale is how every bank transfer ended up in Cash.
+                functions.logger.error("[accounting] unrecognised payment mode — posting to Cash", {
+                    orgId,
+                    invoiceId,
+                    paymentMode
+                });
+            }
+            const assetCode = accountCodeFor(paymentModeType);
             const [assetAccount, arAccount] = await Promise.all([
                 findAccountByCode(t, orgId, assetCode),
                 findAccountByCode(t, orgId, "1200") // Accounts Receivable
@@ -183,6 +241,9 @@ export const processPayment = functions.https.onCall(async (data: PaymentRequest
                 amount,
                 currency: invoice?.currency,
                 paymentMode,
+                // The resolved treatment, stored alongside the raw mode so a later audit can
+                // tell which account a payment SHOULD have hit without re-deriving it.
+                paymentModeType,
                 date: admin.firestore.Timestamp.fromDate(new Date(date)),
                 note: note || "",
                 createdBy: userId,
@@ -392,6 +453,7 @@ export const voidInvoice = functions.https.onCall(async (data: VoidInvoiceReques
 
     try {
         await db.runTransaction(async (t) => {
+            // ---- ALL READS FIRST (Firestore rejects a read issued after any write) ----
             const invoiceDoc = await t.get(invoiceRef);
             if (!invoiceDoc.exists) throw new functions.https.HttpsError("not-found", "Invoice not found.");
 
@@ -400,6 +462,35 @@ export const voidInvoice = functions.https.onCall(async (data: VoidInvoiceReques
                 throw new functions.https.HttpsError("failed-precondition", "Cannot void a paid invoice. Refund first.");
             }
 
+            // FIXED 2026-08-09. Voiding used to zero `amountDue` and stop there, so the AR
+            // debit that finalizeInvoice posted stayed on the books forever: the aging report
+            // showed nothing (amountDue is 0) while the balance sheet still carried the
+            // receivable. Measured at +250 on a finalize→void pair.
+            //
+            // The reversal is the mirror of the finalize entry — CREDIT Accounts Receivable,
+            // DEBIT Sales Income — and is linked to the original entry so the pair can be read
+            // as one story. Deterministic id: voiding twice cannot double-reverse.
+            const orgId = invoice?.orgId;
+            const originalSnap = orgId
+                ? await t.get(
+                      db
+                          .collection("journal_entries")
+                          .where("orgId", "==", orgId)
+                          .where("referenceType", "==", "invoice")
+                          .where("referenceId", "==", invoiceId)
+                          .limit(1)
+                  )
+                : null;
+            const original = originalSnap && !originalSnap.empty ? originalSnap.docs[0] : null;
+
+            const [arAccount, incomeAccount] = orgId && original
+                ? await Promise.all([
+                      findAccountByCode(t, orgId, "1200"), // AR
+                      findAccountByCode(t, orgId, "4000")  // Sales Income
+                  ])
+                : [null, null];
+
+            // ---- writes begin here ----
             t.update(invoiceRef, {
                 status: "void",
                 voidReason: reason || "Voided by user",
@@ -407,10 +498,67 @@ export const voidInvoice = functions.https.onCall(async (data: VoidInvoiceReques
                 voidedBy: context.auth?.uid,
                 amountDue: 0 // Clear due amount so it doesn't show in aging reports
             });
+
+            if (!original) {
+                // Nothing was ever posted for this invoice (never finalized, or the chart was
+                // incomplete at the time) — there is no receivable to reverse. Not an error.
+                functions.logger.info("[accounting] void: no invoice journal entry to reverse", {
+                    orgId,
+                    invoiceId
+                });
+                return;
+            }
+
+            if (!arAccount || !incomeAccount) {
+                functions.logger.error(
+                    "[accounting] invoice voided WITHOUT reversing its journal entry — chart of accounts incomplete",
+                    { orgId, invoiceId, missingAR: !arAccount, missingIncome: !incomeAccount }
+                );
+                return;
+            }
+
+            const amount = Number(original.data().totalAmount) || 0;
+            const label = invoice?.numberFormatted || invoice?.number || "INV";
+            const reversalRef = db.collection("journal_entries").doc(`je-void-${invoiceId}`);
+            const reversal: JournalEntry & { reversesEntryId: string } = {
+                orgId,
+                date: admin.firestore.Timestamp.now(),
+                description: `Void of Invoice #${label}`,
+                referenceId: invoiceId,
+                referenceType: "invoice",
+                reversesEntryId: original.id,
+                totalAmount: amount,
+                status: "posted",
+                currency: original.data().currency || invoice?.currency || "USD",
+                fxRate: 1.0,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                createdBy: context.auth?.uid || "system",
+                lines: [
+                    {
+                        accountId: incomeAccount.id,
+                        accountName: incomeAccount.name,
+                        debit: amount,
+                        credit: 0,
+                        description: `Reversal of revenue from #${label}`
+                    },
+                    {
+                        accountId: arAccount.id,
+                        accountName: arAccount.name,
+                        debit: 0,
+                        credit: amount,
+                        description: `Reversal of receivable for #${label}`,
+                        ...(invoice?.customerId
+                            ? { entityType: "customer" as const, entityId: invoice.customerId }
+                            : {})
+                    }
+                ]
+            };
+            t.set(reversalRef, reversal);
         });
         return { success: true };
     } catch (error) {
         if (error instanceof functions.https.HttpsError) throw error;
+        functions.logger.error("[accounting] voidInvoice failed", { invoiceId, error: String(error) });
         throw new functions.https.HttpsError("internal", "Could not void invoice.");
     }
 });

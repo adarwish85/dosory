@@ -5645,6 +5645,8 @@
     "payments.new.noOpenInvoices": "لا توجد فواتير مفتوحة — لا يوجد ما يُدفع",
     "payments.new.due": "المستحق {amount}",
     "payments.new.balanceHint": "الرصيد المتبقي: {balance}",
+    "payments.new.finalizeFirst": "مسودة — قم باعتمادها أولاً",
+    "payments.new.finalizeFirstHint": "لا يمكن تسجيل دفعة على فاتورة مسودة. اعتمد الفاتورة أولاً ثم سجّل الدفعة عليها.",
     "payments.new.amountNotPositive": "يجب أن يكون المبلغ أكبر من صفر",
     "payments.new.amountExceeds": "المبلغ يتجاوز الرصيد المتبقي ({balance})",
     "payments.new.selectMode": "اختر طريقة الدفع…",

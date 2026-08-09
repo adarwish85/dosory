@@ -5645,6 +5645,8 @@
     "payments.new.noOpenInvoices": "No open invoices — nothing to pay",
     "payments.new.due": "{amount} due",
     "payments.new.balanceHint": "Remaining balance: {balance}",
+    "payments.new.finalizeFirst": "Draft — finalize it first",
+    "payments.new.finalizeFirstHint": "Draft invoices can't take a payment yet. Finalize the invoice first, then record the payment against it.",
     "payments.new.amountNotPositive": "Amount must be greater than zero",
     "payments.new.amountExceeds": "Amount exceeds the remaining balance ({balance})",
     "payments.new.selectMode": "Select payment mode…",

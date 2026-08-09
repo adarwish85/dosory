@@ -151,3 +151,123 @@ describe("no posting path may silently skip its journal entry", () => {
         expect(code).toMatch(/orgSettings\.companyName/);
     });
 });
+
+// ---------------------------------------------------------------------------
+// RULE (b) — a receivable may only be credited if it was debited first.
+// RULE (c) — a receivable that was debited must be reversed when the invoice is voided.
+//
+// Both were measured on 2026-08-09 (AR net -100 and +250 respectively) and fixed the same
+// day. The behavioural proof lives in tests/backend/finance.test.ts, which needs the
+// emulator; these are the structural guards that run everywhere, including a bare
+// `npx jest`.
+// ---------------------------------------------------------------------------
+describe("rule (b) — a draft invoice cannot take a payment", () => {
+    const finance = () => read("functions/src/finance.ts");
+
+    test("processPayment rejects a draft, and says what to do about it", () => {
+        const src = finance();
+        const fn = src.slice(src.indexOf("export const processPayment"));
+        const body = fn.slice(0, fn.indexOf("export const finalizeInvoice"));
+        expect(body).toMatch(/invoice\?\.status === "draft"/);
+        expect(body).toMatch(/Finalize it before recording a payment/);
+    });
+
+    test("the rejection is keyed on `status`, NOT on `isFinalized`", () => {
+        // `isFinalized` is only written by finalizeInvoice, which failed for every tenant
+        // until 2026-08-08 — requiring it would block payment on legitimately-sent invoices.
+        const src = finance();
+        const fn = src.slice(src.indexOf("export const processPayment"));
+        const body = fn.slice(0, fn.indexOf("export const finalizeInvoice"));
+        expect(body).not.toMatch(/!invoice\?\.isFinalized/);
+    });
+
+    test("the record-payment form refuses drafts too, and explains why", () => {
+        const utils = read("lib/payments/record-payment-utils.ts");
+        expect(utils).toMatch(/export function isDraft/);
+        expect(utils).toMatch(/if \(isDraft\(inv\)\) return false;/);
+        expect(utils).toMatch(/draftInvoicesAwaitingFinalize/);
+
+        const page = read("app/dashboard/payments/new/page.tsx");
+        expect(page).toMatch(/draftInvoicesAwaitingFinalize/);
+        expect(page).toMatch(/payments\.new\.finalizeFirst/);
+    });
+
+    test("the 'finalize first' copy exists in BOTH locales", () => {
+        for (const locale of ["en", "ar"]) {
+            const json = JSON.parse(read(`lib/i18n/locales/${locale}.json`));
+            expect(typeof json["payments.new.finalizeFirst"]).toBe("string");
+            expect(typeof json["payments.new.finalizeFirstHint"]).toBe("string");
+        }
+    });
+});
+
+describe("rule (c) — voiding a finalized invoice reverses its receivable", () => {
+    const voidFn = () => {
+        const src = read("functions/src/finance.ts");
+        return src.slice(src.indexOf("export const voidInvoice"));
+    };
+
+    test("voidInvoice looks up the original entry and posts a reversal linked to it", () => {
+        const body = voidFn();
+        expect(body).toMatch(/where\("referenceType", "==", "invoice"\)/);
+        expect(body).toMatch(/reversesEntryId/);
+        expect(body).toMatch(/Void of Invoice/);
+    });
+
+    test("the reversal is the MIRROR of the finalize entry: DR income, CR receivable", () => {
+        const body = voidFn();
+        const lines = body.slice(body.indexOf("lines: ["));
+        // income line carries the debit, AR line carries the credit
+        expect(lines).toMatch(/accountId: incomeAccount\.id,[\s\S]{0,120}debit: amount/);
+        expect(lines).toMatch(/accountId: arAccount\.id,[\s\S]{0,120}credit: amount/);
+    });
+
+    test("the reversal id is deterministic, so voiding twice cannot double-reverse", () => {
+        expect(voidFn()).toMatch(/doc\(`je-void-\$\{invoiceId\}`\)/);
+    });
+
+    test("all reads happen before any write (Firestore rejects the other order)", () => {
+        const body = voidFn();
+        const firstWrite = body.indexOf("t.update(invoiceRef");
+        const lastRead = Math.max(body.lastIndexOf("await t.get("), body.lastIndexOf("findAccountByCode(t"));
+        expect(lastRead).toBeGreaterThan(-1);
+        expect(lastRead).toBeLessThan(firstWrite);
+    });
+
+    test("a void with nothing posted is logged, not treated as an error", () => {
+        expect(voidFn()).toMatch(/no invoice journal entry to reverse/);
+    });
+});
+
+describe("payment modes are classified by DATA, not by a display name", () => {
+    test("finance.ts no longer matches a hardcoded list against the raw mode string", () => {
+        const src = read("functions/src/finance.ts");
+        expect(src).not.toMatch(/\["bank_transfer", "cheque", "card"\]\.includes/);
+        expect(src).toMatch(/resolvePaymentModeType/);
+    });
+
+    test("the tenant's paymentModes document wins over the name", () => {
+        const src = read("functions/src/finance.ts");
+        const fn = src.slice(src.indexOf("async function resolvePaymentModeType"));
+        const body = fn.slice(0, fn.indexOf("\n}"));
+        expect(body).toMatch(/collection\("paymentModes"\)/);
+        expect(body).toMatch(/classifyFromDoc/);
+        // the name is the FALLBACK, so it must come after the document lookup
+        expect(body.indexOf("classifyFromDoc")).toBeLessThan(body.indexOf("return classifyByName"));
+    });
+
+    test("separator and case differences cannot change the account", () => {
+        const src = read("functions/src/payment-modes.ts");
+        expect(src).toMatch(/replace\(\/\[\\s\\-\/\.\]\+\/g, "_"\)/);
+        expect(src).toMatch(/toLowerCase\(\)/);
+    });
+
+    test("the seeded modes carry an explicit `type`", () => {
+        const seed = read("lib/provisioning/seed-tenant-defaults.ts");
+        const block = seed.slice(seed.indexOf('seedIfEmpty("paymentModes"'));
+        const body = block.slice(0, block.indexOf("]);"));
+        const modes = body.match(/name: "[^"]+"/g) || [];
+        expect(modes.length).toBeGreaterThan(0);
+        expect((body.match(/type: "(bank|cash)"/g) || []).length).toBe(modes.length);
+    });
+});
