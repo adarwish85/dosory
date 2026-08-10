@@ -1963,3 +1963,179 @@ new process rule, with no working-tree mutation observed.
 4. **Prepayment reclassification** — when an invoice is killed with payments applied, AR nets
    negative by the amount received. Balanced and standard, but it may belong in a dedicated
    customer-prepayment account.
+
+---
+
+# ROUND — EasyKash platform billing, 2026-08-10 (`27fc1307`, `b5e58ec1`, `2e2a0f9d`; rollout `dosory-build-2026-08-10-003`)
+
+Invoice-and-renew, because EasyKash has no recurring charge: every period is a separate hosted
+payment (card, wallet, or a Fawry/Aman cash voucher paid hours later), the link is emailed, and
+the subscription extends only when a signed callback confirms the money.
+
+## 1. Recon found four things worth knowing before any code
+
+- **`subscriptions/{orgId}` has ONE real shape** — all 14 prod docs carry the BillingService
+  shape (`planId`, `planVersion`, `billingCycle`, `currentPeriodStart/End`, `trialEndsAt`,
+  `addons`, `computedEntitlements`). That is the contract EasyKash extends.
+- **`app/api/paypal/capture-order` writes a different, incompatible shape with a whole-document
+  `set()`** — no merge — and reads plans from `platform/subscriptionPlans/plans` (3 docs) while
+  BillingService reads root `plans` (2 docs). If it ever ran on a live tenant it would erase
+  `computedEntitlements`, which every entitlement check reads, and strip that tenant of every
+  module. **It has never run: nothing renders its button** (`components/subscription/paypal-button.tsx`
+  has zero importers). Two plan stores, two subscription shapes — a Sweep E split-brain in billing.
+- **`subscriptionAutoBilling` matched nothing, ever.** It queried `nextBillingDate <= now`, a
+  field no prod subscription has (it exists only in the PayPal shape). What it _would_ have done
+  is worse: create a document in the tenant's own `invoices` collection — the CRM invoices they
+  send their customers — for money owed to us.
+- **Both published plans have no price and no currency.** `plan_starter` and `plan_professional`
+  carry name/limits/entitlements only. Checkout therefore fails closed rather than charging 0.
+
+## 2. What shipped
+
+`lib/billing/easykash-core.ts` is pure and pinned by **EasyKash's own worked example** — payload,
+secret and expected hash quoted verbatim from their callback-verification page. HMAC-SHA512 hex
+over the documented field order, constant-time compare, failing closed on a missing secret, a
+missing hash, or any tampering. `Amount` is hashed as the **raw string** it arrives as; the test
+suite pins that normalising `"11.00"` to `11` breaks the hash, because anything that reformats
+the payload before hashing would reject every genuine callback.
+
+Trust boundary: the callback resolves the tenant from **our own** `billingAttempts` by
+`numericRef`. Nothing org-shaped is read off the wire. Amount and currency must match the
+attempt. Application is idempotent on `easykashRef` through a deterministic
+`platformBillingRecords` id, so a retried callback — or the reconciler racing a late one — cannot
+buy two periods.
+
+One writer: `applyPaidPayment`. The reconciler does not reimplement it in the other package with
+the other admin-SDK major; it calls an internal secret-gated route. Same for renewal —
+`subscriptionAutoBilling` is now just the clock.
+
+`subscriptions/{orgId}` is always **updated/merged**, never `set` — with a test named after the
+route that does the opposite.
+
+## 3. The panel found nine defects, two of which would have cost real money
+
+68 agents, 61 findings raised, **20 confirmed** (nine distinct):
+
+1. **Every charge would have been 100× the price.** Plan prices are stored in MINOR units — the
+   SA editor labels the field "Monthly Price (cents)" with placeholder `4900 = $49.00` and its
+   table renders `cents / 100` — while EasyKash's Pay API takes a major-unit amount. A 49.00 plan
+   would have billed 4,900. **I verified this against the editor myself before acting.** Converted
+   at one boundary; tests pin 4900 → 49, 1 → 0.01, and refuse a fractional "cents" value.
+2. **Any tenant could have invented a plan and bought it for one cent.** `plans` had no rules
+   block, so the catch-all's `allow create` — satisfied by a doc carrying the caller's own orgId —
+   let any org admin publish `plans/{anything}` at a price of their choosing, then buy it through
+   a route that reads with the Admin SDK. The panel reproduced it in the emulator. Fixed in rules
+   (named in `isServerManagedCollection()`, since a deny block alone is a no-op) **and** in the
+   route (any plan carrying an `orgId` is refused).
+3. **Both scheduled functions would have no-opped forever** — `apphosting.yaml` configures the
+   Next.js server, not Cloud Functions, so they read `undefined` and took the "not configured"
+   branch on every run while logging a tidy warning.
+4. **The rules control group proved nothing** — it used `customers`, which has its own rule
+   block, so it passed whether or not the catch-all granted. Now an invented collection with no
+   block, so it goes red the moment the mechanism it demonstrates stops existing.
+5. **Trials fell out of the lifecycle** — `trialExpiryCheck` writes status `expired`; the sweep's
+   filter did not include it.
+6. **Suspension on a stale clock** would have suspended a tenant who had since paid, including
+   one a super admin activated by hand.
+7. **A `past_due` subscription with no `graceUntil`** was emailed every run forever and could
+   never be suspended.
+8. **The renewal email was wrong in both directions** — it recomputed the deadline each run
+   (moving it a day at a time) and promised access until a date after which the workspace was
+   already read-only, because `ensureWriteAccess` blocks `past_due`.
+9. **The reconciler counted a failed apply as "converged"** and logged nothing, so a wrong
+   internal secret produced a summary line that read like a clean run.
+
+Also fixed: the reconciler's duplicated `mapProviderStatus` claimed a contract test that did not
+exist (it does now, loading both implementations and asserting they agree over every documented
+status); `/dashboard/billing` had no link anywhere in the product — the mirror of the
+route-fall-through rule — so a nav entry was added, EN + AR; and the billing page's comment
+claimed both providers were wired when only EasyKash is.
+
+## 4. The rules fail-then-pass pair (the security bar)
+
+`billingAttempts`, `platformBillingRecords` and `counters` are server-written only. **The deny
+blocks are not what enforces that** — the catch-all grants create/write on an orgId match, so a
+deny block alone is a no-op (standing lesson 5). They are named in `isServerManagedCollection()`,
+and the suite proves the difference:
+
+| run | `billingAttempts` in the exclusion? | result                                                                                        |
+| --- | ----------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1   | **no** (deny block only)            | **3 write tests FAIL** — a tenant can mark its own attempt `paid` and get a free subscription |
+| 2   | yes                                 | 12/12 pass                                                                                    |
+
+After the plan fix the suite is 15/15, and the whole rules corpus is **212 passed**.
+
+## 5. Stub mode
+
+EasyKash publishes no sandbox, so `EASYKASH_MODE=stub` replaces the hosted page with a local one
+and generates a **correctly signed** callback through the real verifier — the stub proves the
+production path rather than bypassing it. It refuses to run against `dosory.com`, and both stub
+routes 404 in production (verified live below).
+
+## 6. Live verification — `dosory-build-2026-08-10-003`
+
+| probe                                                          | result                                  |
+| -------------------------------------------------------------- | --------------------------------------- |
+| `GET /api/billing/easykash/callback` (provider liveness probe) | **200**                                 |
+| forged callback (bad signature)                                | **403** `{"error":"Invalid signature"}` |
+| callback with no `signatureHash`                               | **403**                                 |
+| `/api/billing/easykash/stub/checkout` in prod                  | **404**                                 |
+| `/api/billing/easykash/stub/simulate` in prod                  | **404**                                 |
+| `create-checkout` unauthenticated                              | **401**                                 |
+| `internal/.../apply` with no secret / wrong secret             | **403 / 403**                           |
+| `internal/.../renew` with no secret                            | **403**                                 |
+
+Every money path fails closed on the live deployment, with the secrets not yet created.
+
+## 7. What is NOT live, and why
+
+- **The Cloud Functions were not deployed.** `runWith({ secrets: [...] })` makes the deploy fail
+  until `easykash-api-key` and `internal-admin-secret` exist — the right failure for a billing
+  clock that cannot work. So `easykashReconcile` and the new `subscriptionAutoBilling` are
+  committed but not running.
+- **The secret references in `apphosting.yaml` are commented out.** Live references failed the
+  App Hosting **build** ("Error resolving secret version … easykash-api-key") and blocked every
+  rollout of the whole platform, not just billing — proven by the first rollout attempt. They
+  carry activation instructions and follow the `NEXT_PUBLIC_SENTRY_DSN` precedent already in that
+  file.
+- **`INTERNAL_ADMIN_SECRET` was never configured in App Hosting before this round either**, so
+  `/api/internal/usage/recompute` has always returned 403 in production. Flagged, not changed.
+
+## 8. Gates
+
+tsc clean (root + functions) · build clean · eslint **0 errors** on every touched file · jest
+**24 suites, 488 passed** (37 verifier/math, 14 status contract, 10 money transaction, 10 callback
+route, 15 rules) · rules + indexes deployed · one rollout · adversarial panel on a committed tree,
+no working-tree mutation.
+
+## 9. FOR AHMED — activation steps, in order
+
+1. **Create the three secrets** (values never leave your hands):
+   `firebase apphosting:secrets:set easykash-api-key`,
+   `... easykash-hmac-secret`, `... internal-admin-secret`.
+   The HMAC secret is the one on EasyKash's **Integration Settings** page, not the API key —
+   swapping them makes every callback 403, which looks exactly like an attack in the logs.
+2. **Uncomment the three blocks in `apphosting.yaml`** and roll out.
+3. **Set the callback URL in the EasyKash dashboard** to
+   `https://dosory.com/api/billing/easykash/callback` (it answers GET 200 for their probe).
+4. **Grant the functions the same secrets and deploy them**
+   (`firebase functions:secrets:set` for `EASYKASH_API_KEY` / `INTERNAL_ADMIN_SECRET`, then
+   `firebase deploy --only functions`) — this is what turns the reconciler and the renewal clock on.
+   Then check the next hourly `easykashReconcile` run in the logs: a new scheduled function is
+   exactly where a missing composite index shows up as a silent FAILED_PRECONDITION.
+5. **Set prices on the two published plans** — both currently have no `currency` and no
+   `billing.monthlyPrice`/`annualPrice`, so checkout refuses them by design. Remember the field is
+   **cents**: 4900 = 49.00.
+6. **Live 1 EGP test payment**, then reconcile it against `platformBillingRecords`.
+
+## 10. FOR AHMED — decisions this round surfaced but did not take
+
+1. **`app/api/paypal/capture-order` is dangerous as written** — a whole-document `set()` in an
+   incompatible shape that would erase `computedEntitlements`. It is unreachable today (nothing
+   renders its button), so this round left it alone rather than quietly rewriting a second
+   payment provider. Fix it, or delete it and the orphaned component.
+2. **Two plan stores** — root `plans` (2 docs, what BillingService and this feature use) vs
+   `platform/subscriptionPlans/plans` (3 docs, what the PayPal route uses). One should go.
+3. **`past_due` blocks writes today**, so the "grace window" is read-only from the moment a period
+   lapses. The email now says so, but if the intent was for grace to be fully usable, remove
+   `past_due` from `ensureWriteAccess`'s block list and let `suspended` be the only gate.
