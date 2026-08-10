@@ -93,18 +93,27 @@ env:
     # EASYKASH_HMAC_SECRET must be the HMAC key from the EasyKash Integration Settings page —
     # NOT the API key. Getting them the wrong way round makes every callback fail signature
     # verification (403), which looks exactly like an attack in the logs.
-    - variable: EASYKASH_API_KEY
-      secret: easykash-api-key
-      availability: [RUNTIME]
-    - variable: EASYKASH_HMAC_SECRET
-      secret: easykash-hmac-secret
-      availability: [RUNTIME]
+    # COMMENTED UNTIL THE SECRETS EXIST — deliberately, and not a style choice. An App Hosting
+    # build FAILS OUTRIGHT on a secret reference it cannot resolve ("Error resolving secret
+    # version ... easykash-api-key"), so leaving these live blocked EVERY rollout of the whole
+    # platform, not just billing. Proven by the rollout attempt on 2026-08-10.
+    # Uncomment all three in the same commit as the first rollout after the secrets are created —
+    # the same pattern NEXT_PUBLIC_SENTRY_DSN already uses below.
+    # Until then EasyKash fails closed at runtime: create-checkout returns 503 "not configured"
+    # and the callback 403s every request, because the verifier refuses a missing secret.
+    # - variable: EASYKASH_API_KEY
+    #   secret: easykash-api-key
+    #   availability: [RUNTIME]
+    # - variable: EASYKASH_HMAC_SECRET
+    #   secret: easykash-hmac-secret
+    #   availability: [RUNTIME]
     # Shared secret for server-to-server routes (/api/internal/*). The scheduled functions call
     # the renewal and apply routes with it; without it BOTH the existing internal routes and the
-    # billing loop fail closed with 403.
-    - variable: INTERNAL_ADMIN_SECRET
-      secret: internal-admin-secret
-      availability: [RUNTIME]
+    # billing loop fail closed with 403. NOTE: it was never configured here before this round
+    # either, so /api/internal/usage/recompute has always 403'd in production.
+    # - variable: INTERNAL_ADMIN_SECRET
+    #   secret: internal-admin-secret
+    #   availability: [RUNTIME]
     # "stub" replaces the hosted checkout + callback with a local simulation (no sandbox exists
     # upstream). Leave UNSET in production — the stub refuses to run against dosory.com anyway.
     # - variable: EASYKASH_MODE
