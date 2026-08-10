@@ -52,8 +52,9 @@ export function SubscriptionRenewalEmail({
             <Hr style={hr} />
 
             <Text style={footerNote}>
-                If nothing is paid by <strong>{graceEnd}</strong>, the workspace moves to read-only until it is renewed.
-                Your data is not deleted.
+                When the period ends on <strong>{periodEnd}</strong> the workspace becomes read-only until it is renewed
+                — you can still sign in and read everything, but not make changes. If nothing is paid by{" "}
+                <strong>{graceEnd}</strong> the workspace is suspended. Your data is not deleted either way.
             </Text>
         </BaseLayout>
     );

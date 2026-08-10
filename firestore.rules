@@ -433,6 +433,19 @@ service cloud.firestore {
     // ANY matching rule allows, and the catch-all at the bottom of this file grants create/write
     // on an orgId match — so these collections must ALSO be named in isServerManagedCollection().
     // A deny block alone is a no-op (proved for support_tickets; see the retirement test).
+    // Platform catalog — readable by any signed-in tenant (the billing page lists plans),
+    // writable only by a super admin through the SA API. See isServerManagedCollection() for
+    // why the deny below is not what enforces it.
+    match /plans/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    match /addons/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
     match /billingAttempts/{docId} {
       allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.token.orgId == resource.data.orgId);
       allow write: if false;
@@ -573,7 +586,15 @@ service cloud.firestore {
     function isServerManagedCollection(collection) {
       return collection == "billingAttempts"
         || collection == "platformBillingRecords"
-        || collection == "counters";
+        || collection == "counters"
+        // PLATFORM CATALOG. `plans` and `addons` describe what Dosory sells; they are not tenant
+        // data and carry no orgId. Without this exclusion the catch-all's `allow create` — which
+        // only requires request.resource.data.orgId == the caller's own org — let ANY tenant
+        // admin create plans/{anything} with status "published" and a price of their choosing,
+        // then buy it through /api/billing/easykash/create-checkout for 0.01. Found by the
+        // adversarial panel and reproduced in the emulator before this line existed.
+        || collection == "plans"
+        || collection == "addons";
     }
 
     match /{collection}/{docId} {

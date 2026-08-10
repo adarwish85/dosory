@@ -615,6 +615,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 );
                             })}
 
+                            {/* Billing — the page existed with nothing linking to it, which is the
+                                mirror image of the route-fall-through rule in CLAUDE.md §7: there a
+                                link pointed at a missing page, here a page had no link. */}
+                            <Link
+                                href="/dashboard/billing"
+                                className="flex items-center gap-2 p-2 rounded-lg text-[#1c1e21] hover:bg-[#E4E6EB] transition-colors w-full text-left"
+                            >
+                                <div className="w-8 h-8 rounded-full bg-[#E4E6EB] flex items-center justify-center">
+                                    <CreditCard className="h-4 w-4" />
+                                </div>
+                                <span className="font-medium text-sm">{t("navigation.nav.billing")}</span>
+                            </Link>
+
                             {/* Setup Link */}
                             <button
                                 onClick={() => setSetupOpen(true)}

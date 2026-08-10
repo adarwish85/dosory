@@ -49,6 +49,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Plan is not published" }, { status: 400 });
         }
 
+        // A platform plan describes what DOSORY sells, so it must not belong to a tenant. Before
+        // the rules exclusion landed, the catch-all let any org admin create plans/{id} with
+        // their own orgId, `status: "published"` and a price of 0.01, then buy it here — this
+        // route reads with the Admin SDK, so rules do not protect it. Defence in depth: the
+        // rules now refuse the write, and this refuses to price anything tenant-owned.
+        if (plan.orgId !== undefined && plan.orgId !== null) {
+            console.error("[easykash] refused a tenant-owned plan document", { planId, orgId, planOrgId: plan.orgId });
+            return NextResponse.json({ error: "Plan not found" }, { status: 404 });
+        }
+
         // Fails closed when the plan carries no price/currency, which is the state BOTH published
         // plans are in today. Charging a default would give a paid plan away for nothing.
         const price = resolvePlanPrice(plan, billingCycle);

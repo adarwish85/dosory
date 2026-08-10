@@ -23,7 +23,13 @@ const db = admin.firestore();
 
 const INQUIRE_URL = "https://back.easykash.net/api/cash-api/inquire";
 
-/** Mirrors lib/billing/easykash-core.mapProviderStatus. Kept tiny and pinned by a contract test. */
+/**
+ * A deliberate duplicate of lib/billing/easykash-core.mapProviderStatus. The two packages cannot
+ * share a module (separate tsconfigs, and functions/ runs firebase-admin 11 against the root's
+ * 13), so the copy is pinned by tests/unit/easykash-status-contract.test.ts, which reads BOTH
+ * files and asserts they agree across every documented status. Duplicated money logic without a
+ * contract test is how a fix lands on the copy nobody calls.
+ */
 function mapProviderStatus(raw: unknown): string {
     const s = String(raw ?? "").trim().toUpperCase();
     if (s === "PAID" || s === "DELIVERED") return "paid";
@@ -35,7 +41,14 @@ function mapProviderStatus(raw: unknown): string {
     return "unknown";
 }
 
-export const easykashReconcile = functions.pubsub
+export const easykashReconcile = functions
+    // App Hosting env vars are NOT Cloud Functions env vars — apphosting.yaml configures the
+    // Next.js server only. Without this binding both schedules read `undefined`, take the
+    // "not configured" branch and no-op forever while logging a tidy warning. Found by the
+    // adversarial panel. `secrets` makes the deploy FAIL LOUDLY until the secrets exist,
+    // which is the right failure: a billing clock that cannot work should not deploy.
+    .runWith({ secrets: ["EASYKASH_API_KEY", "INTERNAL_ADMIN_SECRET"] })
+    .pubsub
     .schedule("15 * * * *")
     .timeZone("UTC")
     .onRun(async () => {
@@ -129,14 +142,25 @@ export const easykashReconcile = functions.pubsub
                             voucher: body.voucher ? String(body.voucher) : undefined,
                         }),
                     });
-                    const out = (await res.json().catch(() => ({}))) as { applied?: boolean; reason?: string };
-                    if (res.ok && out.applied) {
-                        applied++;
-                        console.log(`[easykashReconcile] applied late payment for ref ${numericRef}`);
-                    } else if (res.status === 409) {
-                        discrepancies.push(`apply ${numericRef} rejected: ${out.reason}`);
+                    const out = (await res.json().catch(() => ({}))) as {
+                        applied?: boolean;
+                        outcome?: string;
+                        reason?: string;
+                    };
+                    if (res.ok && (out.applied || out.outcome === "duplicate")) {
+                        if (out.applied) {
+                            applied++;
+                            console.log(`[easykashReconcile] applied late payment for ref ${numericRef}`);
+                        }
+                        converged++;
+                    } else {
+                        // TOTAL else. The previous version counted a 403 (wrong internal secret)
+                        // or a 500 as "converged" and logged nothing, so a permanently broken
+                        // apply path produced a summary line reading like a clean run.
+                        discrepancies.push(
+                            `apply ${numericRef} -> HTTP ${res.status} ${out.reason ?? out.outcome ?? ""}`.trim()
+                        );
                     }
-                    converged++;
                 } catch (error) {
                     discrepancies.push(`apply ${numericRef} -> ${String(error)}`);
                 }

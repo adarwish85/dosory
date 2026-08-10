@@ -31,8 +31,12 @@ type Attempt = {
  *
  * It did not exist before this round: `components/subscription/paypal-button.tsx` was written
  * but never rendered anywhere (zero importers), so there was no way for a tenant to pay Dosory
- * from the product at all. Both providers now live here — EasyKash for card / wallet / Fawry /
- * Aman, PayPal for cards abroad.
+ * from the product at all.
+ *
+ * ONLY EasyKash is wired here. The PayPal component is still unrendered, and adding it would
+ * mean shipping the route behind it — app/api/paypal/capture-order writes `subscriptions/{orgId}`
+ * with a whole-document set() in an incompatible shape, which would erase `computedEntitlements`
+ * and strip the tenant of every module. That route needs its own fix first; see the round report.
  *
  * Attempt history is read straight from `billingAttempts`, which rules scope to the owning org
  * and no client may write.

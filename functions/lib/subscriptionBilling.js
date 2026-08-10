@@ -30,7 +30,14 @@ if (!admin.apps.length) {
  * CONFIG IS READ INSIDE THE HANDLER. Reading config at module scope crashed the whole container
  * on boot once already, taking every function in the bundle down with it (CLAUDE.md §11).
  */
-exports.subscriptionAutoBilling = functions.pubsub
+exports.subscriptionAutoBilling = functions
+    // App Hosting env vars are NOT Cloud Functions env vars — apphosting.yaml configures the
+    // Next.js server only. Without this binding both schedules read `undefined`, take the
+    // "not configured" branch and no-op forever while logging a tidy warning. Found by the
+    // adversarial panel. `secrets` makes the deploy FAIL LOUDLY until the secrets exist,
+    // which is the right failure: a billing clock that cannot work should not deploy.
+    .runWith({ secrets: ["EASYKASH_API_KEY", "INTERNAL_ADMIN_SECRET"] })
+    .pubsub
     .schedule("0 0 * * *")
     .timeZone("UTC")
     .onRun(async () => {

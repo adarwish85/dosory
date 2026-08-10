@@ -22,7 +22,13 @@ const db = admin.firestore();
  * that here would be a second money writer in a package with a different admin SDK major.
  */
 const INQUIRE_URL = "https://back.easykash.net/api/cash-api/inquire";
-/** Mirrors lib/billing/easykash-core.mapProviderStatus. Kept tiny and pinned by a contract test. */
+/**
+ * A deliberate duplicate of lib/billing/easykash-core.mapProviderStatus. The two packages cannot
+ * share a module (separate tsconfigs, and functions/ runs firebase-admin 11 against the root's
+ * 13), so the copy is pinned by tests/unit/easykash-status-contract.test.ts, which reads BOTH
+ * files and asserts they agree across every documented status. Duplicated money logic without a
+ * contract test is how a fix lands on the copy nobody calls.
+ */
 function mapProviderStatus(raw) {
     const s = String(raw !== null && raw !== void 0 ? raw : "").trim().toUpperCase();
     if (s === "PAID" || s === "DELIVERED")
@@ -39,11 +45,18 @@ function mapProviderStatus(raw) {
         return "pending";
     return "unknown";
 }
-exports.easykashReconcile = functions.pubsub
+exports.easykashReconcile = functions
+    // App Hosting env vars are NOT Cloud Functions env vars — apphosting.yaml configures the
+    // Next.js server only. Without this binding both schedules read `undefined`, take the
+    // "not configured" branch and no-op forever while logging a tidy warning. Found by the
+    // adversarial panel. `secrets` makes the deploy FAIL LOUDLY until the secrets exist,
+    // which is the right failure: a billing clock that cannot work should not deploy.
+    .runWith({ secrets: ["EASYKASH_API_KEY", "INTERNAL_ADMIN_SECRET"] })
+    .pubsub
     .schedule("15 * * * *")
     .timeZone("UTC")
     .onRun(async () => {
-    var _a;
+    var _a, _b, _c;
     // --- lazy config, never at module scope ---
     const apiKey = process.env.EASYKASH_API_KEY;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
@@ -126,14 +139,19 @@ exports.easykashReconcile = functions.pubsub
                     }),
                 });
                 const out = (await res.json().catch(() => ({})));
-                if (res.ok && out.applied) {
-                    applied++;
-                    console.log(`[easykashReconcile] applied late payment for ref ${numericRef}`);
+                if (res.ok && (out.applied || out.outcome === "duplicate")) {
+                    if (out.applied) {
+                        applied++;
+                        console.log(`[easykashReconcile] applied late payment for ref ${numericRef}`);
+                    }
+                    converged++;
                 }
-                else if (res.status === 409) {
-                    discrepancies.push(`apply ${numericRef} rejected: ${out.reason}`);
+                else {
+                    // TOTAL else. The previous version counted a 403 (wrong internal secret)
+                    // or a 500 as "converged" and logged nothing, so a permanently broken
+                    // apply path produced a summary line reading like a clean run.
+                    discrepancies.push(`apply ${numericRef} -> HTTP ${res.status} ${(_b = (_a = out.reason) !== null && _a !== void 0 ? _a : out.outcome) !== null && _b !== void 0 ? _b : ""}`.trim());
                 }
-                converged++;
             }
             catch (error) {
                 discrepancies.push(`apply ${numericRef} -> ${String(error)}`);
@@ -143,7 +161,7 @@ exports.easykashReconcile = functions.pubsub
         // failed / expired / cancelled / refunded — a status change, no money movement.
         await doc.ref.update({
             status,
-            providerStatus: String((_a = body.status) !== null && _a !== void 0 ? _a : ""),
+            providerStatus: String((_c = body.status) !== null && _c !== void 0 ? _c : ""),
             reconciledAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });

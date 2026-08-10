@@ -67,19 +67,26 @@ beforeEach(async () => {
             currency: "EGP",
         });
         await setDoc(doc(db, "counters", "easykashRef"), { currentNumber: 100001 });
-        // Control: an ordinary tenant collection, still governed by the catch-all.
-        await setDoc(doc(db, "customers", "cust_a"), { orgId: ORG_A, name: "Acme" });
+        // CONTROL. Deliberately an invented collection name with NO dedicated rule block, so the
+        // only thing that can grant it is the catch-all itself. `customers` was used here first
+        // and proved nothing — it has its own block (firestore.rules), so the control passed
+        // whether or not the catch-all existed. The panel caught that; this is the fix.
+        await setDoc(doc(db, "zz_catchall_probe", "probe_a"), { orgId: ORG_A, name: "probe" });
     });
 });
 
 describe("the catch-all grant path is real (control — this is what had to be excluded)", () => {
-    test("an org member CAN write an ordinary orgId-scoped document", async () => {
-        // Same shape of grant that would apply to billingAttempts without the exclusion.
-        await assertSucceeds(updateDoc(doc(asOrg(ORG_A), "customers", "cust_a"), { name: "Acme Ltd" }));
+    test("an org member CAN write a doc in a collection with no rule of its own", async () => {
+        // Exactly the grant that would apply to billingAttempts without the exclusion. If the
+        // catch-all ever stops granting, THIS goes red — which is what makes the denials below
+        // meaningful rather than vacuous.
+        await assertSucceeds(updateDoc(doc(asOrg(ORG_A), "zz_catchall_probe", "probe_a"), { name: "probe2" }));
     });
 
     test("an org member CAN create one", async () => {
-        await assertSucceeds(setDoc(doc(asOrg(ORG_A), "customers", "cust_new"), { orgId: ORG_A, name: "New" }));
+        await assertSucceeds(
+            setDoc(doc(asOrg(ORG_A), "zz_catchall_probe", "probe_new"), { orgId: ORG_A, name: "New" })
+        );
     });
 });
 
@@ -143,5 +150,46 @@ describe("counters — admin SDK only", () => {
         // credit the wrong tenant's subscription.
         await assertFails(getDoc(doc(asOrg(ORG_A), "counters", "easykashRef")));
         await assertFails(setDoc(doc(asOrg(ORG_A), "counters", "easykashRef"), { currentNumber: 1 }));
+    });
+});
+
+describe("platform catalog — a tenant cannot invent a plan and price its own subscription", () => {
+    test("an org admin cannot create a plans document", async () => {
+        // THE ATTACK, reproduced in the emulator before the exclusion existed: create
+        // plans/pwn with your own orgId, status "published" and monthlyPrice 1, then buy it
+        // through /api/billing/easykash/create-checkout for one cent. The catch-all's
+        // `allow create` was satisfied because the forged doc carried the caller's own orgId.
+        await assertFails(
+            setDoc(doc(asOrg(ORG_A), "plans", "pwn_pro"), {
+                orgId: ORG_A,
+                id: "pwn_pro",
+                name: "Pwn",
+                status: "published",
+                currency: "EGP",
+                billing: { monthlyPrice: 1 },
+                versioning: { version: 1 },
+                limits: { maxUsers: -1 },
+                entitlements: { modules: ["crm", "sales", "hr", "finance"] },
+            })
+        );
+    });
+
+    test("nor edit a real one, nor touch addons", async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+            await setDoc(doc(ctx.firestore(), "plans", "plan_starter"), {
+                id: "plan_starter",
+                status: "published",
+                billing: { monthlyPrice: 4900 },
+            });
+        });
+        await assertFails(updateDoc(doc(asOrg(ORG_A), "plans", "plan_starter"), { billing: { monthlyPrice: 1 } }));
+        await assertFails(setDoc(doc(asOrg(ORG_A), "addons", "pwn_addon"), { orgId: ORG_A, name: "Pwn" }));
+    });
+
+    test("but any signed-in tenant may READ the catalog — the billing page lists plans", async () => {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+            await setDoc(doc(ctx.firestore(), "plans", "plan_starter"), { id: "plan_starter", status: "published" });
+        });
+        await assertSucceeds(getDoc(doc(asOrg(ORG_B), "plans", "plan_starter")));
     });
 });

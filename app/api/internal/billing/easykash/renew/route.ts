@@ -42,9 +42,12 @@ export async function POST(request: NextRequest) {
 
     // Only subscriptions that pay us — a trialing tenant is invited to convert, an active one to
     // renew. `canceled` and `suspended` are terminal for this sweep.
+    // "expired" is in the list because trialExpiryCheck (functions/src/contractExpiry.ts) writes
+    // exactly that when a trial ends — leaving it out meant every trial fell out of the billing
+    // lifecycle nine days before this sweep would have invited it to convert. Found by the panel.
     const snap = await adminDb
         .collection("subscriptions")
-        .where("status", "in", ["active", "trialing", "past_due"])
+        .where("status", "in", ["active", "trialing", "past_due", "expired"])
         .get();
 
     for (const doc of snap.docs) {
@@ -56,9 +59,14 @@ export async function POST(request: NextRequest) {
             continue;
         }
 
-        // ---------- pass 3: grace expired ----------
+        // ---------- pass 3: grace expired AND still unpaid ----------
+        // All three conditions matter. Suspending on a stale `graceUntil` alone would suspend a
+        // tenant who has since paid — including one a super admin activated by hand, since that
+        // path does not clear the field. The period end is the real test of "still unpaid".
         const graceUntil = toDate(sub.graceUntil);
-        if (graceUntil && graceUntil.getTime() < now.getTime()) {
+        const stillUnpaid = periodEnd.getTime() < now.getTime();
+        const inArrears = sub.status === "past_due" || sub.status === "expired";
+        if (graceUntil && graceUntil.getTime() < now.getTime() && stillUnpaid && inArrears) {
             await doc.ref.update({
                 status: "suspended",
                 suspendedAt: FieldValue.serverTimestamp(),
@@ -67,12 +75,25 @@ export async function POST(request: NextRequest) {
             out.suspended++;
             continue;
         }
-
-        // ---------- pass 2: lapsed, start the grace clock ----------
-        if (periodEnd.getTime() < now.getTime() && sub.status !== "past_due") {
+        if (graceUntil && !stillUnpaid) {
+            // Paid since the lapse (callback, reconciler, or a super admin). Clear the arrears
+            // bookkeeping so the next run cannot resurrect it.
             await doc.ref.update({
-                status: "past_due",
-                graceUntil: Timestamp.fromDate(new Date(now.getTime() + GRACE_DAYS * 86400000)),
+                graceUntil: FieldValue.delete(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+        }
+
+        // ---------- pass 2: lapsed — start (or repair) the grace clock ----------
+        // Keyed on the MISSING clock, not just on the status transition. A subscription that
+        // reached `past_due` by another route (or lost the field) would otherwise be emailed on
+        // every run forever and could never be suspended, because pass 3 needs `graceUntil`.
+        let graceDeadline = graceUntil;
+        if (periodEnd.getTime() < now.getTime() && (!inArrears || !graceUntil)) {
+            graceDeadline = new Date(now.getTime() + GRACE_DAYS * 86400000);
+            await doc.ref.update({
+                status: sub.status === "expired" ? "expired" : "past_due",
+                graceUntil: Timestamp.fromDate(graceDeadline),
                 updatedAt: FieldValue.serverTimestamp(),
             });
             out.pastDue++;
@@ -139,7 +160,10 @@ export async function POST(request: NextRequest) {
             checkoutUrl: payment.redirectUrl,
         });
 
-        const graceEnd = new Date(Math.max(periodEnd.getTime(), now.getTime()) + GRACE_DAYS * 86400000);
+        // The STORED deadline drives the email, so the date the customer reads is the date pass 3
+        // will actually act on. Recomputing it here moved the deadline a day later on every run.
+        const graceEnd =
+            graceDeadline ?? new Date(Math.max(periodEnd.getTime(), now.getTime()) + GRACE_DAYS * 86400000);
         const sent = await sendEmail({
             to: admin.email,
             subject: `Renew your ${String((planSnap?.data() as Record<string, unknown>)?.name || "Dosory")} subscription`,

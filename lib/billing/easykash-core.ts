@@ -185,6 +185,11 @@ export type PlanLike = {
     name?: string;
     currency?: string;
     isFree?: boolean;
+    /**
+     * MINOR UNITS (cents/piastres). The Super Admin plan editor labels this field
+     * "Monthly Price (cents)" with the placeholder "4900 = $49.00", and its table formats it as
+     * `cents / 100` — so 4900 means 49.00, not 4,900.
+     */
     billing?: { monthlyPrice?: number; annualPrice?: number };
 };
 
@@ -204,9 +209,13 @@ export function resolvePlanPrice(plan: PlanLike | null | undefined, cycle: Billi
     if (!plan) return { ok: false, reason: "no-price" };
     if (plan.isFree) return { ok: false, reason: "free-plan" };
 
+    // UNIT CONVERSION, and the only place it happens. The plan stores MINOR units; EasyKash's
+    // Pay API takes a MAJOR-unit amount ("Amount must be in the currency being sent"). Passing
+    // the stored number straight through charges 100× — a 49.00 plan would bill 4,900.
     const raw = cycle === "annual" ? plan.billing?.annualPrice : plan.billing?.monthlyPrice;
-    const amount = typeof raw === "number" ? raw : NaN;
-    if (!Number.isFinite(amount) || amount <= 0) return { ok: false, reason: "no-price" };
+    if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return { ok: false, reason: "no-price" };
+    if (!Number.isInteger(raw)) return { ok: false, reason: "no-price" }; // minor units are whole
+    const amount = Math.round(raw) / 100;
 
     const currency = typeof plan.currency === "string" ? plan.currency.trim().toUpperCase() : "";
     if (!SUPPORTED_CURRENCIES.includes(currency)) return { ok: false, reason: "no-currency" };

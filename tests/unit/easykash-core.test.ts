@@ -188,13 +188,43 @@ describe("period math", () => {
 });
 
 describe("plan pricing — fails closed", () => {
-    test("a fully-specified plan resolves", () => {
+    test("plan prices are MINOR units and are converted to major units for the provider", () => {
+        // The Super Admin editor labels the field "Monthly Price (cents)" and its placeholder is
+        // literally "4900 = $49.00"; the plans table renders `cents / 100`. EasyKash's Pay API
+        // takes a MAJOR-unit amount. Passing the stored number through charges 100× — a 49.00
+        // plan would bill 4,900. This is the assertion that stops that.
+        expect(resolvePlanPrice({ currency: "EGP", billing: { monthlyPrice: 4900 } }, "monthly")).toEqual({
+            ok: true,
+            amount: 49,
+            currency: "EGP",
+        });
         expect(
-            resolvePlanPrice({ currency: "egp", billing: { monthlyPrice: 500, annualPrice: 5000 } }, "monthly")
-        ).toEqual({ ok: true, amount: 500, currency: "EGP" });
+            resolvePlanPrice({ currency: "egp", billing: { monthlyPrice: 500, annualPrice: 54000 } }, "monthly")
+        ).toEqual({ ok: true, amount: 5, currency: "EGP" });
         expect(
-            resolvePlanPrice({ currency: "EGP", billing: { monthlyPrice: 500, annualPrice: 5000 } }, "annual")
-        ).toEqual({ ok: true, amount: 5000, currency: "EGP" });
+            resolvePlanPrice({ currency: "EGP", billing: { monthlyPrice: 500, annualPrice: 54000 } }, "annual")
+        ).toEqual({ ok: true, amount: 540, currency: "EGP" });
+    });
+
+    test("odd cent amounts survive the conversion exactly", () => {
+        expect(resolvePlanPrice({ currency: "EGP", billing: { monthlyPrice: 1 } }, "monthly")).toEqual({
+            ok: true,
+            amount: 0.01,
+            currency: "EGP",
+        });
+        expect(resolvePlanPrice({ currency: "EGP", billing: { monthlyPrice: 12345 } }, "monthly")).toEqual({
+            ok: true,
+            amount: 123.45,
+            currency: "EGP",
+        });
+    });
+
+    test("a fractional 'cents' value is refused rather than silently rounded", () => {
+        // 49.5 cents is not a price anyone meant to set; charging 0.495 or 0.50 both guess.
+        expect(resolvePlanPrice({ currency: "EGP", billing: { monthlyPrice: 49.5 } }, "monthly")).toEqual({
+            ok: false,
+            reason: "no-price",
+        });
     });
 
     test("the plans actually in prod today (no price, no currency) REFUSE to be charged", () => {
