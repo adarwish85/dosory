@@ -2139,3 +2139,106 @@ no working-tree mutation.
 3. **`past_due` blocks writes today**, so the "grace window" is read-only from the moment a period
    lapses. The email now says so, but if the intent was for grace to be fully usable, remove
    `past_due` from `ensureWriteAccess`'s block list and let `suspended` be the only gate.
+
+---
+
+# ROUND — EasyKash activation, 2026-08-10 (`d1f4e2b8`; rollout `dosory-build-2026-08-10-006`)
+
+Partial activation. The money path is live; three things are blocked on inputs only Ahmed can
+supply, and none of them were guessed.
+
+## 1. Secret verification — presence and byte length only, never values
+
+| secret                  | exists                         | enabled versions | bytes | placeholder words | shape                             |
+| ----------------------- | ------------------------------ | ---------------- | ----- | ----------------- | --------------------------------- |
+| `EASYKASH_API_KEY`      | ✅                             | 2                | 16    | 0                 | not hex, no trailing newline      |
+| `EASYKASH_HMAC_SECRET`  | ✅                             | 2                | 32    | 0                 | **pure hex**, no trailing newline |
+| `internal-admin-secret` | ❌ **absent under any casing** | —                | —     | —                 | —                                 |
+
+**Two findings from this table.**
+
+- **The names are not the ones `apphosting.yaml` referenced.** Ahmed created
+  `EASYKASH_API_KEY` / `EASYKASH_HMAC_SECRET` (upper snake); the file referenced
+  `easykash-api-key` / `easykash-hmac-secret` (kebab). A reference to a name that does not
+  exist fails the **build**, so uncommenting as written would have reproduced the outage from
+  the previous round. Refs corrected to match Secret Manager exactly — the same shape
+  `RESEND_API_KEY` already uses in that file.
+- **Neither value looks like a placeholder,** and the HMAC secret being **32 hex characters**
+  matches the shape of EasyKash's own documented example secret, which is what the Integration
+  Settings page issues. Neither ends in a newline — a trailing newline would silently break
+  every signature. (Values were piped straight to `wc -c` / `grep -c`; nothing was printed.)
+
+## 2. Rollout — activated and verified by behaviour, not by the deploy message
+
+IAM `secretAccessor` granted to the App Hosting backend for both secrets, refs uncommented,
+rollout `dosory-build-2026-08-10-006` serving.
+
+The discriminating probe, authenticated as the qa-smoke org admin:
+
+```
+POST /api/billing/easykash/create-checkout {planId: plan_starter, billingCycle: monthly}
+  before activation:  503  "EasyKash is not configured on this environment"
+  after  activation:  409  "This plan has no price configured for that billing cycle."
+```
+
+That 503 → 409 transition is the proof the API key reached the runtime: the route got past
+`easykashConfigured()` and stopped at the _next_ honest gate. It also confirms the org-admin
+gate passes for a real admin. Checkout will keep refusing until the plans are priced — by
+design, since charging a default would give a paid plan away.
+
+## 3. Functions deploy — BLOCKED, and it failed exactly where it should
+
+```
+firebase deploy --only functions
+Error: Failed to validate secret versions:
+- Secret [projects/618844317530/secrets/INTERNAL_ADMIN_SECRET] not found or has no versions.
+```
+
+Validation happens **before** anything is uploaded, so nothing deployed and nothing changed.
+This is `runWith({secrets})` doing its job: a billing clock that cannot read its config should
+refuse to ship rather than no-op quietly in production.
+
+**What stays off until `internal-admin-secret` exists:** `easykashReconcile` (so a Fawry/Aman
+payment whose callback is lost will not self-heal), the renewal sweep, and the grace/suspend
+lifecycle. The callback path — the one that actually credits money — does not need it and is
+live.
+
+## 4. Plan prices — NOT SET
+
+The instruction carried an unfilled placeholder:
+`[AHMED: INSERT MAPPING HERE, e.g. Plan X = 25000 cents EGP, Plan Y = 50000 cents EGP]`.
+Those are illustrative numbers in the example text, not a mapping. Writing them onto live
+published plans would set a real price a real tenant could be charged, so nothing was written.
+`plan_starter` and `plan_professional` still have no `currency` and no
+`billing.monthlyPrice`/`annualPrice`. **The field is cents: 4900 = 49.00.**
+
+## 5. End-to-end acceptance — NOT DONE, and partly not mine to do
+
+Two independent blockers:
+
+1. It needs a priced plan (item 4).
+2. **Completing the payment means entering card details, which I do not do.** I can drive
+   everything up to the hosted EasyKash page and verify the entire money trail afterwards —
+   attempt → signed callback → `subscriptions/{orgId}` extended with `computedEntitlements`
+   intact → `platformBillingRecords` row → reconciler convergence — but the card entry itself
+   has to be you.
+
+## 6. EasyKash dashboard callback probe — no evidence yet
+
+All 15 requests to `/api/billing/easykash/*` in the last 24h carry the `Google` user agent —
+they are my own probes through Google egress. **No request from EasyKash has arrived**, which
+is consistent with the callback URL not being configured in their dashboard yet. The endpoint is
+ready for it: `GET https://dosory.com/api/billing/easykash/callback` answers **200**, and forged
+or unsigned POSTs answer **403**.
+
+## 7. Where this leaves the feature
+
+| capability                              | state                                    |
+| --------------------------------------- | ---------------------------------------- |
+| checkout → hosted EasyKash page         | **live**, blocked only by unpriced plans |
+| signed callback → subscription extended | **live**                                 |
+| forged / unsigned callback rejected     | **live** (403)                           |
+| stub routes in production               | 404                                      |
+| reconciler (late/lost callbacks)        | **off** — needs `internal-admin-secret`  |
+| renewal + grace + suspend               | **off** — same                           |
+| dashboard callback URL registered       | **not done** — EasyKash side             |
