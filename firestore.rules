@@ -422,6 +422,33 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
     
+    // ============================================
+    // PLATFORM BILLING (tenants paying Dosory) — SERVER-WRITTEN ONLY
+    // ============================================
+    // These carry money state that only the server may set: a tenant that could write its own
+    // billingAttempt could mark it paid, and a subscription would be extended for free. Reads
+    // are scoped to the owning org so the billing page can show its own history.
+    //
+    // NOTE: the specific blocks below are NOT what enforces the write ban. Firestore grants when
+    // ANY matching rule allows, and the catch-all at the bottom of this file grants create/write
+    // on an orgId match — so these collections must ALSO be named in isServerManagedCollection().
+    // A deny block alone is a no-op (proved for support_tickets; see the retirement test).
+    match /billingAttempts/{docId} {
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.token.orgId == resource.data.orgId);
+      allow write: if false;
+    }
+
+    match /platformBillingRecords/{docId} {
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.token.orgId == resource.data.orgId);
+      allow write: if false;
+    }
+
+    // Reference counters (e.g. the EasyKash customerReference sequence). Admin SDK only — a
+    // client that could rewind a counter could mint a duplicate payment reference.
+    match /counters/{docId} {
+      allow read, write: if false;
+    }
+
     match /tenantUsage/{docId} {
       allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.token.orgId == docId);
       allow write: if isSuperAdmin();
@@ -541,15 +568,25 @@ service cloud.firestore {
       return collection == "support_tickets";
     }
 
+    // SERVER-MANAGED COLLECTIONS — same mechanism, different reason. These have their own
+    // read rules above; what they must never have is the catch-all's client write path.
+    function isServerManagedCollection(collection) {
+      return collection == "billingAttempts"
+        || collection == "platformBillingRecords"
+        || collection == "counters";
+    }
+
     match /{collection}/{docId} {
       // Allow read/write if authenticated and document's orgId matches user's token orgId
       allow read, write: if isAuthenticated()
         && !isRetiredCollection(collection)
+        && !isServerManagedCollection(collection)
         && resource.data.orgId != null
         && request.auth.token.orgId == resource.data.orgId;
       // Allow create if authenticated and new document's orgId matches user's token orgId
       allow create: if isAuthenticated()
         && !isRetiredCollection(collection)
+        && !isServerManagedCollection(collection)
         && request.resource.data.orgId != null
         && request.auth.token.orgId == request.resource.data.orgId;
     }

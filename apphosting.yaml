@@ -1,86 +1,112 @@
 env:
-  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: AIzaSyBjO7KDkU3V9zL9XFYCZvkKvg3sywIlYLU
-    availability: [BUILD, RUNTIME]
-  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: goalo-6a269.firebaseapp.com
-    availability: [BUILD, RUNTIME]
-  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    value: goalo-6a269
-    availability: [BUILD, RUNTIME]
-  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: goalo-6a269.firebasestorage.app
-    availability: [BUILD, RUNTIME]
-  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    value: "618844317530"
-    availability: [BUILD, RUNTIME]
-  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    value: 1:618844317530:web:c91700ca7986eeda497563
-    availability: [BUILD, RUNTIME]
-  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
-    value: G-Y33Y4T5HRT
-    availability: [BUILD, RUNTIME]
-  - variable: NEXT_PUBLIC_ROOT_DOMAIN
-    value: dosory.com
-    availability: [BUILD, RUNTIME]
-  - variable: NEXT_PUBLIC_PAYPAL_CLIENT_ID
-    value: AVrV1_jTzj4roCuVIwDV8llyW-QIsArn0dKYW2fTkVX4OpTYjGobynSsJuNe4y2BLdV4az8hureO9y3S
-    availability: [BUILD, RUNTIME]
-  - variable: PAYPAL_CLIENT_ID
-    value: AVrV1_jTzj4roCuVIwDV8llyW-QIsArn0dKYW2fTkVX4OpTYjGobynSsJuNe4y2BLdV4az8hureO9y3S
-    availability: [BUILD, RUNTIME]
-  - variable: PAYPAL_CLIENT_SECRET
-    secret: paypal-client-secret
-    availability: [BUILD, RUNTIME]
-  - variable: PAYPAL_MODE
-    value: live
-    availability: [BUILD, RUNTIME]
-  - variable: NEXT_PUBLIC_APP_URL
-    value: https://dosory.com
-    availability: [BUILD, RUNTIME]
-  - variable: FIREBASE_SERVICE_ACCOUNT_KEY
-    secret: firebase-service-account-key
-    availability: [BUILD, RUNTIME]
-  # SMTP transactional-email credentials (Stage 3.0.4 — migrated out of
-  # platform/settings.smtpSettings which was world-readable in Firestore).
-  # SMTP_PASSWORD lives in Secret Manager; the rest are inline non-secrets.
-  - variable: SMTP_HOST
-    value: smtp.resend.com
-    availability: [BUILD, RUNTIME]
-  - variable: SMTP_PORT
-    value: "587"
-    availability: [BUILD, RUNTIME]
-  - variable: SMTP_USERNAME
-    value: resend
-    availability: [BUILD, RUNTIME]
-  - variable: SMTP_PASSWORD
-    secret: smtp-password
-    availability: [BUILD, RUNTIME]
-  - variable: SMTP_ENCRYPTION
-    value: tls
-    availability: [BUILD, RUNTIME]
-  - variable: SMTP_FROM_EMAIL
-    value: noreply@dosory.com
-    availability: [BUILD, RUNTIME]
-  - variable: SMTP_FROM_NAME
-    value: Dosory Support
-    availability: [BUILD, RUNTIME]
-  # Resend API key — used by the App Hosting server route /api/email/send
-  # (lib/email/resend.ts) for welcome / team-invite / password-reset emails.
-  # Without it that route 500s "RESEND_API_KEY environment variable is not set"
-  # (confirmed by the prod send-test). The secret already exists in Secret Manager;
-  # IAM secretAccessor must be granted to the App Hosting compute SA before runtime
-  # can read it (gated IAM op — see closeout report).
-  - variable: RESEND_API_KEY
-    secret: RESEND_API_KEY
-    availability: [BUILD, RUNTIME]
-  # Observability — Sentry error tracking (A6). The DSN is a public client key (safe to
-  # inline, like NEXT_PUBLIC_FIREBASE_API_KEY). Uncomment and set the value from your Sentry
-  # project (Settings -> Client Keys / DSN) to turn capture on; until then it is a no-op.
-  # The server reuses NEXT_PUBLIC_SENTRY_DSN, so this one variable is enough.
-  # - variable: NEXT_PUBLIC_SENTRY_DSN
-  #   value: https://<key>@<orgId>.ingest.sentry.io/<projectId>
-  #   availability: [BUILD, RUNTIME]
-  # - variable: NEXT_PUBLIC_SENTRY_ENV
-  #   value: production
-  #   availability: [BUILD, RUNTIME]
+    - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+      value: AIzaSyBjO7KDkU3V9zL9XFYCZvkKvg3sywIlYLU
+      availability: [BUILD, RUNTIME]
+    - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+      value: goalo-6a269.firebaseapp.com
+      availability: [BUILD, RUNTIME]
+    - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+      value: goalo-6a269
+      availability: [BUILD, RUNTIME]
+    - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+      value: goalo-6a269.firebasestorage.app
+      availability: [BUILD, RUNTIME]
+    - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+      value: "618844317530"
+      availability: [BUILD, RUNTIME]
+    - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+      value: 1:618844317530:web:c91700ca7986eeda497563
+      availability: [BUILD, RUNTIME]
+    - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+      value: G-Y33Y4T5HRT
+      availability: [BUILD, RUNTIME]
+    - variable: NEXT_PUBLIC_ROOT_DOMAIN
+      value: dosory.com
+      availability: [BUILD, RUNTIME]
+    - variable: NEXT_PUBLIC_PAYPAL_CLIENT_ID
+      value: AVrV1_jTzj4roCuVIwDV8llyW-QIsArn0dKYW2fTkVX4OpTYjGobynSsJuNe4y2BLdV4az8hureO9y3S
+      availability: [BUILD, RUNTIME]
+    - variable: PAYPAL_CLIENT_ID
+      value: AVrV1_jTzj4roCuVIwDV8llyW-QIsArn0dKYW2fTkVX4OpTYjGobynSsJuNe4y2BLdV4az8hureO9y3S
+      availability: [BUILD, RUNTIME]
+    - variable: PAYPAL_CLIENT_SECRET
+      secret: paypal-client-secret
+      availability: [BUILD, RUNTIME]
+    - variable: PAYPAL_MODE
+      value: live
+      availability: [BUILD, RUNTIME]
+    - variable: NEXT_PUBLIC_APP_URL
+      value: https://dosory.com
+      availability: [BUILD, RUNTIME]
+    - variable: FIREBASE_SERVICE_ACCOUNT_KEY
+      secret: firebase-service-account-key
+      availability: [BUILD, RUNTIME]
+    # SMTP transactional-email credentials (Stage 3.0.4 — migrated out of
+    # platform/settings.smtpSettings which was world-readable in Firestore).
+    # SMTP_PASSWORD lives in Secret Manager; the rest are inline non-secrets.
+    - variable: SMTP_HOST
+      value: smtp.resend.com
+      availability: [BUILD, RUNTIME]
+    - variable: SMTP_PORT
+      value: "587"
+      availability: [BUILD, RUNTIME]
+    - variable: SMTP_USERNAME
+      value: resend
+      availability: [BUILD, RUNTIME]
+    - variable: SMTP_PASSWORD
+      secret: smtp-password
+      availability: [BUILD, RUNTIME]
+    - variable: SMTP_ENCRYPTION
+      value: tls
+      availability: [BUILD, RUNTIME]
+    - variable: SMTP_FROM_EMAIL
+      value: noreply@dosory.com
+      availability: [BUILD, RUNTIME]
+    - variable: SMTP_FROM_NAME
+      value: Dosory Support
+      availability: [BUILD, RUNTIME]
+    # Resend API key — used by the App Hosting server route /api/email/send
+    # (lib/email/resend.ts) for welcome / team-invite / password-reset emails.
+    # Without it that route 500s "RESEND_API_KEY environment variable is not set"
+    # (confirmed by the prod send-test). The secret already exists in Secret Manager;
+    # IAM secretAccessor must be granted to the App Hosting compute SA before runtime
+    # can read it (gated IAM op — see closeout report).
+    - variable: RESEND_API_KEY
+      secret: RESEND_API_KEY
+      availability: [BUILD, RUNTIME]
+    # Observability — Sentry error tracking (A6). The DSN is a public client key (safe to
+    # inline, like NEXT_PUBLIC_FIREBASE_API_KEY). Uncomment and set the value from your Sentry
+    # project (Settings -> Client Keys / DSN) to turn capture on; until then it is a no-op.
+    # The server reuses NEXT_PUBLIC_SENTRY_DSN, so this one variable is enough.
+    # - variable: NEXT_PUBLIC_SENTRY_DSN
+    #   value: https://<key>@<orgId>.ingest.sentry.io/<projectId>
+    #   availability: [BUILD, RUNTIME]
+    # - variable: NEXT_PUBLIC_SENTRY_ENV
+    #   value: production
+    #   availability: [BUILD, RUNTIME]
+    # ---------------------------------------------------------------------------
+    # EasyKash platform billing (2026-08-10). VALUES LIVE IN SECRET MANAGER ONLY —
+    # these are references. Create them before flipping EASYKASH_MODE off stub:
+    #   firebase apphosting:secrets:set easykash-api-key
+    #   firebase apphosting:secrets:set easykash-hmac-secret
+    #   firebase apphosting:secrets:set internal-admin-secret
+    # EASYKASH_HMAC_SECRET must be the HMAC key from the EasyKash Integration Settings page —
+    # NOT the API key. Getting them the wrong way round makes every callback fail signature
+    # verification (403), which looks exactly like an attack in the logs.
+    - variable: EASYKASH_API_KEY
+      secret: easykash-api-key
+      availability: [RUNTIME]
+    - variable: EASYKASH_HMAC_SECRET
+      secret: easykash-hmac-secret
+      availability: [RUNTIME]
+    # Shared secret for server-to-server routes (/api/internal/*). The scheduled functions call
+    # the renewal and apply routes with it; without it BOTH the existing internal routes and the
+    # billing loop fail closed with 403.
+    - variable: INTERNAL_ADMIN_SECRET
+      secret: internal-admin-secret
+      availability: [RUNTIME]
+    # "stub" replaces the hosted checkout + callback with a local simulation (no sandbox exists
+    # upstream). Leave UNSET in production — the stub refuses to run against dosory.com anyway.
+    # - variable: EASYKASH_MODE
+    #   value: stub
+    #   availability: [BUILD, RUNTIME]

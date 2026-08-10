@@ -6,6 +6,7 @@ admin.initializeApp();
 
 // Export all scheduled functions
 export { subscriptionAutoBilling } from "./subscriptionBilling";
+export { easykashReconcile } from "./easykashReconcile";
 export { contractAutoExpiry, trialExpiryCheck } from "./contractExpiry";
 
 // Export email notification functions
