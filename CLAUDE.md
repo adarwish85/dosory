@@ -278,15 +278,33 @@ data: 1 customer, 1 lead, 1 paid invoice (INV-000001, $150) + payment, 1 task.
 
 **Awaiting Ahmed's go-ahead (approvals):**
 
-- **EASYKASH ACTIVATION (in order).** 1) create `easykash-api-key`, `easykash-hmac-secret`,
-  `internal-admin-secret` via `firebase apphosting:secrets:set` — the HMAC secret is the one on
-  EasyKash's Integration Settings page, NOT the API key; 2) uncomment the three blocks in
-  `apphosting.yaml` and roll out; 3) set the callback URL in the EasyKash dashboard to
-  `https://dosory.com/api/billing/easykash/callback` (it answers GET 200 for their probe); 4) grant the same secrets to the functions and `firebase deploy --only functions` — this is
-  what turns the reconciler and the renewal clock on, and the first hourly run needs a log check
-  for FAILED_PRECONDITION; 5) set prices on the two published plans (field is CENTS: 4900 =
-  49.00) — both have none today, so checkout refuses them by design; 6) live 1 EGP test payment,
-  reconciled against `platformBillingRecords`.
+- **EASYKASH ACTIVATION — PARTIALLY DONE 2026-08-10.** LIVE: `EASYKASH_API_KEY` +
+  `EASYKASH_HMAC_SECRET` verified (byte length only, never the value — 32 hex for the HMAC,
+  no trailing newline on either), IAM granted, refs live in `apphosting.yaml`, rollout
+  `dosory-build-2026-08-10-006` serving, checkout proven past the config gate by behaviour
+  (503 "not configured" became 409 "no price"). **The secret NAMES are upper-snake**
+  (`EASYKASH_API_KEY`), not the kebab-case this list originally guessed — a ref to a
+  non-existent name fails the BUILD (lesson 12). STILL BLOCKED, in order:
+    1. **Create `internal-admin-secret`** — absent from Secret Manager under any casing. Until it
+       exists `firebase deploy --only functions` fails at secret validation (nothing is uploaded),
+       so the reconciler, the renewal sweep and the grace/suspend lifecycle are all OFF. The
+       callback path does not need it and is live.
+    2. **Price the two published plans** — both still have no `currency`/`billing.*`, so checkout
+       refuses them by design. **FIELD IS CENTS: 4900 = 49.00.** The activation prompt's mapping
+       was an unfilled placeholder; its illustrative example numbers were NOT written to live plans.
+    3. **Set the callback URL in the EasyKash dashboard** to
+       `https://dosory.com/api/billing/easykash/callback` — it answers GET 200 for their probe, and
+       no request from EasyKash has arrived yet (all inbound traffic so far is our own).
+    4. **Live test payment** — needs a priced plan, and the card entry is Ahmed's to perform; the
+       agent drives checkout and verifies the money trail afterwards.
+- **QUEUED NEXT SECURITY ROUND (all three from the EasyKash recon).** 1) disable or fix
+  `app/api/paypal/capture-order` — whole-document `set()` in an incompatible shape that erases
+  `computedEntitlements`, unreachable today only because nothing renders its button; 2) plan-store
+  consolidation — root `plans` (BillingService + EasyKash) vs `platform/subscriptionPlans/plans`
+  (the PayPal route); one must go; 3) **rules inversion** — the catch-all
+  `match /{collection}/{docId}` grants by default and every safe collection must be named in an
+  exclusion helper. Invert it to deny-by-default with an explicit allowlist: that is the only
+  shape in which a NEW collection is safe on the day it is created, which `plans` was not.
 - **`app/api/paypal/capture-order` is dangerous as written** — whole-document `set()` in an
   incompatible shape that would erase `computedEntitlements`. Unreachable today (nothing renders
   its button), so this round left it alone. Fix it, or delete it with the orphaned component.
