@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PartyPopper, CheckCircle2, Trash2, ArrowRight, Loader2, RotateCcw } from "lucide-react";
+import { PartyPopper, CheckCircle2, MinusCircle, Trash2, ArrowRight, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWizard } from "../OnboardingWizard";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
@@ -12,7 +12,7 @@ import confetti from "canvas-confetti";
 import { useTranslation } from "@/lib/i18n";
 
 export default function CompleteStep() {
-    const { useDummyData, createdCustomerId, createdInvoiceId, completeWizard } = useWizard();
+    const { useDummyData, createdCustomerId, createdInvoiceId, invitationsSent, completeWizard } = useWizard();
     const { t } = useTranslation();
     const { profile } = useUserProfile();
     const { skipOnboarding } = useOnboardingContext();
@@ -124,18 +124,29 @@ export default function CompleteStep() {
                     <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                     <span className="text-sm text-gray-700">{t("onboarding.complete.taskInvoice")}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-                    <span className="text-sm text-gray-700">{t("onboarding.complete.taskTeam")}</span>
-                </div>
+                {/* The only line here that is not guaranteed true. The team step can be skipped
+                    outright, submitted empty, or fail mid-write, and every one of those used to
+                    end with a green tick claiming invitations had been sent. `invitationsSent`
+                    is the count the step actually wrote. */}
+                {invitationsSent > 0 ? (
+                    <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                        <span className="text-sm text-gray-700">
+                            {t("onboarding.complete.taskTeam", { count: invitationsSent })}
+                        </span>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-3">
+                        <MinusCircle className="h-5 w-5 text-gray-300 shrink-0" />
+                        <span className="text-sm text-gray-400">{t("onboarding.complete.taskTeamSkipped")}</span>
+                    </div>
+                )}
             </div>
 
             {/* Reset Demo Data (only if dummy data was used) */}
             {useDummyData && !resetComplete && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 max-w-md mx-auto">
-                    <p className="text-sm text-amber-800 mb-3">
-                        {t("onboarding.complete.demoPrompt")}
-                    </p>
+                    <p className="text-sm text-amber-800 mb-3">{t("onboarding.complete.demoPrompt")}</p>
                     <Button
                         variant="outline"
                         onClick={handleResetDemoData}

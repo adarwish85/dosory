@@ -18,7 +18,7 @@ interface TeamMember {
 }
 
 export default function InviteTeamStep() {
-    const { goNext, skipStep, useDummyData } = useWizard();
+    const { goNext, skipStep, useDummyData, setInvitationsSent } = useWizard();
     const { t } = useTranslation();
     const { profile } = useUserProfile();
     const orgId = profile?.orgId;
@@ -68,6 +68,9 @@ export default function InviteTeamStep() {
         }
 
         setIsSaving(true);
+        // Counted as they land, not up front: if the loop throws halfway, the completion screen
+        // should report what actually got written, not what was attempted.
+        let sent = 0;
         try {
             // Create invitations in Firestore
             for (const member of validMembers) {
@@ -80,6 +83,7 @@ export default function InviteTeamStep() {
                     createdAt: serverTimestamp(),
                     invitedBy: userId,
                 });
+                sent++;
             }
 
             goNext();
@@ -88,6 +92,7 @@ export default function InviteTeamStep() {
             // Still proceed to next step even on error
             goNext();
         } finally {
+            setInvitationsSent(sent);
             setIsSaving(false);
         }
     };
@@ -143,9 +148,7 @@ export default function InviteTeamStep() {
             </div>
 
             {/* Note */}
-            <p className="text-xs text-center text-gray-400 max-w-md mx-auto">
-                {t("onboarding.team.note")}
-            </p>
+            <p className="text-xs text-center text-gray-400 max-w-md mx-auto">{t("onboarding.team.note")}</p>
 
             {/* Action Buttons */}
             <div className="flex justify-between pt-4">

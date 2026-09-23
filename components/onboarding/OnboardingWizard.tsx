@@ -37,6 +37,13 @@ interface WizardContextType {
     setCreatedCustomerId: (id: string | null) => void;
     createdInvoiceId: string | null;
     setCreatedInvoiceId: (id: string | null) => void;
+    /**
+     * How many invitations the team step actually wrote. 0 means the step was skipped, left
+     * blank, or failed — the completion screen used to claim invitations were sent either way,
+     * because nothing recorded what happened. Counts successful writes, not attempts.
+     */
+    invitationsSent: number;
+    setInvitationsSent: (count: number) => void;
 }
 
 export const WizardContext = React.createContext<WizardContextType | null>(null);
@@ -54,6 +61,7 @@ export default function OnboardingWizard() {
     const [useDummyData, setUseDummyData] = useState(false);
     const [createdCustomerId, setCreatedCustomerId] = useState<string | null>(null);
     const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
+    const [invitationsSent, setInvitationsSent] = useState(0);
     const [isClosing, setIsClosing] = useState(false);
 
     // Don't show if onboarding is completed or not showing welcome
@@ -115,6 +123,8 @@ export default function OnboardingWizard() {
                 setCreatedCustomerId,
                 createdInvoiceId,
                 setCreatedInvoiceId,
+                invitationsSent,
+                setInvitationsSent,
             }}
         >
             <div className="fixed inset-0 z-[100] flex items-center justify-center">
