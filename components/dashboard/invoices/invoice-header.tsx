@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Invoice } from "@/lib/types";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { defaultYearFilter, yearFilterOptions } from "@/lib/invoices/year-filter-options";
 
 interface InvoiceHeaderProps {
     invoices: Invoice[];
@@ -63,13 +64,16 @@ export function InvoiceHeader({ invoices }: InvoiceHeaderProps) {
                             </SelectContent>
                         </Select>
 
-                        <Select defaultValue="2025">
+                        <Select defaultValue={String(defaultYearFilter())}>
                             <SelectTrigger className="w-[80px] h-8 bg-transparent border-none font-semibold text-gray-600 hover:text-gray-900 shadow-none px-0">
                                 <SelectValue placeholder="Year" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="2025">2025</SelectItem>
-                                <SelectItem value="2024">2024</SelectItem>
+                                {yearFilterOptions().map((year) => (
+                                    <SelectItem key={year} value={String(year)}>
+                                        {year}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
