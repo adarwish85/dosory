@@ -127,7 +127,7 @@ export default function InvoiceDetailsPage() {
     };
 
     const handleCreateCreditNote = () => {
-        router.push(`/dashboard/sales/credit-notes/new?invoiceId=${id}`);
+        router.push(`/dashboard/accounting/credit-notes/new?invoiceId=${id}`);
     };
 
     if (loading)

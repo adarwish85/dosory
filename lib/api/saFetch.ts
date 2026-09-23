@@ -45,7 +45,7 @@ export async function saFetch<T = unknown>(url: string, options: RequestInit = {
             console.error(`[saFetch] Auth error ${response.status} for ${url}`);
             if (typeof window !== "undefined") {
                 if (response.status === 401) {
-                    window.location.href = "/auth/login";
+                    window.location.href = "/login";
                 } else {
                     toast.error("Access denied: code 403");
                 }
