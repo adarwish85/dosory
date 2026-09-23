@@ -160,10 +160,29 @@ export function LandingContent() {
     const [heroBefore, heroAfter] = t("landing.hero.title").split("{accent}");
 
     const faqs = ["1", "2", "3", "4"];
-    const footerCols = [
-        { titleKey: "colProduct", links: ["features", "modules", "pricing", "signin"] },
-        { titleKey: "colCompany", links: ["about", "blog", "careers", "contact"] },
-        { titleKey: "colLegal", links: ["privacy", "terms", "security", "status"] },
+    // Footer links, each with a destination that exists today. The previous version rendered all
+    // twelve as <span class="cursor-default"> — unclickable text dressed as links — and six of
+    // them (About, Blog, Careers, Contact, Security, Status) had no page or anchor behind them
+    // at all. Those are removed instead of being pointed at a placeholder: a 404 in the footer
+    // is the route-fall-through rule in CLAUDE.md §7 arriving from the other direction.
+    const footerCols: { titleKey: string; links: { key: string; href: string }[] }[] = [
+        {
+            titleKey: "colProduct",
+            links: [
+                { key: "features", href: "#features" },
+                { key: "modules", href: "#modules" },
+                { key: "pricing", href: "#pricing" },
+                { key: "faq", href: "#faq" },
+                { key: "signin", href: "/login" },
+            ],
+        },
+        {
+            titleKey: "colLegal",
+            links: [
+                { key: "privacy", href: "/privacy" },
+                { key: "terms", href: "/terms" },
+            ],
+        },
     ];
 
     return (
@@ -327,7 +346,7 @@ export function LandingContent() {
             </section>
 
             {/* ---------------- Alternating feature sections ---------------- */}
-            <div className="mx-auto max-w-6xl px-5 sm:px-8">
+            <div id="features" className="mx-auto max-w-6xl px-5 sm:px-8">
                 {features.map((f, i) => {
                     const flip = i % 2 === 1;
                     const Icon = f.icon;
@@ -514,7 +533,7 @@ export function LandingContent() {
             {/* ---------------- Footer ---------------- */}
             <footer className="bg-[#16171B] px-5 pb-14 pt-8 text-white sm:px-8">
                 <div className="mx-auto max-w-6xl border-t border-white/10 pt-12">
-                    <div className="grid gap-10 md:grid-cols-4">
+                    <div className="grid gap-10 md:grid-cols-3">
                         <div>
                             <div className="flex items-baseline gap-[2px] text-[22px]" style={serif}>
                                 <SiteLogo
@@ -537,13 +556,23 @@ export function LandingContent() {
                                     {t(`landing.footer.${col.titleKey}`)}
                                 </h3>
                                 <ul className="mt-4 space-y-2.5">
-                                    {col.links.map((l) => (
-                                        <li key={l}>
-                                            <span className="cursor-default text-[14px] text-[#A7A9B0] transition-colors hover:text-white">
-                                                {t(`landing.footer.link.${l}`)}
-                                            </span>
-                                        </li>
-                                    ))}
+                                    {col.links.map((l) => {
+                                        const className =
+                                            "text-[14px] text-[#A7A9B0] transition-colors hover:text-white";
+                                        return (
+                                            <li key={l.key}>
+                                                {l.href.startsWith("#") ? (
+                                                    <a href={l.href} className={className}>
+                                                        {t(`landing.footer.link.${l.key}`)}
+                                                    </a>
+                                                ) : (
+                                                    <Link href={l.href} className={className}>
+                                                        {t(`landing.footer.link.${l.key}`)}
+                                                    </Link>
+                                                )}
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
                         ))}
