@@ -147,6 +147,18 @@ export function LandingContent() {
         { figure: "RBAC", key: "rbac" },
     ];
 
+    // ONE headline template per language, split around the styled accent word.
+    //
+    // It used to be three keys — titleLead + titleAccent + titleTrail — which forced Arabic to
+    // carry an EMPTY titleTrail, because the accent word lands at the END of the Arabic sentence
+    // and mid-sentence in English. `t()` treats "" as missing and falls back to English, so the
+    // Arabic H1 rendered "…مكان واحد أنيق place". A template keeps the whole sentence in one
+    // value and lets each language put {accent} wherever its grammar wants it.
+    //
+    // `t()` leaves an unknown {token} untouched when no params are passed (use-translation.ts),
+    // so the raw template comes back and we split on it here. The spaces live in the template.
+    const [heroBefore, heroAfter] = t("landing.hero.title").split("{accent}");
+
     const faqs = ["1", "2", "3", "4"];
     const footerCols = [
         { titleKey: "colProduct", links: ["features", "modules", "pricing", "signin"] },
@@ -237,7 +249,7 @@ export function LandingContent() {
                         className="rise mx-auto max-w-3xl text-[42px] leading-[1.04] tracking-[-0.02em] text-[#16171B] sm:text-[64px]"
                         style={{ ...serif, animationDelay: "80ms" }}
                     >
-                        {t("landing.hero.titleLead")}{" "}
+                        {heroBefore}
                         <span className="relative whitespace-nowrap text-[#0A66C2]">
                             {t("landing.hero.titleAccent")}
                             <svg
@@ -255,8 +267,8 @@ export function LandingContent() {
                                     opacity="0.5"
                                 />
                             </svg>
-                        </span>{" "}
-                        {t("landing.hero.titleTrail")}
+                        </span>
+                        {heroAfter}
                     </h1>
                     <p
                         className="rise mx-auto mt-7 max-w-xl text-[17px] leading-relaxed text-[#5B5D64] sm:text-[19px]"
