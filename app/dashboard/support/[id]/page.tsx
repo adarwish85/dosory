@@ -27,7 +27,14 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { useSupportTicket, useSupportTicketMessages, usePermission, useStaff } from "@/lib/hooks";
+import {
+    useSupportTicket,
+    useSupportTicketMessages,
+    usePermission,
+    useStaff,
+    useCustomer,
+    useContacts,
+} from "@/lib/hooks";
 import { format } from "date-fns";
 import { SupportTicket, SupportTicketStatus, SupportTicketPriority } from "@/lib/types/support";
 import { useTranslation } from "@/lib/i18n";
@@ -70,7 +77,8 @@ function TicketTimeline({ ticketId }: { ticketId: string }) {
     const { messages, loading } = useSupportTicketMessages(ticketId);
 
     if (loading) return <div className="p-4 text-center text-gray-500">{t("support.detail.loadingTimeline")}</div>;
-    if (messages.length === 0) return <div className="p-4 text-center text-gray-500">{t("support.detail.noMessages")}</div>;
+    if (messages.length === 0)
+        return <div className="p-4 text-center text-gray-500">{t("support.detail.noMessages")}</div>;
 
     return (
         <div className="space-y-6">
@@ -88,7 +96,10 @@ function TicketTimeline({ ticketId }: { ticketId: string }) {
                     >
                         <div className="flex items-center gap-2 mb-1">
                             <span className="text-sm font-medium">
-                                {msg.senderName || (msg.senderType === "agent" ? t("support.detail.supportAgent") : t("support.detail.customer"))}
+                                {msg.senderName ||
+                                    (msg.senderType === "agent"
+                                        ? t("support.detail.supportAgent")
+                                        : t("support.detail.customer"))}
                             </span>
                             <span className="text-xs text-gray-400">
                                 {format(msg.createdAt.toDate(), "MMM dd, HH:mm")}
@@ -151,7 +162,9 @@ function ReplyBox({ ticketId }: { ticketId: string }) {
                 <Textarea
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
-                    placeholder={isInternal ? t("support.detail.internalNotePlaceholder") : t("support.detail.replyPlaceholder")}
+                    placeholder={
+                        isInternal ? t("support.detail.internalNotePlaceholder") : t("support.detail.replyPlaceholder")
+                    }
                     className="min-h-[100px] bg-white"
                 />
                 <div className="flex justify-end gap-2">
@@ -203,6 +216,24 @@ function TicketDetailContent({ ticketId }: { ticketId: string }) {
     const { ticket, loading, updateStatus } = useSupportTicket(ticketId);
     const { can } = usePermission();
     const { staff } = useStaff();
+
+    // The requester panel used to be a fixture: a "C" avatar, a placeholder name and the literal
+    // string customer@example.com, rendered on every real ticket in every tenant.
+    //
+    // A SupportTicket has no requester email of its own — the only link it carries is
+    // `customerId` (lib/types/support.ts). The customer's email is not on the customer document
+    // either (the Customer type has no email field); the app's canonical customer email is the
+    // PRIMARY CONTACT's, which is what the customers list renders (app/dashboard/customers/page.tsx).
+    // So: ticket.customerId -> customer (company name) -> primary contact (email).
+    //
+    // Both hooks are called unconditionally, above the early returns, and tolerate a null id —
+    // `ticket` is null on the first render.
+    const { customer } = useCustomer(ticket?.customerId ?? null);
+    const { contacts } = useContacts({ customerId: ticket?.customerId ?? undefined });
+    const requester = contacts.find((c) => c.isPrimary) ?? contacts[0];
+    const requesterEmail = requester?.email?.trim() || null;
+    const requesterName =
+        [requester?.firstName, requester?.lastName].filter(Boolean).join(" ").trim() || customer?.company || null;
 
     if (loading) return <div className="p-8 text-center">{t("support.detail.loadingTicket")}</div>;
     if (!ticket) return <div className="p-8 text-center">{t("support.detail.ticketNotFound")}</div>;
@@ -323,28 +354,43 @@ function TicketDetailContent({ ticketId }: { ticketId: string }) {
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium">{t("support.detail.customer")}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4 text-sm">
-                            {/* Mock Customer Info - In real app fetch customer */}
-                            <div className="flex items-center gap-3">
-                                <Avatar className="h-10 w-10">
-                                    <AvatarFallback>C</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <div className="font-medium">{t("support.detail.customerNamePlaceholder")}</div>
-                                    <div className="text-gray-500">customer@example.com</div>
+                    {ticket.customerId && (requesterName || requesterEmail) && (
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-medium">{t("support.detail.customer")}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4 text-sm">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-10 w-10">
+                                        <AvatarFallback>
+                                            {(requesterName || requesterEmail || "?").charAt(0).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="min-w-0">
+                                        {requesterName && <div className="font-medium truncate">{requesterName}</div>}
+                                        {/* Only rendered when there is a real address — never a placeholder. */}
+                                        {requesterEmail && (
+                                            <a
+                                                href={`mailto:${requesterEmail}`}
+                                                className="text-gray-500 hover:text-blue-600 truncate block"
+                                            >
+                                                {requesterEmail}
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="pt-2">
-                                <Link href="#" className="text-blue-600 hover:underline flex items-center gap-1">
-                                    <User className="h-3 w-3" /> {t("support.detail.viewProfile")}
-                                </Link>
-                            </div>
-                        </CardContent>
-                    </Card>
+                                <div className="pt-2">
+                                    {/* Was href="#". There is a real customer behind this card now. */}
+                                    <Link
+                                        href={`/dashboard/customers/${ticket.customerId}`}
+                                        className="text-blue-600 hover:underline flex items-center gap-1"
+                                    >
+                                        <User className="h-3 w-3" /> {t("support.detail.viewProfile")}
+                                    </Link>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {ticket.slaResolutionDueAt && (
                         <Card className={ticket.slaStatus === "breached" ? "border-red-200 bg-red-50" : ""}>
