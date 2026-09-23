@@ -180,10 +180,13 @@ export default function CreditNotesPage() {
     const [focusedRowIndex, setFocusedRowIndex] = useState<number | null>(null);
 
     // Helpers
-    const formatDate = (timestamp: any) => {
+    const formatDate = (timestamp: { toDate?: () => Date } | string | number | Date | null | undefined) => {
         if (!timestamp) return "-";
         try {
-            const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+            const date =
+                typeof timestamp === "object" && timestamp !== null && "toDate" in timestamp && timestamp.toDate
+                    ? timestamp.toDate()
+                    : new Date(timestamp as string | number | Date);
             return format(date, "dd/MM/yyyy");
         } catch {
             return "-";
@@ -231,7 +234,7 @@ export default function CreditNotesPage() {
         }
         if (sortKey && sortDirection) {
             result.sort((a, b) => {
-                let aVal: any, bVal: any;
+                let aVal: string | number, bVal: string | number;
                 switch (sortKey) {
                     case "number":
                         aVal = a.number || 0;
@@ -277,8 +280,13 @@ export default function CreditNotesPage() {
     const handleSelectAll = () => setSelectedIds(processedCreditNotes.map((cn) => cn.id));
     const handleClearSelection = () => setSelectedIds([]);
     const handleSelectPage = () => setSelectedIds(paginatedCreditNotes.map((cn) => cn.id));
-    const toggleSelect = (id: string) =>
-        setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+    // Stable: the body is purely a functional setState, so it closes over nothing.
+    // handleKeyDown below depends on it, and an unstable reference there defeated the
+    // memo the useCallback was written to provide.
+    const toggleSelect = useCallback(
+        (id: string) => setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id])),
+        []
+    );
     const isAllSelected =
         paginatedCreditNotes.length > 0 && paginatedCreditNotes.every((cn) => selectedIds.includes(cn.id));
     const isSomeSelected = paginatedCreditNotes.some((cn) => selectedIds.includes(cn.id)) && !isAllSelected;
@@ -320,7 +328,7 @@ export default function CreditNotesPage() {
                     break;
             }
         },
-        [focusedRowIndex, paginatedCreditNotes]
+        [focusedRowIndex, paginatedCreditNotes, toggleSelect]
     );
 
     const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]);
@@ -339,7 +347,7 @@ export default function CreditNotesPage() {
             <div className="space-y-4" onKeyDown={handleKeyDown} tabIndex={0} ref={tableRef}>
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">{t("customers.creditNotes.title")}</h1>
-                    <Link href={`/dashboard/sales/credit-notes/new?customerId=${customerId}`}>
+                    <Link href={`/dashboard/accounting/credit-notes/new?customerId=${customerId}`}>
                         <Button className="bg-gray-900 text-white hover:bg-gray-800">
                             <Plus className="mr-2 h-4 w-4" />
                             {t("customers.creditNotes.create")}
@@ -352,14 +360,18 @@ export default function CreditNotesPage() {
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-blue-600 mb-1">
                             <CreditCard className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">{t("customers.creditNotes.openCredits")}</span>
+                            <span className="text-xs font-medium uppercase">
+                                {t("customers.creditNotes.openCredits")}
+                            </span>
                         </div>
                         <div className="text-2xl font-bold text-blue-900">{formatCurrency(openTotal)}</div>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
                         <div className="flex items-center gap-2 text-green-600 mb-1">
                             <CircleCheck className="h-4 w-4" />
-                            <span className="text-xs font-medium uppercase">{t("customers.creditNotes.appliedCredits")}</span>
+                            <span className="text-xs font-medium uppercase">
+                                {t("customers.creditNotes.appliedCredits")}
+                            </span>
                         </div>
                         <div className="text-2xl font-bold text-green-900">{formatCurrency(closedTotal)}</div>
                     </div>
@@ -401,8 +413,12 @@ export default function CreditNotesPage() {
                                 value={rowDensity}
                                 onValueChange={(v) => setRowDensity(v as RowDensity)}
                             >
-                                <DropdownMenuRadioItem value="compact">{t("customers.toolbar.compact")}</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="comfortable">{t("customers.toolbar.comfortable")}</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="compact">
+                                    {t("customers.toolbar.compact")}
+                                </DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="comfortable">
+                                    {t("customers.toolbar.comfortable")}
+                                </DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuLabel>{t("customers.toolbar.columns")}</DropdownMenuLabel>
@@ -514,7 +530,7 @@ export default function CreditNotesPage() {
                                     <Checkbox
                                         checked={isAllSelected}
                                         ref={(el) => {
-                                            if (el) (el as any).indeterminate = isSomeSelected;
+                                            if (el) (el as unknown as HTMLInputElement).indeterminate = isSomeSelected;
                                         }}
                                         onCheckedChange={(checked) => {
                                             if (checked) handleSelectPage();
@@ -564,7 +580,9 @@ export default function CreditNotesPage() {
                                     >
                                         {searchQuery
                                             ? t("customers.creditNotes.emptySearch")
-                                            : t("customers.creditNotes.emptyForCustomer", { customer: customer?.company || t("customers.thisCustomer") })}
+                                            : t("customers.creditNotes.emptyForCustomer", {
+                                                  customer: customer?.company || t("customers.thisCustomer"),
+                                              })}
                                     </TableCell>
                                 </TableRow>
                             ) : (
