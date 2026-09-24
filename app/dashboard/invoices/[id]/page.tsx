@@ -40,6 +40,8 @@ import { cn } from "@/lib/utils";
 import { useInvoice, useInvoices, useOrganizationSettings } from "@/lib/hooks";
 import { useTranslation } from "@/lib/i18n";
 import { InvoiceStatus, LineItem } from "@/lib/types";
+import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
+import { formatMoney, FALLBACK_CURRENCY } from "@/lib/money/format-money";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formatDate = (date: any): string => {
@@ -162,15 +164,27 @@ export default function InvoiceDetailsPage() {
     const billToAddress = invoice.billToAddress || [t("invoices.detail.addressUnset")];
     const shipToAddress = invoice.shipToAddress || billToAddress;
 
-    // Calculate totals if missing
-    const subTotal =
-        invoice.subtotal ||
-        (invoice.items || []).reduce((acc: number, item: LineItem) => acc + item.quantity * item.rate, 0);
-    const taxTotal = invoice.taxTotal || 0;
-    const total = invoice.total || subTotal + taxTotal;
+    // Documents written before 2026-09-24 carry no `discountTotal` and no per-line tax, so the
+    // rows are recomputed from the items they DO carry rather than printing figures that do not
+    // add up. For a current document every `??` below falls through to the stored value.
+    const computed = computeInvoiceTotals({
+        items: (invoice.items || []).map((item: LineItem) => ({
+            amount: item.amount ?? item.quantity * item.rate,
+            taxRate: item.taxRate,
+        })),
+        discount: invoice.discount,
+        adjustment: invoice.adjustment,
+    });
 
-    // Assuming taxRate isn't directly on invoice object unless added
-    const taxPercentage = subTotal > 0 ? (taxTotal / subTotal) * 100 : 0;
+    const subTotal = invoice.subtotal ?? computed.subtotal;
+    const discountTotal = invoice.discountTotal ?? computed.discountTotal;
+    const taxTotal = invoice.taxTotal ?? computed.taxTotal;
+    const adjustment = invoice.adjustment ?? 0;
+    const total = invoice.total ?? computed.total;
+    // A partially-paid invoice used to print the full total as still owing.
+    const amountDue = invoice.amountDue ?? total;
+    const currency = invoice.currency || FALLBACK_CURRENCY;
+    const money = (amount: number) => formatMoney(amount, currency);
 
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
@@ -418,16 +432,18 @@ export default function InvoiceDetailsPage() {
                                                 {item.quantity}
                                             </TableCell>
                                             <TableCell className="text-right text-gray-700 align-top py-4">
-                                                {item.rate.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                                {money(item.rate)}
                                             </TableCell>
                                             <TableCell className="text-center text-gray-500 text-sm align-top py-4">
                                                 <div>{t("invoices.detail.vat")}</div>
-                                                <div>{taxPercentage.toFixed(2)}%</div>
+                                                {/* The line's OWN stored rate. Dividing the tax
+                                                    total by the sub total to get one shared rate
+                                                    printed 13.30% for a 14% line as soon as a
+                                                    discount applied. */}
+                                                <div>{(item.taxRate ?? 0).toFixed(2)}%</div>
                                             </TableCell>
                                             <TableCell className="text-right text-gray-700 align-top py-4">
-                                                {(item.quantity * item.rate).toLocaleString("en-US", {
-                                                    minimumFractionDigits: 2,
-                                                })}
+                                                {money(item.amount ?? item.quantity * item.rate)}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -440,29 +456,34 @@ export default function InvoiceDetailsPage() {
                         <div className="w-72 space-y-3">
                             <div className="flex justify-between text-sm py-2 border-b border-gray-100">
                                 <span className="font-medium text-gray-700">{t("invoices.detail.subTotal")}</span>
-                                <span className="text-gray-600">
-                                    EGP{subTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                                </span>
+                                <span className="text-gray-600">{money(subTotal)}</span>
                             </div>
+                            {/* The discount was applied to the total but never drawn, so the
+                                document did not add up on screen: 200 + 26.60 shown against a
+                                total of 216.60, a hole exactly the size of this row. */}
+                            {discountTotal > 0 && (
+                                <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                                    <span className="font-medium text-gray-700">{t("invoices.detail.discount")}</span>
+                                    <span className="text-gray-600">-{money(discountTotal)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-sm py-2 border-b border-gray-100">
-                                <span className="font-medium text-gray-700">
-                                    {t("invoices.detail.vatPercent", { percent: taxPercentage.toFixed(2) })}
-                                </span>
-                                <span className="text-gray-600">
-                                    EGP{taxTotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                                </span>
+                                <span className="font-medium text-gray-700">{t("invoices.detail.vat")}</span>
+                                <span className="text-gray-600">{money(taxTotal)}</span>
                             </div>
+                            {adjustment !== 0 && (
+                                <div className="flex justify-between text-sm py-2 border-b border-gray-100">
+                                    <span className="font-medium text-gray-700">{t("invoices.detail.adjustment")}</span>
+                                    <span className="text-gray-600">{money(adjustment)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-sm py-2 border-b border-gray-100">
                                 <span className="font-medium text-gray-700">{t("invoices.detail.total")}</span>
-                                <span className="text-gray-600">
-                                    EGP{total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                                </span>
+                                <span className="text-gray-600">{money(total)}</span>
                             </div>
                             <div className="flex justify-between text-base py-2 font-bold">
                                 <span className="text-red-500">{t("invoices.detail.amountDue")}</span>
-                                <span className="text-red-500">
-                                    EGP{total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                                </span>
+                                <span className="text-red-500">{money(amountDue)}</span>
                             </div>
                         </div>
                     </div>

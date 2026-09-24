@@ -5709,5 +5709,7 @@
     "billing.easykash.return.voucherNote": "اذكر هذا الرقم في أي منفذ فوري أو أمان. ينتهي خلال ٢٤ ساعة، وبعدها ابدأ عملية دفع جديدة.",
     "billing.easykash.return.reference": "مرجع المزوّد",
     "billing.easykash.return.backToBilling": "العودة للفوترة",
-    "billing.easykash.return.tryAgain": "إعادة المحاولة"
+    "billing.easykash.return.tryAgain": "إعادة المحاولة",
+    "invoices.detail.discount": "الخصم",
+    "invoices.detail.adjustment": "تسوية"
 }

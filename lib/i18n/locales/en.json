@@ -5709,5 +5709,7 @@
     "billing.easykash.return.voucherNote": "Quote this number at any Fawry or Aman outlet. It expires in 24 hours; after that, start a new payment.",
     "billing.easykash.return.reference": "Provider reference",
     "billing.easykash.return.backToBilling": "Back to billing",
-    "billing.easykash.return.tryAgain": "Try again"
+    "billing.easykash.return.tryAgain": "Try again",
+    "invoices.detail.discount": "Discount",
+    "invoices.detail.adjustment": "Adjustment"
 }
