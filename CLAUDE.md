@@ -790,3 +790,76 @@ permanently empty, and nothing errors.
   the retired collection is precisely how a fifth surface forks again.
   _Guard:_ `tests/unit/ticket-collection-agreement.test.ts` pins all six ticket surfaces, the
   tenant key, the assignee-id contract, and index coverage — extend it, don't allow-list around it.
+
+---
+
+## 13. Environments — who runs what (added 2026-09-24)
+
+Execution moved to a single-repo Claude Code cloud session. Two environments, one of which can
+reach production and it is not the session.
+
+|            | Claude Code session (cloud or local)       | GitHub Actions                       |
+| ---------- | ------------------------------------------ | ------------------------------------ |
+| Runs       | dev, tests, **emulators**                  | the gate table, and the only deploys |
+| Firestore  | emulator only                              | prod via a service-account secret    |
+| Can deploy | **no** — denied in `.claude/settings.json` | yes, manually approved               |
+| Secrets    | **none available**                         | repo/environment secrets             |
+
+**GitHub Actions is the only path to prod.** `.github/workflows/deploy.yml` is `workflow_dispatch`
+only, requires the literal input `deploy`, refuses any commit whose Gates run did not pass, and
+runs three jobs each on `environment: production` with its own approval:
+
+    1. firestore:indexes  →  2. apphosting rollout  →  3. firestore:rules
+
+**Rules are last, and that ordering is a safety property rather than a preference.** The rules now
+require `date` to be a timestamp on invoice create. Deploying that before the app is serving the
+writer that satisfies it rejects invoice creation for everyone still on the old bundle — every
+open tab, and the onboarding wizard, which used to write no `date` at all. That breaks new-tenant
+onboarding silently. Indexes are first because an index build takes minutes and a query missing a
+composite index fails with `FAILED_PRECONDITION`, which this codebase has repeatedly shown is
+invisible from the UI; the deploy job waits for every index to report READY rather than trusting
+that the call returned.
+
+Three separate approvals, not one: a single "deploy" gate would let a reviewer wave through the
+rules change while having only read the app change, and the rules change is the one that can lock
+every tenant out of creating an invoice.
+
+### Cloud environments have no secret vault
+
+A cloud session has no `.env.local`, no `service-account.json`, and no access to Secret Manager.
+Anything needing a real credential — a prod query, a deploy, a live payment — cannot be done from
+a session and must go through Actions or through Ahmed. Write the change and the test; let CI
+carry it.
+
+The gate workflow deliberately needs **no real credentials**: `next build` requires
+`FIREBASE_SERVICE_ACCOUNT_KEY` (Next collects page data for the Admin-SDK API routes at build
+time), so CI generates a throwaway RSA key per run. It authorises nothing and dies with the runner.
+
+### Network allowlist
+
+A sandboxed session needs outbound access to:
+
+- `registry.npmjs.org` — `npm ci`, both root and `functions/`
+- `github.com`, `api.github.com`, `objects.githubusercontent.com` — clone, push, PRs
+- `dl.google.com`, `storage.googleapis.com` — the Firestore emulator jar on first run
+- `*.googleapis.com` — only if a task legitimately needs a live Google API; the emulator does not
+
+Blocking the first three stops the session working at all. Blocking the emulator download makes
+every `tests/firestore-rules/*` suite fail with "The host and port of the firestore emulator must
+be specified", which reads like a broken test rather than a missing network route — worth
+recognising, it has cost time twice.
+
+### What does NOT carry into a single-repo session
+
+- **`~/.claude/settings.json`** and the 48 user-level skills in `~/.claude/skills/`. None of them
+  reference this project (checked: no skill mentions Dosory, Goalo or Firestore), so nothing was
+  copied in. `~/.claude/agents/` and `~/.claude/commands/` are empty.
+- **The `firebase@firebase` plugin (v1.1.0)**, which supplies the Firestore / App Hosting MCP
+  tools used for the prod reads in these batches. Plugins are account-level: **Ahmed enables it**,
+  it cannot be committed.
+- **`.claude/settings.local.json`** — gitignored globally via `~/.config/git/ignore`.
+
+What DOES carry, because it is tracked: this file at the repo root, `.claude/settings.json`,
+`.husky/pre-commit` + `lint-staged.config.mjs` (with `prepare: husky` in package.json, so `npm ci`
+installs the hook in a fresh clone), `.lint-baseline.json`, and everything under
+`.github/workflows/` and `scripts/ci/`.

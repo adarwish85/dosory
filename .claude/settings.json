@@ -1,0 +1,59 @@
+{
+    "$comment": [
+        "TRACKED project settings, so a single-repo Claude Code session (cloud or local) inherits",
+        "the working agreement without anyone re-explaining it.",
+        "",
+        "The git pre-commit hook is NOT configured here. It is husky + lint-staged:",
+        "  .husky/pre-commit       -> npx lint-staged --config lint-staged.config.mjs",
+        "  lint-staged.config.mjs  -> eslint --fix + prettier --write on staged source",
+        "Both are tracked, and package.json has `prepare: husky` with husky as a devDependency,",
+        "so `npm ci` in a fresh clone installs the hook. It carries over on its own.",
+        "",
+        "What does NOT carry to a cloud session: ~/.claude/settings.json, ~/.claude/skills/*,",
+        "and installed plugins (the firebase plugin that supplies the Firestore/App Hosting MCP",
+        "tools is account-level and must be enabled by Ahmed). See CLAUDE.md section 13."
+    ],
+    "permissions": {
+        "allow": [
+            "Bash(npm run build)",
+            "Bash(npm run lint)",
+            "Bash(npm run test)",
+            "Bash(npx tsc --noEmit)",
+            "Bash(npx jest*)",
+            "Bash(npx eslint*)",
+            "Bash(npm ci)",
+            "Bash(npm --prefix functions ci)",
+            "Bash(npx firebase-tools emulators:exec*)",
+            "Bash(firebase emulators:exec*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)",
+            "Bash(git add*)",
+            "Bash(git commit*)",
+            "Bash(git checkout -b*)",
+            "Bash(node scripts/ci/*)"
+        ],
+        "deny": [
+            "Bash(firebase deploy*)",
+            "Bash(npx firebase-tools deploy*)",
+            "Bash(firebase apphosting:rollouts:create*)",
+            "Bash(npx firebase-tools apphosting:rollouts:create*)",
+            "Bash(git push --force*)",
+            "Bash(git push -f*)",
+            "Read(./.env.local)",
+            "Read(./service-account.json)",
+            "Read(./qa-smoke-credentials.txt)"
+        ]
+    },
+    "$denyRationale": [
+        "Deploys are denied outright in a session because .github/workflows/deploy.yml is the",
+        "only path to production: three separately-approved jobs in the order indexes -> app ->",
+        "rules. Rules last is a safety property, not a preference — enforcing the",
+        "date-is-timestamp contract before the app is serving the writer that satisfies it breaks",
+        "invoice creation, including new-tenant onboarding, for anyone on the old bundle.",
+        "",
+        "The credential files are deny-read because they are real secrets that happen to sit in",
+        "the working directory; .env.local and service-account.json are gitignored and must stay",
+        "out of transcripts."
+    ]
+}

@@ -57,3 +57,6 @@ qa-smoke-credentials.txt
 backups/
 tests/e2e/
 playwright.config.ts
+
+# eslint JSON report produced by the CI lint gate
+lint.json

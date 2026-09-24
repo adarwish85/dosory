@@ -1,0 +1,105 @@
+# The CLAUDE.md §8 gate table, as CI.
+#
+# It ran on whoever's laptop was handy, which is how the recorded baseline drifted 71 problems out
+# of date and how an untracked file passed every local gate twice (standing lesson 8 — tsc, next
+# build and jest all read the working tree, so a module that was never `git add`ed is green
+# locally and breaks a clean checkout). CI checks out only what is committed, which closes that
+# class outright.
+#
+# NO REAL CREDENTIALS. The build needs FIREBASE_SERVICE_ACCOUNT_KEY because Next collects page
+# data for the Admin-SDK API routes at build time, so this generates a throwaway RSA key per run.
+# Nothing here touches a real project: the emulator is local to the runner and the build never
+# makes a network call. Deploys live in deploy.yml and are manually approved.
+
+name: Gates
+
+on:
+    pull_request:
+    push:
+        branches:
+            - "fix/**"
+            - main
+
+concurrency:
+    group: gates-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    gates:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+
+            # The firestore emulator is a Java process.
+            - uses: actions/setup-java@v4
+              with:
+                  distribution: temurin
+                  java-version: 17
+
+            - name: Install root dependencies
+              run: npm ci
+
+            # functions/ is a separate package. Skipping it is why tests/backend/finance.test.ts
+            # reported "Cannot find module '../../functions/node_modules/firebase-admin'" and read
+            # as a real failure when it was an environment gap.
+            - name: Install functions dependencies
+              run: npm --prefix functions ci
+
+            - name: Verify every imported module is tracked
+              # Standing lesson 8: an untracked file passes tsc, next build and jest locally
+              # because they all read the working tree. A clean checkout is the only honest test,
+              # and this is that test made explicit rather than implied.
+              run: |
+                  if [ -n "$(git status --porcelain --untracked-files=all -- ':!node_modules' ':!functions/node_modules')" ]; then
+                    echo "Untracked or modified files in a fresh checkout:"
+                    git status --porcelain --untracked-files=all -- ':!node_modules' ':!functions/node_modules'
+                    exit 1
+                  fi
+
+            - name: TypeScript
+              run: npx tsc --noEmit
+
+            - name: Lint against the recorded baseline
+              run: |
+                  npx eslint --format json -o lint.json || true
+                  node scripts/ci/check-lint-baseline.mjs lint.json
+
+            - name: Tests (firestore emulator)
+              run: npx firebase-tools emulators:exec --only firestore --project demo-ci "npx jest"
+
+            - name: Build
+              env:
+                  # Public Firebase web config. Placeholders: the build never makes a network
+                  # call, and the real values belong to App Hosting, not to a test runner.
+                  NEXT_PUBLIC_FIREBASE_API_KEY: ci-placeholder
+                  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-placeholder.firebaseapp.com
+                  NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-placeholder
+                  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ci-placeholder.appspot.com
+                  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+                  NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000000000"
+              run: |
+                  # A freshly generated throwaway key, valid enough for firebase-admin to
+                  # initialise during page-data collection. It authorises nothing and is
+                  # discarded with the runner.
+                  openssl genrsa 2048 > /tmp/ci-dummy.pem 2>/dev/null
+                  export FIREBASE_SERVICE_ACCOUNT_KEY="$(node -e '
+                    const fs=require("fs");
+                    process.stdout.write(JSON.stringify({
+                      type:"service_account", project_id:"ci-placeholder",
+                      private_key_id:"0".repeat(40),
+                      private_key: fs.readFileSync("/tmp/ci-dummy.pem","utf8"),
+                      client_email:"ci-placeholder@ci-placeholder.iam.gserviceaccount.com",
+                      client_id:"0".repeat(21),
+                      auth_uri:"https://accounts.google.com/o/oauth2/auth",
+                      token_uri:"https://oauth2.googleapis.com/token",
+                      auth_provider_x509_cert_url:"https://www.googleapis.com/oauth2/v1/certs",
+                      client_x509_cert_url:"https://www.googleapis.com/robot/v1/metadata/x509/ci"
+                    }))')"
+                  npm run build

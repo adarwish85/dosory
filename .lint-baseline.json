@@ -1,0 +1,31 @@
+{
+    "generatedAt": "2026-09-24",
+    "commit": "batch-2",
+    "errors": 272,
+    "warnings": 617,
+    "problems": 889,
+    "ruleIds": [
+        "@next/next/no-img-element",
+        "@typescript-eslint/no-explicit-any",
+        "@typescript-eslint/no-unused-vars",
+        "import/no-anonymous-default-export",
+        "react-hooks/exhaustive-deps",
+        "react-hooks/immutability",
+        "react-hooks/incompatible-library",
+        "react-hooks/preserve-manual-memoization",
+        "react-hooks/purity",
+        "react-hooks/set-state-in-effect"
+    ],
+    "counts": {
+        "@typescript-eslint/no-explicit-any": 231,
+        "@typescript-eslint/no-unused-vars": 559,
+        "react-hooks/exhaustive-deps": 44,
+        "react-hooks/preserve-manual-memoization": 10,
+        "react-hooks/incompatible-library": 4,
+        "react-hooks/set-state-in-effect": 27,
+        "@next/next/no-img-element": 7,
+        "react-hooks/immutability": 1,
+        "react-hooks/purity": 3,
+        "import/no-anonymous-default-export": 3
+    }
+}
