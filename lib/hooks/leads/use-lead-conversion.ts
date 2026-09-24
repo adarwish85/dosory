@@ -15,7 +15,7 @@ import {
     serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { computeInvoiceTotals, totalsAsIssued } from "@/lib/money/compute-invoice-totals";
+import { totalsAsIssued } from "@/lib/money/compute-invoice-totals";
 import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 import type { Lead } from "@/lib/types";
 import type { UserProfile } from "@/components/hooks/use-user-profile";

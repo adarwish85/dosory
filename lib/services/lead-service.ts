@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 import type { Firestore } from "firebase/firestore";
 import type { Lead } from "@/lib/types";
-import { computeInvoiceTotals, totalsAsIssued } from "@/lib/money/compute-invoice-totals";
+import { totalsAsIssued } from "@/lib/money/compute-invoice-totals";
 import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 
 export interface ConvertLeadOptions {
