@@ -92,6 +92,13 @@ describe.each(COLLECTIONS)("Tenant isolation: /%s/", (col) => {
         await assertSucceeds(alice().firestore().collection(col).doc("ownDoc").update({ touched: true }));
     });
 
+    // Asymmetry guard: the suite asserted "CANNOT delete tenantB" but never "CAN delete own",
+    // so a collection whose delete was denied outright would have passed every assertion here.
+    it("tenantA user CAN delete own-tenant doc", async () => {
+        await seedDoc(col, "ownDoc", TENANT_A);
+        await assertSucceeds(alice().firestore().collection(col).doc("ownDoc").delete());
+    });
+
     it("tenantA user CAN create doc with own orgId", async () => {
         await assertSucceeds(
             alice()
