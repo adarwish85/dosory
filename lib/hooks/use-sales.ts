@@ -24,6 +24,7 @@ import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Estimate, EstimateStatus } from "@/lib/types";
 import { computeInvoiceTotals, totalsAsIssued } from "@/lib/money/compute-invoice-totals";
+import { buildInvoiceDocument } from "@/lib/invoices/build-invoice-document";
 import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 import type { EstimateFormData } from "@/lib/schemas";
 
@@ -242,35 +243,26 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
         // because two rapid writes never collide.
         const invoiceNumber = await generateInvoiceNumber(db, profile.orgId);
 
-        // Create invoice from estimate
-        const invoiceRef = await addDoc(collection(db, "invoices"), {
-            number: invoiceNumber.number,
-            numberFormatted: invoiceNumber.formatted,
+        // Create invoice from estimate. The estimate's OWN figures are carried through the
+        // builder untouched (see totalsAsIssued above): a quote the customer accepted must be
+        // billed at the number they accepted, not at what the calculator would say today.
+        const now = new Date();
+        const invoiceDoc = buildInvoiceDocument({
+            orgId: profile.orgId,
+            createdBy: profile.uid,
             customerId: estimate.customerId,
             customerName: estimate.customerName,
-            items: estimate.items,
-            // Recomputed from the estimate's own items and discount rather than copying its
-            // stored aggregates: a document written before the calculators were reconciled
-            // carries the old gross-basis numbers, and copying them would import that arithmetic
-            // into a brand-new invoice.
-            subtotal: convertedTotals.subtotal,
-            discountTotal: convertedTotals.discountTotal,
-            taxTotal: convertedTotals.taxTotal,
-            total: convertedTotals.total,
-            amountPaid: 0,
-            amountDue: convertedTotals.total,
+            items: estimate.items || [],
             discount: estimate.discount,
-            status: "draft",
-            date: serverTimestamp(),
-            dueDate: Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)), // 30 days
-            currency: estimate.currency || "USD",
-            fromEstimateId: id,
-            fromEstimateNumber: estimate.number,
-            orgId: profile.orgId,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            createdBy: profile.uid,
+            date: now,
+            dueDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+            currency: estimate.currency,
+            number: invoiceNumber.number,
+            numberFormatted: invoiceNumber.formatted,
+            carriedTotals: convertedTotals,
+            extra: { fromEstimateId: id, fromEstimateNumber: estimate.number },
         });
+        const invoiceRef = await addDoc(collection(db, "invoices"), invoiceDoc);
 
         // Update estimate with conversion reference
         await updateDoc(doc(db, "estimates", id), {

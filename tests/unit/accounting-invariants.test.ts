@@ -128,11 +128,14 @@ describe("no posting path may silently skip its journal entry", () => {
         // Two same-named money calculators is how a fix lands on the copy nobody calls.
         const hook = read("lib/hooks/use-invoices.ts");
         expect(hook).not.toMatch(/function calculateInvoiceTotals/);
-        expect(hook).toMatch(/import \{ calculateInvoiceTotals \} from "@\/lib\/services\/invoice-service"/);
+        // The hook now reaches the calculator through the shared builder rather than directly.
+        expect(hook).toMatch(/buildInvoiceDocument/);
     });
 
     test("both invoice write paths persist `adjustment`", () => {
-        expect(read("lib/hooks/use-invoices.ts")).toMatch(/adjustment: data\.adjustment \?\? 0/);
+        // The field is written by the single shaping path now, not inline in the hook.
+        expect(read("lib/invoices/build-invoice-document.ts")).toMatch(/adjustment: input\.adjustment \?\? 0/);
+        expect(read("lib/hooks/use-invoices.ts")).toMatch(/adjustment: data\.adjustment/);
         expect(read("app/dashboard/invoices/new/page.tsx")).toMatch(/\n\s+adjustment,/);
         expect(read("components/dashboard/customers/invoices/invoice-sheet.tsx")).toMatch(/\n\s+adjustment,/);
     });

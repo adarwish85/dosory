@@ -230,7 +230,20 @@ service cloud.firestore {
     match /invoices/{docId} {
       // Tenant-scoped: any user in the same orgId can read/write; SA bypass
       allow read, update, delete: if isSuperAdmin() || isOrgMember(resource.data.orgId);
-      allow create: if isSuperAdmin() || isOrgMember(request.resource.data.orgId);
+
+      // `date` MUST be a timestamp on create. The invoices list orders by `date`, and Firestore
+      // silently omits any document lacking the orderBy field - no error, no warning - so a
+      // dateless invoice is COUNTED by the summary (aggregations have no orderBy) and never
+      // LISTED. That is the "summary reads 2, list renders 1" defect found on prod tenant
+      // qatestdosory, whose onboarding-written invoice has no `date` at all; the same shape also
+      // makes the document unpayable and unfinalizable.
+      //
+      // buildInvoiceDocument() throws on a missing date and a contract test requires every writer
+      // to use it, but both ship in the client bundle. This is the layer a future writer cannot
+      // route around. A string or epoch number is rejected too: it is not orderable the way the
+      // list expects, so accepting one would recreate the defect in a form that looks correct.
+      allow create: if (isSuperAdmin() || isOrgMember(request.resource.data.orgId))
+                    && request.resource.data.date is timestamp;
     }
     
     match /payments/{docId} {
@@ -597,17 +610,30 @@ service cloud.firestore {
         || collection == "addons";
     }
 
+    // Collections whose OWN match block fully governs create, and which the catch-all must
+    // therefore not widen. Firestore grants when ANY matching rule allows, so a condition added
+    // to a dedicated block is a NO-OP while the generic block below still says yes on an orgId
+    // match — the same trap that made deleting the support_tickets block useless in 2026-08-08
+    // (CLAUDE.md standing lesson 5). Proven here: the `date is timestamp` condition on
+    // /invoices had zero effect until this exclusion existed, and the emulator suite recorded
+    // the before/after.
+    function hasOwnCreateContract(collection) {
+      return collection == "invoices";
+    }
+
     match /{collection}/{docId} {
       // Allow read/write if authenticated and document's orgId matches user's token orgId
       allow read, write: if isAuthenticated()
         && !isRetiredCollection(collection)
         && !isServerManagedCollection(collection)
+        && !hasOwnCreateContract(collection)
         && resource.data.orgId != null
         && request.auth.token.orgId == resource.data.orgId;
       // Allow create if authenticated and new document's orgId matches user's token orgId
       allow create: if isAuthenticated()
         && !isRetiredCollection(collection)
         && !isServerManagedCollection(collection)
+        && !hasOwnCreateContract(collection)
         && request.resource.data.orgId != null
         && request.auth.token.orgId == request.resource.data.orgId;
     }

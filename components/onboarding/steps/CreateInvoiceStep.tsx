@@ -4,13 +4,14 @@ import React, { useState } from "react";
 import { Receipt, Plus, Trash2, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useWizard } from "../OnboardingWizard";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useTranslation } from "@/lib/i18n";
 import { generateInvoiceNumber } from "@/lib/services/invoice-service";
+import { buildInvoiceDocument } from "@/lib/invoices/build-invoice-document";
+import { useOrganizationSettings } from "@/lib/hooks/use-organization-settings";
 
 interface LineItem {
     description: string;
@@ -22,6 +23,7 @@ export default function CreateInvoiceStep() {
     const { goNext, useDummyData, createdCustomerId, setCreatedInvoiceId } = useWizard();
     const { t } = useTranslation();
     const { profile } = useUserProfile();
+    const { settings } = useOrganizationSettings();
     const orgId = profile?.orgId;
     const userId = profile?.uid;
 
@@ -79,25 +81,32 @@ export default function CreateInvoiceStep() {
             // reader queries, so the demo invoice was both unnumbered and unfindable.
             const invoiceNumber = await generateInvoiceNumber(db, orgId);
 
-            // Create invoice in Firestore
-            const invoiceRef = await addDoc(collection(db, "invoices"), {
-                number: invoiceNumber.number,
-                numberFormatted: invoiceNumber.formatted,
-                customerId: createdCustomerId || null,
-                orgId,
-                status: "draft",
-                lineItems: lineItems.map((item) => ({
-                    ...item,
-                    total: item.quantity * item.unitPrice,
-                })),
-                subtotal: calculateTotal(),
-                tax: 0,
-                total: calculateTotal(),
-                isOnboardingDemo: useDummyData,
-                createdAt: serverTimestamp(),
-                createdBy: userId,
-                dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-            });
+            // Every field this step used to invent is now the canonical one. It wrote
+            // `lineItems` where readers query `items`, `tax` for `taxTotal`, an ISO string for a
+            // Timestamp dueDate, and NO `date` at all — which made the document invisible to the
+            // invoices list, because Firestore drops any document lacking the orderBy field.
+            const now = new Date();
+            const invoiceRef = await addDoc(
+                collection(db, "invoices"),
+                buildInvoiceDocument({
+                    orgId,
+                    createdBy: userId || "",
+                    customerId: createdCustomerId || "",
+                    items: lineItems.map((item, i) => ({
+                        id: String(i + 1),
+                        description: item.description,
+                        quantity: item.quantity,
+                        rate: item.unitPrice,
+                        amount: item.quantity * item.unitPrice,
+                    })),
+                    date: now,
+                    dueDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+                    currency: settings.currency,
+                    number: invoiceNumber.number,
+                    numberFormatted: invoiceNumber.formatted,
+                    extra: { isOnboardingDemo: useDummyData },
+                })
+            );
 
             setCreatedInvoiceId(invoiceRef.id);
             goNext();

@@ -24,15 +24,14 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { calculateInvoiceTotals } from "@/lib/services/invoice-service";
-import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
+import { buildInvoiceDocument } from "@/lib/invoices/build-invoice-document";
 import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
 import { createNotification } from "@/lib/hooks/use-notifications";
 import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
-import type { Invoice, InvoiceStatus, LineItem } from "@/lib/types";
+import type { Invoice, InvoiceStatus } from "@/lib/types";
 import type { InvoiceFormData } from "@/lib/schemas";
-import { getFunctions, httpsCallable } from "firebase/functions";
 import { invoiceNumberLabel } from "@/lib/invoices/invoice-number";
 
 // ============================================
@@ -227,46 +226,26 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
             padding: orgSettings.numberPadding || 6,
         });
 
-        // Calculate totals
-        const totals = computeInvoiceTotals({
+        const invoiceDoc = buildInvoiceDocument({
+            orgId: profile.orgId,
+            createdBy: profile.uid,
+            customerId: data.customerId,
+            customerName,
+            projectId: data.projectId,
             items: data.items,
             discount: data.discount,
             adjustment: data.adjustment,
-        });
-        const { subtotal, discountTotal, taxTotal, total } = totals;
-
-        const docRef = await addDoc(collection(db, "invoices"), {
-            ...data,
+            date: data.date,
+            dueDate: data.dueDate,
+            currency: data.currency,
             number: invoiceNumberResult.number,
             numberFormatted: invoiceNumberResult.formatted,
-            customerName,
-            // Per-line tax is PERSISTED, not re-derived at render time. The detail page used to
-            // reconstruct one aggregate rate as taxTotal/subtotal and stamp it on every line,
-            // which prints the wrong rate as soon as there is a discount or a second rate.
-            items: data.items.map((item, i) => ({
-                ...item,
-                taxRate: totals.lines[i]?.taxRate ?? item.taxRate ?? 0,
-                taxAmount: totals.lines[i]?.taxAmount ?? 0,
-                discountAmount: totals.lines[i]?.discountAmount ?? 0,
-            })),
-            subtotal,
-            adjustment: data.adjustment ?? 0,
-            // The discount was collected and shown but never stored, so no renderer could draw
-            // the discount row and the document did not add up on screen.
-            discountTotal,
-            taxTotal,
-            total,
-            amountPaid: 0,
-            amountDue: total,
-            status: "draft",
-            date: Timestamp.fromDate(data.date),
-            dueDate: Timestamp.fromDate(data.dueDate),
-            orgId: profile.orgId,
-            currency: data.currency || "USD",
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            createdBy: profile.uid,
+            notes: data.notes,
+            terms: data.terms,
+            tags: data.tags,
         });
+
+        const docRef = await addDoc(collection(db, "invoices"), invoiceDoc);
 
         if (logActivity) {
             await logActivity(
@@ -274,7 +253,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
                 `Created invoice ${invoiceNumberResult.formatted}`,
                 docRef.id,
                 "invoice",
-                { amount: total }
+                { amount: invoiceDoc.total as number }
             );
         }
 

@@ -56,9 +56,14 @@ describe("every money write path routes through the shared calculator", () => {
         "lib/hooks/use-invoices.ts",
     ];
 
-    test.each(MUST_IMPORT)("%s imports computeInvoiceTotals", (rel) => {
+    test.each(MUST_IMPORT)("%s routes through the shared money module", (rel) => {
         const src = readFileSync(join(ROOT, rel), "utf8");
-        expect(src).toMatch(/from "@\/lib\/money\/compute-invoice-totals"/);
+        // Either directly, or through buildInvoiceDocument — which is itself the only shaping
+        // path and calls the calculator. Both are the shared route; a local calculation is not,
+        // and the tax-arithmetic scan above is what actually forbids one.
+        const direct = /from "@\/lib\/money\/compute-invoice-totals"/.test(src);
+        const viaBuilder = /from "@\/lib\/invoices\/build-invoice-document"/.test(src);
+        expect([rel, direct || viaBuilder]).toEqual([rel, true]);
     });
 });
 

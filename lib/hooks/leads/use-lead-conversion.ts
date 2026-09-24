@@ -16,6 +16,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { totalsAsIssued } from "@/lib/money/compute-invoice-totals";
+import { buildInvoiceDocument } from "@/lib/invoices/build-invoice-document";
 import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 import type { Lead } from "@/lib/types";
 import type { UserProfile } from "@/components/hooks/use-user-profile";
@@ -159,33 +160,24 @@ export function useLeadConversion(profile: UserProfile | null) {
                         // The transactional counter, never a clock reading.
                         const convertedNumber = await generateInvoiceNumber(db, profile.orgId);
 
-                        const invoiceData = {
+                        const invoiceNow = new Date();
+                        const invoiceData = buildInvoiceDocument({
+                            orgId: profile.orgId,
+                            createdBy: profile.uid,
                             customerId: customerRef.id,
                             customerName: finalCompany,
-                            projectId: null, // Could link if project created above, but simpler for now
-                            date: serverTimestamp(),
-                            dueDate: serverTimestamp(),
-                            status: "draft",
-                            currency: estData.currency,
-                            subtotal: convertedTotals.subtotal,
+                            items: estData.items || [],
                             discount: estData.discount,
-                            discountTotal: convertedTotals.discountTotal,
-                            taxTotal: convertedTotals.taxTotal,
-                            total: convertedTotals.total,
-                            items: estData.items,
-                            amountPaid: 0,
-                            amountDue: convertedTotals.total,
-                            notes: estData.notes || "",
-                            terms: estData.terms || "",
-                            orgId: profile.orgId,
-                            createdAt: serverTimestamp(),
-                            updatedAt: serverTimestamp(),
-                            createdBy: profile.uid,
-                            fromEstimateId: selectedEstimateId,
-                            fromEstimateNumber: estData.number,
+                            date: invoiceNow,
+                            dueDate: invoiceNow,
+                            currency: estData.currency,
                             number: convertedNumber.number,
                             numberFormatted: convertedNumber.formatted,
-                        };
+                            notes: estData.notes || "",
+                            terms: estData.terms || "",
+                            carriedTotals: convertedTotals,
+                            extra: { fromEstimateId: selectedEstimateId, fromEstimateNumber: estData.number },
+                        });
                         const invRef = await addDoc(collection(db, "invoices"), invoiceData);
 
                         await updateDoc(doc(db, "estimates", selectedEstimateId), {

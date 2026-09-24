@@ -1,4 +1,5 @@
 import { readFileSync } from "fs";
+import { Timestamp } from "firebase/firestore";
 import {
     initializeTestEnvironment,
     assertFails,
@@ -28,6 +29,20 @@ const COLLECTIONS = [
     "notifications",
     "settings",
 ] as const;
+
+/**
+ * Fields a collection's own rule block requires on create, beyond orgId. This suite asserts
+ * TENANT ISOLATION, not document shape, so it supplies whatever a collection's create contract
+ * demands and keeps testing the thing it is about.
+ *
+ * invoices: `date` must be a timestamp. A dateless invoice is dropped from any orderBy("date")
+ * query while still being counted by aggregations — the "summary reads 2, list renders 1"
+ * defect. See tests/firestore-rules/invoice-date-required.test.ts.
+ */
+function requiredCreateFields(collection: string): Record<string, unknown> {
+    if (collection === "invoices") return { date: Timestamp.fromDate(new Date("2026-09-24T00:00:00Z")) };
+    return {};
+}
 
 let env: RulesTestEnvironment;
 
@@ -78,7 +93,13 @@ describe.each(COLLECTIONS)("Tenant isolation: /%s/", (col) => {
     });
 
     it("tenantA user CAN create doc with own orgId", async () => {
-        await assertSucceeds(alice().firestore().collection(col).doc("newA").set({ orgId: TENANT_A }));
+        await assertSucceeds(
+            alice()
+                .firestore()
+                .collection(col)
+                .doc("newA")
+                .set({ orgId: TENANT_A, ...requiredCreateFields(col) })
+        );
     });
 
     it("tenantA user CANNOT read tenantB doc", async () => {

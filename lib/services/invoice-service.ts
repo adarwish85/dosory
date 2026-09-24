@@ -1,14 +1,4 @@
-import {
-    collection,
-    doc,
-    addDoc,
-    getDoc,
-    runTransaction,
-    serverTimestamp,
-    Timestamp,
-    Firestore,
-} from "firebase/firestore";
-import type { InvoiceFormData } from "@/lib/schemas";
+import { doc, runTransaction, Firestore } from "firebase/firestore";
 import type { LineItem } from "@/lib/types";
 import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
 
@@ -99,59 +89,9 @@ export async function generateInvoiceNumber(
     }
 }
 
-// ============================================
-// Create Invoice Service
-// ============================================
-
-export interface CreateInvoiceOptions {
-    uid: string;
-    orgId: string;
-}
-
-export async function createInvoiceService(
-    db: Firestore,
-    data: InvoiceFormData,
-    user: CreateInvoiceOptions
-): Promise<string> {
-    if (!user.orgId) throw new Error("No organization");
-
-    // Get organization settings for invoice numbering
-    const settingsRef = doc(db, "organizations", user.orgId, "settings", "general");
-    const settingsSnap = await getDoc(settingsRef);
-    const orgSettings = settingsSnap.exists() ? settingsSnap.data() : {};
-
-    // Get customer name
-    const customerDoc = await getDoc(doc(db, "customers", data.customerId));
-    const customerName = customerDoc.exists() ? customerDoc.data().company : "Unknown Customer";
-
-    // Generate invoice number using org settings
-    const invoiceNumberResult = await generateInvoiceNumber(db, user.orgId, {
-        prefix: orgSettings.invoiceNumberPrefix || "INV-",
-        padding: orgSettings.numberPadding || 6,
-    });
-
-    // Calculate totals
-    const { subtotal, taxTotal, total } = calculateInvoiceTotals(data.items, data.discount);
-
-    const docRef = await addDoc(collection(db, "invoices"), {
-        ...data,
-        number: invoiceNumberResult.number,
-        numberFormatted: invoiceNumberResult.formatted,
-        customerName,
-        subtotal,
-        taxTotal,
-        total,
-        amountPaid: 0,
-        amountDue: total,
-        status: "draft",
-        date: Timestamp.fromDate(data.date),
-        dueDate: Timestamp.fromDate(data.dueDate),
-        orgId: user.orgId,
-        currency: data.currency || "USD",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        createdBy: user.uid,
-    });
-
-    return docRef.id;
-}
+// The duplicate writer that used to live here (createInvoiceService) is DELETED. It had zero
+// callers, it dropped `adjustment` — i.e. it still contained the exact defect the 2026-08-08
+// round fixed in use-invoices.ts — and an abandoned writer pointing at the same collection is
+// precisely how a seventh divergent shape gets forked (CLAUDE.md Sweep E: "deleting the
+// abandoned accessor is part of the fix"). The one shaping path is
+// lib/invoices/build-invoice-document.ts.
