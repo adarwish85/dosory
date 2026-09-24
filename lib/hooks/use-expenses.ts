@@ -17,6 +17,7 @@ import {
     QueryConstraint,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import type { Expense, ExpenseCategory, Subscription, SubscriptionStatus } from "@/lib/types";
 import type { ExpenseFormData, SubscriptionFormData } from "@/lib/schemas";
@@ -128,7 +129,11 @@ export function useExpenses(options: UseExpensesOptions = {}) {
                 const taxDoc = await getDoc(doc(db, "taxes", data.taxId));
                 if (taxDoc.exists()) {
                     taxRate = taxDoc.data().rate;
-                    taxAmount = data.amount * (taxRate / 100);
+                    // Routed through the one calculator so there is no second place in the
+                    // codebase that turns a rate into money. An expense is a single amount with
+                    // no discount, so net and gross coincide and this changes no stored figure
+                    // except to round it to 2dp.
+                    taxAmount = computeInvoiceTotals({ items: [{ amount: data.amount, taxRate }] }).taxTotal;
                 }
             }
 

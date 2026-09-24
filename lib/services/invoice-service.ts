@@ -10,41 +10,26 @@ import {
 } from "firebase/firestore";
 import type { InvoiceFormData } from "@/lib/schemas";
 import type { LineItem } from "@/lib/types";
+import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
 
 // ============================================
 // Helper: Calculate Invoice Totals
 // ============================================
 
+/**
+ * Back-compatible wrapper over the one calculator in lib/money.
+ *
+ * The arithmetic that used to live here now lives in `computeInvoiceTotals`, which also returns
+ * the discount total and the per-line tax breakdown that renderers need. This signature is kept
+ * because existing callers pass positional arguments; new code should call `computeInvoiceTotals`
+ * directly and use the richer result.
+ */
 export function calculateInvoiceTotals(
     items: LineItem[],
     discount?: { type: "percentage" | "fixed"; value: number },
     adjustment: number = 0
 ) {
-    const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-
-    let discountAmount = 0;
-    if (discount) {
-        discountAmount = discount.type === "percentage" ? subtotal * (discount.value / 100) : discount.value;
-    }
-
-    const taxableAmount = subtotal - discountAmount;
-    const taxTotal = items.reduce((sum, item) => {
-        // Guard subtotal === 0: the proration below divides by it, and a NaN here propagates
-        // straight into the persisted invoice total.
-        if (item.taxRate && subtotal > 0) {
-            const itemTaxable = item.amount * (taxableAmount / subtotal);
-            return sum + itemTaxable * (item.taxRate / 100);
-        }
-        return sum;
-    }, 0);
-
-    // `adjustment` is a signed manual correction (rounding, goodwill, a late fee). It was
-    // collected by both invoice forms and shown in the on-screen total, but never written —
-    // and the persisted total was recomputed WITHOUT it, so what the customer was billed
-    // silently differed from what the creator saw by exactly this amount. It is now part of
-    // the one shared calculation, so screen and database cannot drift again.
-    const total = taxableAmount + taxTotal + (adjustment || 0);
-
+    const { subtotal, taxTotal, total } = computeInvoiceTotals({ items, discount, adjustment });
     return { subtotal, taxTotal, total };
 }
 

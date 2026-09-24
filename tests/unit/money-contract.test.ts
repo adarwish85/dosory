@@ -14,7 +14,6 @@
  */
 import { computeInvoiceTotals, round2, TAX_BASIS } from "@/lib/money/compute-invoice-totals";
 import { formatMoney, currencySymbol } from "@/lib/money/format-money";
-import { calculateInvoiceTotals } from "@/lib/services/invoice-service";
 import type { LineItem } from "@/lib/types";
 
 const line = (amount: number, taxRate?: number) => ({ amount, taxRate });
@@ -127,8 +126,38 @@ describe("edge cases that used to produce NaN or a negative bill", () => {
     });
 });
 
+/**
+ * A FROZEN copy of the arithmetic that shipped in lib/services/invoice-service.ts before the
+ * refactor, reproduced verbatim. It is duplicated here on purpose: `calculateInvoiceTotals` now
+ * delegates to `computeInvoiceTotals`, so comparing against the live export would compare the new
+ * function with itself and pass no matter what it did (CLAUDE.md standing lesson 9 — a guard that
+ * cannot fail blesses everything). Comparing against this frozen copy is what actually proves no
+ * live invoice is repriced. Do not "simplify" it to call the real implementation.
+ */
+function legacyCalculateInvoiceTotals(
+    items: LineItem[],
+    discount?: { type: "percentage" | "fixed"; value: number },
+    adjustment: number = 0
+) {
+    const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+    let discountAmount = 0;
+    if (discount) {
+        discountAmount = discount.type === "percentage" ? subtotal * (discount.value / 100) : discount.value;
+    }
+    const taxableAmount = subtotal - discountAmount;
+    const taxTotal = items.reduce((sum, item) => {
+        if (item.taxRate && subtotal > 0) {
+            const itemTaxable = item.amount * (taxableAmount / subtotal);
+            return sum + itemTaxable * (item.taxRate / 100);
+        }
+        return sum;
+    }, 0);
+    const total = taxableAmount + taxTotal + (adjustment || 0);
+    return { subtotal, taxTotal, total };
+}
+
 describe("LEGACY PARITY — invoices must not be repriced by this refactor", () => {
-    // Every shape the shipped calculator supports. If any of these diverge, the refactor is a
+    // Every shape the shipped calculator supported. If any of these diverge, the refactor is a
     // repricing of live customer documents and must stop for a ruling, not ship.
     const cases: Array<{
         name: string;
@@ -164,7 +193,7 @@ describe("LEGACY PARITY — invoices must not be repriced by this refactor", () 
     ];
 
     test.each(cases)("$name: total matches the shipped calculator", ({ items, discount, adjustment }) => {
-        const legacy = calculateInvoiceTotals(items, discount, adjustment);
+        const legacy = legacyCalculateInvoiceTotals(items, discount, adjustment);
         const next = computeInvoiceTotals({ items, discount, adjustment });
         expect(next.total).toBe(round2(legacy.total));
         expect(next.subtotal).toBe(round2(legacy.subtotal));

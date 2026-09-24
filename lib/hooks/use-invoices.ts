@@ -24,6 +24,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { calculateInvoiceTotals } from "@/lib/services/invoice-service";
+import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
 import { createNotification } from "@/lib/hooks/use-notifications";
@@ -286,15 +287,32 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         });
 
         // Calculate totals
-        const { subtotal, taxTotal, total } = calculateInvoiceTotals(data.items, data.discount, data.adjustment);
+        const totals = computeInvoiceTotals({
+            items: data.items,
+            discount: data.discount,
+            adjustment: data.adjustment,
+        });
+        const { subtotal, discountTotal, taxTotal, total } = totals;
 
         const docRef = await addDoc(collection(db, "invoices"), {
             ...data,
             number: invoiceNumberResult.number,
             numberFormatted: invoiceNumberResult.formatted,
             customerName,
+            // Per-line tax is PERSISTED, not re-derived at render time. The detail page used to
+            // reconstruct one aggregate rate as taxTotal/subtotal and stamp it on every line,
+            // which prints the wrong rate as soon as there is a discount or a second rate.
+            items: data.items.map((item, i) => ({
+                ...item,
+                taxRate: totals.lines[i]?.taxRate ?? item.taxRate ?? 0,
+                taxAmount: totals.lines[i]?.taxAmount ?? 0,
+                discountAmount: totals.lines[i]?.discountAmount ?? 0,
+            })),
             subtotal,
             adjustment: data.adjustment ?? 0,
+            // The discount was collected and shown but never stored, so no renderer could draw
+            // the discount row and the document did not add up on screen.
+            discountTotal,
             taxTotal,
             total,
             amountPaid: 0,

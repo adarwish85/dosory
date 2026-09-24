@@ -23,6 +23,8 @@ import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Estimate, EstimateStatus } from "@/lib/types";
+import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
+import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 import type { EstimateFormData } from "@/lib/schemas";
 
 // ============================================
@@ -93,29 +95,30 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
         return () => unsubscribe();
     }, [profile?.orgId, status, customerId, leadId]);
 
-    // Calculate totals helper
+    /**
+     * Estimates used to have their OWN calculator here, which taxed the gross line amount and
+     * subtracted the discount afterwards — 218.00 where the invoice said 216.60 on the same
+     * inputs. Since `convertToInvoice` copied the estimate's stored totals into the invoice, the
+     * number a customer was billed depended on which screen created the document. Ruled
+     * 2026-09-23: VAT is charged on the NET amount, so both now call the one calculator.
+     */
     const calculateTotals = (
-        items: { quantity: number; rate: number; taxRate?: number }[],
+        items: { quantity: number; rate: number; taxRate?: number; amount?: number }[],
         discount?: { type: "percentage" | "fixed"; value: number }
     ) => {
-        let subtotal = 0;
-        let taxTotal = 0;
-
-        items.forEach((item) => {
-            const lineTotal = item.quantity * item.rate;
-            subtotal += lineTotal;
-            if (item.taxRate) {
-                taxTotal += lineTotal * (item.taxRate / 100);
-            }
+        const totals = computeInvoiceTotals({
+            items: items.map((i) => ({
+                amount: i.amount ?? i.quantity * i.rate,
+                taxRate: i.taxRate,
+            })),
+            discount,
         });
-
-        let discountAmount = 0;
-        if (discount) {
-            discountAmount = discount.type === "percentage" ? subtotal * (discount.value / 100) : discount.value;
-        }
-
-        const total = subtotal + taxTotal - discountAmount;
-        return { subtotal, taxTotal, discountAmount, total };
+        return {
+            subtotal: totals.subtotal,
+            taxTotal: totals.taxTotal,
+            discountAmount: totals.discountTotal,
+            total: totals.total,
+        };
     };
 
     const createEstimate = async (data: EstimateFormData): Promise<string> => {
@@ -132,7 +135,13 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
             const leadDoc = await getDoc(doc(db, "leads", data.leadId));
             if (leadDoc.exists()) {
                 const leadData = leadDoc.data();
-                customerName = leadData.title || leadData.company || leadData.name || leadData.companyName || leadData.contactName || "Unknown Client";
+                customerName =
+                    leadData.title ||
+                    leadData.company ||
+                    leadData.name ||
+                    leadData.companyName ||
+                    leadData.contactName ||
+                    "Unknown Client";
             }
         }
 
@@ -220,20 +229,33 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
             throw new Error("Only accepted estimates can be converted to invoices");
         }
 
-        // Generate invoice number
-        const invNumber = `INV-${Date.now().toString().slice(-6).padStart(6, "0")}`;
+        const convertedTotals = computeInvoiceTotals({
+            items: (estimate.items || []).map((i) => ({ amount: i.amount, taxRate: i.taxRate })),
+            discount: estimate.discount,
+        });
+
+        // The transactional counter, not `INV-${Date.now()}`. A timestamp is not an invoice
+        // number: it is unauditable, it sorts wrongly, and it silently hides a duplicate submit
+        // because two rapid writes never collide.
+        const invoiceNumber = await generateInvoiceNumber(db, profile.orgId);
 
         // Create invoice from estimate
         const invoiceRef = await addDoc(collection(db, "invoices"), {
-            number: invNumber,
+            number: invoiceNumber.number,
+            numberFormatted: invoiceNumber.formatted,
             customerId: estimate.customerId,
             customerName: estimate.customerName,
             items: estimate.items,
-            subtotal: estimate.subtotal,
-            taxTotal: estimate.taxTotal,
-            total: estimate.total,
+            // Recomputed from the estimate's own items and discount rather than copying its
+            // stored aggregates: a document written before the calculators were reconciled
+            // carries the old gross-basis numbers, and copying them would import that arithmetic
+            // into a brand-new invoice.
+            subtotal: convertedTotals.subtotal,
+            discountTotal: convertedTotals.discountTotal,
+            taxTotal: convertedTotals.taxTotal,
+            total: convertedTotals.total,
             amountPaid: 0,
-            amountDue: estimate.total,
+            amountDue: convertedTotals.total,
             discount: estimate.discount,
             status: "draft",
             date: serverTimestamp(),
@@ -282,4 +304,3 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
         convertToInvoice,
     };
 }
-

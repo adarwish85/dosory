@@ -15,6 +15,8 @@ import {
     serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
+import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 import type { Lead } from "@/lib/types";
 import type { UserProfile } from "@/components/hooks/use-user-profile";
 import type { ConvertLeadOptions } from "./types";
@@ -144,6 +146,16 @@ export function useLeadConversion(profile: UserProfile | null) {
                     const estimateSnap = await getDoc(doc(db, "estimates", selectedEstimateId));
                     if (estimateSnap.exists()) {
                         const estData = estimateSnap.data();
+                        const convertedTotals = computeInvoiceTotals({
+                            items: (estData.items || []).map((i: { amount: number; taxRate?: number }) => ({
+                                amount: i.amount,
+                                taxRate: i.taxRate,
+                            })),
+                            discount: estData.discount,
+                        });
+                        // The transactional counter, never `INV-${Date.now()}`.
+                        const convertedNumber = await generateInvoiceNumber(db, profile.orgId);
+
                         const invoiceData = {
                             customerId: customerRef.id,
                             customerName: finalCompany,
@@ -152,13 +164,14 @@ export function useLeadConversion(profile: UserProfile | null) {
                             dueDate: serverTimestamp(),
                             status: "draft",
                             currency: estData.currency,
-                            subtotal: estData.subtotal,
+                            subtotal: convertedTotals.subtotal,
                             discount: estData.discount,
-                            taxTotal: estData.taxTotal,
-                            total: estData.total,
+                            discountTotal: convertedTotals.discountTotal,
+                            taxTotal: convertedTotals.taxTotal,
+                            total: convertedTotals.total,
                             items: estData.items,
                             amountPaid: 0,
-                            amountDue: estData.total,
+                            amountDue: convertedTotals.total,
                             notes: estData.notes || "",
                             terms: estData.terms || "",
                             orgId: profile.orgId,
@@ -167,7 +180,8 @@ export function useLeadConversion(profile: UserProfile | null) {
                             createdBy: profile.uid,
                             fromEstimateId: selectedEstimateId,
                             fromEstimateNumber: estData.number,
-                            number: `INV-${Date.now().toString().slice(-6)}`,
+                            number: convertedNumber.number,
+                            numberFormatted: convertedNumber.formatted,
                         };
                         const invRef = await addDoc(collection(db, "invoices"), invoiceData);
 

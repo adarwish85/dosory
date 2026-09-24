@@ -13,6 +13,8 @@ import {
 } from "firebase/firestore";
 import type { Firestore } from "firebase/firestore";
 import type { Lead } from "@/lib/types";
+import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
+import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 
 export interface ConvertLeadOptions {
     company?: string;
@@ -175,6 +177,16 @@ export async function convertLeadToCustomerService(
             if (estData.convertedToInvoiceId) {
                 console.log("Skip: Estimate already converted");
             } else {
+                const convertedTotals = computeInvoiceTotals({
+                    items: (estData.items || []).map((i: { amount: number; taxRate?: number }) => ({
+                        amount: i.amount,
+                        taxRate: i.taxRate,
+                    })),
+                    discount: estData.discount,
+                });
+                // The transactional counter, never `INV-${Date.now()}`.
+                const convertedNumber = await generateInvoiceNumber(db, profile.orgId);
+
                 const invoiceData = {
                     customerId: customerRef.id,
                     customerName: finalCompany,
@@ -183,13 +195,14 @@ export async function convertLeadToCustomerService(
                     dueDate: serverTimestamp(),
                     status: "draft",
                     currency: estData.currency,
-                    subtotal: estData.subtotal,
+                    subtotal: convertedTotals.subtotal,
                     discount: estData.discount,
-                    taxTotal: estData.taxTotal,
-                    total: estData.total,
+                    discountTotal: convertedTotals.discountTotal,
+                    taxTotal: convertedTotals.taxTotal,
+                    total: convertedTotals.total,
                     items: estData.items,
                     amountPaid: 0,
-                    amountDue: estData.total,
+                    amountDue: convertedTotals.total,
                     notes: estData.notes || "",
                     terms: estData.terms || "",
                     orgId: profile.orgId,
@@ -198,7 +211,8 @@ export async function convertLeadToCustomerService(
                     createdBy: profile.uid,
                     fromEstimateId: selectedEstimateId,
                     fromEstimateNumber: estData.number,
-                    number: `INV-${Date.now().toString().slice(-6)}`,
+                    number: convertedNumber.number,
+                    numberFormatted: convertedNumber.formatted,
                 };
                 const invRef = await addDoc(collection(db, "invoices"), invoiceData);
 
@@ -238,10 +252,7 @@ export async function convertLeadToCustomerService(
         if (hasUpdates) await batch.commit();
     };
 
-    await Promise.all([
-        transferRelated("estimates", "leadId"),
-        transferRelated("tasks", "relatedTo.id"),
-    ]);
+    await Promise.all([transferRelated("estimates", "leadId"), transferRelated("tasks", "relatedTo.id")]);
 
     // 6. Transfer lead notes
     console.log("🔄 Step 6: Transferring notes...");

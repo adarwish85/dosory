@@ -145,6 +145,12 @@ export interface Invoice extends BaseEntity {
     currency: string;
     subtotal: number;
     discount?: DiscountInfo;
+    /**
+     * The money value of `discount`. It was collected and displayed but never stored, so no
+     * renderer could draw the discount row and the printed document did not add up. Optional
+     * because documents written before 2026-09-24 do not carry it.
+     */
+    discountTotal?: number;
     /** Signed manual correction applied after discount and tax (rounding, goodwill, fees). */
     adjustment?: number;
     taxTotal: number;
@@ -179,6 +185,15 @@ export interface LineItem {
     taxRate?: number;
     amount: number;
     unit?: string;
+    /**
+     * The tax actually charged on this line, and this line's share of the document discount,
+     * both persisted by computeInvoiceTotals. They exist so a renderer never has to reconstruct
+     * a rate: the detail page used to derive one as taxTotal/subtotal and stamp it on every
+     * line, which prints 13.30% for a 14% line as soon as a discount is applied. Optional
+     * because documents written before 2026-09-24 do not carry them.
+     */
+    taxAmount?: number;
+    discountAmount?: number;
 }
 
 export interface DiscountInfo {
