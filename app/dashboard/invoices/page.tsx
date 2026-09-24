@@ -17,8 +17,6 @@ import {
     Trash,
     DollarSign,
     FileText,
-    Clock,
-    AlertCircle,
 } from "lucide-react";
 import { useInvoices, useSettings, usePermission } from "@/lib/hooks";
 import { useTranslation } from "@/lib/i18n";
@@ -66,6 +64,8 @@ import {
 
 import { InvoiceHeader } from "@/components/dashboard/invoices/invoice-header";
 import { invoiceNumberLabel } from "@/lib/invoices/invoice-number";
+import { summariseInvoices, topGroups } from "@/lib/money/invoice-summary";
+import { formatMoney } from "@/lib/money/format-money";
 
 const statusColors: Record<InvoiceStatus, { bg: string; text: string; border: string }> = {
     draft: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
@@ -141,20 +141,48 @@ function HighlightText({ text, search }: { text: string; search: string }) {
     );
 }
 
+/**
+ * The summary bar. Its three money figures share their definitions with the chips in
+ * InvoiceHeader on this same page — before lib/money/invoice-summary.ts the two disagreed on all
+ * three, so the same invoices produced different numbers depending which you read.
+ */
 function QuickStatsBar({
     invoices,
-    currency,
+    orgDefaultCurrency,
     totalCount,
 }: {
     invoices: Invoice[];
-    currency: string;
+    orgDefaultCurrency: string;
     totalCount?: number;
 }) {
     const { t } = useTranslation();
     const total = totalCount ?? invoices.length;
-    const paid = invoices.filter((i) => i.status === "paid").reduce((sum, i) => sum + (i.total || 0), 0);
-    const overdue = invoices.filter((i) => i.status === "overdue").length;
-    const draft = invoices.filter((i) => i.status === "draft").length;
+    const summary = summariseInvoices(invoices, { orgDefaultCurrency });
+
+    const cards = [
+        {
+            key: "collected",
+            label: t("invoices.summary.collected"),
+            groups: summary.collected,
+            cls: "from-green-50 to-green-100 border-green-200 text-green-600",
+            value: "text-green-900",
+        },
+        {
+            key: "overdue",
+            label: t("invoices.summary.overdue"),
+            groups: summary.overdue,
+            cls: "from-red-50 to-red-100 border-red-200 text-red-600",
+            value: "text-red-900",
+        },
+        {
+            key: "outstanding",
+            label: t("invoices.summary.outstanding"),
+            groups: summary.outstanding,
+            cls: "from-yellow-50 to-yellow-100 border-yellow-200 text-yellow-600",
+            value: "text-yellow-900",
+        },
+    ];
+
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg px-4 py-3">
@@ -164,29 +192,40 @@ function QuickStatsBar({
                 </div>
                 <div className="text-2xl font-bold text-blue-900">{total}</div>
             </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg px-4 py-3">
-                <div className="flex items-center gap-2 text-green-600 mb-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">{t("invoices.stats.paid")}</span>
-                </div>
-                <div className="text-2xl font-bold text-green-900">
-                    {new Intl.NumberFormat("en-US", { style: "currency", currency }).format(paid)}
-                </div>
-            </div>
-            <div className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-lg px-4 py-3">
-                <div className="flex items-center gap-2 text-red-600 mb-1">
-                    <AlertCircle className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">{t("invoices.stats.overdue")}</span>
-                </div>
-                <div className="text-2xl font-bold text-red-900">{overdue}</div>
-            </div>
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg px-4 py-3">
-                <div className="flex items-center gap-2 text-gray-600 mb-1">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-xs font-medium uppercase">{t("invoices.stats.draft")}</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900">{draft}</div>
-            </div>
+            {cards.map((card) => {
+                const { shown, overflowCurrencies } = topGroups(card.groups);
+                return (
+                    <div key={card.key} className={`bg-gradient-to-br border rounded-lg px-4 py-3 ${card.cls}`}>
+                        <div className="flex items-center gap-2 mb-1">
+                            <DollarSign className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase">{card.label}</span>
+                        </div>
+                        {shown.length === 0 ? (
+                            <div className={`text-2xl font-bold ${card.value}`}>—</div>
+                        ) : (
+                            shown.map((g) => (
+                                <div key={g.currency} className={`text-2xl font-bold ${card.value}`}>
+                                    {formatMoney(g.amount, g.currency)}
+                                </div>
+                            ))
+                        )}
+                        {(overflowCurrencies > 0 || summary.noCurrencyCount > 0) && (
+                            <div className="text-[10px] text-gray-500 mt-0.5">
+                                {[
+                                    overflowCurrencies > 0
+                                        ? t("invoices.summary.overflowCurrencies", { count: overflowCurrencies })
+                                        : null,
+                                    summary.noCurrencyCount > 0
+                                        ? t("invoices.summary.noCurrency", { count: summary.noCurrencyCount })
+                                        : null,
+                                ]
+                                    .filter(Boolean)
+                                    .join(", ")}
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 }
@@ -510,11 +549,11 @@ export default function InvoicesPage() {
     return (
         <TooltipProvider>
             <div className="space-y-6">
-                <InvoiceHeader invoices={invoices} />
+                <InvoiceHeader invoices={invoices} orgDefaultCurrency={currency} />
                 {loading ? (
                     <StatCardSkeleton count={4} />
                 ) : (
-                    <QuickStatsBar invoices={invoices} currency={currency} totalCount={totalRecords} />
+                    <QuickStatsBar invoices={invoices} orgDefaultCurrency={currency} totalCount={totalRecords} />
                 )}
 
                 {/* Toolbar */}

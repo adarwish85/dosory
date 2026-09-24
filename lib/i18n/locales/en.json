@@ -5711,5 +5711,10 @@
     "billing.easykash.return.backToBilling": "Back to billing",
     "billing.easykash.return.tryAgain": "Try again",
     "invoices.detail.discount": "Discount",
-    "invoices.detail.adjustment": "Adjustment"
+    "invoices.detail.adjustment": "Adjustment",
+    "invoices.summary.collected": "Collected",
+    "invoices.summary.outstanding": "Outstanding",
+    "invoices.summary.overdue": "Overdue",
+    "invoices.summary.overflowCurrencies": "+{count} in other currencies",
+    "invoices.summary.noCurrency": "{count} with no currency set"
 }

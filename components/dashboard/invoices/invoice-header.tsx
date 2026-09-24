@@ -1,43 +1,80 @@
-import { Button } from "@/components/ui/button";
+"use client";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Invoice } from "@/lib/types";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { defaultYearFilter, yearFilterOptions } from "@/lib/invoices/year-filter-options";
+import { summariseInvoices, topGroups, type CurrencyGroup } from "@/lib/money/invoice-summary";
+import { formatMoney } from "@/lib/money/format-money";
+import { useTranslation } from "@/lib/i18n";
 
 interface InvoiceHeaderProps {
     invoices: Invoice[];
+    /** Only where a document with NO currency is grouped. Never a display source. */
+    orgDefaultCurrency: string;
 }
 
-export function InvoiceHeader({ invoices }: InvoiceHeaderProps) {
-    // Calculate summaries
-    const paidAmount = invoices.filter((inv) => inv.status === "paid").reduce((sum, inv) => sum + inv.total, 0);
+const TONES = {
+    green: "bg-green-50 border-green-100 text-green-600",
+    red: "bg-red-50 border-red-100 text-red-600",
+    yellow: "bg-yellow-50 border-yellow-100 text-yellow-600",
+} as const;
 
-    // For partial payments, we should count the paid portion towards "Paid" stats generically?
-    // The design says "Paid Invoices EGP...", usually implies fully paid or total collected.
-    // Let's assume Total Collected for now to be accurate to cash flow, or just sum of Paid status.
-    // Given the label "Paid Invoices", it likely means sum of Full Paid invoices.
-    // However, "Outstanding" usually means Amount Due.
+/**
+ * A chip showing at most two currencies plus a counted overflow. Currencies are never summed
+ * together: a figure that adds dollars to pounds is not a quantity of anything, and there is no
+ * FX rate source here to convert with honestly.
+ */
+function SummaryChip({
+    label,
+    groups,
+    noCurrencyCount,
+    tone,
+}: {
+    label: string;
+    groups: CurrencyGroup[];
+    noCurrencyCount: number;
+    tone: keyof typeof TONES;
+}) {
+    const { t } = useTranslation();
+    const { shown, overflowCurrencies } = topGroups(groups);
+    return (
+        <div className={`px-3 py-1.5 rounded-md border flex flex-col gap-0.5 ${TONES[tone]}`}>
+            <span className="text-xs font-medium">{label}</span>
+            {shown.length === 0 ? (
+                <span className="text-sm font-bold text-gray-400">—</span>
+            ) : (
+                shown.map((g) => (
+                    <span key={g.currency} className="text-sm font-bold text-gray-900">
+                        {formatMoney(g.amount, g.currency)}
+                    </span>
+                ))
+            )}
+            {(overflowCurrencies > 0 || noCurrencyCount > 0) && (
+                <span className="text-[10px] text-gray-500">
+                    {[
+                        overflowCurrencies > 0
+                            ? t("invoices.summary.overflowCurrencies", { count: overflowCurrencies })
+                            : null,
+                        noCurrencyCount > 0 ? t("invoices.summary.noCurrency", { count: noCurrencyCount }) : null,
+                    ]
+                        .filter(Boolean)
+                        .join(", ")}
+                </span>
+            )}
+        </div>
+    );
+}
 
-    // Let's refine based on typical accounting:
-    // Paid Invoices: Sum of `amountPaid` across all invoices? Or just invoices marked as Paid?
-    // Let's go with: Sum of `amountPaid` across ALL invoices.
-    const totalCollected = invoices.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0);
+export function InvoiceHeader({ invoices, orgDefaultCurrency }: InvoiceHeaderProps) {
+    const { t } = useTranslation();
 
-    // Past Due: Sum of `amountDue` for overdue invoices
-    const pastDueAmount = invoices
-        .filter((inv) => inv.status === "overdue")
-        .reduce((sum, inv) => sum + (inv.amountDue || 0), 0);
-
-    // Outstanding: Sum of `amountDue` across ALL invoices (including sent, partial, overdue)
-    const totalOutstanding = invoices.reduce((sum, inv) => sum + (inv.amountDue || 0), 0);
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "EGP", // Using EGP as per screenshot, or make dynamic later
-        }).format(amount);
-    };
+    // One definition per card, shared with the QuickStatsBar on the same page. These chips and
+    // that bar used to compute different things under near-identical words: this component summed
+    // amountPaid across everything and called it "Paid Invoices", while the bar summed the total
+    // of invoices whose status was "paid". See lib/money/invoice-summary.ts.
+    const summary = summariseInvoices(invoices, { orgDefaultCurrency });
 
     return (
         <div className="flex flex-col gap-4">
@@ -79,18 +116,24 @@ export function InvoiceHeader({ invoices }: InvoiceHeaderProps) {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        <div className="px-3 py-1.5 rounded-md bg-green-50 border border-green-100 flex items-center gap-2">
-                            <span className="text-xs font-medium text-green-600">Paid Invoices</span>
-                            <span className="text-sm font-bold text-gray-900">{formatCurrency(totalCollected)}</span>
-                        </div>
-                        <div className="px-3 py-1.5 rounded-md bg-red-50 border border-red-100 flex items-center gap-2">
-                            <span className="text-xs font-medium text-red-600">Past Due Invoices</span>
-                            <span className="text-sm font-bold text-gray-900">{formatCurrency(pastDueAmount)}</span>
-                        </div>
-                        <div className="px-3 py-1.5 rounded-md bg-yellow-50 border border-yellow-100 flex items-center gap-2">
-                            <span className="text-xs font-medium text-yellow-600">Outstanding Invoices</span>
-                            <span className="text-sm font-bold text-gray-900">{formatCurrency(totalOutstanding)}</span>
-                        </div>
+                        <SummaryChip
+                            label={t("invoices.summary.collected")}
+                            groups={summary.collected}
+                            noCurrencyCount={summary.noCurrencyCount}
+                            tone="green"
+                        />
+                        <SummaryChip
+                            label={t("invoices.summary.overdue")}
+                            groups={summary.overdue}
+                            noCurrencyCount={summary.noCurrencyCount}
+                            tone="red"
+                        />
+                        <SummaryChip
+                            label={t("invoices.summary.outstanding")}
+                            groups={summary.outstanding}
+                            noCurrencyCount={summary.noCurrencyCount}
+                            tone="yellow"
+                        />
                     </div>
                 </div>
             </div>

@@ -5711,5 +5711,10 @@
     "billing.easykash.return.backToBilling": "العودة للفوترة",
     "billing.easykash.return.tryAgain": "إعادة المحاولة",
     "invoices.detail.discount": "الخصم",
-    "invoices.detail.adjustment": "تسوية"
+    "invoices.detail.adjustment": "تسوية",
+    "invoices.summary.collected": "المحصَّل",
+    "invoices.summary.outstanding": "المستحق",
+    "invoices.summary.overdue": "المتأخر",
+    "invoices.summary.overflowCurrencies": "+{count} بعملات أخرى",
+    "invoices.summary.noCurrency": "{count} بدون عملة محددة"
 }
