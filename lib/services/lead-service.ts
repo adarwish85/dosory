@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 import type { Firestore } from "firebase/firestore";
 import type { Lead } from "@/lib/types";
-import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
+import { computeInvoiceTotals, totalsAsIssued } from "@/lib/money/compute-invoice-totals";
 import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 
 export interface ConvertLeadOptions {
@@ -177,7 +177,10 @@ export async function convertLeadToCustomerService(
             if (estData.convertedToInvoiceId) {
                 console.log("Skip: Estimate already converted");
             } else {
-                const convertedTotals = computeInvoiceTotals({
+                // A customer accepted THIS document's numbers. Carry them forward rather than
+                // re-deriving: correcting the estimate arithmetic must not reprice a quote
+                // already agreed. Only a document that stored no total is computed.
+                const convertedTotals = totalsAsIssued(estData, {
                     items: (estData.items || []).map((i: { amount: number; taxRate?: number }) => ({
                         amount: i.amount,
                         taxRate: i.taxRate,

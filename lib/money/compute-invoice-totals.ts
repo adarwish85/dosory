@@ -4,8 +4,12 @@
  * WHY THIS EXISTS. Three calculators disagreed on the same inputs. `calculateInvoiceTotals`
  * (invoice-service.ts) taxed the amount AFTER discount; `useSales.calculateTotals` taxed BEFORE
  * it and subtracted the discount afterwards. On 200 at 14% VAT with a 5% discount that is 216.60
- * versus 218.00 — and because lead conversion copies an estimate's stored totals verbatim into a
- * new invoice, which number a customer was billed depended on which screen created the document.
+ * versus 218.00, so which number a customer was billed depended on which screen created the
+ * document. Ruled 2026-09-23: tax is charged on the NET amount.
+ *
+ * Note that CARRYING an accepted document's totals forward is correct and is what
+ * `totalsAsIssued` below does — a quote a customer agreed to must be billed at the number they
+ * agreed to. The defect was never the copying; it was that the two calculators disagreed.
  *
  * It also returns PER-LINE results. The invoice detail page used to reconstruct a single tax rate
  * as `taxTotal / subtotal` and stamp it on every line, which is only correct when every line
@@ -114,4 +118,51 @@ export function computeInvoiceTotals(input: ComputeTotalsInput): InvoiceTotals {
     const total = round2(subtotal - discountTotal + taxTotal + adjustment);
 
     return { subtotal, discountTotal, taxableTotal, taxTotal, adjustment, total, lines };
+}
+
+/** The subset of a stored document the conversion path carries forward. */
+export interface IssuedTotalsLike {
+    subtotal?: number | null;
+    discountTotal?: number | null;
+    taxTotal?: number | null;
+    total?: number | null;
+}
+
+/**
+ * The totals to carry forward when an ACCEPTED document becomes another document.
+ *
+ * A quote a customer accepted said a number. Converting it must bill THAT number, not what the
+ * calculator would produce today — otherwise correcting the estimate arithmetic silently reprices
+ * every quote already agreed. This returns the stored figures whenever the document has them, and
+ * only computes for a document that never stored any (which cannot be a document a customer
+ * agreed to, because nothing showed them a total).
+ *
+ * `stale` tells the caller the numbers came from the document rather than the calculator, so a
+ * conversion can record that it carried figures forward rather than deriving them.
+ */
+export function totalsAsIssued(
+    doc: IssuedTotalsLike | null | undefined,
+    fallback: ComputeTotalsInput
+): { subtotal: number; discountTotal: number; taxTotal: number; total: number; stale: boolean } {
+    const storedTotal = doc?.total;
+    const hasStored = typeof storedTotal === "number" && Number.isFinite(storedTotal);
+    if (!hasStored) {
+        const c = computeInvoiceTotals(fallback);
+        return {
+            subtotal: c.subtotal,
+            discountTotal: c.discountTotal,
+            taxTotal: c.taxTotal,
+            total: c.total,
+            stale: false,
+        };
+    }
+    const computed = computeInvoiceTotals(fallback);
+    return {
+        subtotal: typeof doc?.subtotal === "number" ? doc.subtotal : computed.subtotal,
+        // Never stored before 2026-09-24; derived so the document can draw its discount row.
+        discountTotal: typeof doc?.discountTotal === "number" ? doc.discountTotal : computed.discountTotal,
+        taxTotal: typeof doc?.taxTotal === "number" ? doc.taxTotal : computed.taxTotal,
+        total: storedTotal as number,
+        stale: true,
+    };
 }

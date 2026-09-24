@@ -23,7 +23,7 @@ import { db } from "@/lib/firebase";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collection-cache";
 import type { Estimate, EstimateStatus } from "@/lib/types";
-import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
+import { computeInvoiceTotals, totalsAsIssued } from "@/lib/money/compute-invoice-totals";
 import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 import type { EstimateFormData } from "@/lib/schemas";
 
@@ -229,7 +229,10 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
             throw new Error("Only accepted estimates can be converted to invoices");
         }
 
-        const convertedTotals = computeInvoiceTotals({
+        // A customer accepted THIS document's numbers. Carry them forward rather than
+        // re-deriving: correcting the estimate arithmetic must not reprice a quote
+        // already agreed. Only a document that stored no total is computed.
+        const convertedTotals = totalsAsIssued(estimate, {
             items: (estimate.items || []).map((i) => ({ amount: i.amount, taxRate: i.taxRate })),
             discount: estimate.discount,
         });

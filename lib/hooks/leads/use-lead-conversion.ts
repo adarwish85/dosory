@@ -15,7 +15,7 @@ import {
     serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
+import { computeInvoiceTotals, totalsAsIssued } from "@/lib/money/compute-invoice-totals";
 import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 import type { Lead } from "@/lib/types";
 import type { UserProfile } from "@/components/hooks/use-user-profile";
@@ -146,7 +146,10 @@ export function useLeadConversion(profile: UserProfile | null) {
                     const estimateSnap = await getDoc(doc(db, "estimates", selectedEstimateId));
                     if (estimateSnap.exists()) {
                         const estData = estimateSnap.data();
-                        const convertedTotals = computeInvoiceTotals({
+                        // A customer accepted THIS document's numbers. Carry them forward rather than
+                        // re-deriving: correcting the estimate arithmetic must not reprice a quote
+                        // already agreed. Only a document that stored no total is computed.
+                        const convertedTotals = totalsAsIssued(estData, {
                             items: (estData.items || []).map((i: { amount: number; taxRate?: number }) => ({
                                 amount: i.amount,
                                 taxRate: i.taxRate,

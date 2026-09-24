@@ -18,7 +18,7 @@
  */
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join } from "path";
-import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
+import { computeInvoiceTotals, totalsAsIssued } from "@/lib/money/compute-invoice-totals";
 
 const ROOT = join(__dirname, "..", "..");
 
@@ -83,5 +83,55 @@ describe("the estimate and its invoice agree, by construction", () => {
         // net basis is    250 - 12.50 = 237.50, tax 190*14% = 26.60, total 264.10
         expect(t.total).toBe(264.1);
         expect(t.total).not.toBe(265.5);
+    });
+});
+
+describe("converting an accepted document bills what it SAID", () => {
+    // A quote issued under the old gross-basis arithmetic: 250 of goods, 5% off, 14% on one line.
+    // It told the customer 265.50. Today's calculator would say 264.10 for the same inputs.
+    const acceptedEstimate = { subtotal: 250, taxTotal: 28, total: 265.5 };
+    const itemsAndDiscount = {
+        items: [
+            { amount: 200, taxRate: 14 },
+            { amount: 50, taxRate: 0 },
+        ],
+        discount: { type: "percentage" as const, value: 5 },
+    };
+
+    test("the stored total is carried forward, NOT recomputed", () => {
+        const carried = totalsAsIssued(acceptedEstimate, itemsAndDiscount);
+        expect(carried.total).toBe(265.5);
+        expect(carried.stale).toBe(true);
+    });
+
+    test("recomputing would have repriced the quote — proving the difference is real", () => {
+        const recomputed = computeInvoiceTotals(itemsAndDiscount);
+        expect(recomputed.total).toBe(264.1);
+        expect(recomputed.total).not.toBe(acceptedEstimate.total);
+    });
+
+    test("a document that stored no total IS computed — nothing ever showed a customer a number", () => {
+        const carried = totalsAsIssued({}, itemsAndDiscount);
+        expect(carried.total).toBe(264.1);
+        expect(carried.stale).toBe(false);
+    });
+
+    test("discountTotal is derived when absent, so the carried document can draw its row", () => {
+        const carried = totalsAsIssued(acceptedEstimate, itemsAndDiscount);
+        expect(carried.discountTotal).toBe(12.5);
+        expect(carried.total).toBe(265.5); // still the issued figure
+    });
+});
+
+describe("every conversion path carries totals forward", () => {
+    const CONVERSION_SITES = [
+        "lib/hooks/use-sales.ts",
+        "lib/hooks/leads/use-lead-conversion.ts",
+        "lib/services/lead-service.ts",
+    ];
+
+    test.each(CONVERSION_SITES)("%s uses totalsAsIssued, not a bare recompute", (rel) => {
+        const src = readFileSync(join(ROOT, rel), "utf8");
+        expect(src).toMatch(/totalsAsIssued\(/);
     });
 });
