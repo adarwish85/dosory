@@ -1,28 +1,41 @@
 #!/usr/bin/env bash
 #
-# Post-deploy smoke. Fails the release on any non-200.
+# Post-deploy smoke.
 #
-# Two kinds of route are listed on purpose:
+# TWO LISTS WITH DIFFERENT EXIT BEHAVIOUR, and the split is the whole point.
 #
-#   MUST WORK      - load-bearing surfaces. A regression here is a release-stopper.
-#   MUST BE FIXED  - routes PROVEN to 404 on the deployed build today (verified 2026-09-24
-#                    against build-2026-08-10-009, commit fa97cb24). They are in the list so a
-#                    green smoke is evidence the fix shipped, not an assumption that it did.
-#                    Until Batch F lands, this section is EXPECTED to fail — that is the point.
+#   MUST_PASS  - load-bearing routes. A non-200 FAILS the release.
+#   PENDING    - routes PROVEN to 404 on production today. A non-200 is reported and does NOT
+#                fail the release.
+#
+# The first version of this script put both in one list, so the very first production release
+# would have failed its own smoke job. That trains everyone to ignore a red smoke, which is worse
+# than having no smoke at all: the next red one — a real one — gets waved through too.
+#
+# THE LIST CANNOT ROT IN EITHER DIRECTION:
+#
+#   * a MUST_PASS route that breaks        -> fails the release  (the obvious direction)
+#   * a PENDING route that starts PASSING  -> fails the release  (the direction everyone forgets)
+#
+# The second is deliberate. A PENDING route going green means someone fixed it and did not move
+# it to MUST_PASS in the same commit, so nothing is holding the fix in place and it can silently
+# regress later. The failure message says exactly which line to move. This is the same
+# one-directional-guard trap that has bitten this codebase repeatedly (CLAUDE.md standing lesson
+# 9): a check that can only fail one way blesses everything that drifts the other.
 #
 # Authenticated routes redirect to /login, which is a 200 after following redirects. A 404 or a
-# 5xx is what fails. Note that `/dashboard/setup/help` is a page that EXISTS but which proxy.ts
-# redirects to `/dashboard/setup/help-support`, a path with no page — so it is a genuine 404 that
-# no amount of building will fix until that redirect entry is corrected (Batch D).
+# 5xx is what matters.
 #
-# Usage: scripts/ci/smoke.sh https://dosory.com [--allow-known-failures]
+# Usage: scripts/ci/smoke.sh https://dosory.com
 
 set -uo pipefail
 
 BASE="${1:-https://dosory.com}"
-ALLOW_KNOWN="${2:-}"
 
-MUST_WORK=(
+# ---------------------------------------------------------------------------
+# MUST_PASS — a non-200 here fails the release.
+# ---------------------------------------------------------------------------
+MUST_PASS=(
     "/"
     "/privacy"
     "/terms"
@@ -32,53 +45,82 @@ MUST_WORK=(
     "/dashboard/setup/organization/localization"
 )
 
-# Placeholder ids: these routes must exist as routes. A missing SEGMENT falls through to the
-# tenant catch-all /[...slug] and renders a not-found, which is exactly the defect being proven.
-MUST_BE_FIXED=(
+# ---------------------------------------------------------------------------
+# PENDING — known 404 on the build deployed 2026-08-10 (commit fa97cb24), verified by hand.
+# Move a line UP to MUST_PASS in the same commit that fixes it. The job tells you when.
+#
+#   /dashboard/invoices/<id>/edit   no such route exists          -> Batch F
+#   /dashboard/customers/<id>/edit  no such route exists          -> Batch F
+#   /dashboard/setup/help           page EXISTS, but proxy.ts redirects it to
+#                                   /dashboard/setup/help-support, which has no page
+#                                                                 -> Batch D
+#
+# Batch G adds:  /robots.txt  /sitemap.xml
+# ---------------------------------------------------------------------------
+PENDING=(
     "/dashboard/invoices/smoke-id/edit"
     "/dashboard/customers/smoke-id/edit"
     "/dashboard/setup/help"
 )
 
-# Added by Batch G. Kept here, commented, so the list is the single record of what is expected.
-# "/robots.txt"
-# "/sitemap.xml"
+status_of() {
+    curl -sS -L -o /dev/null -w '%{http_code}' --max-time 30 "${BASE}$1" 2>/dev/null || echo "000"
+}
 
 fail=0
-check() {
-    local path="$1" label="$2"
-    local code
-    code=$(curl -sS -L -o /dev/null -w '%{http_code}' --max-time 30 "${BASE}${path}" 2>/dev/null || echo "000")
-    if [ "$code" = "200" ]; then
-        printf '  ok    %-3s %s\n' "$code" "$path"
-    else
-        printf '  FAIL  %-3s %s   [%s]\n' "$code" "$path" "$label"
-        return 1
-    fi
-}
+summary=()
 
 echo "Smoke against ${BASE}"
 echo
-echo "MUST WORK:"
-for p in "${MUST_WORK[@]}"; do check "$p" "load-bearing" || fail=1; done
-
-echo
-echo "MUST BE FIXED (404 on the build deployed 2026-08-10; green here proves the fix shipped):"
-known_fail=0
-for p in "${MUST_BE_FIXED[@]}"; do check "$p" "known 404" || known_fail=1; done
-
-echo
-if [ "$known_fail" = "1" ]; then
-    if [ "$ALLOW_KNOWN" = "--allow-known-failures" ]; then
-        echo "NOTE: known-404 routes still failing, tolerated by --allow-known-failures."
+echo "MUST PASS — a non-200 fails this release:"
+for p in "${MUST_PASS[@]}"; do
+    code=$(status_of "$p")
+    if [ "$code" = "200" ]; then
+        printf '  ok    %-3s %s\n' "$code" "$p"
     else
-        echo "Known-404 routes are still 404. Batch F/D have not shipped, or have regressed."
+        printf '  FAIL  %-3s %s\n' "$code" "$p"
+        summary+=("BROKEN: $p returned $code")
         fail=1
     fi
+done
+
+echo
+echo "PENDING — known 404s. Reported, not release-blocking:"
+promoted=()
+for p in "${PENDING[@]}"; do
+    code=$(status_of "$p")
+    if [ "$code" = "200" ]; then
+        printf '  FIXED %-3s %s  <-- move this to MUST_PASS\n' "$code" "$p"
+        promoted+=("$p")
+    else
+        printf '  todo  %-3s %s\n' "$code" "$p"
+        summary+=("still pending: $p ($code)")
+    fi
+done
+
+echo
+if [ ${#promoted[@]} -gt 0 ]; then
+    echo "SMOKE FAILED — a PENDING route is now passing but was never promoted."
+    echo
+    echo "  These routes work now. Nothing is holding them that way, so they can regress"
+    echo "  silently. Move each one from PENDING to MUST_PASS in scripts/ci/smoke.sh, in the"
+    echo "  same commit as the fix:"
+    echo
+    for p in "${promoted[@]}"; do echo "      $p"; done
+    echo
+    fail=1
 fi
 
 if [ "$fail" != "0" ]; then
     echo "SMOKE FAILED."
+    for s in "${summary[@]}"; do echo "  - $s"; done
     exit 1
 fi
+
 echo "Smoke passed."
+if [ ${#summary[@]} -gt 0 ]; then
+    echo
+    echo "Still pending (expected, not blocking):"
+    for s in "${summary[@]}"; do echo "  - $s"; done
+fi
+exit 0
