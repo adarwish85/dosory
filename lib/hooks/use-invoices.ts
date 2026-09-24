@@ -25,6 +25,7 @@ import {
 import { db } from "@/lib/firebase";
 import { calculateInvoiceTotals } from "@/lib/services/invoice-service";
 import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
+import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { useActivity } from "@/lib/hooks/use-activity";
 import { createNotification } from "@/lib/hooks/use-notifications";
@@ -32,6 +33,7 @@ import { getCachedData, setCachedData, buildCacheKey } from "@/lib/cache/collect
 import type { Invoice, InvoiceStatus, LineItem } from "@/lib/types";
 import type { InvoiceFormData } from "@/lib/schemas";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { invoiceNumberLabel } from "@/lib/invoices/invoice-number";
 
 // ============================================
 // FIX BLE-001: Invoice Status Transition Map
@@ -57,73 +59,12 @@ function getStatusTransitionError(currentStatus: InvoiceStatus, newStatus: Invoi
     return `Cannot transition invoice from '${currentStatus}' to '${newStatus}'. Allowed transitions: ${ALLOWED_STATUS_TRANSITIONS[currentStatus].join(", ") || "none"}`;
 }
 
-// ============================================
-// Helper: Generate Invoice Number (Atomic)
-// ============================================
-
-interface InvoiceNumberSettings {
-    prefix: string;
-    padding: number;
-}
-
-async function generateInvoiceNumber(
-    orgId: string,
-    settings?: InvoiceNumberSettings
-): Promise<{ number: number; formatted: string }> {
-    // Use Firestore transaction for atomic increment
-    const { runTransaction } = await import("firebase/firestore");
-
-    const counterRef = doc(db, "organizations", orgId, "counters", "invoices");
-    const settingsRef = doc(db, "organizations", orgId, "settings", "general");
-    const prefix = settings?.prefix || "INV-";
-    const padding = settings?.padding || 6;
-
-    try {
-        // Try to atomically increment using transaction
-        const result = await runTransaction(db, async (transaction) => {
-            const counterDoc = await transaction.get(counterRef);
-            const settingsDoc = await transaction.get(settingsRef);
-
-            let currentCounter = 0;
-            if (counterDoc.exists()) {
-                currentCounter = counterDoc.data().currentNumber || 0;
-            }
-
-            let configuredNextNumber = 1;
-            if (settingsDoc.exists()) {
-                const settingsData = settingsDoc.data();
-                // Parse invoiceNextNumber - it could be a string like "000050"
-                if (settingsData?.invoiceNextNumber) {
-                    configuredNextNumber = parseInt(settingsData.invoiceNextNumber, 10) || 1;
-                }
-            }
-
-            // The next number should be at least (current + 1), but can jump ahead
-            // if configuredNextNumber is higher (e.g. user manually set it to 50)
-            const nextNumber = Math.max(currentCounter + 1, configuredNextNumber);
-
-            transaction.set(counterRef, { currentNumber: nextNumber }, { merge: true });
-
-            return nextNumber;
-        });
-
-        // Format with padding
-        const paddedNumber = String(result).padStart(padding, "0");
-
-        return {
-            number: result,
-            formatted: `${prefix}${paddedNumber}`,
-        };
-    } catch (error) {
-        console.error("Error generating invoice number:", error);
-        // Fallback to timestamp-based if transaction fails
-        const fallbackNum = Date.now();
-        return {
-            number: fallbackNum,
-            formatted: `${prefix}${fallbackNum}`,
-        };
-    }
-}
+/**
+ * The invoice number generator used to be duplicated here: a second copy of the one in
+ * lib/services/invoice-service.ts, and BOTH carried the same Date.now() fallback, so removing it
+ * from one would have left the other still minting timestamps. Exactly the trap described under
+ * calculateInvoiceTotals below. Single source of truth now - see generateInvoiceNumber there.
+ */
 
 // ============================================
 // Helper: Calculate Invoice Totals
@@ -281,7 +222,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         const customerName = customerDoc.exists() ? customerDoc.data().company : "Unknown Customer";
 
         // Generate invoice number using org settings
-        const invoiceNumberResult = await generateInvoiceNumber(profile.orgId, {
+        const invoiceNumberResult = await generateInvoiceNumber(db, profile.orgId, {
             prefix: orgSettings.invoiceNumberPrefix || "INV-",
             padding: orgSettings.numberPadding || 6,
         });
@@ -385,7 +326,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
             await finalizeInvoiceFn({ invoiceId: id });
 
             if (logActivity) {
-                await logActivity("invoice_sent", `Sent invoice ${invoice.number}`, id, "invoice");
+                await logActivity("invoice_sent", `Sent invoice ${invoiceNumberLabel(invoice)}`, id, "invoice");
             }
             return;
         }

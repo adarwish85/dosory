@@ -184,7 +184,7 @@ export async function convertLeadToCustomerService(
                     })),
                     discount: estData.discount,
                 });
-                // The transactional counter, never `INV-${Date.now()}`.
+                // The transactional counter, never a clock reading.
                 const convertedNumber = await generateInvoiceNumber(db, profile.orgId);
 
                 const invoiceData = {

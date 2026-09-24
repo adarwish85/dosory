@@ -1,6 +1,7 @@
 "use client";
 
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
+import { invoiceNumberLabel } from "@/lib/invoices/invoice-number";
 
 // PDF Settings interface from org settings
 export interface PDFSettings {
@@ -262,7 +263,7 @@ export default function InvoicePDF({
                     </View>
                     <View style={{ alignItems: "flex-end" }}>
                         <Text style={styles.invoiceTitle}>INVOICE</Text>
-                        <Text style={styles.invoiceNumber}>#{invoice.number}</Text>
+                        <Text style={styles.invoiceNumber}>#{invoiceNumberLabel(invoice)}</Text>
                         {settings.showStatus && (
                             <View
                                 style={[

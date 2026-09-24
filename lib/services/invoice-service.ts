@@ -84,12 +84,18 @@ export async function generateInvoiceNumber(
             formatted: `${prefix}${paddedNumber}`,
         };
     } catch (error) {
+        // NO TIMESTAMP FALLBACK. It used to return Date.now() here, which is how org "gomla"
+        // ended up with invoices numbered 1782922103813: the counters path had no Firestore rule,
+        // so the transaction was permission-denied for every tenant and every invoice silently
+        // got a timestamp. A timestamp is not an invoice number - it is unauditable, it sorts
+        // wrongly, and because two rapid writes never collide it also hides a duplicate submit.
+        // Failing here surfaces the real problem instead of writing a document that cannot be
+        // reconciled later.
         console.error("Error generating invoice number:", error);
-        const fallbackNum = Date.now();
-        return {
-            number: fallbackNum,
-            formatted: `${prefix}${fallbackNum}`,
-        };
+        throw new Error(
+            "Could not allocate an invoice number. The invoice was not created. " +
+                "This usually means the organisation's counter document is unreachable."
+        );
     }
 }
 

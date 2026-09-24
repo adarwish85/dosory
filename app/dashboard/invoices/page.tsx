@@ -65,6 +65,7 @@ import {
 } from "@dnd-kit/sortable";
 
 import { InvoiceHeader } from "@/components/dashboard/invoices/invoice-header";
+import { invoiceNumberLabel } from "@/lib/invoices/invoice-number";
 
 const statusColors: Record<InvoiceStatus, { bg: string; text: string; border: string }> = {
     draft: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-200" },
@@ -445,7 +446,7 @@ export default function InvoicesPage() {
                             href={`/dashboard/invoices/${invoice.id}`}
                             className="font-medium text-blue-600 hover:underline block truncate w-fit"
                         >
-                            <HighlightText text={invoice.number || "-"} search={searchQuery} />
+                            <HighlightText text={invoiceNumberLabel(invoice)} search={searchQuery} />
                         </Link>
                         {/* Hover Actions Menu */}
                         <div className="flex items-center gap-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity h-4 -ml-0.5">
@@ -557,8 +558,7 @@ export default function InvoicesPage() {
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
                                         <Badge className="mr-2 bg-blue-600">{selectedInvoices.length}</Badge>
-                                        {t("invoices.toolbar.bulk")}{" "}
-                                        <ChevronDown className="ml-2 h-4 w-4" />
+                                        {t("invoices.toolbar.bulk")} <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>

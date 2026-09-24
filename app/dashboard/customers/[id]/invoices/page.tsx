@@ -48,6 +48,7 @@ import { StatsGroup } from "@/components/dashboard/customers/stats-group";
 import Link from "next/link";
 import { InvoiceWizard } from "@/components/dashboard/customers/invoices/invoice-sheet";
 import { toast } from "sonner";
+import { invoiceNumberLabel } from "@/lib/invoices/invoice-number";
 
 // Types
 type SortDirection = "asc" | "desc" | null;
@@ -263,7 +264,7 @@ export default function InvoicesPage() {
         }
         if (sortKey && sortDirection) {
             result.sort((a, b) => {
-                let aVal: any, bVal: any;
+                let aVal: string | number, bVal: string | number;
                 switch (sortKey) {
                     case "number":
                         aVal = a.number || 0;
@@ -311,8 +312,12 @@ export default function InvoicesPage() {
     const handleSelectAll = () => setSelectedIds(processedInvoices.map((i) => i.id));
     const handleClearSelection = () => setSelectedIds([]);
     const handleSelectPage = () => setSelectedIds(paginatedInvoices.map((i) => i.id));
-    const toggleSelect = (id: string) =>
-        setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+    // Stable: the body is purely a functional setState, so it closes over nothing. handleKeyDown
+    // depends on it, and an unstable reference there defeated the memo it was written to provide.
+    const toggleSelect = useCallback(
+        (id: string) => setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id])),
+        []
+    );
     const isAllSelected = paginatedInvoices.length > 0 && paginatedInvoices.every((i) => selectedIds.includes(i.id));
     const isSomeSelected = paginatedInvoices.some((i) => selectedIds.includes(i.id)) && !isAllSelected;
 
@@ -360,7 +365,7 @@ export default function InvoicesPage() {
                     break;
             }
         },
-        [focusedRowIndex, paginatedInvoices]
+        [focusedRowIndex, paginatedInvoices, toggleSelect]
     );
 
     const visibleColumns = DEFAULT_COLUMNS.filter((c) => columnVisibility[c.key]).map((c) => ({
@@ -526,7 +531,7 @@ export default function InvoicesPage() {
                                     <Checkbox
                                         checked={isAllSelected}
                                         ref={(el) => {
-                                            if (el) (el as any).indeterminate = isSomeSelected;
+                                            if (el) (el as unknown as HTMLInputElement).indeterminate = isSomeSelected;
                                         }}
                                         onCheckedChange={(checked) => {
                                             if (checked) handleSelectPage();
@@ -603,7 +608,7 @@ export default function InvoicesPage() {
                                                         className="text-blue-600 hover:underline font-medium"
                                                     >
                                                         <HighlightText
-                                                            text={`INV-${String(invoice.number).padStart(6, "0")}`}
+                                                            text={invoiceNumberLabel(invoice)}
                                                             search={searchQuery}
                                                         />
                                                     </Link>

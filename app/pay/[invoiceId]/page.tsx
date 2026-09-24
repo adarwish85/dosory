@@ -8,6 +8,7 @@ import { useTranslation } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PayPalButton from "@/components/payments/PayPalButton";
 import { FileText, Calendar, Building2, CheckCircle, AlertTriangle, DollarSign, Mail } from "lucide-react";
+import { invoiceNumberLabel } from "@/lib/invoices/invoice-number";
 
 interface Invoice {
     id: string;
@@ -100,9 +101,7 @@ export default function InvoicePaymentPage() {
                     <CardContent className="p-8 text-center">
                         <AlertTriangle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
                         <h1 className="text-xl font-bold mb-2">{t("pay.notFound.title")}</h1>
-                        <p className="text-gray-600">
-                            {error || t("pay.notFound.description")}
-                        </p>
+                        <p className="text-gray-600">{error || t("pay.notFound.description")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -120,9 +119,7 @@ export default function InvoicePaymentPage() {
                         <CheckCircle className="h-6 w-6 text-green-600" />
                         <div>
                             <p className="font-medium text-green-800">{t("pay.success.title")}</p>
-                            <p className="text-sm text-green-700">
-                                {t("pay.success.description")}
-                            </p>
+                            <p className="text-sm text-green-700">{t("pay.success.description")}</p>
                         </div>
                     </div>
                 )}
@@ -134,7 +131,7 @@ export default function InvoicePaymentPage() {
                             <div>
                                 <div className="flex items-center gap-2 text-blue-100 text-sm mb-1">
                                     <FileText className="h-4 w-4" />
-                                    {t("pay.invoiceNumber", { number: invoice.number })}
+                                    {t("pay.invoiceNumber", { number: invoiceNumberLabel(invoice) })}
                                 </div>
                                 <CardTitle className="text-2xl">
                                     {invoice.currency} {invoice.total.toFixed(2)}

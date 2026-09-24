@@ -23,6 +23,7 @@ import { useInvoices } from "@/lib/hooks/use-invoices";
 import { toast } from "sonner";
 import { Invoice } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n";
+import { invoiceNumberLabel } from "@/lib/invoices/invoice-number";
 
 interface RecordPaymentDialogProps {
     open: boolean;
@@ -86,9 +87,10 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
             setAmount("");
             setNote("");
             setPaymentMode("Bank Transfer");
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error recording payment:", error);
-            toast.error(error.message || t("customers.payments.recordError"));
+            const message = error instanceof Error ? error.message : "";
+            toast.error(message || t("customers.payments.recordError"));
         } finally {
             setSubmitting(false);
         }
@@ -109,7 +111,11 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
                         <Select value={selectedInvoiceId} onValueChange={setSelectedInvoiceId}>
                             <SelectTrigger>
                                 <SelectValue
-                                    placeholder={loadingInvoices ? t("customers.payments.loadingInvoices") : t("customers.payments.selectInvoice")}
+                                    placeholder={
+                                        loadingInvoices
+                                            ? t("customers.payments.loadingInvoices")
+                                            : t("customers.payments.selectInvoice")
+                                    }
                                 />
                             </SelectTrigger>
                             <SelectContent>
@@ -120,7 +126,8 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
                                 ) : (
                                     outstandingInvoices.map((inv) => (
                                         <SelectItem key={inv.id} value={inv.id}>
-                                            {inv.number} - {t("customers.payments.due")}: ${inv.amountDue.toFixed(2)}
+                                            {invoiceNumberLabel(inv)} - {t("customers.payments.due")}: $
+                                            {inv.amountDue.toFixed(2)}
                                         </SelectItem>
                                     ))
                                 )}
@@ -169,7 +176,9 @@ export function RecordPaymentDialog({ open, onOpenChange, customerId, customerNa
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="Bank Transfer">{t("customers.payments.mode.bankTransfer")}</SelectItem>
+                                <SelectItem value="Bank Transfer">
+                                    {t("customers.payments.mode.bankTransfer")}
+                                </SelectItem>
                                 <SelectItem value="Cash">{t("customers.payments.mode.cash")}</SelectItem>
                                 <SelectItem value="Cheque">{t("customers.payments.mode.cheque")}</SelectItem>
                                 <SelectItem value="Credit Card">{t("customers.payments.mode.creditCard")}</SelectItem>

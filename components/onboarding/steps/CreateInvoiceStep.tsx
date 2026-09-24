@@ -10,6 +10,7 @@ import { useUserProfile } from "@/components/hooks/use-user-profile";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useTranslation } from "@/lib/i18n";
+import { generateInvoiceNumber } from "@/lib/services/invoice-service";
 
 interface LineItem {
     description: string;
@@ -73,11 +74,15 @@ export default function CreateInvoiceStep() {
         setIsSaving(true);
         try {
             // Generate invoice number
-            const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
+            // The transactional counter, never a clock reading. This step used to mint
+            // `INV-<timestamp>` and store it in a field called `invoiceNumber` that no invoice
+            // reader queries, so the demo invoice was both unnumbered and unfindable.
+            const invoiceNumber = await generateInvoiceNumber(db, orgId);
 
             // Create invoice in Firestore
             const invoiceRef = await addDoc(collection(db, "invoices"), {
-                invoiceNumber,
+                number: invoiceNumber.number,
+                numberFormatted: invoiceNumber.formatted,
                 customerId: createdCustomerId || null,
                 orgId,
                 status: "draft",

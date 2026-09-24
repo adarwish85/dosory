@@ -234,7 +234,7 @@ export function useEstimates(options: UseEstimatesOptions = {}) {
             discount: estimate.discount,
         });
 
-        // The transactional counter, not `INV-${Date.now()}`. A timestamp is not an invoice
+        // The transactional counter, never a clock reading. A timestamp is not an invoice
         // number: it is unauditable, it sorts wrongly, and it silently hides a duplicate submit
         // because two rapid writes never collide.
         const invoiceNumber = await generateInvoiceNumber(db, profile.orgId);

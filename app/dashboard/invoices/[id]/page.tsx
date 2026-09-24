@@ -42,6 +42,7 @@ import { useTranslation } from "@/lib/i18n";
 import { InvoiceStatus, LineItem } from "@/lib/types";
 import { computeInvoiceTotals } from "@/lib/money/compute-invoice-totals";
 import { formatMoney, FALLBACK_CURRENCY } from "@/lib/money/format-money";
+import { invoiceNumberLabel } from "@/lib/invoices/invoice-number";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formatDate = (date: any): string => {
@@ -340,7 +341,7 @@ export default function InvoiceDetailsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                         {/* Left: Invoice # and Sender */}
                         <div>
-                            <h1 className="text-2xl font-bold text-blue-600 mb-6">{invoice.number}</h1>
+                            <h1 className="text-2xl font-bold text-blue-600 mb-6">{invoiceNumberLabel(invoice)}</h1>
 
                             <div className="space-y-1 text-sm text-gray-800">
                                 <p className="font-bold">{senderName}</p>
