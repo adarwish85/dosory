@@ -5716,5 +5716,7 @@
     "invoices.summary.outstanding": "المستحق",
     "invoices.summary.overdue": "المتأخر",
     "invoices.summary.overflowCurrencies": "+{count} بعملات أخرى",
-    "invoices.summary.noCurrency": "{count} بدون عملة محددة"
+    "invoices.summary.noCurrency": "{count} بدون عملة محددة",
+    "auth.signup.accountCheckFailed": "تعذّر التحقق من حسابك. برجاء المحاولة مرة أخرى بعد قليل.",
+    "auth.signup.emailAlreadyInOrg": "هذا البريد الإلكتروني مرتبط بمساحة عمل أخرى ({org}). سجّل الدخول هناك، أو استخدم بريدًا مختلفًا لإنشاء مساحة عمل جديدة."
 }

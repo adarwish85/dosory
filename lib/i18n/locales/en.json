@@ -5716,5 +5716,7 @@
     "invoices.summary.outstanding": "Outstanding",
     "invoices.summary.overdue": "Overdue",
     "invoices.summary.overflowCurrencies": "+{count} in other currencies",
-    "invoices.summary.noCurrency": "{count} with no currency set"
+    "invoices.summary.noCurrency": "{count} with no currency set",
+    "auth.signup.accountCheckFailed": "We could not verify your account. Please try again in a moment.",
+    "auth.signup.emailAlreadyInOrg": "This email already belongs to another workspace ({org}). Sign in there, or use a different email to create a new workspace."
 }

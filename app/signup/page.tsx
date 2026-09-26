@@ -167,6 +167,30 @@ export default function SignupPage() {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
+            // 1b. GUARD: is this person's staff key free?
+            // staff/{email} is a ROOT document keyed by lowercased email, so the key is global
+            // across every tenant, and step 4 below writes it with a bare setDoc — a full
+            // replacement including orgId. A second signup by the same person therefore rebinds
+            // their staff record to the new org and the FIRST org silently loses its only staff
+            // document. That already happened in production (orgs `fareed` / `fareedmagdy`,
+            // same email, same day; one staff doc survives and the other org has none).
+            //
+            // Checked HERE, before the org document is written, so a rejection leaves nothing
+            // behind: `orgCreated` is still false, so the catch below deletes the auth user and
+            // the email is free to retry. Checking after the org write would strand exactly the
+            // kind of shell org this guard exists to prevent.
+            const keyCheck = await fetch("/api/auth/staff-key-available", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${await user.getIdToken()}` },
+            });
+            if (!keyCheck.ok) {
+                throw new Error(t("auth.signup.accountCheckFailed"));
+            }
+            const keyStatus = (await keyCheck.json()) as { available: boolean; existingOrgId?: string };
+            if (!keyStatus.available) {
+                throw new Error(t("auth.signup.emailAlreadyInOrg", { org: keyStatus.existingOrgId || "" }));
+            }
+
             // 2. Create Organization with subdomain
             const orgId = subdomain; // Use subdomain as org ID for easy lookup
             const orgRef = doc(db, "organizations", orgId);
