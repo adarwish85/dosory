@@ -698,9 +698,17 @@ functions` reported 21/21 successful updates while shipping **stale July build o
 - Cloud Functions Node 20 runtime → upgrade path planned **before 2026-10**.
 - `checkReminders` sends inside a single 500-op batch — chunk before any reminder backfill
   or growth makes >500 due at once.
-- 5 expired trials will be transitioned by `trialExpiryCheck` at its next 02:00 UTC run
-  (first healthy run after the index fix) — expected, not an incident. Expiry sets
-  status:"expired", which ensureWriteAccess does NOT currently block (product decision open).
+- **EXPIRED TRIALS DO NOT BLOCK ANYTHING — OPEN COMMERCIAL DECISION (ruled 2026-09-26: leave
+  open for now).** `trialExpiryCheck` sets `status: "expired"`, but `ensureWriteAccess`
+  (lib/entitlements/tenantEntitlements.ts:222) blocks only `canceled`, `suspended` and
+  `past_due`. `"expired"` is not in that list, so **a tenant whose trial ended keeps full write
+  access indefinitely** and is never asked to pay.
+  **Revenue implication:** every expired trial is a free forever account. Prod carries at least
+  one today — `fareed` has `status: "expired"` and is unblocked. There is no upgrade prompt
+  either, so a willing customer has no route to convert even if they wanted one.
+  Ruled: do NOT add `"expired"` to the blocking list, do NOT surface an upgrade prompt, until
+  the platform-billing funnel (Stage 3.2) can actually take the money. Blocking writes before
+  there is a way to pay converts a silent leak into a locked-out customer.
 
 ---
 
