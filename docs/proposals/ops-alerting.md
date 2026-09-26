@@ -33,17 +33,87 @@ converting looks exactly like a quiet week. Nobody gets an error; there is simpl
 business. That is the same shape of invisible failure as the three unprovisioned orgs — and those
 went unnoticed for three months.
 
-**Proposed policy** (Ahmed to create; needs console access this session does not have):
+## Create the alert — runnable, one time
 
-- **Condition:** log-based metric on the `dosory` Cloud Run service matching
-  `jsonPayload.alert = "SIGNUP_BLOCKED"`, **count > 0 over 5 minutes**.
-- **Why count > 0 rather than a rate:** at current volume a single blocked signup is already
-  worth knowing about, and a rate threshold would need a baseline nobody has.
-- **Channel:** email to the same address as `OPS_REPORT_EMAIL`. Not Slack — there is no
-  workspace wired to this project, and a channel that does not exist is worse than none.
+Everything below can be done with `gcloud` by the deploy service account. Nothing here needs the
+console. Replace the two placeholders and run it once.
 
-A useful companion, cheaper to add and harder to get wrong: the same metric on **5xx rate for
-the signup route**, which catches failures this specific `catch` never sees.
+**Placeholders:** `<DEPLOY_SA>` — the service-account email whose key is in the
+`GOOGLE_APPLICATION_CREDENTIALS` repo secret. `<OPS_EMAIL>` — where alerts should go.
+
+```bash
+set -euo pipefail
+PROJECT=goalo-6a269
+DEPLOY_SA="<DEPLOY_SA>"          # e.g. deployer@goalo-6a269.iam.gserviceaccount.com
+OPS_EMAIL="<OPS_EMAIL>"
+
+gcloud config set project "$PROJECT"
+
+# 1. IAM. The two permissions needed are logging.logMetrics.create and
+#    monitoring.alertPolicies.create; these are the smallest predefined roles that carry them.
+gcloud projects add-iam-policy-binding "$PROJECT" \
+  --member="serviceAccount:${DEPLOY_SA}" --role="roles/logging.configWriter"
+gcloud projects add-iam-policy-binding "$PROJECT" \
+  --member="serviceAccount:${DEPLOY_SA}" --role="roles/monitoring.alertPolicyEditor"
+
+# 2. The log-based metric. Matches the structured line the route emits — on the `alert` KEY,
+#    not on prose, so rewording the message never silently breaks the alert.
+gcloud logging metrics create signup_blocked \
+  --description="Signup duplicate-email guard failed closed; every signup is blocked." \
+  --log-filter='resource.type="cloud_run_revision"
+resource.labels.service_name="dosory"
+severity>=ERROR
+jsonPayload.alert="SIGNUP_BLOCKED"'
+
+# 3. Email notification channel. Capture the id it prints.
+CHANNEL=$(gcloud beta monitoring channels create \
+  --display-name="Dosory ops email" \
+  --type=email \
+  --channel-labels=email_address="${OPS_EMAIL}" \
+  --format="value(name)")
+echo "channel: $CHANNEL"
+
+# 4. The policy: count > 0 over 5 minutes.
+cat > /tmp/signup-blocked-policy.json <<JSON
+{
+  "displayName": "Signup blocked (duplicate-email guard failing closed)",
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "SIGNUP_BLOCKED errors > 0 in 5 minutes",
+      "conditionThreshold": {
+        "filter": "metric.type=\"logging.googleapis.com/user/signup_blocked\" AND resource.type=\"cloud_run_revision\"",
+        "aggregations": [{ "alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_SUM" }],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0,
+        "duration": "0s",
+        "trigger": { "count": 1 }
+      }
+    }
+  ],
+  "notificationChannels": ["${CHANNEL}"],
+  "alertStrategy": { "autoClose": "1800s" },
+  "documentation": {
+    "mimeType": "text/markdown",
+    "content": "The duplicate-email guard (/api/auth/staff-key-available) is failing closed, so EVERY signup is being rejected. Failing closed is correct - failing open would allow cross-tenant staff-document overwrites - but it means the funnel has stopped. Check the Firestore read behind the guard. Source: app/api/auth/staff-key-available/route.ts"
+  }
+}
+JSON
+
+gcloud alpha monitoring policies create --policy-from-file=/tmp/signup-blocked-policy.json
+rm -f /tmp/signup-blocked-policy.json
+```
+
+Two choices worth stating rather than burying:
+
+- **`count > 0`, not a rate.** At current volume a single blocked signup is already worth
+  knowing, and a rate threshold needs a baseline nobody has.
+- **`duration: "0s"` with a 5-minute alignment window** fires on the first aligned interval
+  containing an error, rather than requiring the condition to persist — a funnel outage should
+  not have to last ten minutes to be noticed.
+
+A cheaper companion worth adding later: the same shape on **5xx rate for the signup route**,
+which catches failures this specific `catch` never sees.
 
 ## The reconciliation report — why it emails on a clean run too
 
@@ -66,9 +136,28 @@ all three orgs found on 2026-09-26, and it is why the sweep reports instead of r
 auto-repair would have minted three fresh 14-day trials on accounts nobody can sign into, and
 buried the signup defect that created them.
 
-**Required to activate:** set `OPS_REPORT_EMAIL` in the **Cloud Functions** environment (not
-`apphosting.yaml`). Until it is set the function logs a warning saying so and falls back to
-Cloud Logging, which is to say: to nothing.
+### Activating it — the exact command
+
+`OPS_REPORT_EMAIL` is **an email address, not a secret**, so it goes in ordinary Functions
+config. Routing it through Secret Manager would add a grant, a version and a deploy step for a
+value that is printed in every report it sends.
+
+This project already uses the Firebase `.env.<projectId>` mechanism — `functions/.env.goalo-6a269`
+exists and is gitignored — and firebase-functions v4 injects those into `process.env` at deploy,
+which is what the function reads:
+
+```bash
+cd functions
+echo 'OPS_REPORT_EMAIL=<OPS_EMAIL>' >> .env.goalo-6a269
+cd .. && npx firebase-tools deploy --only functions:provisioningReconcile --project goalo-6a269
+```
+
+Do **not** use `firebase functions:config:set` for this: that populates `functions.config()`,
+not `process.env`, and it is the API being removed in firebase-functions v6 (CLAUDE.md §11 has
+the migration deadline).
+
+Until it is set, the function logs a warning saying so and falls back to Cloud Logging — which
+is to say, to nothing.
 
 ## Not proposed
 

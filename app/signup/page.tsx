@@ -7,7 +7,7 @@ import { createUserWithEmailAndPassword, deleteUser, sendEmailVerification } fro
 import { doc, setDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { provisionWithRetry } from "@/lib/provisioning/ensure-provisioned-client";
-import { signupErrorKey, shouldOfferSignIn } from "@/lib/auth/signup-errors";
+import { signupErrorKey, shouldOfferSignIn, takenByOrg, STAFF_KEY_TAKEN_CODE } from "@/lib/auth/signup-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -192,7 +192,13 @@ export default function SignupPage() {
             }
             const keyStatus = (await keyCheck.json()) as { available: boolean; existingOrgId?: string };
             if (!keyStatus.available) {
-                throw new Error(t("auth.signup.emailAlreadyInOrg", { org: keyStatus.existingOrgId || "" }));
+                // Typed so the message mapper can tell THIS rejection apart from Firebase's
+                // `auth/email-already-in-use`. They mean opposite things to the reader and must
+                // not share copy. See lib/auth/signup-errors.ts.
+                throw Object.assign(new Error("staff key taken"), {
+                    code: STAFF_KEY_TAKEN_CODE,
+                    orgId: keyStatus.existingOrgId || "",
+                });
             }
 
             // 2. Create Organization with subdomain
@@ -336,7 +342,8 @@ export default function SignupPage() {
             // actually resumes setup is signing in — useEnsureProvisioned heals the tenant on
             // dashboard load. See lib/auth/signup-errors.ts.
             const key = signupErrorKey(err);
-            setError(key === "auth.signup.genericFailure" ? (err as Error).message : t(key));
+            const org = takenByOrg(err);
+            setError(key === "auth.signup.genericFailure" ? (err as Error).message : t(key, org ? { org } : undefined));
             setOfferSignIn(shouldOfferSignIn(err));
             setSubmitting(false);
         }

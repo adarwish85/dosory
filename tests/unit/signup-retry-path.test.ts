@@ -21,10 +21,42 @@
  */
 import { readFileSync } from "fs";
 import { join } from "path";
-import { signupErrorKey, shouldOfferSignIn } from "@/lib/auth/signup-errors";
+import { signupErrorKey, shouldOfferSignIn, takenByOrg, STAFF_KEY_TAKEN_CODE } from "@/lib/auth/signup-errors";
 
 const ROOT = join(__dirname, "..", "..");
 const err = (code: string) => Object.assign(new Error(code), { code });
+
+describe("the two rejections do NOT share copy", () => {
+    // They arrive differently and mean opposite things: one is help, one is a refusal.
+    const firebaseDup = err("auth/email-already-in-use");
+    const guardDup = Object.assign(new Error("staff key taken"), {
+        code: STAFF_KEY_TAKEN_CODE,
+        orgId: "beit",
+    });
+
+    test("(a) the ambiguous Firebase rejection maps to the resume-setup key", () => {
+        expect(signupErrorKey(firebaseDup)).toBe("auth.signup.emailExistsResumeSetup");
+    });
+
+    test("(b) the guard's own rejection maps to a DIFFERENT key", () => {
+        expect(signupErrorKey(guardDup)).toBe("auth.signup.staffKeyTaken");
+    });
+
+    test("they are not the same key — sharing copy is the defect", () => {
+        expect(signupErrorKey(firebaseDup)).not.toBe(signupErrorKey(guardDup));
+    });
+
+    test("only the guard's rejection can name the holding workspace", () => {
+        expect(takenByOrg(guardDup)).toBe("beit");
+        expect(takenByOrg(firebaseDup)).toBe("");
+        expect(takenByOrg(new Error("x"))).toBe("");
+    });
+
+    test("both offer sign-in, because both mean an account exists", () => {
+        expect(shouldOfferSignIn(firebaseDup)).toBe(true);
+        expect(shouldOfferSignIn(guardDup)).toBe(true);
+    });
+});
 
 describe("signupErrorKey", () => {
     test("THE RETRY CASE: an existing email routes to resume-setup, not to a generic error", () => {
@@ -82,6 +114,7 @@ describe("the messages exist in both locales and say the right thing", () => {
         "auth.signup.networkFailed",
         "auth.signup.genericFailure",
         "auth.signup.provisioningFailed",
+        "auth.signup.staffKeyTaken",
     ];
 
     test.each(KEYS)("%s is present and non-empty in both locales", (k) => {
@@ -92,6 +125,31 @@ describe("the messages exist in both locales and say the right thing", () => {
     test("the resume-setup message actually mentions signing in", () => {
         // A generic "email already in use" would be accurate and useless here.
         expect(String(en["auth.signup.emailExistsResumeSetup"]).toLowerCase()).toContain("sign in");
+    });
+
+    test("(a) the ambiguous message must be true of BOTH cases", () => {
+        const m = String(en["auth.signup.emailExistsResumeSetup"]).toLowerCase();
+        // It must NOT promise that setup will complete as though case (a) were certain —
+        // an agency owner refused a second workspace would be sent into the wrong one.
+        expect(m).toContain("one workspace");
+        expect(m).toContain("if your workspace setup did not finish");
+    });
+
+    test("(b) the guard message names the workspace and states the rule", () => {
+        const m = String(en["auth.signup.staffKeyTaken"]);
+        expect(m).toContain("{org}");
+        expect(m.toLowerCase()).toContain("one workspace");
+    });
+
+    test("the two messages are not the same string in either locale", () => {
+        expect(en["auth.signup.emailExistsResumeSetup"]).not.toBe(en["auth.signup.staffKeyTaken"]);
+        expect(ar["auth.signup.emailExistsResumeSetup"]).not.toBe(ar["auth.signup.staffKeyTaken"]);
+    });
+
+    test("the Arabic guard message keeps the {org} placeholder", () => {
+        // interpolate() leaves unknown tokens intact, so a dropped placeholder renders "{org}"
+        // to an Arabic-speaking user.
+        expect(String(ar["auth.signup.staffKeyTaken"])).toContain("{org}");
     });
 
     test("the provisioning-failure message does not claim success", () => {

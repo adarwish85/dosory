@@ -5720,10 +5720,11 @@
     "auth.signup.accountCheckFailed": "We could not verify your account. Please try again in a moment.",
     "auth.signup.emailAlreadyInOrg": "This email already belongs to another workspace ({org}). Sign in there, or use a different email to create a new workspace.",
     "auth.signup.provisioningFailed": "Your workspace was created but could not finish setting up, so it cannot save data yet. Please sign in and reload — setup will retry automatically. If it keeps failing, contact support.",
-    "auth.signup.emailExistsResumeSetup": "An account with this email already exists. Sign in to continue — if your workspace setup did not finish, signing in completes it automatically.",
+    "auth.signup.emailExistsResumeSetup": "An account with this email already exists. Sign in to continue — each email can own one workspace, and if your workspace setup did not finish, signing in completes it.",
     "auth.signup.goToSignIn": "Go to sign in",
     "auth.signup.weakPassword": "Please choose a longer password (at least 6 characters).",
     "auth.signup.invalidEmail": "That email address does not look valid.",
     "auth.signup.networkFailed": "We could not reach the server. Check your connection and try again.",
-    "auth.signup.genericFailure": "Sign up failed. Please try again."
+    "auth.signup.genericFailure": "Sign up failed. Please try again.",
+    "auth.signup.staffKeyTaken": "This email already belongs to the workspace \"{org}\". Each email can belong to one workspace — sign in to that one, or use a different email to create a new workspace."
 }

@@ -85,8 +85,13 @@ describe("the guard runs where it can still be undone", () => {
 
     test("a failed check aborts rather than falling through", () => {
         // Fail-closed: an unreachable endpoint must not read as "the key is free".
-        expect(signup).toMatch(/if \(!keyCheck\.ok\) \{\s*\n\s*throw new Error/);
-        expect(signup).toMatch(/if \(!keyStatus\.available\) \{\s*\n\s*throw new Error/);
+        //
+        // Asserts that each branch THROWS, not how it constructs what it throws. The first
+        // version of this pinned `throw new Error`, and broke the moment the rejection began
+        // carrying the holding org via Object.assign — a guard tied to an incidental detail of
+        // the code it guards (CLAUDE.md standing lesson 9, in miniature).
+        expect(signup).toMatch(/if \(!keyCheck\.ok\) \{[\s\S]{0,200}?\bthrow\b/);
+        expect(signup).toMatch(/if \(!keyStatus\.available\) \{[\s\S]{0,400}?\bthrow\b/);
     });
 });
 
