@@ -57,7 +57,31 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         // Fail CLOSED. An unavailable check must not read as "the key is free" and let the
         // overwrite through — that is the exact outcome this endpoint exists to prevent.
-        console.error("[staff-key-available] lookup failed:", error);
+        //
+        // BUT FAILING CLOSED HERE BLOCKS EVERY SIGNUP, so this is an outage, not a warning, and
+        // it has to read like one. A signup funnel that has silently stopped converting is lost
+        // revenue nobody notices — the same shape of invisible failure as the unprovisioned orgs
+        // this endpoint was written for.
+        //
+        // WHERE THIS LANDS: this is a Next.js route handler on App Hosting, i.e. Cloud Run — not
+        // a Cloud Function — so `functions.logger` is unavailable and console.error goes to
+        // stderr, which Cloud Logging records at ERROR severity for the `dosory` service. It is
+        // structured as a single JSON payload so a log-based metric can match on
+        // `SIGNUP_BLOCKED` without parsing prose.
+        //
+        // NOTHING ALERTS ON IT TODAY. A log line in a console nobody opens is not a signal. The
+        // alert policy is proposed in docs/proposals/ops-alerting.md and is Ahmed's to create;
+        // until it exists, the daily provisioning-reconcile email is the only thing that would
+        // surface a signup funnel that has stopped.
+        console.error(
+            JSON.stringify({
+                severity: "ERROR",
+                alert: "SIGNUP_BLOCKED",
+                where: "api/auth/staff-key-available",
+                impact: "every signup is failing closed at the duplicate-email guard",
+                message: error instanceof Error ? error.message : String(error),
+            })
+        );
         return NextResponse.json({ error: "Could not verify account availability" }, { status: 503 });
     }
 }

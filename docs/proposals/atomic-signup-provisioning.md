@@ -108,6 +108,28 @@ Then implement (b) if recon supports it, additively, keeping the old route alive
 **Do not start by writing the transaction.** Start by establishing what authorises the call
 before any document exists — question 2 determines the shape of everything else.
 
+## Product fork this forecloses — flagged, not blocking
+
+The duplicate-email guard (`0ad3f4f8`) makes **one email = one workspace**. That is correct
+today, and not by preference: `staff/{email}` is a root document keyed by email, so two orgs for
+one person are impossible _without data loss_ — the second signup overwrites the first org's
+staff record. The guard is the honest expression of a constraint the data model already imposes.
+
+But it does foreclose a real product shape: **one person owning several workspaces** (an agency
+with a workspace per client, a founder with two companies). Today that person must use
+`name+client1@` style aliases, which is a workaround they will feel.
+
+**The enabler is re-keying staff by `uid` rather than email** — `staff/{uid}` (or an
+`orgId__uid` composite) makes membership per-tenant and lets one identity hold several. That is
+a data migration touching every staff read: `use-permissions`, the `set-claims` fallback, the
+dashboard self-heal, `user-profile-provider`, the easykash checkout lookup, and the documented
+"staff docs are keyed by lowercased email and carry authUid" invariant in CLAUDE.md §11.
+
+**Not to be built now**, and deliberately not folded into the atomic-signup batch either — it is
+a separate decision with its own migration, and doing it under cover of a provisioning fix is
+how a data model changes without anyone deciding to change it. Recorded here so that when
+multi-workspace is wanted, the blocker is already named.
+
 ## Not in this batch
 
 - Releasing the three shell subdomains.

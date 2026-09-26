@@ -7,6 +7,7 @@ import { createUserWithEmailAndPassword, deleteUser, sendEmailVerification } fro
 import { doc, setDoc, collection, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { provisionWithRetry } from "@/lib/provisioning/ensure-provisioned-client";
+import { signupErrorKey, shouldOfferSignIn } from "@/lib/auth/signup-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +32,9 @@ export default function SignupPage() {
     const [joinSubdomain, setJoinSubdomain] = useState("");
     const [joinMessage, setJoinMessage] = useState("");
     const [error, setError] = useState("");
+    // Set when the failure means "you already have an account" — the UI then offers a
+    // sign-in link, because signing in is what resumes a half-provisioned workspace.
+    const [offerSignIn, setOfferSignIn] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     if (loading) {
@@ -325,7 +329,15 @@ export default function SignupPage() {
                     console.error("Signup rollback (deleteUser) failed:", rollbackErr);
                 }
             }
-            setError((err as Error).message);
+            // Route the user to the recovery that WORKS rather than to a dead end. Signup
+            // deliberately keeps the org and auth user on a provisioning failure, so the
+            // natural retry ("sign up again, same subdomain") hits two walls: the email is
+            // already in use, and their own org makes their own subdomain read as taken. What
+            // actually resumes setup is signing in — useEnsureProvisioned heals the tenant on
+            // dashboard load. See lib/auth/signup-errors.ts.
+            const key = signupErrorKey(err);
+            setError(key === "auth.signup.genericFailure" ? (err as Error).message : t(key));
+            setOfferSignIn(shouldOfferSignIn(err));
             setSubmitting(false);
         }
     };
@@ -518,7 +530,21 @@ export default function SignupPage() {
                                 />
                             </div>
 
-                            {error && <p className="text-sm text-red-500">{error}</p>}
+                            {error && (
+                                <div className="space-y-1">
+                                    <p className="text-sm text-red-500">{error}</p>
+                                    {/* The recovery that actually resumes a half-provisioned
+                                        workspace. Without this the user is told their email is
+                                        taken and left to guess. */}
+                                    {offerSignIn && (
+                                        <p className="text-sm">
+                                            <Link href="/login" className="font-medium underline">
+                                                {t("auth.signup.goToSignIn")}
+                                            </Link>
+                                        </p>
+                                    )}
+                                </div>
+                            )}
 
                             <Button
                                 type="submit"
