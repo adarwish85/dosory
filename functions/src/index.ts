@@ -8,6 +8,7 @@ admin.initializeApp();
 export { subscriptionAutoBilling } from "./subscriptionBilling";
 export { easykashReconcile } from "./easykashReconcile";
 export { contractAutoExpiry, trialExpiryCheck } from "./contractExpiry";
+export { provisioningReconcile } from "./provisioningReconcile";
 
 // Export email notification functions
 export {

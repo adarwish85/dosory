@@ -263,7 +263,18 @@ export default function SignupPage() {
             // provisioning guard (useEnsureProvisioned) converges the tenant on next load.
             const provisionResult = await provisionWithRetry(user, orgId);
             if (!provisionResult.ok) {
+                // FAIL VISIBLY. This used to console.error and carry on to the welcome email and
+                // the redirect, so a half-provisioned tenant was reported to the user as a
+                // successful signup — they landed in a workspace where every write 403s "No
+                // subscription found", with nothing on screen to explain it and no reason to
+                // suspect anything. Three prod orgs are in that state.
+                //
+                // The org and auth user are deliberately KEPT (the rollback below only fires
+                // while orgCreated is false): deleting them would free the subdomain out from
+                // under a user who may simply retry, and the login-time convergence guard can
+                // still heal the tenant. What changes is that the user is told.
                 console.error("Provisioning incomplete after retries:", provisionResult.lastError);
+                throw new Error(t("auth.signup.provisioningFailed"));
             }
 
             // 7. Send Welcome Email (fire-and-forget)

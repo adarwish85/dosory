@@ -24,6 +24,24 @@ export async function provisionTenant(orgId: string, createdBy: string): Promise
     if (!orgId) throw new Error("provisionTenant: orgId is required");
     await seedSubscription(orgId, createdBy);
     await seedDefaults(orgId, createdBy);
+
+    // VERIFY, do not assume. Reaching the end of this function is not evidence the document
+    // exists: seedSubscription returns early when the doc is already there, both writes are
+    // separate non-transactional calls, and a partial failure upstream can leave the org
+    // without the one document every write path depends on. Three prod orgs reached exactly
+    // that state (chicago, fareedmagdy, saad99 — all with zero documents of any kind and no
+    // way for the owner to notice), because the caller logged the failure and redirected the
+    // user into the tenant anyway.
+    //
+    // This read-back is what lets the caller fail visibly instead. It is the same discipline
+    // as CLAUDE.md standing lesson 7: "Deploy complete!" is not evidence — check the artifact.
+    const verify = await adminDb.collection("subscriptions").doc(orgId).get();
+    if (!verify.exists) {
+        throw new Error(
+            `provisionTenant: subscriptions/${orgId} is still missing after provisioning. ` +
+                "The tenant would be unable to save anything; signup must not report success."
+        );
+    }
 }
 
 async function seedSubscription(orgId: string, createdBy: string): Promise<void> {
